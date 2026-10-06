@@ -1,0 +1,40 @@
+# 비밀 — 절대 커밋하지 않는다
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets/
+
+# 받은 데이터·실행 산출물 — 로그인 등급 원천이 섞일 수 있어 통째로 제외 (docs/DATA_TIERS.md §4)
+data/
+state/
+probe_out/
+runs/
+raw/
+fixtures/real/
+*.sqlite
+*.sqlite3
+*.db
+*.parquet
+*.xlsx
+out/
+
+# 공개 사이트 빌드 결과 (CI 가 만들어 Pages 로 배포)
+public_build/
+dist/
+
+# 개발 환경
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+node_modules/
+.DS_Store
+.idea/
+.vscode/
