@@ -1,12 +1,11 @@
 """서비스 공통 실행 도구(kbj.services.runtime) — 로그·health·하트비트·healthcheck·백오프·스레드.
 
 승격(GEXLAB, fakeredis 만 — 시험 본문 그대로, 바꾼 것만 적는다):
-- `tests/unit/test_services_runtime.py` 13개 중 7개: 하트비트 2·healthcheck 2·log_event 1·
-  health sink 1·backoff 1. healthcheck 설정 오류 시험의 환경변수 이름은 KBJ 이름으로
-  (`REDIS_URL` → `KBJ_REDIS_URL`, `KIS_ENV` → `KBJ_KIS_ENV`). health sink 시험의 태거는
-  `tagger_for(CAL)` 대신 같은 값을 돌려주는 고정 태거 — 캘린더(kbj.core.calendar)가 묶음 B
-  라서다(B 뒤에 `tagger_for` 와 함께 원래대로 돌린다). 나머지 6개(GEX 채널·봉투·세션 상태
-  메시지·태거)는 P7·B 몫.
+- `tests/unit/test_services_runtime.py` 13개 중 8개: 하트비트 2·healthcheck 2·log_event 1·
+  health sink 1·backoff 1·태거 1(`test_tagger_follows_the_session_state_machine` — P2 묶음 H 가
+  `tagger_for` 를 붙이며 옮겼다). healthcheck 설정 오류 시험의 환경변수 이름은 KBJ 이름으로
+  (`REDIS_URL` → `KBJ_REDIS_URL`, `KIS_ENV` → `KBJ_KIS_ENV`). 나머지 5개(GEX 채널·봉투·세션
+  상태 메시지)는 P7 몫.
 - `tests/unit/test_auth_service.py` 의 health 이벤트·로그 싱크 시험 3개(health.py 를 S0 가
   승격했다 — 묶음 A 는 이 3개를 다시 옮기지 않는다).
 """
@@ -25,6 +24,7 @@ import pytest
 from pydantic import SecretStr
 from redis import Redis
 
+from kbj.core.calendar import TradingCalendar
 from kbj.services.runtime import (
     Backoff,
     HealthEvent,
@@ -37,6 +37,7 @@ from kbj.services.runtime import (
     heartbeat_age,
     log_event,
     run_in_thread,
+    tagger_for,
 )
 from kbj.store import redis_keys as bus
 
@@ -50,9 +51,7 @@ def _redis() -> tuple[fakeredis.FakeServer, fakeredis.FakeRedis]:
     return server, fakeredis.FakeRedis(server=server)
 
 
-def _cal_tagger(t: datetime) -> tuple[date | None, str | None]:
-    """`tagger_for(CAL)` 가 2026-09-28 10:00 KST(주간장) 에 돌려주는 값과 같다(B 전 대역)."""
-    return (date(2026, 9, 28), "day")
+CAL = TradingCalendar.default()
 
 
 # ── 하트비트·healthcheck (승격) ──
@@ -147,6 +146,26 @@ def test_log_event_is_one_json_line_with_trade_date_and_session(
     assert (b["trade_date"], b["session"]) == (None, None)
 
 
+@pytest.mark.parametrize(
+    ("kst", "want"),
+    [
+        (datetime(2026, 9, 28, 10, 0, tzinfo=KST), (date(2026, 9, 28), "day")),
+        (
+            datetime(2026, 9, 28, 8, 10, tzinfo=KST),
+            (date(2026, 9, 28), "day"),
+        ),  # PRE_DAY → 주간
+        (datetime(2026, 9, 28, 17, 55, tzinfo=KST), (date(2026, 9, 29), "night")),  # PRE_NIGHT
+        (datetime(2026, 9, 29, 2, 0, tzinfo=KST), (date(2026, 9, 29), "night")),
+        (datetime(2026, 9, 28, 16, 0, tzinfo=KST), (None, None)),  # POST_DAY
+        (datetime(2026, 9, 24, 12, 0, tzinfo=KST), (None, None)),  # 추석 휴장
+    ],
+)
+def test_tagger_follows_the_session_state_machine(
+    kst: datetime, want: tuple[date | None, str | None]
+) -> None:
+    assert tagger_for(CAL)(kst) == want
+
+
 class HealthStore:
     def __init__(self, fail: bool = False) -> None:
         self.fail = fail
@@ -164,7 +183,7 @@ def test_service_health_sink_logs_and_stores_and_isolates_failures(
     ev = HealthEvent("ws_backoff", "3초 뒤 재연결", T0, "warning", service="ws-gateway")
     store = HealthStore()
     with caplog.at_level(logging.INFO):
-        ServiceHealthSink(store, _cal_tagger).emit(ev)
+        ServiceHealthSink(store, tagger_for(CAL)).emit(ev)
     assert store.events == [(ev, (date(2026, 9, 28), "day"))]
     rec = json.loads(caplog.records[-1].getMessage())
     assert rec["service"] == "ws-gateway" and rec["trade_date"] == "2026-09-28"

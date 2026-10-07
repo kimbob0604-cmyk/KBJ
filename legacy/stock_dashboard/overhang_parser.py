@@ -14,6 +14,9 @@ import asyncio
 import aiohttp
 from datetime import datetime, timedelta
 from pathlib import Path
+
+from kbj.config.settings import Settings
+from kbj.data import legacy_bridge
 from typing import Optional, Dict, List
 
 
@@ -35,7 +38,10 @@ def _load_dotenv(path: Path) -> None:
 _load_dotenv(Path(__file__).parent / '.env')
 
 DB_PATH = Path(__file__).parent / 'db' / 'dashboard.db'
-DART_API_KEY = os.environ.get('DART_API_KEY', '')
+# KBJ P2(설계 §9.4): DART 를 직접 부르지 않는다 — 논리 URL `dart:` 를 KBJ 브리지가 받아 키
+# (KBJ_DART_API_KEY)·리미터·일 예산을 넣는다. 옛 환경변수 DART_API_KEY 는 읽지 않는다.
+# DART_API_KEY 는 '키가 설정됐는가' 표시(값 아님 — 키 원문은 브리지만 안다).
+DART_API_KEY = 'KBJ_DART_API_KEY' if Settings().dart_api_key is not None else ''
 
 OVERHANG_REPORT_PATTERNS = {
     'CB': ['전환사채권발행결정', '전환사채발행결정'],
@@ -83,7 +89,6 @@ async def fetch_overhang_disclosures(stock_code: str, days_back: int = 1825) -> 
     async with aiohttp.ClientSession() as session:
         while page_no <= 10:
             params = {
-                'crtfc_key': DART_API_KEY,
                 'corp_code': corp_code,
                 'bgn_de': start_date,
                 'end_de': end_date,
@@ -91,12 +96,11 @@ async def fetch_overhang_disclosures(stock_code: str, days_back: int = 1825) -> 
                 'page_count': 100,
             }
             try:
-                async with session.get(
-                    'https://opendart.fss.or.kr/api/list.json',
-                    params=params,
-                    timeout=aiohttp.ClientTimeout(total=15)
-                ) as resp:
-                    data = await resp.json(content_type=None)
+                # KBJ 브리지(동기)를 스레드로 — 키·리미터는 브리지가
+                resp = await asyncio.to_thread(
+                    legacy_bridge.get, 'dart:/list.json', params=params, timeout=15
+                )
+                data = resp.json()
             except Exception as e:
                 print(f"  ⚠ {stock_code} list.json 실패: {e}")
                 break
@@ -134,32 +138,33 @@ async def fetch_overhang_disclosures(stock_code: str, days_back: int = 1825) -> 
 
 async def fetch_disclosure_document(rcept_no: str, session: aiohttp.ClientSession) -> Optional[str]:
     """공시 원본 (zip 안의 XML) 다운로드 + 디코드"""
-    url = 'https://opendart.fss.or.kr/api/document.xml'
-    params = {'crtfc_key': DART_API_KEY, 'rcept_no': rcept_no}
+    url = 'dart:/document.xml'
+    params = {'rcept_no': rcept_no}
 
     try:
-        async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=20)) as resp:
-            if resp.status != 200:
-                return None
-            content = await resp.read()
-            try:
-                with zipfile.ZipFile(io.BytesIO(content)) as z:
-                    # 가장 큰 .xml 파일 (본문)
-                    candidates = [n for n in z.namelist() if n.endswith('.xml')]
-                    if not candidates:
-                        return None
-                    candidates.sort(key=lambda n: z.getinfo(n).file_size, reverse=True)
-                    with z.open(candidates[0]) as f:
-                        # DART는 보통 EUC-KR이지만 UTF-8로도 시도
-                        raw = f.read()
-                        for enc in ('utf-8', 'euc-kr', 'cp949'):
-                            try:
-                                return raw.decode(enc)
-                            except UnicodeDecodeError:
-                                continue
-                        return raw.decode('utf-8', errors='ignore')
-            except zipfile.BadZipFile:
-                return content.decode('utf-8', errors='ignore')
+        # session(aiohttp)은 쓰지 않는다 — KBJ 브리지(동기)를 스레드로
+        resp = await asyncio.to_thread(legacy_bridge.get, url, params=params, timeout=20)
+        if resp.status_code != 200:
+            return None
+        content = resp.content
+        try:
+            with zipfile.ZipFile(io.BytesIO(content)) as z:
+                # 가장 큰 .xml 파일 (본문)
+                candidates = [n for n in z.namelist() if n.endswith('.xml')]
+                if not candidates:
+                    return None
+                candidates.sort(key=lambda n: z.getinfo(n).file_size, reverse=True)
+                with z.open(candidates[0]) as f:
+                    # DART는 보통 EUC-KR이지만 UTF-8로도 시도
+                    raw = f.read()
+                    for enc in ('utf-8', 'euc-kr', 'cp949'):
+                        try:
+                            return raw.decode(enc)
+                        except UnicodeDecodeError:
+                            continue
+                    return raw.decode('utf-8', errors='ignore')
+        except zipfile.BadZipFile:
+            return content.decode('utf-8', errors='ignore')
     except Exception:
         return None
 
@@ -387,7 +392,7 @@ async def collect_overhang_all():
 
 if __name__ == '__main__':
     if not DART_API_KEY:
-        print("❌ DART_API_KEY 환경변수 없음")
+        print("❌ KBJ_DART_API_KEY 환경변수 없음")
         sys.exit(1)
 
     if len(sys.argv) > 1 and sys.argv[1] == 'all':

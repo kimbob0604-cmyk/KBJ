@@ -104,7 +104,7 @@ def probe(code='005930'):
     out = []
     try:
         K.token()
-        out.append(('KIS 토큰', True, '발급/캐시 확인'))
+        out.append(('KIS 토큰', True, '토큰 읽기 확인(KBJ auth)'))
     except Exception as e:  # noqa: BLE001
         out.append(('KIS 토큰', False, str(e)[:200]))
         return out

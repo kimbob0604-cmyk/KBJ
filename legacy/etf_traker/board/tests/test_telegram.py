@@ -223,54 +223,10 @@ class TestLimit(unittest.TestCase):
         self.assertIn(f'외 {len(codes) - T.CROSS_MAX}종목', msg)
 
 
-class TestSplit(unittest.TestCase):
-    def test_chunks_cut_at_line_boundaries(self):
-        lines = [f'{i}번째 줄 ' + '가' * 40 for i in range(200)]
-        chunks = T._split('\n'.join(lines), 500)
-        self.assertGreater(len(chunks), 1)
-        for c in chunks:
-            self.assertLessEqual(len(c), 500)
-        self.assertEqual('\n'.join(chunks).split('\n'), lines)   # 문장 중간에서 안 자른다
-
-    def test_single_overlong_line_is_not_lost(self):
-        chunks = T._split('가' * 130, 50)
-        self.assertEqual(''.join(chunks), '가' * 130)
+# KBJ P2: TestSplit(2개)는 tests/unit/notifier/test_telegram_api.py·test_format.py 로 승격했다 — 같은 단언이 kbj 쪽에서 돈다(MIGRATION.md P2).
 
 
-class TestSend(unittest.TestCase):
-    """발송 실패가 파이프라인을 멈추면 안 된다. 예외 대신 (False, 사유)."""
-
-    def setUp(self):
-        self._orig = T._cred
-        T._cred = lambda name: ''      # 자격증명이 있는 환경에서도 같은 결과를 봐야 한다
-
-    def tearDown(self):
-        T._cred = self._orig
-
-    def test_send_without_token(self):
-        ok, why = T.send('본문')
-        self.assertFalse(ok)
-        self.assertIn('TELEGRAM_BOT_TOKEN', why)
-
-    def test_send_without_chat_id(self):
-        ok, why = T.send('본문', token='1234:abcd')
-        self.assertFalse(ok)
-        self.assertIn('TELEGRAM_CHAT_ID', why)
-
-    def test_send_with_empty_body(self):
-        ok, why = T.send('   ', token='1234:abcd', chat_id='-100')
-        self.assertFalse(ok)
-        self.assertIn('본문', why)
-
-    def test_check_without_token(self):
-        ok, why = T.check()
-        self.assertFalse(ok)
-        self.assertIn('TELEGRAM_BOT_TOKEN', why)
-
-    def test_check_reports_missing_chat_id_as_failure(self):
-        ok, why = T.check(token='')
-        self.assertFalse(ok)
-        self.assertIsInstance(why, str)
+# KBJ P2: TestSend(5개)는 tests/unit/notifier/test_telegram_api.py·test_format.py 로 승격했다 — 같은 단언이 kbj 쪽에서 돈다(MIGRATION.md P2).
 
 
 class TestDraft(unittest.TestCase):
@@ -438,100 +394,10 @@ if __name__ == '__main__':
     unittest.main(verbosity=2)
 
 
-class TestCheckDestination(unittest.TestCase):
-    """봇이 살아 있는 것과 그 방에 보낼 수 있는 것은 다르다.
-
-    봇이 방에서 쫓겨났거나 chat_id 가 틀리면 getMe 는 통과하고 발송만 실패한다.
-    18시에 조용히 실패하지 않으려면 점검에서 목적지까지 봐야 한다.
-    """
-
-    def setUp(self):
-        import requests
-        self.real = requests.get
-        self.calls = []
-
-    def tearDown(self):
-        import requests
-        requests.get = self.real
-
-    def _serve(self, me=200, chat=200, chat_body=None):
-        import requests
-
-        class R:
-            def __init__(self, code, body):
-                self.status_code, self._b = code, body
-                self.text = str(body)
-
-            def json(self):
-                return self._b
-
-        def fake(url, params=None, timeout=None):
-            self.calls.append(url.rsplit('/', 1)[-1])
-            if url.endswith('getMe'):
-                return R(me, {'result': {'username': 'board_bot'}})
-            return R(chat, chat_body or {'result': {'title': '리서치방'}})
-        requests.get = fake
-
-    def test_봇과_방을_모두_확인한다(self):
-        self._serve()
-        ok, why = T.check(token='t', chat_id='1')
-        self.assertTrue(ok)
-        self.assertIn('board_bot', why)
-        self.assertIn('리서치방', why)
-        self.assertEqual(self.calls, ['getMe', 'getChat'])
-
-    def test_방이_없으면_실패다(self):
-        self._serve(chat=400)
-        ok, why = T.check(token='t', chat_id='1')
-        self.assertFalse(ok)
-        self.assertIn('대화방', why)
-
-    def test_메시지를_보내지_않는다(self):
-        """점검이 발송으로 새면 안 된다."""
-        self._serve()
-        T.check(token='t', chat_id='1')
-        self.assertNotIn('sendMessage', self.calls)
+# KBJ P2: TestCheckDestination(3개)는 tests/unit/notifier/test_telegram_api.py·test_format.py 로 승격했다 — 같은 단언이 kbj 쪽에서 돈다(MIGRATION.md P2).
 
 
-class TestPlainTextMode(unittest.TestCase):
-    """미국장 브리프는 평문으로 보낸다.
-
-    브리프 본문에는 `**유니버스를 …**` 와 `—` 가 섞여 있다. Markdown 으로 보내면
-    텔레그램이 '엔티티가 안 닫혔다' 며 400 으로 거절한다. 국장 리포트는 우리가
-    서식을 붙여 만들므로 기본값은 Markdown 그대로여야 한다.
-    """
-    def _capture(self, **kw):
-        import requests
-        sent = {}
-
-        class R:
-            status_code = 200
-
-            @staticmethod
-            def json():
-                return {'ok': True}
-
-        def fake(url, data=None, timeout=None, **_):
-            sent.update(data or {})
-            return R()
-
-        real = requests.post
-        requests.post = fake
-        try:
-            ok, why = T.send('본문 **굵게** — 대시', token='t', chat_id='c', **kw)
-        finally:
-            requests.post = real
-        return ok, sent
-
-    def test_plain_mode_sends_no_parse_mode(self):
-        ok, sent = self._capture(parse_mode=None)
-        self.assertTrue(ok)
-        self.assertNotIn('parse_mode', sent)
-
-    def test_default_is_still_markdown(self):
-        ok, sent = self._capture()
-        self.assertTrue(ok)
-        self.assertEqual(sent.get('parse_mode'), 'Markdown')
+# KBJ P2: TestPlainTextMode(2개)는 tests/unit/notifier/test_telegram_api.py·test_format.py 로 승격했다 — 같은 단언이 kbj 쪽에서 돈다(MIGRATION.md P2).
 
 
 def _nh_row(code, name, close=None, high=None, **kw):

@@ -144,3 +144,54 @@ P1 은 경로만 고치는 단계라 아래는 손대지 않고 적어만 둔다
 | `board/web/prototype.html` | 이식본에서 **삭제** | 화면 원안 표·히트맵에 2026-08-26 실제 종목명과 등락률·거래대금 숫자(로그인 등급 시세로 볼 수 있음)와 사용자 원고 조각이 남아 있었다. 시험은 이 파일을 읽지 않는다. 화면 디자인은 KBJ P3 의 MD6형 SPA 가 대신한다 | 없음 |
 
 `render.py`·`README.md` 의 prototype.html 언급은 원본 설명이라 그대로 둔다(파일은 원본 레포에만 있다).
+
+## P2. KBJ 정본으로 재배선 (묶음 H, 2026-10-07)
+
+설계 `docs/p2_design.md` §1.9·§3.7·§3.8(K2·K3·K6)·§5.8~§5.10·§7.2. KIS·KRX·DART 는 KBJ 논리 URL 브리지
+(`kbj.data.legacy_bridge`)로만, 텔레그램은 KBJ notifier 대기열로만, 인박스는 notifier 웹훅이 쌓은 것을
+읽기만 한다. 키는 KBJ 설정(`KBJ_*`)에서 브리지·notifier 가 넣는다 — 옛 이름(`KIS_APP_KEY`·`KRX_API_KEY`·
+`DART_API_KEY`·`TELEGRAM_*`)은 읽지 않는다(DART 는 옛 이름이 있어도 키 값은 버린다).
+
+### 파일별
+
+| 파일 | 바꾼 것 |
+|---|---|
+| `ingest/kis.py` (K3) | `REAL`·`VTS`·`TOKEN_CACHE`·`_cached_token`·`_save_token`·발급 POST 삭제. `base()` = `"kis:"`, `session` = 브리지 세션, `token()` 은 KBJ auth 토큰 읽기만(없으면 `Fetch('… auth 대기')`), `_headers` 는 `tr_id`·`custtype`·우선순위(P3)만 — 토큰·앱키는 브리지가. `probe()` 는 토큰 앞자리도 찍지 않는다 |
+| `ingest/krx.py` | `BASE = "krx:"`, 세션 = 브리지(인증키는 브리지), `_isu_to_code` → KBJ `kbj.data.private.krx.stocks.isu_to_code` 다시 내보내기, `probe()` 키 확인 `KBJ_KRX_API_KEY` |
+| `ingest/dart.py` | `BASE = "dart:"`, 세션 = 브리지, `_key()` 는 '설정됨' 표시값(키 원문 아님 — 브리지가 버리고 KBJ 키를 넣는다), `has_key()` 새로. `STATUS_KO`·`KINDS`·`kind_of` → KBJ `kbj.data.public.dart` 다시 내보내기. `disclosures_for` 등 나머지 함수 본문은 그대로(아래 '남긴 시험') |
+| `ingest/financials.py` | `fnlttMultiAcnt` 세션 → `dart.session()`(브리지), opendart 리퍼러 삭제 |
+| `ingest/http.py` | `scrub`·`why`·`SECRET_PARAMS`·`BODY_*` → KBJ `kbj.data.http` 다시 내보내기(가린 자리는 `***`). `get`·`Fetch`·`session`·`gather`·`pick`·`num` 은 그대로(ET 예외 계층) |
+| `ingest/tg_inbox.py` (#33) | getUpdates·getWebhookInfo·offset 파일·봇 토큰 읽기 삭제. `drain(chat_ids, inbox_path, *, store=None, …)` 은 KBJ `kbj.services.notifier.inbox.read_items`(notifier 가 `prv_alerts.tg_inbox` 에 쌓은 것)를 읽어 `state/inbox.json` 계약 그대로 쓴다. 파싱 함수는 KBJ 정본 다시 내보내기. 대화방은 `KBJ_TELEGRAM_INBOX_CHAT_IDS`·`KBJ_TELEGRAM_CHAT_ID` |
+| `ingest/triggers.py` | DART 사용 가능 판정 `_dart_ready()`(옛 이름 또는 `KBJ_DART_API_KEY`), getWebhookInfo(#46) → `webhook_status()` |
+| `report/telegram.py` (#22) | `send` → `legacy_send(…, source="et.board", parse_mode=…, kind=…)`(기본 parse_mode 'Markdown' 그대로, `kind` 인자 추가), `send_document` → `legacy_send_document(…, kind='board.files')`, `check` → notifier 웹훅·하트비트 상태(getMe·getChat 은 notifier), `_split` → `kbj.services.notifier.format.split_text`. `token`·`chat_id` 인자는 받고 무시(경고 로그). `_cred`·`_why`·`_safe_err`·텔레그램 주소 상수 삭제 |
+| `run.py` | `cmd_send` 가 종류를 넘긴다: rankings·draft·signals·backtest/search/screen(`board.manual`)·note·files(#23~#28). `cmd_us_send` 의 본문 발송은 `legacy_kinds`(cmd_us_send → `board.us` — notifier.yaml 요청)에 맡기고 첨부만 `kind='board.us'`(발송 대역 시험이 옛 호출 모양을 고정한다). `_send_files(only_fresh)` 는 '기준일 ≠ 오늘이면 휴장 추정' 을 KBJ 캘린더로 명시(휴장일이면 그렇다고 적고, 거래일인데 기준일이 다르면 '오늘 보드가 아직 없다'). `cmd_inbox` 는 `KBJ_DATABASE_URL` 이 있을 때만 인박스를 읽는다(없으면 0 으로 건너뜀) |
+| `engine/build.py`·`engine/db.py`·`xdigest/analyze.py` 의 `now_kst` | 본문 → `kbj.core.time.now_kst().isoformat(timespec='seconds')`(벽시계 한 곳 — 설계 §7.2. 문자열은 같다: `+09:00`) |
+| `tools/dashboard_brief_preview.py` (K2)·`tools/probe_kis_futures.py` (K6) | **삭제**. 워크플로 사본(`dashboard-brief-preview.yml`·`kis-futures-probe.yml`)은 P1 에서 옮기지 않았다 — `test_workflow_modes` 영향 없음 |
+
+### 시험 — 승격으로 지운 것(kbj 쪽에서 같은 단언이 돈다)
+
+| 지운 시험 | 수 | kbj 쪽 |
+|---|---|---|
+| `tests/test_tg_inbox.py` 옛 39개 | 39 | 27 승격(Links 9·Whitelist 4·DedupExpiry 4·OEmbed 7·Other 3 → `tests/unit/notifier/test_inbox.py`). 12 는 옛 getUpdates 경로 모양이라 그대로는 지웠다(Paging 4·Webhook 3·CmdInboxExit 2·ChatIdsFromCreds 1·파일 손상 2) — 이 중 legacy 에 남은 동작(손상 inbox·`cmd_inbox`·대화방)은 아래 '고쳐 둔 것' 에서 다시 썼다 |
+| `tests/test_telegram.py` — TestSplit·TestSend·TestCheckDestination·TestPlainTextMode | 12 (2·5·3·2) | `tests/unit/notifier/test_format.py`(2)·`test_telegram_api.py`(10) |
+| `tests/test_send_files.py` — SendDocumentTest | 2 | `tests/unit/notifier/test_telegram_api.py` |
+| `tests/test_http_reason.py` — WhyTest·NoBacktrackTest | 10 (6·4) | `tests/unit/data/test_http.py` |
+| 합계 | **63** | |
+
+남긴 시험: `test_http_reason.py` 의 GetTest 4(ET `get` 은 그대로)·DatagoKeyFormTest 5(ET `datago.py` 는
+P2 범위 밖 — 묶음 C 의 `kbj.data.datago` 로 바꾸는 것은 data.go.kr 기준선 정리 때), `test_dart_for.py` 7
+(ET `disclosures_for` 본문을 그대로 두었다 — 브리지로만 바꿈. kbj 에도 같은 단언 7개가 있다).
+
+새로: `tests/test_kbj_bridge.py`(+1 — `kis.token()` 이 발급하지 않는다, 주소는 논리 URL, 브리지는 직접
+주소·POST 를 받지 않는다).
+
+고쳐 둔 것(독립 검증에서 더함): `tests/test_tg_inbox.py` 를 **legacy 에 남은 인박스 코드** 시험 10개로 다시
+썼다(+10). 승격한 27개는 kbj notifier 정본을 시험하고, legacy `drain`·`merge`·`read_inbox`·`inbox_chat_ids`·
+`run.cmd_inbox` 는 그대로 돌므로 그 시험까지 지우면 legacy 쪽 단언이 0 이 된다. 옛 단언은 그대로 두고 갱신을
+주는 자리만 저장소 대역(`FakeStore` — `read_items` 가 부르는 `items(since)`)으로, 자격 읽기는 `Settings`
+대역으로 바꿨다: Drain 2(계약 모양·저장소에 묻는 기간, 대화방 없음 → Fetch — 옛 Whitelist 1 의 단언),
+DedupExpiry 5(중복·보존 기간·나중 실행 만료·`keep_days`·손상 파일 `.bad` — 옛 단언 그대로), CmdInboxExit 2
+(설정 없음 → 0, 수집 실패 → 1), ChatIdsFromCreds 1(목록이 하나짜리보다 우선). 그래서 옛 39개 중 진짜로
+없어진 것은 getUpdates·offset 에 묶인 8개(Paging 4·Webhook 3·손상 offset 1)뿐이다.
+
+결과: `scripts/test_legacy.sh board` **1,267 실행**(P1 1,319 − 63 + 1 + 10), 1 건너뜀(그대로).

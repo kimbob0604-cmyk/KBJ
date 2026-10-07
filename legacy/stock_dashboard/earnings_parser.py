@@ -17,10 +17,11 @@ import io
 import json
 import zipfile
 import sqlite3
-import urllib.request
-import urllib.error
 from pathlib import Path
 from datetime import datetime
+
+from kbj.config.settings import Settings
+from kbj.data import legacy_bridge
 from typing import Optional, Dict
 
 
@@ -36,7 +37,10 @@ def _load_dotenv(p: Path):
 _load_dotenv(Path(__file__).parent / '.env')
 
 DB_PATH = Path(__file__).parent / 'db' / 'dashboard.db'
-DART_API_KEY = os.environ.get('DART_API_KEY', '')
+# KBJ P2(설계 §9.4): DART 를 직접 부르지 않는다 — 논리 URL `dart:` 를 KBJ 브리지가 받아 키
+# (KBJ_DART_API_KEY)·리미터·일 예산을 넣는다. 옛 환경변수 DART_API_KEY 는 읽지 않는다.
+# DART_API_KEY 는 '키가 설정됐는가' 표시(값 아님 — 키 원문은 브리지만 안다).
+DART_API_KEY = 'KBJ_DART_API_KEY' if Settings().dart_api_key is not None else ''
 
 
 # ============================================================
@@ -78,12 +82,13 @@ def fetch_dart_document(rcept_no: str) -> Optional[str]:
     """document.xml zip → utf-8 디코딩 (가장 큰 .xml 파일)."""
     if not DART_API_KEY:
         return None
-    url = f'https://opendart.fss.or.kr/api/document.xml?crtfc_key={DART_API_KEY}&rcept_no={rcept_no}'
     try:
-        with urllib.request.urlopen(url, timeout=15) as r:
-            raw = r.read()
-    except (urllib.error.URLError, TimeoutError):
+        r = legacy_bridge.get('dart:/document.xml', params={'rcept_no': rcept_no}, timeout=15)
+    except legacy_bridge.BridgeConnectionError:
         return None
+    if r.status_code != 200:
+        return None
+    raw = r.content
     try:
         with zipfile.ZipFile(io.BytesIO(raw)) as z:
             xmls = [n for n in z.namelist() if n.endswith('.xml')]

@@ -20,16 +20,14 @@ import threading
 from collections.abc import Callable
 from datetime import date, datetime
 from typing import Any, Final
-from zoneinfo import ZoneInfo
 
 from redis import Redis
 from redis.exceptions import RedisError
 
 from kbj.core.masking import safe_snippet
+from kbj.core.time import KST
 from kbj.store.redis_keys import budget_closed_key, budget_key, krx_calls_key
 
-# kbj.core.calendar·kbj.core.time(묶음 B)이 생기면 그쪽 KST 를 쓴다 — 지금은 같은 값을 여기 둔다
-KST: Final = ZoneInfo("Asia/Seoul")
 TTL_S: Final = 3 * 86400
 REASON_MAX: Final = 200
 

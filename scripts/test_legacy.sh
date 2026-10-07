@@ -7,7 +7,7 @@
 #   uv run bash scripts/test_legacy.sh etf-rest         # 묶음 이름도 된다(CI 매트릭스)
 #
 # 부분 이름
-#   gexlab               legacy/gexlab           pytest -m "not network and not integration"(3,177)
+#   gexlab               legacy/gexlab           pytest -m "not network and not integration"(2,716 — P2)
 #   gexlab-integration   legacy/gexlab           pytest -m "integration and not network"(50 — 49개는 Docker
 #                                                필요, 없으면 건너뜀)
 #   board                legacy/etf_traker       unittest discover -s board/tests
@@ -15,14 +15,17 @@
 #   flowlab              legacy/etf_traker       python -m flowlab selftest
 #   dart-report          legacy/etf_traker/dart-report   tests_smoke.py
 #   etf_tracker_v9       legacy/etf_traker/etf_tracker_v9  모듈 13개 import 스모크
-#   stock_dashboard      legacy/stock_dashboard  pytest 래퍼(검사 스크립트 10개 + 목록 대조 + 합성 재현)
+#   stock_dashboard      legacy/stock_dashboard  pytest 래퍼(검사 스크립트 10개 + 목록 대조 + 합성 재현
+#                                                + KBJ 다리 시험 1 — P2, 13)
 # 묶음: etf-rest = kr flow flowlab dart-report etf_tracker_v9,  all = 전부
 #
 # 원칙
 # - 프로젝트마다 작업 디렉터리와 PYTHONPATH 를 따로 잡아 한 프로세스에 두 import 루트가 섞이지 않게
 #   한다(§3.4: db·scripts·data·config·tests 이름 충돌). 부모 환경의 PYTHONPATH 는 물려주지 않는다.
 # - 해석기는 루트 .venv 하나(uv sync --all-groups). PYTHON 환경변수로 바꿀 수 있다.
-# - 각 부분은 최소 시험 수(P1 기준)를 확인한다 — 시험이 조용히 덜 모이면 실패로 본다.
+# - 각 부분은 최소 시험 수를 확인한다 — 시험이 조용히 덜 모이면 실패로 본다. P1 기준(gexlab 3,177·
+#   board 1,319·stock_dashboard 12)에서 P2 는 kbj 로 승격한 원본 시험만 뺐고(kbj 쪽에서 같은 단언이
+#   돈다) 프로젝트마다 KBJ 다리 시험 1개를 더했다 — 빠진 수·파일은 legacy/*/MIGRATION.md 'P2' 절.
 # - legacy 폴더에 __pycache__·.pytest_cache 를 남기지 않는다(PYTHONDONTWRITEBYTECODE, -p no:cacheprovider).
 # - KBJ_REQUIRE_DOCKER=1 이면 gexlab-integration 에서 'Docker 없음' 으로 건너뛴 시험이 있을 때 실패로 본다(CI).
 # - 하나라도 실패하면 종료코드 1.
@@ -128,8 +131,9 @@ run_part() {
     case "$1" in
         gexlab)
             # 원본 'pytest -m "not network"'(Docker 없이 3,178 통과·49 건너뜀)을 둘로 나눈다:
-            # 여기 3,177 + gexlab-integration 50(Docker 없이도 도는 compose 설정 검사 1 + 컨테이너 49)
-            part_pytest gexlab "$GX" 3177 -m "not network and not integration"
+            # 여기 + gexlab-integration 50(Docker 없이도 도는 compose 설정 검사 1 + 컨테이너 49).
+            # P1 3,177 → P2 2,716: kbj 로 승격한 원본 시험 462개를 빼고(gexlab/MIGRATION.md P2) 다리 시험 +1
+            part_pytest gexlab "$GX" 2716 -m "not network and not integration"
             ;;
         gexlab-integration)
             # 시험이 docker CLI 로 TimescaleDB·Redis 컨테이너를 직접 띄운다(tests/integration/conftest.py)
@@ -143,7 +147,9 @@ run_part() {
             fi
             ;;
         board)
-            part_unittest board board/tests 1319
+            # P1 1,319 → P2 1,267: 승격·폐지 63개 빼고(etf_traker/board/MIGRATION.md P2) 다리 시험 +1,
+            # legacy 에 남은 인박스 코드(drain·merge·cmd_inbox) 시험 test_tg_inbox.py 10개를 고쳐 둠
+            part_unittest board board/tests 1267
             ;;
         kr)
             part_unittest kr monitor/kr 94 -p "test_*.py"
@@ -193,7 +199,8 @@ run_part() {
             ;;
         stock_dashboard)
             # 루트 pyproject 의 pytest 설정(pythonpath ., scripts)이 잡히지 않게 -c /dev/null 로 설정을 끊는다
-            part_pytest stock_dashboard "$SD" 12 -c /dev/null --rootdir "$SD" -q tests
+            # P1 12 → P2 13: KBJ 다리 시험(tests/test_kbj_bridge.py) +1
+            part_pytest stock_dashboard "$SD" 13 -c /dev/null --rootdir "$SD" -q tests
             ;;
         *)
             echo "모르는 부분 이름: $1" >&2

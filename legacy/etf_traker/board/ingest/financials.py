@@ -25,7 +25,7 @@ from datetime import date
 
 from ..engine.config import ROOT
 from . import dart
-from .http import Fetch, get, session
+from .http import Fetch, get
 
 SOURCE = 'dart'
 CACHE = os.path.join(ROOT, 'state', 'financials.json')
@@ -212,8 +212,8 @@ def collect(codes, cfg, asof=None, log=print):
         def one(rep):
             year, rc = rep
             t0 = time.time()
-            # 세션은 스레드마다 따로 — requests.Session 은 스레드 안전을 보장하지 않는다
-            rows = fetch_batch(session(referer='https://opendart.fss.or.kr/'), list(codes_of), year, rc)
+            # 세션은 스레드마다 따로. KBJ P2: DART 는 KBJ 브리지 세션(`dart:` — 키·리미터는 브리지가)
+            rows = fetch_batch(dart.session(), list(codes_of), year, rc)
             return rep, rows, time.time() - t0
 
         with ThreadPoolExecutor(max_workers=int(f.get('workers', 3))) as ex:

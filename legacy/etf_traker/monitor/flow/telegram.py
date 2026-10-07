@@ -10,27 +10,26 @@ board/report/telegram.py 는 `sendMessage` 와 `sendDocument` 만 있다. 차트
 `sendMessage` 로 보낸다. 캡션은 1,024자 제한이라 본문을 캡션에 우겨넣지 않는다.
 
 토큰·채팅방 조달과 오류 메시지의 키 마스킹은 board 쪽을 그대로 쓴다.
+
+KBJ P2 (설계 §5.9·§5.10 #39): 텔레그램을 직접 부르지 않는다. 사진 묶음은 KBJ notifier 대기열
+(`kbj.services.notifier.client.legacy_send_media`, 종류 `flows.report`)에 넣고, 10장씩 묶기·캡션
+상한·재시도는 notifier 가 한다. 봇 토큰·chat id 는 읽지 않는다(token·chat_id 인자는 무시).
 """
 from __future__ import annotations
 
-import json
 import os
 import sys
+
+from kbj.services.notifier.client import legacy_send_media
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from board.report import telegram as TG  # noqa: E402
 
-API = 'https://api.telegram.org/bot{token}/{method}'
 TIMEOUT = 60
 
-# 한 묶음에 넣을 수 있는 사진 수. 텔레그램 제한이다.
+# 한 묶음에 넣을 수 있는 사진 수. 텔레그램 제한이다(묶기는 notifier 가 한다 — 옛 값).
 MEDIA_GROUP_MAX = 10
-
-
-def _creds(token, chat_id):
-    return (token or TG._cred('TELEGRAM_BOT_TOKEN'),
-            chat_id or TG._cred('TELEGRAM_CHAT_ID'))
 
 
 def send_photos(paths, caption='', token=None, chat_id=None, silent=False):
@@ -39,48 +38,16 @@ def send_photos(paths, caption='', token=None, chat_id=None, silent=False):
     캡션은 **첫 장에만** 붙는다(텔레그램 규약). 없는 파일은 조용히 건너뛰지
     않는다 — 못 보낸 것을 보냈다고 적으면 받은 사람이 찾다가 끝난다.
     """
-    token, chat_id = _creds(token, chat_id)
-    if not token:
-        return False, 'TELEGRAM_BOT_TOKEN 이 없다'
-    if not chat_id:
-        return False, 'TELEGRAM_CHAT_ID 가 없다'
+    TG._ignored(token, chat_id)
     paths = [p for p in (paths or [])]
     missing = [p for p in paths if not os.path.exists(p)]
     if missing:
         return False, f'보낼 그림이 없다: {", ".join(os.path.basename(p) for p in missing)}'
     if not paths:
         return False, '보낼 그림이 없다'
-    try:
-        import requests
-    except ImportError as ex:
-        return False, f'requests 가 없다: {ex}'
-
-    sent = 0
-    for chunk in [paths[i:i + MEDIA_GROUP_MAX]
-                  for i in range(0, len(paths), MEDIA_GROUP_MAX)]:
-        media, files = [], {}
-        for i, p in enumerate(chunk):
-            key = f'photo{i}'
-            item = {'type': 'photo', 'media': f'attach://{key}'}
-            if i == 0 and caption and sent == 0:
-                item['caption'] = caption[:TG.TG_CAPTION_LIMIT]
-            media.append(item)
-            files[key] = (os.path.basename(p), open(p, 'rb'))
-        try:
-            r = requests.post(
-                API.format(token=token, method='sendMediaGroup'),
-                data=dict(chat_id=chat_id, media=json.dumps(media),
-                          disable_notification=bool(silent)),
-                files=files, timeout=TIMEOUT)
-        except Exception as ex:  # noqa: BLE001 — 사유는 남기되 키는 지운다
-            return False, f'그림 전송 실패: {TG._safe_err(ex, token)}'
-        finally:
-            for _, fh in files.values():
-                fh.close()
-        if r.status_code != 200:
-            return False, f'그림 거부: HTTP {r.status_code} · {TG._why(r)}'
-        sent += len(chunk)
-    return True, f'그림 {sent}장'
+    ok, why = legacy_send_media(paths, caption or '', source='et.flow', kind='flows.report',
+                                silent=bool(silent))
+    return (True, f'그림 {len(paths)}장') if ok else (False, why)
 
 
 def send_report(rep, charts, text, token=None, chat_id=None, silent=False):
@@ -94,7 +61,7 @@ def send_report(rep, charts, text, token=None, chat_id=None, silent=False):
                           silent=silent)
     if not ok:
         return False, why
-    ok2, why2 = TG.send(text, token=token, chat_id=chat_id, silent=silent)
+    ok2, why2 = TG.send(text, token=token, chat_id=chat_id, silent=silent, kind='flows.report')
     if not ok2:
         return False, f'그림은 갔으나 본문 실패: {why2}'
     return True, f'{why} · {why2}'

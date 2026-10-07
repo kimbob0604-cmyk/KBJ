@@ -357,13 +357,18 @@
 | 5 | 15134343 | 기간 한도, 시도 합계 행 유무, 개편 전후 `sggNm`, HS6 외 자릿수, 출항일 기준 파라미터 |
 | 6 | 10일 잠정치 4종 | 11·21·1일 반영 시각, 잠정 → 확정 덮어쓰기, `priodDt` 말일 표기, 15157909의 10년 한도, 열 구성 변경 감지 |
 | 7 | 15094809 | `getSecuritiesMarketTotalCapitalInfo` 대소문자, 펀드순자산 필수 파라미터, `endBasDt` 미만 의미, 반영 시각(D+1 13시?), 단위 원, ECOS 901Y056과 월말 대조 |
-| 8 | 15094808(로그인) | 옛 V1 경로 존속, V2 응답 필드 차이 |
+| 8 | 15094808(로그인) | 옛 V1 경로 존속, V2 응답 필드 차이(`srtnCd` 외 `shrtnCd` 후보), **금융위 지수시세 포털 ID(15094807 로 가정)·V2 경로 존재 여부**(P2 묶음 D) |
 | 9 | ECOS | 일·분 한도(602 발생 조건), 요청 1회 최대 건수, 721Y001·301Y013(경상수지)·513Y001·731Y003·M2 원계열 항목 코드, 일별 금리 당일 반영 시각 |
 | 10 | KOSIS | 일 한도, `objL1=ALL`·`itmId=ALL` 동작, 표 ID 확정(산업활동 계절조정, 광공업·서비스업·소매판매), 국제통계 표 제외 |
 | 11 | 등급 | ECOS 731Y001(서울외국환중개)·901Y009(국가데이터처) 공개 표시 가능 여부 [결정 필요] |
 | 12 | KRX OpenAPI 한도 (P2 추가 — 메인 결정 D5) | 일 호출 상한 실제 값(GX #16 의 10,000회/일이 키당인지·서비스별인지), 초과 시 응답(HTTP 상태·본문), 초당 한도. `config/limits.yaml` 의 `krx.daily_cap` 기본 **8,000 [확인 필요]**(10,000 의 80%)·`backfill_cap` 5,000·`rate` 2/s [추정] 을 실측으로 고친다 |
 | 13 | DART·ECOS·KOSIS 한도 (P2 추가 — 설계 R10) | DART 일 20,000건(`020`)·초당 한도, ECOS·KOSIS 일 한도 — `config/limits.yaml` 의 `dart.daily_cap` 18,000·`ecos`·`kosis` 값과 대조 |
 | 14 | 거래대금·수급·ETF TR (P2 추가 — 메인 결정 D7, `docs/metrics.md`) | KRX `stk_bydd_trd`·`ksq_bydd_trd`(`ACC_TRDVAL`)·`etf_bydd_trd`(NAV·`LIST_SHRS`·`INVSTASST_NETASST_TOTAMT`·거래대금) 필드 이름·공표 시각, KIS `FHKST01010900`(종목별 투자자 — 기관 7구분 가능 여부)·`FHPTJ04400000`(외국인·기관 가집계)·`FHPST01710000`(거래량 순위 — 거래대금 정렬·상위 몇 개)·`FHPST02400000`(ETF 현재가 — 장중 NAV·괴리율) 응답, **KRX·NXT 구분**(응답이 통합인지 KRX 만인지, 시장 구분 코드로 나눠 받을 수 있는지) |
+| 15 | 공공데이터포털 공통 (P2 묶음 C) | 새 게이트웨이의 키 오류·초당 한도 응답 형태(HTTP 401·429 평문인지), GW 코드 01~04·10·11·21·22·32·33·99 처리, 기관 `resultCode` 03(NODATA) → 빈 결과로 처리하는지, 기관이 `resultMsg` 에 serviceKey 를 되돌려 주는지(가림 확인) |
+| 16 | KOSIS·ECOS 오류 (P2 묶음 C) | KOSIS 오류 코드표(err 30 빈 결과·10·11 키·40~42 한도 — 지금 [추정]), ECOS `602` 를 받은 날 닫는 기준 3회(`config/limits.yaml` `ecos.close_after_throttles`) |
+| 17 | DART·관세청 10일 잠정치 (P2 묶음 C) | DART `corpCode` 에서 한 종목코드가 두 회사에 걸리는 재사용이 있는지(지금은 최근 `modify_date` 쪽, 같으면 `corp_map()` 전체 실패 — 나오면 그 코드만 실패하도록), 10일 잠정치 swagger 열 설명 문구 형식(`verify_ten_day_columns` 입력), 관세청 합계 행·`priodTitle` 형식, `endBasDt` 미만 해석 |
+| 18 | KRX 응답 세부 (P2 묶음 D) | 401 본문(Unauthorized API Call 대 키 오류) 구분, `stk_bydd_trd` 의 `SECT_TP_NM` 이 소속부인지 업종인지, 영숫자 단축코드(예: `0009K0` 꼴) 여부, 주식·지수·ETP 공표 시각, 지수 필드 이름(`CLSPRC_IDX` 대 `TDD_CLSPRC`), 일 한도 초과 응답 모양(지금은 부르기 전 `krx:calls` 예산으로만 막는다), NXT 포함 여부 |
+| 19 | KIS 인증·구분 (P2 묶음 A, 설계 R4·R20) | 웹소켓 접속키 수명(12시간 가정 — 11시간마다 갱신), 접근토큰과 접속키가 1분 1회 발급 제한을 함께 쓰는지, 토큰 거절 코드 `EGW00121`·`EGW00123`, 거래소 구분 파라미터(`J`·`NX`·`UN` [추정]), 투자의견·추정실적 TR(`FHKST668300C0`·`FHKST663300C0`) |
 
 ---
 

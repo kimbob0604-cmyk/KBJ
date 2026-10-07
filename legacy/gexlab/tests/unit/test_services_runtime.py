@@ -196,24 +196,7 @@ def test_log_event_is_one_json_line_with_trade_date_and_session(
     assert (b["trade_date"], b["session"]) == (None, None)
 
 
-@pytest.mark.parametrize(
-    ("kst", "want"),
-    [
-        (datetime(2026, 9, 28, 10, 0, tzinfo=KST), (date(2026, 9, 28), "day")),
-        (
-            datetime(2026, 9, 28, 8, 10, tzinfo=KST),
-            (date(2026, 9, 28), "day"),
-        ),  # PRE_DAY → 주간
-        (datetime(2026, 9, 28, 17, 55, tzinfo=KST), (date(2026, 9, 29), "night")),  # PRE_NIGHT
-        (datetime(2026, 9, 29, 2, 0, tzinfo=KST), (date(2026, 9, 29), "night")),
-        (datetime(2026, 9, 28, 16, 0, tzinfo=KST), (None, None)),  # POST_DAY
-        (datetime(2026, 9, 24, 12, 0, tzinfo=KST), (None, None)),  # 추석 휴장
-    ],
-)
-def test_tagger_follows_the_session_state_machine(
-    kst: datetime, want: tuple[date | None, str | None]
-) -> None:
-    assert tagger_for(CAL)(kst) == want
+# KBJ P2: test_tagger_follows_the_session_state_machine 는 kbj tests/unit/runtime/test_runtime.py 로 승격했다(같은 단언이 kbj 쪽에서 돈다 — MIGRATION.md P2).
 
 
 class HealthStore:

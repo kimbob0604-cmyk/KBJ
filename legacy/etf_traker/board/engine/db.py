@@ -8,7 +8,9 @@ sqlite3 로 간다. 근거와 되돌리는 조건은 docs/DECISIONS.md D-002 참
 역사적 최고가 스칼라를 들고 있는 저장소일 뿐이고, 엔진의 입력 계약이 아니다.
 """
 import sqlite3
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta, timezone
+
+from kbj.core.time import now_kst as _kbj_now_kst
 
 KST = timezone(timedelta(hours=9))
 
@@ -21,7 +23,7 @@ def now_kst():
     9시간 어긋나고, naive 쪽은 오프셋이 없어 사후에 어느 쪽인지 구분조차
     안 된다. '어느 배정이 더 최신인가' 를 이 컬럼으로 판단하는 순간 틀린다.
     """
-    return datetime.now(KST).isoformat(timespec='seconds')
+    return _kbj_now_kst().isoformat(timespec='seconds')  # KBJ P2(설계 §7.2): 벽시계는 kbj.core.time 한 곳
 
 DDL = """
 PRAGMA journal_mode=WAL;

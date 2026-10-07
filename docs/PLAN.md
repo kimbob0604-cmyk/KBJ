@@ -181,14 +181,24 @@ kbj/
 
 **P2 — 공용 기반 일원화 (5~7일)**
 - auth(토큰 1곳 발급) + 앱키 레이트리미터
-- 어댑터: KRX, DART, 네이버, ECOS, 공공데이터
+- 어댑터: KRX, DART, ~~네이버~~(ADR 0001 U4 — 네이버 어댑터는 만들지 않는다), ECOS, 공공데이터(+ KIS REST·KOSIS·관세청·금투협·금융위 시세)
 - 캘린더, notifier, scheduler(작업 등록부), DB 스키마 통합(SQLite → Postgres 이관 스크립트)
 - **완료 기준:** legacy가 KIS·KRX·DART를 직접 부르면 import-linter가 실패한다. 하루 운영 시뮬레이션(가짜 시계)에서 토큰 발급 1회, 중복 수집 0건이다.
+  (해석 — 설계 `docs/p2_design.md` §0.2·메인 결정 D1~D7: legacy 는 import-linter 루트가 아니라 `scripts/check_canonical.py`(문자열·AST)가, kbj 안은 import-linter 계약 ④~⑦ 이 실패시킨다. '하루'는 24시간 창이고 "토큰 발급 1회"는 "모든 발급은 auth 에서만·auth 밖 발급 0·어떤 23시간 구간에도 접근토큰 발급 ≤ 1"로 단언한다 — 결정 D3)
+- **결과(2026-10-07 로컬 실측, 설계서·ADR 0004~0007):**
+  - legacy 의 KIS·KRX·DART 직접 호출 **0**: `check_canonical` 목표 0 그룹(`kis_oauth`·`kis_rest`·`kis_master`·`krx_api`·`dart`) 0건(파일 493개). legacy 의 호출은 논리 URL 브리지(`kbj/data/legacy_bridge.py`)로, 발송 7벌은 notifier shim 하나로. 남은 직접 호출은 줄어들기만 하는 기준선 — `datago` 2·`kis_ws` 4(P7, 결정 D2)·`naver` 176·`krx_scrape` 81(P3~P5). kbj 는 import-linter 계약 **7 kept, 0 broken**
+  - 하루 운영 시뮬레이션(`tests/sim`, 24시간 창 2026-10-06 05:00 ~ 10-07 05:00 KST): 접근토큰 발급은 auth 의 05:00·다음 날 04:00(만료 60분 전 갱신) 두 번뿐 — **어떤 23시간 구간에도 1회**, 접속키 3회도 auth, **auth 밖 발급 0**. 데이터 키 **1,385개 각각 수집 1회**(선점 거절 0, 데이터셋 66개마다 작업 하나), KRX (엔드포인트, 기준일) 12쌍 각 1회, KIS 초당 최대 4건, 아침·마감 브리핑 각 1건(U2 — 발송 꺼짐이라 `suppressed`, 텔레그램 요청 0). 시험 50개 통과(변형 6종 포함)
+  - kbj: ruff·ruff format·pyright(0 errors)·import-linter·pytest **1,804 통과**·22 건너뜀(통합 21 — Docker 없음, legacy 휴장 대조 1)·xfail 0 · `scripts/check_public_safety.py` 레포 전체 0건 · 작업 등록부 검증 통과
+  - legacy(`scripts/test_legacy.sh`, 기존 시험 — 승격한 원본 시험만 빠지고 프로젝트마다 다리 시험 +1): GEXLAB **2,716**(P1 3,177 − kbj 로 승격·폐지 462 + 1) + 통합 1(Docker 49 는 CI), board **1,267**(1,319 − 55 + 3), monitor/kr 94·flow 129·flowlab 44/44·dart-report 스모크·etf_tracker_v9 13 import, stock_dashboard **13**(12 + 1)
+  - 남은 것: 운영 VM 전환(옛 발급자 정지·레포 밖 발급자 K10·setWebhook 이전 — 사용자 작업), GitHub CI 첫 녹색, Docker 통합 시험(kbj 21·GEXLAB 49 — 이 환경에 Docker 없음), 실측 체크리스트(`docs/probe_results.md` §7 #12~#19)
 
-**P3 — MD6형 웹 + 시장·신고가 (5~7일)**
-- SPA 셸(MD6 디자인, 테마 5종, 스와이프, PWA, 상단 띠)
-- 페이지 1(시장)·2(신고가 보드)·4(수급), FastAPI `/api/market`·`/api/board`·`/api/flows`
-- **완료 기준:** 장중 1시간 무결측. 신고가 보드 결과가 기존 board 산출과 같다(골든).
+**P3 — MD6형 웹 + 시장·신고가·수급·ETF 수급 (6~8일)**
+- SPA 셸(MD6 디자인, 테마 5종, 스와이프, PWA, 상단 띠). 화면 구성 예시는 미리보기 아티팩트(합성 데이터)
+- 페이지 1(시장 — 시장 거래대금·시장폭 포함)·2(신고가 보드)·4(수급·스크리닝), FastAPI `/api/market`·`/api/board`·`/api/flows`·`/api/etf`, 텔레그램 웹훅 수신(P2 D4)
+- **사용자 요청(2026-10-07) 반영:** 거래대금 상위·외국인/기관 순매수 상위·외인·기관 동반·연속 순매수·거래대금 급증 스크리닝(페이지 4), **ETF 수급**(페이지 10 — 순유입=좌수 변화×NAV, 투자자별 ETF 순매수, 유형별 자금 흐름, 괴리율, 구성종목 변동). 지표 정의는 `docs/metrics.md`(분할·분배금·신규상장·NXT 함정 포함)
+- 그래서 ETF 표 마이그레이션(`prv_etf.etf_daily`·`quote_intraday`, 원래 0013·P5)을 **P3 으로 당긴다**. 수집 작업: KRX 주식·ETF 일별(거래소별 KRX/NXT/합계), KIS 투자자별·가집계·순위 TR(장중 잠정 → 마감 확정 덮어쓰기)
+- 네이버·옛 환경변수에 묶인 legacy 단계(conflict_map §1.13, secrets.md P2 절)를 기능별로 kbj 작업으로 옮긴다. 일봉 이력은 KRX 로 다시 받는다(R11 — 약 2,500회를 며칠에 나눠)
+- **완료 기준:** 장중 1시간 무결측. 신고가 보드 결과가 기존 board 산출과 같다(골든). 스크리닝·ETF 수급의 검산 ①②③(metrics.md §2·§4)이 합성·실데이터 모두 0 차이.
 
 **P4 — 공시·재무·컨센서스·종목 상세 (5~7일)**
 - DART 피드·잠정실적·오버행·내부자, dart-report 모듈화(엑셀 + 화면)

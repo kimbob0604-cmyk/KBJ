@@ -332,8 +332,5 @@ def test_shim_check_catches_a_direct_sender(tmp_path: Path) -> None:
     assert len(got) == 2 and all("send_telegram:" in g for g in got)
 
 
-@pytest.mark.xfail(
-    strict=True, reason="묶음 H(legacy 재배선) 전 — H 가 7곳을 shim 으로 바꾼 뒤 이 표시를 지운다"
-)
 def test_legacy_shim_targets_call_legacy_send() -> None:
     assert shim_violations(ROOT) == []

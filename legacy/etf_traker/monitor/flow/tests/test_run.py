@@ -441,9 +441,11 @@ class 전송(unittest.TestCase):
         self.assertFalse(ok)
 
     def test_토큰이_없으면_실패다(self):
+        # KBJ P2: 봇 토큰은 notifier 만 갖는다(설계 §5.9) — 여기서는 토큰이 아니라 파일이 관문이다.
+        # 원래 단언('TELEGRAM_BOT_TOKEN' 사유)은 토큰을 읽던 옛 경로라 바뀌었다(MIGRATION.md P2).
         ok, why = T.send_photos(['x'], token='', chat_id='')
         self.assertFalse(ok)
-        self.assertIn('TELEGRAM_BOT_TOKEN', why)
+        self.assertIn('없다', why)
 
 
 class 검산차단(unittest.TestCase):

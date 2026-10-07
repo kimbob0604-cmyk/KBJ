@@ -108,6 +108,25 @@ def test_same_token_report_is_kept_and_a_new_token_report_replaces_it() -> None:
     assert not cache.close_rejection("T1", NOW + timedelta(minutes=2))  # 지난 값은 닫지 못한다
 
 
+def test_a_late_report_for_a_replaced_token_does_not_mask_the_current_report() -> None:
+    """지난 토큰을 메모리에 쥔 프로세스의 늦은 신고가 현재 값의 신고를 덮어쓰면 auth 가 현재 값의
+    거절을 모른다(재발급도 알림도 없음 — 하루 시뮬레이션 변형 `test_token_rejected`)."""
+    r = fakeredis.FakeRedis()
+    old = reader(r, CREDS, now=lambda: NOW, by="legacy")
+    seed(r, "OLDTOKEN")
+    assert old.get() == "OLDTOKEN"  # legacy 가 지난 값을 메모리에 쥔다
+    seed(r, "NEWTOKEN", issued_ago=timedelta(minutes=40))  # auth 가 바꿨다
+    cur = reader(r, CREDS, now=lambda: NOW, by="scheduler")
+    assert cur.get() == "NEWTOKEN"
+    cur.invalidate()  # 현재 값 거절 신고
+    old.invalidate()  # 지난 값의 늦은 신고 — 쓰지 않는다
+    cache = RedisTokenCache(r)
+    pending = cache.pending_rejection("NEWTOKEN")
+    assert pending is not None and pending.by == "scheduler"
+    assert not cache.report_rejected("OLDTOKEN", NOW, "legacy")
+    assert old.get() == "NEWTOKEN"  # 늦게 신고한 쪽도 다음 읽기에서 새 값을 받는다
+
+
 def test_broken_report_is_ignored() -> None:
     r = fakeredis.FakeRedis()
     r.hset(KIS_TOKEN_REJECTED, mapping={"token_sha16": token_digest("T1"), "at": "not-a-time"})

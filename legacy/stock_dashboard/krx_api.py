@@ -2,7 +2,7 @@
 krx_api.py  —  KRX Open API 경량 래퍼
 
 설계 원칙:
-- API 키는 **반드시** 환경변수 KRX_API_KEY 로만 관리. 코드 하드코딩 금지.
+- API 키는 **반드시** 환경변수로만 관리(KBJ P2 부터 KBJ_KRX_API_KEY — KBJ 브리지가 넣는다).
 - 네트워크/인증 실패 시 None 반환 → 호출 측에서 pykrx fallback 등으로 전환 가능.
 - 모든 응답은 KRX 가 반환하는 원형 dict 를 그대로 전달한다 (정규화는 호출 측에서).
 
@@ -37,74 +37,70 @@ KRX Open API 엔드포인트 레퍼런스 (openapi.krx.co.kr 카탈로그 기준
 from __future__ import annotations
 
 import json
-import os
 import time
-import urllib.error
-import urllib.parse
-import urllib.request
 
-# Base URL은 환경변수로 오버라이드 가능하지만 기본값이 실제 KRX Open API 게이트웨이.
-KRX_API_BASE = os.environ.get("KRX_API_BASE", "https://data-dbg.krx.co.kr/svc/apis")
-KRX_API_KEY  = os.environ.get("KRX_API_KEY", "")
+from kbj.config.settings import Settings
+from kbj.data import legacy_bridge
+
+# KBJ P2(설계 §3.8·§9.4): KRX 를 직접 부르지 않는다. 논리 URL `krx:` 를 KBJ 브리지가 받아
+# `kbj.data.private.krx.KrxClient` 로 부른다 — 인증키(KBJ_KRX_API_KEY)·초당 리미터·일 예산
+# (`krx:calls:<날짜>`, config/limits.yaml)은 브리지 쪽이 넣는다. 옛 환경변수 KRX_API_KEY·
+# KRX_API_BASE 는 읽지 않는다(docs/secrets.md §2). 호출 간 0.2초 슬립도 리미터가 대신한다.
+KRX_API_BASE = "krx:"
 
 DEFAULT_TIMEOUT  = 30
-THROTTLE_SECONDS = 0.2
 
 
 def has_api_key() -> bool:
-    """KRX_API_KEY 환경변수가 설정되어 있는지 여부."""
-    return bool(KRX_API_KEY)
+    """KBJ_KRX_API_KEY 가 설정되어 있는지 여부(값은 브리지만 쓴다)."""
+    return Settings().krx_api_key is not None
 
 
 def krx_api_call(endpoint: str, params: dict | None = None,
                  max_retries: int = 3,
                  timeout: int = DEFAULT_TIMEOUT) -> dict | None:
     """
-    KRX Open API GET 호출. 성공 시 응답 JSON(dict), 실패 시 None.
+    KRX Open API GET 호출(KBJ 브리지 경유). 성공 시 응답 JSON(dict), 실패 시 None.
 
     - `endpoint` 는 `sto/stk_bydd_trd` 처럼 /svc/apis/ 이후 경로만.
-    - AUTH_KEY 헤더 인증.
-    - 401(미구독)은 재시도 없이 즉시 None 반환 (구독 추가 전까지 무한 재시도 무의미).
-    - 네트워크 오류만 지수 백오프 재시도.
-    - 호출 간 200ms 슬립 (속도 제한 회피).
+    - `basDd`(YYYYMMDD)가 있어야 한다 — KBJ 어댑터는 날짜 없는 호출을 하지 않는다.
+    - 401(미구독·키 오류)은 재시도 없이 즉시 None 반환 (구독 추가 전까지 무한 재시도 무의미).
+    - 네트워크 오류·5xx 만 지수 백오프 재시도.
     """
-    if not KRX_API_KEY:
+    if not has_api_key():
+        return None
+    p = dict(params or {})
+    if not p.get("basDd"):
+        print(f"[KRX API] {endpoint}: basDd 없음 — 부르지 않음(KBJ 브리지는 기준일이 필요)")
         return None
 
-    url = f"{KRX_API_BASE.rstrip('/')}/{endpoint.lstrip('/')}"
-    if params:
-        url += "?" + urllib.parse.urlencode(params)
-
-    req = urllib.request.Request(url, headers={"AUTH_KEY": KRX_API_KEY})
+    url = f"{KRX_API_BASE}/{endpoint.lstrip('/')}"
 
     for attempt in range(max_retries):
         try:
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
-                body = resp.read().decode("utf-8")
-            data = json.loads(body)
-            time.sleep(THROTTLE_SECONDS)
-            return data
-        except urllib.error.HTTPError as exc:
-            # 401 은 미구독 — 재시도 무의미
-            if exc.code == 401:
-                try:
-                    err = json.loads(exc.read().decode("utf-8"))
-                    print(f"[KRX API 401] {endpoint}: {err}")
-                except Exception:
-                    print(f"[KRX API 401] {endpoint}: Unauthorized")
-                return None
-            # 5xx 는 재시도
-            if attempt < max_retries - 1 and 500 <= exc.code < 600:
-                time.sleep(2 ** attempt)
-                continue
-            print(f"[KRX API HTTP {exc.code}] {endpoint}")
-            return None
-        except (urllib.error.URLError, json.JSONDecodeError, TimeoutError) as exc:
+            r = legacy_bridge.get(url, params=p, timeout=timeout)
+        except legacy_bridge.BridgeConnectionError as exc:
             if attempt < max_retries - 1:
                 time.sleep(2 ** attempt)
                 continue
-            print(f"[KRX API 실패] {endpoint}: {exc!r}")
+            print(f"[KRX API 실패] {endpoint}: {exc}")
             return None
+        if r.status_code == 200:
+            try:
+                return r.json()
+            except json.JSONDecodeError as exc:
+                print(f"[KRX API 실패] {endpoint}: {exc!r}")
+                return None
+        # 401 은 미구독(본문 'Unauthorized API Call') 또는 키 문제 — 재시도 무의미
+        if r.status_code == 401:
+            print(f"[KRX API 401] {endpoint}: {r.text[:200]}")
+            return None
+        # 5xx 는 재시도
+        if attempt < max_retries - 1 and 500 <= r.status_code < 600:
+            time.sleep(2 ** attempt)
+            continue
+        print(f"[KRX API HTTP {r.status_code}] {endpoint}: {r.text[:200]}")
+        return None
     return None
 
 
@@ -161,7 +157,7 @@ def probe_subscriptions(basDd: str) -> dict:
     Returns: {endpoint: {"ok": bool, "rows": int|None, "error": str|None}}
     """
     if not has_api_key():
-        return {"_note": "KRX_API_KEY 환경변수 미설정 — .env 에 추가하거나 서버 환경변수로 주입"}
+        return {"_note": "KBJ_KRX_API_KEY 환경변수 미설정 — .env 에 추가하거나 서버 환경변수로 주입"}
 
     endpoints = [
         ("sto/stk_bydd_trd",    {"basDd": basDd}),

@@ -24,13 +24,12 @@ from concurrent.futures import Future
 from datetime import UTC, date, datetime
 from typing import Any, Protocol
 
+from kbj.services.runtime import tagger_for  # noqa: F401 — 다시 내보내기(KBJ P2)
 from redis import Redis
 from redis.exceptions import RedisError
 
-from core.calendar import TradingCalendar
 from services.auth.health import HealthEvent, LogHealthSink
 from services.bus import Heartbeat, heartbeat_key
-from services.poller.context import session_tag
 
 Tag = tuple[date | None, str | None]
 Tagger = Callable[[datetime], tuple[date | None, str | None]]
@@ -102,14 +101,7 @@ def run_in_thread[T](fn: Callable[[], T], *, name: str = "worker") -> Future[T]:
     return fut
 
 
-def tagger_for(cal: TradingCalendar) -> Tagger:
-    """시각 → (거래일, 세션). 장 전 준비는 곧 열릴 세션, 장 밖은 (None, None) — poller 와 같다."""
-
-    def tag(t: datetime) -> tuple[date | None, str | None]:
-        got = session_tag(t, cal)
-        return (None, None) if got is None else got
-
-    return tag
+# KBJ P2: tagger_for 는 kbj.services.runtime 으로 승격했다 — 위 import 로 다시 내보낸다.
 
 
 class Heartbeater:

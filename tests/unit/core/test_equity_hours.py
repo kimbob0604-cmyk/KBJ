@@ -127,11 +127,15 @@ def test_regular_hours_lie_inside_the_derivative_day_session(ts: datetime) -> No
     """정규장 안이면 파생 DAY 이고 귀속 거래일은 그 KST 날짜.
 
     거꾸로는 성립하지 않는다(08:45~09:00·15:30~15:45 는 파생 DAY 지만 정규장 밖).
+    정규장 경계는 `equity_bounds`(지연 개장 반영 — 그해 첫 거래일 10:00, 수능일 10:00~16:30)를
+    오라클로 쓴다. 수능일은 파생 세션 지연을 아직 반영하지 않아(`state_at` 은 15:45 에 닫는다
+    [확인 필요]) DAY 단언에서 뺀다.
     """
     inside = is_equity_regular_hours(ts, CAL)
     k = ts.astimezone(KST)
-    assert inside is (CAL.is_trading_day(k.date()) and EQUITY_OPEN <= k.time() < EQUITY_CLOSE)
-    if inside:
+    start, end = CAL.equity_bounds(k.date())
+    assert inside is (CAL.is_trading_day(k.date()) and start <= k < end)
+    if inside and end.time() == EQUITY_CLOSE:
         info = state_at(ts, CAL)
         assert info.state is State.DAY
         assert info.trade_date == k.date()

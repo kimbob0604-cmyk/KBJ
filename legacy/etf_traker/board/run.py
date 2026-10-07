@@ -227,19 +227,21 @@ def cmd_inbox():
     실패가 묻힌다(GITHUB.md 2장 '하나도 없어도 워크플로는 돌아간다'). 실패는 수집
     자체(Fetch)뿐이다.
     """
-    from .ingest import creds, tg_inbox as TI
+    # KBJ P2(설계 §5.8): 갱신은 KBJ notifier 웹훅이 받아 DB 에 둔다 — 여기서는 그것을 읽어
+    # state/inbox.json 을 만든다(getUpdates·봇 토큰 없음). DB 주소가 없으면 건너뛴다(0).
+    from kbj.config.settings import Settings
+    from .ingest import tg_inbox as TI
     from .ingest.http import Fetch
-    token = creds.get('TELEGRAM_BOT_TOKEN')
-    if not token:
-        log('  인박스 건너뜀 — TELEGRAM_BOT_TOKEN 없음')
+    if Settings().database_url is None:
+        log('  인박스 건너뜀 — KBJ_DATABASE_URL 없음 (인박스는 KBJ notifier DB)')
         return 0
     chat_ids = TI.inbox_chat_ids()
     if not chat_ids:
-        log('  인박스 건너뜀 — TRIGGER_INBOX_CHAT_IDS 도 TELEGRAM_CHAT_ID 도 없다')
+        log('  인박스 건너뜀 — KBJ_TELEGRAM_INBOX_CHAT_IDS 도 KBJ_TELEGRAM_CHAT_ID 도 없다')
         return 0
     keep = (load().get('inbox') or {}).get('keep_days', TI.KEEP_DAYS)
     try:
-        r = TI.drain(token, chat_ids, TI.OFFSET_PATH, TI.INBOX_PATH, log=log, keep_days=keep)
+        r = TI.drain(chat_ids, TI.INBOX_PATH, log=log, keep_days=keep)
     except Fetch as ex:
         log(f'  인박스 실패: {ex}')
         return 1
@@ -928,7 +930,8 @@ def cmd_send(what='rankings', only_fresh=False, once=False, asof=None, inbox=Tru
         with open(p, encoding='utf-8') as f:
             pay = json.load(f)
         ok, why = TG.send('\n'.join(['*스윙 시그널 백테스트*'] +
-                                     [TG._safe(x) for x in BT.summary_lines(pay)]))
+                                     [TG._safe(x) for x in BT.summary_lines(pay)]),
+                          kind='board.manual')
         log(f'  발송 {"성공" if ok else "실패"} — {why}')
         return 0 if ok else 1
     if what == 'search':
@@ -944,7 +947,8 @@ def cmd_send(what='rankings', only_fresh=False, once=False, asof=None, inbox=Tru
         lines = SE.summary_lines(pay, S.load_cfg())
         # 텔레그램 한 통에 36줄은 길다 — 머리 4줄 + 1단계 통과만 + 꼬리
         keep = lines[:4] + [x for x in lines[4:-1] if not x.startswith('✗')] + lines[-1:]
-        ok, why = TG.send('\n'.join(['*시스템 조합 탐색*'] + [TG._safe(x) for x in keep]))
+        ok, why = TG.send('\n'.join(['*시스템 조합 탐색*'] + [TG._safe(x) for x in keep]),
+                          kind='board.manual')
         log(f'  발송 {"성공" if ok else "실패"} — {why}')
         return 0 if ok else 1
     if what == 'screen':
@@ -958,7 +962,7 @@ def cmd_send(what='rankings', only_fresh=False, once=False, asof=None, inbox=Tru
             pay = json.load(f)
         body = ['*매매 시스템 점검*'] + [TG._safe(x) for x in SY.summary_lines(pay, pay['criteria'])]
         body.append(TG._safe('통과: ' + (', '.join(pay.get('passed') or []) or '없음')))
-        ok, why = TG.send('\n'.join(body))
+        ok, why = TG.send('\n'.join(body), kind='board.manual')
         log(f'  발송 {"성공" if ok else "실패"} — {why}')
         return 0 if ok else 1
     if what == 'signals':
@@ -968,7 +972,7 @@ def cmd_send(what='rankings', only_fresh=False, once=False, asof=None, inbox=Tru
         if not sig:
             log('signals.json 이 없다. --signals 를 먼저 돌려라.')
             return 1
-        ok, why = TG.send(ST.message(sig, S.load_cfg()))
+        ok, why = TG.send(ST.message(sig, S.load_cfg()), kind='board.signals')
         log(f'  발송 {"성공" if ok else "실패"} — {why}')
         return 0 if ok else 1
     if what == 'draft':
@@ -989,7 +993,8 @@ def cmd_send(what='rankings', only_fresh=False, once=False, asof=None, inbox=Tru
         text = TG.rankings_message(rk, newhigh=read(asof, 'newhigh.json'),
                                    stockflows=read(asof, 'stockflows.json'),
                                    triggers=TR.load(asof))
-    ok, why = TG.send(text)
+    # KBJ P2(설계 §5.10 #23·#24): notifier 종류를 넘긴다 — 발송은 notifier 대기열
+    ok, why = TG.send(text, kind='board.draft' if what == 'draft' else 'board.rankings')
     log(f'  발송 {"성공" if ok else "실패"} — {why}')
     return 0 if ok else 1
 
@@ -1031,7 +1036,7 @@ def _send_note(date, TG):
             log(f'  · {e}')
         return 1
     for i, m in enumerate(msgs, 1):
-        ok, why = TG.send(m)
+        ok, why = TG.send(m, kind='board.note')
         log(f'  {i}/{len(msgs)} {"성공" if ok else "실패"} — {why}')
         if not ok:
             return 1
@@ -1090,12 +1095,19 @@ def _send_files(asof, TG, only_fresh, once=False):
 
     once 는 재시도용 가드다. 그 기준일을 이미 보냈으면 아무 일도 하지 않는다.
     """
-    from datetime import datetime, timedelta, timezone
     if only_fresh:
-        today = datetime.now(timezone(timedelta(hours=9))).date().isoformat()
+        # KBJ P2(설계 §7.2): '기준일 ≠ 오늘이면 휴장 추정' 을 캘린더로 명시한다 — 오늘이 KRX
+        # 휴장일이면 그렇다고 적고, 거래일인데 기준일이 오늘이 아니면 오늘 보드가 아직 없다.
+        from kbj.core.calendar_compat import is_kr_holiday
+        from kbj.core.time import now_kst
+        now = now_kst()
+        today = now.date().isoformat()
+        if is_kr_holiday(now):
+            log(f'  오늘({today})은 KRX 휴장일이다 — 발송을 생략한다')
+            return 0
         if asof != today:
             log(f'  보드 기준일 {asof} 이 오늘({today})이 아니다 — '
-                '휴장일로 보고 발송을 생략한다')
+                '오늘 보드가 아직 없어 발송을 생략한다')
             return 0
     if once and _sent_mark() == asof:
         log(f'  {asof} 보드는 이미 보냈다 — 다시 보내지 않는다')
@@ -1130,7 +1142,7 @@ def _send_files(asof, TG, only_fresh, once=False):
             # 엑셀이 없으면 없는 채로 보내되 그 사실을 알린다. 조용히 한 개만
             # 보내면 받은 쪽은 원래 한 개였다고 믿는다.
             TG.send(f'랭킹 엑셀({asof})이 없어 HTML 만 보냈습니다. '
-                    '--excel 실행 여부를 확인하세요')
+                    '--excel 실행 여부를 확인하세요', kind='board.files')
             log('  엑셀 없음 — 그 사실을 함께 발송')
         # 표식은 **보낸 뒤에만** 남긴다. 먼저 남기면 발송이 실패한 날도
         # 재시도가 "이미 보냈다" 며 건너뛴다.
@@ -1897,13 +1909,16 @@ def cmd_us_send(what='brief', only_fresh=False):
     chunks = BR.telegram_chunks(board, rows, us_cfg())
     rc = 0
     for i, chunk in enumerate(chunks, 1):
+        # 종류는 notifier legacy_kinds(cmd_us_send → board.us)가 정한다 — 발송 대역 시험이 옛
+        # 호출 모양(kind 없음)을 고정한다(test_us_pipeline.TestSendPath)
         ok, why = TG.send(chunk, parse_mode='HTML')
         log(f'  브리프 {i}/{len(chunks)} {"성공" if ok else "실패"} — {why}')
         if not ok:
             rc = 1
             break
     if what == 'files' and os.path.exists(US_OUT):
-        ok2, why2 = TG.send_document(US_OUT, caption=f'미국장 신고가 보드 {asof}')
+        ok2, why2 = TG.send_document(US_OUT, caption=f'미국장 신고가 보드 {asof}',
+                                     kind='board.us')
         log(f'  화면 첨부 {"성공" if ok2 else "실패"} — {why2}')
         rc = rc or (0 if ok2 else 1)
     return rc

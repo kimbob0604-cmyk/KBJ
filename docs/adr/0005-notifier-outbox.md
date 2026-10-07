@@ -1,7 +1,8 @@
 # ADR 0005 — 알림 발송: outbox·중복 키·발송 기록 분리·발송 꺼짐 기본 (2026-10-07)
 
-상태: 제안(P2 묶음 E — `docs/p2_design.md` §5, ADR 0001 U1·U2, 메인 결정 D4). 번호·내용은 메인이 확정한다 —
-§2.2 '설계 표와 달라진 점'(쿨다운 미끄러지는 창·legacy origin 별 하루 1회)은 설계서 §5.2·§5.3 을 고쳐 적을 때 함께 닫는다.
+상태: **확정**(2026-10-07 — P2 묶음 E, `docs/p2_design.md` §5, ADR 0001 U1·U2, 메인 결정 D4). §2.2 '설계 표와
+달라진 점'(쿨다운 미끄러지는 창·legacy 는 부른 곳마다 하루 1회)은 설계서 §5.2(끝 '전환 기간 legacy 규칙')·§5.3(문지기
+키 / 발송 기록 키)·§5.9 에 고쳐 적었다.
 구현: `kbj/services/notifier/{client,policy,outbox,service,telegram_api,format,webhook,commands,inbox,store,__main__}.py`,
 `config/notify.yaml`, 시험 `tests/unit/notifier/`. 표는 묶음 G 의 `0002_ops_core.sql`(`ops.notify_log`)·
 `0005_alerts_inbox.sql`(`prv_alerts.notify_message`·`prv_alerts.tg_inbox`).
@@ -82,9 +83,10 @@
 
 ## 3. 결과
 
-- legacy 발송 7벌은 묶음 H 가 shim(`legacy_send*`)으로 바꾼다. 7곳 정적 검사
-  (`tests/unit/notifier/test_client_shim.py::test_legacy_shim_targets_call_legacy_send`)는 H 전까지 `xfail(strict)` —
-  H 가 끝나면 통과하므로 표시를 지운다.
-- `kind` 를 안 넘긴 legacy 호출은 호출 스택의 함수 이름 → `legacy_kinds` [제안 — 전환 기간 한정]. 메시지를 kbj
-  작업으로 옮길 때(P3~P5) 함수와 함께 지운다.
+- legacy 발송 7벌은 묶음 H 가 shim(`legacy_send*`)으로 바꿨다. 7곳 정적 검사
+  (`tests/unit/notifier/test_client_shim.py::test_legacy_shim_targets_call_legacy_send`)는 이제 표시 없이 통과한다.
+  `check_canonical` 그룹 `telegram`(api.telegram.org)은 legacy 0건.
+- `kind` 를 안 넘긴 legacy 호출은 호출 스택의 함수 이름 → `legacy_kinds`(전환 기간 한정 — SD 14개 + ET `cmd_us_send`
+  → `board.us`·flow `send_text` → `flows.report`). 표에 없는 호출은 `legacy.other`(운영 토픽). 메시지를 kbj 작업으로
+  옮길 때(P3~P5) 함수와 함께 지운다.
 - 남은 [확인 필요]: 토픽 thread id(슈퍼그룹 생성 뒤), 첨부 상한 20 MiB, 대화당 1/s(그룹 20/분) 한도.

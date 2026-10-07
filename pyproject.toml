@@ -144,3 +144,67 @@ name = "③ kbj.core 는 순수 계산 — 어댑터·서비스·저장소와 I/
 type = "forbidden"
 source_modules = ["kbj.core"]
 forbidden_modules = ["kbj.data", "kbj.services", "kbj.store", "httpx", "psycopg", "redis"]
+
+# ── P2 묶음 I — 정본 경계(docs/p2_design.md §9.6, ADR 0004). 계약 소스 모듈이 다 생긴 뒤 한꺼번에 넣었다 ──
+# ④ 은 간접 import 까지 막는다(기본값) — auth 를 끌어오는 길이 kbj 어디에도 없어야 한다(메인 결정 D1 의 세 겹 중 하나)
+[[tool.importlinter.contracts]]
+name = "④ KIS 발급(kbj.services.auth)은 다른 모듈이 import 하지 않는다"
+type = "forbidden"
+source_modules = [
+    "kbj.core",
+    "kbj.config",
+    "kbj.data",
+    "kbj.store",
+    "kbj.engines",
+    "kbj.reports",
+    "kbj.services.api",
+    "kbj.services.collectors",
+    "kbj.services.engine",
+    "kbj.services.notifier",
+    "kbj.services.ops",
+    "kbj.services.scheduler",
+    "kbj.services.ws_gateway",
+    "kbj.services.runtime",
+]
+forbidden_modules = ["kbj.services.auth"]
+
+# ⑤ 도 간접 import 까지 막는다(기본값). 예외는 notifier 의 공용 shim(client)·대기열(outbox)이 telegram_api 의
+# Attachment 자료형(HTTP 없음)만 가져오는 두 줄뿐이다(ignore_imports) — scheduler 등이 shim 으로 알림을 넣는 것은
+# 허용, notifier.service·__main__(발송 루프)를 거쳐 텔레그램 HTTP 를 끌어오는 것은 실패. Attachment 가
+# telegram_api 밖(HTTP 없는 모듈)으로 옮겨지면 ignore_imports 두 줄을 지운다(묶음 E 요청)
+[[tool.importlinter.contracts]]
+name = "⑤ 텔레그램 HTTP(kbj.services.notifier.telegram_api)는 notifier 안에서만"
+type = "forbidden"
+source_modules = [
+    "kbj.core",
+    "kbj.config",
+    "kbj.data",
+    "kbj.store",
+    "kbj.engines",
+    "kbj.reports",
+    "kbj.services.api",
+    "kbj.services.auth",
+    "kbj.services.collectors",
+    "kbj.services.engine",
+    "kbj.services.ops",
+    "kbj.services.scheduler",
+    "kbj.services.ws_gateway",
+    "kbj.services.runtime",
+]
+forbidden_modules = ["kbj.services.notifier.telegram_api"]
+ignore_imports = [
+    "kbj.services.notifier.client -> kbj.services.notifier.telegram_api",
+    "kbj.services.notifier.outbox -> kbj.services.notifier.telegram_api",
+]
+
+[[tool.importlinter.contracts]]
+name = "⑥ 어댑터(kbj.data)는 서비스·엔진·리포트를 모른다"
+type = "forbidden"
+source_modules = ["kbj.data"]
+forbidden_modules = ["kbj.services", "kbj.engines", "kbj.reports"]
+
+[[tool.importlinter.contracts]]
+name = "⑦ 저장소(kbj.store)는 어댑터·서비스·엔진을 모른다"
+type = "forbidden"
+source_modules = ["kbj.store"]
+forbidden_modules = ["kbj.data", "kbj.services", "kbj.engines"]

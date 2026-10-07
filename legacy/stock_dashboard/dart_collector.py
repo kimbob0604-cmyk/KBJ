@@ -20,6 +20,9 @@ from pathlib import Path
 from typing import Optional, Dict, List
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
+from kbj.config.settings import Settings
+from kbj.data import legacy_bridge
+
 # .env 자동 로드 (CLI 단독 실행 시) — server.py와 동일 방식 (python-dotenv 미의존)
 def _load_dotenv(path: Path) -> None:
     if not path.exists():
@@ -38,8 +41,14 @@ def _load_dotenv(path: Path) -> None:
 _load_dotenv(Path(__file__).parent / '.env')
 
 DB_PATH = Path(__file__).parent / 'db' / 'dashboard.db'
-DART_API_KEY = os.environ.get('DART_API_KEY', '')
-DART_BASE_URL = 'https://opendart.fss.or.kr/api'
+# KBJ P2(설계 §9.4): DART 를 직접 부르지 않는다. 논리 URL `dart:` 를 KBJ 브리지가 받아
+# kbj.data.public.dart.DartClient 로 부른다 — 키(KBJ_DART_API_KEY)·초당 리미터·일 예산(18,000)은
+# 브리지 쪽이 넣는다. 옛 환경변수 DART_API_KEY 는 읽지 않는다(docs/secrets.md §2).
+DART_BASE_URL = 'dart:'
+
+
+def _has_dart_key() -> bool:
+    return Settings().dart_api_key is not None
 
 # Step 4-2-A 보강: 차단 회피 보수적 설정
 CONCURRENCY = 10
@@ -149,7 +158,8 @@ class DartFetchError(Exception):
     stop=stop_after_attempt(5),
     wait=wait_exponential(multiplier=2, min=3, max=30),
     retry=retry_if_exception_type((aiohttp.ClientError, asyncio.TimeoutError,
-                                    DartFetchError, ConnectionResetError))
+                                    DartFetchError, ConnectionResetError,
+                                    legacy_bridge.BridgeConnectionError))
 )
 async def _fetch_dart_json(session: aiohttp.ClientSession, endpoint: str, params: dict) -> dict:
     """DART API 호출 (재시도 + 글로벌 백오프)."""
@@ -165,29 +175,29 @@ async def _fetch_dart_json(session: aiohttp.ClientSession, endpoint: str, params
         await asyncio.sleep(wait_time)
 
     url = f'{DART_BASE_URL}/{endpoint}'
-    full_params = {'crtfc_key': DART_API_KEY, **params}
 
     try:
-        async with session.get(url, params=full_params,
-                               timeout=aiohttp.ClientTimeout(total=15)) as resp:
-            if resp.status != 200:
-                raise DartFetchError(f"HTTP {resp.status}")
-            data = await resp.json(content_type=None)
+        # session(aiohttp)은 쓰지 않는다 — KBJ 브리지(동기)를 스레드로 부른다. 키는 브리지가 넣는다
+        resp = await asyncio.to_thread(legacy_bridge.get, url, params=dict(params), timeout=15)
+        if resp.status_code != 200:
+            raise DartFetchError(f"HTTP {resp.status_code}")
+        data = resp.json()
 
-            status = data.get('status')
-            if status == '013':
-                async with _backoff_lock:
-                    _consecutive_failures = 0
-                return {'list': []}
-            if status not in ('000', None):
-                raise DartFetchError(f"DART {status}: {data.get('message')}")
-
-            # 성공 → 카운터 리셋
+        status = data.get('status')
+        if status == '013':
             async with _backoff_lock:
                 _consecutive_failures = 0
-            return data
+            return {'list': []}
+        if status not in ('000', None):
+            raise DartFetchError(f"DART {status}: {data.get('message')}")
 
-    except (aiohttp.ClientError, asyncio.TimeoutError, ConnectionResetError, DartFetchError):
+        # 성공 → 카운터 리셋
+        async with _backoff_lock:
+            _consecutive_failures = 0
+        return data
+
+    except (aiohttp.ClientError, asyncio.TimeoutError, ConnectionResetError, DartFetchError,
+            legacy_bridge.BridgeConnectionError):
         # 차단 의심 카운트
         async with _backoff_lock:
             _consecutive_failures += 1
@@ -528,8 +538,8 @@ async def fetch_pending_only() -> List[dict]:
 def fetch_all_kr_stocks_sync():
     from valuechain import get_all_stocks_in_map
     kr_stocks, _ = get_all_stocks_in_map()
-    if not DART_API_KEY:
-        raise RuntimeError("DART_API_KEY 환경변수 없음")
+    if not _has_dart_key():
+        raise RuntimeError("KBJ_DART_API_KEY 환경변수 없음")
     return asyncio.run(fetch_all_stocks(kr_stocks))
 
 
@@ -540,8 +550,8 @@ def fetch_all_kr_stocks_sync():
 if __name__ == '__main__':
     import sys
 
-    if not DART_API_KEY:
-        print("❌ DART_API_KEY 환경변수 없음 (.env 확인)")
+    if not _has_dart_key():
+        print("❌ KBJ_DART_API_KEY 환경변수 없음 (.env 확인)")
         sys.exit(1)
 
     if len(sys.argv) > 1 and sys.argv[1] == 'all':

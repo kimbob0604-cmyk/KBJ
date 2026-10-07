@@ -191,7 +191,8 @@ class RejectionBoard(Protocol):
     """
 
     def report_rejected(self, token: str, now: datetime, by: str) -> bool:
-        """이 토큰이 거절됐다고 신고. 같은 토큰의 신고가 이미 있으면 그대로 두고 False."""
+        """이 토큰이 거절됐다고 신고. 같은 토큰의 신고가 이미 있거나, 캐시의 값이 이미 다른
+        토큰(지난 토큰의 늦은 신고)이면 그대로 두고 False."""
         ...
 
     def pending_rejection(self, token: str) -> RejectionReport | None:
@@ -211,14 +212,8 @@ redis.call('SET', KEYS[1], ARGV[2], 'PX', ARGV[3])
 return 1
 """
 
-# 거절 신고: 같은 토큰의 신고가 있으면 두고(처리 표시를 지우지 않게), 다른 토큰 것이면 바꾼다
-_REPORT_LUA = """
-if redis.call('HGET', KEYS[1], 'token_sha16') == ARGV[1] then return 0 end
-redis.call('DEL', KEYS[1])
-redis.call('HSET', KEYS[1], 'token_sha16', ARGV[1], 'at', ARGV[2], 'by', ARGV[3])
-redis.call('EXPIRE', KEYS[1], ARGV[4])
-return 1
-"""
+# 거절 신고를 쓰는 트랜잭션(WATCH)이 다른 프로세스와 부딪히면 다시 보는 횟수
+_REPORT_RETRIES: Final = 5
 
 # 신고 닫기: 이 토큰의 신고이고 아직 안 닫혔으면 닫은 시각을 적는다(처음 닫은 쪽만 1)
 _CLOSE_LUA = """
@@ -250,7 +245,6 @@ class RedisTokenCache:
         self.issue_key = issue_blocked(key)
         self.rejected_key = rejected_key(key)
         self._claim = redis.register_script(_CLAIM_LUA)
-        self._report = redis.register_script(_REPORT_LUA)
         self._close = redis.register_script(_CLOSE_LUA)
 
     def load(self) -> TokenRecord | None:
@@ -304,16 +298,56 @@ class RedisTokenCache:
     # ---- 거절 신고(설계 §3.4) ---------------------------------------------------------------
 
     def report_rejected(self, token: str, now: datetime, by: str) -> bool:
-        res: Any = self._report(
-            keys=[self.rejected_key],
-            args=[
-                token_digest(token),
-                now.astimezone(UTC).isoformat(),
-                by or "unknown",
-                int(REJECTED_TTL.total_seconds()),
-            ],
-        )
-        return int(res) == 1
+        """거절 신고를 쓴다. 쓰지 않고 False 인 경우:
+
+        - 같은 토큰의 신고가 이미 있다(처리 표시 `handled_at` 를 지우지 않게).
+        - 캐시의 값이 이미 다른 토큰이다 — 지난 토큰을 메모리에 쥐고 있던 프로세스의 늦은 신고가
+          현재 값의 신고를 덮어쓰면 auth 가 현재 값의 거절을 모른다(재발급도 알림도 없음 — 하루
+          시뮬레이션 `test_stale_token_report_does_not_mask_current_rejection`). 지난 값은 auth 가
+          이미 바꿨으니 신고할 것이 없다(신고한 쪽은 다음 읽기에서 새 값을 받는다).
+
+        `kis:token` 과 신고 키를 WATCH 하고 확인·쓰기를 한 트랜잭션으로 한다 — 그 사이 둘 중 하나가
+        바뀌면 처음부터 다시 본다(`_REPORT_RETRIES` 번 넘게 부딪히면 `WatchError` — 부른 쪽이
+        `RedisError` 로 받는다).
+        """
+        digest = token_digest(token)
+        # hset(items=…) — 키·값을 번갈아(redis-py 의 mapping 형은 키 형이 불변이라
+        # dict[str, str] 를 받지 않는다)
+        fields: list[str] = [
+            "token_sha16",
+            digest,
+            "at",
+            now.astimezone(UTC).isoformat(),
+            "by",
+            by or "unknown",
+        ]
+        ttl_s = int(REJECTED_TTL.total_seconds())
+        attempt = 0
+        while True:
+            attempt += 1
+            with self._r.pipeline() as p:
+                try:
+                    p.watch(self.key, self.rejected_key)
+                    raw: Any = p.get(self.key)
+                    if raw is not None:
+                        try:
+                            cur = TokenRecord.model_validate_json(raw)
+                        except ValidationError:
+                            cur = None
+                        if cur is not None and cur.token != token:
+                            return False  # 지난 토큰의 신고 — 현재 값의 신고를 덮지 않는다
+                    held: Any = p.hget(self.rejected_key, "token_sha16")
+                    if held is not None and _text(held) == digest:
+                        return False
+                    p.multi()
+                    p.delete(self.rejected_key)
+                    p.hset(self.rejected_key, items=fields)
+                    p.expire(self.rejected_key, ttl_s)
+                    p.execute()
+                    return True
+                except WatchError:
+                    if attempt >= _REPORT_RETRIES:
+                        raise
 
     def pending_rejection(self, token: str) -> RejectionReport | None:
         rep = self.rejection()

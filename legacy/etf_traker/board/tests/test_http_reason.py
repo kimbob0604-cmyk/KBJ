@@ -37,64 +37,10 @@ DATAGO_403 = (
     '</cmmMsgHeader></OpenAPI_ServiceResponse>')
 
 
-class WhyTest(unittest.TestCase):
-
-    def test_xml_error_tags(self):
-        w = http.why(_R(403, DATAGO_403))
-        self.assertIn('SERVICE_ACCESS_DENIED_ERROR', w)
-        self.assertIn('returnReasonCode=20', w)
-
-    def test_json_message(self):
-        self.assertIn('막힘', http.why(_R(403, '{}', {'message': '막힘'})))
-
-    def test_falls_back_to_body_snippet(self):
-        w = http.why(_R(500, '  이유를   모를   본문 '))
-        self.assertEqual(w, '이유를 모를 본문')
-
-    def test_snippet_is_bounded(self):
-        self.assertLessEqual(len(http.why(_R(500, 'x' * 5000))), http.BODY_SNIP)
-
-    def test_empty_body_gives_empty_string(self):
-        # 사유가 없는 것과 못 읽은 것은 다르다. 호출자가 구분해 적을 수 있어야
-        # 한다 — 빈 문자열을 돌려주지 않으면 "HTTP 403 · " 처럼 구분자만 남는다.
-        self.assertEqual(http.why(_R(403, '')), '')
-        self.assertEqual(http.why(_R(403, '   \n  ')), '')
-
-    def test_value_whitespace_and_cdata(self):
-        self.assertEqual(http.why(_R(403, '<errMsg>\n  막힘\n</errMsg>')),
-                         'errMsg=막힘')
-        self.assertEqual(http.why(_R(403, '<errMsg><![CDATA[막힘]]></errMsg>')),
-                         'errMsg=막힘')
+# KBJ P2: WhyTest(6개)는 tests/unit/data/test_http.py 로 승격했다 — 같은 단언이 kbj 쪽에서 돈다(MIGRATION.md P2).
 
 
-class NoBacktrackTest(unittest.TestCase):
-    """사유를 뽑다가 멈추면 안 된다. 첫 판이 두 번 멈췄다.
-
-    `(.*?)` 는 닫히지 않은 여는 태그가 많은 본문에서 O(n²) 였고, 그걸 고치며
-    넣은 앞뒤 `\s*` 는 값 자리와 같은 공백 구간을 나눠 갖느라 다시 멈췄다.
-    수집기가 부르는 자리라 여기서 멈추면 그날 보드가 통째로 안 나온다.
-    """
-
-    LIMIT = 2.0
-
-    def _under_limit(self, body):
-        import time
-        t = time.time()
-        http.why(_R(403, body))
-        dt = time.time() - t
-        self.assertLess(dt, self.LIMIT, f'{len(body):,}자에 {dt:.1f}초')
-
-    def test_many_unclosed_tags(self):
-        self._under_limit('<message>' * 20000 + 'x' * 100000)
-
-    def test_whitespace_run(self):
-        self._under_limit('<message>' + ' ' * 300000 + '<' * 100)
-
-    def test_interleaved_tags(self):
-        self._under_limit('<errMsg><message>' * 10000 + 'y' * 200000)
-
-    def test_large_html(self):
-        self._under_limit('<html>' + '<div>가나다</div>' * 40000 + '</html>')
+# KBJ P2: NoBacktrackTest(4개)는 tests/unit/data/test_http.py 로 승격했다 — 같은 단언이 kbj 쪽에서 돈다(MIGRATION.md P2).
 
 
 class GetTest(unittest.TestCase):

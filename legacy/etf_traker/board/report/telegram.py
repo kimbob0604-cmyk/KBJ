@@ -40,29 +40,25 @@
 
 발송 실패는 예외로 올리지 않고 `(False, 사유)` 로 돌려준다. 18:00 발송이 막혀도
 대시보드·아카이브는 끝나야 한다. 대신 사유는 반드시 문자열로 남긴다 (2장 6번).
+
+KBJ P2 (설계 §5.9·§5.10 #22): 텔레그램을 직접 부르지 않는다. `send`·`send_document` 는 KBJ
+notifier 대기열(`kbj.services.notifier.client.legacy_send*`)에 넣고, 보내기·재시도·분할·중복 방지는
+notifier 한 곳이 한다. `check` 는 notifier 의 웹훅·하트비트 상태를 읽는다(getMe·getChat 은 notifier
+몫). 봇 토큰·chat id 는 여기서 읽지 않는다 — `token`·`chat_id` 인자는 옛 호출 모양으로 받기만
+하고 무시한다(경고 로그). `_split` 은 KBJ 정본(`kbj.services.notifier.format.split_text`).
 """
+import logging
 import os
 import re
 
+from kbj.services.notifier.client import legacy_send, legacy_send_document, webhook_status
+from kbj.services.notifier.format import split_text
+
+log = logging.getLogger(__name__)
+
 # ─────────────────────────── 임계값 ───────────────────────────
 TG_LIMIT = 4096              # sendMessage 본문 상한. 넘으면 텔레그램이 자른다
-TIMEOUT = 20                 # 발송 1건 타임아웃(초)
-API = 'https://api.telegram.org/bot{token}/{method}'
-
-
-def _safe_err(ex, *secrets):
-    """예외 메시지에서 자격증명을 지운다.
-
-    requests 의 연결 예외 메시지에는 **요청 URL 이 통째로** 들어 있고, 텔레그램은
-    토큰을 URL 경로에 담는다. 그대로 로그에 찍으면 네트워크 실패 한 번에 봇
-    토큰이 GitHub Actions 로그에 영구히 남는다. D-013 의 마스킹 규칙이 이 경로만
-    비껴 있었다.
-    """
-    msg = f'{type(ex).__name__}: {ex}'
-    for sec in secrets:
-        if sec:
-            msg = msg.replace(str(sec), '<TOKEN>')
-    return msg
+TIMEOUT = 20                 # 발송 1건 타임아웃(초) — 옛 값(발송은 notifier 가 한다)
 
 SECTOR_TOP_N = 5             # 상위 섹터 노출 수
 SECTOR_BOTTOM_N = 3          # 하위 섹터 노출 수
@@ -235,27 +231,8 @@ def _fit(head, groups, tail, limit=TG_LIMIT):
 
 
 def _split(text, limit=TG_LIMIT):
-    """발송용 분할. 줄 경계에서 자르고, 문장 중간에서 자르지 않는다."""
-    out, cur = [], ''
-    for line in (text or '').split('\n'):
-        while len(line) > limit:          # 한 줄이 통째로 한도를 넘는 병적인 경우
-            cut = line.rfind(' ', 0, limit)
-            cut = cut if cut > 0 else limit
-            if cur:
-                out.append(cur)
-                cur = ''
-            out.append(line[:cut])
-            line = line[cut:].lstrip()
-        if not cur:
-            cur = line
-        elif len(cur) + 1 + len(line) <= limit:
-            cur += '\n' + line
-        else:
-            out.append(cur)
-            cur = line
-    if cur:
-        out.append(cur)
-    return [x for x in out if x.strip()] or ['']
+    """발송용 분할. 줄 경계에서 자르고, 문장 중간에서 자르지 않는다(KBJ 정본 다시 내보내기)."""
+    return split_text(text, limit)
 
 
 # ─────────────────────────── 랭킹 메시지 ───────────────────────────
@@ -758,130 +735,55 @@ def draft_message(draft_md, url=None):
 
 
 # ─────────────────────────── 발송 ───────────────────────────
-def _cred(name):
-    """자격증명. .env 가 없거나 로딩이 깨져도 예외를 내지 않고 빈 문자열."""
-    try:
-        from ..ingest import creds
-        return creds.get(name) or ''
-    except Exception:                                    # noqa: BLE001 - 사유는 호출부가 만든다
-        return ''
+def _ignored(token, chat_id):
+    """옛 인자(token·chat_id)는 받기만 한다 — 보내는 곳은 notifier 설정(KBJ_TELEGRAM_CHAT_ID·토픽)."""
+    if token or chat_id:
+        log.warning('telegram.send: token·chat_id 인자는 무시한다 — 발송은 KBJ notifier 가 정한 '
+                    '대화·토픽으로 간다')
 
 
-def _why(r):
-    """텔레그램이 준 거절 사유를 그대로 옮긴다. 우리가 요약하지 않는다."""
-    try:
-        j = r.json()
-        return j.get('description') or str(j)
-    except Exception:                                    # noqa: BLE001
-        return (r.text or '')[:200]
-
-
-def send(text, token=None, chat_id=None, silent=False, parse_mode='Markdown'):
-    """실제 발송. 반환 (ok, 사유). 4096자 초과분은 여러 건으로 나눠 보낸다.
+def send(text, token=None, chat_id=None, silent=False, parse_mode='Markdown', kind=None):
+    """발송 — KBJ notifier 대기열에 넣는다. 반환 (ok, 사유). 4096자 초과분은 notifier 가 나눠 보낸다.
 
     parse_mode 를 None 으로 주면 **서식 없이 평문**으로 보낸다. 미국장 브리프가
     그렇다 — 본문에 `**...**` 와 `—` 가 섞여 있어 Markdown 으로 보내면 텔레그램이
     엔티티가 안 닫혔다며 400 으로 거절한다. 국장 리포트는 우리가 서식을 붙여
     만들므로 기본값은 그대로 둔다.
+
+    kind 는 notifier 종류(config/notify.yaml — `board.rankings` 등). 없으면 부른 함수 이름으로
+    `legacy_kinds` 가 정한다.
     """
-    token = token or _cred('TELEGRAM_BOT_TOKEN')
-    chat_id = chat_id or _cred('TELEGRAM_CHAT_ID')
-    if not token:
-        return False, 'TELEGRAM_BOT_TOKEN 이 없다. board/.env 에 넣거나 환경변수로 주입하라'
-    if not chat_id:
-        return False, 'TELEGRAM_CHAT_ID 가 없다. 보낼 대화방을 모른다'
+    _ignored(token, chat_id)
     if not (text or '').strip():
         return False, '본문이 비어 있다. 보낼 것이 없다'
-    try:
-        import requests
-    except ImportError as ex:
-        return False, f'requests 가 없다: {ex}'
-
-    chunks = _split(text)
-    for i, chunk in enumerate(chunks, 1):
-        try:
-            r = requests.post(
-                API.format(token=token, method='sendMessage'),
-                data=dict(chat_id=chat_id, text=chunk,
-                          disable_web_page_preview=True,
-                          disable_notification=bool(silent),
-                          **({'parse_mode': parse_mode} if parse_mode else {})),
-                timeout=TIMEOUT)
-        except Exception as ex:                          # noqa: BLE001 - 사유를 문자열로 보존
-            return False, (f'{i}/{len(chunks)}번째 조각 전송 실패: '
-                           + _safe_err(ex, token))
-        if r.status_code != 200:
-            return False, f'{i}/{len(chunks)}번째 조각 거부: HTTP {r.status_code} · {_why(r)}'
-    return True, f'{len(chunks)}건 발송'
+    return legacy_send(text, source='et.board', parse_mode=parse_mode, kind=kind,
+                       silent=bool(silent))
 
 
 # sendDocument 캡션 상한. 본문(4096)과 다르다 — 넘기면 텔레그램이 거부한다.
 TG_CAPTION_LIMIT = 1024
 
 
-def send_document(path, caption='', token=None, chat_id=None, silent=False):
-    """파일 한 개를 첨부로 보낸다. 반환 (ok, 사유).
+def send_document(path, caption='', token=None, chat_id=None, silent=False, kind='board.files'):
+    """파일 한 개를 첨부로 — KBJ notifier 대기열에 넣는다. 반환 (ok, 사유).
 
     17:30 자동 발송(D-063)이 보드 HTML 과 랭킹 엑셀을 이걸로 보낸다.
     파일이 없으면 조용히 성공으로 넘기지 않는다 — 없는 것을 보냈다고 적으면
     받은 사람이 찾다가 끝난다.
     """
-    token = token or _cred('TELEGRAM_BOT_TOKEN')
-    chat_id = chat_id or _cred('TELEGRAM_CHAT_ID')
-    if not token:
-        return False, 'TELEGRAM_BOT_TOKEN 이 없다'
-    if not chat_id:
-        return False, 'TELEGRAM_CHAT_ID 가 없다'
+    _ignored(token, chat_id)
     if not os.path.exists(path):
         return False, f'보낼 파일이 없다: {path}'
-    try:
-        import requests
-    except ImportError as ex:
-        return False, f'requests 가 없다: {ex}'
-    try:
-        with open(path, 'rb') as f:
-            r = requests.post(
-                API.format(token=token, method='sendDocument'),
-                data=dict(chat_id=chat_id,
-                          caption=(caption or '')[:TG_CAPTION_LIMIT],
-                          disable_notification=bool(silent)),
-                files={'document': (os.path.basename(path), f)},
-                timeout=TIMEOUT * 4)     # 파일 업로드는 본문보다 오래 걸린다
-    except Exception as ex:                              # noqa: BLE001
-        return False, f'전송 실패: {_safe_err(ex, token)}'
-    if r.status_code != 200:
-        return False, f'거부: HTTP {r.status_code} · {_why(r)}'
-    return True, os.path.basename(path)
+    ok, why = legacy_send_document(path, (caption or '')[:TG_CAPTION_LIMIT],
+                                   source='et.board.files', kind=kind, silent=bool(silent))
+    return (True, os.path.basename(path)) if ok else (False, why)
 
 
 def check(token=None, chat_id=None):
-    """봇 연결 확인. getMe 를 부르고 (ok, 봇이름 또는 사유) 반환."""
-    token = token or _cred('TELEGRAM_BOT_TOKEN')
-    chat_id = chat_id or _cred('TELEGRAM_CHAT_ID')
-    if not token:
-        return False, 'TELEGRAM_BOT_TOKEN 이 없다'
-    try:
-        import requests
-        r = requests.get(API.format(token=token, method='getMe'), timeout=TIMEOUT)
-    except Exception as ex:                              # noqa: BLE001
-        return False, 'getMe 실패: ' + _safe_err(ex, token)
-    if r.status_code != 200:
-        return False, f'getMe HTTP {r.status_code} · {_why(r)}'
-    name = '@' + (((r.json() or {}).get('result') or {}).get('username') or '이름없음')
-    if not chat_id:
-        # 봇은 살아 있어도 보낼 곳이 없으면 발송은 실패한다. 절반의 성공을 참으로 보고하지 않는다.
-        return False, f'{name} 은 응답하지만 TELEGRAM_CHAT_ID 가 없다'
+    """발송 경로 확인 — KBJ notifier 의 웹훅·하트비트 상태. (ok, 사유) 반환. 메시지는 보내지 않는다."""
+    _ignored(token, chat_id)
+    st = webhook_status()
+    if st.get('ok'):
+        return True, f"KBJ notifier 정상 · {st.get('reason') or '웹훅 설정됨'}"
+    return False, f"KBJ notifier 확인 실패 · {st.get('reason') or '사유 없음'}"
 
-    # 봇이 살아 있다는 것과 그 방에 보낼 수 있다는 것은 다르다. 봇이 방에서
-    # 쫓겨났거나 chat_id 가 틀리면 getMe 는 통과하고 발송만 실패한다.
-    # getChat 은 **메시지를 보내지 않고** 목적지를 확인한다.
-    try:
-        c = requests.get(API.format(token=token, method='getChat'),
-                         params={'chat_id': chat_id}, timeout=TIMEOUT)
-    except Exception as ex:                              # noqa: BLE001
-        return False, f'{name} · getChat 실패: ' + _safe_err(ex, token)
-    if c.status_code != 200:
-        return False, f'{name} · 대화방 확인 실패 HTTP {c.status_code} · {_why(c)}'
-    room = (c.json() or {}).get('result') or {}
-    where = room.get('title') or room.get('username') or room.get('type') or '대화방'
-    return True, f'{name} → {where}'

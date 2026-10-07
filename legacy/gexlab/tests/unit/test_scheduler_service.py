@@ -46,7 +46,7 @@ from services.scheduler.minute import (
     minute_thread_submit,
     reader_kis_client,
 )
-from services.scheduler.service import Scheduler, http_master_downloader, run
+from services.scheduler.service import Scheduler, run
 from tests.fakes.kis_server import (
     FakeClock,
     FakeKisServer,
@@ -484,36 +484,13 @@ def _transport(status: int, parts: list[bytes], seen: list[httpx.Request]) -> ht
     return httpx.MockTransport(handle)
 
 
-def test_http_master_downloader_reads_the_zip_through_the_transport() -> None:
-    seen: list[httpx.Request] = []
-    data = master_zip()
-    half = len(data) // 2
-    get = http_master_downloader(transport=_transport(200, [data[:half], data[half:]], seen))
-    assert get() == data
-    (req,) = seen
-    assert req.method == "GET" and req.url.path.endswith("fo_idx_code_mts.mst.zip")
-    assert req.extensions["timeout"] == {"connect": 5.0, "read": 15.0, "write": 15.0, "pool": 15.0}
+# KBJ P2: test_http_master_downloader_reads_the_zip_through_the_transport 는 kbj tests/unit/kis/test_master_download.py 로 승격했다(같은 단언이 kbj 쪽에서 돈다 — MIGRATION.md P2).
 
 
-def test_http_master_downloader_gives_up_after_the_total_deadline() -> None:
-    t = [0.0]
-
-    def clock() -> float:
-        t[0] += 11.0  # 조각마다 11초 — 30초를 넘는다
-        return t[0]
-
-    parts = [b"x" * 10] * 10
-    get = http_master_downloader(transport=_transport(200, parts, []), total_s=30.0, clock=clock)
-    with pytest.raises(TimeoutError, match="30초"):
-        get()
+# KBJ P2: test_http_master_downloader_gives_up_after_the_total_deadline 는 kbj tests/unit/kis/test_master_download.py 로 승격했다(같은 단언이 kbj 쪽에서 돈다 — MIGRATION.md P2).
 
 
-def test_http_master_downloader_refuses_errors_and_oversized_files() -> None:
-    with pytest.raises(httpx.HTTPStatusError):
-        http_master_downloader(transport=_transport(404, [b"nope"], []))()
-    big = http_master_downloader(transport=_transport(200, [b"x" * 60] * 2, []), max_bytes=100)
-    with pytest.raises(ValueError, match="100B"):
-        big()
+# KBJ P2: test_http_master_downloader_refuses_errors_and_oversized_files 는 kbj tests/unit/kis/test_master_download.py 로 승격했다(같은 단언이 kbj 쪽에서 돈다 — MIGRATION.md P2).
 
 
 # ── KRX 전일 적재 구동 ──

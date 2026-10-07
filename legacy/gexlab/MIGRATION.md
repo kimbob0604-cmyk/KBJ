@@ -227,3 +227,88 @@ Dockerfile 이 이 폴더 `uv.lock`(pandas 3.0.6)을 `uv sync --frozen` 으로 �
 CI(`.github/workflows/ci.yml`)의 `gexlab-integration` 잡은 원본 GEXLAB CI 처럼 러너의 Docker 를 그대로 쓴다. 시험이 docker
 CLI 로 TimescaleDB·Redis 컨테이너를 직접 띄우고 지우므로 job `services` 는 쓰지 않고 이미지만 미리 받는다.
 `KBJ_REQUIRE_DOCKER=1` 이면 'Docker 없음' 으로 건너뛴 시험이 있거나 통과가 49개보다 적을 때 실패로 본다.
+
+## P2. KBJ 정본으로 재배선 (묶음 H, 2026-10-07)
+
+설계 `docs/p2_design.md` §1.9·§3.7·§3.8·§7.2, ADR 0004. 원칙: legacy 의 KIS 토큰 **발급**·KIS REST·
+KRX 직접 호출을 0 으로(PLAN P2 완료 기준), 승격한 코드는 KBJ 를 다시 내보내는 한 줄로(두 벌 금지).
+웹소켓 연결(`services/ws_gateway`, `config/kis_ws.yaml`)은 P7 까지 여기 남는다(메인 결정 D2) — 접속키는
+KBJ auth 가 Redis 에 둔 것을 `reader(…, "ws_key")` 로 읽기만 한다.
+
+### P2.1 다시 내보내기(정본 → 이 파일)
+
+| 파일 | 정본 | 비고 |
+|---|---|---|
+| `core/calendar.py` | `kbj.core.calendar` | 공개 이름 전부. 휴장 덮어쓰기 정본은 레포 루트 `config/holidays_override.yaml`(이 폴더 `config/` 사본은 읽히지 않는다) |
+| `services/poller/context.py:session_tag` | `kbj.core.calendar.session_tag` | 함수 본문 삭제, import 로 |
+| `services/runtime.py:tagger_for` | `kbj.services.runtime.tagger_for` | 나머지(하트비트·싱크·백오프)는 GX `services.bus` 모델에 묶여 있어 그대로(P7) |
+| `data/kis/auth_client.py` | `kbj.data.private.kis.token`·`credentials` | **읽기 쪽만**: `TokenRecord`·`RedisTokenCache`·`CachedTokenProvider`·`token_owner`(같은 소유 해시)·`TokenUnavailable`·`utcnow` 등 |
+| `data/kis/ratelimit.py` | `kbj.data.ratelimit` | 같은 Redis 키 `rl:kis:<앱키 해시>` |
+| `data/kis/master.py` | `kbj.data.private.kis.master` | `http_master_downloader`·`download_fo_master` 포함 — 배포 주소는 KBJ 모듈에만 |
+| `data/kis/rest.py` | `kbj.data.private.kis.rest.KisRestClient` | `KisClient(settings, …)` 는 같은 호출 모양의 생성 함수. **provider 를 안 주면 토큰 없는 제공자**(`NoTokenProvider` → `TokenUnavailable`, 발급 없음 — K7) |
+| `data/krx/eod.py` | `kbj.data.private.krx.client` | `KrxClient` 는 하위 클래스: `from_settings` 가 GX 설정을 받고, 실패 문구는 GX 모양(`KrxError.__str__` = 가린 사유). `fetch_daily`(probe)도 같은 클라이언트로 |
+| `data/krx/models.py` | `kbj.data.private.krx.models` | |
+| `data/spool.py` | `kbj.store.spool` | 묶음 G 요청(같은 코드 두 벌이었다) |
+| `services/auth/health.py` | `kbj.services.runtime.health` | detail 을 한 번 더 형태로 가린다 |
+| `services/auth/service.py` | — | 발급 코드 전부 삭제. `TOKEN_KEY`·`WS_KEY_KEY`·`reader(redis, settings, name, *, now)`(GX 설정 → KBJ `reader`)·`redact`(KBJ masking)만. `main()` 은 안내 후 2 로 끝난다(`python -m kbj.services.auth` 로 띄운다) |
+| `services/scheduler/service.py:http_master_downloader` | `kbj.data.private.kis.master` | `data.kis.master` 를 거쳐 import |
+
+### P2.2 지운 것·바꾼 것
+
+- 발급: `KisTokenIssuer`·`KisApprovalKeyIssuer`·`AuthService`·`build_auth_service`·`serve`·발급 경로 상수
+  (`TOKEN_PATH`·`APPROVAL_PATH`) → KBJ `kbj/services/auth/issuer.py`·`service.py`(K8·K9).
+- 파일 토큰 캐시: `FileTokenCache`·`FallbackTokenCache`·`default_token_provider`, 설정 `kis_token_cache_path`
+  — 토큰은 Redis 에만(docs/secrets.md, `KIS_TOKEN_CACHE_PATH` 삭제).
+- `config/settings.py`: `KIS_REAL_BASE`·`KIS_VTS_BASE`·`KRX_BASE` 문자열 삭제. `kis_base` 는 KBJ
+  `credentials.base_url(env)`, 새 `kis_credentials()` 가 KBJ `KisCredentials` 를 만든다.
+  `telegram_bot_token`·`telegram_chat_id` 필드 삭제(설계 §5.10 #42 — 읽는 곳이 없었다. 발송·수신은 KBJ
+  notifier. `extra="ignore"` 라 `.env` 에 옛 이름이 있어도 무시된다).
+- `scripts/probe_common.py`(`MASTER_URL` 삭제)·`probe_chain_fill.py` → `download_fo_master()`.
+  `scripts/probe_all.py` → `KisClient(settings, token_provider=reader(…))`(Redis 가 없으면 토큰 없음).
+- 동작 차이: KIS 가 토큰을 거절하면 GX 처럼 캐시를 지우지 않고 거절을 신고만 한다(`kis:token:rejected`
+  — 새 값은 auth 가, ADR 0004 §4.3). KBJ 캘린더는 주식 정규장 지연 개장(그해 첫 거래일 10:00·수능일
+  `late_open`)을 안다 — GX 파생 세션 상태 머신 시험은 그대로 통과했다.
+
+### P2.3 시험 — 승격으로 지운 것(kbj 쪽에서 같은 단언이 돈다)
+
+pytest 수집 항목(매개변수 펼친 수) 기준. 함수 수는 괄호.
+
+| 지운 시험 | 항목(함수) | kbj 쪽 |
+|---|---|---|
+| `tests/unit/test_calendar.py` | 137 (36) | `tests/unit/core/test_calendar.py` 137 |
+| `tests/property/test_calendar_properties.py` | 7 (7) | `tests/property/test_calendar_properties.py` 7 |
+| `tests/unit/test_dependencies.py::test_xkrx_knows_2026_holidays` | 7 (1) | `tests/unit/core/test_xkrx_dependency.py` 7 |
+| `tests/unit/test_ratelimit.py` | 44 (24) | `tests/unit/data/test_ratelimit.py` 44 |
+| `tests/property/test_ratelimit_properties.py` | 3 (3) | `tests/property/test_ratelimit_properties.py` 3 |
+| `tests/unit/test_auth_client.py` | 49 (28) | 20 함수 승격(`tests/unit/kis/test_token_cache.py`·`tests/unit/auth/test_issuer.py`). 8 함수(파일 캐시 5·기본 발급 제공자/폴백 3)는 기능과 함께 폐지(설계 §1.2) |
+| `tests/unit/test_auth_service.py` | 63 (52) | `tests/unit/auth/test_auth_service.py` 63(49 함수) + health 3 함수 `tests/unit/runtime/test_runtime.py` |
+| `tests/unit/test_kis_rest.py` | 18 (13) | 11 함수 `tests/unit/kis/test_kis_rest.py`. 2 함수(토큰 파일 권한·파일 캐시 폴백)는 폐지 |
+| `tests/unit/test_kis_master.py` | 39 (17) | `tests/unit/kis/test_kis_master.py` |
+| `tests/unit/test_krx_client.py` | 11 (7) | `tests/unit/data/private/test_krx_client.py` 11 |
+| `tests/unit/test_krx_models.py` | 38 (16) | `tests/unit/data/private/test_krx_models.py` 38 |
+| `tests/unit/test_spool.py` DiskSpool·인코딩 18 함수 | 36 (18) | `tests/unit/store/test_spool.py` 36 |
+| `tests/unit/test_scheduler_service.py` 마스터 내려받기 3 함수 | 3 (3) | `tests/unit/kis/test_master_download.py` |
+| `tests/unit/test_services_runtime.py::test_tagger_follows_the_session_state_machine` | 6 (1) | `tests/unit/runtime/test_runtime.py` 6 |
+| 합계 | **461** | |
+
+그대로 남긴 것(승격됐지만 GX 코드가 아직 legacy 라 지우지 않았다): `test_services_runtime.py` 의 하트비트·
+healthcheck·log_event·sink·backoff 7개(GX `services.runtime` 은 GX `services.bus` 모델을 쓴다),
+`test_scheduler_service.py` 의 상태 발행 7개(GX `Scheduler` 는 P7 까지), `test_scheduler_krx.py` 의 예산
+4개(GX `KrxCallBudget` 그대로).
+
+### P2.4 시험 — 고친 것·더한 것
+
+- `tests/unit/test_spool.py::test_every_service_gives_its_sink_the_calendar_tagger` — 매개변수 `auth` 를
+  뺐다(−1 항목). auth 진입점이 KBJ 로 옮겨 `services/auth/service.py` 에 `PostgresSink` 가 없다.
+- `tests/unit/test_compose_file.py::test_heartbeat_names_match_the_services` — auth 하트비트 이름을 KBJ
+  `kbj/services/auth/service.py`(`SERVICE = "auth"`, `Heartbeater(redis, SERVICE…)`) 소스에서 본다.
+- `tests/unit/test_nogap_report.py:182` — 패치 대상 `core.calendar._default_calendar` →
+  `kbj.core.calendar._default_calendar`(정본 위치, 묶음 B 요청).
+- `tests/fakes/kis_server.py` — 발급 경로 상수 `TOKEN_PATH` 를 가짜 서버 안에 둔다(legacy 코드에는 없다).
+- 새로: `tests/unit/test_kbj_bridge.py`(+1) — 제공자 없는 `KisClient` 가 요청 0건으로 `TokenUnavailable`,
+  `reader` 가 빈 Redis 에서 `TokenUnavailable`, 발급 이름이 없다, 다시 내보낸 객체가 KBJ 와 같다.
+
+### P2.5 결과
+
+`scripts/test_legacy.sh gexlab`: **2,716 통과**(P1 3,177 − 승격·폐지 461 − 매개변수 1 + 다리 1).
+`gexlab-integration`: 50(compose 1 + Docker 49) — 실행 결과는 묶음 H 보고에 적는다.

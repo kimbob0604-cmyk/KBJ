@@ -1,0 +1,26 @@
+# 앱 이미지(Dockerfile)에 들어가지 않게 — 비밀·실행 산출물·legacy·시험·문서
+.env
+.env.*
+!.env.example
+.git
+.github
+.venv
+.hypothesis
+.pytest_cache
+.ruff_cache
+**/__pycache__
+state
+probe_out
+legacy
+tests
+docs
+scripts
+*.db
+*.sqlite
+*.sqlite3
+*.duckdb
+*.parquet
+*.xlsx
+*.key
+*.pem
+*token*.json

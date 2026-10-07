@@ -196,7 +196,8 @@ def write_result(name: str, ctx: Ctx, started: datetime, error: str | None) -> d
     return json.loads(text)
 
 
-MASTER_URL = "https://new.real.download.dws.co.kr/common/master/fo_idx_code_mts.mst.zip"
+# KBJ P2(설계 §3.8 K7): 마스터 배포 주소는 KBJ 모듈에만 있다 — 내려받기는 KBJ 정본 함수로.
+from data.kis.master import download_fo_master  # noqa: E402
 
 
 def futures_codes(ctx: Ctx) -> list[str]:
@@ -225,9 +226,7 @@ def _master_codes(ctx: Ctx) -> list[str]:
     import io
     import zipfile
 
-    import httpx
-
-    raw = httpx.get(MASTER_URL, timeout=40).content
+    raw = download_fo_master(read_s=40.0, total_s=60.0)
     z = zipfile.ZipFile(io.BytesIO(raw))
     text = z.read(z.namelist()[0]).decode("cp949", errors="replace")
     found: list[tuple[int, str]] = []

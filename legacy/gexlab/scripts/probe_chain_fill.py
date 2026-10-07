@@ -23,11 +23,9 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import Any
 
-import httpx
-
+from data.kis.master import download_fo_master
 from scripts.probe_callput import callput_params
 from scripts.probe_common import (
-    MASTER_URL,
     P_CALLPUT,
     P_PRICE,
     TR_CALLPUT,
@@ -114,7 +112,7 @@ def code_pairs(rs: list[dict[str, Any]]) -> list[tuple[str, str]]:
 
 def master_options(ctx: Ctx) -> list[MasterRow]:
     """마스터의 줄 종류별 개수·표본을 기록하고, 파싱한 행 전체를 돌려준다."""
-    raw = httpx.get(MASTER_URL, timeout=40).content
+    raw = download_fo_master(read_s=40.0, total_s=60.0)  # KBJ P2: 배포 주소는 KBJ 모듈에만
     z = zipfile.ZipFile(io.BytesIO(raw))
     text = z.read(z.namelist()[0]).decode("cp949", errors="replace")
     lines = text.splitlines()

@@ -17,13 +17,21 @@ KRX 오픈API — 전 종목 일별 시세와 업종.
 다르면 FIELD 표만 고치면 된다.
 
 인증키는 헤더 `AUTH_KEY` 로 보낸다.
+
+## KBJ P2 (설계 §3.7·§9.4)
+
+KRX 를 직접 부르지 않는다. 주소는 논리 URL `krx:` 이고 세션은 KBJ 브리지
+(`kbj.data.legacy_bridge`)다 — 브리지가 KBJ 인증키(KBJ_KRX_API_KEY)와 초당 리미터·일 예산
+(`krx:calls:<날짜>`)을 넣고 `kbj.data.private.krx.KrxClient` 로 부른다. 단축코드 풀기
+(`_isu_to_code`)는 KBJ 정본(`kbj.data.private.krx.stocks.isu_to_code`)을 다시 내보낸다.
 """
-import re
+from kbj.config.settings import Settings
+from kbj.data.legacy_bridge import session
+from kbj.data.private.krx.stocks import isu_to_code as _isu_to_code
 
-from . import creds
-from .http import Fetch, get, num, pick, session
+from .http import Fetch, get, num, pick
 
-BASE = 'https://data-dbg.krx.co.kr/svc/apis'
+BASE = 'krx:'
 SOURCE = 'krx'
 
 PATHS = {
@@ -53,9 +61,10 @@ FIELD = dict(
 
 
 def _s():
-    s = session()
-    s.headers['AUTH_KEY'] = creds.get('KRX_API_KEY', required=True)
-    return s
+    """브리지 세션 — 인증키는 브리지가 KBJ 설정에서 넣는다."""
+    if Settings().krx_api_key is None:
+        raise Fetch('KBJ_KRX_API_KEY 가 없다 — KRX 를 부르지 않는다')
+    return session()
 
 
 def new_session():
@@ -78,26 +87,6 @@ def _f(r, key):
 
 def _div(v, by):
     return None if v is None else v / by
-
-
-def _isu_to_code(raw):
-    """단축코드 6자리를 뽑는다.
-
-    예전에는 `re.sub(r'^KR\\w+$', '', code)` 였는데 이건 문자열 **전체**에
-    매치해서 결과가 빈 문자열이 됐다. 그러면 fetch_day 가 전 종목을 버리는데,
-    독스트링이 "휴장일이면 빈 리스트 — 실패가 아니다" 라고 적혀 있어
-    **필드명 오판이 휴장일과 구분되지 않는다.** 제일 나쁜 실패 방식이다.
-
-    ISIN(KR7005930003)이 오면 가운데 6자리가 단축코드다.
-    """
-    c = str(raw or '').strip().upper()
-    if re.fullmatch(r'\d{6}', c):
-        return c
-    m = re.fullmatch(r'KR\w(\d{6})\d*', c)      # KR7 005930 003
-    if m:
-        return m.group(1)
-    m = re.search(r'\d{6}', c)
-    return m.group(0) if m else ''
 
 
 def _norm(r):
@@ -161,9 +150,9 @@ def sector_map(bas_dt, s=None):
 
 def probe():
     from datetime import date, timedelta
-    if not creds.has('KRX_API_KEY'):
-        return [('KRX 인증키', False, 'KRX_API_KEY 없음')]
-    out = [('KRX 인증키', True, creds.mask(creds.get('KRX_API_KEY')))]
+    if Settings().krx_api_key is None:
+        return [('KRX 인증키', False, 'KBJ_KRX_API_KEY 없음')]
+    out = [('KRX 인증키', True, '설정됨(KBJ)')]   # 값은 앞자리도 찍지 않는다
     d = date.today()
     for _ in range(8):                     # 최근 영업일을 뒤로 훑는다
         try:

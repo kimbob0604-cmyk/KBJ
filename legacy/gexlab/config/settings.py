@@ -5,12 +5,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
+from kbj.data.private.kis.credentials import KisCredentials, base_url
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-KIS_REAL_BASE = "https://openapi.koreainvestment.com:9443"
-KIS_VTS_BASE = "https://openapivts.koreainvestment.com:29443"
-KRX_BASE = "https://data-dbg.krx.co.kr/svc/apis"
+# KBJ P2(설계 §3.8): KIS·KRX 주소 문자열은 KBJ 어댑터 안에만 둔다(check_canonical `kis_rest`·
+# `krx_api`). `kis_base` 는 KBJ `credentials.base_url(env)` 로 얻는다
+# (같은 값 — 토큰 소유 해시가 같다).
 
 
 class Settings(BaseSettings):
@@ -26,15 +27,14 @@ class Settings(BaseSettings):
     # 24건(08:05~09:55 12회 × 2). 재기동을 되풀이하는 고장에서 KRX 를 지킨다
     krx_daily_call_cap: int = Field(default=200, gt=0)
 
-    telegram_bot_token: SecretStr | None = None
-    telegram_chat_id: SecretStr | None = None
+    # KBJ P2(설계 §5.10 #42): telegram_bot_token·telegram_chat_id 필드 삭제 — GX 는 텔레그램을 쓰지
+    # 않았고(읽는 곳 없음) 발송·수신은 KBJ notifier 한 곳이다(KBJ_TELEGRAM_*). extra="ignore" 라
+    # .env 에 옛 이름이 남아 있어도 무시한다
 
     @field_validator(
         "kis_app_key",
         "kis_app_secret",
         "krx_api_key",
-        "telegram_bot_token",
-        "telegram_chat_id",
         "database_url",
         mode="before",
     )
@@ -45,9 +45,9 @@ class Settings(BaseSettings):
             return None
         return v
 
-    # 공용 Redis (토큰 캐시·레이트리미터). 없으면 probe 는 파일 캐시로 토큰을 재사용한다
+    # 공용 Redis (토큰 캐시·레이트리미터). 토큰은 KBJ auth 가 Redis 에만 둔다
+    # (KBJ P2 — 파일 캐시 폐지)
     redis_url: str | None = None
-    kis_token_cache_path: Path = Path("state/kis.token.json")  # gitignore: state/, *.token.json
 
     # PostgreSQL + TimescaleDB (PLAN §4.5). 비밀번호가 들어 있어 SecretStr — 쓰는 곳에서만
     # get_secret_value() 로 꺼내고 로그·오류 문구에 싣지 않는다
@@ -62,4 +62,16 @@ class Settings(BaseSettings):
 
     @property
     def kis_base(self) -> str:
-        return KIS_VTS_BASE if self.kis_env == "vts" else KIS_REAL_BASE
+        return base_url(self.kis_env)
+
+    def kis_credentials(self) -> KisCredentials:
+        """KBJ KIS 자격(앱키·시크릿·환경). 앱키가 없으면 ValueError.
+
+        시크릿은 없으면 빈 값 — 읽기 전용 토큰 리더는 앱키만 쓴다."""
+        if self.kis_app_key is None:
+            raise ValueError("KIS_APP_KEY 가 없다")
+        return KisCredentials(
+            app_key=self.kis_app_key,
+            app_secret=self.kis_app_secret or SecretStr(""),
+            env=self.kis_env,
+        )

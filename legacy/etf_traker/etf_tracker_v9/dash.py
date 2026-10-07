@@ -9,14 +9,16 @@ ETF 대시보드 — 집계와 렌더링.
 초소형 ETF가 등락률 상위를 독식해서 순위표가 쓸모없어진다.
 """
 import statistics as st
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, timedelta, timezone
+
+from kbj.core.time import now_kst as _kbj_now_kst
 
 KST = timezone(timedelta(hours=9))
 
 
 def kst_now():
     """컨테이너는 UTC 로 돈다. 한국 시장 데이터에 UTC 시각을 붙이면 9시간 어긋난다."""
-    return datetime.now(KST)
+    return _kbj_now_kst().astimezone(KST)  # KBJ P2(설계 §7.2): 벽시계는 kbj.core.time 한 곳
 
 MIN_MKTCAP = 50.0      # 억원. 이 미만은 순위에서 제외
 MIN_TURN = 1.0         # 억원/일. 거래대금 하한

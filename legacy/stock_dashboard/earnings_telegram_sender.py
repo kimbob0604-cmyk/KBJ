@@ -13,12 +13,11 @@ import sqlite3
 import os
 import json
 import time
-import urllib.request
-import urllib.parse
-import urllib.error
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, Optional
+
+from kbj.services.notifier.client import legacy_send
 
 
 # .env 자동 로드
@@ -34,8 +33,7 @@ def _load_dotenv(p: Path):
 _load_dotenv(Path(__file__).parent / '.env')
 
 DB_PATH = Path(__file__).parent / 'db' / 'dashboard.db'
-TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
-TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '')
+# KBJ P2(설계 §5.9): 봇 토큰·chat id 는 읽지 않는다 — 발송은 KBJ notifier 하나(대기열에 넣기만).
 
 
 def _get_db():
@@ -45,60 +43,22 @@ def _get_db():
 
 
 # ============================================================
-# 1. 텔레그램 발송 (urllib만, 가벼움)
+# 1. 텔레그램 발송 — KBJ notifier 대기열(설계 §5.9 shim)
 # ============================================================
 
 def send_telegram_message(text: str, parse_mode: str = '',
                           disable_preview: bool = True,
                           timeout: int = 30, max_retries: int = 2) -> Dict:
-    """텔레그램 발송. timeout 30s + 지수 백오프 재시도.
-    실패해도 raise 안 하고 결과 dict."""
-    if os.environ.get('TELEGRAM_ENABLED', '1').strip().lower() in ('0', 'false', 'no', 'off'):
-        return {'success': False, 'error': 'TELEGRAM_ENABLED=0 (알림 OFF)'}
-    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
-        return {'success': False, 'error': 'TELEGRAM_BOT_TOKEN/CHAT_ID 미설정'}
+    """텔레그램 발송 — KBJ notifier 대기열에 넣는다. 실패해도 raise 안 하고 결과 dict.
 
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    payload = {
-        'chat_id': TELEGRAM_CHAT_ID,
-        'text': text,
-        'disable_web_page_preview': disable_preview,
-    }
-    if parse_mode:
-        payload['parse_mode'] = parse_mode
-
-    last_error = None
-    for attempt in range(max_retries + 1):
-        if attempt > 0:
-            backoff = 2 ** attempt  # 2초, 4초
-            time.sleep(backoff)
-
-        data = json.dumps(payload).encode('utf-8')
-        req = urllib.request.Request(url, data=data,
-                                      headers={'Content-Type': 'application/json'})
-        try:
-            with urllib.request.urlopen(req, timeout=timeout) as r:
-                resp = json.loads(r.read().decode('utf-8'))
-            if resp.get('ok'):
-                return {'success': True,
-                        'message_id': resp['result'].get('message_id'),
-                        'attempt': attempt + 1}
-            last_error = resp.get('description', 'unknown')
-        except urllib.error.HTTPError as e:
-            body = e.read().decode('utf-8', errors='ignore')
-            if parse_mode and 'parse' in body.lower():
-                payload.pop('parse_mode', None)
-                continue  # plain text로 재시도
-            last_error = f"HTTP {e.code}: {body[:200]}"
-        except (urllib.error.URLError, TimeoutError) as e:
-            last_error = str(e)
-            continue  # 네트워크 timeout → backoff 후 재시도
-        except Exception as e:
-            last_error = str(e)
-            break
-
-    return {'success': False, 'error': last_error,
-            'attempts': max_retries + 1}
+    재시도·parse 오류 시 평문 재전송은 notifier 가 한다(timeout·max_retries 는 받기만 한다).
+    message_id 는 notifier 가 실제로 보낼 때 정해진다 — 여기서는 None(발송 기록은 ops.notify_log).
+    """
+    ok, reason = legacy_send(text, source='sd.earnings', parse_mode=parse_mode or None,
+                             kind='alert.earnings')
+    if ok:
+        return {'success': True, 'message_id': None, 'attempt': 1, 'detail': reason}
+    return {'success': False, 'error': reason, 'attempts': 1}
 
 
 # ============================================================

@@ -73,8 +73,9 @@ def test_heartbeat_names_match_the_services() -> None:
     assert importlib.import_module("services.poller.service").SERVICE == "poller"
     assert importlib.import_module("services.ws_gateway.service").SERVICE == "ws-gateway"
     assert importlib.import_module("services.engine.service").SERVICE == "engine"
-    src = (ROOT / "services" / "auth" / "service.py").read_text(encoding="utf-8")
-    assert 'Heartbeater(redis, "auth"' in src
+    # KBJ P2: auth(토큰 발급)는 KBJ 서비스로 옮겼다(ADR 0004) — 하트비트 이름은 그쪽에서 본다
+    src = (ROOT.parents[1] / "kbj" / "services" / "auth" / "service.py").read_text(encoding="utf-8")
+    assert 'SERVICE: Final = "auth"' in src and "Heartbeater(redis, SERVICE" in src
 
 
 def test_infrastructure_healthchecks_and_one_shot_migrate() -> None:

@@ -19,11 +19,12 @@ ENDPOINTS 표의 path 와 tr_id 는 KIS 문서 기준으로 적은 것이고, �
   1. path·tr_id·응답 키를 전부 표로 뺐다. 틀린 게 있으면 이 표만 고치면 된다.
   2. run.py --check 가 토큰 발급과 각 엔드포인트를 실제로 찔러 보고 결과를 찍는다.
 
-## 토큰
+## 토큰 (KBJ P2 — 설계 §3.8 K3)
 
-접근토큰은 발급 후 24시간 유효하고 **1분에 1회로 발급이 제한된다.** 매 실행마다
-새로 받으면 한도에 걸리므로 state/.kis_token.json 에 캐시한다. 이 파일에는
-토큰이 들어가므로 .gitignore 에 걸려 있어야 한다.
+접근토큰은 발급 후 24시간 유효하고 **1분에 1회로 발급이 제한된다.** 그래서 발급은
+KBJ auth 서비스 한 곳만 하고(ADR 0004), 여기서는 읽기만 한다. 호출은 논리 URL
+`kis:` 를 KBJ 브리지(`kbj.data.legacy_bridge`)가 받아 토큰·앱키·시크릿을 넣고 앱키당
+레이트리미터(초당 4건)를 지킨다. 옛 토큰 파일(state/.kis_token.json)과 발급 코드는 지웠다.
 
 ## 주의
 
@@ -31,17 +32,14 @@ ENDPOINTS 표의 path 와 tr_id 는 KIS 문서 기준으로 적은 것이고, �
 주문·잔고 엔드포인트를 여기에 추가하지 마라.
 """
 import json
-import os
 import re
 import time
 
-from ..engine.config import ROOT
-from . import creds
-from .http import Fetch, get, num, pick, session
+from kbj.data import legacy_bridge
+from kbj.data.legacy_bridge import session
 
-REAL = 'https://openapi.koreainvestment.com:9443'
-VTS = 'https://openapivts.koreainvestment.com:29443'
-TOKEN_CACHE = os.path.join(ROOT, 'state', '.kis_token.json')
+from .http import Fetch, get, num, pick
+
 SOURCE = 'kis'
 
 # path, tr_id, 그리고 응답에서 결과 배열을 꺼낼 키.
@@ -85,70 +83,28 @@ FIELD = dict(
 
 
 def base():
-    return VTS if creds.get('KIS_ENV').lower() == 'vts' else REAL
+    """논리 URL — 실전·모의 주소는 KBJ 설정(KBJ_KIS_ENV)을 브리지가 고른다."""
+    return 'kis:'
 
 
 # ─────────────────────────── 토큰 ───────────────────────────
-def _cached_token():
-    try:
-        with open(TOKEN_CACHE, encoding='utf-8') as f:
-            d = json.load(f)
-        if d.get('expires_at', 0) > time.time() + 600 and d.get('base') == base():
-            return d['access_token']
-    except (OSError, ValueError, KeyError):
-        pass
-    return None
-
-
 def token(force=False):
-    """접근토큰. 24시간 유효하고 발급이 1분 1회로 제한되므로 캐시한다."""
-    if not force:
-        t = _cached_token()
-        if t:
-            return t
-    key = creds.get('KIS_APP_KEY', required=True)
-    sec = creds.get('KIS_APP_SECRET', required=True)
-    s = session()
-    r = s.post(f'{base()}/oauth2/tokenP', timeout=25, json={
-        'grant_type': 'client_credentials', 'appkey': key, 'appsecret': sec})
-    if r.status_code != 200:
-        raise Fetch(f'토큰 발급 실패 HTTP {r.status_code}: {r.text[:200]}')
-    d = r.json()
-    tok = d.get('access_token')
+    """접근토큰 — KBJ auth 가 Redis 에 둔 값을 읽기만 한다(발급하지 않는다, ADR 0004).
+
+    `force` 는 옛 호출 모양을 위해 받기만 한다 — 다시 받기(갱신)는 auth 몫이다.
+    토큰이 없으면 Fetch(사유: auth 대기).
+    """
+    tok = legacy_bridge.access_token_or_none()
     if not tok:
-        raise Fetch(f'토큰이 응답에 없다: {str(d)[:200]}')
-    _save_token(tok, int(d.get('expires_in') or 86400))
+        raise Fetch('KIS 토큰 없음 — KBJ auth 서비스(Redis kis:token) 대기')
     return tok
 
 
-def _save_token(tok, ttl):
-    """임시 파일에 쓰고 원자적으로 바꿔 끼운다.
-
-    예전에는 O_TRUNC 로 열고 바로 썼는데, 그 사이에 다른 프로세스가 읽으면
-    0바이트를 본다. 그러면 _cached_token 이 ValueError 를 삼키고 None 을 돌려
-    **곧바로 재발급으로 간다.** KIS 는 토큰 발급을 1분에 1회로 제한하므로
-    --daily 와 --check 가 겹치면 그날 수급이 통째로 빈다.
-    """
-    os.makedirs(os.path.dirname(TOKEN_CACHE), exist_ok=True)
-    tmp = TOKEN_CACHE + f'.{os.getpid()}.tmp'
-    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    try:
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
-            json.dump(dict(access_token=tok, base=base(),
-                           expires_at=time.time() + ttl), f)
-        os.chmod(tmp, 0o600)          # 기존 파일 권한이 느슨해도 새로 조인다
-        os.replace(tmp, TOKEN_CACHE)
-    finally:
-        if os.path.exists(tmp):
-            os.remove(tmp)
-
-
 def _headers(tr_id):
+    """토큰·앱키·시크릿은 넣지 않는다 — 브리지가 KBJ 값으로 넣는다."""
     return {
-        'authorization': f'Bearer {token()}',
-        'appkey': creds.get('KIS_APP_KEY', required=True),
-        'appsecret': creds.get('KIS_APP_SECRET', required=True),
         'tr_id': tr_id, 'custtype': 'P', 'content-type': 'application/json',
+        legacy_bridge.PRIORITY_HEADER: 'P3',
     }
 
 
@@ -545,11 +501,9 @@ def probe_market_params(market='0001', stop_on_hit=True, log=None):
 
 def probe():
     out = []
-    if not creds.has('KIS_APP_KEY', 'KIS_APP_SECRET'):
-        return [('KIS 앱키', False, 'KIS_APP_KEY / KIS_APP_SECRET 없음')]
     try:
-        t = token()
-        out.append(('KIS 토큰', True, creds.mask(t)))
+        token()
+        out.append(('KIS 토큰', True, '토큰 있음'))   # 값은 앞자리도 찍지 않는다
     except Exception as e:                       # noqa: BLE001
         return out + [('KIS 토큰', False, _why(e))]
     for label, fn in (('시장 수급 코스피', lambda: market_flows('0001')),

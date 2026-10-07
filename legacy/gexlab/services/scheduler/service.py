@@ -41,13 +41,12 @@ from concurrent.futures import Future
 from datetime import date, datetime, timedelta
 from typing import Protocol
 
-import httpx
 from pydantic import ValidationError
 from redis import Redis
 from redis.exceptions import RedisError
 
 from core.calendar import SessionInfo, State, TradingCalendar, state_at
-from data.kis.master import MasterRow, master_text_from_zip, parse_master
+from data.kis.master import MasterRow, http_master_downloader, master_text_from_zip, parse_master
 from data.store import SessionLogRecord
 from services.auth.health import HealthEvent, HealthSink, Severity
 from services.bus import (
@@ -80,10 +79,6 @@ MASTER_RETRY_S = 60.0
 STATE_REFRESH_S = 30.0
 STEP_S = 1.0
 
-MASTER_CONNECT_S = 5.0  # 확인 필요: KIS 배포 서버 응답·파일 크기 미실측 — 보수적으로
-MASTER_READ_S = 15.0
-MASTER_TOTAL_S = 30.0
-MASTER_MAX_BYTES = 32 << 20
 
 MasterDownloader = Callable[[], bytes]
 Submit = Callable[[MasterDownloader], "Future[bytes]"]
@@ -101,38 +96,8 @@ class SchedulerStore(Protocol):
     def flush_spool(self) -> bool: ...
 
 
-def http_master_downloader(
-    *,
-    connect_s: float = MASTER_CONNECT_S,
-    read_s: float = MASTER_READ_S,
-    total_s: float = MASTER_TOTAL_S,
-    max_bytes: int = MASTER_MAX_BYTES,
-    transport: httpx.BaseTransport | None = None,
-    clock: Callable[[], float] = time.monotonic,
-) -> MasterDownloader:
-    """KIS 마스터 zip 을 받는다. 접속·읽기 한 번마다 시간 제한, 전체는 조각 사이에서 total_s 로
-    끊는다(TimeoutError) — 느리게 흘러와도 끝이 있다. 시험은 transport(가짜)를 넣는다."""
-    from scripts.probe_common import MASTER_URL
-
-    timeout = httpx.Timeout(read_s, connect=connect_s)
-
-    def get() -> bytes:
-        deadline = clock() + total_s
-        buf = bytearray()
-        with (
-            httpx.Client(timeout=timeout, transport=transport) as client,
-            client.stream("GET", MASTER_URL) as r,
-        ):
-            r.raise_for_status()
-            for chunk in r.iter_bytes():
-                buf += chunk
-                if len(buf) > max_bytes:
-                    raise ValueError(f"마스터가 {max_bytes}B 보다 크다")
-                if clock() > deadline:
-                    raise TimeoutError(f"마스터 내려받기 {total_s:g}초 초과")
-        return bytes(buf)
-
-    return get
+# KBJ P2(설계 §3.8 K7): http_master_downloader 는 kbj.data.private.kis.master 로 승격했다 —
+# data.kis.master 를 거쳐 다시 내보낸다(배포 주소는 KBJ 모듈에만).
 
 
 def thread_submit(fn: MasterDownloader) -> Future[bytes]:

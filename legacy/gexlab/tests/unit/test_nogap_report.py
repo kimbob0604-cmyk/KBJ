@@ -179,7 +179,7 @@ def test_a_calendar_config_error_is_exit_code_2_not_unmet(
     def broken() -> TradingCalendar:
         raise ValueError("holidays_override.yaml: closed.0.date 형식이 틀렸다\n  input_value=…")
 
-    monkeypatch.setattr("core.calendar._default_calendar", broken)
+    monkeypatch.setattr("kbj.core.calendar._default_calendar", broken)  # KBJ P2: 정본 위치
     store = Store(clean_day(TUE) + clean_day(WED) + clean_day(D28))
     assert main(["--end", "2026-09-28"], store=store) == 2
     err = capsys.readouterr().err

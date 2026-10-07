@@ -114,3 +114,23 @@
 pandas(2.3.3 에서 확인, 3.x 는 미확인), numpy, requests, lxml, beautifulsoup4, PyYAML, openpyxl, matplotlib, fonttools
 (`monitor/flow/chart.py` 가 직접 import), streamlit(`dart-report/app.py` 만), playwright(선택 — kr `test_page`·flow `capture.py`,
 없으면 kr 시험 1건 skip), anthropic(board 패키지 의존. monitor·flowlab 시험이 board 를 import).
+
+## P2. KBJ 정본으로 재배선 (묶음 H, 2026-10-07)
+
+board 는 `board/MIGRATION.md` 'P2' 절. 그 밖:
+
+| 파일 | 바꾼 것 |
+|---|---|
+| `etf_tracker_v9/tracker.py` | `send_telegram` → `legacy_send(…, source="et.etf", kind="etf.report")`(#34 — 분할·429 대기는 notifier), `send_telegram_file` **삭제**(#35 — 부르는 곳 없음), `doctor` 의 getMe·시험 발송 → notifier `webhook_status()`(#36 — 메시지를 보내지 않는다), `prev_trading_day` 는 KBJ 캘린더의 직전 거래일과 DB 마지막 스냅샷을 대조해 다르면 알린다(비교 대상은 DB 스냅샷 그대로) |
+| `etf_tracker_v9/dash.py:kst_now` | `kbj.core.time.now_kst()` 를 같은 고정 오프셋 KST 로(벽시계 한 곳 — 설계 §7.2) |
+| `monitor/flow/telegram.py` | `send_photos` → `legacy_send_media(…, source="et.flow", kind="flows.report")`(#39), `send_report` 본문도 `kind="flows.report"`, 봇 토큰·주소 상수 삭제 |
+| `monitor/flow/kissrc.py` | 메시지만: '발급/캐시 확인' → '토큰 읽기 확인(KBJ auth)'(K5 — 토큰은 board `kis.token()` 이 읽기만) |
+| `monitor/flow/tests/test_run.py::전송.test_토큰이_없으면_실패다` | 단언 하나를 바꿨다: 봇 토큰은 notifier 만 가지므로 `send_photos` 의 관문은 토큰이 아니라 파일이다 — `'TELEGRAM_BOT_TOKEN' in why` → `'없다' in why`(실패 반환 단언은 그대로). 시험 수 129 그대로 |
+| `dart-report/dartreport/client.py` | KBJ `kbj.data.public.dart.client.DartClient` 다시 내보내기 + 옛 생성자 호환(`DartClient(api_key=None, cache_dir='.cache', throttle=0.12, timeout=30)` — throttle 은 공용 리미터가 대신). 키는 인자 또는 `KBJ_DART_API_KEY`. 차이: `DartError.status` 는 HTTP 상태(DART 코드는 `.code`), `disclosures` 는 20쪽을 넘으면 자르지 않고 `DartError` |
+| `flowlab/probe_market_official.py` | **삭제**(KRX OpenAPI 직접 조회 진단 — 설계 §9.4 [제안]. selftest 44 영향 없음) |
+
+남긴 것: `monitor/flow/narrative.py:prev_trading_day` — 리포트 데이터 안의 직전 날짜(데이터가 있는 날)라
+캘린더로 바꾸지 않았다(설계 §7.2 의 ET `trading_days` 와 같은 이유, 시험이 합성 날짜로 고정한다).
+`monitor/kr`(K4)는 board `kis` 를 타므로 코드 변경 없음.
+
+시험: kr 94·flow 129·flowlab 44/44·dart-report built(14·4·9)·etf_tracker_v9 13 모듈 import — P1 과 같다.

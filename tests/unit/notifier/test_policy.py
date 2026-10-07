@@ -80,6 +80,8 @@ def test_legacy_kinds_map_sd_senders(config: NotifyConfig) -> None:
     assert lk["send_closing_market_summary"] == "brief.closing"  # #9
     assert lk["check_alert_rules"] == "alert.rule"  # #12
     assert lk["_watchdog_notify"] == "ops.watchdog"  # #18
+    assert lk["cmd_us_send"] == "board.us"  # ET #29
+    assert lk["send_text"] == "flows.report"  # ET #40
     assert config.legacy_default_kind == "legacy.other"
     assert set(lk.values()) <= set(config.kinds)
 

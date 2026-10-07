@@ -7,7 +7,6 @@ CLAUDE.md 2장 6번(에러를 삼키지 않는다)에 따라 실패는 예외로
 빈 값 + 사유 문자열로 돌려주고, 조용히 None 을 반환하지 않는다.
 """
 import concurrent.futures as cf
-import re
 import time
 
 import requests
@@ -33,79 +32,11 @@ def session(referer=None):
     return s
 
 
-# 쿼리 파라미터로 보내는 인증키. 예외 메시지에 URL 이 통째로 실려 오므로
-# 사유를 만들기 전에 값을 지운다. DART 는 crtfc_key, 공공데이터포털은 serviceKey 다.
-SECRET_PARAMS = ('crtfc_key', 'serviceKey', 'apiKey', 'auth_key', 'AUTH_KEY',
-                 'key', 'token', 'access_token', 'appkey', 'appsecret')
-
-
-def scrub(msg, params=None):
-    """예외 메시지에서 자격증명을 지운다.
-
-    requests 의 연결 예외 메시지에는 **쿼리스트링이 포함된 URL** 이 들어 있다.
-    그대로 사유로 올리면 --check 출력과 run_log 에 인증키가 남는다.
-    """
-    out = str(msg)
-    for k in SECRET_PARAMS:
-        v = (params or {}).get(k)
-        if v:
-            out = out.replace(str(v), '<SECRET>')
-    # 파라미터를 못 받은 경로에서도 URL 안의 키=값 형태를 잘라낸다.
-    return re.sub(r'((?:' + '|'.join(SECRET_PARAMS) + r')=)[^&\s\'"]+',
-                  r'\1<SECRET>', out, flags=re.I)
-
-
-BODY_SNIP = 300
-# 정규식에 물리는 본문 길이 상한. 에러 봉투는 사유를 맨 앞에 담으므로 뒤를
-# 볼 이유가 없고, 상한이 없으면 큰 본문에서 탐색이 길어진다.
-BODY_SCAN = 20_000
-
-# 서버는 사유를 **본문**에 담아 보낸다. 상태코드만 올리면 "HTTP 403" 이 되어
-# 무엇을 해야 하는지 알 수 없다 — 2026-09-01 공공데이터포털 403 이 정확히
-# 그랬다. 인증키는 붙었는데 로그에는 숫자 403 뿐이라 사유를 못 읽었다.
-# CLAUDE.md 2장 6번(에러를 삼키지 않는다)은 상태코드가 아니라 사유를 요구한다.
-#
-# 값 자리는 `[^<\]]*` 하나뿐이다. 같은 구간을 훑는 수량자를 겹치면 안 된다.
-#
-#   `(.*?)`                  닫히지 않은 여는 태그가 여러 개인 본문에서 시작
-#                            위치마다 남은 본문을 끝까지 훑어 O(n²).
-#                            `'<message>' * 20000` 에 물려 돌아오지 않았다.
-#   `\s*(...)[^<\]]*(...)\s*`  앞뒤 `\s*` 가 값 자리와 공백을 나눠 갖는 경우의
-#                            수를 만든다. `'<message>' + ' ' * 300000` 에서
-#                            같은 구간을 세 수량자가 겹쳐 훑어 다시 멈췄다.
-#
-# 값의 앞뒤 공백은 정규식이 아니라 아래에서 strip 으로 턴다.
-_ERR_TAG = re.compile(
-    r'<(returnAuthMsg|returnReasonCode|errMsg|resultMsg|resultCode|message)>'
-    r'(?:<!\[CDATA\[)?([^<\]]*)(?:\]\]>)?</\1>', re.I)
-_ERR_KEY = ('message', 'msg', 'resultMsg', 'error_description', 'error', 'msg1')
-
-
-def why(r):
-    """응답 본문에서 사람이 읽을 사유를 뽑는다. 못 뽑으면 앞부분을 그대로.
-
-    공공데이터포털은 에러일 때 `resultType=json` 을 무시하고 XML 을 준다.
-    그래서 JSON 파서로만 보면 사유가 통째로 사라진다.
-
-    본문이 비어 있으면 빈 문자열이다 — 호출자가 '본문 없음' 을 따로 적는다.
-    사유가 없는데 구분자만 붙으면 무엇이 잘렸는지 헷갈린다.
-    """
-    try:
-        body = (r.text or '')[:BODY_SCAN]
-    except Exception:                                # noqa: BLE001
-        return ''
-    hits = [f'{k}={v.strip()}' for k, v in _ERR_TAG.findall(body) if v.strip()]
-    if hits:
-        return ' '.join(dict.fromkeys(hits))
-    try:
-        js = r.json()
-    except Exception:                                # noqa: BLE001
-        js = None
-    if isinstance(js, dict):
-        for k in _ERR_KEY:
-            if js.get(k):
-                return f'{k}={js[k]}'
-    return ' '.join(body.split())[:BODY_SNIP]
+# 쿼리 파라미터로 보내는 인증키 지우기(`scrub`)와 본문에서 사유 뽑기(`why`)는 KBJ 정본
+# (`kbj.data.http`)을 다시 내보낸다(KBJ P2 — 설계 §1.11 두 벌 금지). 가린 자리는 `***` 다
+# (옛 `<SECRET>`). 정규식 백트래킹 회귀(NoBacktrack)·사유 추출(Why) 시험은 kbj 쪽
+# tests/unit/data/test_http.py 로 옮겼다.
+from kbj.data.http import BODY_SCAN, BODY_SNIP, SECRET_PARAMS, scrub, why  # noqa: E402,F401
 
 
 def get(s, url, params=None, retries=3, backoff=0.8, want='json', timeout=None):

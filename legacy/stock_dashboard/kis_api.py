@@ -1,111 +1,46 @@
 """
 kis_api.py — 한국투자증권 REST API 클라이언트 (데이터 조회 전용)
 
-매매 기능 없음. 토큰·메모리·파일 3중 캐시로 호출 최소화.
-초당 20회 제한 → 18회 임계값에서 자동 sleep.
+매매 기능 없음. 메모리·파일 캐시로 호출 최소화.
+
+KBJ P2(설계 §3.8 K1): 토큰을 여기서 발급하지 않는다. 접근토큰은 KBJ auth 서비스가 Redis 에 두고,
+이 모듈은 `kbj.data.legacy_bridge`(이름 `requests` 로 끼웠다)로 읽기만 한다. 주소는 논리 URL
+`kis:`·`kis-master:` — 브리지가 앱키·시크릿·토큰을 넣고 앱키당 레이트리미터(초당 4건, KBJ 정본)를
+지킨다. 옛 토큰 파일 캐시(`cache/kis_token.json`)와 자체 리미터(초당 18회)는 지웠다.
+장중 판정은 KBJ 캘린더(`kbj.core.calendar_compat`), 시각은 `kbj.core.time.now_kst`.
 """
 from __future__ import annotations
-import os
 import json
 import time
-import threading
 import logging
 from pathlib import Path
 from datetime import datetime
 
-import requests
+from kbj.core.calendar_compat import is_kr_regular_hours
+from kbj.core.time import now_kst
+from kbj.data import legacy_bridge as requests
 
 log = logging.getLogger(__name__)
 
-KIS_BASE = "https://openapi.koreainvestment.com:9443"
+KIS_BASE = "kis:"
 BASE_DIR = Path(__file__).parent
 CACHE_DIR = BASE_DIR / "cache"
 
-# ── 토큰 (24시간 유효, 발급 빈도 제한 1분/회) ─────────────
-_token_lock = threading.Lock()
-_token_cache: dict = {"token": None, "expires": 0}
-_TOKEN_FILE = CACHE_DIR / "kis_token.json"
 
-
-def _load_token_from_disk():
-    if not _TOKEN_FILE.exists():
-        return
-    try:
-        d = json.loads(_TOKEN_FILE.read_text(encoding="utf-8"))
-        if d.get("token") and time.time() < d.get("expires", 0) - 300:
-            _token_cache["token"] = d["token"]
-            _token_cache["expires"] = d["expires"]
-    except Exception:
-        pass
-
-
-def _save_token_to_disk():
-    try:
-        CACHE_DIR.mkdir(exist_ok=True)
-        _TOKEN_FILE.write_text(json.dumps(_token_cache), encoding="utf-8")
-    except Exception:
-        pass
-
-
+# ── 토큰 (KBJ auth 가 발급 — 여기서는 읽기만) ─────────────
 def _get_token() -> str | None:
-    with _token_lock:
-        if _token_cache["token"] and time.time() < _token_cache["expires"] - 300:
-            return _token_cache["token"]
-        if _token_cache["token"] is None:
-            _load_token_from_disk()
-            if _token_cache["token"] and time.time() < _token_cache["expires"] - 300:
-                return _token_cache["token"]
-        key = os.getenv("KIS_APP_KEY")
-        secret = os.getenv("KIS_APP_SECRET")
-        if not key or not secret:
-            log.warning("[KIS] APP_KEY/SECRET 미설정")
-            return None
-        try:
-            r = requests.post(f"{KIS_BASE}/oauth2/tokenP", json={
-                "grant_type": "client_credentials",
-                "appkey": key, "appsecret": secret,
-            }, timeout=10)
-            d = r.json()
-            tok = d.get("access_token")
-            if tok:
-                _token_cache["token"] = tok
-                _token_cache["expires"] = time.time() + int(d.get("expires_in", 86400))
-                _save_token_to_disk()
-                log.info("[KIS] 토큰 발급 (만료까지 %d초)", d.get("expires_in", 0))
-                return tok
-            log.warning("[KIS] 토큰 응답 이상: %s", d)
-        except Exception as exc:
-            log.warning("[KIS] 토큰 발급 실패: %s", exc)
-        return None
+    return requests.access_token_or_none()
 
 
 def _headers(tr_id: str) -> dict | None:
-    tok = _get_token()
-    if not tok:
+    """토큰이 없으면 None(호출자가 빈 결과로 끝낸다 — 기존 동작). 토큰·앱키는 브리지가 넣는다."""
+    if not _get_token():
         return None
     return {
         "Content-Type": "application/json; charset=utf-8",
-        "authorization": f"Bearer {tok}",
-        "appkey": os.getenv("KIS_APP_KEY", ""),
-        "appsecret": os.getenv("KIS_APP_SECRET", ""),
         "tr_id": tr_id,
+        "x-kbj-priority": "P3",
     }
-
-
-# ── 레이트 리밋 (초당 20회 제한, 18회 임계값) ─────────────
-_rate_lock = threading.Lock()
-_rate_calls: list = []
-
-
-def _rate_limit():
-    with _rate_lock:
-        now = time.time()
-        _rate_calls[:] = [t for t in _rate_calls if now - t < 1.0]
-        if len(_rate_calls) >= 18:
-            sleep_t = 1.0 - (now - _rate_calls[0]) + 0.05
-            if sleep_t > 0:
-                time.sleep(sleep_t)
-        _rate_calls.append(time.time())
 
 
 # ── 메모리 + 파일 캐시 ─────────────────────────────
@@ -144,11 +79,7 @@ def _set_cache(key: str, data):
 
 
 def _is_kr_market_hours() -> bool:
-    now = datetime.now()
-    if now.weekday() >= 5:
-        return False
-    t = now.hour * 100 + now.minute
-    return 900 <= t <= 1530
+    return is_kr_regular_hours(now_kst())
 
 
 # ── 분봉 (장중 60s, 장외 1h) ─────────────────────
@@ -161,12 +92,11 @@ def get_minute_chart(code: str, interval: int = 1) -> list:
     h = _headers("FHKST03010200")
     if not h:
         return []
-    _rate_limit()
     p = {
         "FID_ETC_CLS_CODE": "",
         "FID_COND_MRKT_DIV_CODE": "J",
         "FID_INPUT_ISCD": code,
-        "FID_INPUT_HOUR_1": datetime.now().strftime("%H%M%S"),
+        "FID_INPUT_HOUR_1": _now_kst().strftime("%H%M%S"),
         "FID_PW_DATA_INCU_YN": "Y",
     }
     try:
@@ -216,7 +146,6 @@ def get_orderbook(code: str) -> dict | None:
     h = _headers("FHKST01010200")
     if not h:
         return None
-    _rate_limit()
     p = {"FID_COND_MRKT_DIV_CODE": "J", "FID_INPUT_ISCD": code}
     try:
         r = requests.get(
@@ -242,7 +171,7 @@ def get_orderbook(code: str) -> dict | None:
             "asks": asks, "bids": bids,
             "total_ask_qty": int(out1.get("total_askp_rsqn") or 0),
             "total_bid_qty": int(out1.get("total_bidp_rsqn") or 0),
-            "timestamp": datetime.now().strftime("%H:%M:%S"),
+            "timestamp": _now_kst().strftime("%H:%M:%S"),
         }
         if asks or bids:
             _set_cache(key, result)
@@ -261,7 +190,6 @@ def get_investor_trading(code: str) -> list:
     h = _headers("FHKST01010900")
     if not h:
         return []
-    _rate_limit()
     p = {"FID_COND_MRKT_DIV_CODE": "J", "FID_INPUT_ISCD": code}
     try:
         r = requests.get(
@@ -301,7 +229,6 @@ def get_price_detail(code: str) -> dict | None:
     h = _headers("FHKST01010100")
     if not h:
         return None
-    _rate_limit()
     p = {"FID_COND_MRKT_DIV_CODE": "J", "FID_INPUT_ISCD": code}
     try:
         r = requests.get(
@@ -358,14 +285,13 @@ def get_price_detail(code: str) -> dict | None:
 #     futs_oprc 시가 · futs_hgpr 고가 · futs_lwpr 저가 · futs_prpr 현재가(마감 뒤엔 종가)
 #     futs_prdy_vrss/futs_prdy_ctrt 전일 대비 · hts_otst_stpl_qty 미결제약정
 #     otst_stpl_qty_icdc 미결제약정 증감 · acml_vol 거래량 · futs_last_tr_date 최종거래일
-FO_MASTER_URL = "https://new.real.download.dws.co.kr/common/master/fo_idx_code_mts.mst.zip"
+FO_MASTER_URL = "kis-master:fo_idx_code_mts.mst.zip"  # 브리지가 KBJ 마스터 내려받기로
 _fut_master_cache: dict = {"date": None, "contracts": None}
 
 
 def _now_kst() -> datetime:
-    # Render 는 UTC 로 돈다. 날짜 경계·as_of 는 KST 로 잡는다.
-    from datetime import timezone, timedelta
-    return datetime.now(timezone(timedelta(hours=9)))
+    # Render 는 UTC 로 돈다. 날짜 경계·as_of 는 KST 로 잡는다(KBJ 벽시계 한 곳).
+    return now_kst()
 
 
 def _kospi200_futures_contracts() -> list:
@@ -418,9 +344,8 @@ def get_kospi200_futures(n: int = 2) -> dict:
     for order, code, name in master[:n]:
         h = _headers("FHMIF10000000")
         if not h:
-            result["error"] = "KIS 토큰 없음 (APP_KEY/SECRET 확인)"
+            result["error"] = "KIS 토큰 없음 (KBJ auth 서비스·KBJ_REDIS_URL 확인)"
             return result
-        _rate_limit()
         try:
             r = requests.get(
                 f"{KIS_BASE}/uapi/domestic-futureoption/v1/quotations/inquire-price",

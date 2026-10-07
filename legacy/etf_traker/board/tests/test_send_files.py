@@ -3,23 +3,9 @@ import os
 import unittest
 
 from .. import run as R
-from ..report import telegram as TG
 
 
-class SendDocumentTest(unittest.TestCase):
-
-    def test_missing_file_is_an_error_not_silence(self):
-        ok, why = TG.send_document('/없는/파일.html', token='t', chat_id='c')
-        self.assertFalse(ok)
-        self.assertIn('없다', why)
-
-    def test_missing_creds_named(self):
-        ok, why = TG.send_document(__file__, token=None, chat_id=None)
-        # 자격증명이 환경에 있으면 이 시험은 성립하지 않는다 — 건너뛴다.
-        if os.environ.get('TELEGRAM_BOT_TOKEN'):
-            self.skipTest('실자격증명이 있는 환경')
-        self.assertFalse(ok)
-        self.assertIn('TELEGRAM_BOT_TOKEN', why)
+# KBJ P2: SendDocumentTest(2개)는 tests/unit/notifier/test_telegram_api.py 로 승격했다 — 같은 단언이 kbj 쪽에서 돈다(MIGRATION.md P2).
 
 
 class SendFilesTest(unittest.TestCase):

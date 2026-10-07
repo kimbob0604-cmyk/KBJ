@@ -1,6 +1,7 @@
 # KBJ P2 설계서 — 공용 기반 일원화
 
-- 작성: 2026-10-06. 상태: **설계(구현 전)**. 대상 단계: `docs/PLAN.md` §8 P2.
+- 작성: 2026-10-06. 상태: **구현 완료(P2, 2026-10-07 — 로컬 통과, CI 확인 대기)**. 대상 단계: `docs/PLAN.md` §8 P2(결과 수치는 그 절).
+- **메인 결정(2026-10-07)으로 닫은 것**: D1 앱키는 KIS REST 를 부르는 프로세스에도, 발급은 세 겹으로 auth 에만(§3.6·R1 — ADR 0004) · D2 KIS 웹소켓 연결은 P7 까지 legacy GX 기준선 그룹, 접속키 발급은 auth 만(D-P2-4·R2) · D3 하루 시뮬레이션은 **24시간 창**, 단언은 "어떤 23시간 구간에도 접근토큰 발급 ≤ 1"(D-P2-3·R17·§10.3) · D4 FastAPI·uvicorn 은 P3, P2 웹훅은 순수 처리 함수(R8) · D5 KRX 일 상한 8,000 [확인 필요] + 실측 체크리스트(R9) · D6 네이버 어댑터 없음(D-P2-1) · D7 거래대금·투자자별 순매수·ETF 수급 논리 데이터셋 등록(`docs/metrics.md`) · 지연 개장 `late_open`(R24 — §7.1). 아래 본문에서 각 자리에 **[결정 Dn]** 으로 표시했다. 구현이 설계와 다르게 정한 것은 ADR 0004~0007 과 각 절의 '구현 메모'에 있다.
 - 기준 문서: 정본 지정 `docs/conflict_map.md`(이 설계의 기준), 등급 `docs/DATA_TIERS.md`, 결정 `docs/adr/0001~0003`, 일정·발송·DB·환경변수 표 `docs/inventory.md` (c)(d)(e)(f), 공공데이터 명세 `docs/probe_results.md`, 비밀 이름표 `docs/secrets.md`, 뼈대(`kbj/config/settings.py`, `kbj/core/quality.py`·`masking.py`, `kbj/store/migrations/0001_schemas.sql`, `pyproject.toml` 의 `[tool.importlinter]`).
 - 원본 줄 번호: 읽기 전용 스냅샷 `/home/user/p0src` 기준 — SD=stock-dashboard `f46178c`, ET=etf-traker `0014f57`, GX=gexlab `43a9ed1`. 이 설계를 쓰는 동안 `legacy/` 이식(P1)이 진행 중이었다(그때 `legacy/` 에는 `gexlab` 만 있었다). legacy 경로는 이식 후 경로(`legacy/stock_dashboard/…`, `legacy/etf_traker/board/…`, `legacy/gexlab/…`)로 적었다. P1 은 경로·import 만 고치므로 줄 번호는 같거나 몇 줄 밀린다 **[추정]** — H 묶음이 시작할 때 다시 찾는다.
 - 표기: **[추정]** = 코드로 끝까지 확인하지 못함, **[확인 필요]** = 실측·결정 전의 기본값, **[제안]** = 이 설계의 권고, ⚠ = 충돌·위험.
@@ -20,7 +21,7 @@
 | 어댑터: KIS REST(+마스터 내려받기), KRX, DART, ECOS, KOSIS, 공공데이터포털(관세청·금투협 종합통계·금융위 시세) | 네이버 어댑터(U4 — PLAN §8 P2 목록에서 뺀다), FRED·Yahoo·RSS·ETF 운용사(P5) |
 | `kbj/core/calendar`(GX `core.calendar` 승격 + XNYS·주식 정규장) | GEX 엔진·poller·ws-gateway·recorder 승격(P7 — 그때까지 legacy GX) |
 | `kbj/services/notifier` — 발송(outbox)·웹훅 수신·명령 분배·인박스·발송 기록 | 수집 결과를 쌓는 collectors 대부분(P3~P6) — P2 는 `filings.corp_code`·`ops.watchdog` 두 개만 |
-| `kbj/services/scheduler` — 세션 상태 머신 + **작업 등록부** `config/jobs.yaml` + 실행기 + 데이터 키 선점(claim) | FastAPI 로그인 API(P3) — notifier 웹훅만 P2 |
+| `kbj/services/scheduler` — 세션 상태 머신 + **작업 등록부** `config/jobs.yaml` + 실행기 + 데이터 키 선점(claim) | FastAPI 로그인 API·웹훅 HTTP 서버(P3) — **[결정 D4]** P2 웹훅은 순수 처리 함수만(요청 dict → 응답), `fastapi`·`uvicorn` 의존성 없음 |
 | DB: 0002~0006 마이그레이션(P2 표), 적용기(GX `db/migrate.py` 승격), SQLite·JSON → Postgres 이관 스크립트(멱등·검증) | P3 이후 표(보드·공시·재무·매크로·무역·ETF·알림 규칙·저널) — 목록과 매핑만 정해 둔다 |
 | legacy 재배선: KIS·KRX·DART 직접 호출 0, 텔레그램 발송 7벌 → shim 하나, legacy 휴장 판정 → 캘린더 | legacy 텔레그램·ECOS·data.go.kr·네이버 호출의 **완전 제거**(기준선 파일로 줄여 간다) |
 | `scripts/check_canonical.py` + import-linter 계약 추가 + 하루 운영 시뮬레이션 `tests/sim` | 운영 VM 전환(옛 발급자 정지·setWebhook 이전) — 사용자 작업(§3.8 K10, §5.11) |
@@ -32,7 +33,7 @@
 | legacy 가 **KIS** 를 직접 부르면 검사가 실패한다 | `scripts/check_canonical.py` 그룹 `kis_oauth`·`kis_rest`·`kis_master` 가 legacy 에서 0건(기준선 없음, 한 건이라도 생기면 종료 코드 1). import-linter 계약 ④(발급 모듈은 auth 밖 import 금지) | H, I |
 | legacy 가 **KRX**·**DART** 를 직접 부르면 실패한다 | 같은 검사 그룹 `krx_api`·`dart` 0건 | H, I |
 | (+텔레그램·ECOS·data.go.kr) | 그룹 `telegram`·`ecos`·`datago`·`kosis`·`naver`·`krx_scrape`·`kis_ws` 는 **줄어들기만 하는 기준선**(`scripts/canonical_baseline.txt`) — 새 위반·건수 증가는 실패 | I |
-| 하루 운영 시뮬레이션(가짜 시계)에서 **토큰 발급 1회** | `tests/sim/test_one_day.py`: 가짜 KIS 의 `token_posts == 1`(창 2026-10-06 05:00 ~ 10-07 04:00 KST, §10.3) | I |
+| 하루 운영 시뮬레이션(가짜 시계)에서 **토큰 발급 1회** | **[결정 D3]** `tests/sim/test_one_day.py`(창 2026-10-06 05:00 ~ 10-07 05:00 KST, 24시간 — §10.3): 모든 발급은 auth 에서만, auth 밖 소비자의 발급 0, **어떤 23시간 구간에도 접근토큰 발급 ≤ 1**(창 안 발급은 05:00 첫 발급과 다음 날 04:00 만료 60분 전 갱신 2회 — 간격 23시간) | I |
 | **중복 수집 0건** | 같은 시험: 데이터 키 `(source, dataset, as_of)` 마다 성공 수집 1회(`ops.data_claim` 충돌 0, 가짜 서버 요청 목록 대조), 등록부 정적 검사(같은 데이터셋을 두 작업이 갖지 않음) | F, I |
 
 ### 0.3 PLAN·앞 문서와 달라지는 점 (이 설계가 정한 것)
@@ -40,9 +41,9 @@
 | # | 내용 | 이유 |
 |---|---|---|
 | D-P2-1 | P2 어댑터에서 **네이버 제외** | U4. PLAN §8 P2 문구("어댑터: KRX, DART, 네이버…")보다 ADR 0001 이 뒤에 확정됐다 |
-| D-P2-2 | KIS **앱키·시크릿은 KIS REST 를 부르는 프로세스에도 필요**하다(모든 REST 요청 헤더에 `appkey`·`appsecret`) → "앱키는 auth 컨테이너에만"(conflict_map §1.1 이행 1번·secrets.md)은 그대로 지킬 수 없다 | GX:`data/kis/rest.py:_send`(헤더), ET:`board/ingest/kis.py:_headers`:146, SD:`kis_api.py:_headers`:82. 발급 차단은 **코드 구조**로 한다(§3.6) **[확인 필요: 사용자 확인]** |
-| D-P2-3 | 시뮬레이션의 "하루"는 **23시간 창**(05:00 → 다음 날 04:00 KST) | 토큰 수명 24시간·만료 60분 전 갱신이라 24시간 창에는 발급이 1~2회 걸린다(§10.3) |
-| D-P2-4 | KIS **웹소켓 호스트**(`ops.koreainvestment.com`)는 P7 까지 기준선 그룹 | ws-gateway 는 GX legacy 로 남는다(P7 승격). 접속키는 이미 auth 의 Redis 값을 읽기만 한다(GX `services/ws_gateway/client.py:250`) **[확인 필요: PLAN 기준의 'KIS'를 REST·토큰으로 읽어도 되는지]** |
+| D-P2-2 | KIS **앱키·시크릿은 KIS REST 를 부르는 프로세스에도 필요**하다(모든 REST 요청 헤더에 `appkey`·`appsecret`) → "앱키는 auth 컨테이너에만"(conflict_map §1.1 이행 1번·secrets.md)은 그대로 지킬 수 없다 | GX:`data/kis/rest.py:_send`(헤더), ET:`board/ingest/kis.py:_headers`:146, SD:`kis_api.py:_headers`:82. 발급 차단은 **코드 구조**로 한다(§3.6) — **[결정 D1] 안 A 확정**(ADR 0004, secrets.md §4) |
+| D-P2-3 | ~~시뮬레이션의 "하루"는 23시간 창~~ → **[결정 D3] 24시간 창**(05:00 → 다음 날 05:00 KST). 단언은 "어떤 23시간 구간에도 접근토큰 발급 ≤ 1" — 23시간 창 시험은 따로 만들지 않는다 | 토큰 수명 24시간·만료 60분 전 갱신이라 24시간 창에는 발급이 2회(05:00·다음 날 04:00) 걸린다. 갱신이 정상 동작한다는 것도 같은 시험이 보인다(§10.3) |
+| D-P2-4 | KIS **웹소켓 호스트**(`ops.koreainvestment.com`)는 P7 까지 기준선 그룹 | ws-gateway 는 GX legacy 로 남는다(P7 승격). 접속키는 이미 auth 의 Redis 값을 읽기만 한다(GX `services/ws_gateway/client.py:250`) — **[결정 D2] 확정**: 연결 코드는 P7 까지 legacy GX(`check_canonical` 기준선 그룹 `kis_ws`, 지금 `legacy/gexlab/config/kis_ws.yaml` 4줄), 접속키 **발급**은 지금부터 auth 만 |
 | D-P2-5 | GX 스케줄러의 GEX 단계(마스터·KRX 파생 일별·분봉·무결측·개장 확인)는 legacy GX 에 두고, 등록부에는 `runner: external` 로 **데이터 키만** 등록 | 그 단계들은 GX `Scheduler.step`(GX:`services/scheduler/service.py:187`) 안에 얽혀 있다. 키만 먼저 등록해 두면 다른 작업이 같은 데이터를 받는 것을 P2 부터 막는다 |
 | D-P2-6 | legacy 가 KBJ 어댑터를 쓰는 길은 **논리 URL 브리지**(`kbj/data/legacy_bridge.py`) 하나 | legacy 파일마다 호출 구조를 바꾸지 않고 "주소 상수 + 세션/`requests` 이름" 몇 줄만 고친다(§3.7) |
 
@@ -122,11 +123,13 @@
 | `outbox.py` | 신규 | `OutboundMessage(kind, text \| None, document: Path \| None, media: tuple[Path, ...], as_of, subject, chat \| None, thread_id \| None, parse_mode, source)` · `Outbox(redis, *, now)` `.put(msg) -> NotifyTicket`(중복 키 `SET NX` + `XADD notify:outbox`), `.read(consumer, n) -> list`, `.ack(msg_id)` | redis | 새로: `test_outbox.py`(fakeredis — 같은 키 두 번 → 두 번째 `duplicate`) |
 | `client.py`(공용 shim) | SD:`server.py:send_telegram`:5205·`send_telegram_long`:5273, SD:`earnings_telegram_sender.py:send_telegram_message`:51, ET:`board/report/telegram.py:send`:779·`send_document`:822, ET:`etf_tracker_v9/tracker.py:send_telegram`:395, ET:`monitor/flow/telegram.py:send_photos`:36 — **7벌의 대체** | `notify(text, *, kind, as_of=None, subject=None, parse_mode="HTML", silent=False, source) -> NotifyTicket` · `notify_document(path, caption="", *, kind, ...)` · `notify_media(paths, caption="", *, kind, ...)` · **`legacy_send(text, *, source, parse_mode="HTML", kind=None, numbered=False) -> tuple[bool, str]`**(ET 식 반환) · `legacy_send_document(path, caption="", *, source, kind=None)` · `legacy_send_media(paths, caption="", *, source, kind=None)` · `webhook_status() -> dict` · `NotifyTicket(ok, id, reason, duplicate)` | `.outbox`, `.policy` | 새로: `test_client_shim.py`(legacy 반환 모양 그대로, 꺼짐 모드 사유, Redis 없음 → `(False, 사유)`) |
 | `service.py`, `__main__.py` | 신규 | `NotifierService(outbox, api, policies, store, settings, *, now, limiter)` `.drain_once() -> int`, `.health() -> dict` · `run(service, stop, *, step_s=1.0, clock, wait)` · `python -m kbj.services.notifier [run \| setup-webhook \| webhook-info]` | `.telegram_api`, `.store`, `kbj.data.ratelimit` | 새로: `test_service.py`(꺼짐 → `suppressed`, 켜짐 → 가짜 텔레그램 1회, 실패 → 재시도·`failed`) |
-| `webhook.py` | SD:`server.py:api_telegram_webhook`:5860(시크릿 헤더·소유자 chat), `_telegram_setup_webhook`:5882 | `router`(FastAPI `APIRouter`) — `POST /telegram/webhook` · `handle_update(update: dict, secret_header: str \| None) -> WebhookResult`(순수 처리) · `build_app(settings) -> FastAPI` | fastapi **[제안 — S0 에서 의존성 추가]** | 새로: `test_webhook.py`(시크릿 `hmac.compare_digest`, 허용 chat, `update_id` 중복, 명령/인박스 갈래) |
+| `webhook.py` | SD:`server.py:api_telegram_webhook`:5860(시크릿 헤더·소유자 chat), `_telegram_setup_webhook`:5882 | **[결정 D4]** `WebhookHandler.handle(요청 dict) -> WebhookResult`(순수 처리 — 시크릿·`update_id` 중복·`notify:inbound` XADD 를 Lua 한 번에). `router`·`build_app`(FastAPI)은 P3 API 가 이 함수를 감싼다 | — (fastapi 넣지 않음) | 새로: `test_webhook.py`(시크릿 `hmac.compare_digest`, 허용 chat, `update_id` 중복, 명령/인박스 갈래) |
 | `commands.py` | SD:`server.py:_handle_telegram_command`:5823·`_tg_help`·`_tg_cmd_price`·`_tg_cmd_flow`·`_resolve_kr_code` | `CommandRegistry.register(name, aliases, handler, *, phase)` · `.dispatch(text, chat_id, thread_id) -> Reply` · 내장: `/도움`(help·start·명령) — P2 동작, 나머지는 '준비 중(Pn)' 답(§5.7) | `.client` | 새로: `test_commands.py`(`@봇이름` 접미사, 모르는 명령, 인자 없음) |
 | `inbox.py`, `store.py` | ET:`board/ingest/tg_inbox.py`(`_norm_ids`:87, `_allow_sets`:102, `_chat_allowed`:117, `extract_urls`:173, `is_x_url`:204, `x_ids_and_author`:218, `_forward_name`:232, `parse_update`:266, `oembed`:308, `fill_oembed`:333, `merge`:410) | `parse_update(up) -> InboxItem \| None`(ET 계약 그대로) · `extract_urls(text, entities)` · `x_ids_and_author(urls)` · `fill_oembed(item, client)` · `InboxStore.upsert(items)` · **`read_items(chat_ids, since) -> dict`**(ET `state/inbox.json` 모양 그대로 — legacy ET 가 읽는다) · `NotifyLogStore.record(...)` | psycopg, httpx(oEmbed) | 옮김: ET `test_tg_inbox.py` 39개 중 27개(Links 9·Whitelist 4·DedupExpiry 4·OEmbed 7·Other 3). 버림 12개(Paging 4·Webhook 3·CmdInboxExit 2·ChatIdsFromCreds 1·파일 손상 2 — getUpdates·파일 저장 폐지) |
 
 ### 1.7 F — scheduler + 작업 등록부
+
+> 구현 메모: API 가 아래 표와 조금 다르다 — `JobRunner.tick(now)`(+`runs`·`catalog` 인자), `JobContext(run_id, attempt, keys, resources)`, `ClaimStore.complete·fail(…, now)`. 등록부가 §6.7 과 다르게 정한 것은 ADR 0006 §3.
 
 | kbj 최종 경로 | 승격 원본 | 공개 API | 의존 | 테스트 |
 |---|---|---|---|---|
@@ -264,7 +267,7 @@
 | 앱키·시크릿 오류(4xx) | 61초 간격으로만 다시(폭주 없음) | `TokenUnavailable` | critical `auth_credentials_rejected` |
 | 토큰 만료·없음 | 즉시 발급 시도 | 만료 1분 전까지 쓰고, 그 뒤 `TokenUnavailable` — **발급하지 않는다** | — |
 | KIS 가 토큰 거절(`EGW00121`·`EGW00123`) | 아래 가드 | `invalidate()` 후 1회 재시도(GX:`rest.py:get`) | — |
-| ⚠ 거절 폭주 | **가드 [제안]**: `invalidate()` 는 키를 지우지 않고 `kis:token:rejected` 에 신고만 한다. auth 는 같은 토큰에 대한 신고를 한 번만 처리하고, 발급 10분 안에 거절 신고가 오면 다시 발급하지 않고 critical `token_rejected_after_issue` | 신고 후 다음 step(≤30초+61초) 뒤 새 토큰 | GX 는 `discard`(:352)로 키를 지운다 — 고장 난 호출자 하나가 하루 1,400번 발급을 일으킬 수 있다 **[추정 상한 = 86,400 ÷ 61]** |
+| ⚠ 거절 폭주 | **가드(구현 — ADR 0004 §4.3: '한 번 처리하면 닫는' 대신 '값이 바뀔 때까지 걸려 있는' 방식)**: `invalidate()` 는 키를 지우지 않고 `kis:token:rejected` 에 신고만 한다. auth 는 같은 토큰에 대한 신고를 한 번만 처리하고, 발급 10분 안에 거절 신고가 오면 다시 발급하지 않고 critical `token_rejected_after_issue` | 신고 후 다음 step(≤30초+61초) 뒤 새 토큰 | GX 는 `discard`(:352)로 키를 지운다 — 고장 난 호출자 하나가 하루 1,400번 발급을 일으킬 수 있다 **[추정 상한 = 86,400 ÷ 61]** |
 
 ### 3.5 읽기 전용 클라이언트 API (발급하지 않는다)
 
@@ -278,13 +281,13 @@
 
 발급 경로가 없다는 것은 세 겹으로 지킨다: ① 발급자 클래스는 `kbj/services/auth/issuer.py` 에만 있고 import-linter 계약 ④가 auth 밖 import 를 막는다(§9.6) ② `oauth2/tokenP`·`oauth2/Approval` 문자열은 `kbj/services/auth/**` 밖에서 `check_canonical` 이 실패시킨다 ③ 런타임 가드 — `Settings.service`(신규, `KBJ_SERVICE`)가 `auth` 가 아니면 `KisTokenIssuer.__init__` 이 `RuntimeError` **[제안]**.
 
-### 3.6 앱키 주입 범위 ⚠ [확인 필요]
+### 3.6 앱키 주입 범위 — [결정 D1] 안 A 확정 (ADR 0004)
 
 KIS REST 는 **모든 요청 헤더에 `appkey`·`appsecret`** 이 들어간다(GX:`data/kis/rest.py:_send` 헤더, ET:`board/ingest/kis.py:_headers`:146, SD:`kis_api.py:_headers`:82). 그래서 "`KBJ_KIS_APP_KEY` 는 services.auth 만 읽는다"(`docs/secrets.md` 표, conflict_map §1.1 이행 1번 "auth 컨테이너에만 주입")는 그대로 지킬 수 없다. GX 도 compose 의 모든 앱 서비스에 `.env` 를 통째로 넣는다(GX:`docker-compose.yml:24` `env_file`).
 
 | 안 | 내용 | 장단점 |
 |---|---|---|
-| **A(권고, P2)** | 앱키·시크릿을 KIS REST 를 부르는 프로세스(auth, scheduler 실행기·collectors, legacy GX poller·ws-gateway)에 주입. **발급** 차단은 §3.5 세 겹으로 | 지금 구조 그대로. secrets.md "읽는 곳" 칸을 "발급: services.auth 만 / 요청 헤더: kbj.data.private.kis" 로 고쳐야 한다(이 설계는 다른 파일을 고치지 않는다 — S0 가 고친다) |
+| **A(채택 — 결정 D1)** | 앱키·시크릿을 KIS REST 를 부르는 프로세스(auth, scheduler 실행기·collectors, legacy GX poller·ws-gateway)에 주입. **발급** 차단은 §3.5 세 겹으로 | 지금 구조 그대로. secrets.md "읽는 곳" 칸은 "발급: services.auth 만 / 요청 헤더: kbj.data.private.kis" 로 고쳤다(secrets.md §1·§4). compose 는 P2 에 KIS 를 부르는 서비스가 auth 하나라 앱키를 auth 에만 넣었다 — KIS 수집 작업이 켜지는 P3 에 scheduler 에도 더한다 |
 | B | auth 가 KIS REST 프록시까지 맡아(내부 HTTP) 앱키를 auth 에만 둔다 | 지연·장애 단일점, 레이트리미터·재시도·EGW00201 처리를 auth 로 모아야 한다 — P7 이후 재검토 |
 | C | 앱키 2개(발급용·조회용) | 토큰은 앱키별이라 조회용 앱키 토큰을 따로 발급해야 한다 — "발급 1곳" 은 지키지만 앱키 공유(U1)와 어긋난다 |
 
@@ -309,11 +312,11 @@ legacy 는 "주소 상수 + `requests`/세션"으로 부른다. 주소 상수를
 | # | 지점(원본 줄) | 교체 방법(legacy 파일·함수) | 확인 |
 |---|---|---|---|
 | K1 | SD:`kis_api.py:_get_token`:50(`POST …/oauth2/tokenP`:64), 캐시 `_TOKEN_FILE`:28·`_load_token_from_disk`:30·`_save_token_to_disk`:42 | `legacy/stock_dashboard/kis_api.py`: `import requests`(:16) → `from kbj.data import legacy_bridge as requests`; `KIS_BASE`(:20) → `"kis:"`; `_get_token` 본문 → `return requests.access_token_or_none()`; :24~48 토큰 캐시 코드 삭제; `_rate_limit`:100 과 호출 5곳(:164·:219·:264·:304·:423) 삭제(리미터는 브리지); `FO_MASTER_URL`:361 → `"kis-master:fo_idx_code_mts.mst.zip"`. `_headers`:82 는 토큰이 없으면 `None`(호출자가 빈 결과로 끝내는 기존 동작 유지) | `grep oauth2/tokenP` 0, SD 검사 스크립트 9/10 그대로 |
-| K2 | ET:`board/tools/dashboard_brief_preview.py:build`(SD `server.py` 함수를 `exec`) | **파일 삭제**(conflict_map §1.1 이행 4번). 워크플로 사본 `legacy/etf_traker/.github/workflows/dashboard-brief-preview.yml` 은 실행되지 않지만 같이 삭제 **[확인 필요: ET `test_workflow_modes` 가 워크플로 목록을 세는지]** | ET 1,319 녹색 |
+| K2 | ET:`board/tools/dashboard_brief_preview.py:build`(SD `server.py` 함수를 `exec`) | **파일 삭제**(conflict_map §1.1 이행 4번). 워크플로 사본 `dashboard-brief-preview.yml` 은 P1 에서 옮기지 않았다(board MIGRATION — `test_workflow_modes` 영향 없음, 확인됨) | ET 1,319 녹색 |
 | K3 | ET:`board/ingest/kis.py:token`:103(`POST`:112), `_cached_token`:92, `_save_token`:124, `TOKEN_CACHE`:44, `REAL`·`VTS`:42~43, `base`:87, `_headers`:146, `call`:167 | `legacy/etf_traker/board/ingest/kis.py`: `REAL`·`VTS`·`TOKEN_CACHE` 삭제; `base()` → `"kis:"`; `token(force=False)` → `force` 면 `kbj…token.reader(...).invalidate()` 후 읽기, 아니면 `access_token()`(발급 없음); `_cached_token`·`_save_token` 삭제; `_headers(tr_id)` → `{"tr_id": tr_id, "custtype": "P", "content-type": "application/json", "x-kbj-priority": "P3"}`(토큰·앱키 없음); `call` 의 `session()` → `kbj.data.legacy_bridge.session()`. `probe()`:546 의 `creds.mask(t)`(앞 4자 노출 — ET:`creds.py:mask`:72)는 `'토큰 있음'` 으로 | ET `test_kis_call`(32)이 `kis._headers`·`kis.get`·`kis.session` 을 바꿔 끼우므로 그대로 통과 **[추정]** |
 | K4 | ET:`monitor/kr/flows.py:collect` → K3 | 코드 변경 없음(K3 를 탄다). 회차마다 새로 발급하던 문제(러너 캐시 없음)가 사라진다 | kr 94 녹색 |
 | K5 | ET:`monitor/flow/kissrc.py:fetch_daily`:48, `probe`:102(`K.token()`:106) | 변경 없음(K3). `probe` 의 메시지 '발급/캐시 확인' → '토큰 읽기 확인' | flow 129 녹색 |
-| K6 | ET:`board/tools/probe_kis_futures.py`(`K._headers`:27, `MASTER`:22) | **파일 삭제**(수동 진단, 선물은 GX 정본). 워크플로 사본 `kis-futures-probe.yml` 삭제 **[확인 필요: K2 와 같음]** | — |
+| K6 | ET:`board/tools/probe_kis_futures.py`(`K._headers`:27, `MASTER`:22) | **파일 삭제**(수동 진단, 선물은 GX 정본). 워크플로 사본 `kis-futures-probe.yml` 은 P1 에서 옮기지 않았다(K2 와 같음 — 확인됨) | — |
 | K7 | GX:`data/kis/auth_client.py:default_token_provider`:539 ← `data/kis/rest.py:KisClient._provider`:120 ← `scripts/probe_all.py:55`(`KisClient(settings)`) | 승격 후 `legacy/gexlab/data/kis/{auth_client,rest,ratelimit,master}.py` 는 kbj 를 다시 내보내는 얇은 모듈(파일 캐시·기본 발급 경로 없음). `probe_all.py:55` → `KisRestClient.for_service(settings, redis)`. `scripts/probe_common.py:199`(`MASTER_URL`)·:230, `probe_chain_fill.py:117` → `kbj…master.download_fo_master()` | `KisRestClient()` provider 없이 → `TypeError` |
 | K8 | GX:`services/auth/service.py:AuthService`:186 (정본) | `kbj/services/auth/service.py` 로 승격. `legacy/gexlab/services/auth/` 는 `reader`·`TOKEN_KEY`·`WS_KEY_KEY`·health 이름만 kbj 에서 다시 내보낸다(발급 코드 없음) | GX 남은 시험 녹색 |
 | K9 | GX:`services/auth/service.py:KisApprovalKeyIssuer`:465 (정본) | `kbj/services/auth/issuer.py` | 같음 |
@@ -417,17 +420,19 @@ telegram: {rate: 25.0, per_chat_rate: 1.0, retry_after_max: 4}
 
 토픽 id(`message_thread_id`)는 슈퍼그룹을 만든 뒤 `config/notify.yaml` 에 적는다 **[확인 필요]**. chat id 는 비밀 취급(`KBJ_TELEGRAM_CHAT_ID`).
 
+**전환 기간 legacy 규칙(ADR 0005 §2.2 — 구현)**: 위 '규칙' 칸은 kbj 작업(origin 없이 부른다) 기준이다 — 종류당 하루 1회(U2)가 그대로 선다. legacy 발송은 ① kind 를 넘기지 않아 `legacy_kinds`(§5.9)로 종류를 찾은 함수는 **부른 함수(origin)마다 하루 1회** — SD 아침 함수 셋(#3·#4·#5)이 모두 `brief.morning` 이어도 함수마다 따로 센다(본문 합치기는 마감 P3·아침 P5. 그전에 legacy 내용을 조용히 버리지 않는다) ② kind 를 넘긴 legacy 호출(ET ETF 리포트 여러 통 `etf.report`·수급 종목별 차트 `flows.report`)은 한 번에 여러 통을 보내므로 origin 에 내용 해시를 붙여 **내용마다** 센다(같은 내용의 재실행만 막는다 — 안 그러면 둘째 통부터 `duplicate` 인데 legacy 는 보낸 줄 안다).
+
 ### 5.3 중복 방지 키·쿨다운
 
-| 정책 | 키 | 수명 |
-|---|---|---|
-| 하루 1회 | `{kind}:{as_of:%Y%m%d}` | 36시간 |
-| 쿨다운 | `{kind}:{subject}:{floor(now / cooldown_s)}` | `cooldown_s` |
-| 대상별 1회 | `{kind}:{subject}` | 30일 |
-| 그 밖 | `{kind}:{as_of}:{sha256(본문)[:16]}` | 24시간 |
+| 정책 | 문지기 키(Redis `notify:dedup:<키>`) | 발송 기록 키(`ops.notify_log.dedup_key`) | 수명 |
+|---|---|---|---|
+| 하루 1회 | `{kind}:{as_of:%Y%m%d}`(+`:{subject}`)(+`:{legacy origin}`) | 문지기 키와 같다 | 36시간 |
+| 쿨다운 | `{kind}:{subject 또는 본문 해시}` — **미끄러지는 창**(마지막 발송부터 `cooldown_s`) | `{kind}:{subject}:{floor(now / cooldown_s)}` | `cooldown_s` |
+| 대상별 1회 | `{kind}:{subject 또는 본문 해시}` | 문지기 키와 같다 | 30일 |
+| 그 밖 | `{kind}:{as_of}:{sha256(본문)[:16]}` | 문지기 키와 같다 | 24시간 |
 | 강제 재발송(운영 화면, P3 — SD `?force=1`(#43) 대체) | 위 키 + `:force:<n>` + 감사 기록 | — |
 
-1차는 Redis `SET NX`(enqueue 순간 — 호출자가 즉시 `duplicate` 를 안다), 2차는 `ops.notify_log.dedup_key` UNIQUE. SD `ops_state` 하루 1회 표식, ET `docs/api/sent.json`·`guru-sent.json`·`xdigest-sent.json`, bok `telegram-sent.json`, Actions `etf-sent-*`, SD `_alert_cooldown_ok`:6102 은 이 한 곳으로 대체되고 메시지 이전 단계(P3~P5)에서 삭제한다.
+1차는 Redis `SET NX`(enqueue 순간 — 호출자가 즉시 `duplicate` 를 안다), 2차는 `ops.notify_log.dedup_key` UNIQUE. **구현 메모(ADR 0005 §2.2)**: `floor` 붙은 키를 문지기로 쓰면 창 경계(10:59·11:01)에서 2분 만에 두 번 나간다 — 그래서 문지기는 미끄러지는 창, `floor` 키는 기록 키로만 쓴다(받아들인 두 발송은 늘 `cooldown_s` 이상 떨어져 기록 키가 겹치지 않는다). 문지기 만료는 주입한 시계로 판정한다(가짜 시계 시험·시뮬레이션에서도 풀린다). subject 가 없으면 본문 해시가 대상이다. 거절(`duplicate`·`cooldown`) 기록은 `<원래 키>#<상태>#<대기열 항목 id>` 로 한 줄씩 남긴다(`dedup_key` 가 `NOT NULL UNIQUE`). SD `ops_state` 하루 1회 표식, ET `docs/api/sent.json`·`guru-sent.json`·`xdigest-sent.json`, bok `telegram-sent.json`, Actions `etf-sent-*`, SD `_alert_cooldown_ok`:6102 은 이 한 곳으로 대체되고 메시지 이전 단계(P3~P5)에서 삭제한다.
 
 ### 5.4 발송 기록
 
@@ -447,7 +452,7 @@ telegram: {rate: 25.0, per_chat_rate: 1.0, retry_after_max: 4}
 
 | 단계 | 처리 | 근거 |
 |---|---|---|
-| 경로 | `POST /telegram/webhook`(notifier 가 127.0.0.1 에 열고 VM 역방향 프록시가 `KBJ_PUBLIC_BASE_URL` 로 노출 **[확인 필요]**) | SD:`server.py:5860` |
+| 경로 | `POST /telegram/webhook` — **[결정 D4]** HTTP 서버는 P3 API 가 열고(VM 역방향 프록시가 `KBJ_PUBLIC_BASE_URL` 로 노출 **[확인 필요]**) P2 의 순수 처리 함수를 부른다. 받을 서버가 없는 P2 에는 `setup-webhook` 이 `--confirm` 없이 걸지 않는다 | SD:`server.py:5860` |
 | 인증 | 헤더 `X-Telegram-Bot-Api-Secret-Token` 을 `KBJ_TELEGRAM_WEBHOOK_SECRET` 과 `hmac.compare_digest` 로 비교, 다르면 403 | SD `_telegram_secret`:5731(봇 토큰 해시 파생·`!=` 비교)을 독립 비밀·상수 시간 비교로 |
 | 응답 | 검증 뒤 **바로 200** — 처리는 `notify:inbound` 스트림으로 넘긴다(텔레그램은 실패 응답이면 재전송한다) | — |
 | 중복 | `update_id` 를 `SET NX tg:update:<id>`(48시간) | ET `merge`:410 의 update_id 중복 제거와 같은 뜻 |
@@ -493,7 +498,7 @@ telegram: {rate: 25.0, per_chat_rate: 1.0, retry_after_max: 4}
 | ET `etf_tracker_v9/tracker.py:send_telegram(text, parse='HTML')`:395 | `legacy_send(text, source="et.etf", parse_mode=parse, kind="etf.report")` — `try` 없이 토큰 URL 이 예외에 실리던 문제 해소 | 원래대로 |
 | ET `monitor/flow/telegram.py:send_photos`:36 | `legacy_send_media(paths, caption, source="et.flow", kind="flows.report")` | `(ok, 사유)` |
 
-`kind` 를 넘기지 않은 legacy 호출(SD 발송 함수 대부분)은 `config/notify.yaml` 의 `legacy_kinds:`(부른 함수 이름 → 종류)로 정한다 — shim 이 `sys._getframe(1).f_code.co_name` 을 본다 **[제안 — 전환 기간 한정, 메시지를 kbj 작업으로 옮길 때(P3~P5) 그 함수와 함께 지운다]**.
+`kind` 를 넘기지 않은 legacy 호출(SD 발송 함수 대부분, ET `cmd_us_send`·flow `send_text`)은 `config/notify.yaml` 의 `legacy_kinds:`(부른 함수 이름 → 종류)로 정한다 — shim 이 호출 스택을 거슬러 올라가며 처음 만나는 이름을 쓰고, 없으면 `legacy.other`(운영 토픽, 본문 해시 규칙). **세는 단위(ADR 0005 §2.2)**: `legacy_kinds` 로 찾은 함수는 **함수마다 하루 1회**(그 함수는 한 번 돌 때 한 통을 보낸다), kind 를 넘긴 legacy 호출은 **내용마다**(재실행만 막는다) — §5.2 끝 '전환 기간 legacy 규칙'. 전환 기간 한정이고, 메시지를 kbj 작업으로 옮길 때(P3~P5) 그 함수와 함께 지운다.
 
 ### 5.10 발송·수신 지점 46곳 교체 (inventory d-1)
 
@@ -783,9 +788,9 @@ SD `add_job` 43개 전부의 행선지: `market_update`·`self_keepalive`·`tg_r
 | 항목 | 내용 |
 |---|---|
 | 승격 | GX:`core/calendar.py` 를 `kbj/core/calendar.py` 로(이름·동작 그대로). pyright strict 는 GX 에서도 `core` 가 strict 였다(GX `pyproject.toml:50`) — 그대로 통과 **[추정]** |
-| 덮어쓰기 파일 | 레포 루트 `config/holidays_override.yaml`(GX 파일 그대로 — 2026-06-03 지방선거). 경로는 `OVERRIDE_PATH`(코드 기준 레포 루트)이고 서비스는 `Settings.config_dir` 로 바꿀 수 있다 |
+| 덮어쓰기 파일 | 레포 루트 `config/holidays_override.yaml`(GX 파일 그대로 — 2026-06-03 지방선거 + `late_open`). `TradingCalendar.default()`·`calendar_compat` 는 늘 `OVERRIDE_PATH`(레포 루트)를 읽는다. 서비스 진입점(scheduler `__main__._build`)은 `TradingCalendar.from_override(load_override(config_path(...)))` 로 `Settings.config_dir` 의 파일을 쓴다(구현 메모) |
 | 신규 `exchange` 인자 | `TradingCalendar(exchange="XNYS")` → `us_calendar()`. 미국 일정(`us.eod`·아침 브리핑 조건)을 XNYS 로 판정(conflict_map §1.6 [제안]) |
-| 신규 주식 시간 | GX 상태 머신은 **파생** 세션(08:45~15:45)이다. 주식 정규장 09:00~15:30 은 `equity_session_bounds`·`is_equity_regular_hours` 로 따로. 수능일·연초 지연 개장은 GX 도 반영하지 않았다(GX `calendar.py` 머리말) → `holidays_override.yaml` 에 `late_open:` 항목을 더할지 **[확인 필요]** |
+| 신규 주식 시간 | GX 상태 머신은 **파생** 세션(08:45~15:45)이다. 주식 정규장 09:00~15:30 은 `equity_session_bounds`·`is_equity_regular_hours` 로 따로. 수능일·연초 지연 개장은 GX 도 반영하지 않았다(GX `calendar.py` 머리말) → **[결정 R24 — 구현]** `TradingCalendar.equity_bounds(d)`: override `late_open:`(수능일 10:00~16:30 — XKRX 4.13.2 는 모른다, 해마다 KRX 공지로 더한다 [확인 필요: 2026-11-19 공지]) > 그해 첫 거래일 10:00 개장(규칙 — XKRX 도 안다) > 평소 09:00~15:30. 작업 등록부 `equity` 트리거(`market.close_collect` 등)가 이것을 따른다(수능일 마감 수집 16:35). 파생 세션 상태 머신(`state_at`)은 수능일 지연을 아직 반영하지 않는다 [확인 필요]. compat `is_kr_regular_hours` 는 [09:00, 15:30) 반열림(SD 는 15:30 분 전체를 장중으로 봤다 — 의도한 변경) |
 | 의존성 | `exchange-calendars`(GX `pyproject.toml:7` `>=4.13.2`)를 KBJ 런타임 의존성에 더한다(S0). pandas 는 P0 단일 해석 2.3.3(conflict_map §3.3) |
 
 ### 7.2 legacy 휴장 판정 대체
@@ -875,6 +880,8 @@ SD `add_job` 43개 전부의 행선지: `market_update`·`self_keepalive`·`tg_r
 | `prv_alerts.notify_message` | `dedup_key` | `body`, `parse_mode`, `created_at` | 30일 |
 
 모든 값 표에 `source`·`quality`(ok·stale·estimated·invalid) 열을 둔다(CLAUDE.md 절대 규칙 1, `kbj/core/quality.py`). 시각은 `timestamptz`, 날짜는 `date`.
+
+**구현 메모(묶음 G — 위 표와 달라진 점)**: universe 키에 `source` 추가 · 값 표(`prv_market`·`prv_flows`) 키에 `venue`(KRX·NXT·TOTAL — 결정 D7) 추가 · `loaded_by`(적재한 작업 이름, NOT NULL — 이관 검증용 원본 표시) 열 · `prv_flows.stock_investor_daily` 도 hypertable(365일) · 이관분은 원본에 시각이 없으면 `received_at`·`ops.kv.updated_at` 이 NULL(지어내지 않는다) · `ops.legacy_import` 는 `id` + UNIQUE(`batch_id`, `mapping`) · `ops.data_claim` 은 `venue` 열(기본 '')을 키에 포함, `done` 이면 `done_at` 필수. 적용기·이관 API(§1.8)는 `Mapping(source, …)`(`source_db` → `source`, 버리기는 transform `Drop`), `run(sources, target, *, phase, now, dry_run, verify_only, batch_id)` — 시계 주입, `PgTarget`·`MemoryTarget` 대상 추상. ETF 일별·장중 표(`prv_etf.etf_daily`·`quote_intraday`)는 0013(P5) 예정 — D7 ETF 수급을 P3 에 받으려면 당겨야 한다 [결정 필요].
 
 ### 8.4 SQLite·JSON → Postgres 매핑
 
@@ -1019,8 +1026,8 @@ legacy 로 옮길 범위(SD 전체, ET `board`·`monitor/kr`·`monitor/flow`·`f
 | ⑦ | **저장소는 어댑터·서비스를 모른다** | forbidden | source: `kbj.store` → forbidden: `kbj.data`, `kbj.services`, `kbj.engines` |
 
 - `tests/test_import_contracts.py` 의 위반 심기 시험은 지금 `"Contracts: 2 kept, 1 broken."`(계약 3개)을 기대한다 — 계약이 7개가 되면 `"6 kept, 1 broken."` 으로 고치고 ④~⑦ 각각에 위반 하나씩 심은 경우를 더한다(I 가 계약을 더할 때 같이).
-- `RUNTIME_IMPORTS` 에 새 런타임 의존성(`exchange_calendars`, `fastapi`, `uvicorn`, `defusedxml`)을 더한다(S0).
-- 계약 소스 모듈이 아직 없으면 import-linter 가 실패할 수 있다 **[확인 필요: import-linter 2.x 의 없는 모듈 처리]** → ④~⑦ 은 A·E·F 가 들어온 뒤 I 가 한꺼번에 넣는다.
+- `RUNTIME_IMPORTS` 에 새 런타임 의존성(`exchange_calendars`, `defusedxml`)을 더한다(S0). `fastapi`·`uvicorn` 은 P3(결정 D4).
+- 계약 소스 모듈이 아직 없으면 import-linter 가 실패할 수 있다 → ④~⑦ 은 A·E·F 가 들어온 뒤 I 가 한꺼번에 넣었다(R14 닫힘 — 7 kept). **구현 메모**: ⑤ 는 간접 import 도 잡는다(`allow_indirect_imports` 없음) — 예외는 `Attachment` 형 import 두 줄(`notifier.client`·`notifier.outbox` → `telegram_api`, `ignore_imports`). 묶음 E 가 `Attachment` 를 HTTP 없는 모듈로 옮기면 두 줄을 지운다. 위반 심기 시험은 19개(`tests/test_import_contracts.py`).
 
 ### 9.7 출력·종료 코드·CI
 
@@ -1064,14 +1071,14 @@ legacy 로 옮길 범위(SD 전체, ET `board`·`monitor/kr`·`monitor/flow`·`f
 
 ### 10.3 시계 진행
 
-- **창: 2026-10-06(화) 05:00 KST ~ 2026-10-07(수) 04:00 KST (23시간)**. 이유: 토큰 수명 24시간·만료 60분 전 갱신이라, 05:00 에 빈 Redis 에서 시작하면 첫 발급 05:00, 다음 갱신은 다음 날 04:00 이다 — 24시간 창이면 갱신 1회가 더 들어간다(D-P2-3). 이 날을 고른 이유: 전날 10-05 가 대체공휴일이라 `prev_trading_day` = 10-02(금), KRX 는 10-02 분을 10-06 08:00 에 공표(conflict_map E1 의 10/5 기록과 맞다), 간밤 미국(10-05 월) 장 마감 16:10 ET = 10-06 05:10 KST 가 창 안이다.
-- 보폭: 작업 창(±2분)·세션 전이 둘레는 1초, 그 밖은 60초(GX `test_full_day` 의 LIVE 창 방식). DART 매분 폴링 구간은 60초 보폭으로도 분마다 한 번 돈다.
+- **창: 2026-10-06(화) 05:00 KST ~ 2026-10-07(수) 05:00 KST (24시간 — [결정 D3])**. 토큰 수명 24시간·만료 60분 전 갱신이라, 05:00 에 빈 Redis 에서 시작하면 첫 발급 05:00, 다음 갱신은 다음 날 04:00 이다 — 창 안 발급은 2회(간격 23시간)이고, 단언은 "모든 발급은 auth 에서만·auth 밖 발급 0·**어떤 23시간 구간에도 접근토큰 발급 ≤ 1**"이다. 23시간 창 시험은 따로 두지 않는다(설계 원안 D-P2-3 의 23시간 창은 결정 D3 로 바뀌었다). 이 날을 고른 이유: 전날 10-05 가 대체공휴일이라 `prev_trading_day` = 10-02(금), KRX 는 10-02 분을 10-06 08:00 에 공표(conflict_map E1 의 10/5 기록과 맞다), 간밤 미국(10-05 월) 장 마감 16:10 ET = 10-06 05:10 KST 가 창 안이다.
+- 보폭(구현): 세션 전이 둘레 ±2분은 1초, 그 밖은 **30초**(auth step 과 같은 간격 — 설계 원안의 '작업 창 ±2분 1초·그 밖 60초' 대신). 작업 발화는 실행기가 `(지난 tick, now]` 구간의 시각을 모두 보므로 30초 보폭에서도 빠지지 않고, DART 매분 폴링도 분마다 한 번 돈다(`tests/sim/harness.py` `STEP_S`·`FINE_S`·`FINE_AROUND_S`).
 
 ### 10.4 단언
 
 | # | 단언 | 확인 방법 |
 |---|---|---|
-| 1 | **접근토큰 발급 1회** | `FakeKisServer.token_posts == 1`, 발급 시각 05:00:00 |
+| 1 | **접근토큰 발급은 auth 에서만, 어떤 23시간 구간에도 ≤ 1**([결정 D3]) | `FakeKisServer.posts(TOKEN_PATH)` = auth 의 05:00:00·다음 날 04:00:00 두 건(간격 ≥ 23시간), auth 밖 소비자(scheduler·gx·legacy)의 발급 요청 0 |
 | 2 | 접속키 발급은 11시간 규칙대로 3회(05:00·16:00·03:00) | `approval_posts == 3` [가정: 12시간 수명] |
 | 3 | 모든 KIS REST 요청이 그 토큰 하나를 실었다 | `set(bearers) == {"Bearer <가짜 토큰>"}` |
 | 4 | 앱키 리미터: 어떤 1초 창에도 KIS 요청 4건 이하 | `max_in_window(1.0) <= 4` |
@@ -1088,10 +1095,10 @@ legacy 로 옮길 범위(SD 전체, ET `board`·`monitor/kr`·`monitor/flow`·`f
 
 | 시험 | 내용 | 기대 |
 |---|---|---|
-| `test_holiday.py` | 창 2026-10-05(월, 대체공휴일) 05:00 ~ 10-06 04:00 | 거래일 작업 0회, `brief.morning`·`brief.closing` 0건(전날 밤 미국 = 일요일 → `after_us_session` 거짓), 야간장 없음, 토큰 발급 1회 |
+| `test_holiday.py` | 창 2026-10-05(월, 대체공휴일) 05:00 ~ 10-06 05:00(24시간 — 결정 D3) | 거래일 작업 0회, `brief.morning`·`brief.closing` 0건(전날 밤 미국 = 일요일 → `after_us_session` 거짓), 야간장 없음, 토큰 발급은 auth 에서만(05:00·다음 날 04:00 — 23시간 구간마다 ≤ 1) |
 | `test_notify_on.py` | `KBJ_NOTIFY_ENABLED=true` | 텔레그램 sendMessage 가 브리핑 2건 + 알림 종류별 건수와 같다, 429 주입 시 재시도 후 1회 |
 | `test_krx_late.py` | KRX 공표 08:20 | 08:05·08:15 빈 응답 → 08:25 성공, 성공 수집 1회, 예산 = 3 × 엔드포인트 수 |
-| `test_token_rejected.py` | 14:00 에 KIS 가 `EGW00123` 한 번 | 재발급 1회(신고 처리 1번만), 그 뒤 거절 반복 주입 → 추가 발급 0 + critical health(§3.4 가드) |
+| `test_token_rejected.py` | 14:00 에 KIS 가 `EGW00123` 한 번 | 재발급 1회(신고 처리 1번만), 그 뒤 발급 10분 안 거절 반복 → 추가 발급 0 + critical `token_rejected_after_issue`(§3.4 가드). 지난 토큰의 늦은 신고가 현재 값의 신고를 덮지 않는다(최종 점검에서 고친 결함 — ADR 0004 §4.3-5) |
 | `test_redis_blip.py` | 12:00~12:01 Redis 접속 실패 | auth 발급 안 함, 수집 작업은 실패 기록 후 재시도, 데이터 키 중복 0 |
 | `test_restart.py` | 15:50 스케줄러 재시작 | 같은 `(job, as_of)` 재실행 없음(`ops.job_run`·선점이 막음), `brief.closing` 1건 |
 
@@ -1116,7 +1123,7 @@ legacy 로 옮길 범위(SD 전체, ET `board`·`monitor/kr`·`monitor/flow`·`f
 
 | 묶음 | 만드는·고치는 파일 | 읽기만(의존) |
 |---|---|---|
-| **S0** 공유 기반 | `pyproject.toml`(의존성 `exchange-calendars>=4.13.2`·`fastapi`·`uvicorn`·`defusedxml` [버전은 `uv lock` 해석으로 — 확인 필요], pytest 마커 `integration`·`network`·`sim`, `addopts` `--import-mode=importlib`), `uv.lock`, `kbj/config/settings.py`(`config_dir: Path = Path("config")`, `service: str \| None = None`), `kbj/config/files.py`, `.env.example`(`KBJ_SERVICE`·`KBJ_CONFIG_DIR`), `docs/secrets.md`(새 이름 + §3.6 결정 반영), `config/limits.yaml`, `config/notify.yaml`(틀), `config/jobs.yaml`(틀 — `version`·`defaults` 만), `kbj/store/redis_keys.py`, `kbj/data/ratelimit.py`, `kbj/data/budget.py`, `kbj/data/http.py`, `kbj/data/spec.py`, `kbj/services/runtime/*.py`, `tests/conftest.py`(마커 별칭 — GX 방식), `tests/fakes/__init__.py`, `tests/fakes/clock.py`, `tests/test_import_contracts.py`(`RUNTIME_IMPORTS` 만), `tests/unit/data/test_ratelimit.py`, `tests/property/test_ratelimit_properties.py`, `tests/unit/data/test_budget.py`, `tests/unit/data/test_http.py`, `tests/unit/data/test_spec.py`, `tests/unit/store/test_redis_keys.py`, `tests/unit/runtime/test_runtime.py`, `tests/unit/config/test_config_files.py` | GX `data/kis/ratelimit.py`, `services/runtime.py`, `services/auth/health.py`, ET `board/ingest/http.py` |
+| **S0** 공유 기반 | `pyproject.toml`(의존성 `exchange-calendars>=4.13.2`·`defusedxml` — `fastapi`·`uvicorn` 은 결정 D4 로 P3, pytest 마커 `integration`·`network`·`sim`, `addopts` `--import-mode=importlib`), `uv.lock`, `kbj/config/settings.py`(`config_dir: Path = Path("config")`, `service: str \| None = None`), `kbj/config/files.py`, `.env.example`(`KBJ_SERVICE`·`KBJ_CONFIG_DIR`), `docs/secrets.md`(새 이름 + §3.6 결정 반영), `config/limits.yaml`, `config/notify.yaml`(틀), `config/jobs.yaml`(틀 — `version`·`defaults` 만), `kbj/store/redis_keys.py`, `kbj/data/ratelimit.py`, `kbj/data/budget.py`, `kbj/data/http.py`, `kbj/data/spec.py`, `kbj/services/runtime/*.py`, `tests/conftest.py`(마커 별칭 — GX 방식), `tests/fakes/__init__.py`, `tests/fakes/clock.py`, `tests/test_import_contracts.py`(`RUNTIME_IMPORTS` 만), `tests/unit/data/test_ratelimit.py`, `tests/property/test_ratelimit_properties.py`, `tests/unit/data/test_budget.py`, `tests/unit/data/test_http.py`, `tests/unit/data/test_spec.py`, `tests/unit/store/test_redis_keys.py`, `tests/unit/runtime/test_runtime.py`, `tests/unit/config/test_config_files.py` | GX `data/kis/ratelimit.py`, `services/runtime.py`, `services/auth/health.py`, ET `board/ingest/http.py` |
 | **A** auth·KIS | `kbj/data/private/kis/{__init__,credentials,token,rest,master,datasets}.py`, `kbj/services/auth/{__init__,issuer,service,__main__}.py`, `tests/unit/kis/{conftest,test_kis_credentials,test_token_cache,test_reader_never_issues,test_invalidate_guard,test_kis_rest,test_kis_master,test_master_download}.py`, `tests/unit/auth/{test_issuer,test_auth_service,test_auth_guard,test_owner_compat}.py`, `tests/fixtures/synthetic/kis/master_lines.json` | S0, B(`calendar_tagger` — `__main__` 만) |
 | **B** 캘린더 | `kbj/core/calendar.py`, `kbj/core/time.py`, `kbj/core/calendar_compat.py`, `config/holidays_override.yaml`, `tests/unit/core/{test_calendar,test_xkrx_dependency,test_xnys_calendar,test_equity_hours,test_calendar_compat,test_legacy_holiday_parity,test_time}.py`, `tests/property/test_calendar_properties.py` | S0 |
 | **C** 공개 어댑터 | `kbj/data/datago.py`, `kbj/data/public/dart/{__init__,client,corp_code,disclosures,datasets}.py`, `kbj/data/public/ecos/{__init__,client,datasets}.py`, `kbj/data/public/kosis/{__init__,client,datasets}.py`, `kbj/data/public/customs/{__init__,client,models,datasets}.py`, `kbj/data/public/fsc_kofia_stats/{__init__,client,datasets}.py`, `tests/unit/data/public/test_*.py`, `tests/unit/data/test_datago_transport.py`, `tests/fixtures/public/{dart,ecos}/…`(공개 등급 실데이터 — 키가 생긴 뒤), `tests/fixtures/synthetic/datago/…` | S0 |
@@ -1165,14 +1172,14 @@ legacy 로 옮길 범위(SD 전체, ET `board`·`monitor/kr`·`monitor/flow`·`f
 
 ### 11.5 legacy 시험 수 변화 (예상)
 
-| 프로젝트 | P1 기준(conflict_map §3.2) | P2 뒤 legacy 에 남는 수 | 빠지는 것 |
+| 프로젝트 | P1 기준(conflict_map §3.2) | P2 뒤 legacy(**실측 2026-10-07**) | 빠진 것(시험 ID 대조 — 최종 점검) |
 |---|---|---|---|
-| GX | 3,178 통과 | 약 2,940 [추정] | 승격 약 240(calendar 44, ratelimit 27, auth 80, kis_rest 13, kis_master 17, krx 23, 예산·내려받기·runtime·spool 일부) |
-| ET board | 1,319 | 약 1,250 [추정] | tg_inbox 39(27 승격·12 삭제), telegram 12, send_files 2, http_reason 19, dart_for 7 + 다리 시험 +1 |
-| ET kr·flow·flowlab | 94·129·44 | 같음 | — |
-| SD 검사 | 9/10 | 9/10 | — |
+| GX(`not network and not integration`) | 3,177 | **2,716** | 462 항목 빠짐 + 다리 시험 1. 빠진 462 중 439 는 같은 이름으로 kbj 에 있다(calendar 137·속성 7·XKRX 7·ratelimit 44·속성 3·auth_client·auth_service·kis_rest·kis_master 39·krx 11+38·spool 36·마스터 내려받기 3·태거 6). 22 는 기능과 함께 폐지(파일 토큰 캐시·폴백 — 함수 10 + `file` 매개변수 12, 설계 §1.2·K7), 1 은 매개변수(`auth` 싱크 — auth 진입점이 KBJ 로). `legacy/gexlab/MIGRATION.md` P2.3 |
+| ET board | 1,319 | **1,267**(건너뜀 1 그대로) | 55 ID 빠짐(telegram 12·send_files 2·http_reason 10·tg_inbox 31) + 3 더함(다리 1·인박스 Drain 2). 빠진 55 중 47 은 kbj 에 있고 8 은 getUpdates·offset 경로(§5.8 폐지). ET `test_dart_for` 7 은 legacy 에 남겼다(ET `disclosures_for` 본문 유지 — kbj 쪽 승격본과 별개). `legacy/etf_traker/board/MIGRATION.md` P2 |
+| ET kr·flow·flowlab | 94·129·44 | 94·129·44/44 | — |
+| SD 검사 | 12(래퍼) | **13** | 다리 시험 +1 |
 
-kbj 쪽 시험은 옮긴 약 300 + 새 시험.
+kbj 쪽 시험은 1,826 수집(1,804 통과·22 건너뜀 — 통합 21 은 Docker 필요) — 승격분 + 새 시험.
 
 ---
 
@@ -1180,37 +1187,37 @@ kbj 쪽 시험은 옮긴 약 300 + 새 시험.
 
 | # | 위험·미정 | 영향 | 대응·기본값 |
 |---|---|---|---|
-| R1 | ⚠ 앱키가 REST 헤더에 필요 — "auth 에만 주입"과 충돌(§3.6) | 비밀 노출 면적 | 안 A(코드 구조로 발급 차단) 기본. 사용자 확인 후 secrets.md 고침 **[확인 필요]** |
-| R2 | KIS 웹소켓은 P7 까지 legacy(D-P2-4) | PLAN 완료 기준 해석 | 기준선 그룹으로 두고 접속키는 auth 읽기만 **[확인 필요]** |
+| R1 | ⚠ 앱키가 REST 헤더에 필요 — "auth 에만 주입"과 충돌(§3.6) | 비밀 노출 면적 | **닫힘 — 결정 D1(안 A, ADR 0004)**: 앱키는 KIS REST 를 부르는 프로세스에도, 발급은 세 겹(issuer.py 에만 + 계약 ④ / `oauth2` 경로 문자열 검사 / `KBJ_SERVICE != auth` 면 발급자 생성 거부). secrets.md §1·§4 고침. compose 는 P2 에 auth 에만 넣었다(P3 에 scheduler 추가) |
+| R2 | KIS 웹소켓은 P7 까지 legacy(D-P2-4) | PLAN 완료 기준 해석 | **닫힘 — 결정 D2**: 연결 코드는 P7 까지 legacy GX, `check_canonical` 기준선 그룹 `kis_ws`(지금 4줄 — `legacy/gexlab/config/kis_ws.yaml`). 접속키 발급은 auth 만(시뮬레이션: 05:00·16:00·03:00 모두 auth) |
 | R3 | 거절 신고 폭주 → 재발급 반복(GX `discard`) | 1분 1회 제한·다른 발급자 무효화 | §3.4 가드 [제안] |
 | R4 | 접근토큰·접속키가 KIS 의 1분 1회 제한을 함께 쓰는지 미실측 | 기동 직후 접속키 1회 지연 | GX 가 이미 정상으로 처리(서비스 머리말). 실측 후 기록 |
 | R5 | 레포 밖 발급자 K10 | 매일 토큰 무효화 | 전환일 사용자 작업(Q13), `token_throttled` health 로 감지 |
 | R6 | P1 이식 미완 — legacy 경로·줄 번호가 바뀔 수 있음 | H 일정 | H 는 P1 완료 뒤, 줄 번호는 함수 이름으로 다시 찾는다 |
-| R7 | GX fixture 합성본(U3)이 늦으면 A·D·I 시험이 막힌다 | 일정 | P1 산출 합성본을 옮긴다. 없으면 A·D 가 GX `golden/synthetic.py` 방식으로 만든다 **[확인 필요]** |
-| R8 | `exchange-calendars`(pandas)·FastAPI 를 런타임 의존성에 더함 | 이미지 크기, pandas 2.3.3 고정 | S0 에서 lock. FastAPI 를 P3 로 미루면 웹훅은 순수 처리기만 P2(배포는 P3) — 대안 |
-| R9 | KRX 일 상한(GX 기본 200) | 주식·지수·ETP 추가로 모자람 | 8,000 [확인 필요], 백필 상한 분리 |
+| R7 | GX fixture 합성본(U3)이 늦으면 A·D·I 시험이 막힌다 | 일정 | **닫힘**: P1 합성본을 `tests/fixtures/synthetic/{kis,krx,datago}` 로 옮겨 썼다(A·D·I) |
+| R8 | `exchange-calendars`(pandas)·FastAPI 를 런타임 의존성에 더함 | 이미지 크기, pandas 2.3.3 고정 | **닫힘 — 결정 D4**: FastAPI·uvicorn 은 P3 로 미룬다(의존성 없음). P2 웹훅은 순수 처리 함수 `WebhookHandler.handle(요청 dict)` 로 만들고 시험했다(`tests/unit/notifier/test_webhook.py`). `exchange-calendars` 는 S0 에서 lock |
+| R9 | KRX 일 상한(GX 기본 200) | 주식·지수·ETP 추가로 모자람 | **결정 D5**: `config/limits.yaml` `krx.daily_cap` 기본 8,000 **[확인 필요]**(백필 5,000 분리), 실측 체크리스트 `probe_results.md` §7 #12 |
 | R10 | DART 20,000/일·ECOS·KOSIS 일 한도 미확정 | 상한 값 | §4.2 기본값, 실측 체크리스트(`probe_results.md` §7)에 더함 |
 | R11 | 네이버 출처 행을 버리면 일봉 이력이 대부분 사라짐(ET 일봉 주 경로가 네이버) | 신고가 보드 이력·백테스트 | `market.backfill` 로 KRX 재수집(5년 ≈ 2,500회, 며칠에 나눠) **[확인 필요: Q12 원본 사본·수집 일정]** |
-| R12 | ET 워크플로 사본·도구 삭제가 ET 시험(`test_workflow_modes` 등)에 걸릴 수 있음 | ET 1,319 | 삭제 전 확인 — 걸리면 사본은 두고 기준선 |
-| R13 | SD 라우트 삭제가 SD 검사 스크립트(AST 로 함수 추출)에 걸릴 수 있음 | SD 9/10 | 삭제 전 확인 |
-| R14 | import-linter 가 없는 소스 모듈을 어떻게 다루는지 | I 실패 | 계약 ④~⑦ 은 마지막(I)에 |
+| R12 | ET 워크플로 사본·도구 삭제가 ET 시험(`test_workflow_modes` 등)에 걸릴 수 있음 | ET 1,319 | **닫힘**: K2·K6 의 워크플로 사본은 P1 에서 옮기지 않았고(board MIGRATION), 도구 두 파일 삭제 뒤 board 1,267 통과(승격분만 빠짐) |
+| R13 | SD 라우트 삭제가 SD 검사 스크립트(AST 로 함수 추출)에 걸릴 수 있음 | SD 9/10 | **닫힘**: SD 검사 래퍼 13/13 통과(P1 12 + 다리 시험 1) |
+| R14 | import-linter 가 없는 소스 모듈을 어떻게 다루는지 | I 실패 | **닫힘**: 계약 ④~⑦ 을 I 가 마지막에 넣었다 — 7 kept, 0 broken. 위반 심기 시험 19개(`tests/test_import_contracts.py`) |
 | R15 | 웹훅 전환 순서를 어기면(SD 부팅 setWebhook 이 살아 있음) 수신이 SD 로 되돌아감 | 명령·인박스 유실 | §5.11 순서, `webhook-info` 점검 |
 | R16 | 토픽 thread id·슈퍼그룹 미생성 | 발송 위치 | `notify.yaml` 비워 두면 일반 대화로 보내고 경고 |
-| R17 | 시뮬레이션 23시간 창(D-P2-3)을 PLAN 의 "하루"로 읽어도 되는지 | 완료 기준 해석 | 갱신 1회가 더 들어오는 24시간 변형도 함께 두고 "만료 60분 전 갱신 1회"로 별도 단언 **[확인 필요]** |
+| R17 | 시뮬레이션 23시간 창(D-P2-3)을 PLAN 의 "하루"로 읽어도 되는지 | 완료 기준 해석 | **닫힘 — 결정 D3**: 24시간 창(10-06 05:00 ~ 10-07 05:00). 단언: 모든 발급은 auth 에서만, auth 밖 발급 0, 어떤 23시간 구간에도 접근토큰 발급 ≤ 1(05:00·다음 날 04:00). 23시간 창 시험은 따로 만들지 않는다 |
 | R18 | Q1(당일 종가 KIS 대 KRX) 미결 | `market.close_collect` 데이터 키 | ADR 0001 기본값(KIS 16:40, 다음 날 KRX 대조)으로 등록 |
 | R19 | legacy 가 kbj 를 import 하려면 legacy 시험을 루트 venv(kbj 설치)로 돌려야 함 | CI 잡 구성 | ADR 0003 의 프로젝트별 잡에서 `uv run --project <루트>` 로 [추정] |
 | R20 | KIS 투자의견·추정실적 TR(`FHKST668300C0`·`FHKST663300C0`) 미실측 | 컨센서스 작업 | 등록만, P4 실측 뒤 데이터셋 확정(추정치로 채우지 않음) |
 | R21 | 공개 실데이터 fixture(DART·ECOS·관세청)는 키가 있어야 녹화 가능 | C 시험이 합성으로 시작 | 키 발급 뒤 공개 fixture 로 바꾼다 |
 | R22 | GX 운영 DB 에 보관할 녹화 데이터 존재 여부 | 0006 이관 필요성 | P7 에 `pg_dump --data-only` + `search_path` **[확인 필요]** |
 | R23 | `ops.nightly` 백업 위치(VM 디스크·외부) 미정 | 백업 | P2 는 VM 로컬 + 보존 7일 [확인 필요] |
-| R24 | 주식 지연 개장일(수능·연초) | 장중 작업 시각 | `holidays_override.yaml` `late_open:` 추가 여부 결정 **[확인 필요]** |
+| R24 | 주식 지연 개장일(수능·연초) | 장중 작업 시각 | **닫힘 — 지연 개장 결정**: `holidays_override.yaml` `late_open:`(수능일 10:00~16:30) + 그해 첫 거래일 10:00 규칙 → `TradingCalendar.equity_bounds`, 등록부 `equity` 트리거가 따른다(§7.1). 남은 [확인 필요]: 2026-11-19 KRX 공지, 파생 세션 상태 머신의 수능일 지연 |
 
-### 이 설계로 새로 남길 ADR 후보 [제안]
+### 이 설계로 남긴 ADR (확정 — 2026-10-07)
 
-- ADR 0004 — KIS 앱키 주입 범위와 발급 차단 세 겹(§3.5·§3.6).
-- ADR 0005 — 발송 outbox·중복 키·발송 기록 분리(`ops.notify_log` 메타 / `prv_alerts.notify_message` 본문).
-- ADR 0006 — 작업 등록부·논리 데이터셋·선점(claim)으로 중복 수집 금지, `runner: external`.
-- ADR 0007 — legacy 논리 URL 브리지와 직접 호출 금지 검사의 기준선 정책.
+- [ADR 0004](adr/0004-kis-issuance.md) — KIS 앱키 주입 범위와 발급 차단 세 겹(§3.5·§3.6, 결정 D1~D3).
+- [ADR 0005](adr/0005-notifier-outbox.md) — 발송 outbox·중복 키·발송 기록 분리(`ops.notify_log` 메타 / `prv_alerts.notify_message` 본문), 쿨다운 미끄러지는 창·legacy 규칙(§5.2·§5.3·§5.9), 결정 D4.
+- [ADR 0006](adr/0006-job-registry-claims.md) — 작업 등록부·논리 데이터셋·선점(claim)으로 중복 수집 금지, `runner: external`, §6.7 과 달라진 점.
+- [ADR 0007](adr/0007-legacy-bridge-baseline.md) — legacy 논리 URL 브리지와 직접 호출 금지 검사의 기준선 정책.
 
 ---
 

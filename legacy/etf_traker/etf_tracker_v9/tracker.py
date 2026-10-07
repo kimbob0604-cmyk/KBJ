@@ -20,6 +20,8 @@ import concurrent.futures as cf
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 import requests
+from kbj.core.calendar import TradingCalendar
+from kbj.services.notifier.client import legacy_send, webhook_status
 from collectors import ADAPTERS
 import themes as TH
 import market as MK
@@ -393,20 +395,11 @@ def _short(fund_name, n=22):
 
 
 def send_telegram(text, parse='HTML'):
-    """단일 메시지 발송. ETF 이름에 * _ ( ) 가 흔해서 Markdown 대신 HTML 을 쓴다."""
-    tok, chat = os.getenv('TELEGRAM_BOT_TOKEN'), os.getenv('TELEGRAM_CHAT_ID')
-    if not tok or not chat:
-        print('[skip] TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID 미설정')
-        return False
-    ok = True
-    for chunk in _chunks(text, 3900):
-        r = requests.post(f'https://api.telegram.org/bot{tok}/sendMessage',
-                          json={'chat_id': chat, 'text': chunk, 'parse_mode': parse,
-                                'disable_web_page_preview': True}, timeout=40)
-        if not r.ok:
-            print('[텔레그램] 발송 실패:', r.text[:200])
-            ok = False
-        time.sleep(0.4)              # 연속 발송 시 429 를 피한다
+    """단일 메시지 발송 — KBJ notifier 대기열에 넣는다(설계 §5.9 #34). ETF 이름에 * _ ( ) 가 흔해서
+    Markdown 대신 HTML 을 쓴다. 분할·재시도·429 대기는 notifier 가 한다(봇 토큰을 읽지 않는다)."""
+    ok, why = legacy_send(text, source='et.etf', parse_mode=parse, kind='etf.report')
+    if not ok:
+        print('[텔레그램] 발송 실패:', why[:200])
     return ok
 
 
@@ -422,27 +415,7 @@ def send_report(msgs):
     return sent == len(msgs)
 
 
-def send_telegram_file(path, caption=''):
-    """대시보드 HTML 을 문서로 보낸다.
-
-    비공개 저장소는 GitHub Pages 가 유료 플랜이라 URL 을 못 만든다. 파일로 보내면
-    호스팅 없이도 휴대폰·PC 어디서든 열린다. Pages 를 켠 경우엔 링크도 함께 간다.
-    """
-    tok, chat = os.getenv('TELEGRAM_BOT_TOKEN'), os.getenv('TELEGRAM_CHAT_ID')
-    if not tok or not chat or not os.path.exists(path):
-        return False
-    try:
-        with open(path, 'rb') as fh:
-            r = requests.post(
-                f'https://api.telegram.org/bot{tok}/sendDocument',
-                data={'chat_id': chat, 'caption': caption[:1000], 'parse_mode': 'Markdown'},
-                files={'document': (os.path.basename(path), fh, 'text/html')}, timeout=90)
-        if not r.ok:
-            print('[텔레그램] 파일 전송 실패:', r.text[:200])
-        return r.ok
-    except Exception as ex:
-        print('[텔레그램] 파일 전송 예외:', type(ex).__name__)
-        return False
+# KBJ P2 삭제(설계 §5.10 #35): send_telegram_file — 호출하는 곳이 없었다(텔레그램 API 직접 호출).
 
 
 def _chunks(text, size):
@@ -530,32 +503,15 @@ def doctor(conn):
         if len(snaps) < 2:
             print('   비교하려면 스냅샷이 2일치 이상 필요합니다')
 
-    print('\n■ 텔레그램')
-    tok, chat = os.getenv('TELEGRAM_BOT_TOKEN'), os.getenv('TELEGRAM_CHAT_ID')
-    if not tok or not chat:
-        print('   TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID 미설정')
-        print('   .env.example 을 .env 로 복사하고 값을 채우세요')
-        ok = False
+    print('\n■ 텔레그램 (KBJ notifier)')
+    # KBJ P2(설계 §5.10 #36): getMe·시험 발송 대신 notifier 의 웹훅·하트비트 상태를 읽는다 —
+    # 봇 토큰은 notifier 만 갖는다. 시험 메시지는 보내지 않는다.
+    st = webhook_status()
+    if st.get('ok'):
+        print(f"   notifier 정상 — {st.get('reason') or '웹훅 설정됨'}")
     else:
-        try:
-            r = requests.get(f'https://api.telegram.org/bot{tok}/getMe', timeout=10).json()
-            if r.get('ok'):
-                print(f'   봇 연결 성공: @{r["result"]["username"]}')
-                s = requests.post(f'https://api.telegram.org/bot{tok}/sendMessage',
-                                  json={'chat_id': chat,
-                                        'text': 'ETF 트래커 연결 테스트 성공'}, timeout=10).json()
-                if s.get('ok'):
-                    print('   테스트 메시지 발송 성공 — 텔레그램을 확인하세요')
-                else:
-                    print(f'   발송 실패: {s.get("description")}')
-                    print('   CHAT_ID 가 맞는지, 봇에게 먼저 말을 걸었는지 확인하세요')
-                    ok = False
-            else:
-                print(f'   봇 인증 실패: {r.get("description")}')
-                ok = False
-        except Exception as e:
-            print(f'   연결 오류: {type(e).__name__}')
-            ok = False
+        print(f"   notifier 확인 실패: {st.get('reason') or '사유 없음'}")
+        ok = False
 
     print('\n' + ('전부 정상입니다. `python tracker.py --run` 으로 시작하세요.'
                   if ok else '위 항목을 먼저 해결하세요.'))
@@ -564,7 +520,15 @@ def doctor(conn):
 
 # ─────────────────────────────── CLI ───────────────────────────────
 def prev_trading_day(conn, asof):
+    """비교할 직전 스냅샷 날짜. KBJ P2(설계 §7.2): 직전 거래일은 KBJ 캘린더로 정하고, 그날
+    스냅샷이 없으면 DB 의 마지막 스냅샷과 비교하되 그 사실을 남긴다(조용히 다른 날과 비교하지 않는다)."""
     r = conn.execute('SELECT MAX(asof) FROM holding WHERE asof < ?', (asof,)).fetchone()[0]
+    try:
+        want = TradingCalendar.default().prev_trading_day(date.fromisoformat(asof)).isoformat()
+    except ValueError:
+        return r
+    if r and r != want:
+        print(f'[주의] 직전 거래일 {want} 스냅샷이 없어 {r} 과 비교한다')
     return r
 
 

@@ -11,6 +11,14 @@ DART OpenAPI — 공시와 기업 개황.
 이 파일은 8MB 남짓이고 자주 안 바뀌므로 state/ 에 캐시한다.
 
 이 환경에서 실호출 검증은 못 했다. run.py --check 로 확인하라.
+
+## KBJ P2 (설계 §3.7·§9.4)
+
+DART 를 직접 부르지 않는다. 주소는 논리 URL `dart:` 이고 세션은 KBJ 브리지
+(`kbj.data.legacy_bridge`)다 — 브리지가 KBJ 키(KBJ_DART_API_KEY)·리미터(8/s)·일 예산
+(18,000)을 넣고 `kbj.data.public.dart.DartClient` 로 부른다. 호출자가 넘기는 `crtfc_key` 는
+브리지가 버린다. 상태 코드 풀이(`STATUS_KO`)와 제목 분류(`KINDS`·`kind_of`)는 KBJ 정본
+(`kbj.data.public.dart`)을 다시 내보낸다.
 """
 import io
 import json
@@ -20,34 +28,33 @@ import xml.etree.ElementTree as ET
 import zipfile
 from datetime import date, timedelta
 
-from ..engine.config import ROOT
-from . import creds
-from .http import Fetch, get, session
+from kbj.config.settings import Settings
+from kbj.data.legacy_bridge import session
+from kbj.data.public.dart.client import STATUS_KO
+from kbj.data.public.dart.disclosures import KINDS, kind_of  # noqa: F401 — 다시 내보내기
 
-BASE = 'https://opendart.fss.or.kr/api'
+from ..engine.config import ROOT
+from .http import Fetch, get
+
+BASE = 'dart:'
 SOURCE = 'dart'
 CORP_CACHE = os.path.join(ROOT, 'state', '.dart_corp.json')
 
 
+def has_key():
+    """KBJ_DART_API_KEY 가 설정됐는가(값은 브리지만 쓴다)."""
+    return Settings().dart_api_key is not None
+
+
 def _key():
-    return creds.get('DART_API_KEY', required=True)
+    """`crtfc_key` 자리 표시 — 키 원문은 브리지가 KBJ 설정에서 넣는다(여기 값은 버려진다)."""
+    if not has_key():
+        raise RuntimeError('KBJ_DART_API_KEY 가 없다 (DART OpenAPI 인증키). '
+                           '.env 에 넣거나 환경변수로 주입하라.')
+    return 'KBJ_DART_API_KEY'
 
 
-# DART 는 실패를 XML 로 준다. 코드만 보면 무슨 일인지 알 수 없어서 풀어 준다.
-STATUS_KO = {
-    '010': '등록되지 않은 인증키',
-    '011': '사용할 수 없는 인증키 (일시 중지)',
-    '012': '접근할 수 없는 IP',
-    '013': '조회된 데이터가 없음',
-    '014': '파일이 존재하지 않음',
-    '020': '요청 제한 초과 (일 20,000건)',
-    '021': '조회 가능한 회사 개수 초과',
-    '100': '필드의 부적절한 값',
-    '101': '부적절한 접근',
-    '800': '시스템 점검 중 — 인증키 문제가 아니다. 시간을 두고 다시',
-    '900': '정의되지 않은 오류',
-    '901': '사용 유의사항 위반에 따른 이용제한',
-}
+# DART 는 실패를 XML 로 준다. 코드만 보면 무슨 일인지 알 수 없어서 풀어 준다(STATUS_KO — KBJ 정본).
 _STATUS_RE = re.compile(r'<status>\s*(\d+)\s*</status>')
 _MESSAGE_RE = re.compile(r'<message>\s*(.*?)\s*</message>', re.S)
 
@@ -177,31 +184,8 @@ def stock_actions(code, bgn, end, s=None):
     return out
 
 
-# 공시 제목 → 종류. 앞에 있는 것이 우선이다 — '자기주식취득 신탁계약 체결' 은
-# buyback 이지 contract 가 아니다. 어디에도 안 걸리면 'other'.
-# 종류는 서술 프롬프트가 '공시:' 표기를 고르는 데만 쓴다. 판정은 하지 않는다.
-KINDS = (
-    ('inquiry', ('조회공시', '풍문', '현저한시황변동', '시황변동')),
-    ('buyback', ('자기주식', '자사주')),
-    ('capital', ('유상증자', '무상증자', '전환사채', '신주인수권부사채', '교환사채',
-                 '감자', '액면', '주식분할', '주식병합', '합병', '분할')),
-    ('owner', ('최대주주', '주식등의대량보유', '임원ㆍ주요주주', '임원·주요주주',
-               '경영권', '지분')),
-    ('clinical', ('임상', '품목허가', '승인', '허가')),
-    ('earnings', ('영업(잠정)실적', '잠정실적', '매출액또는손익', '실적', '결산')),
-    ('contract', ('공급계약', '단일판매', '수주', '판매ㆍ공급', '판매·공급', '계약')),
-)
-
-
-def kind_of(title):
-    """공시 제목의 종류. 위 표의 순서대로 처음 걸리는 것."""
-    t = (title or '')
-    for kind, words in KINDS:
-        if any(w in t for w in words):
-            return kind
-    return 'other'
-
-
+# 공시 제목 → 종류(KINDS·kind_of)는 KBJ 정본을 다시 내보낸다(위 import). 앞에 있는 것이
+# 우선이다 — '자기주식취득 신탁계약 체결' 은 buyback 이지 contract 가 아니다. 판정은 하지 않는다.
 def _ymd(d):
     d = str(d or '')
     return f'{d[:4]}-{d[4:6]}-{d[6:8]}' if len(d) == 8 else d
@@ -243,9 +227,9 @@ def disclosures_for(code, asof, s=None, timeout=None, retries=None):
 
 
 def probe():
-    if not creds.has('DART_API_KEY'):
-        return [('DART 인증키', False, 'DART_API_KEY 없음')]
-    out = [('DART 인증키', True, creds.mask(creds.get('DART_API_KEY')))]
+    if not has_key():
+        return [('DART 인증키', False, 'KBJ_DART_API_KEY 없음')]
+    out = [('DART 인증키', True, '설정됨(KBJ)')]   # 값은 앞자리도 찍지 않는다
     try:
         m = corp_codes()
         out.append(('종목코드 매핑', True, f'{len(m):,}종목'))

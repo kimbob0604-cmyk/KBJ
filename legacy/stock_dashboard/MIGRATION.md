@@ -117,3 +117,34 @@ flask-socketio·simple-websocket)에 더해 **requirements 에서 빠져 있던*
 옮긴·새로 만든 파일 79개 전체(이 문서 포함)에 대해 `kbj.core.masking.SECRET_SHAPES` 10종(텔레그램 봇 토큰·Anthropic·GitHub·AWS·JWT·PEM·
 KIS 앱키/시크릿 형태·계좌번호 8-2)과 맥 개인 홈 경로·Render 호스트 도메인·작업 머신 홈 경로·사용자 이름·Render 서비스 식별자 grep: **0건**.
 `scripts/check_public_safety.py`(레포 전체): 통과, 발견 0건·허용 0건.
+
+## P2. KBJ 정본으로 재배선 (묶음 H, 2026-10-07)
+
+설계 `docs/p2_design.md` §1.9·§3.7·§3.8(K1)·§5.9·§5.10·§7.2. KIS·KRX·DART 는 KBJ 논리 URL 브리지
+(`kbj.data.legacy_bridge` — `kis:`·`kis-master:`·`krx:`·`dart:`)로만 부르고, 텔레그램은 KBJ notifier 대기열
+shim(`kbj.services.notifier.client.legacy_send`)으로, 휴장·장중은 KBJ 캘린더(`kbj.core.calendar_compat`)로.
+키는 KBJ 설정(`KBJ_KIS_APP_KEY`·`KBJ_KRX_API_KEY`·`KBJ_DART_API_KEY`)에서 브리지가 넣는다 — 옛 이름
+(`KIS_APP_KEY`·`KRX_API_KEY`·`DART_API_KEY`·`TELEGRAM_*`)은 읽지 않는다(docs/secrets.md §2). 네이버
+호출(U4·D6)은 그대로 기준선으로 남는다(P3~P5 에서 KRX·KIS 로).
+
+| 파일 | 바꾼 것 |
+|---|---|
+| `kis_api.py` | `requests` → `kbj.data.legacy_bridge`, `KIS_BASE = "kis:"`, `FO_MASTER_URL = "kis-master:…"`. **토큰 발급·파일 캐시(`cache/kis_token.json`) 삭제** — `_get_token()` 은 KBJ auth 가 Redis 에 둔 토큰을 읽기만(`access_token_or_none`), 없으면 `_headers` 가 None 이라 호출자는 빈 결과(기존 동작). 자체 리미터(초당 18회) 삭제 — 브리지가 앱키당 4/s. `_is_kr_market_hours` → `calendar_compat.is_kr_regular_hours(now_kst())`(UTC 서버의 naive `datetime.now()` 오류도 사라졌다). `_now_kst` → `kbj.core.time.now_kst` |
+| `krx_api.py` | `urllib` 직접 호출 → 브리지 `krx:`. `KRX_API_BASE = "krx:"`, `has_api_key()` 는 `KBJ_KRX_API_KEY`. 호출 간 0.2초 슬립 삭제(리미터·일 예산 `krx:calls:<날짜>` 가 대신). `basDd` 없는 호출(종목기본정보 2개)은 부르지 않고 사유를 찍는다 — KBJ 어댑터는 기준일이 필요하다 |
+| `dart_collector.py` | `DART_BASE_URL = "dart:"`, aiohttp 호출 → `asyncio.to_thread(legacy_bridge.get, …)`. 재시도 대상에 `BridgeConnectionError`. 키 확인은 `KBJ_DART_API_KEY` |
+| `earnings_parser.py`·`overhang_parser.py` | `document.xml`·`list.json` → 브리지 `dart:`(`crtfc_key` 는 브리지가 넣는다). `DART_API_KEY` 는 '설정됨' 표시값(키 원문 아님) |
+| `server.py` — DART 6곳(`poll_dart_disclosures`·`_load_dart_corp_code_map`·`_fetch_dart_quarter`·`_try_dart_segment_revenue`(2)·`_fetch_kr_earnings`) | 그 함수 안 `requests` → 브리지, 주소 → `dart:/…`, 키 확인 `_dart_key_configured()` |
+| `server.py` — 텔레그램 | `send_telegram` → `legacy_send(…, source="sd.send_telegram")[0]`, `send_telegram_long` → `legacy_send(…, numbered=True)[0]`(분할·`(i/n)` 머리는 notifier). 종류는 `config/notify.yaml legacy_kinds`(부른 함수 이름). 봇 토큰·chat id 를 읽지 않는다 |
+| `server.py` — 라우트 삭제(§5.10 #19·#20·#21·#43·#44·#45) | `/api/test_telegram`·`/api/telegram/test`·`/api/telegram/briefing_test`(인증 없는 시험 발송), `/api/telegram/webhook`·`/api/telegram/setup_webhook`·`_telegram_setup_webhook`·`_telegram_secret`·부팅 setWebhook(웹훅은 notifier 하나 — §5.11), `/api/ops/brief/closing`(재발송은 P3 운영 화면), `/api/agent/run`, `/api/ops/cron/trigger/<id>`(수동 실행은 `python -m kbj.services.scheduler run-once`). 자리에 `# KBJ P2 삭제` 주석. 프런트(`static/js`)의 세 버튼은 404 가 된다 — 기준선 |
+| `server.py` — 시각·휴장 | `now_kst()` → `kbj.core.time.now_kst()`. `_KR_HOLIDAYS_2026` **삭제**, `_is_kr_holiday`·`_next_trading_open_kst` → `calendar_compat`(naive 시각은 KST 로 읽는다), `is_market_hours` → `is_kr_regular_hours`. 2026년에 다섯 날이 바뀐다(05-01·06-03·08-17·10-05 휴장, 09-28 개장 — 설계 §7.3), 15:30:00 부터 장 밖([09:00, 15:30)), 지연 개장일 반영 |
+| `earnings_telegram_sender.py` | `send_telegram_message` → `legacy_send(…, source="sd.earnings", kind="alert.earnings")`. 반환 dict 모양 유지(`message_id` 는 notifier 가 보낼 때 정해져 None) |
+| `scripts/check_watchdog_gating.py` | `_KR_HOLIDAYS_2026` 를 떼어 오던 정규식 → 새 `_is_kr_holiday`(KBJ 캘린더) 발췌. 단언(1~5)은 그대로 |
+
+남긴 것(기준선): `_split_telegram_lines`·`_TG_LIMIT`·`_TG_CHUNK`(검사 스크립트 `check_newhigh_full_list.py`
+가 떼어 시험한다 — 메시지를 kbj 작업으로 옮길 때 지운다), 텔레그램 cron 등록 조건
+`os.getenv("TELEGRAM_BOT_TOKEN")`(SD APScheduler 는 KBJ 등록부로 폐지 — §6.8, 돌지 않는다),
+`_handle_telegram_command`·`_tg_*` 명령 함수(라우트가 없어 부르는 곳 없음 — 명령은 notifier, P3),
+`data_fetcher.py`·`data_freshness.py` 의 `now_kst`(H 파일 목록 밖 — P3), 네이버·KRX 스크랩 호출(U4).
+
+시험: 검사 스크립트 10 + 목록 대조 + 합성 재현 = 12 그대로 통과, 새 다리 시험 `tests/test_kbj_bridge.py`
+(+1 — `kis_api` 가 브리지를 쓰고 토큰을 발급하지 않는다, 직접 주소는 `ValueError`) → **13 통과**.

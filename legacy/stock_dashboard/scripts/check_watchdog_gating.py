@@ -25,11 +25,13 @@ def grab(pattern, what):
 src = '\n\n'.join([
     grab(r'^_WD_STALE_FROM.*?^_WD_FLOW_FROM = \d+.*?$', '워치독 시간대 상수'),
     grab(r'^def _watchdog_checks_due\(.*?\n    \}\n', '_watchdog_checks_due'),
-    grab(r'^_KR_HOLIDAYS_2026 = \{.*?^\}\n', '휴장일 표'),
-    grab(r'^def _is_kr_holiday\(.*?return dt\.strftime\("%Y-%m-%d"\) in _KR_HOLIDAYS_2026\n',
-         '_is_kr_holiday'),
+    # KBJ P2: 2026 하드코딩(_KR_HOLIDAYS_2026)을 지우고 KBJ 정본 캘린더로 바꿨다(설계 §7.2) —
+    # 휴장 판정은 kbj.core.calendar_compat.is_kr_holiday(XKRX + config/holidays_override.yaml)
+    grab(r'^def _is_kr_holiday\(.*?return _kbj_is_kr_holiday\(.*?\)\n', '_is_kr_holiday'),
 ])
-ns = {'datetime': _dt.datetime, 'now_kst': lambda: None}
+from kbj.core.calendar_compat import is_kr_holiday as _kbj_is_kr_holiday  # noqa: E402
+ns = {'datetime': _dt.datetime, 'now_kst': lambda: None,
+      '_kbj_is_kr_holiday': _kbj_is_kr_holiday, 'KST': _dt.timezone(_dt.timedelta(hours=9))}
 exec(compile(src, 'server.py(발췌)', 'exec'), ns)
 due = ns['_watchdog_checks_due']
 

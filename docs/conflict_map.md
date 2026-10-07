@@ -47,16 +47,18 @@
 
 #### 이행 방법 — "발급은 auth 한 곳"
 
+> **P2 결정 반영(2026-10-07, ADR 0004·`docs/p2_design.md` 머리말)**: D1 앱키는 KIS REST 호출 프로세스에도·발급은 세 겹으로 auth 에만(아래 1·7번) · D2 웹소켓 연결은 P7 까지 legacy 기준선·접속키 발급은 auth 만 · D3 하루 시뮬레이션은 24시간 창, 23시간 구간마다 접근토큰 발급 ≤ 1(8번) · D4 FastAPI 는 P3(웹훅은 순수 처리 함수) · D5 KRX 일 상한 8,000 [확인 필요](§1.11). 1~7번은 P2 에 끝났고(legacy 의 KIS·KRX·DART 직접 호출 0 — `scripts/check_canonical.py`), 8번(옛 발급자 정지)은 운영 전환일의 사용자 작업으로 남았다.
+
 | 순서 | 할 일 | 대상 파일 | 확인 방법 |
 |---|---|---|---|
-| 1 | KBJ `services/auth` 를 GX에서 옮겨 띄운다. 앱키는 `KBJ_KIS_APP_KEY`·`KBJ_KIS_APP_SECRET`, **auth 컨테이너에만** 주입 | GX `services/auth/*`, `data/kis/auth_client.py` → `kbj/services/auth`, `kbj/data/private/kis/auth_client.py` | compose 환경변수 검사(다른 서비스에 앱키 없음) |
+| 1 | KBJ `services/auth` 를 GX에서 옮겨 띄운다. 앱키는 `KBJ_KIS_APP_KEY`·`KBJ_KIS_APP_SECRET`. ~~auth 컨테이너에만 주입~~ → **P2 결정 D1(ADR 0004)**: KIS REST 는 모든 요청 헤더에 앱키가 필요해 **KIS REST 를 부르는 프로세스에도** 준다. 발급은 세 겹으로 auth 에만(발급 클래스는 `kbj/services/auth/issuer.py` 에만 + import-linter 계약 ④, `oauth2` 경로 문자열 검사, `KBJ_SERVICE != auth` 면 발급자 생성 거부) | GX `services/auth/*`, `data/kis/auth_client.py` → `kbj/services/auth/{issuer,service}.py`, `kbj/data/private/kis/token.py` | compose: P2 는 KIS 를 부르는 서비스가 auth 하나라 앱키는 auth 에만(`tests/test_store_layout.py` compose 시험). P3 에 scheduler 추가 |
 | 2 | 읽기 전용 함수 하나를 공용으로 둔다: `kbj.data.private.kis.token()` = `reader(redis, settings).get()`. 없으면 `TokenUnavailable` 을 올리고 **발급하지 않는다** | `services/auth/service.py:reader`:564 재사용 | 단위 시험: Redis 비었을 때 예외, HTTP 호출 0회 |
 | 3 | GX `KisClient` 의 기본 발급 경로를 없앤다: `token_provider` 를 필수 인자로 바꾸고 `default_token_provider` 는 삭제(K7). probe도 reader 사용 | GX `data/kis/rest.py:120`, `auth_client.py:539`, `scripts/probe_all.py:55` | `KisClient()` 를 provider 없이 만들면 TypeError |
 | 4 | legacy SD: `kis_api._get_token` 본문을 2번 함수 호출로 바꾸고 `_load_token_from_disk`·`_save_token_to_disk`·`cache/kis_token.json` 삭제(K1). K2(`dashboard_brief_preview.py`)는 삭제 | SD `kis_api.py:26-79`, ET `board/tools/dashboard_brief_preview.py` | grep `oauth2/tokenP` 가 legacy에서 0건 |
 | 5 | legacy ET: `board/ingest/kis.py:token()` 을 2번 호출로, `force=True` 는 `invalidate()` 후 auth 재발급을 기다리게. `TOKEN_CACHE`·`_save_token` 삭제 → K3~K6 한꺼번에 해소 | ET `board/ingest/kis.py:44,90-140`, `monitor/flow/kissrc.py:103` | 같음 |
 | 6 | 모든 KIS REST 호출이 앱키당 Redis 레이트리미터를 거치게 한다(§1.2) | 위 클라이언트 전부 | 속성 시험(어떤 1초 창도 4건 이하) |
-| 7 | 금지 규칙: `oauth2/tokenP`·`oauth2/Approval` 문자열과 `KisTokenIssuer` import 를 `kbj/services/auth` 밖에서 금지(import-linter + grep CI) | CI | PLAN P2 완료 기준 |
-| 8 | 옛 발급자 정지(전환일에 동시에): Render 환경변수에서 KIS 키 제거, ET 워크플로 시크릿 `KIS_APP_KEY` 사용 5곳(`board.yml`·`kr.yml`·`flow.yml`·`kis-futures-probe.yml`·`dashboard-brief-preview.yml`) + **GX `probe.yml`**(K7) 제거, 맥 launchd board 정지, K10 처리(§4 Q13) | 각 레포 설정 | 가짜 시계 하루 시뮬레이션에서 발급 1회(PLAN P2 기준) |
+| 7 | 금지 규칙: `oauth2/tokenP`·`oauth2/Approval` 문자열과 `KisTokenIssuer` import 를 `kbj/services/auth` 밖에서 금지 — import-linter 계약 ④ + `scripts/check_canonical.py`(그룹 `kis_oauth`, legacy 는 AST 규칙 `legacy_auth_import`). 웹소켓 연결 코드는 P7 까지 legacy GX 기준선 그룹 `kis_ws`, 접속키 발급은 지금부터 auth 만(결정 D2) | CI(`canonical` 잡) | PLAN P2 완료 기준 — 2026-10-07 legacy 0건 |
+| 8 | 옛 발급자 정지(전환일에 동시에): Render 환경변수에서 KIS 키 제거, ET 워크플로 시크릿 `KIS_APP_KEY` 사용 5곳(`board.yml`·`kr.yml`·`flow.yml`·`kis-futures-probe.yml`·`dashboard-brief-preview.yml`) + **GX `probe.yml`**(K7) 제거, 맥 launchd board 정지, K10 처리(§4 Q13) — **사용자 작업(남음)** | 각 레포 설정 | 가짜 시계 하루 시뮬레이션(결정 D3 — 24시간 창 10-06 05:00 ~ 10-07 05:00): 모든 발급은 auth 에서만, auth 밖 발급 0, 어떤 23시간 구간에도 접근토큰 발급 ≤ 1(05:00·다음 날 04:00) — `tests/sim/test_one_day.py` 통과 |
 
 ### 1.2 KIS 호출 한도
 
@@ -124,7 +126,7 @@
 
 | 지금 구현들 | 정본 | 근거 | 나머지 처리 | 단계 |
 |---|---|---|---|---|
-| SD:`server.py:_KR_HOLIDAYS_2026`:17971(**2026년만** 하드코딩)·`_is_kr_holiday`:17987·`is_market_hours`:174, SD:`kis_api.py:_is_kr_market_hours`:146 · ET:`board/engine/db.py:trading_days`:202(일봉 날짜 합집합), `board/us/db.py:156`, `etf_tracker_v9/tracker.py:prev_trading_day`:566(DB 날짜), `monitor/flow/narrative.py:prev_trading_day`:73(데이터 날짜), `board/run.py` `only_fresh` 휴장 추정(:1086), bok `send-telegram.js --morning-only`(평일 판정), guru `run_weekdays` · GX:`core/calendar.py`(`TradingCalendar`, `state_at`, `expiry_at`, `night_session_opens`) + `config/holidays_override.yaml` | **GX `core/calendar.py`** | `test_calendar` 36 + 속성 7 + 스케줄러 시험. XKRX(exchange_calendars) + 덮어쓰기, 야간 T+1 귀속·만기·대체공휴일 실측(2026 추석·10/5 대체공휴일 `test_dependencies.py`) | SD 하드코딩 3곳 삭제(2027년 누락 위험). ET의 데이터 기반 함수(`trading_days` 등)는 '데이터가 있는 날' 판정으로 남기되 휴장 판정은 캘린더로. 미국 일정은 XNYS 캘린더 추가 [제안]. `now_kst` 6벌(sweep G-2) → `kbj/core/time.py` | P2 |
+| SD:`server.py:_KR_HOLIDAYS_2026`:17971(**2026년만** 하드코딩)·`_is_kr_holiday`:17987·`is_market_hours`:174, SD:`kis_api.py:_is_kr_market_hours`:146 · ET:`board/engine/db.py:trading_days`:202(일봉 날짜 합집합), `board/us/db.py:156`, `etf_tracker_v9/tracker.py:prev_trading_day`:566(DB 날짜), `monitor/flow/narrative.py:prev_trading_day`:73(데이터 날짜), `board/run.py` `only_fresh` 휴장 추정(:1086), bok `send-telegram.js --morning-only`(평일 판정), guru `run_weekdays` · GX:`core/calendar.py`(`TradingCalendar`, `state_at`, `expiry_at`, `night_session_opens`) + `config/holidays_override.yaml` | **GX `core/calendar.py`** | `test_calendar` 36 + 속성 7 + 스케줄러 시험. XKRX(exchange_calendars) + 덮어쓰기, 야간 T+1 귀속·만기·대체공휴일 실측(2026 추석·10/5 대체공휴일 `test_dependencies.py`) | SD 하드코딩 3곳 삭제(2027년 누락 위험). ET의 데이터 기반 함수(`trading_days` 등)는 '데이터가 있는 날' 판정으로 남기되 휴장 판정은 캘린더로. 미국 일정은 XNYS 캘린더 추가 [제안]. `now_kst` 6벌(sweep G-2) → `kbj/core/time.py`. **P2 결과**: `kbj/core/calendar.py`(XKRX·XNYS)·`calendar_compat`(legacy 다시 내보내기), 주식 지연 개장(그해 첫 거래일 10:00·수능일 `late_open` 10:00~16:30 — 설계 R24)은 `equity_bounds` | P2 — 끝 |
 
 ### 1.7 52주·60일·역사적 신고가
 
@@ -154,7 +156,7 @@
 
 | 지금 구현들 | 정본 | 근거 | 나머지 처리 | 단계 |
 |---|---|---|---|---|
-| SD:`krx_api.py:krx_api_call`:59(`2**attempt` 재시도, 0.2초 스로틀, 일 캐시) + 엔드포인트 9개(`sto/stk·ksq·knx_bydd_trd`, `*_isu_base_info`, `idx/kospi·kosdaq·krx_dd_trd`, `etp/etf_bydd_trd`) · ET:`board/ingest/krx.py:fetch_day`·`fetch_index`(`stk_bydd_trd`·`ksq_bydd_trd`·`krx_dd_trd` 파서), `ingest/pipeline.py:_apply_krx_snapshot`·`krx_regular_day`(D-080) · ET:`flowlab/probe_market_official.py`(투자자 경로 추측 진단) · GX:`data/krx/eod.py:KrxClient`(`drv/fut·opt_bydd_trd`, 64MiB 상한), `services/scheduler/krx.py:KrxCallBudget`(Redis `krx:calls:<날짜>`, 일 상한 200) | **GX `data/krx/eod.py` 클라이언트 + 호출 예산** + **ET `board/ingest/krx.py` 주식 파서** + SD 엔드포인트 목록을 메서드로 추가 | GX `test_krx_client` 7·`test_krx_models` 16·`test_scheduler_krx` 37. ET `test_close_source` 25(확정치 덮기). SD 시험 0. 키 하나의 일 10,000회 한도를 GX 예산이 Redis로 센다 | SD `krx_api.py` 삭제. flowlab probe는 기록만. KRX OpenAPI에 투자자별 데이터가 없다는 점은 GX PLAN #16 '투자자별 데이터 미제공'과 일치 → 수급은 KIS. 공표 시각 D+1 08:00(E1) | P2 |
+| SD:`krx_api.py:krx_api_call`:59(`2**attempt` 재시도, 0.2초 스로틀, 일 캐시) + 엔드포인트 9개(`sto/stk·ksq·knx_bydd_trd`, `*_isu_base_info`, `idx/kospi·kosdaq·krx_dd_trd`, `etp/etf_bydd_trd`) · ET:`board/ingest/krx.py:fetch_day`·`fetch_index`(`stk_bydd_trd`·`ksq_bydd_trd`·`krx_dd_trd` 파서), `ingest/pipeline.py:_apply_krx_snapshot`·`krx_regular_day`(D-080) · ET:`flowlab/probe_market_official.py`(투자자 경로 추측 진단) · GX:`data/krx/eod.py:KrxClient`(`drv/fut·opt_bydd_trd`, 64MiB 상한), `services/scheduler/krx.py:KrxCallBudget`(Redis `krx:calls:<날짜>`, 일 상한 200) | **GX `data/krx/eod.py` 클라이언트 + 호출 예산** + **ET `board/ingest/krx.py` 주식 파서** + SD 엔드포인트 목록을 메서드로 추가 | GX `test_krx_client` 7·`test_krx_models` 16·`test_scheduler_krx` 37. ET `test_close_source` 25(확정치 덮기). SD 시험 0. 키 하나의 일 10,000회 한도를 GX 예산이 Redis로 센다 — P2 결정 D5: KBJ 일 상한 `config/limits.yaml` `krx.daily_cap` 8,000 [확인 필요](실측 체크리스트 `probe_results.md` §7 #12) | SD `krx_api.py` 삭제. flowlab probe는 기록만. KRX OpenAPI에 투자자별 데이터가 없다는 점은 GX PLAN #16 '투자자별 데이터 미제공'과 일치 → 수급은 KIS. 공표 시각 D+1 08:00(E1) | P2 |
 
 ### 1.12 DART 클라이언트
 

@@ -332,6 +332,11 @@ def cut_reason(e):
 
 
 # ─────────────────────────── 소스 호출 ───────────────────────────
+def _dart_ready():
+    """DART 를 부를 수 있나. KBJ P2: 키는 KBJ_DART_API_KEY(브리지가 넣는다) — 옛 이름도 받는다."""
+    return creds.has('DART_API_KEY') or dart.has_key()
+
+
 def _naver(name, code, S, s, display=None):
     out = []
     for q in S.get('naver_queries') or []:
@@ -427,8 +432,8 @@ def collect(newhigh, universe, asof, cfg=None, log=print, inbox=None, now=None,
             ns = news._s()
         except Exception as e:                       # noqa: BLE001
             src['naver_news']['cut'] = f'세션 준비 실패 — {short(e)}'
-    if not creds.has('DART_API_KEY'):
-        src['dart']['cut'] = 'DART_API_KEY 없음'
+    if not _dart_ready():
+        src['dart']['cut'] = 'KBJ_DART_API_KEY 없음'
     else:
         try:
             dart.corp_codes()
@@ -684,8 +689,8 @@ def probe(cfg=None):
                     f"'{PROBE_NAME}' → {_title_hit_ratio(rows, PROBE_NAME, S)}"))
     except Exception as e:                           # noqa: BLE001
         out.append(('Google News RSS', False, short(e)))
-    if not creds.has('DART_API_KEY'):
-        out.append(('DART 종목 공시', False, 'DART_API_KEY 없음'))
+    if not _dart_ready():
+        out.append(('DART 종목 공시', False, 'KBJ_DART_API_KEY 없음'))
     else:
         try:
             today = datetime.now(KST).date().isoformat()
@@ -762,7 +767,7 @@ def probe_table(asof, cfg=None, log=print):
         f'{okn}/5 성공' + (f' · 마지막 실패: {last}' if last else ''))
 
     # 3. DART corp 별 1건 (코스피·코스닥) + 날짜 전체 total
-    if creds.has('DART_API_KEY'):
+    if _dart_ready():
         for code in (PROBE_CODE, PROBE_KOSDAQ):
             try:
                 got = dart.disclosures_for(code, asof, timeout=tmo, retries=S['retries'] + 1)
@@ -779,7 +784,7 @@ def probe_table(asof, cfg=None, log=print):
         except Exception as e:                       # noqa: BLE001
             put('FAIL', 'DART 날짜 전체', short(e))
     else:
-        put('FAIL', 'DART', 'DART_API_KEY 없음')
+        put('FAIL', 'DART', 'KBJ_DART_API_KEY 없음')
 
     # 4. 네이버 금융 종목 뉴스 비공식 URL 둘 — 상태·키만 기록. 판정 없음
     s = requests.Session()
@@ -803,19 +808,11 @@ def probe_table(asof, cfg=None, log=print):
         except Exception as e:                       # noqa: BLE001
             put('기록', label, f'요청 실패 — {short(e, 100)}')
 
-    # 5. 텔레그램 getWebhookInfo — 폴링(getUpdates)과 웹훅은 함께 못 쓴다
-    token = creds.get('TELEGRAM_BOT_TOKEN')
-    if not token:
-        put('기록', '텔레그램 getWebhookInfo', 'TELEGRAM_BOT_TOKEN 없음')
-    else:
-        try:
-            r = s.get(f'https://api.telegram.org/bot{token}/getWebhookInfo', timeout=tmo)
-            js = r.json() if r.status_code == 200 else {}
-            res = js.get('result') or {}
-            put('기록', '텔레그램 getWebhookInfo',
-                f'HTTP {r.status_code} · url={"(없음 → getUpdates 폴링 가능)" if not res.get("url") else "설정됨"} '
-                f'· pending {res.get("pending_update_count", "?")}')
-        except Exception as e:                       # noqa: BLE001
-            put('기록', '텔레그램 getWebhookInfo',
-                f'요청 실패 — {str(e).replace(token, "<TOKEN>")[:100]}')
+    # 5. 텔레그램 웹훅 — KBJ P2(설계 §5.10 #46): getWebhookInfo 는 notifier 가 10분마다 보고
+    # Redis 에 남긴다. 여기서는 그 요약을 읽는다(봇 토큰을 읽지 않는다)
+    from kbj.services.notifier.client import webhook_status
+    st = webhook_status()
+    put('기록', '텔레그램 웹훅(KBJ notifier)',
+        f"{'정상' if st.get('ok') else '확인 필요'} · {str(st.get('reason') or '')[:80]} "
+        f"· pending {st.get('pending_update_count', '?')}")
     return rows

@@ -1,0 +1,63 @@
+# 직접 호출 금지 검사 기준선 — scripts/check_canonical.py (docs/p2_design.md §9.3)
+#
+# 형식: 그룹 | 경로 | 건수(줄) | 정리 단계·사유
+# - 줄어들기만 한다. 기준선에 없는 파일의 위반·건수 증가는 실패. 건수가 줄면 같은 커밋에서 기준선도 줄인다
+#   (`uv run python scripts/check_canonical.py --update-baseline` — 줄이는 방향으로만 다시 쓴다).
+# - 목표 0 그룹(kis_oauth·kis_rest·kis_master·krx_api·dart)과 kbj/ 경로는 여기에 둘 수 없다.
+# - 2026-10-07 P2 묶음 I 가 처음 고정: legacy 의 KIS 토큰·REST·마스터·KRX·DART·텔레그램 0건.
+#   남은 것은 웹소켓(P7)·공공데이터포털(P3)·네이버(P3~P5)·KRX 스크랩(P3).
+datago | legacy/etf_traker/board/ingest/datago.py | 1 | P3 — board ingest 이전 때 kbj.data.datago(공공데이터포털 전송층)로 교체
+datago | legacy/etf_traker/flowlab/probe_market_unit2.py | 1 | P3 — flowlab 진단 스크립트: kbj.data.datago 로 바꾸거나 삭제
+kis_ws | legacy/gexlab/config/kis_ws.yaml | 4 | P7 — ws-gateway 승격 때 kbj/services/ws_gateway 로(메인 결정 D2, 접속키는 auth 만 발급)
+krx_scrape | legacy/etf_traker/board/ingest/flows.py | 2 | P3 — KRX 웹 스크랩·pykrx 를 KRX OPEN API(krx.daily)·KIS 로 교체
+krx_scrape | legacy/etf_traker/board/ingest/pipeline.py | 1 | P3 — KRX 웹 스크랩·pykrx 를 KRX OPEN API(krx.daily)·KIS 로 교체
+krx_scrape | legacy/etf_traker/flowlab/krx.py | 5 | P3 — KRX 웹 스크랩·pykrx 를 KRX OPEN API(krx.daily)·KIS 로 교체
+krx_scrape | legacy/etf_traker/flowlab/naver.py | 1 | P3 — KRX 웹 스크랩·pykrx 를 KRX OPEN API(krx.daily)·KIS 로 교체
+krx_scrape | legacy/etf_traker/monitor/flow/krx.py | 5 | P3 — KRX 웹 스크랩·pykrx 를 KRX OPEN API(krx.daily)·KIS 로 교체
+krx_scrape | legacy/stock_dashboard/data_fetcher.py | 12 | P3 — KRX 웹 스크랩·pykrx 를 KRX OPEN API(krx.daily)·KIS 로 교체
+krx_scrape | legacy/stock_dashboard/data_freshness.py | 1 | P3 — KRX 웹 스크랩·pykrx 를 KRX OPEN API(krx.daily)·KIS 로 교체
+krx_scrape | legacy/stock_dashboard/krx_api.py | 1 | P3 — KRX 웹 스크랩·pykrx 를 KRX OPEN API(krx.daily)·KIS 로 교체
+krx_scrape | legacy/stock_dashboard/ohlcv_5y_collector.py | 2 | P3 — KRX 웹 스크랩·pykrx 를 KRX OPEN API(krx.daily)·KIS 로 교체
+krx_scrape | legacy/stock_dashboard/ohlcv_autofill.py | 8 | P3 — KRX 웹 스크랩·pykrx 를 KRX OPEN API(krx.daily)·KIS 로 교체
+krx_scrape | legacy/stock_dashboard/scripts/probe_ohlcv_sources.py | 6 | P3 — KRX 웹 스크랩·pykrx 를 KRX OPEN API(krx.daily)·KIS 로 교체
+krx_scrape | legacy/stock_dashboard/server.py | 35 | P3 — KRX 웹 스크랩·pykrx 를 KRX OPEN API(krx.daily)·KIS 로 교체
+krx_scrape | pyproject.toml | 2 | D8 — legacy 의존성 그룹의 pykrx 줄·주석: legacy 그룹을 지울 때 함께
+naver | legacy/etf_traker/board/config/settings.yaml | 1 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/board/ingest/flows.py | 6 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/board/ingest/funds.py | 2 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/board/ingest/naver.py | 15 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/board/ingest/news.py | 1 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/board/ingest/pipeline.py | 1 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/board/ingest/stockflows.py | 1 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/board/ingest/triggers.py | 2 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/board/web/app.js | 1 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/board/web/render.py | 1 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/etf_tracker_v9/collectors.py | 4 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/etf_tracker_v9/market.py | 3 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/etf_tracker_v9/render.py | 1 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/etf_tracker_v9/tracker.py | 2 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/etf_tracker_v9/verify.py | 4 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/flowlab/config.py | 3 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/flowlab/naver.py | 4 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/flowlab/probe_deal_trend.py | 2 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/flowlab/probe_frgn.py | 1 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/flowlab/probe_frgn_api.py | 14 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/flowlab/probe_market_flows.py | 18 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/flowlab/probe_market_unit.py | 2 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/flowlab/probe_market_unit2.py | 4 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/flowlab/probe_trend_pages.py | 2 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/etf_traker/flowlab/tests.py | 1 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/stock_dashboard/agents/pipeline.py | 1 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/stock_dashboard/consensus_collector.py | 2 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/stock_dashboard/consensus_quarterly_collector.py | 2 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/stock_dashboard/data_fetcher.py | 1 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/stock_dashboard/ohlcv_autofill.py | 2 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/stock_dashboard/scripts/probe_naver_fields.py | 4 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/stock_dashboard/scripts/probe_naver_json_api.py | 15 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/stock_dashboard/scripts/probe_naver_sources.py | 9 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/stock_dashboard/scripts/probe_ohlcv_fill.py | 2 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/stock_dashboard/scripts/probe_ohlcv_sources.py | 5 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/stock_dashboard/scripts/validate_valuechain_external.py | 1 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/stock_dashboard/server.py | 32 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/stock_dashboard/theme_crawler.py | 3 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/stock_dashboard/valuechain.py | 1 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)

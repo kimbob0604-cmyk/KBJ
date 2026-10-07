@@ -7,28 +7,11 @@
 
 import math
 
-import exchange_calendars as xcals
-import pandas as pd
-import pytest
 from vollib.black import black
 from vollib.black.implied_volatility import implied_volatility
 
 
-@pytest.mark.parametrize(
-    ("day", "is_session"),
-    [
-        ("2026-09-23", True),  # 추석 연휴 전날(수)
-        ("2026-09-24", False),  # 추석 전날
-        ("2026-09-25", False),  # 추석
-        ("2026-09-28", True),
-        ("2026-10-05", False),  # 개천절(토) 대체공휴일
-        ("2026-10-09", False),  # 한글날
-        ("2026-12-31", False),  # 연말 휴장
-    ],
-)
-def test_xkrx_knows_2026_holidays(day: str, is_session: bool) -> None:
-    cal = xcals.get_calendar("XKRX")
-    assert bool(cal.is_session(pd.Timestamp(day))) is is_session
+# KBJ P2: test_xkrx_knows_2026_holidays 는 kbj tests/unit/core/test_xkrx_dependency.py 로 승격했다(같은 단언이 kbj 쪽에서 돈다 — MIGRATION.md P2).
 
 
 def test_vollib_black76_round_trip() -> None:

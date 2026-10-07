@@ -14,7 +14,8 @@ from collections.abc import Callable
 from types import ModuleType
 
 from config.settings import Settings
-from data.kis.rest import KisClient, redact
+from data.kis.auth_client import TokenProvider
+from data.kis.rest import KisClient, NoTokenProvider, redact
 from scripts import (
     probe_callput,
     probe_chain_fill,
@@ -45,6 +46,19 @@ PROBES: dict[str, ModuleType] = {
 NEEDS_KIS = {n for n in PROBES if n != "krx"}
 
 
+def _token_reader(settings: Settings) -> TokenProvider:
+    """Redis(`REDIS_URL`)의 KBJ auth 토큰을 읽는 제공자.
+
+    Redis 가 없으면 토큰 없음(발급하지 않는다)."""
+    if settings.redis_url is None or settings.kis_app_key is None:
+        return NoTokenProvider()
+    from redis import Redis
+
+    from services.auth.service import reader
+
+    return reader(Redis.from_url(settings.redis_url), settings)
+
+
 def main(argv: list[str]) -> int:
     names = argv or list(PROBES)
     unknown = [n for n in names if n not in PROBES]
@@ -52,7 +66,8 @@ def main(argv: list[str]) -> int:
         print(f"모르는 probe: {unknown} (가능: {list(PROBES)})")
         return 2
     settings = Settings()
-    kis = KisClient(settings)
+    # KBJ P2(설계 §3.8 K7): 토큰은 KBJ auth 가 Redis 에 둔 것을 읽기만 한다(발급하지 않는다)
+    kis = KisClient(settings, token_provider=_token_reader(settings))
     started = now_kst()
     lines = [f"# probe 결과 {started:%Y-%m-%d %H:%M} KST (세션: {session_of(started)})", ""]
     failed = 0

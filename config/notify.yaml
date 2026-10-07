@@ -142,6 +142,9 @@ legacy_kinds:
   alert_discovery_new_entries: alert.rule        # #14
   _scheduled_universe_sync: ops.universe         # #17
   _watchdog_notify: ops.watchdog                 # #18 (SD 워치독은 돌지 않는다 — 전환 안전망)
+  # ET — kind 를 넘기지 않는 발송(묶음 H 요청)
+  cmd_us_send: board.us                          # #29 미국장 브리프 본문(발송 대역 시험이 옛 호출 모양을 고정)
+  send_text: flows.report                        # #40 수급 리포트 '대상 없음' 한 줄(monitor/flow/telegram.py)
 legacy_default_kind: legacy.other
 
 delivery:

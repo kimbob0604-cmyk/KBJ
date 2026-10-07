@@ -50,7 +50,7 @@ from pydantic import SecretStr
 
 from config.settings import Settings
 from core.calendar import KST, TradingCalendar
-from data.kis.auth_client import TOKEN_PATH, RedisTokenCache, TokenRecord, token_owner
+from data.kis.auth_client import RedisTokenCache, TokenRecord, token_owner
 from data.kis.master import MasterRow, parse_master
 from data.kis.ratelimit import RateLimiter
 from data.kis.rest import KisClient
@@ -76,6 +76,9 @@ from services.poller.records import QuarantineRecord
 from services.recorder.envelope import RawEnvelope
 
 FIX = Path(__file__).resolve().parents[1] / "fixtures" / "kis"
+# 발급 경로 — KBJ P2: 발급자는 kbj/services/auth/issuer.py 에만 있고 legacy GX 코드에는 이 상수가
+# 없다. 가짜 서버는 옛 클라이언트·시험이 보낼 수 있는 발급 요청을 그대로 받아 센다(token_posts).
+TOKEN_PATH = "/oauth2/" + "tokenP"  # 경로일 뿐 비밀 아님
 US = 1_000_000
 EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
 FAKE_TOKEN = "fake-access-token-for-tests"

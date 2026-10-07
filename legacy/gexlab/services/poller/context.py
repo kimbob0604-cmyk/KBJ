@@ -24,14 +24,12 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Literal, NamedTuple, cast
 
+from kbj.core.calendar import session_tag  # noqa: F401 — 다시 내보내기(KBJ P2)
+
 from core.calendar import (
-    KST,
-    State,
     TradingCalendar,
     expiry_at,
     monthly_expiry,
-    session_bounds,
-    state_at,
     weekly_monday_expiry,
     weekly_thursday_expiry,
 )
@@ -46,26 +44,7 @@ _CLS_ORDER = {"": 0, "WKM": 1, "WKI": 2}  # 같은 날 만기면 월물 먼저(�
 _MONDAY, _THURSDAY = 0, 3
 
 
-def session_tag(ts: datetime, cal: TradingCalendar) -> Tag | None:
-    """레코드에 붙일 (귀속 거래일, 세션) — `core.calendar.state_at` 기준.
-
-    DAY·NIGHT 는 state_at 값 그대로. 장 전 준비 상태(PRE_DAY·PRE_NIGHT)는 곧 열릴 세션으로 본다
-    (그 세션 시작 시각의 state_at). POST_DAY·IDLE 은 None — poller 는 이때 일하지 않는다.
-    """
-    info = state_at(ts, cal)
-    if info.trade_date is not None and info.session is not None:
-        return info.trade_date, info.session
-    d = ts.astimezone(KST).date()
-    if info.state is State.PRE_DAY:
-        start = session_bounds(d, "day")[0]
-    elif info.state is State.PRE_NIGHT:
-        start = session_bounds(d, "night")[0]
-    else:
-        return None
-    nxt = state_at(start, cal)
-    if nxt.trade_date is None or nxt.session is None:
-        return None
-    return nxt.trade_date, nxt.session
+# KBJ P2(설계 §1.3): session_tag 는 kbj.core.calendar 로 승격했다 — 위 import 로 다시 내보낸다.
 
 
 class Series(NamedTuple):

@@ -14,7 +14,9 @@ CLAUDE.md 3장 계약: 각 단계는 JSON 파일로 결과를 남기고 다음 �
 """
 import json
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta, timezone
+
+from kbj.core.time import now_kst as _kbj_now_kst
 
 from . import aggregate as agg
 from . import kinds as K
@@ -65,7 +67,7 @@ STATE = os.path.join(ROOT, 'state')
 
 
 def now_kst():
-    return datetime.now(KST).isoformat(timespec='seconds')
+    return _kbj_now_kst().isoformat(timespec='seconds')  # KBJ P2(설계 §7.2): 벽시계는 kbj.core.time 한 곳
 
 
 def state_dir(asof, make=True):

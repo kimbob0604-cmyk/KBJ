@@ -9,9 +9,8 @@
 from __future__ import annotations
 
 from datetime import datetime
-from zoneinfo import ZoneInfo
 
-KST = ZoneInfo("Asia/Seoul")
+from kbj.core.time import KST
 
 
 class TokenError(RuntimeError):

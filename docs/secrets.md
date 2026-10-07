@@ -1,6 +1,6 @@
 # KBJ 비밀·환경변수 이름표
 
-- 작성: 2026-10-06(P1). 고침: 2026-10-07(P2 S0 — `KBJ_SERVICE`·`KBJ_CONFIG_DIR` 추가, KIS 앱키 주입 범위를 ADR 0004 로). 근거: `docs/inventory.md` (f) 환경변수 통합 표, `docs/DATA_TIERS.md` §1, `docs/adr/0001-p0-decisions.md` U1, `docs/adr/0004-kis-issuance.md`.
+- 작성: 2026-10-06(P1). 고침: 2026-10-07(P2 S0 — `KBJ_SERVICE`·`KBJ_CONFIG_DIR` 추가, KIS 앱키 주입 범위를 ADR 0004 로 / P2 최종 점검 — 서비스별 주입 표, legacy 옛 이름 현황). 근거: `docs/inventory.md` (f) 환경변수 통합 표, `docs/DATA_TIERS.md` §1, `docs/adr/0001-p0-decisions.md` U1, `docs/adr/0004-kis-issuance.md`.
 - **이름만 적는다. 값은 어디에도 적지 않는다**(레포·문서·이슈·로그·텔레그램). 값은 로컬 `.env`(git 제외)와 운영 VM 환경에만 둔다.
 - 코드는 `kbj/config/settings.py` 의 `Settings` 하나로만 읽는다(`KBJ_` 접두사, 비밀은 `SecretStr`). 로그·오류 문구에 내보낼 때는 `kbj/core/masking.py` 를 거친다(절대 규칙 5).
 - 빈 값은 '설정 안 함'(기본값)으로 읽는다. 비밀이 아닌 튜닝값(호출 상한·주기·발송 규칙)은 환경변수가 아니라 `config/*.yaml` 로 둔다.
@@ -93,6 +93,8 @@
 
 legacy 코드는 옮겨 온 그대로 옛 이름을 읽는다(P1 은 경로·import 만 고친다). 새 이름으로 바꾸는 것은 각 영역을 정본으로 갈아 끼우는 단계(P2~)에서 한다.
 
+**P2 뒤(2026-10-07)**: legacy 의 KIS·KRX·DART 호출은 논리 URL 브리지(`kbj/data/legacy_bridge.py`, ADR 0007)가, 텔레그램 발송·수신은 notifier shim(ADR 0005)이 `KBJ_*` 값으로 한다 — 호출자가 넘긴 옛 이름의 값은 버린다. legacy GX 설정의 `telegram_*`·`kis_token_cache_path` 필드는 지웠다. 남은 것: ET board ingest 의 단계 관문 몇 곳(`creds.has('KRX_API_KEY')`·`'KIS_APP_KEY'`·`'DART_API_KEY'`)과 SD `server.py` 의 텔레그램 cron 등록 조건(`TELEGRAM_BOT_TOKEN`)은 아직 옛 이름의 **유무**만 본다 — KBJ 환경에서는 그 단계를 건너뛴다(값은 읽지 않는다). P3 이전 때 KBJ 설정 확인으로 바꾼다.
+
 P1 이식에서 개인·운영 정보를 코드에서 빼며 legacy 에 새로 생긴 이름(값은 레포 어디에도 적지 않는다 — 각 `legacy/<프로젝트>/MIGRATION.md`):
 
 | 이름 | 쓰는 곳 | 무엇 | 등급 |
@@ -118,6 +120,17 @@ KIS REST 는 **모든 요청 헤더에** `appkey`·`appsecret` 을 요구한다(
 | 접근토큰·웹소켓 접속키 **발급** | `services.auth` 한 곳. 나머지는 Redis `kis:token`·`kis:ws_key` 를 읽기만 한다 |
 | 발급 차단 세 겹 | ① 발급 클래스는 `kbj/services/auth/issuer.py` 에만, import-linter 계약으로 auth 밖 import 금지 ② `oauth2/tokenP`·`oauth2/Approval` 문자열 검사(`scripts/check_canonical.py`) ③ 런타임 가드 — `KBJ_SERVICE` 가 `auth` 가 아니면 발급자 생성 거부 |
 | 웹소켓 연결 코드 | P7 까지 legacy GX(`check_canonical` 기준선 그룹 `kis_ws`). 접속키 발급은 지금부터 auth 만 |
+
+서비스별 주입(`docker-compose.yml` profile `app` — `.env` 를 통째로 넣지 않는다, `tests/test_store_layout.py` 가 고정):
+
+| 서비스 | 받는 비밀 |
+|---|---|
+| `migrate` | `KBJ_DATABASE_URL` |
+| `auth` | `KBJ_REDIS_URL`, `KBJ_KIS_APP_KEY`·`KBJ_KIS_APP_SECRET`·`KBJ_KIS_ENV` (P2 에 KIS 를 부르는 서비스는 auth 하나 — KIS 수집 작업이 켜지는 P3 에 scheduler 에도 더한다) |
+| `scheduler` | `KBJ_REDIS_URL`, `KBJ_DATABASE_URL`, `KBJ_DART_API_KEY`(`filings.corp_code`) |
+| `notifier` | `KBJ_REDIS_URL`, `KBJ_DATABASE_URL`, `KBJ_TELEGRAM_BOT_TOKEN`·`KBJ_TELEGRAM_CHAT_ID`·`KBJ_TELEGRAM_INBOX_CHAT_IDS`·`KBJ_TELEGRAM_WEBHOOK_SECRET`, `KBJ_PUBLIC_BASE_URL` |
+
+접속 문자열(`KBJ_DATABASE_URL`·`KBJ_REDIS_URL`)은 compose 가 `KBJ_POSTGRES_PASSWORD`·`KBJ_REDIS_PASSWORD` 로 만든다(기본값 없음 — 없으면 compose 가 멈춘다).
 
 토큰 값 자체는 어느 환경변수에도 두지 않는다(Redis 에만 — `KIS_TOKEN_CACHE_PATH` 삭제).
 

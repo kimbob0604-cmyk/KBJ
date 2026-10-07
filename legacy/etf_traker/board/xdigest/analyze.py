@@ -37,7 +37,9 @@
 여기서는 `client=` 로 가짜를 넣어 흐름을 시험한다.
 """
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta, timezone
+
+from kbj.core.time import now_kst as _kbj_now_kst
 
 from ..ingest import bsky as BS
 from ..writer import claude as C
@@ -60,7 +62,7 @@ VKEY = 'v{:d}'
 
 
 def now_kst():
-    return datetime.now(KST).isoformat(timespec='seconds')
+    return _kbj_now_kst().isoformat(timespec='seconds')  # KBJ P2(설계 §7.2): 벽시계는 kbj.core.time 한 곳
 
 
 def limits(cfg):

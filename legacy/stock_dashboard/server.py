@@ -54,8 +54,27 @@ _load_dotenv(Path(__file__).parent / ".env")
 # Render 등 UTC 서버에서도 KST 기준으로 날짜/시간 계산
 KST = timezone(timedelta(hours=9))
 
+# KBJ P2(설계 §7.2): 벽시계는 kbj.core.time 한 곳, 휴장·장중 판정은 KBJ 정본 캘린더
+# (XKRX + config/holidays_override.yaml — kbj.core.calendar_compat). 텔레그램 발송은 KBJ notifier
+# 대기열(kbj.services.notifier.client.legacy_send — 설계 §5.9), DART 는 KBJ 브리지(`dart:`).
+from kbj.core.calendar_compat import (  # noqa: E402
+    is_kr_holiday as _kbj_is_kr_holiday,
+    is_kr_regular_hours as _kbj_is_kr_regular_hours,
+    next_trading_open as _kbj_next_trading_open,
+)
+from kbj.core.time import now_kst as _kbj_now_kst  # noqa: E402
+from kbj.services.notifier.client import legacy_send  # noqa: E402
+
+
 def now_kst() -> datetime:
-    return datetime.now(KST)
+    return _kbj_now_kst()
+
+
+def _dart_key_configured() -> str | None:
+    """DART 키가 설정됐는가(KBJ_DART_API_KEY). 키 값은 KBJ 브리지만 쓴다 — 여기 값은 표시일 뿐이고
+    `crtfc_key` 로 넘겨도 브리지가 버리고 KBJ 키를 넣는다."""
+    from kbj.config.settings import Settings
+    return "KBJ_DART_API_KEY" if Settings().dart_api_key is not None else None
 
 try:
     from flask import Flask, Response, jsonify, request, send_file
@@ -172,12 +191,8 @@ def _set(**kw):
 # 장중 여부
 # ─────────────────────────────────────────────────────────────────────────────
 def is_market_hours() -> bool:
-    """KST 기준 평일 09:00 ~ 15:30 여부"""
-    now = now_kst()
-    if now.weekday() >= 5:          # 토/일
-        return False
-    t = now.hour * 100 + now.minute
-    return 900 <= t <= 1530
+    """KST 기준 거래일 주식 정규장(09:00 ~ 15:30, 휴장·지연 개장 반영) 여부 — KBJ 캘린더."""
+    return _kbj_is_kr_regular_hours(now_kst())
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -4640,26 +4655,7 @@ def api_db_restore():
         return jsonify({"ok": False, "reason": str(exc)}), 500
 
 
-@app.route("/api/test_telegram")
-def api_test_telegram_get():
-    """텔레그램 전송 테스트 (GET — 브라우저로 바로 호출 가능)."""
-    try:
-        sched_running = False
-        job_count = 0
-        if _scheduler is not None:
-            sched_running = bool(_scheduler.running)
-            job_count = len(_scheduler.get_jobs())
-        msg = ("✅ <b>서버 정상 동작 확인</b>\n\n"
-               f"⏰ {now_kst().strftime('%Y-%m-%d %H:%M:%S')} KST\n"
-               f"🔄 스케줄러: {'실행중' if sched_running else '⚠️ 멈춤'}\n"
-               f"📋 잡 수: {job_count}개\n"
-               f"🕐 가동: {(time.time() - _start_time) / 3600:.1f}시간")
-        ok = send_telegram(msg)
-        return jsonify({"status": "sent" if ok else "failed",
-                        "scheduler_running": sched_running,
-                        "scheduler_jobs": job_count})
-    except Exception as exc:
-        return jsonify({"status": "failed", "error": str(exc)}), 500
+# KBJ P2 삭제(설계 §5.10): api_test_telegram_get — #19 인증 없는 텔레그램 시험 발송 라우트
 
 
 @app.before_request
@@ -5203,28 +5199,12 @@ def api_options_signal():
 # PHASE 23 — 텔레그램 알림 / ETF 히트맵 / 배당 스크리너
 # ─────────────────────────────────────────────────────────────────────────
 def send_telegram(message: str, parse_mode: str = "HTML") -> bool:
-    """텔레그램 메시지 전송. 토큰 미설정 또는 알림 OFF 시 silently skip."""
-    if os.getenv("TELEGRAM_ENABLED", "1").strip().lower() in ("0", "false", "no", "off"):
-        log.info("[텔레그램] 알림 OFF (TELEGRAM_ENABLED) — 발송 생략")
-        return False
-    token = os.getenv("TELEGRAM_BOT_TOKEN")
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
-    if not token or not chat_id:
-        return False
-    try:
-        import requests as _rq
-        url = f"https://api.telegram.org/bot{token}/sendMessage"
-        r = _rq.post(url, json={
-            "chat_id": chat_id, "text": message,
-            "parse_mode": parse_mode, "disable_web_page_preview": True,
-        }, timeout=10)
-        if r.status_code != 200:
-            log.warning("[텔레그램] send failed: %s %s", r.status_code, r.text[:200])
-            return False
-        return True
-    except Exception as exc:
-        log.warning("[텔레그램] error: %s", exc)
-        return False
+    """텔레그램 메시지 전송 — KBJ notifier 대기열에 넣는다(설계 §5.9). 발송 꺼짐·실패면 False.
+
+    토큰·chat id 는 여기서 읽지 않는다(notifier 만). 종류(kind)는 부른 함수 이름으로
+    config/notify.yaml `legacy_kinds` 가 정한다.
+    """
+    return legacy_send(message, source="sd.send_telegram", parse_mode=parse_mode)[0]
 
 
 # 텔레그램 sendMessage 본문 상한. 넘기면 400 이 나거나 잘린다.
@@ -5271,22 +5251,13 @@ def _split_telegram_lines(text: str, limit: int = _TG_CHUNK) -> list[str]:
 
 
 def send_telegram_long(message: str, parse_mode: str = "HTML") -> bool:
-    """긴 본문을 줄 경계에서 나눠 여러 건으로 보낸다. 전부 성공해야 True.
+    """긴 본문을 여러 건으로 — 줄 경계 분할과 `(i/n)` 머리는 KBJ notifier(format)가 한다.
 
-    조각이 둘 이상이면 각 조각 머리에 `(i/n)` 을 붙인다. 안 붙이면 받는 쪽에서
-    두 번째 조각이 왜 제목도 없이 종목 목록부터 시작하는지 알 수 없다.
+    `_split_telegram_lines` 는 검사 스크립트(check_newhigh_full_list.py)가 떼어 가 시험하므로
+    남겨 둔다(KBJ P2 기준선 — 메시지를 kbj 작업으로 옮길 때 함께 지운다).
     """
-    chunks = _split_telegram_lines(message)
-    if len(chunks) == 1:
-        return send_telegram(chunks[0], parse_mode=parse_mode)
-    ok = True
-    for i, chunk in enumerate(chunks, 1):
-        head = f"<i>({i}/{len(chunks)})</i>\n"
-        if not send_telegram(head + chunk, parse_mode=parse_mode):
-            ok = False
-            log.warning("[텔레그램] %d/%d 조각 발송 실패", i, len(chunks))
-    log.info("[텔레그램] 본문 %d자 → %d건 분할 발송", len(message), len(chunks))
-    return ok
+    return legacy_send(message, source="sd.send_telegram_long", parse_mode=parse_mode,
+                       numbered=True)[0]
 
 
 @app.route("/api/volume_profile/<code>")
@@ -5704,35 +5675,15 @@ def check_alert_rules():
             pass
 
 
-@app.route("/api/telegram/test", methods=["POST"])
-def api_telegram_test():
-    """테스트 메시지 전송."""
-    ok = send_telegram(
-        "🔔 <b>테스트</b>\n"
-        "stock-dashboard 텔레그램 연동 성공!\n"
-        f"시각: {now_kst().strftime('%Y-%m-%d %H:%M:%S')} KST"
-    )
-    return jsonify({"ok": ok})
+# KBJ P2 삭제(설계 §5.10): api_telegram_test — #19 인증 없는 텔레그램 시험 발송 라우트
 
 
-@app.route("/api/telegram/briefing_test", methods=["POST"])
-def api_briefing_test():
-    """새벽 브리핑 수동 테스트. 데이터 갱신 후 브리핑 발송."""
-    try:
-        _refresh_briefing_data()
-        alert_overnight_prediction()
-        return jsonify({"ok": True, "message": "브리핑 발송 완료"})
-    except Exception as exc:
-        return jsonify({"ok": False, "error": str(exc)}), 500
+# KBJ P2 삭제(설계 §5.10): api_briefing_test — #19 인증 없는 브리핑 시험 발송 라우트
 
 
 # ── 텔레그램 양방향 봇 (webhook 명령 처리) ───────────────────────────────────
 # push 전용 → 온디맨드 조회 지원. 보안: 소유자 chat_id 만 응답 + 시크릿 헤더.
-def _telegram_secret() -> str:
-    """webhook 시크릿 토큰 (봇 토큰 파생 — 별도 설정 불필요)."""
-    import hashlib
-    tok = os.getenv("TELEGRAM_BOT_TOKEN") or "no-token"
-    return hashlib.sha256(("wh:" + tok).encode()).hexdigest()[:32]
+# KBJ P2 삭제(설계 §5.10): _telegram_secret — #20·#21 봇 토큰 파생 시크릿 — 웹훅 시크릿은 KBJ_TELEGRAM_WEBHOOK_SECRET(notifier)
 
 
 def _resolve_kr_code(q: str) -> tuple[str, str] | None:
@@ -5857,55 +5808,13 @@ def _handle_telegram_command(text: str) -> None:
         _tg_reply(f"⚠️ 처리 중 오류: {str(exc)[:100]}")
 
 
-@app.route("/api/telegram/webhook", methods=["POST"])
-def api_telegram_webhook():
-    """텔레그램 webhook — 소유자 chat 명령만 처리."""
-    # 시크릿 검증 (Telegram 이 setWebhook 의 secret_token 을 헤더로 재전송)
-    secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
-    if secret != _telegram_secret():
-        return jsonify({"ok": False}), 403
-    try:
-        upd = request.get_json(force=True, silent=True) or {}
-    except Exception:
-        upd = {}
-    msg = upd.get("message") or upd.get("edited_message") or {}
-    chat_id = str((msg.get("chat") or {}).get("id") or "")
-    text = msg.get("text") or ""
-    owner = os.getenv("TELEGRAM_CHAT_ID") or ""
-    # 소유자만 응답 (타인 chat 무시)
-    if owner and chat_id and chat_id == owner and text.startswith("/"):
-        threading.Thread(target=_handle_telegram_command, args=(text,),
-                         daemon=True, name="tg-cmd").start()
-    return jsonify({"ok": True})
+# KBJ P2 삭제(설계 §5.10): api_telegram_webhook — #21 웹훅 수신은 KBJ notifier 하나(POST /telegram/webhook) — 명령 로직은 notifier commands(P3)
 
 
-def _telegram_setup_webhook() -> None:
-    """부팅 시 webhook 자동 등록 (Render — 공개 URL 있을 때만)."""
-    base = (os.getenv("RENDER_EXTERNAL_URL") or "").rstrip("/")
-    token = os.getenv("TELEGRAM_BOT_TOKEN")
-    if not base or not token:
-        return
-    try:
-        import requests as _rq
-        r = _rq.post(
-            f"https://api.telegram.org/bot{token}/setWebhook",
-            json={"url": f"{base}/api/telegram/webhook",
-                  "secret_token": _telegram_secret(),
-                  "allowed_updates": ["message", "edited_message"]},
-            timeout=10)
-        if r.status_code == 200 and r.json().get("ok"):
-            log.info("[봇] webhook 등록 완료: %s/api/telegram/webhook", base)
-        else:
-            log.warning("[봇] webhook 등록 실패: %s", r.text[:200])
-    except Exception as exc:
-        log.warning("[봇] webhook 등록 예외: %s", exc)
+# KBJ P2 삭제(설계 §5.10): _telegram_setup_webhook — #20 setWebhook 은 notifier 만(python -m kbj.services.notifier setup-webhook)
 
 
-@app.route("/api/telegram/setup_webhook", methods=["POST"])
-def api_telegram_setup_webhook():
-    """webhook 수동 등록 트리거."""
-    _telegram_setup_webhook()
-    return jsonify({"ok": True, "message": "webhook 등록 시도 (로그 확인)"})
+# KBJ P2 삭제(설계 §5.10): api_telegram_setup_webhook — #20 setWebhook 은 notifier 만
 
 
 @app.route("/api/watchlist/sync", methods=["POST"])
@@ -7020,10 +6929,7 @@ def _startup():
         threading.Thread(target=_startup_naver_universe_sync,
                          daemon=True, name="naver-startup").start()
 
-        # 텔레그램 양방향 봇 webhook 등록 (Render 공개 URL 있을 때만)
-        if os.getenv("TELEGRAM_BOT_TOKEN") and os.getenv("TELEGRAM_CHAT_ID"):
-            threading.Thread(target=_telegram_setup_webhook,
-                             daemon=True, name="tg-webhook-setup").start()
+        # KBJ P2 삭제(설계 §5.10 #20): 부팅 setWebhook — 웹훅은 KBJ notifier 하나(§5.11)
 
         # Phase 14: S&P 500 market 백그라운드 빌드
         #   일 1회, ~180 초 소요. 사용자가 [🇺🇸 미국] 토글 누르기 전에 완료되도록.
@@ -7309,7 +7215,7 @@ def _startup():
         log.info("[Maint] ETF 마킹/테마 매핑/US 유니버스 자동화 등록")
 
         # ── DART 공시 실시간 감지 ──
-        if os.getenv("DART_API_KEY"):
+        if _dart_key_configured():
             # 평일 08:00~18:00 1분 간격 공시 폴링
             _scheduler.add_job(poll_dart_disclosures, "cron",
                                day_of_week="mon-fri", hour="8-17", minute="*",
@@ -8489,41 +8395,7 @@ def api_ops_ohlcv_fill():
                     "force": force})
 
 
-@app.route("/api/ops/brief/closing", methods=["POST"])
-def api_ops_brief_closing():
-    """장마감 시황을 지금 보낸다. `?force=1` 이면 오늘 이미 보냈어도 다시 보낸다.
-
-    **왜 있는가.** 시황은 하루 한 번 제한이 ops_state 에 걸려 있다. 그 제한은
-    옳지만, 덜 찬 시황이 나가 버린 날(2026-09-18 처럼 일봉이 비어 신고가가
-    '데이터 수집 실패' 로 나간 날)에는 사람이 손으로 다시 보낼 길이 있어야
-    한다. 그 길이다 — 자동 경로는 건드리지 않는다.
-
-    데이터가 덜 찼으면 `send_closing_market_summary` 가 먼저 일봉을 채우고
-    다시 본다(재배포 직후 빈 DB 면 ~1,500종목 전 구간이라 수 분). 그래서
-    **백그라운드 스레드로 돌리고 즉시 돌아온다** — HTTP 가 그동안 매달려
-    있으면 프록시가 먼저 끊는다.
-    진행 상황은 `/api/ops/ohlcv/status` 로 본다.
-    """
-    force = (request.args.get("force") or "").strip() in ("1", "true", "yes")
-    if force:
-        _ops_set(_closing_brief_key(), "")
-
-    def _run():
-        try:
-            sent = send_closing_market_summary(catchup=True)
-            log.info("[장마감시황] 수동 발송 결과: %s", sent)
-        except Exception:                                  # noqa: BLE001
-            log.exception("[장마감시황] 수동 발송 실패")
-
-    threading.Thread(target=_run, daemon=True, name="brief-manual").start()
-    try:
-        import ohlcv_autofill as _oa
-        st = _oa.status()
-    except Exception as exc:                               # noqa: BLE001
-        st = {"error": f"{type(exc).__name__}: {exc}"}
-    return jsonify({"ok": True, "force": force,
-                    "message": "백그라운드 발송 시작 — 일봉이 비었으면 먼저 채운다",
-                    "ohlcv": st})
+# KBJ P2 삭제(설계 §5.10): api_ops_brief_closing — #43 재발송은 P3 운영 화면(인증·강제 키)
 
 
 @app.route("/api/ops/ohlcv/status")
@@ -10293,7 +10165,7 @@ def init_dart_corp_map_db():
 
 def poll_dart_disclosures():
     """DART 최근 공시 조회 → 중요 공시 텔레그램 알림. 1분 간격 호출."""
-    dart_key = os.getenv("DART_API_KEY")
+    dart_key = _dart_key_configured()
     if not dart_key:
         return
     if not (_SQLITE_OK and USE_SQLITE):
@@ -10304,10 +10176,10 @@ def poll_dart_disclosures():
     MAX_PAGES = 10  # 1000건 한도 (분기 발표 절정일 보호)
     items = []
     try:
-        import requests as _rq
+        from kbj.data import legacy_bridge as _rq  # KBJ P2: DART 는 브리지(`dart:`)로
         for page in range(1, MAX_PAGES + 1):
             r = _rq.get(
-                "https://opendart.fss.or.kr/api/list.json",
+                "dart:/list.json",
                 params={
                     "crtfc_key": dart_key,
                     "bgn_de": today,
@@ -10462,14 +10334,15 @@ def _load_dart_corp_code_map() -> dict:
             return _DART_CORP_MAP_CACHE
         except Exception:
             pass
-    dart_key = os.getenv("DART_API_KEY")
+    dart_key = _dart_key_configured()
     if not dart_key:
         _DART_CORP_MAP_CACHE = {}
         return _DART_CORP_MAP_CACHE
     try:
-        import requests as _rq, io as _io, zipfile as _zf
+        import io as _io, zipfile as _zf
+        from kbj.data import legacy_bridge as _rq  # KBJ P2: DART 는 브리지(`dart:`)로
         import xml.etree.ElementTree as _ET
-        r = _rq.get("https://opendart.fss.or.kr/api/corpCode.xml",
+        r = _rq.get("dart:/corpCode.xml",
                     params={"crtfc_key": dart_key}, timeout=30)
         if r.status_code != 200 or len(r.content) < 1000:
             _DART_CORP_MAP_CACHE = {}
@@ -10553,10 +10426,10 @@ def _fetch_dart_quarter(dart_key: str, corp_code: str, year: int,
                         reprt_code: str) -> dict | None:
     """한 분기 조회. CFS 우선, 없으면 OFS fallback."""
     try:
-        import requests as _rq
+        from kbj.data import legacy_bridge as _rq  # KBJ P2: DART 는 브리지(`dart:`)로
         for fs_div in ("CFS", "OFS"):
             r = _rq.get(
-                "https://opendart.fss.or.kr/api/fnlttSinglAcntAll.json",
+                "dart:/fnlttSinglAcntAll.json",
                 params={
                     "crtfc_key": dart_key, "corp_code": corp_code,
                     "bsns_year": str(year), "reprt_code": reprt_code,
@@ -10584,10 +10457,10 @@ def _try_dart_segment_revenue(dart_key: str, corp_code: str, year: int) -> list 
     Best-effort: 회사별 포맷이 제각각이라 실패 잦음. 실패 시 None.
     """
     try:
-        import requests as _rq
+        from kbj.data import legacy_bridge as _rq  # KBJ P2: DART 는 브리지(`dart:`)로
         from bs4 import BeautifulSoup
         r = _rq.get(
-            "https://opendart.fss.or.kr/api/list.json",
+            "dart:/list.json",
             params={
                 "crtfc_key": dart_key, "corp_code": corp_code,
                 "bgn_de": f"{year}0101", "end_de": f"{year}1231",
@@ -10606,7 +10479,7 @@ def _try_dart_segment_revenue(dart_key: str, corp_code: str, year: int) -> list 
             return None
 
         doc_r = _rq.get(
-            "https://opendart.fss.or.kr/api/document.xml",
+            "dart:/document.xml",
             params={"crtfc_key": dart_key, "rcept_no": rcept_no},
             timeout=20,
         )
@@ -10660,9 +10533,9 @@ def api_dart_financial(code: str):
     if not re.fullmatch(r"\d{6}", code):
         return jsonify({"error": "잘못된 종목코드"}), 400
 
-    dart_key = os.getenv("DART_API_KEY")
+    dart_key = _dart_key_configured()
     if not dart_key:
-        return jsonify({"error": "DART_API_KEY 미설정"}), 503
+        return jsonify({"error": "KBJ_DART_API_KEY 미설정"}), 503
 
     cache_file = BASE_DIR / "cache" / f"dart_fin_{code}.json"
     cached = _read_fresh_json(cache_file, 1440)
@@ -11173,13 +11046,13 @@ def _fetch_us_earnings(from_date: str, to_date: str) -> list:
 
 def _fetch_kr_earnings(from_date: str, to_date: str) -> list:
     """DART 정기공시 (사업/반기/분기 보고서) 조회."""
-    dart_key = os.getenv("DART_API_KEY")
+    dart_key = _dart_key_configured()
     if not dart_key:
         return []
     try:
-        import requests as _rq
+        from kbj.data import legacy_bridge as _rq  # KBJ P2: DART 는 브리지(`dart:`)로
         res = _rq.get(
-            "https://opendart.fss.or.kr/api/list.json",
+            "dart:/list.json",
             params={
                 "crtfc_key":  dart_key,
                 "bgn_de":     from_date.replace("-", ""),
@@ -12485,53 +12358,7 @@ def api_discover_reset():
 _agent_running = [False]
 
 
-@app.route("/api/agent/run", methods=["POST"])
-def api_agent_run():
-    """에이전트 파이프라인 백그라운드 실행. market=kr|us|all"""
-    if _agent_running[0]:
-        return jsonify({"status": "already_running"})
-    market = request.args.get("market", "kr")
-    if request.is_json:
-        market = (request.get_json(silent=True) or {}).get("market", market)
-    if market not in ("kr", "us", "all"):
-        market = "kr"
-
-    def _run():
-        _agent_running[0] = True
-        try:
-            from agents.pipeline import run_pipeline, send_agent_telegram
-            result = run_pipeline(market=market)
-            # 추천 이력 스냅샷
-            try:
-                if market == "all" and isinstance(result, dict) and "kr" in result:
-                    save_recommendation_snapshot(
-                        "agent_kr", (result["kr"] or {}).get("final_picks") or [],
-                        market="kr")
-                    save_recommendation_snapshot(
-                        "agent_us", (result["us"] or {}).get("final_picks") or [],
-                        market="us")
-                elif isinstance(result, dict):
-                    src = f"agent_{market}"
-                    save_recommendation_snapshot(
-                        src, result.get("final_picks") or [], market=market)
-            except Exception as exc:
-                log.debug("[추천이력] agent 저장 실패: %s", exc)
-            try:
-                # all 결과는 kr/us 중첩이라 각각 발송
-                if market == "all" and isinstance(result, dict) and "kr" in result:
-                    send_agent_telegram(result["kr"])
-                    send_agent_telegram(result["us"])
-                else:
-                    send_agent_telegram(result)
-            except Exception as exc:
-                log.debug("[Agent] 텔레그램 발송 실패: %s", exc)
-        except Exception as exc:
-            log.exception("[Agent] 파이프라인 실패: %s", exc)
-        finally:
-            _agent_running[0] = False
-
-    threading.Thread(target=_run, daemon=True, name="agent-pipeline").start()
-    return jsonify({"status": "started", "market": market})
+# KBJ P2 삭제(설계 §5.10): api_agent_run — #44 인증 없는 발송 경로
 
 
 @app.route("/api/agent/result")
@@ -17967,38 +17794,17 @@ def api_freshness_all():
 # Step 4-5-2-B: 시장 컨텍스트 API
 # ============================================================
 
-# 한국 거래소 휴장일 (2026 — KRX 공식 일정 발표 시 보강)
-_KR_HOLIDAYS_2026 = {
-    "2026-01-01",  # 신정
-    "2026-02-16", "2026-02-17", "2026-02-18",  # 설날
-    "2026-03-02",  # 삼일절 대체 (3/1 일요일)
-    "2026-05-05",  # 어린이날
-    "2026-05-25",  # 부처님오신날 대체 (5/24 일요일)
-    "2026-06-06",  # 현충일 (토요일이지만 KRX 휴장)
-    "2026-08-15",  # 광복절 (토요일)
-    "2026-09-24", "2026-09-25", "2026-09-28",  # 추석 + 대체월요일
-    "2026-10-03",  # 개천절 (토요일)
-    "2026-10-09",  # 한글날
-    "2026-12-25",  # 성탄절
-    "2026-12-31",  # 연말 휴장
-}
-
-
+# 한국 거래소 휴장일 — KBJ P2: 2026 하드코딩(_KR_HOLIDAYS_2026)을 지우고 KBJ 정본 캘린더로
+# (XKRX + config/holidays_override.yaml). 2026년에 다섯 날이 달랐다(설계 §7.3 — 05-01·06-03·
+# 08-17·10-05 누락, 09-28 오기).
 def _is_kr_holiday(dt: datetime) -> bool:
-    """주말 또는 한국 공휴일이면 True."""
-    if dt.weekday() >= 5:
-        return True
-    return dt.strftime("%Y-%m-%d") in _KR_HOLIDAYS_2026
+    """주말 또는 KRX 휴장일이면 True. naive 시각은 KST 벽시계로 읽는다."""
+    return _kbj_is_kr_holiday(dt if dt.tzinfo is not None else dt.replace(tzinfo=KST))
 
 
 def _next_trading_open_kst(now: datetime) -> datetime:
-    """now 이후 가장 가까운 거래일 09:00 KST 시각."""
-    cand = now.replace(hour=9, minute=0, second=0, microsecond=0)
-    if cand <= now:
-        cand += timedelta(days=1)
-    while _is_kr_holiday(cand):
-        cand += timedelta(days=1)
-    return cand
+    """now 이후 가장 가까운 거래일 정규장 시작 KST 시각(보통 09:00, 지연 개장일은 그 시각)."""
+    return _kbj_next_trading_open(now if now.tzinfo is not None else now.replace(tzinfo=KST))
 
 
 def _humanize_duration(seconds: int) -> str:
@@ -18366,36 +18172,7 @@ def api_ops_cron_jobs():
         return jsonify({"error": str(exc)}), 500
 
 
-@app.route("/api/ops/cron/trigger/<job_id>", methods=["POST"])
-def api_ops_cron_trigger(job_id: str):
-    """수동 트리거 — 등록된 잡의 함수를 별도 thread 에서 즉시 호출.
-
-    이전엔 _scheduler.modify_job(next_run_time=_dt.now()) 사용했으나
-    Render(UTC) + APScheduler(KST) 환경에서 naive datetime 이 9시간 후로
-    해석되어 즉시 실행 안 되는 버그. 함수를 직접 thread 로 호출하면
-    timezone 무관 + max_instances 제약도 우회.
-    """
-    try:
-        if _scheduler is None or not _scheduler.running:
-            return jsonify({"ok": False, "error": "scheduler not running"}), 409
-        job = _scheduler.get_job(job_id)
-        if not job:
-            return jsonify({"ok": False, "error": f"job not found: {job_id}"}), 404
-        func = job.func
-        import threading as _th
-        _th.Thread(target=func, daemon=True,
-                   name=f"manual-{job_id}").start()
-        return jsonify({
-            "ok": True,
-            "job_id": job_id,
-            "name": job.name or job_id,
-            "func": getattr(func, "__name__", str(func)),
-            "triggered_at": now_kst().strftime("%Y-%m-%d %H:%M:%S KST"),
-            "method": "thread_direct",
-        })
-    except Exception as exc:
-        log.exception("ops/cron/trigger")
-        return jsonify({"ok": False, "error": str(exc)}), 500
+# KBJ P2 삭제(설계 §5.10): api_ops_cron_trigger — #45 수동 실행은 python -m kbj.services.scheduler run-once <job> --as-of …
 
 
 @app.route("/api/ops/data_json/rebuild", methods=["POST"])

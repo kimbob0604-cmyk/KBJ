@@ -6,6 +6,8 @@ name: CI
 # - 해석기는 루트 uv.lock 하나(Python 3.12). legacy 잡은 legacy 의존성 그룹까지 설치한다
 # - legacy 시험은 scripts/test_legacy.sh 의 부분 이름으로 돌린다(프로젝트마다 import 루트 분리 —
 #   docs/conflict_map.md §3.4)
+# - P2 묶음 I: canonical(직접 호출 금지 검사 — scripts/check_canonical.py)·sim(하루 운영 시뮬레이션 —
+#   tests/sim, 가짜 시계·가짜 서버라 네트워크·비밀 없음) 잡. test-kbj 는 sim 을 빼고 돈다(두 번 돌지 않게)
 
 on:
   push:
@@ -56,8 +58,67 @@ jobs:
           enable-cache: true
       - name: 의존성(dev)
         run: uv sync --frozen
-      - name: pytest
-        run: uv run pytest
+      - name: pytest (sim·통합 제외 — 아래 sim·kbj-integration 잡)
+        run: uv run pytest -m "not sim and not integration"
+
+  kbj-integration:
+    # kbj 통합 시험(TimescaleDB pg16 — 마이그레이션 0001~0006·이관·저장소 SQL). 시험이 docker CLI 로
+    # 컨테이너를 직접 띄우고 지운다(tests/integration/conftest.py). Docker 를 못 써서 하나라도
+    # 건너뛰면 녹색이 아니라 실패로 본다(이 환경에서 못 돌린 21개를 여기서 확인한다).
+    name: kbj-integration (TimescaleDB pg16)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: 의존성(dev)
+        run: uv sync --frozen
+      - name: 이미지 받기
+        run: docker pull timescale/timescaledb:latest-pg16
+      - name: pytest -m integration (건너뜀 0 이어야 통과)
+        run: |
+          set -o pipefail
+          uv run pytest -m integration -rs 2>&1 | tee integration.log
+          if grep -qE '^SKIPPED|[0-9]+ skipped' integration.log; then
+            echo "::error::통합 시험이 건너뛰어졌다 — Docker 를 쓸 수 있어야 한다"; exit 1
+          fi
+
+  canonical:
+    # 정본 경계(docs/p2_design.md §9): legacy·kbj 의 KIS 토큰·REST·마스터·KRX·DART 직접 호출 0(기준선
+    # 없음), 웹소켓·공공데이터포털·네이버·KRX 스크랩은 줄어들기만 하는 기준선(scripts/canonical_baseline.txt),
+    # legacy 의 kbj import 규칙(AST). 실패하면 경로:줄·그룹만 찍는다(찾은 문자열은 찍지 않는다)
+    name: canonical (직접 호출 금지 검사)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: 의존성(dev)
+        run: uv sync --frozen
+      - name: 목표 0 그룹(PLAN §8 P2 완료 기준)
+        run: uv run python scripts/check_canonical.py --groups kis_oauth,kis_rest,kis_master,krx_api,dart
+      - name: 전체(기준선 포함)
+        run: uv run python scripts/check_canonical.py
+
+  sim:
+    # 하루 운영 시뮬레이션(PLAN §8 P2 완료 기준 — 토큰 발급은 auth 한 곳, 중복 수집 0). 24시간 창과
+    # 변형 6개. 가짜 웹소켓 서버만 127.0.0.1 임의 포트에 뜬다
+    name: sim (하루 운영 시뮬레이션)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: 의존성(dev)
+        run: uv sync --frozen
+      - name: pytest tests/sim
+        run: uv run pytest tests/sim -m sim -rx
 
   legacy:
     name: legacy (${{ matrix.part }})

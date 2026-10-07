@@ -1,6 +1,17 @@
-# 작업 등록부 — 틀(S0). 서비스·작업·폐지 목록(services·jobs·retired)은 묶음 F 가 채운다
-# (docs/p2_design.md §6.2~§6.8, §11.3). 해석·검증은 kbj/services/scheduler/registry.py(묶음 F).
-# 같은 (source, dataset) 은 등록부 전체에서 한 작업만 받는다. cron 은 tz 기준(기본 KST).
+# 작업 등록부 — KBJ 의 정기 작업·상시 서비스·폐지한 legacy 작업 전부(PLAN §2 "스케줄은 등록부 하나").
+# 형식·검증: docs/p2_design.md §6.2~§6.8, 해석기 kbj/services/scheduler/registry.py(묶음 F).
+#   python -m kbj.services.scheduler validate config/jobs.yaml   (CI: tests/unit/scheduler/test_registry_validation.py)
+#
+# - 같은 (source, dataset) 은 등록부 전체(jobs + services)에서 한 곳만 collects 에 둔다(§6.5 정적 겹).
+#   데이터셋 id 는 카탈로그(kbj/data/catalog.py)의 논리 데이터셋이다. 실행 때는 ops.data_claim 선점(동적 겹).
+# - 시각은 schedule.tz 벽시계(기본 KST — 컨테이너는 UTC, 변환은 코드에서). 트리거는 하나만:
+#   cron · state_enter(세션 상태 진입) · equity(주식 정규장 기준 — 연초·수능일 지연 개장을 따른다) · manual.
+# - P2 에 실제로 도는 작업은 enabled: true 인 셋(ops.nightly·filings.corp_code·ops.watchdog)뿐이다(§6.9).
+#   나머지는 등록만 — 실행기는 '계획됨'(ops.job_run status=skipped, reason=planned)으로 기록만 한다.
+# - runner: external = legacy GX 가 돌린다(P7 까지). KBJ 는 실행하지 않고 데이터 키만 등록한다(D-P2-5).
+# - absorbs 의 문자열은 tests/unit/scheduler/legacy_jobs.txt 의 줄 이름이다(inventory (c) — 줄마다
+#   absorbs·retired 에 정확히 한 번). 그 밖의 문자열(코드 위치)은 근거 메모다.
+# - 아침 브리핑·마감 요약은 하루 1회씩(U2): notify.kind brief.morning·brief.closing 을 보내는 작업은 각 1개.
 version: 1
 
 defaults:
@@ -8,3 +19,550 @@ defaults:
   retry: {max: 3, backoff_s: [60, 300, 900]}
   deadline_min: 120            # 시작 시각 + 이 시간 안에 끝나지 않으면 실패
   enabled: false               # P2: kbj 구현이 있는 작업만 true
+
+# ── 상시 프로세스(작업이 아님 — 하트비트로만 감시) ───────────────────────────────────────────
+services:
+  - {name: auth, owner: kbj.services.auth, phase: P2, heartbeat_s: 180, enabled: true,
+     absorbs: ["GX:auth:step"],
+     note: "KIS 접근토큰·웹소켓 접속키의 유일한 발급자(ADR 0004). K1~K9 발급 지점은 묶음 H 가 교체"}
+  - {name: notifier, owner: kbj.services.notifier, phase: P2, heartbeat_s: 60, enabled: true,
+     note: "발송 outbox 소비·웹훅·10분 웹훅 점검(§5). 발송·수신 지점 #1~#46"}
+  - {name: scheduler, owner: kbj.services.scheduler, phase: P2, heartbeat_s: 60, enabled: true,
+     absorbs: ["GX:scheduler:session_state"],
+     note: "세션 상태 발행(session:state·session.events·ops.session_log) + 이 등록부 실행기"}
+  - name: gex.poller
+    owner: "legacy:gexlab/services/poller"
+    runner: external
+    phase: P7
+    collects:
+      - {source: KIS, dataset: option_chain_live, as_of: minute}
+      - {source: KIS, dataset: market_investor_intraday, as_of: minute}
+    absorbs: ["GX:poller"]
+  - name: gex.ws_gateway
+    owner: "legacy:gexlab/services/ws_gateway"
+    runner: external
+    phase: P7
+    collects:
+      - {source: KIS, dataset: ws_ticks, as_of: minute}
+    absorbs: ["GX:ws_gateway", "GX:ws_gateway:closed_session_watch"]
+    note: "접속키는 auth 가 발급, ws-gateway 는 읽기만(ADR 0004 D2)"
+  - {name: gex.recorder, owner: "legacy:gexlab/services/recorder", runner: external, phase: P7,
+     absorbs: ["GX:recorder"]}
+  - {name: gex.engine, owner: "legacy:gexlab/services/engine", runner: external, phase: P7,
+     absorbs: ["GX:engine:cycle", "GX:engine:daily_post_day"]}
+
+jobs:
+  # ── 새벽(운영·공시 기준표) ─────────────────────────────────────────────────────────────
+  - name: ops.nightly
+    phase: P2
+    enabled: true
+    owner: "kbj.services.ops.nightly:run"
+    schedule: {cron: "0 3 * * *", when: always}
+    retry: {max: 1, backoff_s: [600]}
+    writes: [prv_alerts.tg_inbox, prv_alerts.notify_message]
+    absorbs: ["SD:db_backup_hourly", "ET:Actions 캐시 DB(board.db 보존)"]
+    note: "pg_dump 백업(VM 로컬, 7일 보존 [확인 필요 — R23]) · 인박스 14일 · 발송 본문 30일 정리"
+
+  - name: filings.corp_code
+    phase: P2
+    enabled: true
+    owner: "kbj.services.collectors.corp_code:run"
+    schedule: {cron: "5 3 * * *", when: always}
+    retry: {max: 3, backoff_s: [600, 600, 600]}
+    collects:
+      - {source: DART, dataset: corpCode, as_of: run_date}
+    budget: dart
+    writes: [pub_filings.corp_code]
+    absorbs: ["SD:dart_corp_map_update", "ET:board/ingest/dart.py:corp_codes", "ET:dart-report .cache/corp*"]
+
+  - name: us.universe
+    phase: P3
+    owner: "kbj.services.collectors.us:universe"
+    schedule: {cron: "0 4 * * 0", when: always}
+    retry: {max: 2, backoff_s: [600]}
+    collects:
+      - {source: NASDAQ, dataset: screener, as_of: run_date}
+    writes: [prv_market.us_universe]
+    absorbs: ["SD:refresh_us_universe"]
+
+  - name: us.eod
+    phase: P3
+    owner: "kbj.services.collectors.us:eod"
+    # 16:10 뉴욕 = 서머타임 끝(11-01) 전 05:10 KST, 뒤 06:10 KST
+    schedule: {cron: "10 16 * * 1-5", tz: America/New_York, when: us_trading_day}
+    retry: {max: 3, backoff_s: [600]}
+    depends_on: [{job: us.universe, hard: false}]
+    collects:
+      - {source: NASDAQ, dataset: daily, as_of: us_trade_date}
+      - {source: YAHOO, dataset: us_index_daily, as_of: us_trade_date}
+    writes: [prv_market.us_daily_bar]
+    absorbs: ["SD:us_market_daily", "ET:us-board.yml:collect"]
+
+  - name: earnings.backfill
+    phase: P4
+    owner: "kbj.engines.earnings:backfill"
+    schedule: {cron: "30 6 * * *", when: always}
+    retry: {max: 1, backoff_s: [600]}
+    writes: [prv_fin.earnings_surprise]
+    absorbs: ["SD:earnings_backfill_daily"]
+
+  # ── 아침 ────────────────────────────────────────────────────────────────────────────────
+  # 매크로는 공개(정부 시리즈)·로그인(Yahoo·ForexFactory)으로 작업을 나눈다 — 로그인 출처를 받는 작업은
+  # pub_* 에 쓰지 않는다(ADR 0002). 설계 §6.7 의 macro.morning 한 줄을 둘로 나눴다.
+  - name: macro.morning
+    phase: P5
+    owner: "kbj.services.collectors.macro:morning"
+    schedule: {cron: "20 6 * * *", when: kr_or_after_us}
+    retry: {max: 3, backoff_s: [600]}
+    collects:
+      - {source: FRED, dataset: gov_series, as_of: us_trade_date}
+      - {source: TREASURY, dataset: yield_curve, as_of: us_trade_date}
+      - {source: NYFED, dataset: rates, as_of: us_trade_date}
+    writes: [pub_macro.series]
+    absorbs: ["ET:bok.yml@06:40:collect", "ET:bok.yml@09:30"]
+
+  - name: macro.morning_prv
+    phase: P5
+    owner: "kbj.services.collectors.macro:morning_restricted"
+    schedule: {cron: "20 6 * * *", when: kr_or_after_us}
+    retry: {max: 3, backoff_s: [600]}
+    collects:
+      - {source: YAHOO, dataset: macro, as_of: us_trade_date}
+      - {source: FF, dataset: calendar, as_of: run_date}
+    writes: [prv_macro.series, prv_macro.calendar]
+    absorbs: ["SD:tg_briefing_refresh", "SD:global_data_refresh"]
+
+  - name: gex.night_minutes
+    phase: P7
+    runner: external
+    owner: "legacy:gexlab/services/scheduler/minute.py:MinuteDaily"
+    schedule: {state_enter: [IDLE], when: after_night_session}
+    collects:
+      - {source: KIS, dataset: fut_minute_night, as_of: trade_date}
+    writes: [prv_gex.minute_bars]
+    absorbs: ["GX:scheduler:minute_night", "GX:scheduler:gap_night", "GX:scheduler:open_check_night"]
+    note: "GX 규칙 그대로 — IDLE 06:10~08:00 야간(CM) 분봉·무결측, 18:03 야간 개장 확인"
+
+  - name: guru.research
+    phase: P5
+    owner: "kbj.services.collectors.guru:run"
+    schedule: {cron: "30 7 * * *", when: after_us_session}
+    retry: {max: 2, backoff_s: [900]}
+    collects:
+      - {source: ANTHROPIC, dataset: guru, as_of: run_date}
+    writes: [prv_journal.guru_digest]
+    absorbs: ["ET:xdigest.yml:collect"]
+
+  - name: etf.collect
+    phase: P5
+    owner: "kbj.services.collectors.etf:run"
+    schedule: {cron: "0 8 * * 1-5", when: trading_day}
+    retry: {max: 3, backoff_s: [900]}
+    collects:
+      - {source: ETF_ISSUERS, dataset: pdf, as_of: trade_date}
+    writes: [prv_etf.holdings]
+    notify: {kind: etf.report}
+    absorbs: ["ET:daily.yml"]
+
+  - name: kis.master
+    phase: P7
+    runner: external
+    owner: "legacy:gexlab/services/scheduler/service.py:Scheduler"
+    schedule: {state_enter: [PRE_DAY, PRE_NIGHT], when: trading_day}
+    collects:
+      - {source: KIS, dataset: fo_master, as_of: trade_date}
+    writes: [prv_gex.master_snapshots]
+    absorbs: ["GX:scheduler:master"]
+    note: "GX _master_step — 실패하면 60초 뒤 다시(GX 규칙)"
+
+  - name: krx.daily
+    phase: P3
+    owner: "kbj.services.collectors.krx_daily:run"
+    schedule: {cron: "5 8 * * 1-5", when: trading_day}
+    retry: {every_s: 600, until: "10:00"}     # KRX 는 D+1 08:00 공표(conflict_map E1)
+    collects:
+      - {source: KRX, dataset: sto/stk_bydd_trd, as_of: prev_trading_day}
+      - {source: KRX, dataset: sto/ksq_bydd_trd, as_of: prev_trading_day}
+      - {source: KRX, dataset: sto/knx_bydd_trd, as_of: prev_trading_day}
+      - {source: KRX, dataset: sto/stk_isu_base_info, as_of: prev_trading_day}
+      - {source: KRX, dataset: sto/ksq_isu_base_info, as_of: prev_trading_day}
+      - {source: KRX, dataset: idx/kospi_dd_trd, as_of: prev_trading_day}
+      - {source: KRX, dataset: idx/kosdaq_dd_trd, as_of: prev_trading_day}
+      - {source: KRX, dataset: idx/krx_dd_trd, as_of: prev_trading_day}
+      - {source: KRX, dataset: etp/etf_bydd_trd, as_of: prev_trading_day}
+      - {source: KRX, dataset: etp/etn_bydd_trd, as_of: prev_trading_day}
+    budget: krx
+    writes: [prv_market.daily_bar, prv_market.universe, prv_etf.etf_daily]
+    notify: {kind: ops.universe, when: changed}
+    absorbs: ["SD:mark_etf_stocks", "SD:kr_universe_daily", "SD:universe_sync_monthly",
+              "ET:board@16:10:krx_confirm", "SD:krx_api.*"]
+    note: "ADR 0001 Q1 — 전날 KIS 잠정 종가(market.close_collect)와 대조·정정. 거래대금·ETF 수급 원장(D7)"
+
+  - name: gex.krx_derivatives
+    phase: P7
+    runner: external
+    owner: "legacy:gexlab/services/scheduler/krx.py:KrxDaily"
+    schedule: {cron: "5 8 * * 1-5", when: trading_day}
+    retry: {every_s: 600, until: "10:00"}
+    collects:
+      - {source: KRX, dataset: drv/fut_bydd_trd, as_of: prev_trading_day}
+      - {source: KRX, dataset: drv/opt_bydd_trd, as_of: prev_trading_day}
+    budget: krx
+    writes: [prv_gex.krx_fut_daily, prv_gex.krx_opt_daily]
+    absorbs: ["GX:scheduler:krx_daily"]
+
+  - name: brief.morning
+    phase: P5
+    owner: "kbj.reports.briefs:morning"
+    schedule: {cron: "10 8 * * *", when: kr_or_after_us, catch_up_until: "09:00"}
+    retry: {max: 0}
+    depends_on:
+      - {job: us.eod, hard: false}
+      - {job: macro.morning, hard: false}
+      - {job: macro.morning_prv, hard: false}
+      - {job: guru.research, hard: false}
+      - {job: gex.night_minutes, hard: false}
+    notify: {kind: brief.morning}
+    absorbs: ["SD:tg_morning", "SD:tg_overnight", "SD:tg_us_market_summary",
+              "ET:bok.yml@06:40:send", "ET:us-board.yml:send", "ET:xdigest.yml:send",
+              "GX:plan:brief_0605", "GX:plan:brief_0830"]
+    note: "U2 하루 1회(08:10, 캐치업 09:00). 본문은 P5. 준비 안 된 재료는 '미준비'로 적는다(무른 의존)"
+
+  - name: macro.monthly
+    phase: P5
+    owner: "kbj.services.collectors.macro:monthly"
+    schedule: {cron: "10 9 * * *", when: always}
+    retry: {max: 1, backoff_s: [3600]}
+    collects:
+      - {source: ECOS, dataset: 721Y001, as_of: month}
+      - {source: ECOS, dataset: 404Y014, as_of: month}
+      - {source: ECOS, dataset: 402Y014, as_of: month}
+      - {source: ECOS, dataset: 401Y015, as_of: month}
+      - {source: ECOS, dataset: 161Y005, as_of: month}
+      - {source: ECOS, dataset: 301Y013, as_of: month}
+      - {source: ECOS, dataset: 513Y001, as_of: month}
+      - {source: ECOS, dataset: 200Y102, as_of: quarter}
+      - {source: KOSIS, dataset: DT_1C8015, as_of: month}
+      - {source: KOSIS, dataset: DT_1C8016, as_of: month}
+      - {source: KOSIS, dataset: DT_1JH20201, as_of: month}
+      - {source: KOSIS, dataset: DT_1DA7001S, as_of: month}
+      - {source: KOSIS, dataset: DT_1DA7002S, as_of: month}
+      - {source: KOSIS, dataset: DT_1J22003, as_of: month}
+    writes: [pub_macro.series]
+    note: "공표 뒤 받을 때까지 매일 본다 — 받은 달·분기는 선점(done)이라 다시 받지 않는다. ECOS 200Y102(분기)도 여기"
+
+  - name: macro.monthly_prv
+    phase: P5
+    owner: "kbj.services.collectors.macro:monthly_restricted"
+    schedule: {cron: "15 9 * * *", when: always}
+    retry: {max: 1, backoff_s: [3600]}
+    collects:
+      - {source: ECOS, dataset: 901Y056, as_of: month}
+      - {source: ECOS, dataset: 901Y009, as_of: month}
+    writes: [prv_macro.series]
+
+  - name: reports.dart_excel
+    phase: P4
+    owner: "kbj.reports.dart_excel:run"
+    schedule: {cron: "0 9 16 2,5,8,11 *", when: always}
+    retry: {max: 1, backoff_s: [1800]}
+    depends_on: [{job: fin.quarterly, hard: false}]
+    absorbs: ["ET:report.yml"]
+
+  - name: trade.customs_tenday
+    phase: P6
+    owner: "kbj.services.collectors.customs:tenday"
+    schedule: {cron: "0 10 * * *", when: month_days, month_days: [1, 11, 21]}
+    retry: {max: 6, backoff_s: [3600]}
+    deadline_min: 420
+    collects:
+      - {source: DATAGO, dataset: "15157908", as_of: ten_day}
+      - {source: DATAGO, dataset: "15157941", as_of: ten_day}
+      - {source: DATAGO, dataset: "15157901", as_of: ten_day}
+      - {source: DATAGO, dataset: "15157909", as_of: ten_day}
+    budget: datago
+    writes: [pub_trade.ten_day]
+    note: "관세청 10일 잠정치 — 11일(1~10일)·21일(1~20일)·다음 달 1일(월 전체) 공표(probe_results §2.6)"
+
+  - name: trade.customs_monthly
+    phase: P6
+    owner: "kbj.services.collectors.customs:monthly"
+    schedule: {cron: "0 10 * * *", when: month_days, month_days: [15, 16, 17]}
+    retry: {max: 0}
+    collects:
+      - {source: DATAGO, dataset: "15101609", as_of: month}
+      - {source: DATAGO, dataset: "15101612", as_of: month}
+      - {source: DATAGO, dataset: "15100475", as_of: month}
+      - {source: DATAGO, dataset: "15134343", as_of: month}
+    budget: datago
+    writes: [pub_trade.item_monthly, pub_trade.country_monthly, pub_trade.item_country_monthly,
+             pub_trade.sigungu_monthly]
+    note: "매월 15일경 공표 — 15~17일 하루 한 번씩 본다(받으면 선점 done 이라 다음 날은 건너뛴다)"
+
+  - name: market.fsc_daily
+    phase: P3
+    owner: "kbj.services.collectors.fsc_daily:run"
+    schedule: {cron: "10 13 * * 1-5", when: trading_day}
+    retry: {max: 3, backoff_s: [1800]}
+    collects:
+      - {source: DATAGO, dataset: "15094808", as_of: prev_trading_day}
+      - {source: DATAGO, dataset: "15094807", as_of: prev_trading_day}
+    budget: datago
+    writes: [prv_market.daily_bar]
+    absorbs: ["ET:kr.yml:datago_daily"]
+    note: "금융위 주식·지수 시세(로그인 — 공공누리 4유형). KRX 일별의 대조·보조 [제안]. D+1 13시 개방"
+
+  - name: market_stats.kofia
+    phase: P5
+    owner: "kbj.services.collectors.kofia:run"
+    schedule: {cron: "30 13 * * 1-5", when: trading_day}
+    retry: {max: 3, backoff_s: [1800]}
+    collects:
+      - {source: DATAGO, dataset: 15094809/credit, as_of: prev_trading_day}
+      - {source: DATAGO, dataset: 15094809/capital, as_of: prev_trading_day}
+      - {source: DATAGO, dataset: 15094809/fund, as_of: prev_trading_day}
+      - {source: DATAGO, dataset: 15094809/cma, as_of: prev_trading_day}
+    budget: datago
+    writes: [pub_market_stats.credit_balance, pub_market_stats.market_capital,
+             pub_market_stats.fund_nav, pub_market_stats.cma]
+    note: "상단 띠 신용잔고·예탁금(신규). D+1 13시 개방(probe_results §3.1)"
+
+  # ── 장중 ────────────────────────────────────────────────────────────────────────────────
+  - name: filings.dart_feed
+    phase: P4
+    owner: "kbj.services.collectors.dart_feed:run"
+    schedule: {cron: "* 7-19 * * 1-5", when: trading_day}
+    retry: {max: 0}
+    deadline_min: 5
+    as_of: minute
+    collects:
+      - {source: DART, dataset: list, as_of: minute}
+      - {source: DART, dataset: document, as_of: event}
+    budget: dart
+    writes: [pub_filings.disclosure, pub_filings.overhang]
+    notify: {kind: alert.earnings}
+    absorbs: ["SD:dart_poll", "SD:earnings_pipeline_5min", "ET:board/ingest/dart.disclosures",
+              "ET:triggers._dart"]
+    note: "공시 원문(document)은 접수번호 이벤트로 받는다(as_of event — 접수번호마다 선점). 잠정실적·오버행 파싱 트리거"
+
+  - name: filings.company_profile
+    phase: P4
+    owner: "kbj.services.collectors.dart_company:run"
+    schedule: {cron: "0 4 * * 6", when: always}
+    retry: {max: 2, backoff_s: [1800]}
+    deadline_min: 360
+    collects:
+      - {source: DART, dataset: company, as_of: run_date}
+    budget: dart
+    writes: [pub_filings.corp_code]
+    note: "기업개황(표준산업분류) — 종목마다 1건이라 실제 호출은 상장사 수(약 2,700)만큼이다 [확인 필요: 주 1회]"
+
+  - name: fin.quarterly
+    phase: P4
+    owner: "kbj.services.collectors.fin:quarterly"
+    schedule: {cron: "30 7 * * *", when: always, triggered_by: [filings.dart_feed]}
+    retry: {max: 3, backoff_s: [1800]}
+    collects:
+      - {source: DART, dataset: fnlttSinglAcntAll, as_of: quarter}
+      - {source: DART, dataset: fnlttMultiAcnt, as_of: quarter}
+    budget: dart
+    writes: [pub_fin.quarterly]
+    absorbs: ["SD:mac-crontab:dart_collector", "ET:board/ingest/financials", "ET:dart-report 수집부"]
+    note: "정기보고서 접수 이벤트(dart_feed)로도 돈다 — 연결은 P4"
+
+  - name: rules.intraday
+    phase: P8
+    owner: "kbj.engines.rules:intraday"
+    schedule: {equity: {start: open, end: close, every_min: 10}, when: trading_day}
+    retry: {max: 0}
+    deadline_min: 10
+    collects:
+      - {source: KIS, dataset: watch_quotes_intraday, as_of: slot10m}
+    notify: {kind: alert.rule}
+    absorbs: ["SD:tg_custom_alerts", "SD:tg_watchlist", "SD:tg_trailing", "SD:price_sync_intraday",
+              "SD:stage2_realtime_kr"]
+
+  - name: flows.intraday
+    phase: P3
+    owner: "kbj.services.collectors.market_intraday:run"
+    schedule: {equity: {start: open, end: close, every_min: 10}, when: trading_day}
+    retry: {max: 0}
+    deadline_min: 10
+    collects:
+      - {source: KIS, dataset: inst_foreign_intraday, as_of: slot10m}
+      - {source: KIS, dataset: turnover_rank_intraday, as_of: slot10m}
+      - {source: KIS, dataset: etf_quote_intraday, as_of: slot10m}
+    writes: [prv_flows.stock_investor_daily, prv_market.stock_snapshot, prv_etf.quote_intraday]
+    note: "D7 — 장중 외국인·기관 가집계·거래대금 순위·ETF 현재가(잠정, quality=estimated). 마감 뒤 확정치로 덮는다(metrics §2)"
+
+  # ── 장 마감 뒤 ──────────────────────────────────────────────────────────────────────────
+  - name: market.close_collect
+    phase: P3
+    owner: "kbj.services.collectors.market_close:run"
+    schedule: {equity: {start: "close+5"}, when: trading_day}   # 평소 15:35, 수능일 16:35
+    retry: {max: 5, backoff_s: [300]}
+    collects:
+      - {source: KIS, dataset: stock_quote_eod, as_of: trade_date}
+      - {source: KIS, dataset: stock_investor_daily, as_of: trade_date}
+      - {source: KIS, dataset: market_investor_daily, as_of: trade_date}
+      - {source: KIS, dataset: inst_foreign_top, as_of: trade_date}
+    writes: [prv_market.stock_snapshot, prv_flows.stock_investor_daily, prv_flows.market_investor_daily]
+    absorbs: ["SD:price_sync_close", "SD:flow_batch", "SD:ohlcv_autofill", "SD:price_sync_afterhours",
+              "ET:board@16:10:collect", "ET:kr.yml:kis_flows", "ET:flow.yml:collect"]
+    note: "ADR 0001 Q1 결정 전 기본값(KIS 당일 잠정, 다음 날 KRX 대조). 거래소 구분(KRX·NXT·통합)마다 데이터 키"
+
+  - name: gex.day_minutes
+    phase: P7
+    runner: external
+    owner: "legacy:gexlab/services/scheduler/minute.py:MinuteDaily"
+    schedule: {state_enter: [POST_DAY], when: trading_day}
+    collects:
+      - {source: KIS, dataset: fut_minute_day, as_of: trade_date}
+    writes: [prv_gex.minute_bars]
+    absorbs: ["GX:scheduler:minute_day", "GX:scheduler:gap_day", "GX:scheduler:open_check_day"]
+    note: "GX 규칙 그대로 — POST_DAY 16:00~17:50 주간(F) 분봉·무결측, 08:48 개장 확인"
+
+  - name: board.daily
+    phase: P3
+    owner: "kbj.engines.board:daily"
+    schedule: {cron: "20 16 * * 1-5", when: trading_day}
+    retry: {max: 2, backoff_s: [600]}
+    depends_on: [{job: market.close_collect, hard: true}]
+    writes: [prv_board.daily_state]
+    absorbs: ["SD:prewarm_new_highs", "SD:stage2_auto", "ET:board@16:10:compute"]
+    note: "신고가 계산·랭킹·탐지·LLM 초안(DB 만). 수능일은 close_collect(16:35) 를 기다린다. 표 이름은 P3 [확인 필요]"
+
+  - name: brief.closing
+    phase: P3
+    owner: "kbj.reports.briefs:closing"
+    schedule: {cron: "40 16 * * 1-5", when: trading_day, catch_up_until: "20:30"}
+    retry: {max: 0}
+    depends_on:
+      - {job: market.close_collect, hard: true}
+      - {job: board.daily, hard: false}
+    notify: {kind: brief.closing}
+    absorbs: ["SD:tg_closing", "SD:tg_closing_summary", "SD:closing_brief_catchup", "SD:agent_pipeline",
+              "ET:board@16:10:send", "GX:plan:brief_1550"]
+    note: "U2 하루 1회(16:40, 캐치업 20:30). 본문은 P3"
+
+  - name: themes.monitor
+    phase: P5
+    owner: "kbj.engines.themes:monitor"
+    schedule: {cron: "50 16 * * 1-5", when: trading_day}
+    retry: {max: 1, backoff_s: [600]}
+    depends_on: [{job: market.close_collect, hard: true}]
+    writes: [prv_themes.strength]
+    absorbs: ["ET:kr.yml:build"]
+    note: "ET kr.yml 09:30·15:30 — 장중판은 폐지 [제안], 마감 뒤 1회"
+
+  - name: macro.evening
+    phase: P5
+    owner: "kbj.services.collectors.macro:evening"
+    schedule: {cron: "0 17 * * 1-5", when: trading_day}
+    retry: {max: 3, backoff_s: [1800]}
+    collects:
+      - {source: ECOS, dataset: 817Y002, as_of: trade_date}
+      - {source: ECOS, dataset: 722Y001, as_of: trade_date}
+      - {source: ECOS, dataset: 731Y003, as_of: trade_date}
+    writes: [pub_macro.series]
+    absorbs: ["ET:bok.yml@16:30", "ET:bok.yml@22:00"]
+
+  - name: macro.evening_prv
+    phase: P5
+    owner: "kbj.services.collectors.macro:evening_restricted"
+    schedule: {cron: "5 17 * * 1-5", when: trading_day}
+    retry: {max: 3, backoff_s: [1800]}
+    collects:
+      - {source: ECOS, dataset: 802Y001, as_of: trade_date}
+      - {source: ECOS, dataset: 731Y001, as_of: trade_date}
+    writes: [prv_macro.series]
+    note: "ECOS 타기관 작성 표(한국거래소·서울외국환중개) — 로그인(DATA_TIERS §1)"
+
+  - name: flows.report
+    phase: P3
+    owner: "kbj.reports.flows:daily"
+    schedule: {cron: "20 18 * * 1-5", when: trading_day}
+    retry: {max: 0}
+    depends_on:
+      - {job: market.close_collect, hard: true}
+      - {job: board.daily, hard: false}
+    notify: {kind: flows.report}
+    absorbs: ["SD:tg_flow_signals", "ET:flow.yml:report"]
+    note: "수집은 P3, 발송은 P5 [제안 — U2 범위 밖]"
+
+  - name: consensus.snapshot
+    phase: P4
+    owner: "kbj.services.collectors.consensus:run"
+    schedule: {cron: "30 18 * * 1-5", when: trading_day}
+    retry: {max: 2, backoff_s: [1800]}
+    depends_on: [{job: market.close_collect, hard: true}]
+    collects:
+      - {source: KIS, dataset: consensus_estimate, as_of: trade_date}
+    writes: [prv_fin.consensus_snapshot]
+    notify: {kind: alert.revision}
+    absorbs: ["SD:consensus_snapshot_daily", "SD:tg_revision_signals", "SD:consensus_quarterly_weekly",
+              "SD:mac-crontab:consensus_collector"]
+    note: "⚠ 대체 출처 미확인(conflict_map §1.13, R20) — KIS TR 실측 뒤 확정"
+
+  - name: fin.valuation_band
+    phase: P4
+    owner: "kbj.engines.valuation:band"
+    schedule: {cron: "40 18 * * 1-5", when: trading_day}
+    retry: {max: 1, backoff_s: [600]}
+    depends_on: [{job: market.close_collect, hard: true}]
+    writes: [prv_fin.valuation_band]
+    absorbs: ["SD:mac-crontab:valuation_calculator"]
+
+  # ── 장중 운영 감시·수동 ─────────────────────────────────────────────────────────────────
+  - name: ops.watchdog
+    phase: P2
+    enabled: true
+    owner: "kbj.services.collectors.ops_watchdog:run"
+    schedule: {cron: "0,30 8-20 * * 1-5", when: trading_day}
+    retry: {max: 0}
+    deadline_min: 10
+    as_of: minute
+    notify: {kind: ops.watchdog}
+    absorbs: ["SD:data_watchdog", "ET:daily.yml 실패 curl(#37)", "GX health"]
+    note: "마감 지난 실행·하트비트 끊긴 서비스·실패 작업 → ops.watchdog 알림"
+
+  - name: market.backfill
+    phase: P3
+    owner: "kbj.services.collectors.krx_daily:backfill"
+    schedule: {manual: true}
+    retry: {max: 2, backoff_s: [600]}
+    backfill_of: [krx.daily]
+    budget: krx
+    writes: [prv_market.daily_bar, prv_market.universe, prv_etf.etf_daily]
+    absorbs: ["SD:mac-crontab:ohlcv_5y_collector"]
+    note: "run-once --as-of <과거 날짜> — krx.daily 와 같은 데이터 키(선점 공유). 백필 상한 krx.backfill_cap. ET 네이버 일봉 백필은 KRX 로 다시 받는다(U4)"
+
+# ── 폐지하는 legacy 정기 작업(§6.8) ──────────────────────────────────────────────────────────
+retired:
+  - {legacy: "SD:market_update", reason: "KRX 스크랩 라이브러리·data.json — 쓰지 않음(U4)"}
+  - {legacy: "SD:self_keepalive", reason: "Render 전용(D2)"}
+  - {legacy: "SD:workflow:wake.yml", reason: "Render 전용(D2)"}
+  - {legacy: "SD:tg_reports", reason: "네이버 리서치 — 대체 없음(conflict_map §1.13)"}
+  - {legacy: "SD:gen_themes_mapping", reason: "네이버 테마 크롤(U4) → P5 분류 사전"}
+  - {legacy: "SD:refresh_options", reason: "yfinance 옵션 — 쓰는 화면 재검토 전 폐지 [제안]"}
+  - {legacy: "SD:data_json_close", reason: "data.json 정적 산출 폐지"}
+  - {legacy: "SD:data_json_evening", reason: "data.json 정적 산출 폐지"}
+  - {legacy: "SD:us_db_sync", reason: "US 캐시 → DB 동기화 — us.eod 가 DB 에 바로 쓴다"}
+  - {legacy: "SD:thread:_price_broadcaster", reason: "네이버 polling(U4) — 실시간 시세는 KIS 웹소켓(P7)"}
+  - {legacy: "SD:mac-crontab:gist_git_push", reason: "DB 일원화(Gist·git push 단계 폐지)"}
+  - {legacy: "SD:mac-crontab:data_fetcher", reason: "KRX 스크랩 라이브러리·data.json — 쓰지 않음(U4)"}
+  - {legacy: "SD:mac-crontab:tam_modeler", reason: "쓰는 화면 재검토 전 폐지 [제안 — P4 에 다시 본다]"}
+  - {legacy: "SD:boot:_startup", reason: "부팅이 일을 일으키지 않는다 — 등록부 작업과 catch_up_until 로(Gist 복원·setWebhook·일봉 채움·캐치업 발송)"}
+  - {legacy: "SD:http:/api/ops/cron/trigger", reason: "인증 없는 수동 실행 — run-once(인증된 운영 화면은 P3)"}
+  - {legacy: "ET:artifacts-gc.yml", reason: "스케줄러 하나(PLAN §2)"}
+  - {legacy: "ET:board.yml:dispatch", reason: "스케줄러 하나(PLAN §2)"}
+  - {legacy: "ET:launchd:board", reason: "맥 launchd 16:10 — 스케줄러 하나(PLAN §2)"}
+  - {legacy: "ET:cron-job.org:board-daily", reason: "외부 dispatch — 스케줄러 하나(PLAN §2)"}
+  - {legacy: "ET:cron-job.org:board-send", reason: "외부 dispatch — 스케줄러 하나(PLAN §2)"}
+  - {legacy: "ET:cron-job.org:xdigest", reason: "외부 dispatch — 스케줄러 하나(PLAN §2)"}
+  - {legacy: "ET:cron-job.org:etf-daily", reason: "외부 dispatch — 스케줄러 하나(PLAN §2)"}
+  - {legacy: "ET:routine:artifact_17:09", reason: "레포 밖 Claude 루틴 — 스케줄러 하나(PLAN §2)"}
+  - {legacy: "ET:etf_tracker_v9/live_update.py", reason: "죽은 진입점(예약 없음)"}
+  - {legacy: "ET:xdigest.yml:legacy_mode", reason: "xdigest 구모드 폐기 [제안](inventory (b))"}
+  - {legacy: "GX:plan:brief_1200", reason: "U2 — 아침·마감 브리핑 하루 1회씩만"}
+  - {legacy: "EXT:kospi-dislocation", reason: "레포 밖 KIS 발급자(K10) — 전환일 사용자 작업(Q13), token_throttled health 로 감지"}

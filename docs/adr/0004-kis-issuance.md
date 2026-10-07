@@ -101,6 +101,12 @@ GX 의 `invalidate()` 는 `kis:token` 을 지웠다 — 고장 난 호출자 하
 4. 결과: 늘 거절만 신고하는 호출자가 있어도 하루 발급은 '처음 1 + 재발급 1' 에서 멈춘다
    (`tests/unit/auth/test_rejected_storm.py`). 신고를 10분보다 드물게 내는 호출자는 값마다 한 번씩 재발급을
    일으킬 수 있다(최대 10분에 1회) — 이것이 남은 상한이다.
+5. **지난 토큰의 늦은 신고는 쓰지 않는다**(최종 점검 2026-10-07 — 하루 시뮬레이션이 찾은 결함): 캐시의 값이 이미
+   다른 토큰이면 `report_rejected` 는 False 로 끝난다. 전에는 '다른 토큰 것이면 바꾼다'(Lua)라서, 지난 값을 메모리에
+   쥔 프로세스(legacy 브리지 등)의 신고가 현재 값의 신고를 덮어써 auth 가 현재 값의 거절을 몰랐다(재발급·알림 둘 다
+   없음). 지금은 `kis:token`·신고 키를 WATCH 하는 트랜잭션으로 확인·쓰기를 한 번에 한다
+   (`tests/unit/kis/test_invalidate_guard.py::test_a_late_report_for_a_replaced_token_does_not_mask_the_current_report`,
+   `tests/sim/test_token_rejected.py::test_stale_token_report_does_not_mask_current_rejection`).
 
 ### 4.4 증명(시험)
 

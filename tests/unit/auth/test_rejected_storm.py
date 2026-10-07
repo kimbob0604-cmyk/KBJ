@@ -149,7 +149,10 @@ def test_a_report_for_an_old_token_does_not_force_a_refresh() -> None:
     svc, _ = auth(server, clock, iss)
     svc.step(clock.t)
     cache = RedisTokenCache(fakeredis.FakeRedis(server=server))
-    assert cache.report_rejected("tok-0-already-replaced", clock.t, "late")
+    # 캐시에는 이미 다른 값(tok-1)이 있다 — 지난 토큰의 늦은 신고는 쓰지 않는다
+    # (현재 값의 신고를 덮지 않게)
+    assert not cache.report_rejected("tok-0-already-replaced", clock.t, "late")
+    assert cache.rejection() is None
     clock.t += timedelta(hours=1)
     assert svc.step(clock.t)["token"].action == "fresh"
     assert len(iss.calls) == 1

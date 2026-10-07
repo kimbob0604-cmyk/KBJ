@@ -10,10 +10,14 @@ GEXLAB db/migrations 001~004 의 열을 그대로 갖는다.
 
 from __future__ import annotations
 
+import os
 import re
+import shutil
+import subprocess
 from pathlib import Path
 from typing import Any
 
+import pytest
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -84,10 +88,11 @@ def test_compose_services_ports_and_secrets() -> None:
     assert {"db", "redis"} <= set(services)
     assert "timescaledb" in services["db"]["image"] and "pg16" in services["db"]["image"]
     assert services["redis"]["image"].startswith("redis:7")
-    for svc in services.values():
+    for name, svc in services.items():
         for port in svc.get("ports", []):
             assert str(port).startswith("127.0.0.1:"), port
-        assert "healthcheck" in svc
+        if svc.get("restart") != "no":  # 한 번 돌고 끝나는 migrate 말고는 상시 — 헬스체크 필수
+            assert "healthcheck" in svc, name
     pw = services["db"]["environment"]["POSTGRES_PASSWORD"]
     assert re.fullmatch(r"\$\{KBJ_POSTGRES_PASSWORD:\?[^}]*\}", pw), "기본값 없이 필수"
     rpw = services["redis"]["environment"]["KBJ_REDIS_PASSWORD"]
@@ -100,6 +105,128 @@ def test_compose_applies_0001_as_initdb() -> None:
     assert mount == [
         "./kbj/store/migrations/0001_schemas.sql:/docker-entrypoint-initdb.d/100_kbj_0001_schemas.sql:ro"
     ]
+
+
+# ── P2 앱 서비스(묶음 I — docs/p2_design.md §11.2, 메인 결정 D1·D4, ADR 0004) ──────────────────
+
+APP = ("migrate", "auth", "scheduler", "notifier")
+SECRET_ENV = re.compile(r"KBJ_\w*(KEY|SECRET|TOKEN|PASSWORD|_ID|_IDS|_URL)$")
+_ENTRY = {
+    "migrate": ["python", "-m", "kbj.store.migrate"],
+    "auth": ["python", "-m", "kbj.services.auth"],
+    "scheduler": ["python", "-m", "kbj.services.scheduler", "run"],
+    "notifier": ["python", "-m", "kbj.services.notifier", "run"],
+}
+
+
+def _env(name: str) -> dict[str, str]:
+    return {k: str(v) for k, v in _compose()["services"][name]["environment"].items()}
+
+
+def test_app_services_share_one_image_behind_the_app_profile() -> None:
+    services = _compose()["services"]
+    assert set(APP) <= set(services)
+    for name in APP:
+        svc = services[name]
+        assert svc["profiles"] == ["app"], name  # 기본 `up` 은 지금처럼 db·redis 만
+        assert svc["image"] == "kbj-app:local" and svc["build"]["dockerfile"] == "Dockerfile"
+        assert svc["command"] == _ENTRY[name]
+        env = _env(name)
+        assert env["KBJ_SERVICE"] == name and env["TZ"] == "UTC"
+        assert "env_file" not in svc, name  # .env 를 통째로 넣지 않는다 — 필요한 값만
+        assert "ports" not in svc, name  # 웹훅·API HTTP 서버는 P3(D4)
+    for name in ("db", "redis"):
+        assert "profiles" not in services[name]
+
+
+def test_app_services_wait_for_storage_and_migration() -> None:
+    services = _compose()["services"]
+    assert services["migrate"]["restart"] == "no"
+    assert services["migrate"]["depends_on"] == {"db": {"condition": "service_healthy"}}
+    assert services["auth"]["depends_on"] == {"redis": {"condition": "service_healthy"}}
+    for name in ("scheduler", "notifier"):
+        deps = services[name]["depends_on"]
+        assert deps["migrate"] == {"condition": "service_completed_successfully"}
+        assert deps["db"]["condition"] == deps["redis"]["condition"] == "service_healthy"
+    for name in ("auth", "scheduler", "notifier"):
+        test = services[name]["healthcheck"]["test"]
+        assert test[:5] == ["CMD", "python", "-m", "kbj.services.runtime.healthcheck", name]
+
+
+def test_kis_app_key_goes_only_to_the_issuer_in_p2() -> None:
+    """D1 안 A: 앱키는 KIS 를 부르는 프로세스에만 — P2 는 auth 하나(발급자)."""
+    holders = {n for n in APP if "KBJ_KIS_APP_KEY" in _env(n) or "KBJ_KIS_APP_SECRET" in _env(n)}
+    assert holders == {"auth"}
+    tg = {n for n in APP if any(k.startswith("KBJ_TELEGRAM_") for k in _env(n))}
+    assert tg == {"notifier"}
+    assert {n for n in APP if "KBJ_DART_API_KEY" in _env(n)} == {"scheduler"}
+
+
+def test_app_secrets_have_no_default_values() -> None:
+    for name in APP:
+        for key, value in _env(name).items():
+            if not SECRET_ENV.search(key):
+                continue
+            for m in re.finditer(r"\$\{(\w+)(:[-?])([^}]*)\}", value):
+                op, rest = m.group(2), m.group(3)
+                assert op == ":?" or rest == "", f"{name}.{key} 에 기본값이 있다"
+
+
+def test_app_urls_point_inside_compose_with_required_passwords() -> None:
+    raw = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
+    db = "postgresql://kbj:${KBJ_POSTGRES_PASSWORD:?"
+    rd = "redis://:${KBJ_REDIS_PASSWORD:?"
+    assert db in raw and "@db:5432/kbj" in raw
+    assert rd in raw and "@redis:6379/0" in raw
+    for name in APP:
+        env = _env(name)
+        if "KBJ_DATABASE_URL" in env:
+            assert env["KBJ_DATABASE_URL"].startswith(db), name
+        if "KBJ_REDIS_URL" in env:
+            assert env["KBJ_REDIS_URL"].startswith(rd), name
+    sched = _compose()["services"]["scheduler"]
+    assert "state:/data" in sched["volumes"] and _env("scheduler")["KBJ_DATA_DIR"] == "/data"
+    assert "state" in _compose()["volumes"]
+
+
+def test_dockerfile_keeps_secrets_and_legacy_out() -> None:
+    docker = (ROOT / "Dockerfile").read_text(encoding="utf-8")
+    ignore = (ROOT / ".dockerignore").read_text(encoding="utf-8").splitlines()
+    assert {".env", ".env.*", "!.env.example", "legacy", "tests", "state"} <= set(ignore)
+    copies = [ln.split()[1:-1] for ln in docker.splitlines() if ln.startswith("COPY ")]
+    flat = {c for group in copies for c in group}
+    assert flat & {".", ".env", "legacy", "tests"} == set()
+    assert "uv sync --frozen --no-dev" in docker  # 런타임 의존성만(dev·legacy 그룹 없음)
+    assert "postgresql-client" in docker  # ops.nightly pg_dump
+    assert "\nUSER kbj" in docker
+    assert "ENV TZ=UTC" in docker
+
+
+@pytest.mark.skipif(shutil.which("docker") is None, reason="docker CLI 없음")
+def test_compose_config_is_valid_with_and_without_app_profile(tmp_path: Path) -> None:
+    env = tmp_path / "env"
+    env.write_text(
+        "KBJ_POSTGRES_PASSWORD=simpw123\nKBJ_REDIS_PASSWORD=simpw456\n", encoding="utf-8"
+    )
+    base = ["docker", "compose", "--project-directory", str(ROOT), "--env-file", str(env)]
+    # 셸의 KBJ_*·COMPOSE_*(COMPOSE_FILE·COMPOSE_PROFILES 등)가 결과를 바꾸지 않게 뺀다
+    clean = {k: v for k, v in os.environ.items() if not k.startswith(("KBJ_", "COMPOSE_"))}
+    for extra in ([], ["--profile", "app"]):
+        r = subprocess.run(  # noqa: S603 — 고정 인자
+            [*base, *extra, "config", "-q"], capture_output=True, text=True, check=False, env=clean
+        )
+        if "docker" in r.stderr and "not found" in r.stderr:  # compose 플러그인 없음
+            pytest.skip("docker compose 플러그인 없음")
+        assert r.returncode == 0, r.stderr
+    for extra in ([], ["--profile", "app"]):
+        missing = subprocess.run(  # noqa: S603
+            [*base[:4], "--env-file", "/dev/null", *extra, "config", "-q"],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=clean,
+        )
+        assert missing.returncode != 0  # 비밀번호가 없으면 멈춘다(기본값 없음)
 
 
 # ── P2 마이그레이션 0002~0006 (docs/p2_design.md §8.2·§8.8) ──────────────────────────────────
