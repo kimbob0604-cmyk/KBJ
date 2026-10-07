@@ -1,0 +1,51 @@
+{
+  "_source": "SYNTHETIC — 공식 문서 모양의 가상 값(tests/fixtures/synthetic/datago/make_fixtures.py)",
+  "response": {
+    "header": {
+      "resultCode": "00",
+      "resultMsg": "NORMAL SERVICE."
+    },
+    "body": {
+      "numOfRows": 10000,
+      "pageNo": 1,
+      "totalCount": 3,
+      "items": {
+        "item": [
+          {
+            "basDt": "20260930",
+            "crdTrFingWhl": "29679345011609",
+            "crdTrFingScrs": "13406708155055",
+            "crdTrFingKosdaq": "2383741774913",
+            "crdTrLndrWhl": "2381035726073",
+            "crdTrLndrScrs": "29473806742530",
+            "crdTrLndrKosdaq": "19067910462780",
+            "sbscCapLn": "14465665946706",
+            "dpsgScrtMogFing": "28959011073986"
+          },
+          {
+            "basDt": "20261001",
+            "crdTrFingWhl": "28984065969983",
+            "crdTrFingScrs": "27506504828902",
+            "crdTrFingKosdaq": "11930399173244",
+            "crdTrLndrWhl": "1588954313616",
+            "crdTrLndrScrs": "23959995010585",
+            "crdTrLndrKosdaq": "29364541015204",
+            "sbscCapLn": "3450522499958",
+            "dpsgScrtMogFing": "29805498353974"
+          },
+          {
+            "basDt": "20261002",
+            "crdTrFingWhl": "12480249049604",
+            "crdTrFingScrs": "9801923723561",
+            "crdTrFingKosdaq": "16253806558466",
+            "crdTrLndrWhl": "21744332237156",
+            "crdTrLndrScrs": "23385516254819",
+            "crdTrLndrKosdaq": "15350873347076",
+            "sbscCapLn": "9601197635548",
+            "dpsgScrtMogFing": "17819266641623"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "_source": "SYNTHETIC — 공식 문서 모양의 가상 값(tests/fixtures/synthetic/datago/make_fixtures.py)",
+  "response": {
+    "header": {
+      "resultCode": "00",
+      "resultMsg": "NORMAL SERVICE."
+    },
+    "body": {
+      "numOfRows": 10000,
+      "pageNo": 1,
+      "totalCount": 4,
+      "items": {
+        "item": [
+          {
+            "basDt": "20260930",
+            "mngInvTgt": "MMF",
+            "invrCtg": "개인",
+            "scrtCmpyCnt": "29",
+            "actCnt": "4837238",
+            "actBal": "70762384155007"
+          },
+          {
+            "basDt": "20260930",
+            "mngInvTgt": "RP",
+            "invrCtg": "법인",
+            "scrtCmpyCnt": "20",
+            "actCnt": "6371572",
+            "actBal": "97604796127119"
+          },
+          {
+            "basDt": "20261001",
+            "mngInvTgt": "MMF",
+            "invrCtg": "개인",
+            "scrtCmpyCnt": "10",
+            "actCnt": "5637927",
+            "actBal": "19582653059438"
+          },
+          {
+            "basDt": "20261001",
+            "mngInvTgt": "RP",
+            "invrCtg": "법인",
+            "scrtCmpyCnt": "15",
+            "actCnt": "2892076",
+            "actBal": "67171039566609"
+          }
+        ]
+      }
+    }
+  }
+}

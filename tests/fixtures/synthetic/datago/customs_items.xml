@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- SYNTHETIC — 공식 문서 모양의 가상 값(tests/fixtures/synthetic/datago/make_fixtures.py) -->
+<response>
+  <header><resultCode>00</resultCode><resultMsg>정상 서비스.</resultMsg></header>
+  <body>
+    <items>
+      <item><balPayments>2679097</balPayments><expDlr>3451435</expDlr><expWgt>86732</expWgt><hsCode>106191000</hsCode><impDlr>772338</impDlr><impWgt>7001</impWgt><statKor>기타 포유동물</statKor><year>2026.08</year></item>
+      <item><balPayments>-321305</balPayments><expDlr>133077</expDlr><expWgt>41099</expWgt><hsCode>8542</hsCode><impDlr>454382</impDlr><impWgt>6102</impWgt><statKor>전자집적회로</statKor><year>2026.08</year></item>
+      <item><balPayments>3384086</balPayments><expDlr>3912861</expDlr><expWgt>38027</expWgt><hsCode>303</hsCode><impDlr>528775</impDlr><impWgt>7879</impWgt><statKor>냉동 어류</statKor><year>2026.08</year></item>
+    </items>
+    <totalCount>3</totalCount>
+  </body>
+</response>

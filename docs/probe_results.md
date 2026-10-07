@@ -361,6 +361,9 @@
 | 9 | ECOS | 일·분 한도(602 발생 조건), 요청 1회 최대 건수, 721Y001·301Y013(경상수지)·513Y001·731Y003·M2 원계열 항목 코드, 일별 금리 당일 반영 시각 |
 | 10 | KOSIS | 일 한도, `objL1=ALL`·`itmId=ALL` 동작, 표 ID 확정(산업활동 계절조정, 광공업·서비스업·소매판매), 국제통계 표 제외 |
 | 11 | 등급 | ECOS 731Y001(서울외국환중개)·901Y009(국가데이터처) 공개 표시 가능 여부 [결정 필요] |
+| 12 | KRX OpenAPI 한도 (P2 추가 — 메인 결정 D5) | 일 호출 상한 실제 값(GX #16 의 10,000회/일이 키당인지·서비스별인지), 초과 시 응답(HTTP 상태·본문), 초당 한도. `config/limits.yaml` 의 `krx.daily_cap` 기본 **8,000 [확인 필요]**(10,000 의 80%)·`backfill_cap` 5,000·`rate` 2/s [추정] 을 실측으로 고친다 |
+| 13 | DART·ECOS·KOSIS 한도 (P2 추가 — 설계 R10) | DART 일 20,000건(`020`)·초당 한도, ECOS·KOSIS 일 한도 — `config/limits.yaml` 의 `dart.daily_cap` 18,000·`ecos`·`kosis` 값과 대조 |
+| 14 | 거래대금·수급·ETF TR (P2 추가 — 메인 결정 D7, `docs/metrics.md`) | KRX `stk_bydd_trd`·`ksq_bydd_trd`(`ACC_TRDVAL`)·`etf_bydd_trd`(NAV·`LIST_SHRS`·`INVSTASST_NETASST_TOTAMT`·거래대금) 필드 이름·공표 시각, KIS `FHKST01010900`(종목별 투자자 — 기관 7구분 가능 여부)·`FHPTJ04400000`(외국인·기관 가집계)·`FHPST01710000`(거래량 순위 — 거래대금 정렬·상위 몇 개)·`FHPST02400000`(ETF 현재가 — 장중 NAV·괴리율) 응답, **KRX·NXT 구분**(응답이 통합인지 KRX 만인지, 시장 구분 코드로 나눠 받을 수 있는지) |
 
 ---
 

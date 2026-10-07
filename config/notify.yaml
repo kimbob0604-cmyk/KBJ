@@ -1,0 +1,158 @@
+# 알림 발송 규칙 — 해석기는 kbj/services/notifier/policy.py 하나(모르는 키는 오류).
+# 근거: docs/p2_design.md §5.2(종류·토픽)·§5.3(중복 키·쿨다운)·§5.5(발송 꺼짐)·§5.9(legacy_kinds), U2.
+# 채팅 id 는 비밀 취급이라 여기 두지 않는다(KBJ_TELEGRAM_CHAT_ID). 발송 스위치는 KBJ_NOTIFY_ENABLED(기본 false).
+#
+# dedup(중복 방지 규칙) — 키는 Redis notify:dedup:<키>(SET NX) + ops.notify_log.dedup_key(UNIQUE):
+#   daily     하루 1회   {kind}:{as_of YYYYMMDD}[:{subject}][:{legacy 부른 곳}]   36시간
+#   cooldown  쿨다운     {kind}:{subject 또는 본문 해시} — 마지막 발송부터 cooldown_s   cooldown_s
+#   subject   대상별 1회 {kind}:{subject 또는 본문 해시}                             30일
+#   body      그 밖      {kind}:{as_of}:{sha256(본문) 16자}                           24시간
+# ttl_s 를 적으면 문지기 수명을 바꾼다. catch_up_until(KST, as_of 날짜)이 지나면 보내지 않는다(failed).
+version: 1
+
+# 토픽 → message_thread_id. 슈퍼그룹을 만든 뒤 적는다 [확인 필요] — 비어 있으면 일반 대화로 보내고
+# 경고(notify_topic_missing, R16).
+topics:
+  market: null    # 시장 — 아침 브리핑·마감 요약·수급 리포트·ETF 리포트
+  newhigh: null   # 신고가 — 보드 HTML·랭킹 엑셀·노트
+  alert: null     # 알림 — 규칙·관심종목·트레일링·어닝·리비전·GEX 레벨
+  ops: null       # 운영 — 워치독·작업 실패·헬스·유니버스 변동
+
+kinds:
+  # ── 시장 — U2: 아침 브리핑 1회·마감 요약 1회 ─────────────────────────────────────────
+  brief.morning:
+    topic: market
+    dedup: daily
+    note: "U2 하루 1회. 작업 brief.morning 08:10(본문은 P5). 흡수 legacy #3·#4·#5·#15(오전)·#29·#30·#38"
+  brief.closing:
+    topic: market
+    dedup: daily
+    catch_up_until: "20:30"
+    note: "U2 하루 1회, 캐치업 20:30 까지. 작업 brief.closing 16:40(본문은 P3). 흡수 #8·#9·#15(오후)·#23~#26"
+  flows.report:
+    topic: market
+    dedup: daily
+    note: "작업 flows.report 18:20. 흡수 #11·#39·#40"
+  etf.report:
+    topic: market
+    dedup: daily
+    note: "작업 etf.collect 08:00. 흡수 #34"
+
+  # ── 신고가·ET 보드 (전환 기간: ET 가 kind 를 넘긴다 — 마감 요약에 합치는 것은 P3) ──────────
+  board.rankings:
+    topic: market
+    dedup: body
+    parse_mode: Markdown
+    note: "ET cmd_send('rankings') #23 → P3 에 brief.closing ③"
+  board.draft:
+    topic: market
+    dedup: body
+    parse_mode: Markdown
+    max_parts: 20
+    note: "ET cmd_send('draft') #24 → P3 에 brief.closing ⑧. 초안은 자르지 않고 전부 보낸다(ET D-084)"
+  board.signals:
+    topic: market
+    dedup: body
+    parse_mode: Markdown
+    note: "ET cmd_send('signals') #26 → P3 에 brief.closing ⑦"
+  board.files:
+    topic: newhigh
+    dedup: body
+    note: "ET run._send_files #25 — 보드 HTML·랭킹 엑셀 첨부"
+  board.note:
+    topic: newhigh
+    dedup: body
+    parse_mode: Markdown
+    note: "ET run._send_note #27(수동)"
+  board.us:
+    topic: market
+    dedup: body
+    note: "ET run.cmd_us_send #29 → P5 에 brief.morning ①"
+  board.manual:
+    topic: ops
+    dedup: body
+    parse_mode: Markdown
+    note: "ET cmd_send('backtest'·'screen'·'search') #28(수동)"
+
+  # ── 알림 ───────────────────────────────────────────────────────────────────────────
+  alert.rule:
+    topic: alert
+    dedup: cooldown
+    cooldown_s: 3600
+    note: "규칙·종목마다 60분(SD _alert_cooldown_ok:6102). 작업 rules.intraday(P8). 흡수 #6·#12·#13·#14"
+  alert.earnings:
+    topic: alert
+    dedup: subject
+    note: "접수번호마다 1회. 작업 filings.dart_feed(P4). 흡수 #16"
+  alert.revision:
+    topic: alert
+    dedup: daily
+    note: "작업 consensus.snapshot(P4). 흡수 #10"
+  alert.gex_level:
+    topic: alert
+    dedup: cooldown
+    cooldown_s: 600
+    note: "GX 설계 쿨다운 10분. GEX 엔진(P7). #42 계획"
+
+  # ── 운영 ───────────────────────────────────────────────────────────────────────────
+  ops.watchdog:
+    topic: ops
+    dedup: cooldown
+    cooldown_s: 1800
+    note: "같은 공백 30분. 작업 ops.watchdog. 흡수 #18, GX health"
+  ops.job_failed:
+    topic: ops
+    dedup: subject
+    note: "작업·as_of 마다 1회(subject = '<작업>:<as_of>'). 실행기. 흡수 #37"
+  ops.universe:
+    topic: ops
+    dedup: daily
+    note: "작업 krx.daily. 흡수 #17"
+
+  # ── 명령 응답 — 받은 대화·스레드로. subject = 'u<update_id>'(chat id 는 키에 넣지 않는다) ─────
+  cmd.reply:
+    topic: reply
+    dedup: subject
+    ttl_s: 172800
+    note: "§5.7. 같은 업데이트에 두 번 답하지 않는다(48시간 — tg:update 와 같다). #21"
+
+  # ── 전환 기간 — legacy 가 kind 없이 부르고 legacy_kinds 에도 없는 발송 ─────────────────
+  legacy.other:
+    topic: ops
+    dedup: body
+    note: "부른 곳(source)이 발송 기록에 남는다. P3~P5 에 메시지를 kbj 작업으로 옮기며 0 으로 줄인다"
+
+# kind 를 넘기지 않는 legacy 발송의 '부른 함수 이름 → 종류'(§5.9 — 전환 기간 한정).
+# shim 이 호출 스택을 거슬러 올라가며 처음 만나는 이름을 쓴다. 없으면 legacy_default_kind.
+# 같은 종류라도 함수마다 하루 1회로 센다(origin) — 본문 합치기는 P3(마감)·P5(아침).
+# kind 를 넘긴 legacy 호출(ET ETF 리포트 여러 통·수급 종목별 차트)은 내용마다 센다 — 같은 내용의 재실행만 막는다.
+legacy_kinds:
+  # SD server.py (inventory d-1 #)
+  alert_watchlist_price: alert.rule              # #6
+  alert_morning_briefing: brief.morning          # #3
+  alert_overnight_prediction: brief.morning      # #4
+  send_us_market_summary_telegram: brief.morning # #5
+  alert_closing_summary: brief.closing           # #8
+  send_market_summary_telegram: brief.closing    # #9 (send_closing_market_summary 가 부른다)
+  send_closing_market_summary: brief.closing     # #9
+  alert_revision_signals: alert.revision         # #10
+  alert_flow_signals: flows.report               # #11
+  check_alert_rules: alert.rule                  # #12
+  _check_trailing_stops: alert.rule              # #13
+  alert_discovery_new_entries: alert.rule        # #14
+  _scheduled_universe_sync: ops.universe         # #17
+  _watchdog_notify: ops.watchdog                 # #18 (SD 워치독은 돌지 않는다 — 전환 안전망)
+legacy_default_kind: legacy.other
+
+delivery:
+  max_attempts: 3              # 네트워크·5xx·429 초과는 재시도, 그 밖 4xx 는 바로 failed
+  retry_initial_s: 10
+  retry_max_s: 300
+  max_attachment_bytes: 20971520   # 20 MiB [제안] — 첨부는 대기열에 바이트로 싣는다(봇 API 한도 50 MB)
+  backlog_warn: 500            # notify:outbox 가 이만큼 쌓이면 경고
+  webhook_check_s: 600         # getWebhookInfo 점검 주기(ET triggers.py:812 #46 대체)
+  webhook_pending_warn: 100    # 대기 업데이트 급증 경고
+
+inbox:
+  keep_days: 14                # ET KEEP_DAYS — ops.nightly 가 지운다
+  oembed_timeout_s: 20

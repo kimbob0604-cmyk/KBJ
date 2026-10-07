@@ -1,0 +1,45 @@
+{
+  "_source": "SYNTHETIC — 공식 문서 모양의 가상 값(tests/fixtures/synthetic/datago/make_fixtures.py)",
+  "response": {
+    "header": {
+      "resultCode": "00",
+      "resultMsg": "NORMAL SERVICE."
+    },
+    "body": {
+      "numOfRows": 10000,
+      "pageNo": 1,
+      "totalCount": 3,
+      "items": {
+        "item": [
+          {
+            "basDt": "20260930",
+            "invrDpsgAmt": "51306591213800",
+            "onbdDrvPrdTrRcAdvAmt": "1689533637939",
+            "toCstRpchCndBndSlgBal": "75660552035806",
+            "brkTrdUcolMny": "682602384747",
+            "brkTrdUcolMnyVsOppsTrdAmt": "53345151849",
+            "ucolMnyVsOppsTrdRlImpt": "11.80"
+          },
+          {
+            "basDt": "20261001",
+            "invrDpsgAmt": "53454721491491",
+            "onbdDrvPrdTrRcAdvAmt": "2790673144075",
+            "toCstRpchCndBndSlgBal": "88609645054569",
+            "brkTrdUcolMny": "199732217695",
+            "brkTrdUcolMnyVsOppsTrdAmt": "56417790531",
+            "ucolMnyVsOppsTrdRlImpt": "5.34"
+          },
+          {
+            "basDt": "20261002",
+            "invrDpsgAmt": "46401515110707",
+            "onbdDrvPrdTrRcAdvAmt": "5852194750717",
+            "toCstRpchCndBndSlgBal": "86992599669010",
+            "brkTrdUcolMny": "870810942303",
+            "brkTrdUcolMnyVsOppsTrdAmt": "7556391136",
+            "ucolMnyVsOppsTrdRlImpt": "4.18"
+          }
+        ]
+      }
+    }
+  }
+}

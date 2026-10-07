@@ -1,0 +1,8 @@
+{
+ "_source": "SYNTHETIC — scripts/make_synthetic_fixtures.py(시드 고정)가 만든 합성 데이터. 실측 아님 — KRX /drv/fut_bydd_trd 응답 행 형태(basDd 20260923), 미니 선물 3행",
+ "rows": [
+  {"BAS_DD": "20260923", "PROD_NM": "미니코스피200 선물", "MKT_NM": "야간", "ISU_CD": "A056A000", "ISU_NM": "미니코스피 F 202610 (야간)", "TDD_CLSPRC": "1131.40", "CMPPREVDD_PRC": "25.10", "TDD_OPNPRC": "1106.59", "TDD_HGPRC": "1134.81", "TDD_LWPRC": "1106.18", "SPOT_PRC": "1124.85", "SETL_PRC": "", "ACC_TRDVOL": "34036", "ACC_TRDVAL": "1912066000000", "ACC_OPNINT_QTY": "63154"},
+  {"BAS_DD": "20260923", "PROD_NM": "미니코스피200 선물", "MKT_NM": "정규", "ISU_CD": "A056A000", "ISU_NM": "미니코스피 F 202610 (주간)", "TDD_CLSPRC": "1120.35", "CMPPREVDD_PRC": "14.05", "TDD_OPNPRC": "1106.08", "TDD_HGPRC": "1121.04", "TDD_LWPRC": "1105.33", "SPOT_PRC": "1124.85", "SETL_PRC": "1120.35", "ACC_TRDVOL": "119476", "ACC_TRDVAL": "6688489500000", "ACC_OPNINT_QTY": "63233"},
+  {"BAS_DD": "20260923", "PROD_NM": "미니코스피200 선물", "MKT_NM": "야간", "ISU_CD": "A056B000", "ISU_NM": "미니코스피 F 202611 (야간)", "TDD_CLSPRC": "1135.30", "CMPPREVDD_PRC": "26.05", "TDD_OPNPRC": "1110.11", "TDD_HGPRC": "1136.03", "TDD_LWPRC": "1109.86", "SPOT_PRC": "1124.85", "SETL_PRC": "", "ACC_TRDVOL": "608", "ACC_TRDVAL": "13055950000", "ACC_OPNINT_QTY": "2525"}
+ ]
+}

@@ -4,8 +4,15 @@ version = "0.1.0"
 description = "국장 통합 터미널 · 포트폴리오 완성본"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
-# 신규 kbj/ 코드에 필요한 것만. 버전 하한은 P0 통합 해석(docs/conflict_map.md §3.3)과 맞춘다
+# 신규 kbj/ 코드에 필요한 것만. 버전 하한은 P0 통합 해석(docs/conflict_map.md §3.3)과 맞춘다.
+# P2(docs/p2_design.md §11.2 S0)에서 더한 것:
+# - exchange-calendars: 거래 캘린더 XKRX·XNYS(kbj.core.calendar — 지연 import). pandas 는 이 의존성으로
+#   들어오고 단일 lock 이 2.3.3 으로 묶는다(legacy 그룹 `pandas<3.0`, conflict_map §3.3)
+# - defusedxml: 공공데이터포털·DART corpCode.xml XML 파싱(외부 XML 은 표준 xml 로 열지 않는다)
+# - FastAPI·uvicorn 은 넣지 않는다 — 로그인 API 와 웹훅 서버는 P3(메인 결정 D4, R8). P2 웹훅은 순수 처리 함수
 dependencies = [
+    "defusedxml>=0.7.1",
+    "exchange-calendars>=4.13.2",
     "httpx>=0.28",
     "psycopg[binary]>=3.3.6",
     "pydantic>=2.13",
@@ -19,22 +26,25 @@ dev = [
     "fakeredis[lua]>=2.39",
     "hypothesis>=6.100",
     "import-linter>=2.1",
+    # pyright strict(kbj/core)가 exchange_calendars 가 돌려주는 pandas 값의 타입을 읽게(묶음 B —
+    # GX dev 의존성 그대로). 없으면 `.sessions` 의 year·month·day 가 Unknown 이라 strict 가 실패한다
+    "pandas-stubs>=3.0.5.260914",
     "pyright>=1.1.380",
     "pytest>=8.3",
     "ruff>=0.6",
     "types-pyyaml>=6.0.12",
+    # 하루 운영 시뮬레이션의 가짜 KIS 웹소켓 서버(tests/fakes/ws_server.py — GX 승격, 묶음 I)
+    "websockets>=17.1",
 ]
 # legacy 세 프로젝트(legacy/gexlab·etf_traker·stock_dashboard)를 루트 .venv 하나로 돌리는 의존성.
 # 이식 보고들의 python_deps 를 합쳤다(docs/conflict_map.md §3.3, /tmp/p0test/resolve/union.txt 해석과 같은 범위).
 # 루트 uv.lock 이 정본이다 — legacy/gexlab/uv.lock 은 원본 기록으로만 남는다(legacy/gexlab/MIGRATION.md).
 # legacy 를 비우는 단계(PLAN D8)에서 이 그룹도 지운다.
 legacy = [
-    # gexlab (실행)
-    "exchange-calendars>=4.13.2",
+    # gexlab (실행) — exchange-calendars 는 P2 부터 런타임 의존성(위 dependencies)
     "vollib>=1.0.11",
     "websockets>=17.1",
-    # gexlab (개발 — 자기 pyright·pre-commit 설정용)
-    "pandas-stubs>=3.0.5.260914",
+    # gexlab (개발 — 자기 pyright·pre-commit 설정용). pandas-stubs 는 P2 부터 dev 그룹(위)
     "pre-commit>=3.7",
     # 공통 — pandas 는 pykrx 가 <3.0 을 요구해 2.3 대로 묶는다(GX 는 2.3.3 에서 통과 확인, E2)
     "pandas>=2.3.3,<3.0",
@@ -100,8 +110,17 @@ venv = ".venv"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = [".", "scripts"]
-addopts = "-q --strict-markers"
+# importlib: tests/ 아래 하위 폴더(unit/<영역>·property·integration·sim)에 __init__.py 를 두지 않는다 —
+# 같은 이름의 시험 파일이 생겨도 수집이 깨지지 않게(docs/p2_design.md §1.11). 공용 도구는 `tests.fakes.*`
+addopts = "-q --strict-markers --import-mode=importlib"
 xfail_strict = true
+# integration·docker 는 서로의 별칭이다(tests/conftest.py — GX 방식). 단위 실행은 `-m "not integration"`
+markers = [
+    "integration: compose·컨테이너 스택(TimescaleDB·Redis)이 필요한 통합 시험 (Docker 없으면 건너뜀)",
+    "docker: integration 의 옛 이름 — 둘 중 하나가 붙으면 둘 다 붙는다(tests/conftest.py)",
+    "network: 외부 API 를 실제로 부르는 시험 (CI 기본 제외 — 키가 있는 운영 환경에서만)",
+    "sim: 하루 운영 시뮬레이션(가짜 시계·가짜 서버 — tests/sim)",
+]
 
 # ── import-linter — 구조로 막는 의존 규칙 (DATA_TIERS §3, ADR 0002·0003) ─────────────────────
 [tool.importlinter]

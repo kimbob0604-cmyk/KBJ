@@ -1,0 +1,10 @@
+# 작업 등록부 — 틀(S0). 서비스·작업·폐지 목록(services·jobs·retired)은 묶음 F 가 채운다
+# (docs/p2_design.md §6.2~§6.8, §11.3). 해석·검증은 kbj/services/scheduler/registry.py(묶음 F).
+# 같은 (source, dataset) 은 등록부 전체에서 한 작업만 받는다. cron 은 tz 기준(기본 KST).
+version: 1
+
+defaults:
+  tz: Asia/Seoul               # 컨테이너 TZ=UTC(docs/secrets.md) — 변환은 코드에서
+  retry: {max: 3, backoff_s: [60, 300, 900]}
+  deadline_min: 120            # 시작 시각 + 이 시간 안에 끝나지 않으면 실패
+  enabled: false               # P2: kbj 구현이 있는 작업만 true

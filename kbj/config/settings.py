@@ -6,6 +6,9 @@
 - 비밀이 아닌 튜닝값(호출 상한·주기 등)은 환경변수가 아니라 `config/*.yaml` 로 둔다
   (inventory (f) 원칙).
 - 테스트는 `Settings(_env_file=None)` 으로 실제 `.env` 를 읽지 않는다.
+- KIS 앱키·시크릿은 KIS REST 를 부르는 프로세스에도 들어간다(모든 요청 헤더에 필요 — ADR 0004).
+  **발급**(접근토큰·웹소켓 접속키)은 `service == "auth"` 인 프로세스만 한다: 발급 클래스는
+  kbj/services/auth/issuer.py 에만 있고, 그 생성자가 `service` 를 본다(런타임 가드).
 """
 
 from __future__ import annotations
@@ -53,7 +56,7 @@ class Settings(BaseSettings):
         env_ignore_empty=True,  # `.env.example` 을 복사만 한 빈 값은 기본값으로
     )
 
-    # ── KIS — services.auth 만 읽는다(ADR 0001 U1) ──────────────────────────────────────
+    # ── KIS — 발급은 services.auth 만, 요청 헤더는 KIS REST 를 부르는 프로세스(ADR 0004) ──────────
     kis_app_key: SecretStr | None = None
     kis_app_secret: SecretStr | None = None
     kis_env: Literal["real", "vts"] = "real"
@@ -95,10 +98,18 @@ class Settings(BaseSettings):
     probe_out_dir: Path = Path("probe_out")
     test_timescale_image: str | None = None
 
+    # ── 프로세스·설정 파일 ─────────────────────────────────────────────────────────────
+    # 이 프로세스가 어느 서비스인가(compose 가 서비스마다 넣는다: auth·scheduler·notifier …).
+    # 비어 있으면 None(시험·스크립트). KIS 발급자는 "auth" 일 때만 만들어진다(ADR 0004 런타임 가드)
+    service: str | None = Field(default=None, pattern=r"^[a-z][a-z0-9_.-]*$")
+    # config/*.yaml(작업 등록부·호출 상한·발송 규칙·휴장 덮어쓰기)이 있는 폴더. 상대 경로는
+    # 레포 루트 기준(kbj/config/files.py — 작업 디렉터리와 무관). 설치 이미지에서는 절대 경로로
+    config_dir: Path = Path("config")
+
     # ── 실전 주문 스위치 — 기본 false, 사용자 승인 전엔 바꾸지 않는다(절대 규칙 6) ──────────────
     live_trading: bool = False
 
-    @field_validator(*_SECRET_FIELDS, "public_base_url", "git_commit", mode="before")
+    @field_validator(*_SECRET_FIELDS, "public_base_url", "git_commit", "service", mode="before")
     @classmethod
     def _blank_is_none(cls, v: object) -> object:
         if isinstance(v, str) and not v.strip():

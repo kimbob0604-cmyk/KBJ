@@ -1,0 +1,24 @@
+{
+  "_source": "SYNTHETIC — 공식 문서 모양의 가상 값(tests/fixtures/synthetic/datago/make_fixtures.py)",
+  "response": {
+    "header": {
+      "resultCode": "00",
+      "resultMsg": "NORMAL SERVICE."
+    },
+    "body": {
+      "numOfRows": 10000,
+      "pageNo": 1,
+      "totalCount": 1,
+      "items": {
+        "item": [
+          {
+            "basDt": "20261002",
+            "ctg": "주식형",
+            "tstMthdCtg": "공모",
+            "nPptTotAmt": "38007038206321"
+          }
+        ]
+      }
+    }
+  }
+}

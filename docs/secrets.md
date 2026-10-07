@@ -1,6 +1,6 @@
 # KBJ 비밀·환경변수 이름표
 
-- 작성: 2026-10-06(P1). 근거: `docs/inventory.md` (f) 환경변수 통합 표, `docs/DATA_TIERS.md` §1, `docs/adr/0001-p0-decisions.md` U1.
+- 작성: 2026-10-06(P1). 고침: 2026-10-07(P2 S0 — `KBJ_SERVICE`·`KBJ_CONFIG_DIR` 추가, KIS 앱키 주입 범위를 ADR 0004 로). 근거: `docs/inventory.md` (f) 환경변수 통합 표, `docs/DATA_TIERS.md` §1, `docs/adr/0001-p0-decisions.md` U1, `docs/adr/0004-kis-issuance.md`.
 - **이름만 적는다. 값은 어디에도 적지 않는다**(레포·문서·이슈·로그·텔레그램). 값은 로컬 `.env`(git 제외)와 운영 VM 환경에만 둔다.
 - 코드는 `kbj/config/settings.py` 의 `Settings` 하나로만 읽는다(`KBJ_` 접두사, 비밀은 `SecretStr`). 로그·오류 문구에 내보낼 때는 `kbj/core/masking.py` 를 거친다(절대 규칙 5).
 - 빈 값은 '설정 안 함'(기본값)으로 읽는다. 비밀이 아닌 튜닝값(호출 상한·주기·발송 규칙)은 환경변수가 아니라 `config/*.yaml` 로 둔다.
@@ -10,9 +10,9 @@
 
 | 이름 | 용도 | 발급처 | 등급 | 읽는 곳 |
 |---|---|---|---|---|
-| `KBJ_KIS_APP_KEY` | KIS 앱키 | 한국투자증권 KIS Developers | 로그인 | services.auth **만**(U1) |
-| `KBJ_KIS_APP_SECRET` | KIS 앱시크릿 | 같음 | 로그인 | services.auth **만** |
-| `KBJ_KIS_ENV` | `real` / `vts`(모의) | — | 설정 | services.auth |
+| `KBJ_KIS_APP_KEY` | KIS 앱키 | 한국투자증권 KIS Developers | 로그인 | **발급: services.auth 만**(U1) / 요청 헤더: kbj.data.private.kis(KIS REST 를 부르는 프로세스 — §4, ADR 0004) |
+| `KBJ_KIS_APP_SECRET` | KIS 앱시크릿 | 같음 | 로그인 | 같음(발급: services.auth 만 / 요청 헤더: kbj.data.private.kis) |
+| `KBJ_KIS_ENV` | `real` / `vts`(모의) | — | 설정 | kbj.data.private.kis.credentials(auth·REST 호출 프로세스) |
 | `KBJ_KRX_API_KEY` | KRX OpenAPI 일별 시세·선물옵션(하루 한도 공유) | KRX 정보데이터시스템 OpenAPI | 로그인 | kbj.data.private.krx |
 | `KBJ_DART_API_KEY` | DART 공시·재무 | OpenDART(금융감독원) — 1인 1키 | 공개 | kbj.data.public.dart |
 | `KBJ_DATAGO_KEY` | 공공데이터포털: 관세청 수출입·금투협 종합통계(·금융위 시세는 로그인 데이터) | 공공데이터포털 활용신청(DATA_TIERS §5 목록) | 공개 | kbj.data.public.customs·fsc_kofia_stats, kbj.data.private.fsc_* |
@@ -31,7 +31,7 @@
 | `KBJ_POSTGRES_PASSWORD` | db 컨테이너 비밀번호(compose 가 요구, 기본값 없음) | 직접 생성(영숫자) | 운영 | docker-compose.yml |
 | `KBJ_REDIS_PASSWORD` | redis 컨테이너 비밀번호(compose 가 요구, 기본값 없음) | 직접 생성(영숫자) | 운영 | docker-compose.yml |
 | `KBJ_DATABASE_URL` | Postgres 접속 문자열(비밀번호 포함) | — | 운영 | kbj.store |
-| `KBJ_REDIS_URL` | Redis 접속 문자열(비밀번호 포함) | — | 운영 | 토큰 캐시·레이트리미터·pub/sub |
+| `KBJ_REDIS_URL` | Redis 접속 문자열(비밀번호 포함) | — | 운영 | 토큰 캐시·레이트리미터·일 예산·발송 outbox·하트비트·pub/sub(키 이름은 `kbj/store/redis_keys.py`) |
 | `KBJ_DATA_DIR` | 실행 산출물 루트(기본 `state`) [확인 필요] | — | 설정 | — |
 | `KBJ_SPOOL_DIR` | DB 장애 동안 쓰기 묶음 디스크 큐(기본 `state/spool`) | — | 설정 | kbj.store |
 | `KBJ_SPOOL_MAX_MB` | 디스크 큐 상한(서비스 하나, 기본 1024) | — | 설정 | kbj.store |
@@ -42,19 +42,21 @@
 | `KBJ_HEALTHCHECK_URL` | 외부 하트비트 주소(주소 자체가 비밀) [확인 필요: 서비스 미정] | 하트비트 서비스 | 운영 | scheduler |
 | `KBJ_PROBE_OUT_DIR` | 실측 스크립트 출력 폴더(기본 `probe_out`, gitignore) | — | 설정 | scripts |
 | `KBJ_TEST_TIMESCALE_IMAGE` | 통합 시험용 Timescale 이미지 | — | 설정 | tests(integration) |
+| `KBJ_SERVICE` | 이 프로세스의 서비스 이름(`auth`·`scheduler`·`notifier` …, 소문자). compose 가 서비스마다 넣는다. KIS 발급자(`kbj/services/auth/issuer.py`)는 `auth` 일 때만 만들어진다(ADR 0004 런타임 가드) | — | 설정 | kbj.config.settings, services.auth |
+| `KBJ_CONFIG_DIR` | `config/*.yaml`(작업 등록부·호출 상한·발송 규칙·휴장 덮어쓰기) 폴더. 기본 `config` — 상대 경로는 레포 루트 기준, 설치 이미지에서는 절대 경로 | — | 설정 | kbj.config.files |
 | `KBJ_LIVE_TRADING` | 실전 주문 스위치. **기본 false, 사용자 승인 전엔 바꾸지 않는다**(절대 규칙 6) | — | 설정 | — (주문 코드 없음) |
 
 ## 2. 옛 이름 → 새 이름 (`docs/inventory.md` (f))
 
 | 옛 이름 | 쓰던 곳 | 새 이름 | 비고 |
 |---|---|---|---|
-| `KIS_APP_KEY`, `KIS_APP_SECRET` | SD·ET·GX | `KBJ_KIS_APP_KEY`, `KBJ_KIS_APP_SECRET` | auth 만 읽는다. 옛 레포 시크릿(ET 워크플로 5곳 + GX 1곳)은 지운다 |
+| `KIS_APP_KEY`, `KIS_APP_SECRET` | SD·ET·GX | `KBJ_KIS_APP_KEY`, `KBJ_KIS_APP_SECRET` | 발급은 auth 만, 요청 헤더는 KIS REST 를 부르는 프로세스(§4, ADR 0004). 옛 레포 시크릿(ET 워크플로 5곳 + GX 1곳)은 지운다 |
 | `KIS_ENV` | ET·GX | `KBJ_KIS_ENV` | — |
 | `KIS_ACCOUNT` | ET `.env.example` 만 | 삭제 | 코드 미사용 |
 | `KIS_DEMO_APP_KEY`, `KIS_DEMO_APP_SECRET`, `KIS_DEMO_ACCOUNT` | GX `.env.example` 만 | 보류 | 주문 코드는 승인 전 만들지 않는다 |
 | `KIS_TOKEN_CACHE_PATH` | GX | 삭제 | 토큰은 Redis 에만 |
 | `KRX_API_KEY` | SD·ET·GX | `KBJ_KRX_API_KEY` | — |
-| `KRX_API_BASE`, `KRX_DAILY_CALL_CAP` | SD·GX | `config/krx.yaml` | 비밀 아님 |
+| `KRX_API_BASE`, `KRX_DAILY_CALL_CAP` | SD·GX | 주소: `kbj.data.private.krx` 의 비공개 상수 / 하루 상한: `config/limits.yaml` 의 `krx.daily_cap`(기본 8,000 [확인 필요]) | 비밀 아님 |
 | `KRX_ID`, `KRX_PW` | ET monitor/flow·flowlab | 삭제 | pykrx 1.2.x 가 import 때 같은 이름으로 자동 로그인한다(conflict_map E5) |
 | `DART_API_KEY` | SD·ET | `KBJ_DART_API_KEY` | — |
 | `DATAGO_KEY`, `DATA_GO_KR_KEY` | ET | `KBJ_DATAGO_KEY` | 두 벌을 하나로 |
@@ -105,3 +107,17 @@ P1 이식에서 개인·운영 정보를 코드에서 빼며 legacy 에 새로 �
 1. 그 키를 발급처에서 바로 폐기·재발급한다(KIS 는 앱키 재발급, 텔레그램은 BotFather `/revoke`).
 2. 커밋에 들어갔다면 이력을 고치기 전에 **먼저 재발급**한다 — 공개 레포는 이미 복제됐다고 본다.
 3. `scripts/check_public_safety.py` 가 잡지 못한 형태였다면 `kbj/core/masking.py` 의 `SECRET_SHAPES` 에 형태를 더한다(검사와 마스킹이 같은 목록을 쓴다).
+
+## 4. KIS 앱키 주입 범위 (ADR 0004 — 2026-10-07 메인 결정 D1·D2)
+
+KIS REST 는 **모든 요청 헤더에** `appkey`·`appsecret` 을 요구한다(GX `data/kis/rest.py:_send`, ET `board/ingest/kis.py:_headers`, SD `kis_api.py:_headers`). 그래서 P1 이 적었던 "앱키는 services.auth 만 읽는다"는 그대로 지킬 수 없다. 결정(안 A):
+
+| 무엇 | 어디에 |
+|---|---|
+| `KBJ_KIS_APP_KEY`·`KBJ_KIS_APP_SECRET`·`KBJ_KIS_ENV` 주입 | KIS REST 를 부르는 프로세스: `auth`, scheduler 실행기·collectors, legacy 브리지를 쓰는 legacy 실행, P7 까지 legacy GX poller·ws-gateway. **그 밖 서비스(notifier·api·migrate 등)에는 넣지 않는다**(compose — 묶음 I) |
+| 접근토큰·웹소켓 접속키 **발급** | `services.auth` 한 곳. 나머지는 Redis `kis:token`·`kis:ws_key` 를 읽기만 한다 |
+| 발급 차단 세 겹 | ① 발급 클래스는 `kbj/services/auth/issuer.py` 에만, import-linter 계약으로 auth 밖 import 금지 ② `oauth2/tokenP`·`oauth2/Approval` 문자열 검사(`scripts/check_canonical.py`) ③ 런타임 가드 — `KBJ_SERVICE` 가 `auth` 가 아니면 발급자 생성 거부 |
+| 웹소켓 연결 코드 | P7 까지 legacy GX(`check_canonical` 기준선 그룹 `kis_ws`). 접속키 발급은 지금부터 auth 만 |
+
+토큰 값 자체는 어느 환경변수에도 두지 않는다(Redis 에만 — `KIS_TOKEN_CACHE_PATH` 삭제).
+

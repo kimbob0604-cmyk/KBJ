@@ -1,0 +1,20 @@
+# KBJ 정본 — kbj.core.calendar.OVERRIDE_PATH 가 읽는다(GX config/holidays_override.yaml 승격,
+# docs/p2_design.md §7.1). 아래는 GX 파일 그대로다(PLAN §2.2 는 GX 계획서).
+# exchange_calendars XKRX 에 없는 임시공휴일·휴장일 (PLAN §2.2)
+# 넣을 때는 KRX 일별 데이터 등 근거를 reason 에 함께 적는다.
+closed:
+  - date: 2026-06-03
+    reason: "제9회 전국동시지방선거(공휴일). XKRX 4.13 은 거래일로 봄. KRX fut_bydd_trd 06-03 0행(06-02·06-04 385행) 확인 2026-09-28"
+# XKRX 가 휴장으로 잘못 보는 날 (드묾)
+open: []
+# 주식 정규장 시각이 평소(09:00~15:30)와 다른 날 (설계 R24). 그해 첫 거래일 10:00 개장은 규칙으로
+# 처리하므로 여기 적지 않는다(XKRX 도 안다). 수능일은 XKRX 가 모른다 — 해마다 KRX 공지를 보고 더한다.
+late_open:
+  - date: 2025-11-13
+    open: "10:00"
+    close: "16:30"
+    reason: "2026학년도 대학수학능력시험일. KRX 증권시장 개장·마감 1시간 늦춤(10:00~16:30)"
+  - date: 2026-11-19
+    open: "10:00"
+    close: "16:30"
+    reason: "2027학년도 대학수학능력시험일(교육부 시행계획). KRX 관례대로 1시간 늦춤 [확인 필요: KRX 공지 나오면 재확인]"

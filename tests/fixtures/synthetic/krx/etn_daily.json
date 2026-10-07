@@ -1,0 +1,41 @@
+{
+ "_source": "SYNTHETIC — tests/fixtures/synthetic/krx/make_synthetic.py(시드 고정)가 만든 합성 데이터. 실측 아님 — KRX /etp/etn_bydd_trd 응답 행 형태(basDd → 행)",
+ "20260930": [
+  {
+   "BAS_DD": "20260930",
+   "ISU_CD": "996010",
+   "ISU_NM": "합성 인버스 2X 원유 ETN",
+   "TDD_CLSPRC": "4320",
+   "CMPPREVDD_PRC": "10",
+   "FLUC_RT": "0.23",
+   "PER1SECU_INDIC_VAL": "4310.88",
+   "TDD_OPNPRC": "4310",
+   "TDD_HGPRC": "4325",
+   "TDD_LWPRC": "4305",
+   "ACC_TRDVOL": "983441",
+   "ACC_TRDVAL": "4248465120",
+   "MKTCAP": "86400000000",
+   "INDIC_VAL_AMT": "86217600000",
+   "LIST_SHRS": "20000000",
+   "IDX_IND_NM": "합성 인버스 2X 원유 지수"
+  },
+  {
+   "BAS_DD": "20260930",
+   "ISU_CD": "996020",
+   "ISU_NM": "합성 반도체 TOP5 ETN",
+   "TDD_CLSPRC": "14250",
+   "CMPPREVDD_PRC": "380",
+   "FLUC_RT": "2.74",
+   "PER1SECU_INDIC_VAL": "14275.50",
+   "TDD_OPNPRC": "13870",
+   "TDD_HGPRC": "14255",
+   "TDD_LWPRC": "13865",
+   "ACC_TRDVOL": "94961",
+   "ACC_TRDVAL": "1353194250",
+   "MKTCAP": "57000000000",
+   "INDIC_VAL_AMT": "57102000000",
+   "LIST_SHRS": "4000000",
+   "IDX_IND_NM": "합성 반도체 TOP5 지수"
+  }
+ ]
+}

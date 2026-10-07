@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- SYNTHETIC — 공식 문서 모양의 가상 값(tests/fixtures/synthetic/datago/make_fixtures.py) -->
+<response>
+  <header><resultCode>00</resultCode><resultMsg>정상 서비스.</resultMsg></header>
+  <body>
+    <items>
+      <item><balPayments>1862239</balPayments><expDlr>2021416</expDlr><expWgt>50290</expWgt><hsCd>8542</hsCd><impDlr>159177</impDlr><impWgt>3296</impWgt><statCd>US</statCd><statCdCntnKor1>미국</statCdCntnKor1><statKor>전자집적회로</statKor><year>2026.07</year></item>
+      <item><balPayments>6847832</balPayments><expDlr>7009529</expDlr><expWgt>80643</expWgt><hsCd>8703</hsCd><impDlr>161697</impDlr><impWgt>7088</impWgt><statCd>US</statCd><statCdCntnKor1>미국</statCdCntnKor1><statKor>승용자동차</statKor><year>2026.07</year></item>
+      <item><balPayments>8468262</balPayments><expDlr>8874492</expDlr><expWgt>26559</expWgt><hsCd>0303</hsCd><impDlr>406230</impDlr><impWgt>2289</impWgt><statCd>US</statCd><statCdCntnKor1>미국</statCdCntnKor1><statKor>냉동 어류</statKor><year>2026.07</year></item>
+      <item><balPayments>2608480</balPayments><expDlr>2960970</expDlr><expWgt>8583</expWgt><hsCd>8542</hsCd><impDlr>352490</impDlr><impWgt>6858</impWgt><statCd>US</statCd><statCdCntnKor1>미국</statCdCntnKor1><statKor>전자집적회로</statKor><year>2026.08</year></item>
+      <item><balPayments>7344650</balPayments><expDlr>7573001</expDlr><expWgt>17028</expWgt><hsCd>8703</hsCd><impDlr>228351</impDlr><impWgt>2952</impWgt><statCd>US</statCd><statCdCntnKor1>미국</statCdCntnKor1><statKor>승용자동차</statKor><year>2026.08</year></item>
+      <item><balPayments>5161138</balPayments><expDlr>5454598</expDlr><expWgt>65188</expWgt><hsCd>0303</hsCd><impDlr>293460</impDlr><impWgt>3738</impWgt><statCd>US</statCd><statCdCntnKor1>미국</statCdCntnKor1><statKor>냉동 어류</statKor><year>2026.08</year></item>
+    </items>
+    <totalCount>6</totalCount>
+  </body>
+</response>

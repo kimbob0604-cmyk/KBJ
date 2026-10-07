@@ -1,0 +1,95 @@
+{
+ "_source": "SYNTHETIC — tests/fixtures/synthetic/krx/make_synthetic.py(시드 고정)가 만든 합성 데이터. 실측 아님 — KRX /idx/kospi_dd_trd·kosdaq_dd_trd 응답 행 형태(시리즈 → basDd → 행)",
+ "kospi": {
+  "20260930": [
+   {
+    "BAS_DD": "20260930",
+    "IDX_CLSS": "KOSPI",
+    "IDX_NM": "코스피",
+    "CLSPRC_IDX": "3514.52",
+    "CMPPREVDD_IDX": "47.65",
+    "FLUC_RT": "1.37",
+    "OPNPRC_IDX": "3477.38",
+    "HGPRC_IDX": "3534.29",
+    "LWPRC_IDX": "3469.68",
+    "ACC_TRDVOL": "663364745",
+    "ACC_TRDVAL": "25552809977400",
+    "MKTCAP": "642000000000000"
+   },
+   {
+    "BAS_DD": "20260930",
+    "IDX_CLSS": "KOSPI",
+    "IDX_NM": "코스피 200",
+    "CLSPRC_IDX": "464.82",
+    "CMPPREVDD_IDX": "-1.54",
+    "FLUC_RT": "-0.33",
+    "OPNPRC_IDX": "465.96",
+    "HGPRC_IDX": "467.62",
+    "LWPRC_IDX": "462.04",
+    "ACC_TRDVOL": "160795258",
+    "ACC_TRDVAL": "4514326868350",
+    "MKTCAP": "2925000000000000"
+   },
+   {
+    "BAS_DD": "20260930",
+    "IDX_CLSS": "KOSPI",
+    "IDX_NM": "코스피 대형주",
+    "CLSPRC_IDX": "3491.90",
+    "CMPPREVDD_IDX": "64.01",
+    "FLUC_RT": "1.87",
+    "OPNPRC_IDX": "3443.61",
+    "HGPRC_IDX": "3498.63",
+    "LWPRC_IDX": "3441.95",
+    "ACC_TRDVOL": "850575300",
+    "ACC_TRDVAL": "27595214457900",
+    "MKTCAP": "609000000000000"
+   },
+   {
+    "BAS_DD": "20260930",
+    "IDX_CLSS": "KOSPI",
+    "IDX_NM": "전기·전자",
+    "CLSPRC_IDX": "1088.95",
+    "CMPPREVDD_IDX": "-15.74",
+    "FLUC_RT": "-1.42",
+    "OPNPRC_IDX": "1106.42",
+    "HGPRC_IDX": "1111.32",
+    "LWPRC_IDX": "1086.01",
+    "ACC_TRDVOL": "116384744",
+    "ACC_TRDVAL": "3071393394160",
+    "MKTCAP": "1920000000000000"
+   }
+  ]
+ },
+ "kosdaq": {
+  "20260930": [
+   {
+    "BAS_DD": "20260930",
+    "IDX_CLSS": "KOSDAQ",
+    "IDX_NM": "코스닥",
+    "CLSPRC_IDX": "900.02",
+    "CMPPREVDD_IDX": "16.89",
+    "FLUC_RT": "1.91",
+    "OPNPRC_IDX": "885.39",
+    "HGPRC_IDX": "900.16",
+    "LWPRC_IDX": "882.91",
+    "ACC_TRDVOL": "839125016",
+    "ACC_TRDVAL": "20727227020216",
+    "MKTCAP": "2664000000000000"
+   },
+   {
+    "BAS_DD": "20260930",
+    "IDX_CLSS": "KOSDAQ",
+    "IDX_NM": "코스닥 150",
+    "CLSPRC_IDX": "1401.00",
+    "CMPPREVDD_IDX": "-19.66",
+    "FLUC_RT": "-1.38",
+    "OPNPRC_IDX": "1416.77",
+    "HGPRC_IDX": "1425.06",
+    "LWPRC_IDX": "1393.02",
+    "ACC_TRDVOL": "517947621",
+    "ACC_TRDVAL": "27081409311606",
+    "MKTCAP": "1685000000000000"
+   }
+  ]
+ }
+}

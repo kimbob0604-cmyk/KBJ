@@ -333,6 +333,15 @@ wheels = [
 ]
 
 [[package]]
+name = "defusedxml"
+version = "0.7.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/0f/d5/c66da9b79e5bdb124974bfe172b4daf3c984ebd9c2a06e2b8a4dc7331c72/defusedxml-0.7.1.tar.gz", hash = "sha256:1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69", size = 75520, upload-time = "2021-03-08T10:59:26.269Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl", hash = "sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61", size = 25604, upload-time = "2021-03-08T10:59:24.45Z" },
+]
+
+[[package]]
 name = "deprecated"
 version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -807,6 +816,8 @@ name = "kbj"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "defusedxml" },
+    { name = "exchange-calendars" },
     { name = "httpx" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pydantic" },
@@ -820,17 +831,18 @@ dev = [
     { name = "fakeredis", extra = ["lua"] },
     { name = "hypothesis" },
     { name = "import-linter" },
+    { name = "pandas-stubs" },
     { name = "pyright" },
     { name = "pytest" },
     { name = "ruff" },
     { name = "types-pyyaml" },
+    { name = "websockets" },
 ]
 legacy = [
     { name = "aiohttp" },
     { name = "anthropic" },
     { name = "apscheduler" },
     { name = "beautifulsoup4" },
-    { name = "exchange-calendars" },
     { name = "flask" },
     { name = "flask-socketio" },
     { name = "fonttools" },
@@ -840,7 +852,6 @@ legacy = [
     { name = "numpy" },
     { name = "openpyxl" },
     { name = "pandas" },
-    { name = "pandas-stubs" },
     { name = "playwright" },
     { name = "pre-commit" },
     { name = "pykrx" },
@@ -855,6 +866,8 @@ legacy = [
 
 [package.metadata]
 requires-dist = [
+    { name = "defusedxml", specifier = ">=0.7.1" },
+    { name = "exchange-calendars", specifier = ">=4.13.2" },
     { name = "httpx", specifier = ">=0.28" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.6" },
     { name = "pydantic", specifier = ">=2.13" },
@@ -868,17 +881,18 @@ dev = [
     { name = "fakeredis", extras = ["lua"], specifier = ">=2.39" },
     { name = "hypothesis", specifier = ">=6.100" },
     { name = "import-linter", specifier = ">=2.1" },
+    { name = "pandas-stubs", specifier = ">=3.0.5.260914" },
     { name = "pyright", specifier = ">=1.1.380" },
     { name = "pytest", specifier = ">=8.3" },
     { name = "ruff", specifier = ">=0.6" },
     { name = "types-pyyaml", specifier = ">=6.0.12" },
+    { name = "websockets", specifier = ">=17.1" },
 ]
 legacy = [
     { name = "aiohttp", specifier = ">=3.9" },
     { name = "anthropic", specifier = ">=0.40.0" },
     { name = "apscheduler", specifier = ">=3.10" },
     { name = "beautifulsoup4", specifier = ">=4.12" },
-    { name = "exchange-calendars", specifier = ">=4.13.2" },
     { name = "flask", specifier = ">=3.0" },
     { name = "flask-socketio", specifier = ">=5.3" },
     { name = "fonttools", specifier = ">=4.40" },
@@ -888,7 +902,6 @@ legacy = [
     { name = "numpy", specifier = ">=2.0" },
     { name = "openpyxl", specifier = ">=3.1" },
     { name = "pandas", specifier = ">=2.3.3,<3.0" },
-    { name = "pandas-stubs", specifier = ">=3.0.5.260914" },
     { name = "playwright", specifier = ">=1.40" },
     { name = "pre-commit", specifier = ">=3.7" },
     { name = "pykrx", specifier = ">=1.0.51" },

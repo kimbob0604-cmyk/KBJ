@@ -18,7 +18,18 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
-RUNTIME_IMPORTS = {"pydantic", "pydantic_settings", "httpx", "psycopg", "redis", "yaml"}
+# pyproject `dependencies` 의 import 이름. P2 S0: exchange_calendars(캘린더)·defusedxml(외부 XML).
+# fastapi·uvicorn 은 P3(메인 결정 D4)
+RUNTIME_IMPORTS = {
+    "defusedxml",
+    "exchange_calendars",
+    "httpx",
+    "psycopg",
+    "pydantic",
+    "pydantic_settings",
+    "redis",
+    "yaml",
+}
 LINT_IMPORTS = Path(sys.executable).with_name("lint-imports")
 
 

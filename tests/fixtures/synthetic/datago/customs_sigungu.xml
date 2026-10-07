@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- SYNTHETIC — 공식 문서 모양의 가상 값(tests/fixtures/synthetic/datago/make_fixtures.py) -->
+<response>
+  <header><resultCode>00</resultCode><resultMsg>정상 서비스.</resultMsg></header>
+  <body>
+    <items>
+      <item><cmtrBlncAmt>4,136,489</cmtrBlncAmt><expCnt>255</expCnt><expUsdAmt>4,916,747</expUsdAmt><hsSgn>330499</hsSgn><impCnt>55</impCnt><impUsdAmt>780,258</impUsdAmt><korePrlstNm>기타 미용·화장품</korePrlstNm><priodTitle>2026.07</priodTitle><sggNm>가상시</sggNm></item>
+      <item><cmtrBlncAmt>645,149</cmtrBlncAmt><expCnt>810</expCnt><expUsdAmt>1,116,866</expUsdAmt><hsSgn>330499</hsSgn><impCnt>74</impCnt><impUsdAmt>471,717</impUsdAmt><korePrlstNm>기타 미용·화장품</korePrlstNm><priodTitle>2026.07</priodTitle><sggNm>합성군</sggNm></item>
+      <item><cmtrBlncAmt>-66,050</cmtrBlncAmt><expCnt>626</expCnt><expUsdAmt>63,518</expUsdAmt><hsSgn>330499</hsSgn><impCnt>23</impCnt><impUsdAmt>129,568</impUsdAmt><korePrlstNm>기타 미용·화장품</korePrlstNm><priodTitle>2026.08</priodTitle><sggNm>가상시</sggNm></item>
+      <item><cmtrBlncAmt>3,725,519</cmtrBlncAmt><expCnt>664</expCnt><expUsdAmt>4,017,344</expUsdAmt><hsSgn>330499</hsSgn><impCnt>70</impCnt><impUsdAmt>291,825</impUsdAmt><korePrlstNm>기타 미용·화장품</korePrlstNm><priodTitle>2026.08</priodTitle><sggNm>합성군</sggNm></item>
+    </items>
+    <totalCount>4</totalCount>
+  </body>
+</response>
