@@ -1,40 +1,73 @@
-# 비밀 — 절대 커밋하지 않는다
+# KBJ .gitignore — docs/DATA_TIERS.md §4, docs/adr/0003-legacy-scope.md
+#
+# 규칙: 산출물 디렉터리는 '/' 로 시작하게(루트 앵커) 쓴다. 앵커 없는 'data/'·'state/' 는 같은 이름의
+# 코드 패키지(kbj/data/, legacy/gexlab/data/)까지 무시한다. legacy 산출물은 legacy/**/<이름>/ 으로 따로 쓴다.
+# 확인: git check-ignore -v kbj/data/public/x.py legacy/gexlab/data/kis/x.py  (둘 다 무시되면 안 된다)
+
+# ── 비밀·토큰 캐시 — 절대 커밋하지 않는다 (CLAUDE.md 절대 규칙 5) ──────────────────────
 .env
 .env.*
 !.env.example
 *.key
 *.pem
 secrets/
+# 토큰 캐시: state/kis.token.json(GX)·cache/kis_token.json(SD)·state/.kis_token.json(ET) 같은 이름
+*.token.json
+*_token.json
+kis_token.json
 
-# 받은 데이터·실행 산출물 — 로그인 등급 원천이 섞일 수 있어 통째로 제외 (docs/DATA_TIERS.md §4)
-data/
-state/
-probe_out/
-runs/
-raw/
-fixtures/real/
+# ── 받은 데이터·실행 산출물 (루트) — 로그인 등급 원천이 섞일 수 있어 통째로 제외 ─────────────
+/data/
+/state/
+/cache/
+/out/
+/ci-out/
+/probe_out/
+/runs/
+/raw/
+**/fixtures/real/
+
+# ── legacy 런타임 산출물 (원본 프로젝트가 실행 중에 만드는 것) ─────────────────────────────
+# raw/ 는 루트 앵커만 둔다 — legacy/gexlab/tests/golden/raw/ 는 시험 골든이라 무시하면 안 된다
+legacy/**/state/
+legacy/**/cache/
+legacy/**/.cache/
+legacy/**/out/
+legacy/**/ci-out/
+legacy/**/probe_out/
+legacy/**/runs/
+legacy/**/data_store/
+
+# ── DB·대용량 데이터 파일 (어디에 있든) ─────────────────────────────────────────────────────
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
 *.sqlite
 *.sqlite3
-*.db
+*.duckdb
 *.parquet
 *.xlsx
-out/
 
-# 공개 사이트 빌드 결과 (CI 가 만들어 Pages 로 배포)
-public_build/
+# ── 공개 사이트 빌드 결과 (CI 가 만들어 Pages 로 배포) ─────────────────────────────────────
+/public_build/
 dist/
 
-# 개발 환경
+# ── 개발 환경 ────────────────────────────────────────────────────────────────────────
 .venv/
 venv/
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+.hypothesis/
+.import_linter_cache/
 .coverage
 htmlcov/
 node_modules/
 .DS_Store
 .idea/
 .vscode/
+.claude/settings.local.json

@@ -1,0 +1,71 @@
+# KBJ 로컬 스택 — PostgreSQL 16 + TimescaleDB, Redis 7 (PLAN §2·D2, docs/adr/0002-tier-schemas.md)
+#
+# - 비밀은 .env(로컬, git 제외)에만. 이 파일에 값·기본값이 없다 — KBJ_POSTGRES_PASSWORD·KBJ_REDIS_PASSWORD 가
+#   없으면 compose 가 시작하지 않는다(.env.example 을 복사해 채운다, 이름표는 docs/secrets.md).
+# - 포트는 127.0.0.1 에만 연다(같은 기계에서만 접속). 시각은 UTC, 표시는 앱이 KST 로.
+# - 첫 기동 때 kbj/store/migrations/0001_schemas.sql 을 initdb 로 적용한다(pub_*·prv_*·ops 스키마,
+#   kbj_public_export 역할). 이미지 자체의 timescaledb 설치 스크립트(000_*·001_*) 뒤에 돌도록 100_ 이름으로
+#   넣는다. initdb 는 빈 볼륨에서만 돈다 — 0002 부터는 P2 적용기(ops.schema_migrations)로.
+# - 앱 서비스(auth·scheduler·collectors·ws-gateway·engine·api·notifier)는 P2 부터 이 파일에 더한다.
+#
+# 문법 검사(데몬 없어도 됨): docker compose --env-file <값이 든 임시 파일> config -q
+
+name: kbj
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "5"
+
+services:
+  db:
+    image: timescale/timescaledb:latest-pg16
+    environment:
+      TZ: UTC
+      POSTGRES_USER: kbj
+      POSTGRES_DB: kbj
+      POSTGRES_PASSWORD: ${KBJ_POSTGRES_PASSWORD:?KBJ_POSTGRES_PASSWORD 를 .env 에 넣는다}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./kbj/store/migrations/0001_schemas.sql:/docker-entrypoint-initdb.d/100_kbj_0001_schemas.sql:ro
+    shm_size: 256mb
+    restart: unless-stopped
+    logging: *logging
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U kbj -d kbj"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    environment:
+      TZ: UTC
+      KBJ_REDIS_PASSWORD: ${KBJ_REDIS_PASSWORD:?KBJ_REDIS_PASSWORD 를 .env 에 넣는다}
+    # 비밀번호는 컨테이너 환경에서 읽어 컨테이너 안 설정 파일로 넘긴다 — 이 파일에도, redis-server 명령줄
+    # 인자(ps 로 보인다)에도 값이 없다. 이미지 진입점을 거쳐 redis 사용자로 돈다. AOF 로 토큰·상태가 재기동을 넘긴다
+    command:
+      - sh
+      - -c
+      - >-
+        printf 'requirepass %s\n' "$$KBJ_REDIS_PASSWORD" > /tmp/redis.conf
+        && exec docker-entrypoint.sh redis-server /tmp/redis.conf --appendonly yes
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis:/data
+    restart: unless-stopped
+    logging: *logging
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$KBJ_REDIS_PASSWORD\" redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:
+  redis:

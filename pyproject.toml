@@ -1,0 +1,96 @@
+[project]
+name = "kbj"
+version = "0.1.0"
+description = "국장 통합 터미널 · 포트폴리오 완성본"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+# 신규 kbj/ 코드에 필요한 것만. 버전 하한은 P0 통합 해석(docs/conflict_map.md §3.3)과 맞춘다
+dependencies = [
+    "httpx>=0.28",
+    "psycopg[binary]>=3.3.6",
+    "pydantic>=2.13",
+    "pydantic-settings>=2.15",
+    "pyyaml>=6.0",
+    "redis>=8.1.0",
+]
+
+[dependency-groups]
+dev = [
+    "fakeredis[lua]>=2.39",
+    "hypothesis>=6.100",
+    "import-linter>=2.1",
+    "pyright>=1.1.380",
+    "pytest>=8.3",
+    "ruff>=0.6",
+    "types-pyyaml>=6.0.12",
+]
+# legacy = [
+#   통합 단계가 legacy/ 세 프로젝트의 의존성을 이 그룹으로 넣고 다시 lock 한다
+#   (docs/conflict_map.md §3.3 — /tmp/p0test/resolve/union.txt 해석, pandas 2.3.3).
+#   legacy 를 비우는 단계(PLAN D8)에서 이 그룹도 지운다.
+# ]
+
+[build-system]
+requires = ["uv_build>=0.8.17,<0.9"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "kbj"
+module-root = ""
+
+# ── ruff — 규칙은 GEXLAB pyproject 와 같다. 대상은 kbj/·tests/·scripts/ 만(legacy 제외 — ADR 0003) ──
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = [".", "scripts"]
+include = ["kbj/**/*.py", "tests/**/*.py", "scripts/**/*.py"]
+extend-exclude = ["legacy", "docs"]
+force-exclude = true
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "DTZ", "S", "RUF"]
+# RUF001~003: 한글 문서·주석의 전각 문자 경고는 끈다
+ignore = ["RUF001", "RUF002", "RUF003"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106"]
+
+# ── pyright — 대상은 kbj/·tests/·scripts/ 만(legacy 제외 — ADR 0003) ─────────────────────────
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "standard"
+include = ["kbj", "tests", "scripts"]
+exclude = ["legacy", "**/__pycache__", ".venv"]
+strict = ["kbj/core"]
+extraPaths = ["scripts"]
+venvPath = "."
+venv = ".venv"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "scripts"]
+addopts = "-q --strict-markers"
+xfail_strict = true
+
+# ── import-linter — 구조로 막는 의존 규칙 (DATA_TIERS §3, ADR 0002·0003) ─────────────────────
+[tool.importlinter]
+root_packages = ["kbj"]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "① 공개 수집기(kbj.data.public)는 로그인 수집기(kbj.data.private)를 import 하지 않는다"
+type = "forbidden"
+source_modules = ["kbj.data.public"]
+forbidden_modules = ["kbj.data.private"]
+
+[[tool.importlinter.contracts]]
+name = "② kbj 는 legacy 를 import 하지 않는다"
+type = "forbidden"
+source_modules = ["kbj"]
+forbidden_modules = ["legacy"]
+
+[[tool.importlinter.contracts]]
+name = "③ kbj.core 는 순수 계산 — 어댑터·서비스·저장소와 I/O 라이브러리를 import 하지 않는다"
+type = "forbidden"
+source_modules = ["kbj.core"]
+forbidden_modules = ["kbj.data", "kbj.services", "kbj.store", "httpx", "psycopg", "redis"]
