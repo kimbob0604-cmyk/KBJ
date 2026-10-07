@@ -1,0 +1,28 @@
+{
+ "asof": "2026-09-21",
+ "at": "2026-09-21T07:58:00+09:00",
+ "parts": 2,
+ "sent": 2,
+ "sent_now": 2,
+ "ok": true,
+ "chat": "인자",
+ "note": null,
+ "parse_mode": null,
+ "fingerprint": "732ee43dd93981e9",
+ "stale": null,
+ "over": null,
+ "results": [
+  {
+   "n": 1,
+   "ok": true,
+   "why": "1건 발송",
+   "at": "2026-09-21T07:58:30+09:00"
+  },
+  {
+   "n": 2,
+   "ok": true,
+   "why": "1건 발송",
+   "at": "2026-09-21T07:58:30+09:00"
+  }
+ ]
+}

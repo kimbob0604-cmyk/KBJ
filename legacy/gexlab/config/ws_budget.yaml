@@ -1,0 +1,16 @@
+# KIS 웹소켓 구독 예산 (PLAN §4.3). 앱키당 41건.
+# 옵션 구독 수는 식으로 도출한다 (services/ws_gateway/budget.py):
+#   atm_range = floor(((limit − futures − notices − min_spare) / 2 − 1) / 2)
+#   options   = (2 × atm_range + 1) × 2          # ATM±atm_range 행사가 × 콜·풋
+#   spare     = limit − futures − notices − options  (≥ min_spare)
+# 결과: 주간 ATM±9 → 옵션 38·여유 1, 야간 ATM±8 → 옵션 34·여유 4
+# (PLAN §4.3 의 야간 36 은 계산 오류였다 — 2026-09-28 정정, docs/phase1_design.md §4)
+limit: 41
+day:
+  futures: 1    # H0IFCNT0 근월물
+  notices: 1    # H0IFCNI0 — Phase 8·9 주문용. 자리만 비워 둔다
+  min_spare: 1
+night:
+  futures: 1    # H0MFCNT0
+  notices: 2    # H0MFCNI0·H0EUCNI0
+  min_spare: 2

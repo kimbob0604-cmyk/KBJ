@@ -1,0 +1,2216 @@
+{
+ "asof": "2026-09-21",
+ "window": {
+  "start": "2026-09-20T08:45:00+09:00",
+  "end": "2026-09-21T08:45:00+09:00"
+ },
+ "collected_at": "2026-09-21T08:48:00+09:00",
+ "sources": {
+  "bluesky": {
+   "queries": 7,
+   "calls": 9,
+   "got": 363,
+   "in_window": 156,
+   "kept": 156,
+   "blocked": 0,
+   "cut": null,
+   "errors": []
+  }
+ },
+ "coverage": {
+  "first": "2026-09-20T18:00:00+09:00",
+  "last": "2026-09-21T08:48:00+09:00",
+  "gaps": [
+   {
+    "scope": "bluesky",
+    "why": "X 리스트 타임라인 페이지네이션이 14시간 지점에서 멈춰 그 이전 구간은 미수집"
+   }
+  ]
+ },
+ "posts": [
+  {
+   "id": "at://did:plc:fixture0001/app.bsky.feed.post/3l4x0001",
+   "account": "fxequitylab.bsky.social",
+   "display_name": "fxequitylab",
+   "text": "[픽스처] fxequitylab 게시물 1",
+   "url": "https://bsky.app/profile/fxequitylab.bsky.social/post/3l4x0001",
+   "posted_at": "2026-09-20T18:07:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0002/app.bsky.feed.post/3l4x0002",
+   "account": "omegafxnotes.bsky.social",
+   "display_name": "OmegaFxNotes",
+   "text": "[픽스처] OmegaFxNotes 게시물 2",
+   "url": "https://bsky.app/profile/omegafxnotes.bsky.social/post/3l4x0002",
+   "posted_at": "2026-09-20T18:14:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0003/app.bsky.feed.post/3l4x0003",
+   "account": "northstarlogfx.bsky.social",
+   "display_name": "NorthStarLogFx",
+   "text": "[픽스처] NorthStarLogFx 게시물 3",
+   "url": "https://bsky.app/profile/northstarlogfx.bsky.social/post/3l4x0003",
+   "posted_at": "2026-09-20T18:21:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0004/app.bsky.feed.post/3l4x0004",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 4",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0004",
+   "posted_at": "2026-09-20T18:28:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0005/app.bsky.feed.post/3l4x0005",
+   "account": "drfxmem.bsky.social",
+   "display_name": "DrFxMem",
+   "text": "[픽스처] DrFxMem 게시물 5",
+   "url": "https://bsky.app/profile/drfxmem.bsky.social/post/3l4x0005",
+   "posted_at": "2026-09-20T18:35:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0006/app.bsky.feed.post/3l4x0006",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 6",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0006",
+   "posted_at": "2026-09-20T18:42:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0007/app.bsky.feed.post/3l4x0007",
+   "account": "fxkan07.bsky.social",
+   "display_name": "fxkan07",
+   "text": "[픽스처] fxkan07 게시물 7",
+   "url": "https://bsky.app/profile/fxkan07.bsky.social/post/3l4x0007",
+   "posted_at": "2026-09-20T18:49:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0008/app.bsky.feed.post/3l4x0008",
+   "account": "drfxmem.bsky.social",
+   "display_name": "DrFxMem",
+   "text": "[픽스처] DrFxMem 게시물 8",
+   "url": "https://bsky.app/profile/drfxmem.bsky.social/post/3l4x0008",
+   "posted_at": "2026-09-20T18:56:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0009/app.bsky.feed.post/3l4x0009",
+   "account": "northstarlogfx.bsky.social",
+   "display_name": "NorthStarLogFx",
+   "text": "[픽스처] NorthStarLogFx 게시물 9",
+   "url": "https://bsky.app/profile/northstarlogfx.bsky.social/post/3l4x0009",
+   "posted_at": "2026-09-20T19:03:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0010/app.bsky.feed.post/3l4x0010",
+   "account": "drfxmem.bsky.social",
+   "display_name": "DrFxMem",
+   "text": "[픽스처] DrFxMem 게시물 10",
+   "url": "https://bsky.app/profile/drfxmem.bsky.social/post/3l4x0010",
+   "posted_at": "2026-09-20T19:10:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0011/app.bsky.feed.post/3l4x0011",
+   "account": "fxequitylab.bsky.social",
+   "display_name": "fxequitylab",
+   "text": "[픽스처] fxequitylab 게시물 11",
+   "url": "https://bsky.app/profile/fxequitylab.bsky.social/post/3l4x0011",
+   "posted_at": "2026-09-20T19:17:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0012/app.bsky.feed.post/3l4x0012",
+   "account": "northstarlogfx.bsky.social",
+   "display_name": "NorthStarLogFx",
+   "text": "[픽스처] NorthStarLogFx 게시물 12",
+   "url": "https://bsky.app/profile/northstarlogfx.bsky.social/post/3l4x0012",
+   "posted_at": "2026-09-20T19:24:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0013/app.bsky.feed.post/3l4x0013",
+   "account": "lumencapfx.bsky.social",
+   "display_name": "LumenCapFx",
+   "text": "[픽스처] LumenCapFx 게시물 13",
+   "url": "https://bsky.app/profile/lumencapfx.bsky.social/post/3l4x0013",
+   "posted_at": "2026-09-20T19:31:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0014/app.bsky.feed.post/3l4x0014",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 14",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0014",
+   "posted_at": "2026-09-20T19:38:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0015/app.bsky.feed.post/3l4x0015",
+   "account": "parallaxfxlabs.bsky.social",
+   "display_name": "ParallaxFxLabs",
+   "text": "[픽스처] ParallaxFxLabs 게시물 15",
+   "url": "https://bsky.app/profile/parallaxfxlabs.bsky.social/post/3l4x0015",
+   "posted_at": "2026-09-20T19:45:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0016/app.bsky.feed.post/3l4x0016",
+   "account": "omegafxnotes.bsky.social",
+   "display_name": "OmegaFxNotes",
+   "text": "[픽스처] OmegaFxNotes 게시물 16",
+   "url": "https://bsky.app/profile/omegafxnotes.bsky.social/post/3l4x0016",
+   "posted_at": "2026-09-20T19:52:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0017/app.bsky.feed.post/3l4x0017",
+   "account": "lumencapfx.bsky.social",
+   "display_name": "LumenCapFx",
+   "text": "[픽스처] LumenCapFx 게시물 17",
+   "url": "https://bsky.app/profile/lumencapfx.bsky.social/post/3l4x0017",
+   "posted_at": "2026-09-20T19:59:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0018/app.bsky.feed.post/3l4x0018",
+   "account": "northstarlogfx.bsky.social",
+   "display_name": "NorthStarLogFx",
+   "text": "[픽스처] NorthStarLogFx 게시물 18",
+   "url": "https://bsky.app/profile/northstarlogfx.bsky.social/post/3l4x0018",
+   "posted_at": "2026-09-20T20:06:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0019/app.bsky.feed.post/3l4x0019",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 19",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0019",
+   "posted_at": "2026-09-20T20:13:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0020/app.bsky.feed.post/3l4x0020",
+   "account": "fxwafer-tw.bsky.social",
+   "display_name": "fxwafer_tw",
+   "text": "[픽스처] fxwafer_tw 게시물 20",
+   "url": "https://bsky.app/profile/fxwafer-tw.bsky.social/post/3l4x0020",
+   "posted_at": "2026-09-20T20:20:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0021/app.bsky.feed.post/3l4x0021",
+   "account": "fxstreetwire.bsky.social",
+   "display_name": "fxstreetwire",
+   "text": "[픽스처] fxstreetwire 게시물 21",
+   "url": "https://bsky.app/profile/fxstreetwire.bsky.social/post/3l4x0021",
+   "posted_at": "2026-09-20T20:27:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0022/app.bsky.feed.post/3l4x0022",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 22",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0022",
+   "posted_at": "2026-09-20T20:34:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0023/app.bsky.feed.post/3l4x0023",
+   "account": "omegafxnotes.bsky.social",
+   "display_name": "OmegaFxNotes",
+   "text": "[픽스처] OmegaFxNotes 게시물 23",
+   "url": "https://bsky.app/profile/omegafxnotes.bsky.social/post/3l4x0023",
+   "posted_at": "2026-09-20T20:41:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0024/app.bsky.feed.post/3l4x0024",
+   "account": "fxstreetwire.bsky.social",
+   "display_name": "fxstreetwire",
+   "text": "[픽스처] fxstreetwire 게시물 24",
+   "url": "https://bsky.app/profile/fxstreetwire.bsky.social/post/3l4x0024",
+   "posted_at": "2026-09-20T20:48:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0025/app.bsky.feed.post/3l4x0025",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 25",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0025",
+   "posted_at": "2026-09-20T20:55:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0026/app.bsky.feed.post/3l4x0026",
+   "account": "lumencapfx.bsky.social",
+   "display_name": "LumenCapFx",
+   "text": "[픽스처] LumenCapFx 게시물 26",
+   "url": "https://bsky.app/profile/lumencapfx.bsky.social/post/3l4x0026",
+   "posted_at": "2026-09-20T21:02:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0027/app.bsky.feed.post/3l4x0027",
+   "account": "fxwafer-tw.bsky.social",
+   "display_name": "fxwafer_tw",
+   "text": "[픽스처] fxwafer_tw 게시물 27",
+   "url": "https://bsky.app/profile/fxwafer-tw.bsky.social/post/3l4x0027",
+   "posted_at": "2026-09-20T21:09:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0028/app.bsky.feed.post/3l4x0028",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 28",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0028",
+   "posted_at": "2026-09-20T21:16:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0029/app.bsky.feed.post/3l4x0029",
+   "account": "fxstreetwire.bsky.social",
+   "display_name": "fxstreetwire",
+   "text": "[픽스처] fxstreetwire 게시물 29",
+   "url": "https://bsky.app/profile/fxstreetwire.bsky.social/post/3l4x0029",
+   "posted_at": "2026-09-20T21:23:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0030/app.bsky.feed.post/3l4x0030",
+   "account": "the-fx-investor.bsky.social",
+   "display_name": "The_Fx_Investor",
+   "text": "[픽스처] The_Fx_Investor 게시물 30",
+   "url": "https://bsky.app/profile/the-fx-investor.bsky.social/post/3l4x0030",
+   "posted_at": "2026-09-20T21:30:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0031/app.bsky.feed.post/3l4x0031",
+   "account": "fxequitylab.bsky.social",
+   "display_name": "fxequitylab",
+   "text": "[픽스처] fxequitylab 게시물 31",
+   "url": "https://bsky.app/profile/fxequitylab.bsky.social/post/3l4x0031",
+   "posted_at": "2026-09-20T21:37:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0032/app.bsky.feed.post/3l4x0032",
+   "account": "fxstreetwire.bsky.social",
+   "display_name": "fxstreetwire",
+   "text": "[픽스처] fxstreetwire 게시물 32",
+   "url": "https://bsky.app/profile/fxstreetwire.bsky.social/post/3l4x0032",
+   "posted_at": "2026-09-20T21:44:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0033/app.bsky.feed.post/3l4x0033",
+   "account": "the-fx-investor.bsky.social",
+   "display_name": "The_Fx_Investor",
+   "text": "[픽스처] The_Fx_Investor 게시물 33",
+   "url": "https://bsky.app/profile/the-fx-investor.bsky.social/post/3l4x0033",
+   "posted_at": "2026-09-20T21:51:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0034/app.bsky.feed.post/3l4x0034",
+   "account": "lumencapfx.bsky.social",
+   "display_name": "LumenCapFx",
+   "text": "[픽스처] LumenCapFx 게시물 34",
+   "url": "https://bsky.app/profile/lumencapfx.bsky.social/post/3l4x0034",
+   "posted_at": "2026-09-21T08:31:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0035/app.bsky.feed.post/3l4x0035",
+   "account": "lumencapfx.bsky.social",
+   "display_name": "LumenCapFx",
+   "text": "[픽스처] LumenCapFx 게시물 35",
+   "url": "https://bsky.app/profile/lumencapfx.bsky.social/post/3l4x0035",
+   "posted_at": "2026-09-21T08:20:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0036/app.bsky.feed.post/3l4x0036",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 36",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0036",
+   "posted_at": "2026-09-21T08:09:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0037/app.bsky.feed.post/3l4x0037",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 37",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0037",
+   "posted_at": "2026-09-21T07:58:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0038/app.bsky.feed.post/3l4x0038",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 38",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0038",
+   "posted_at": "2026-09-21T07:47:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0039/app.bsky.feed.post/3l4x0039",
+   "account": "fxwafer-tw.bsky.social",
+   "display_name": "fxwafer_tw",
+   "text": "[픽스처] fxwafer_tw 게시물 39",
+   "url": "https://bsky.app/profile/fxwafer-tw.bsky.social/post/3l4x0039",
+   "posted_at": "2026-09-21T07:36:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0040/app.bsky.feed.post/3l4x0040",
+   "account": "trader-fxie-.bsky.social",
+   "display_name": "Trader_Fxie_",
+   "text": "[픽스처] Trader_Fxie_ 게시물 40",
+   "url": "https://bsky.app/profile/trader-fxie-.bsky.social/post/3l4x0040",
+   "posted_at": "2026-09-21T07:25:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0041/app.bsky.feed.post/3l4x0041",
+   "account": "fxequitylab.bsky.social",
+   "display_name": "fxequitylab",
+   "text": "[픽스처] fxequitylab 게시물 41",
+   "url": "https://bsky.app/profile/fxequitylab.bsky.social/post/3l4x0041",
+   "posted_at": "2026-09-21T07:14:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0042/app.bsky.feed.post/3l4x0042",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 42",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0042",
+   "posted_at": "2026-09-21T07:03:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0043/app.bsky.feed.post/3l4x0043",
+   "account": "fxequitylab.bsky.social",
+   "display_name": "fxequitylab",
+   "text": "[픽스처] fxequitylab 게시물 43",
+   "url": "https://bsky.app/profile/fxequitylab.bsky.social/post/3l4x0043",
+   "posted_at": "2026-09-21T06:52:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0044/app.bsky.feed.post/3l4x0044",
+   "account": "drfxmem.bsky.social",
+   "display_name": "DrFxMem",
+   "text": "[픽스처] DrFxMem 게시물 44",
+   "url": "https://bsky.app/profile/drfxmem.bsky.social/post/3l4x0044",
+   "posted_at": "2026-09-21T06:41:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0045/app.bsky.feed.post/3l4x0045",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 45",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0045",
+   "posted_at": "2026-09-21T06:30:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0046/app.bsky.feed.post/3l4x0046",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 46",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0046",
+   "posted_at": "2026-09-20T19:03:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0047/app.bsky.feed.post/3l4x0047",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 47",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0047",
+   "posted_at": "2026-09-20T19:06:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0048/app.bsky.feed.post/3l4x0048",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 48",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0048",
+   "posted_at": "2026-09-20T19:09:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0049/app.bsky.feed.post/3l4x0049",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 49",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0049",
+   "posted_at": "2026-09-20T19:12:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0050/app.bsky.feed.post/3l4x0050",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 50",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0050",
+   "posted_at": "2026-09-20T19:15:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0051/app.bsky.feed.post/3l4x0051",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 51",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0051",
+   "posted_at": "2026-09-20T19:18:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0052/app.bsky.feed.post/3l4x0052",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 52",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0052",
+   "posted_at": "2026-09-20T19:21:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0053/app.bsky.feed.post/3l4x0053",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 53",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0053",
+   "posted_at": "2026-09-20T19:24:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0054/app.bsky.feed.post/3l4x0054",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 54",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0054",
+   "posted_at": "2026-09-20T19:27:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0055/app.bsky.feed.post/3l4x0055",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 55",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0055",
+   "posted_at": "2026-09-20T19:30:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0056/app.bsky.feed.post/3l4x0056",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 56",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0056",
+   "posted_at": "2026-09-20T19:33:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0057/app.bsky.feed.post/3l4x0057",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 57",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0057",
+   "posted_at": "2026-09-20T19:36:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0058/app.bsky.feed.post/3l4x0058",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 58",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0058",
+   "posted_at": "2026-09-20T19:39:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0059/app.bsky.feed.post/3l4x0059",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 59",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0059",
+   "posted_at": "2026-09-20T19:42:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0060/app.bsky.feed.post/3l4x0060",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 60",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0060",
+   "posted_at": "2026-09-20T19:45:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0061/app.bsky.feed.post/3l4x0061",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 61",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0061",
+   "posted_at": "2026-09-20T19:48:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0062/app.bsky.feed.post/3l4x0062",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 62",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0062",
+   "posted_at": "2026-09-20T19:51:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0063/app.bsky.feed.post/3l4x0063",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 63",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0063",
+   "posted_at": "2026-09-20T19:54:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0064/app.bsky.feed.post/3l4x0064",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 64",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0064",
+   "posted_at": "2026-09-20T19:57:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0065/app.bsky.feed.post/3l4x0065",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 65",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0065",
+   "posted_at": "2026-09-20T20:00:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0066/app.bsky.feed.post/3l4x0066",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 66",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0066",
+   "posted_at": "2026-09-20T20:03:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0067/app.bsky.feed.post/3l4x0067",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 67",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0067",
+   "posted_at": "2026-09-20T20:06:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0068/app.bsky.feed.post/3l4x0068",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 68",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0068",
+   "posted_at": "2026-09-20T20:09:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0069/app.bsky.feed.post/3l4x0069",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 69",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0069",
+   "posted_at": "2026-09-20T20:12:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0070/app.bsky.feed.post/3l4x0070",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 70",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0070",
+   "posted_at": "2026-09-20T20:15:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0071/app.bsky.feed.post/3l4x0071",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 71",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0071",
+   "posted_at": "2026-09-20T20:18:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0072/app.bsky.feed.post/3l4x0072",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 72",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0072",
+   "posted_at": "2026-09-20T20:21:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0073/app.bsky.feed.post/3l4x0073",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 73",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0073",
+   "posted_at": "2026-09-20T20:24:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0074/app.bsky.feed.post/3l4x0074",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 74",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0074",
+   "posted_at": "2026-09-20T20:27:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0075/app.bsky.feed.post/3l4x0075",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 75",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0075",
+   "posted_at": "2026-09-20T20:30:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0076/app.bsky.feed.post/3l4x0076",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 76",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0076",
+   "posted_at": "2026-09-20T20:33:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0077/app.bsky.feed.post/3l4x0077",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 77",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0077",
+   "posted_at": "2026-09-20T20:36:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0078/app.bsky.feed.post/3l4x0078",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 78",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0078",
+   "posted_at": "2026-09-20T20:39:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0079/app.bsky.feed.post/3l4x0079",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 79",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0079",
+   "posted_at": "2026-09-20T20:42:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0080/app.bsky.feed.post/3l4x0080",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 80",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0080",
+   "posted_at": "2026-09-20T20:45:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0081/app.bsky.feed.post/3l4x0081",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 81",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0081",
+   "posted_at": "2026-09-20T20:48:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0082/app.bsky.feed.post/3l4x0082",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 82",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0082",
+   "posted_at": "2026-09-20T20:51:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0083/app.bsky.feed.post/3l4x0083",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 83",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0083",
+   "posted_at": "2026-09-20T20:54:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0084/app.bsky.feed.post/3l4x0084",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 84",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0084",
+   "posted_at": "2026-09-20T20:57:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0085/app.bsky.feed.post/3l4x0085",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 85",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0085",
+   "posted_at": "2026-09-20T21:00:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0086/app.bsky.feed.post/3l4x0086",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 86",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0086",
+   "posted_at": "2026-09-20T21:03:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0087/app.bsky.feed.post/3l4x0087",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 87",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0087",
+   "posted_at": "2026-09-20T21:06:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0088/app.bsky.feed.post/3l4x0088",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 88",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0088",
+   "posted_at": "2026-09-20T21:09:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0089/app.bsky.feed.post/3l4x0089",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 89",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0089",
+   "posted_at": "2026-09-20T21:12:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0090/app.bsky.feed.post/3l4x0090",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 90",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0090",
+   "posted_at": "2026-09-20T21:15:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0091/app.bsky.feed.post/3l4x0091",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 91",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0091",
+   "posted_at": "2026-09-20T21:18:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0092/app.bsky.feed.post/3l4x0092",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 92",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0092",
+   "posted_at": "2026-09-20T21:21:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0093/app.bsky.feed.post/3l4x0093",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 93",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0093",
+   "posted_at": "2026-09-20T21:24:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0094/app.bsky.feed.post/3l4x0094",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 94",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0094",
+   "posted_at": "2026-09-20T21:27:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0095/app.bsky.feed.post/3l4x0095",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 95",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0095",
+   "posted_at": "2026-09-20T21:30:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0096/app.bsky.feed.post/3l4x0096",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 96",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0096",
+   "posted_at": "2026-09-20T21:33:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0097/app.bsky.feed.post/3l4x0097",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 97",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0097",
+   "posted_at": "2026-09-20T21:36:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0098/app.bsky.feed.post/3l4x0098",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 98",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0098",
+   "posted_at": "2026-09-20T21:39:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0099/app.bsky.feed.post/3l4x0099",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 99",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0099",
+   "posted_at": "2026-09-20T21:42:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0100/app.bsky.feed.post/3l4x0100",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 100",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0100",
+   "posted_at": "2026-09-20T21:45:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0101/app.bsky.feed.post/3l4x0101",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 101",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0101",
+   "posted_at": "2026-09-20T21:48:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0102/app.bsky.feed.post/3l4x0102",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 102",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0102",
+   "posted_at": "2026-09-20T21:51:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0103/app.bsky.feed.post/3l4x0103",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 103",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0103",
+   "posted_at": "2026-09-20T21:54:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0104/app.bsky.feed.post/3l4x0104",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 104",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0104",
+   "posted_at": "2026-09-20T21:57:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0105/app.bsky.feed.post/3l4x0105",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 105",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0105",
+   "posted_at": "2026-09-20T22:00:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0106/app.bsky.feed.post/3l4x0106",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 106",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0106",
+   "posted_at": "2026-09-20T22:03:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0107/app.bsky.feed.post/3l4x0107",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 107",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0107",
+   "posted_at": "2026-09-20T22:06:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0108/app.bsky.feed.post/3l4x0108",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 108",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0108",
+   "posted_at": "2026-09-20T22:09:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0109/app.bsky.feed.post/3l4x0109",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 109",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0109",
+   "posted_at": "2026-09-20T22:12:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0110/app.bsky.feed.post/3l4x0110",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 110",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0110",
+   "posted_at": "2026-09-20T22:15:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0111/app.bsky.feed.post/3l4x0111",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 111",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0111",
+   "posted_at": "2026-09-20T22:18:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0112/app.bsky.feed.post/3l4x0112",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 112",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0112",
+   "posted_at": "2026-09-20T22:21:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0113/app.bsky.feed.post/3l4x0113",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 113",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0113",
+   "posted_at": "2026-09-20T22:24:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0114/app.bsky.feed.post/3l4x0114",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 114",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0114",
+   "posted_at": "2026-09-20T22:27:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0115/app.bsky.feed.post/3l4x0115",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 115",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0115",
+   "posted_at": "2026-09-20T22:30:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0116/app.bsky.feed.post/3l4x0116",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 116",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0116",
+   "posted_at": "2026-09-20T22:33:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0117/app.bsky.feed.post/3l4x0117",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 117",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0117",
+   "posted_at": "2026-09-20T22:36:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0118/app.bsky.feed.post/3l4x0118",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 118",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0118",
+   "posted_at": "2026-09-20T22:39:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0119/app.bsky.feed.post/3l4x0119",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 119",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0119",
+   "posted_at": "2026-09-20T22:42:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0120/app.bsky.feed.post/3l4x0120",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 120",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0120",
+   "posted_at": "2026-09-20T22:45:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0121/app.bsky.feed.post/3l4x0121",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 121",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0121",
+   "posted_at": "2026-09-20T22:48:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0122/app.bsky.feed.post/3l4x0122",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 122",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0122",
+   "posted_at": "2026-09-20T22:51:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0123/app.bsky.feed.post/3l4x0123",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 123",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0123",
+   "posted_at": "2026-09-20T22:54:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0124/app.bsky.feed.post/3l4x0124",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 124",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0124",
+   "posted_at": "2026-09-20T22:57:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0125/app.bsky.feed.post/3l4x0125",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 125",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0125",
+   "posted_at": "2026-09-20T23:00:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0126/app.bsky.feed.post/3l4x0126",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 126",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0126",
+   "posted_at": "2026-09-20T23:03:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0127/app.bsky.feed.post/3l4x0127",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 127",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0127",
+   "posted_at": "2026-09-20T23:06:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0128/app.bsky.feed.post/3l4x0128",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 128",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0128",
+   "posted_at": "2026-09-20T23:09:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0129/app.bsky.feed.post/3l4x0129",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 129",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0129",
+   "posted_at": "2026-09-20T23:12:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0130/app.bsky.feed.post/3l4x0130",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 130",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0130",
+   "posted_at": "2026-09-20T23:15:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0131/app.bsky.feed.post/3l4x0131",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 131",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0131",
+   "posted_at": "2026-09-20T23:18:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0132/app.bsky.feed.post/3l4x0132",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 132",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0132",
+   "posted_at": "2026-09-20T23:21:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0133/app.bsky.feed.post/3l4x0133",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 133",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0133",
+   "posted_at": "2026-09-20T23:24:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0134/app.bsky.feed.post/3l4x0134",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 134",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0134",
+   "posted_at": "2026-09-20T23:27:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0135/app.bsky.feed.post/3l4x0135",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 135",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0135",
+   "posted_at": "2026-09-20T23:30:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0136/app.bsky.feed.post/3l4x0136",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 136",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0136",
+   "posted_at": "2026-09-20T23:33:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0137/app.bsky.feed.post/3l4x0137",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 137",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0137",
+   "posted_at": "2026-09-20T23:36:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0138/app.bsky.feed.post/3l4x0138",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 138",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0138",
+   "posted_at": "2026-09-20T23:39:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0139/app.bsky.feed.post/3l4x0139",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 139",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0139",
+   "posted_at": "2026-09-20T23:42:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0140/app.bsky.feed.post/3l4x0140",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 140",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0140",
+   "posted_at": "2026-09-20T23:45:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0141/app.bsky.feed.post/3l4x0141",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 141",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0141",
+   "posted_at": "2026-09-20T23:48:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0142/app.bsky.feed.post/3l4x0142",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 142",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0142",
+   "posted_at": "2026-09-20T23:51:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0143/app.bsky.feed.post/3l4x0143",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 143",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0143",
+   "posted_at": "2026-09-20T23:54:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0144/app.bsky.feed.post/3l4x0144",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 144",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0144",
+   "posted_at": "2026-09-20T23:57:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0145/app.bsky.feed.post/3l4x0145",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 145",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0145",
+   "posted_at": "2026-09-21T00:00:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0146/app.bsky.feed.post/3l4x0146",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 146",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0146",
+   "posted_at": "2026-09-21T00:03:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0147/app.bsky.feed.post/3l4x0147",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 147",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0147",
+   "posted_at": "2026-09-21T00:06:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0148/app.bsky.feed.post/3l4x0148",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 148",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0148",
+   "posted_at": "2026-09-21T00:09:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0149/app.bsky.feed.post/3l4x0149",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 149",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0149",
+   "posted_at": "2026-09-21T00:12:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0150/app.bsky.feed.post/3l4x0150",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 150",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0150",
+   "posted_at": "2026-09-21T00:15:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0151/app.bsky.feed.post/3l4x0151",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 151",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0151",
+   "posted_at": "2026-09-21T00:18:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0152/app.bsky.feed.post/3l4x0152",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 152",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0152",
+   "posted_at": "2026-09-21T00:21:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0153/app.bsky.feed.post/3l4x0153",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 153",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0153",
+   "posted_at": "2026-09-21T00:24:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0154/app.bsky.feed.post/3l4x0154",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 154",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0154",
+   "posted_at": "2026-09-21T00:27:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0155/app.bsky.feed.post/3l4x0155",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 155",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0155",
+   "posted_at": "2026-09-21T00:30:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  },
+  {
+   "id": "at://did:plc:fixture0156/app.bsky.feed.post/3l4x0156",
+   "account": "chipwirefx.bsky.social",
+   "display_name": "ChipWireFx",
+   "text": "[픽스처] ChipWireFx 게시물 156",
+   "url": "https://bsky.app/profile/chipwirefx.bsky.social/post/3l4x0156",
+   "posted_at": "2026-09-21T00:33:00+09:00",
+   "source": "bluesky",
+   "query": "semiconductor",
+   "langs": [
+    "en"
+   ],
+   "in_window": true
+  }
+ ]
+}

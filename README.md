@@ -12,7 +12,7 @@
 
 공개 화면에는 재배포가 허용된 공공데이터와 TradingView 위젯만, 로그인하면 전체 데이터를 보여 준다 — [`docs/DATA_TIERS.md`](docs/DATA_TIERS.md).
 
-> 상태: **P1 진행 중** — 모노레포 뼈대와 세 프로젝트 legacy 이식([`docs/PLAN.md`](docs/PLAN.md) §8).
+> 상태: **P1 완료(CI 확인 대기)** — 모노레포 뼈대와 세 프로젝트 legacy 이식, 기존 시험 전부 통과(로컬). GitHub CI 첫 녹색 확인이 남았다([`docs/PLAN.md`](docs/PLAN.md) §8).
 >
 > 본 프로젝트는 투자 자문이 아니며, 표시되는 데이터·분석은 참고용이다.
 
@@ -35,4 +35,5 @@ tests/  scripts/  docs/(계획·등급표·ADR)
 uv sync && uv run pytest && uv run lint-imports        # 개발 확인
 docker compose up -d                                  # 로컬 DB·Redis (.env 에 KBJ_POSTGRES_PASSWORD·KBJ_REDIS_PASSWORD)
 uv run python scripts/check_public_safety.py          # 커밋 전 공개 안전 검사
+uv sync --all-groups && uv run bash scripts/test_legacy.sh   # legacy 세 프로젝트 기존 시험(부분 이름: gexlab·board·etf-rest·stock_dashboard …)
 ```

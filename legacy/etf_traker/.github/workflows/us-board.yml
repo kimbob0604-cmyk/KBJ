@@ -1,0 +1,314 @@
+name: 미국장 신고가 보드
+
+# 개발 환경에서는 api.nasdaq.com·stooq·yahoo 가 모두 프록시에 막혀 있다(D-076).
+# 러너는 네트워크가 열려 있으므로 **실데이터 검증도 여기서 한다** — flowlab 과 같은
+# 방식이다. workflow_dispatch 로 브랜치를 골라 돌리면, 결과(점검 로그·브리프·요약)를
+# board/us/ci-out/ 에 커밋해 개발 환경에서 그대로 읽는다.
+
+on:
+  # 작업 브랜치 push 트리거는 뺐다(2026-09-29). board/us 를 고칠 때마다 전체 유니버스
+  # 수집(~17분)이 돌아 Actions 무료 분을 먹었다(GITHUB.md 5-4). 검증이 필요하면
+  # workflow_dispatch 로 브랜치를 골라 돌린다.
+  schedule:
+    # 22:00 UTC = 07:00 KST(이튿날). 미국 정규장 마감(20:00 UTC 서머타임 /
+    # 21:00 UTC 표준시)보다 한 시간 이상 뒤라 두 기간 모두 확정 종가를 받는다.
+    - cron: '0 22 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: '실행 모드'
+        type: choice
+        default: daily
+        options: [daily, init, check, build, brief, verify, demo, test]
+      limit:
+        description: '유니버스 상한 (거래대금 상위 N종목. 0 이면 전체)'
+        required: false
+        default: '0'
+
+concurrency:
+  group: us-newhigh-board-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: pip install -r board/requirements.txt
+
+      # 정의 검증은 네트워크가 필요 없다. 수집 전에 먼저 막는다.
+      - name: 정의 단위 검증
+        run: python3 -m board.run --test
+
+      - name: DB 규약 버전
+        id: dv
+        run: |
+          v=$(python3 -c 'from board.us.db import DATA_VERSION; print(DATA_VERSION)')
+          echo "v=$v" >> "$GITHUB_OUTPUT"
+          echo "미국장 DB 규약 v$v"
+
+      - name: DB·state 복원
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            board/us_board.db
+            board/state_us
+          key: us-board-db-v${{ steps.dv.outputs.v }}-${{ github.run_id }}
+          restore-keys: us-board-db-v${{ steps.dv.outputs.v }}-
+
+      # 무엇이 살아 있는지 **먼저** 본다. 어느 일봉 어댑터가 되는지에 따라
+      # 다음 단계의 US_HISTORY 가 갈린다. 실패해도 잡을 여기서 끝내지 않는다 —
+      # 점검 결과 자체가 이 워크플로의 첫 산출물이다.
+      - name: 소스 점검
+        id: probe
+        run: |
+          set +e
+          python3 -m board.run --us-check 2>&1 | tee /tmp/us-check.txt
+          set -e
+          hist=""
+          for cand in nasdaq stooq yahoo; do
+            if [ -z "$hist" ] && grep -qE "PASS +$cand" /tmp/us-check.txt; then
+              hist=$cand
+            fi
+          done
+          uni=no
+          grep -qE 'PASS +나스닥' /tmp/us-check.txt && uni=yes
+          echo "hist=$hist" >> "$GITHUB_OUTPUT"
+          echo "universe=$uni" >> "$GITHUB_OUTPUT"
+          echo "일봉 어댑터: ${hist:-없음} · 유니버스: $uni"
+
+      - name: 실행
+        if: steps.probe.outputs.universe == 'yes' && steps.probe.outputs.hist != ''
+        env:
+          MODE: ${{ github.event.inputs.mode || 'daily' }}
+          # 배관은 run #2·#3 에서 확인했다(D-077). 이제 push 도 전체 유니버스로
+          # 돌린다 — 브레드스·중앙값은 시장 전체여야 뜻이 있다. 부분으로 돌리려면
+          # workflow_dispatch 의 limit 에 종목 수를 넣는다.
+          LIMIT: ${{ github.event.inputs.limit || '0' }}
+          # 점검이 통과한 어댑터를 그날만 쓴다. config/us.yaml 은 그대로 둔다.
+          US_HISTORY: ${{ steps.probe.outputs.hist }}
+        run: |
+          set -eo pipefail
+          if [ "$MODE" = "test" ] || [ "$MODE" = "check" ]; then exit 0; fi
+          if [ "$MODE" = "demo" ]; then python3 -m board.run --us-demo; exit 0; fi
+          LIM=""
+          if [ "$LIMIT" != "0" ] && [ -n "$LIMIT" ]; then LIM="--limit $LIMIT"; fi
+          # DB 가 없으면 무슨 모드를 골랐든 초기 적재부터 한다.
+          if [ ! -f board/us_board.db ] || [ "$MODE" = "init" ]; then
+            # shellcheck disable=SC2086
+            python3 -m board.run --us-init $LIM
+            if [ "$MODE" = "init" ]; then exit 0; fi
+          fi
+          case "$MODE" in
+            # DB 점검. 고치지 않고 사실만 찍는다 — 재구축 판단은 사람이 한다.
+            verify) python3 -m board.run --us-verify 2>&1 | tee /tmp/us-verify.txt || true ;;
+            build) python3 -m board.run --us-build ;;
+            brief) python3 -m board.run --us-brief ;;
+            # shellcheck disable=SC2086
+            *)     python3 -m board.run --us-daily $LIM ;;
+          esac
+
+      # 사용자 요청으로 국장과 같은 경로(report/telegram.py)로 보낸다.
+      # 자격증명이 없으면 **잡을 죽이지 않는다** — 보드는 이미 만들어졌고,
+      # 못 보낸 사실은 로그와 런 요약에 남는다.
+      - name: 브리프 텔레그램 발송
+        if: steps.probe.outputs.universe == 'yes' && steps.probe.outputs.hist != ''
+        continue-on-error: true
+        env:
+          MODE: ${{ github.event.inputs.mode || 'daily' }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ "$MODE" != "daily" ] && [ "$MODE" != "build" ]; then
+            echo "발송 대상 모드가 아니다 ($MODE)"; exit 0
+          fi
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            {
+              echo "TELEGRAM_BOT_TOKEN·TELEGRAM_CHAT_ID 가 없다 — 발송을 건너뛴다."
+              echo "레포 Settings → Secrets and variables → Actions 에 넣으면 다음 런부터 간다."
+            } | tee /tmp/us-send.txt
+            exit 0
+          fi
+          # 휴장일에 같은 브리프가 다시 가지 않게 --only-fresh 로 스스로 생략한다.
+          python3 -m board.run --us-send files --only-fresh 2>&1 | tee /tmp/us-send.txt
+
+      - name: 결과를 런 요약에 올린다
+        if: always()
+        run: |
+          {
+            echo '## 소스 점검'
+            echo '```'
+            cat /tmp/us-check.txt 2>/dev/null || echo '(점검 로그 없음)'
+            echo '```'
+            f=$(ls -t board/state_us/*/brief.txt 2>/dev/null | head -1 || true)
+            if [ -n "$f" ]; then
+              echo '## 브리프'
+              echo '```'
+              cat "$f"
+              echo '```'
+            else
+              echo '_브리프가 만들어지지 않았습니다._'
+            fi
+            if [ -f /tmp/us-verify.txt ]; then
+              echo '## DB 점검'
+              echo '```'
+              cat /tmp/us-verify.txt
+              echo '```'
+            fi
+            if [ -f /tmp/us-send.txt ]; then
+              echo '## 발송'
+              echo '```'
+              cat /tmp/us-send.txt
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 산출물 업로드
+        id: upload
+        if: always()
+        continue-on-error: true   # 판정은 아래 "업로드 결과" 가 한다
+        uses: actions/upload-artifact@v4
+        with:
+          name: us-board-${{ github.run_number }}
+          path: |
+            docs/us/index.html
+            board/state_us/*/*.json
+            board/state_us/*/brief.txt
+          if-no-files-found: warn
+          retention-days: 30
+
+      # board.yml 의 '캐시에 올릴 값이 있나' 와 같은 이유다. 거기 주석에 사고
+      # 경위가 있다. 이쪽은 아직 당하지 않았을 뿐 조건이 한 글자도 다르지 않다.
+
+      # 2026-09-20 에 계정 아티팩트 저장 한도를 넘겼다(살아 있는 것 1,375MB /
+      # 포함 512MB). 1,266MB 를 지워 109MB 로 내렸지만 GitHub 은 이번 청구
+      # 주기의 **누적**으로 셈하므로 지운다고 되돌아가지 않는다. 그래서 10/1
+      # 리셋까지 어떤 업로드도 통과하지 못한다 — 실측으로 확인했다(9/20 15:30
+      # UTC 삭제 뒤 12시간 20분이 지나도 그대로였고, 그 사이 올라간 아티팩트가
+      # 하나도 없다).
+      #
+      # 그동안 실행이 매번 빨갛게 뜨면 진짜 실패를 놓친다. 그렇다고 그냥
+      # continue-on-error 로 덮으면 10/1 이후의 진짜 업로드 실패까지 영영
+      # 안 보인다. 그래서 **날짜로 스스로 끝나는** 가드를 둔다 — 그 날이
+      # 지나면 이 단계는 아무것도 하지 않고 업로드 실패가 원래대로 잡을
+      # 빨갛게 만든다. 되돌리는 것을 사람이 기억할 필요가 없다.
+      #
+      # 창 안에서 관대하게 굴어도 잃는 정보가 없다. 한도가 걸린 동안은 어떤
+      # 업로드도 성공할 수 없어서, 여기서 걸러낼 '진짜 실패' 자체가 없다.
+      - name: 업로드 결과
+        if: always()
+        env:
+          OUTCOME: ${{ steps.upload.outcome }}
+          # 계정 청구 주기 리셋일(UTC). 이 날부터 가드가 저절로 꺼진다.
+          UNTIL: '2026-10-01'
+        run: |
+          if [ "$OUTCOME" != "failure" ]; then exit 0; fi
+          TODAY=$(date -u +%F)
+          if [[ "$TODAY" < "$UNTIL" ]]; then
+            echo "::warning::아티팩트 업로드 실패 — 계정 저장 한도로 본다." \
+                 "$UNTIL(UTC) 까지는 이것으로 잡을 빨갛게 만들지 않는다. 그 뒤에는 실패로 잡는다"
+            exit 0
+          fi
+          echo "::error::아티팩트 업로드 실패 — 저장 한도 유예($UNTIL)가 끝났다. 원인을 봐야 한다"
+          exit 1
+      - name: 캐시에 올릴 값이 있나
+        if: always()
+        id: worth
+        run: |
+          has=0
+          if [ -f board/us_board.db ]; then
+            has=$(python3 -c "import sqlite3;print(1 if sqlite3.connect('board/us_board.db').execute('SELECT 1 FROM px LIMIT 1').fetchone() else 0)" 2>/dev/null || echo 0)
+          fi
+          echo "has=$has" >> "$GITHUB_OUTPUT"
+          [ "$has" = "1" ] && echo "일봉이 들어 있다 — 캐시에 올린다" \
+            || echo "::notice::일봉이 없다 — 캐시에 올리지 않는다"
+
+      - name: DB·state 저장
+        if: always() && steps.worth.outputs.has == '1'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            board/us_board.db
+            board/state_us
+          key: us-board-db-v${{ steps.dv.outputs.v }}-${{ github.run_id }}
+
+      # 개발 환경은 러너 로그를 직접 못 본다. 결과를 브랜치에 커밋해 받아 본다
+      # (flowlab 과 같은 방식). state 전체가 아니라 읽을 것만 남긴다.
+      # 개발 환경은 러너 로그를 직접 못 본다. 결과를 브랜치에 커밋해 받아 본다
+      # (flowlab 과 같은 방식). state 전체가 아니라 읽을 것만 남긴다.
+      #
+      # **rebase 로 합치지 않는다.** ci-out 과 docs/us/index.html 은 런마다
+      # 통째로 새로 만드는 산출물이라 줄 단위로 합칠 것이 없다. run #5 가 그걸
+      # 하려다 충돌로 멈췄고, 이어진 push 는 "Everything up-to-date" 를 찍어
+      # **그 런의 결과가 통째로 사라졌다.** 최신 런의 산출물이 이긴다.
+      - name: 결과 커밋
+        if: always()
+        run: |
+          set -e
+          out=/tmp/ciout
+          mkdir -p "$out"
+          cp /tmp/us-check.txt "$out/check.txt" 2>/dev/null || true
+          cp /tmp/us-send.txt "$out/send.txt" 2>/dev/null || true
+          cp /tmp/us-verify.txt "$out/verify.txt" 2>/dev/null || true
+          f=$(ls -t board/state_us/*/brief.txt 2>/dev/null | head -1 || true)
+          if [ -n "$f" ]; then cp "$f" "$out/brief.txt"; fi
+          u=$(ls -t board/state_us/*/unmapped.json 2>/dev/null | head -1 || true)
+          if [ -n "$u" ]; then cp "$u" "$out/unmapped.json"; fi
+          b=$(ls -t board/state_us/*/board.json 2>/dev/null | head -1 || true)
+          if [ -n "$b" ]; then
+            python3 - "$b" > "$out/summary.json" <<'PY'
+          import json, sys
+          d = json.load(open(sys.argv[1], encoding='utf-8'))
+          keep = {k: d[k] for k in ('asof', 'generated_at', 'source', 'basis',
+                                    'universe', 'trend', 'tiers', 'missing') if k in d}
+          keep['summary'] = {k: v for k, v in d['summary'].items() if k != 'mega'}
+          keep['sectors'] = d.get('sectors')
+          # 시총 파싱 검산용. 상위 종목의 이름·시총을 눈으로 본다.
+          mega = (d.get('mega') or {})
+          keep['mega_count'] = mega.get('n')
+          rows = []
+          for src in ('up', 'down'):
+              for r in mega.get(src) or []:
+                  rows.append({k: r.get(k) for k in ('ticker', 'name', 'mktcap',
+                                                     'chg_pct', 'sector', 'industry')})
+          keep['mega_sample'] = rows
+          json.dump(keep, sys.stdout, ensure_ascii=False, indent=1)
+          PY
+          fi
+          if [ -f docs/us/index.html ]; then cp docs/us/index.html "$out/index.html"; fi
+
+          # 원격 최신 위에 산출물만 얹는다. 추적되지 않는 board/state_us 는
+          # reset 이 건드리지 않으므로 캐시 저장(앞 단계)과도 무관하다.
+          git fetch origin "${GITHUB_REF_NAME}"
+          git reset --hard "origin/${GITHUB_REF_NAME}"
+          mkdir -p board/us/ci-out docs/us
+          for n in check.txt send.txt verify.txt brief.txt unmapped.json summary.json; do
+            if [ -f "$out/$n" ]; then cp "$out/$n" "board/us/ci-out/$n"; fi
+          done
+          if [ -f "$out/index.html" ]; then cp "$out/index.html" docs/us/index.html; fi
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add board/us/ci-out || true
+          if [ -f docs/us/index.html ]; then git add docs/us/index.html || true; fi
+          if git diff --cached --quiet; then
+            echo "바뀐 것이 없습니다."
+          else
+            git commit -m "미국장 보드 CI 결과 $(date -u +%Y-%m-%d) (run ${{ github.run_number }}, hist=${{ steps.probe.outputs.hist || 'none' }})"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+
+      - name: 점검이 실패했으면 잡을 빨갛게
+        if: steps.probe.outputs.universe != 'yes' || steps.probe.outputs.hist == ''
+        run: |
+          echo "소스 점검 실패 — 유니버스=${{ steps.probe.outputs.universe }} 일봉=${{ steps.probe.outputs.hist || '없음' }}"
+          echo "board/us/ci-out/check.txt 에 사유가 있다."
+          exit 1

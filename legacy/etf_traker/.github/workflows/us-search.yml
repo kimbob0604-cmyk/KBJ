@@ -1,0 +1,58 @@
+name: 미국장 시스템 조합 탐색
+
+# 국장 board.yml 의 search 모드와 같은 방법을 미국 일봉에 건다 (board/us/btsearch.py).
+# 긴 일봉(5.6년)을 받아 us_backtest.db 에 쌓고, 최근 250영업일을 봉인한 채 조합을
+# 고른다. 수동 실행만 둔다 — 같은 봉인 구간을 여러 번 보면 봉인이 깨진다.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: us-search
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r board/requirements.txt
+
+      - name: 정의 단위 검증
+        run: python3 -m board.run --test
+
+      - name: 일봉 캐시 복원
+        uses: actions/cache/restore@v4
+        with:
+          path: board/us_backtest.db
+          key: us-backtest-db-${{ github.run_id }}
+          restore-keys: us-backtest-db-
+
+      - name: 탐색
+        run: |
+          set -o pipefail
+          python3 -m board.run --us-search 2>&1 | tee /tmp/us-search.txt
+
+      - name: 결과를 런 요약에 올린다
+        if: always()
+        run: |
+          {
+            echo '## 미국장 조합 탐색'
+            echo '```'
+            grep -A200 '조합 탐색 — .*개 조합' /tmp/us-search.txt 2>/dev/null || tail -80 /tmp/us-search.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 일봉 캐시 저장
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: board/us_backtest.db
+          key: us-backtest-db-${{ github.run_id }}

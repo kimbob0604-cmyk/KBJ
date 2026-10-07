@@ -24,11 +24,42 @@ dev = [
     "ruff>=0.6",
     "types-pyyaml>=6.0.12",
 ]
-# legacy = [
-#   통합 단계가 legacy/ 세 프로젝트의 의존성을 이 그룹으로 넣고 다시 lock 한다
-#   (docs/conflict_map.md §3.3 — /tmp/p0test/resolve/union.txt 해석, pandas 2.3.3).
-#   legacy 를 비우는 단계(PLAN D8)에서 이 그룹도 지운다.
-# ]
+# legacy 세 프로젝트(legacy/gexlab·etf_traker·stock_dashboard)를 루트 .venv 하나로 돌리는 의존성.
+# 이식 보고들의 python_deps 를 합쳤다(docs/conflict_map.md §3.3, /tmp/p0test/resolve/union.txt 해석과 같은 범위).
+# 루트 uv.lock 이 정본이다 — legacy/gexlab/uv.lock 은 원본 기록으로만 남는다(legacy/gexlab/MIGRATION.md).
+# legacy 를 비우는 단계(PLAN D8)에서 이 그룹도 지운다.
+legacy = [
+    # gexlab (실행)
+    "exchange-calendars>=4.13.2",
+    "vollib>=1.0.11",
+    "websockets>=17.1",
+    # gexlab (개발 — 자기 pyright·pre-commit 설정용)
+    "pandas-stubs>=3.0.5.260914",
+    "pre-commit>=3.7",
+    # 공통 — pandas 는 pykrx 가 <3.0 을 요구해 2.3 대로 묶는다(GX 는 2.3.3 에서 통과 확인, E2)
+    "pandas>=2.3.3,<3.0",
+    "numpy>=2.0",
+    "requests>=2.31",
+    "lxml>=5.0",
+    "beautifulsoup4>=4.12",
+    # etf_traker (board·monitor·flowlab·dart-report·etf_tracker_v9)
+    "anthropic>=0.40.0",
+    "openpyxl>=3.1",
+    "matplotlib>=3.8",
+    "fonttools>=4.40",
+    "streamlit>=1.36",
+    "playwright>=1.40",
+    # stock_dashboard (requirements.txt + 누락분 aiohttp·tenacity — dart_collector.py)
+    "flask>=3.0",
+    "pykrx>=1.0.51",
+    "apscheduler>=3.10",
+    "gunicorn>=21.2",
+    "yfinance>=0.2.40",
+    "flask-socketio>=5.3",
+    "simple-websocket>=1.0",
+    "aiohttp>=3.9",
+    "tenacity>=8.2",
+]
 
 [build-system]
 requires = ["uv_build>=0.8.17,<0.9"]

@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:,">
+<title>국장 섹터 모니터</title>
+<!--
+  KBJ P1 최소 템플릿 (직접 작성).
+
+  원본의 template.html 은 제3자 배포본 빌드 산출물이라 공개 레포에 옮기지 않았다(U3).
+  이 파일은 build.py 가 넣는 state(window.__STATE__)의 계약만 따라 새로 쓴 최소 화면이다.
+  외부 스크립트·글꼴을 하나도 불러오지 않는다 — 산점도는 아래 작은 Chart 클래스가 그린다.
+  state 자리표시자(build.TOKEN)는 아래 스크립트에 정확히 한 번만 나와야 한다(build.render 가 센다).
+-->
+<style>
+:root{--bg:#f7f7f5;--fg:#1d1d1b;--muted:#6b6b66;--line:#dcdcd6;--card:#ffffff;
+  --up:#c0392b;--down:#1f5fbf;--accent:#2f6f4f;--prov:#b7791f}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39c;
+  --line:#34342f;--card:#1f1f1d;--up:#ff6b5e;--down:#6aa5ff;--accent:#6fcf97;--prov:#f6ad55}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font:14px/1.5 system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
+header,main{max-width:1280px;margin:0 auto;padding:12px 16px}
+h1{font-size:20px;margin:4px 0}
+h2{font-size:16px;margin:18px 0 8px}
+.muted{color:var(--muted)}
+.badge{display:inline-block;padding:1px 6px;border-radius:4px;border:1px solid var(--line);
+  font-size:12px;margin-left:6px}
+.badge.prov{border-color:var(--prov);color:var(--prov)}
+.cards{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px 12px;min-width:150px}
+.seg{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+button{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);
+  border-radius:4px;padding:3px 9px;cursor:pointer}
+button.on{border-color:var(--accent);color:var(--accent);font-weight:600}
+nav{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-top:8px}
+nav button{border-bottom:none;border-radius:4px 4px 0 0}
+section[hidden]{display:none}
+.wrap{overflow-x:auto;max-width:100%}
+table{border-collapse:collapse;width:100%;background:var(--card)}
+th,td{border-bottom:1px solid var(--line);padding:3px 6px;text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{position:sticky;top:0;background:var(--card);font-weight:600}
+td.l1{padding-left:18px}
+.up{color:var(--up)}.down{color:var(--down)}
+[data-tip]{text-decoration:underline dotted;cursor:help}
+canvas{width:100%;max-width:720px;height:420px;background:var(--card);border:1px solid var(--line);border-radius:6px}
+.grid{display:grid;grid-template-columns:1fr;gap:12px}
+@media (min-width:1000px){.grid{grid-template-columns:1fr 1fr}}
+footer{max-width:1280px;margin:0 auto;padding:16px;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>국장 섹터 모니터 <span class="muted" style="font-size:13px">KBJ legacy · 최소 화면</span></h1>
+  <div id="asofLag" class="muted"></div>
+  <div id="indices" class="cards"></div>
+  <div class="seg" id="groupSeg" aria-label="묶음"></div>
+  <div class="seg" id="periodSeg" aria-label="기간"></div>
+  <nav class="tabs" id="tabs">
+    <button data-tab="sector" class="on">섹터</button>
+    <button data-tab="leaders">상·하위 종목</button>
+    <button data-tab="flow">수급</button>
+    <button data-tab="etf">ETF</button>
+    <button data-tab="about">설명</button>
+  </nav>
+</header>
+<main>
+  <section id="tab-sector">
+    <div class="grid">
+      <div>
+        <h2>히트맵 <span class="muted" id="heatTitle"></span></h2>
+        <div class="wrap"><table id="heatmap"><thead></thead><tbody></tbody></table></div>
+      </div>
+      <div>
+        <h2>로테이션 <span class="muted" id="rotTitle"></span></h2>
+        <canvas id="rotChart" width="720" height="420"></canvas>
+        <p class="muted" style="font-size:12px">x = 기간 평균수익률(%), y = 하루당 수익률 − 더 긴 기간의 하루당 수익률</p>
+      </div>
+    </div>
+  </section>
+  <section id="tab-leaders" hidden>
+    <h2>상·하위 종목 <span class="muted" id="leadTitle"></span></h2>
+    <div class="grid">
+      <div class="wrap"><table id="topTable"><thead></thead><tbody></tbody></table></div>
+      <div class="wrap"><table id="bottomTable"><thead></thead><tbody></tbody></table></div>
+    </div>
+  </section>
+  <section id="tab-flow" hidden>
+    <h2>섹터 수급 <span class="muted">외국인·기관·개인 순매수 금액 합계(억원)</span></h2>
+    <p class="muted" id="flowNote"></p>
+    <div class="wrap"><table id="flowTable"><thead></thead><tbody></tbody></table></div>
+  </section>
+  <section id="tab-etf" hidden>
+    <h2>ETF <span class="muted" id="etfNote"></span></h2>
+    <div class="wrap"><table id="etfTable"><thead></thead><tbody></tbody></table></div>
+  </section>
+  <section id="tab-about" hidden>
+    <h2>데이터 설명</h2>
+    <ul id="about"></ul>
+  </section>
+</main>
+<footer class="muted" id="foot"></footer>
+
+<script>window.__STATE__ = "@@KR_STATE@@";</script>
+<script>
+(function () {
+'use strict';
+
+/* ---------- 아주 작은 산점도 그리개. Chart.getChart(canvas) 로 다시 찾을 수 있다. ---------- */
+class Chart {
+  constructor(canvas, cfg) {
+    const old = Chart._reg.get(canvas);
+    if (old) old.destroy();
+    this.canvas = canvas;
+    this.data = cfg.data;
+    Chart._reg.set(canvas, this);
+    this.draw();
+  }
+  static getChart(canvas) { return Chart._reg.get(canvas) || null; }
+  destroy() { Chart._reg.delete(this.canvas); }
+  draw() {
+    const c = this.canvas, g = c.getContext('2d');
+    if (!g) return;
+    const W = c.width, H = c.height, pad = 40;
+    g.clearRect(0, 0, W, H);
+    const pts = [];
+    this.data.datasets.forEach(ds => ds.data.forEach(p => pts.push(p)));
+    if (!pts.length) return;
+    let x0 = Math.min(0, ...pts.map(p => p.x)), x1 = Math.max(0, ...pts.map(p => p.x));
+    let y0 = Math.min(0, ...pts.map(p => p.y)), y1 = Math.max(0, ...pts.map(p => p.y));
+    if (x1 === x0) { x1 += 1; x0 -= 1; }
+    if (y1 === y0) { y1 += 1; y0 -= 1; }
+    const sx = x => pad + (x - x0) / (x1 - x0) * (W - 2 * pad);
+    const sy = y => H - pad - (y - y0) / (y1 - y0) * (H - 2 * pad);
+    const css = getComputedStyle(document.documentElement);
+    g.strokeStyle = css.getPropertyValue('--line') || '#ccc';
+    g.beginPath(); g.moveTo(sx(0), pad / 2); g.lineTo(sx(0), H - pad / 2);
+    g.moveTo(pad / 2, sy(0)); g.lineTo(W - pad / 2, sy(0)); g.stroke();
+    g.font = '11px sans-serif';
+    this.data.datasets.forEach(ds => {
+      g.fillStyle = ds.color;
+      ds.data.forEach(p => {
+        g.beginPath(); g.arc(sx(p.x), sy(p.y), 3.5, 0, Math.PI * 2); g.fill();
+      });
+    });
+  }
+}
+Chart._reg = new Map();
+window.Chart = Chart;
+
+/* ---------- 상태 ---------- */
+const S = window.__STATE__;
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g,
+  ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[ch]));
+const ok = v => typeof v === 'number' && isFinite(v);
+const pct = (v, d = 1) => ok(v) ? (v > 0 ? '+' : '') + v.toFixed(d) + '%' : '–';
+const num = (v, d = 1) => ok(v) ? v.toLocaleString('ko-KR', {maximumFractionDigits: d, minimumFractionDigits: d}) : '–';
+const cls = v => ok(v) ? (v > 0 ? 'up' : (v < 0 ? 'down' : '')) : '';
+const ymd = d => d ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}` : '–';
+const eok = won => ok(won) ? won / 1e8 : null;
+function capText(won) {
+  if (!ok(won)) return '–';
+  const e = won / 1e8;
+  return e >= 10000 ? num(e / 10000, 2) + '조' : num(e, 0) + '억';
+}
+
+const groups = S.groups || [];
+const periods = (S.periods || []).map(p => p.key);
+let G = groups.length ? groups[0].key : null;
+let P = periods.includes('1M') ? '1M' : (periods[0] || null);
+
+/* ---------- 머리 ---------- */
+function head() {
+  const m = S.meta || {};
+  let h = `최신 거래일 ${ymd(m.latestTradingDay)} · 확정치 ${ymd(m.confirmedThrough)}`;
+  if (m.provisional) {
+    const pv = m.provisional;
+    h += ` <span class="badge prov" title="${esc(pv.source)}">당일 잠정 ${esc(pv.asOf)}</span>`;
+  }
+  h += ` · 유니버스 ${num(m.universeCount, 0)} / ${num(m.totalListed, 0)}종목`;
+  h += ` · 테마 적용 ${num(m.themeCoverage, 1)}%`;
+  $('asofLag').innerHTML = h;
+
+  const ix = S.indices || {};
+  $('indices').innerHTML = Object.keys(ix).map(k => {
+    const x = ix[k] || {}, r = x.r || {};
+    return `<div class="card"><b>${esc(x.name || k)}</b> ${num(x.close, 2)}
+      <span class="${cls(x.chg)}">${pct(x.chg, 2)}</span><br>
+      <span class="muted">1M ${pct(r['1M'])} · YTD ${pct(r['YTD'])}</span></div>`;
+  }).join('');
+
+  $('groupSeg').innerHTML = groups.map(g =>
+    `<button data-group="${esc(g.key)}" class="${g.key === G ? 'on' : ''}">${esc(g.title)}</button>`).join('');
+  $('periodSeg').innerHTML = periods.map(p =>
+    `<button data-period="${esc(p)}" class="${p === P ? 'on' : ''}">${esc(p)}</button>`).join('');
+}
+
+/* ---------- 히트맵 + 로테이션 ---------- */
+function curGroup() { return groups.find(g => g.key === G) || {sectors: []}; }
+
+function heatmap() {
+  const g = curGroup();
+  $('heatTitle').textContent = `${g.title || ''} · 평균수익률`;
+  $('heatmap').tHead.innerHTML = '<tr><th>섹터</th><th>종목</th>' +
+    periods.map(p => `<th>${esc(p)}</th>`).join('') + '<th>RS</th><th>모멘텀</th></tr>';
+  $('heatmap').tBodies[0].innerHTML = g.sectors.map(s => {
+    const st = s.stats || {};
+    const cells = periods.map(p => {
+      const x = st[p];
+      return x ? `<td class="${cls(x.mean)}">${pct(x.mean)}</td>` : '<td class="muted">–</td>';
+    }).join('');
+    const mo = (s.momentum && s.momentum.verdict) || 'na';
+    return `<tr><td class="${s.level ? 'l1' : ''}">${esc(s.label || s.name)}</td>
+      <td>${num(s.count, 0)}</td>${cells}<td>${num(s.rs, 1)}</td><td>${esc(mo)}</td></tr>`;
+  }).join('') || '<tr><td colspan="99" class="muted">계산 가능한 섹터가 없습니다</td></tr>';
+}
+
+const QUAD = {'주도': '#c0392b', '과열둔화': '#b7791f', '반등초입': '#2f6f4f', '소외': '#1f5fbf'};
+
+function rotation() {
+  const g = curGroup();
+  const byQ = {};
+  g.sectors.forEach(s => {
+    const r = s.rot && s.rot[P];
+    if (!r || !ok(r.x) || !ok(r.y) || !r.quad) return;
+    (byQ[r.quad] = byQ[r.quad] || []).push({x: r.x, y: r.y, label: s.name});
+  });
+  const datasets = Object.keys(byQ).map(q => ({label: q, color: QUAD[q] || '#888', data: byQ[q]}));
+  const vs = (g.sectors.find(s => s.rot && s.rot[P]) || {rot: {}}).rot[P];
+  $('rotTitle').textContent = vs ? `${P} vs ${vs.vs}` : `${P} — 비교 기간 없음`;
+  new Chart($('rotChart'), {type: 'scatter', data: {datasets}});
+}
+
+/* ---------- 상·하위 ---------- */
+function stockTip(c, k) {
+  let t = `시가총액 ${capText(k)}`;
+  const F = S.fin && S.fin.byCode && S.fin.byCode[c];
+  if (S.fin && F && F.q && F.q.cur) {
+    const q = F.q.cur;
+    t += ` · ${S.fin.quarter.label} 매출 ${num(q[0], 0)} 영업이익 ${num(q[1], 0)} (${S.fin.unit})`;
+  } else if (S.fin) {
+    t += ' · DART 재무 데이터가 없습니다';
+  }
+  return t;
+}
+
+function leaders() {
+  const L = (S.leaders || {})[P] || {top: [], bottom: []};
+  $('leadTitle').textContent = P;
+  const row = x => `<tr><td><span data-tip="${esc(stockTip(x.c, x.k))}" title="${esc(stockTip(x.c, x.k))}">${esc(x.n)}</span>
+    <span class="muted">${esc(x.c)}</span></td><td>${esc(x.m)}</td><td class="${cls(x.r)}">${pct(x.r)}</td></tr>`;
+  const headRow = t => `<tr><th>${t}</th><th>시장</th><th>${esc(P)}</th></tr>`;
+  $('topTable').tHead.innerHTML = headRow('상위');
+  $('bottomTable').tHead.innerHTML = headRow('하위');
+  $('topTable').tBodies[0].innerHTML = (L.top || []).map(row).join('');
+  $('bottomTable').tBodies[0].innerHTML = (L.bottom || []).map(row).join('');
+}
+
+/* ---------- 수급 ---------- */
+function flow() {
+  const m = S.meta || {};
+  $('flowNote').textContent = m.flowAvailable
+    ? `수급 적용 ${num(m.flowCoverage, 1)}% · 창 ${(m.flowWindows || []).join('·')}일`
+    : '수급 데이터가 없습니다';
+  $('flowTable').tHead.innerHTML = '<tr><th>섹터</th><th>종목</th><th>외국인 5일</th><th>기관 5일</th>' +
+    '<th>개인 5일</th><th>외국인 20일</th><th>기관 20일</th><th>동반 순매수</th></tr>';
+  const rows = [];
+  groups.forEach(g => g.sectors.forEach(s => {
+    const f = s.flow;
+    if (!f || !f['5'] || !f['20']) return;
+    rows.push(`<tr><td>${esc(g.key)} · ${esc(s.name)}</td><td>${num(f.n, 0)}</td>
+      <td class="${cls(f['5'].f)}">${num(f['5'].f)}</td><td class="${cls(f['5'].o)}">${num(f['5'].o)}</td>
+      <td class="${cls(f['5'].p)}">${num(f['5'].p)}</td><td class="${cls(f['20'].f)}">${num(f['20'].f)}</td>
+      <td class="${cls(f['20'].o)}">${num(f['20'].o)}</td><td>${num(f.bothRatio, 1)}%</td></tr>`);
+  }));
+  $('flowTable').tBodies[0].innerHTML = rows.join('');
+}
+
+/* ---------- ETF ---------- */
+function etf() {
+  const E = S.etf;
+  if (!E) {
+    $('etfNote').textContent = '미적용';
+    $('etfTable').tBodies[0].innerHTML = '';
+    return;
+  }
+  const em = E.meta || {};
+  $('etfNote').textContent = `유니버스 ${num(em.universeCount, 0)} / ${num(em.total, 0)}종목`;
+  $('etfTable').tHead.innerHTML = '<tr><th>ETF</th><th>자산군</th><th>운용사</th><th>가격</th>' +
+    '<th>괴리율</th><th>1M</th><th>1Y</th><th>RS</th></tr>';
+  const items = Object.values(E.items || {}).sort((a, b) => (b.net || 0) - (a.net || 0));
+  $('etfTable').tBodies[0].innerHTML = items.map(x => {
+    const r = x.r || {};
+    return `<tr><td>${esc(x.n)} <span class="muted">${esc(x.c)}</span></td><td>${esc(x.asset)}</td>
+      <td>${esc(x.brand)}</td><td>${num(x.p, 0)}</td><td>${pct(x.prem, 2)}</td>
+      <td class="${cls(r['1M'])}">${pct(r['1M'])}</td><td class="${cls(r['1Y'])}">${pct(r['1Y'])}</td>
+      <td>${num(x.rs, 1)}</td></tr>`;
+  }).join('');
+}
+
+/* ---------- 설명 ---------- */
+function about() {
+  const m = S.meta || {};
+  const ex = m.excluded || {};
+  const li = [m.dataLagNote, m.adjustNote, m.gapRule,
+    '제외: ' + Object.keys(ex).map(k => `${k} ${num(ex[k], 0)}`).join(' · '),
+    m.industryAvailable ? `업종 적용 ${num(m.industryCoverage, 1)}%` : '업종 미적용',
+    m.finAvailable ? '재무 적용' : '재무 미적용'];
+  $('about').innerHTML = li.filter(Boolean).map(t => `<li>${esc(t)}</li>`).join('');
+  $('foot').textContent = `기준 ${ymd(m.latestTradingDay)} · 생성 ${m.generatedAt || '–'}`;
+}
+
+function refresh() { heatmap(); rotation(); leaders(); }
+
+function wire() {
+  $('groupSeg').addEventListener('click', e => {
+    const b = e.target.closest('button[data-group]');
+    if (!b) return;
+    G = b.dataset.group;
+    $('groupSeg').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    refresh();
+  });
+  $('periodSeg').addEventListener('click', e => {
+    const b = e.target.closest('button[data-period]');
+    if (!b) return;
+    P = b.dataset.period;
+    $('periodSeg').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    refresh();
+  });
+  $('tabs').addEventListener('click', e => {
+    const b = e.target.closest('button[data-tab]');
+    if (!b) return;
+    $('tabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    document.querySelectorAll('main > section').forEach(s => {
+      s.hidden = s.id !== 'tab-' + b.dataset.tab;
+    });
+  });
+}
+
+head(); wire(); refresh(); flow(); etf(); about();
+})();
+</script>
+</body>
+</html>

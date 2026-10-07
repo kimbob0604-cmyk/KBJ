@@ -1,0 +1,52 @@
+# 기능 플래그 (docs/metrics.md §8, docs/phase3_design.md §4, PLAN §6.4) — 로더 core/features.py
+#
+#   off     계산하지 않는다
+#   shadow  계산·저장만(metrics·levels·oi_changes 의 flag = shadow). Redis 로 발행하지 않고 알림에 안 쓴다
+#   visible 계산·저장·발행
+#
+# - 이름은 core/features.py CATALOG 에 있는 것만 — 모르는 구역·이름·값이면 engine 이 기동하지 않는다
+# - 여기 없는 이름은 카탈로그 기본값(Phase 2 핵심 visible, 새 지표 shadow). 새 지표는 교차검증·육안
+#   검토(docs/metric_validation.md)를 통과하면 visible 로 올린다
+# - Phase 2 핵심은 off 로 둘 수 없다(shadow 까지) [확인 필요]
+# - engine 은 30초마다 이 파일의 mtime 을 보고 다시 읽는다. compose 는 이 파일을 engine 에 읽기 전용으로
+#   마운트한다 — 파일을 새로 만들어 바꾸는 편집기(inode 가 바뀐다)는 컨테이너가 못 본다: 제자리에
+#   고치거나(cp 새파일 config/features.yaml) engine 을 재기동한다. 다시 읽다 틀리면 직전 플래그를
+#   그대로 쓰고 health(engine_flags_invalid)
+
+metrics:
+  # ── Phase 2 핵심 (engine 사이클) ──
+  net_gex: visible        # §2.2 순GEX (all·nearest·0dte)
+  dex: visible            # §2.3 DEX
+  atm_iv: visible         # §3.7 ATM IV (시리즈마다)
+  expiry_gamma: visible   # §3.10 만기별 감마 소멸액
+  call_wall: visible      # §3.1 레벨
+  put_wall: visible       # §3.2
+  abs_gamma: visible      # §3.3
+  flip: visible           # §3.4
+  flip_distance: visible  # §3.5
+  expected_move: visible  # §3.8 expected_move_calendar·expected_move_trading
+  top_levels: visible     # §3.9 기대범위 내 상위 GEX 레벨
+
+  # ── Phase 3 확장 지표 — 1주 섀도 운영(전용 앱키 뒤) 전까지 shadow ──
+  vex: shadow             # §4.1 Vanna 익스포저
+  cex: shadow             # §4.2 Charm 익스포저 (2분)
+  gex_pc: shadow          # §4.3 GEX P/C
+  iv_term: shadow         # §5.2 IV 기간구조
+  skew_25d: shadow        # §5.3 25Δ 스큐
+  atm_iv_daily: shadow    # §5.4 일별 월물 ATM IV (IV 랭크 입력 — off 여도 랭크 계산엔 쓴다)
+  iv_rank: shadow         # §5.4
+  iv_percentile: shadow   # §5.4
+  iv_hv: shadow           # §5.5 IV − HV20
+  hiro: shadow            # §6.1 HIRO-lite
+  investor_flow: shadow   # §6.2 투자자별 순매수
+  dealer_check: shadow    # §6.3 딜러 가정 점검
+  block_trades: shadow    # §6.4 대량 체결 (block_trades 기준·block_trade 체결)
+  pcr: shadow             # §6.5 pcr_oi·pcr_volume
+  max_pain: shadow        # §6.6
+  oi_changes: shadow      # §6.7 OI 증감 히트맵 (oi_changes 표)
+  futures: shadow         # §7 futures_basis·theory_basis·divergence·oi_change·strength
+
+# Phase 4 이후 — 대시보드 위젯·텔레그램 알림·전략 이름은 카탈로그에 더한 뒤 여기 적는다
+widgets: {}
+alerts: {}
+strategies: {}

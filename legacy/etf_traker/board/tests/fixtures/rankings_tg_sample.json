@@ -1,0 +1,529 @@
+{
+  "as_of": "2026-08-26",
+  "prev_asof": "2026-08-25",
+  "market": "KR",
+  "source": "synthetic",
+  "generated_at": "2026-08-26T18:00:00+09:00",
+  "taxonomy": "wics_like",
+  "missing": [
+    "투자자별 수급: 합성 — 소스 미확보 결손 문구",
+    "뉴스: 합성 — 상승·하락의 트리거를 적을 수 없다는 결손 문구",
+    "수정주가 미반영 의심 3종목 — 역사적 신고가 판정 제외(합성 문구)"
+  ],
+  "sector_boards": [
+    {
+      "key": "1d",
+      "label": "금일",
+      "ret_label": "금일 상승률",
+      "weighting": "mktcap",
+      "sectors": [
+        {
+          "rank": 1,
+          "name": "비철금속",
+          "ret": "+2.98%",
+          "ret_raw": 2.98,
+          "n": 37,
+          "breadth": {
+            "up": 25,
+            "flat": 0,
+            "down": 12
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "E00001",
+              "name": "가상101로직",
+              "ret": "+14.51%",
+              "ret_raw": 14.51,
+              "mktcap": "22.98조",
+              "mktcap_raw": 229839.8
+            }
+          ]
+        },
+        {
+          "rank": 2,
+          "name": "원전",
+          "ret": "+2.82%",
+          "ret_raw": 2.82,
+          "n": 63,
+          "breadth": {
+            "up": 43,
+            "flat": 4,
+            "down": 16
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "E00002",
+              "name": "가상102바이오",
+              "ret": "+23.03%",
+              "ret_raw": 23.03,
+              "mktcap": "25.84조",
+              "mktcap_raw": 258368.3
+            }
+          ]
+        },
+        {
+          "rank": 3,
+          "name": "건설",
+          "ret": "+1.38%",
+          "ret_raw": 1.38,
+          "n": 47,
+          "breadth": {
+            "up": 27,
+            "flat": 3,
+            "down": 17
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "E00003",
+              "name": "가상103테크",
+              "ret": "+5.52%",
+              "ret_raw": 5.52,
+              "mktcap": "35.78조",
+              "mktcap_raw": 357783.8
+            }
+          ]
+        },
+        {
+          "rank": 4,
+          "name": "전기가스",
+          "ret": "+1.11%",
+          "ret_raw": 1.11,
+          "n": 51,
+          "breadth": {
+            "up": 29,
+            "flat": 1,
+            "down": 21
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "E00004",
+              "name": "가상104솔루션",
+              "ret": "+22.44%",
+              "ret_raw": 22.44,
+              "mktcap": "17.50조",
+              "mktcap_raw": 174964.3
+            }
+          ]
+        },
+        {
+          "rank": 5,
+          "name": "화장품",
+          "ret": "-0.39%",
+          "ret_raw": -0.39,
+          "n": 25,
+          "breadth": {
+            "up": 11,
+            "flat": 1,
+            "down": 13
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "E00005",
+              "name": "가상105해운",
+              "ret": "-1.44%",
+              "ret_raw": -1.44,
+              "mktcap": "29.77조",
+              "mktcap_raw": 297686.1
+            }
+          ]
+        },
+        {
+          "rank": 6,
+          "name": "은행",
+          "ret": "-0.41%",
+          "ret_raw": -0.41,
+          "n": 68,
+          "breadth": {
+            "up": 32,
+            "flat": 6,
+            "down": 30
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "E00006",
+              "name": "가상106게임즈",
+              "ret": "-3.39%",
+              "ret_raw": -3.39,
+              "mktcap": "9.34조",
+              "mktcap_raw": 93434.7
+            }
+          ]
+        },
+        {
+          "rank": 7,
+          "name": "반도체",
+          "ret": "-0.79%",
+          "ret_raw": -0.79,
+          "n": 15,
+          "breadth": {
+            "up": 6,
+            "flat": 1,
+            "down": 8
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "E00007",
+              "name": "가상107중공업",
+              "ret": "-2.84%",
+              "ret_raw": -2.84,
+              "mktcap": "17.14조",
+              "mktcap_raw": 171357.8
+            }
+          ]
+        },
+        {
+          "rank": 8,
+          "name": "해운",
+          "ret": "-3.75%",
+          "ret_raw": -3.75,
+          "n": 66,
+          "breadth": {
+            "up": 16,
+            "flat": 6,
+            "down": 44
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "E00008",
+              "name": "가상108모빌리티",
+              "ret": "-11.38%",
+              "ret_raw": -11.38,
+              "mktcap": "5.88조",
+              "mktcap_raw": 58818.0
+            }
+          ]
+        },
+        {
+          "rank": 9,
+          "name": "게임",
+          "ret": "-3.89%",
+          "ret_raw": -3.89,
+          "n": 39,
+          "breadth": {
+            "up": 9,
+            "flat": 5,
+            "down": 25
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "E00009",
+              "name": "가상109물산",
+              "ret": "-8.07%",
+              "ret_raw": -8.07,
+              "mktcap": "10.45조",
+              "mktcap_raw": 104484.3
+            }
+          ]
+        },
+        {
+          "rank": 10,
+          "name": "조선",
+          "ret": "-4.23%",
+          "ret_raw": -4.23,
+          "n": 48,
+          "breadth": {
+            "up": 10,
+            "flat": 3,
+            "down": 35
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "E00010",
+              "name": "삼성중공업",
+              "ret": null,
+              "ret_raw": null,
+              "mktcap": "25.27조",
+              "mktcap_raw": 252696.4
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "stock_boards": [
+    {
+      "key": "ret_1w",
+      "title": "1w 주가수익률 순위",
+      "sort_by": "ret_1w",
+      "columns": [
+        {
+          "key": "mktcap",
+          "label": "시가총액",
+          "kind": "amount"
+        },
+        {
+          "key": "ret_1d",
+          "label": "1d",
+          "kind": "pct"
+        },
+        {
+          "key": "ret_1w",
+          "label": "1w",
+          "kind": "pct"
+        },
+        {
+          "key": "ret_1m",
+          "label": "1m",
+          "kind": "pct"
+        },
+        {
+          "key": "vol_3d_1m",
+          "label": "거래량 3일/1달",
+          "kind": "ratio"
+        }
+      ],
+      "rows": [
+        {
+          "rank": 1,
+          "code": "E00201",
+          "name": "네오이뮨텍",
+          "cross": true,
+          "cells": {
+            "mktcap": "6,532억",
+            "ret_1d": "+26.89%",
+            "ret_1w": "+26.21%",
+            "ret_1m": "+29.32%",
+            "vol_3d_1m": null
+          },
+          "cells_raw": {
+            "mktcap": 6531.9,
+            "ret_1d": 26.89,
+            "ret_1w": 26.21,
+            "ret_1m": 29.32,
+            "vol_3d_1m": null
+          }
+        },
+        {
+          "rank": 2,
+          "code": "E00202",
+          "name": "가상ETF 2차전지_소재[합성]*",
+          "cross": true,
+          "cells": {
+            "mktcap": "5,146억",
+            "ret_1d": "+19.21%",
+            "ret_1w": "+26.16%",
+            "ret_1m": "+34.75%",
+            "vol_3d_1m": "710%"
+          },
+          "cells_raw": {
+            "mktcap": 5146.1,
+            "ret_1d": 19.21,
+            "ret_1w": 26.16,
+            "ret_1m": 34.75,
+            "vol_3d_1m": 709.9
+          }
+        },
+        {
+          "rank": 3,
+          "code": "E00203",
+          "name": "가상대형전자",
+          "cross": false,
+          "cells": {
+            "mktcap": "512.30조",
+            "ret_1d": "+4.19%",
+            "ret_1w": "+26.76%",
+            "ret_1m": "+19.89%",
+            "vol_3d_1m": "680%"
+          },
+          "cells_raw": {
+            "mktcap": 5123000.0,
+            "ret_1d": 4.19,
+            "ret_1w": 26.76,
+            "ret_1m": 19.89,
+            "vol_3d_1m": 680.4
+          }
+        },
+        {
+          "rank": 4,
+          "code": "E00204",
+          "name": "가상204소재",
+          "cross": true,
+          "cells": {
+            "mktcap": "1,209억",
+            "ret_1d": "+2.25%",
+            "ret_1w": "+33.19%",
+            "ret_1m": "+15.19%",
+            "vol_3d_1m": "306%"
+          },
+          "cells_raw": {
+            "mktcap": 1209.2,
+            "ret_1d": 2.25,
+            "ret_1w": 33.19,
+            "ret_1m": 15.19,
+            "vol_3d_1m": 306.2
+          }
+        },
+        {
+          "rank": 5,
+          "code": "E00205",
+          "name": "제닉",
+          "cross": true,
+          "cells": {
+            "mktcap": "7,981억",
+            "ret_1d": "+11.77%",
+            "ret_1w": "0.00%",
+            "ret_1m": "+19.74%",
+            "vol_3d_1m": "681%"
+          },
+          "cells_raw": {
+            "mktcap": 7980.8,
+            "ret_1d": 11.77,
+            "ret_1w": null,
+            "ret_1m": 19.74,
+            "vol_3d_1m": 680.9
+          }
+        }
+      ]
+    },
+    {
+      "key": "vol_3d_1m",
+      "title": "거래량 급증 순위",
+      "sort_by": "vol_3d_1m",
+      "columns": [
+        {
+          "key": "mktcap",
+          "label": "시가총액",
+          "kind": "amount"
+        },
+        {
+          "key": "ret_1d",
+          "label": "1d",
+          "kind": "pct"
+        },
+        {
+          "key": "ret_1w",
+          "label": "1w",
+          "kind": "pct"
+        },
+        {
+          "key": "ret_1m",
+          "label": "1m",
+          "kind": "pct"
+        },
+        {
+          "key": "vol_3d_1m",
+          "label": "거래량 3일/1달",
+          "kind": "ratio"
+        }
+      ],
+      "rows": [
+        {
+          "rank": 1,
+          "code": "E00206",
+          "name": "가상206에너지",
+          "cross": false,
+          "cells": {
+            "mktcap": "2,787억",
+            "ret_1d": "+25.77%",
+            "ret_1w": "+35.49%",
+            "ret_1m": "+43.82%",
+            "vol_3d_1m": "4,660%"
+          },
+          "cells_raw": {
+            "mktcap": 2787.4,
+            "ret_1d": 25.77,
+            "ret_1w": 35.49,
+            "ret_1m": 43.82,
+            "vol_3d_1m": 4660.0
+          }
+        },
+        {
+          "rank": 2,
+          "code": "E00204",
+          "name": "가상204소재",
+          "cross": true,
+          "cells": {
+            "mktcap": "1,209억",
+            "ret_1d": "+2.25%",
+            "ret_1w": "+33.19%",
+            "ret_1m": "+15.19%",
+            "vol_3d_1m": "306%"
+          },
+          "cells_raw": {
+            "mktcap": 1209.2,
+            "ret_1d": 2.25,
+            "ret_1w": 33.19,
+            "ret_1m": 15.19,
+            "vol_3d_1m": 306.2
+          }
+        },
+        {
+          "rank": 3,
+          "code": "E00205",
+          "name": "제닉",
+          "cross": true,
+          "cells": {
+            "mktcap": "7,981억",
+            "ret_1d": "+11.77%",
+            "ret_1w": "0.00%",
+            "ret_1m": "+19.74%",
+            "vol_3d_1m": "681%"
+          },
+          "cells_raw": {
+            "mktcap": 7980.8,
+            "ret_1d": 11.77,
+            "ret_1w": null,
+            "ret_1m": 19.74,
+            "vol_3d_1m": 680.9
+          }
+        },
+        {
+          "rank": 4,
+          "code": "E00202",
+          "name": "가상ETF 2차전지_소재[합성]*",
+          "cross": true,
+          "cells": {
+            "mktcap": "5,146억",
+            "ret_1d": "+19.21%",
+            "ret_1w": "+26.16%",
+            "ret_1m": "+34.75%",
+            "vol_3d_1m": "710%"
+          },
+          "cells_raw": {
+            "mktcap": 5146.1,
+            "ret_1d": 19.21,
+            "ret_1w": 26.16,
+            "ret_1m": 34.75,
+            "vol_3d_1m": 709.9
+          }
+        },
+        {
+          "rank": 5,
+          "code": "E00201",
+          "name": "네오이뮨텍",
+          "cross": true,
+          "cells": {
+            "mktcap": "6,532억",
+            "ret_1d": "+26.89%",
+            "ret_1w": "+26.21%",
+            "ret_1m": "+29.32%",
+            "vol_3d_1m": null
+          },
+          "cells_raw": {
+            "mktcap": 6531.9,
+            "ret_1d": 26.89,
+            "ret_1w": 26.21,
+            "ret_1m": 29.32,
+            "vol_3d_1m": null
+          }
+        }
+      ]
+    }
+  ],
+  "cross_codes": [
+    "E00201",
+    "E00204",
+    "E00202",
+    "E00205"
+  ]
+}

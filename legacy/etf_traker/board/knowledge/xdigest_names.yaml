@@ -1,0 +1,143 @@
+# 국내 상장 종목 별칭 사전 — 다이제스트 전용. 계약은 docs/XDIGEST.md 1장·3-3 4번.
+#
+# 쓰는 곳 둘.
+#   1. 검증(xdigest/verify.py 4번) — 출력에 표제어가 있으면 그 줄의 게시물 본문에
+#      별칭 중 하나가 있어야 한다. 영어 게시물의 `Samsung Electronics` 를 `삼성전자`
+#      로 옮기는 것은 문체가 요구하는 일이라 위반이 아니고, 어느 별칭도 본문에 없는
+#      종목명이 위반이다.
+#   2. 렌더(xdigest/render.py) — 표제어 뒤에 `code` 를 붙인다. 모델이 코드를 쓰면
+#      검증 5번에 걸린다.
+#
+# `state/*/universe.json` 을 쓰지 않는 이유는 3-3 에 적혀 있다 — 그것은 보드 실행이
+# 만드는 캐시 산출물이고 `state/*/` 는 .gitignore 라, 캐시를 복원하지 않는
+# 다이제스트 워크플로에는 어느 날도 없다. 휴장일에는 보드도 만들지 않는다.
+# 그래서 **커밋된 파일**로 둔다.
+#
+# 표제어는 우리말 종목명이다. 별칭에는 영문명·약칭·한글 변형·종목코드를 적는다.
+#
+# ── 이름↔코드의 근거 (2026-09-22 에 고침) ────────────────────────────────
+# 예전 주석은 '코드가 전부 sector_map.yaml 에 있고 그 파일 `why` 문장이 같은 코드에
+# 회사 이름을 적어 둔 것이 근거' 라고 적었다. **36종목 중 19종목에서 거짓이었다** —
+# 예: 042700 의 `why` 는 'KSIC 29271은 반도체 제조 장비·서비스로 테스트·후공정 추정'
+# 으로 회사 이름이 없다. sector_map 은 코드→섹터 표라 이름을 담지 않는다. 즉 그
+# 19건의 짝은 이 레포 안에 근거가 없었고, 렌더가 표제어 뒤에 6자리 코드를 사실처럼
+# 붙이므로 한 건만 틀려도 지어낸 식별자가 다이제스트에 실린다(CLAUDE.md 2장 1·4번).
+#
+# 지금 근거는 **보드가 KRX·KIS 에서 받아 커밋한 산출물의 `name`·`code` 짝**이다 —
+# `docs/api/d/2026-09-17.json` · `docs/api/d/2026-09-21.json` · `docs/api/latest.json`
+# 과 시험 픽스처 `board/tests/fixtures/rankings_*.json`(as_of 2026-08-26, krx+kis).
+# 36종목을 전수 대조해 30건이 확인됐고, 확인되지 않은 6건(넥스틴 348210 · 파크시스템스
+# 140860 · 에스에프에이 056190 · 대덕전자 353200 · 고영 098460 · 오픈엣지테크놀로지
+# 394280)은 **뺐다.** 사전에 없는 이름은 다이제스트가 원문 표기 그대로 내보내므로
+# 빼도 잃는 것이 없다(문체: 사전에 없는 이름은 원문 그대로). 넣으려면 그 종목이 실린
+# 보드 산출물이나 KRX·DART 종목 마스터로 짝을 확인하고 여기에 근거를 적는다.
+#
+# ── 짧은 별칭을 뺀 이유 ──────────────────────────────────────────────
+# 대조는 NFKC·공백 제거·소문자 뒤 **부분 문자열**이다. 공백을 지우므로 뒤 경계를
+# 봐도 `Hanmi` 가 `Hanmi Pharmaceutical` 안에 있는 것을 가릴 수 없다 — 남의 회사
+# 기사가 국내 종목명으로 바뀌고 렌더가 거기에 `(042700)` 을 붙인다. 그래서 **다른
+# 상장사 이름의 앞머리가 되는 홀로 서는 짧은 별칭**은 뺐다: `Samsung`(삼성전기·
+# 삼성SDI) · `Hanmi`(한미약품) · `Kakao`(카카오게임즈·카카오페이) · `PSK`(피에스케이
+# 홀딩스) · `Nepes`(네패스아크) · `Dongjin` · `Jusung` · `Leeno` · `Tesna`.
+# 완전명만 남기므로 본문이 `Samsung` 한 단어만 쓴 게시물의 줄은 검증에서 빠진다 —
+# 다이제스트가 한 줄 짧아지는 편이 틀린 종목코드가 실리는 것보다 낫다(3-3 앞머리).
+#
+# 초안 범위는 예시(9장)에 나온 국내 종목 + 반도체·AI 밸류체인이다. 넓히는 것은
+# 위 근거로 짝을 확인한 만큼만 한다.
+
+meta:
+  version: "0.2"
+  scope: "반도체·AI 밸류체인 국내 상장사"
+  source: "이름↔코드: docs/api/d/2026-09-17·2026-09-21.json · docs/api/latest.json · board/tests/fixtures/rankings_*.json (보드가 krx+kis 에서 받아 커밋한 산출물). 대조 2026-09-22, 30/36 확인 · 6건 제외"
+
+names:
+  삼성전자:
+    code: '005930'
+    aliases: [Samsung Electronics, 삼전, '005930']
+  SK하이닉스:
+    code: '000660'
+    aliases: [SK hynix, SKhynix, hynix, 하이닉스, '000660']
+  한미반도체:
+    code: '042700'
+    aliases: [Hanmi Semiconductor, 한미반도체, '042700']
+  삼성전기:
+    code: '009150'
+    aliases: [Samsung Electro-Mechanics, Samsung Electro Mechanics, SEMCO, '009150']
+  LG이노텍:
+    code: '011070'
+    aliases: [LG Innotek, Innotek, '011070']
+  LG전자:
+    code: '066570'
+    aliases: [LG Electronics, '066570']
+  SK스퀘어:
+    code: '402340'
+    aliases: [SK Square, '402340']
+  SK텔레콤:
+    code: '017670'
+    aliases: [SK Telecom, SKT, '017670']
+  NAVER:
+    code: '035420'
+    aliases: [Naver, 네이버, '035420']
+  카카오:
+    code: '035720'
+    aliases: ['035720']
+  DB하이텍:
+    code: '000990'
+    aliases: [DB HiTek, DB Hitek, '000990']
+  동진쎄미켐:
+    code: '005290'
+    aliases: [Dongjin Semichem, '005290']
+  한솔케미칼:
+    code: '014680'
+    aliases: [Hansol Chemical, '014680']
+  원익IPS:
+    code: '240810'
+    aliases: [Wonik IPS, WONIK IPS, '240810']
+  주성엔지니어링:
+    code: '036930'
+    aliases: [Jusung Engineering, '036930']
+  이오테크닉스:
+    code: '039030'
+    aliases: [EO Technics, EOTechnics, '039030']
+  피에스케이:
+    code: '319660'
+    aliases: ['319660']
+  HPSP:
+    code: '403870'
+    aliases: [HPSP, 에이치피에스피, '403870']
+  케이씨텍:
+    code: '281820'
+    aliases: [KCTech, KC Tech, '281820']
+  유진테크:
+    code: '084370'
+    aliases: [Eugene Technology, Eugene Tech, '084370']
+  리노공업:
+    code: '058470'
+    aliases: [Leeno Industrial, '058470']
+  티씨케이:
+    code: '064760'
+    aliases: [Tokai Carbon Korea, TCK, '064760']
+  하나마이크론:
+    code: '067310'
+    aliases: [Hana Micron, '067310']
+  SFA반도체:
+    code: '036540'
+    aliases: [SFA Semicon, '036540']
+  두산테스나:
+    code: '131970'
+    aliases: [Doosan Tesna, '131970']
+  심텍:
+    code: '222800'
+    aliases: [Simmtech, '222800']
+  네패스:
+    code: '033640'
+    aliases: ['033640']
+  솔브레인:
+    code: '357780'
+    aliases: [Soulbrain, '357780']
+  제우스:
+    code: '079370'
+    aliases: [Zeus, '079370']
+  두산에너빌리티:
+    code: '034020'
+    aliases: [Doosan Enerbility, '034020']

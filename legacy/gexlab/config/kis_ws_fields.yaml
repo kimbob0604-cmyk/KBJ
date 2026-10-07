@@ -1,0 +1,255 @@
+# KIS 웹소켓 체결 TR 컬럼 순서 (data/kis/ws.py 가 읽는다)
+#
+# 출처: KIS Open API 문서 — 국내선물옵션 실시간 체결 TR 응답의 필드 이름·순서(API 인터페이스 사실).
+#   GEXLAB 은 이 순서를 한국투자증권 공식 샘플 저장소 koreainvestment/open-trading-api(커밋
+#   b4e6249714418aa57833d1cbbbced39cbcc5b125, 2026-08-26, 가져온 날 2026-09-28)의 TR 별 `columns`
+#   리스트로 확인했다. 아래 `source`·`url` 은 그 대조 위치다(시험이 읽는다 — 코드는 옮기지 않았다).
+# 교차 확인: 같은 저장소 examples_user/domestic_futureoption/domestic_futureoption_functions_ws.py
+#   (네 TR 모두 동일), legacy/websocket/python/ws_domestic_future.py 의 한글 라벨(menulist) —
+#   legacy 는 끝의 실시간 가격제한 필드(dynm_*) 등이 없는 옛 목록이고 앞부분 순서는 같다.
+#   seln_cntg_smtn = 총매도수량, shnu_cntg_smtn = 총매수수량 (누적 매도·매수 체결수량 — PLAN §5.5 HIRO-lite)
+# 주의: 야간 옵션(H0EUCNT0)은 끝 두 필드 순서가 주간과 다르다(dynm_prc_limt_yn, dynm_llam).
+#   야간 선물은 dscs_bltr_acml_qty, 야간 옵션은 avrg_vltl·dscs_lrqn_vol 이 없다.
+# Phase 1 녹화 프레임으로 필드 수·값을 다시 확인한다 (지금 테스트는 이 목록으로 만든 합성 프레임).
+source:
+  repo: https://github.com/koreainvestment/open-trading-api
+  commit: b4e6249714418aa57833d1cbbbced39cbcc5b125
+  fetched: 2026-09-28
+trs:
+  H0IFCNT0:
+    name: 지수선물 실시간체결가 (주간)
+    kind: futures
+    session: day
+    url: https://github.com/koreainvestment/open-trading-api/blob/b4e6249714418aa57833d1cbbbced39cbcc5b125/examples_llm/domestic_futureoption/index_futures_realtime_conclusion/index_futures_realtime_conclusion.py
+    columns:  # 50개
+      - futs_shrn_iscd
+      - bsop_hour
+      - futs_prdy_vrss
+      - prdy_vrss_sign
+      - futs_prdy_ctrt
+      - futs_prpr
+      - futs_oprc
+      - futs_hgpr
+      - futs_lwpr
+      - last_cnqn
+      - acml_vol
+      - acml_tr_pbmn
+      - hts_thpr
+      - mrkt_basis
+      - dprt
+      - nmsc_fctn_stpl_prc
+      - fmsc_fctn_stpl_prc
+      - spead_prc
+      - hts_otst_stpl_qty
+      - otst_stpl_qty_icdc
+      - oprc_hour
+      - oprc_vrss_prpr_sign
+      - oprc_vrss_nmix_prpr
+      - hgpr_hour
+      - hgpr_vrss_prpr_sign
+      - hgpr_vrss_nmix_prpr
+      - lwpr_hour
+      - lwpr_vrss_prpr_sign
+      - lwpr_vrss_nmix_prpr
+      - shnu_rate
+      - cttr
+      - esdg
+      - otst_stpl_rgbf_qty_icdc
+      - thpr_basis
+      - futs_askp1
+      - futs_bidp1
+      - askp_rsqn1
+      - bidp_rsqn1
+      - seln_cntg_csnu
+      - shnu_cntg_csnu
+      - ntby_cntg_csnu
+      - seln_cntg_smtn
+      - shnu_cntg_smtn
+      - total_askp_rsqn
+      - total_bidp_rsqn
+      - prdy_vol_vrss_acml_vol_rate
+      - dscs_bltr_acml_qty
+      - dynm_mxpr
+      - dynm_llam
+      - dynm_prc_limt_yn
+  H0IOCNT0:
+    name: 지수옵션 실시간체결가 (주간)
+    kind: option
+    session: day
+    url: https://github.com/koreainvestment/open-trading-api/blob/b4e6249714418aa57833d1cbbbced39cbcc5b125/examples_llm/domestic_futureoption/index_option_realtime_conclusion/index_option_realtime_conclusion.py
+    columns:  # 58개
+      - optn_shrn_iscd
+      - bsop_hour
+      - optn_prpr
+      - prdy_vrss_sign
+      - optn_prdy_vrss
+      - prdy_ctrt
+      - optn_oprc
+      - optn_hgpr
+      - optn_lwpr
+      - last_cnqn
+      - acml_vol
+      - acml_tr_pbmn
+      - hts_thpr
+      - hts_otst_stpl_qty
+      - otst_stpl_qty_icdc
+      - oprc_hour
+      - oprc_vrss_prpr_sign
+      - oprc_vrss_nmix_prpr
+      - hgpr_hour
+      - hgpr_vrss_prpr_sign
+      - hgpr_vrss_nmix_prpr
+      - lwpr_hour
+      - lwpr_vrss_prpr_sign
+      - lwpr_vrss_nmix_prpr
+      - shnu_rate
+      - prmm_val
+      - invl_val
+      - tmvl_val
+      - delta
+      - gama
+      - vega
+      - theta
+      - rho
+      - hts_ints_vltl
+      - esdg
+      - otst_stpl_rgbf_qty_icdc
+      - thpr_basis
+      - unas_hist_vltl
+      - cttr
+      - dprt
+      - mrkt_basis
+      - optn_askp1
+      - optn_bidp1
+      - askp_rsqn1
+      - bidp_rsqn1
+      - seln_cntg_csnu
+      - shnu_cntg_csnu
+      - ntby_cntg_csnu
+      - seln_cntg_smtn
+      - shnu_cntg_smtn
+      - total_askp_rsqn
+      - total_bidp_rsqn
+      - prdy_vol_vrss_acml_vol_rate
+      - avrg_vltl
+      - dscs_lrqn_vol
+      - dynm_mxpr
+      - dynm_llam
+      - dynm_prc_limt_yn
+  H0MFCNT0:
+    name: KRX 야간선물 실시간체결가
+    kind: futures
+    session: night
+    url: https://github.com/koreainvestment/open-trading-api/blob/b4e6249714418aa57833d1cbbbced39cbcc5b125/examples_llm/domestic_futureoption/krx_ngt_futures_ccnl/krx_ngt_futures_ccnl.py
+    columns:  # 49개
+      - futs_shrn_iscd
+      - bsop_hour
+      - futs_prdy_vrss
+      - prdy_vrss_sign
+      - futs_prdy_ctrt
+      - futs_prpr
+      - futs_oprc
+      - futs_hgpr
+      - futs_lwpr
+      - last_cnqn
+      - acml_vol
+      - acml_tr_pbmn
+      - hts_thpr
+      - mrkt_basis
+      - dprt
+      - nmsc_fctn_stpl_prc
+      - fmsc_fctn_stpl_prc
+      - spead_prc
+      - hts_otst_stpl_qty
+      - otst_stpl_qty_icdc
+      - oprc_hour
+      - oprc_vrss_prpr_sign
+      - oprc_vrss_nmix_prpr
+      - hgpr_hour
+      - hgpr_vrss_prpr_sign
+      - hgpr_vrss_nmix_prpr
+      - lwpr_hour
+      - lwpr_vrss_prpr_sign
+      - lwpr_vrss_nmix_prpr
+      - shnu_rate
+      - cttr
+      - esdg
+      - otst_stpl_rgbf_qty_icdc
+      - thpr_basis
+      - futs_askp1
+      - futs_bidp1
+      - askp_rsqn1
+      - bidp_rsqn1
+      - seln_cntg_csnu
+      - shnu_cntg_csnu
+      - ntby_cntg_csnu
+      - seln_cntg_smtn
+      - shnu_cntg_smtn
+      - total_askp_rsqn
+      - total_bidp_rsqn
+      - prdy_vol_vrss_acml_vol_rate
+      - dynm_mxpr
+      - dynm_llam
+      - dynm_prc_limt_yn
+  H0EUCNT0:
+    name: KRX 야간옵션 실시간체결가
+    kind: option
+    session: night
+    url: https://github.com/koreainvestment/open-trading-api/blob/b4e6249714418aa57833d1cbbbced39cbcc5b125/examples_llm/domestic_futureoption/krx_ngt_option_ccnl/krx_ngt_option_ccnl.py
+    columns:  # 56개
+      - optn_shrn_iscd
+      - bsop_hour
+      - optn_prpr
+      - prdy_vrss_sign
+      - optn_prdy_vrss
+      - prdy_ctrt
+      - optn_oprc
+      - optn_hgpr
+      - optn_lwpr
+      - last_cnqn
+      - acml_vol
+      - acml_tr_pbmn
+      - hts_thpr
+      - hts_otst_stpl_qty
+      - otst_stpl_qty_icdc
+      - oprc_hour
+      - oprc_vrss_prpr_sign
+      - oprc_vrss_nmix_prpr
+      - hgpr_hour
+      - hgpr_vrss_prpr_sign
+      - hgpr_vrss_nmix_prpr
+      - lwpr_hour
+      - lwpr_vrss_prpr_sign
+      - lwpr_vrss_nmix_prpr
+      - shnu_rate
+      - prmm_val
+      - invl_val
+      - tmvl_val
+      - delta
+      - gama
+      - vega
+      - theta
+      - rho
+      - hts_ints_vltl
+      - esdg
+      - otst_stpl_rgbf_qty_icdc
+      - thpr_basis
+      - unas_hist_vltl
+      - cttr
+      - dprt
+      - mrkt_basis
+      - optn_askp1
+      - optn_bidp1
+      - askp_rsqn1
+      - bidp_rsqn1
+      - seln_cntg_csnu
+      - shnu_cntg_csnu
+      - ntby_cntg_csnu
+      - seln_cntg_smtn
+      - shnu_cntg_smtn
+      - total_askp_rsqn
+      - total_bidp_rsqn
+      - prdy_vol_vrss_acml_vol_rate
+      - dynm_mxpr
+      - dynm_prc_limt_yn
+      - dynm_llam

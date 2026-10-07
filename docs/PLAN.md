@@ -170,8 +170,14 @@ kbj/
 
 **P1 — 모노레포 뼈대 + legacy 이식 (3~5일)**
 - uv 단일 lock, CI, Docker Compose, Postgres·Timescale·Redis
-- 네 프로젝트를 `legacy/`로 옮기고 **기존 테스트를 전부 통과**시킨다(경로·import만 고친다).
-- **완료 기준:** board 테스트 507개와 GEXLAB 테스트 3천여 개가 KBJ CI에서 녹색이다.
+- 세 프로젝트(stock-dashboard·ETF-Traker·GEXLAB — kis-ota 는 참고만)를 `legacy/`로 옮기고 **기존 테스트를 전부 통과**시킨다(경로·import만 고친다. 예외: ADR 0001 U3 합성 교체·개인정보 제거 — `legacy/<프로젝트>/MIGRATION.md`).
+- **완료 기준:** KBJ CI(`.github/workflows/ci.yml`)에서 아래가 모두 녹색이다(2026-10-07 로컬 실측 수, `docs/conflict_map.md` §3.2).
+  legacy 는 루트 `.venv` 하나(단일 `uv.lock`, Python 3.12, pandas 2.3.3, `uv sync --all-groups`)로 `scripts/test_legacy.sh` 가 프로젝트별 import 루트를 나눠 돌린다.
+  (예외: `legacy/gexlab/uv.lock` 은 통합 시험 `test_compose` 가 `legacy/gexlab/Dockerfile` 로 앱 이미지를 만들 때만 쓰여 남긴다 — `legacy/gexlab/MIGRATION.md` §6)
+  - GEXLAB: `pytest -m "not network"` **3,178 통과** + Docker 통합 **49**(TimescaleDB pg16·Redis). CI 에서는 단위 3,177(`gexlab`)과 통합 50(`gexlab-integration` — compose 설정 검사 1 포함)으로 나눠 돈다
+  - board **1,319**(skip 1 — 발행 사이트 생성물 `docs/` 를 옮기지 않아 원래 있던 skipTest), monitor/kr **94**(Playwright 브라우저가 없으면 skip 1), monitor/flow **129**, flowlab selftest **44/44**, dart-report 스모크 `built. quarters= 14 annual= 4 bridge steps= 9`, etf_tracker_v9 모듈 13개 import
+  - stock_dashboard 검사 스크립트 **10/10**(pytest 래퍼 12건 — E4 는 검사 하네스 버그를 고쳐 통과, 원본은 9/10)
+  - 신규 `kbj/`: ruff·ruff format·pyright·import-linter·pytest, 레포 전체(legacy 포함) 공개 안전 검사 발견 0건
 
 **P2 — 공용 기반 일원화 (5~7일)**
 - auth(토큰 1곳 발급) + 앱키 레이트리미터

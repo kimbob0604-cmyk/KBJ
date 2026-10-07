@@ -91,6 +91,15 @@
 
 legacy 코드는 옮겨 온 그대로 옛 이름을 읽는다(P1 은 경로·import 만 고친다). 새 이름으로 바꾸는 것은 각 영역을 정본으로 갈아 끼우는 단계(P2~)에서 한다.
 
+P1 이식에서 개인·운영 정보를 코드에서 빼며 legacy 에 새로 생긴 이름(값은 레포 어디에도 적지 않는다 — 각 `legacy/<프로젝트>/MIGRATION.md`):
+
+| 이름 | 쓰는 곳 | 무엇 | 등급 |
+|---|---|---|---|
+| `JOURNAL_ANALYST` | SD `analysis_journal_helper.py` | 분석 일지 작성자 기본값(사용자 이름을 코드에서 뺐다) | 설정 |
+| `XSOURCE_SAMPLE_ACCOUNTS`, `XSOURCE_DIGEST_ACCOUNTS` | ET `board/ingest/xsource.py` | X 실측 도구가 볼 계정 목록(쉼표 구분, 계정 핸들을 코드에서 뺐다) | 설정(개인 데이터) |
+| `DASHBOARD_URL` | SD `scripts/verify_deploy.py` | 배포 확인 대상 주소(Render 호스트명을 코드에서 뺐다 — 위 표의 옛 이름과 같다) | 운영 |
+| `KBJ_REQUIRE_DOCKER` | `scripts/test_legacy.sh`(CI `gexlab-integration` 잡) | `1` 이면 Docker 를 못 써서 건너뛴 통합 시험을 실패로 본다 | 설정 |
+
 ## 3. 키가 샜을 때
 
 1. 그 키를 발급처에서 바로 폐기·재발급한다(KIS 는 앱키 재발급, 텔레그램은 BotFather `/revoke`).

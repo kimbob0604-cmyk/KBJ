@@ -1,0 +1,5583 @@
+{
+ "_about": "코어 파이프라인 골든(PLAN §6.3) — 비교 tests/golden/test_core_golden.py, 허용오차 scripts/make_golden.py TOLERANCES. 손으로 고치지 않는다",
+ "_regenerate": "uv run python -m scripts.make_golden core --write",
+ "inputs": [
+  {
+   "path": "tests/fixtures/validation/chain_snapshot_synthetic_20260928_1427_small.json",
+   "sha256": "9578c6f28b129324fcdbcdbe0c83f35c31829ed47dbd83eb5426e997a68181ef"
+  },
+  {
+   "path": "tests/fixtures/validation/chain_snapshot_synthetic_20260928_1452_small.json",
+   "sha256": "94eb3f2466a90e1b65917ccd412054d966ccaadcd9f3d30d66be65d24aad0046"
+  },
+  {
+   "path": "tests/fixtures/validation/chain_snapshot_synthetic_20260928_1452_small.json",
+   "sha256": "94eb3f2466a90e1b65917ccd412054d966ccaadcd9f3d30d66be65d24aad0046",
+   "derived": {
+    "shift_minutes": 13380,
+    "note": "야간 파생 — 14:52 의 시각만 2026-10-07(수) 21:52 로 옮김(가격·OI 그대로, 실측 아님): 귀속 T+1·0dte·만기 지난 만기 빼기·±1σ 06:00 끝 갈래용"
+   }
+  }
+ ],
+ "snapshots": [
+  {
+   "input": "tests/fixtures/validation/chain_snapshot_synthetic_20260928_1427_small.json",
+   "derived": null,
+   "started_kst": "2026-09-28T14:27:12.848713+09:00",
+   "s_ref": {
+    "code": "A01612",
+    "price_pt": 1095.1
+   },
+   "state": "DAY",
+   "trade_date": "2026-09-28",
+   "session": "day",
+   "expiries": [
+    {
+     "label": "MONTH:202610",
+     "expiry": "202610",
+     "expiry_date": "2026-10-08",
+     "expiry_source": "kis",
+     "now_kst": "2026-09-28T14:27:18.149318+09:00",
+     "T_years": 0.027497521901382545,
+     "T_kis_years": 0.0273972602739726,
+     "basis_in_pt": null,
+     "forward": {
+      "F_pt": 1089.55,
+      "quality": "ok",
+      "reasons": [],
+      "notes": [
+       "no_futures_ref"
+      ],
+      "atm": "1095.00",
+      "strikes": [
+       "1090.00",
+       "1092.50",
+       "1095.00",
+       "1100.00"
+      ],
+      "prev_session_skipped": [
+       "1097.50"
+      ],
+      "reference": null,
+      "futures_gap_pt": null
+     },
+     "quality": "estimated",
+     "options": [
+      {
+       "strike": "1082.50",
+       "cp": "C",
+       "source": "fill",
+       "oi": 279,
+       "volume": 34,
+       "price": "34.05",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.42315123090045725,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.5507666302327741,
+       "gamma": 0.005175890254231556,
+       "gex_won": 4285718100.8045435
+      },
+      {
+       "strike": "1082.50",
+       "cp": "P",
+       "source": "fill",
+       "oi": 50,
+       "volume": 25,
+       "price": "27.00",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.4231512309004567,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.4492333697672259,
+       "gamma": 0.005175890254231563,
+       "gex_won": -768049838.8538618
+      },
+      {
+       "strike": "1085.00",
+       "cp": "C",
+       "source": "fill",
+       "oi": 316,
+       "volume": 41,
+       "price": "31.15",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.4007244826160945,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.5383197430940547,
+       "gamma": 0.005484797595205845,
+       "gex_won": 5143775752.204797
+      },
+      {
+       "strike": "1085.00",
+       "cp": "P",
+       "source": "fill",
+       "oi": 96,
+       "volume": 33,
+       "price": "26.60",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.40072448261609384,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.4616802569059453,
+       "gamma": 0.005484797595205854,
+       "gex_won": -1562666051.3027258
+      },
+      {
+       "strike": "1087.50",
+       "cp": "C",
+       "source": "fill",
+       "oi": 87,
+       "volume": 5,
+       "price": "29.65",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.39742172853263924,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.5245306504500928,
+       "gamma": 0.005545522360813181,
+       "gex_won": 1431845147.9251454
+      },
+      {
+       "strike": "1087.50",
+       "cp": "P",
+       "source": "fill",
+       "oi": 86,
+       "volume": 44,
+       "price": "27.60",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.39742172853263874,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.4754693495499071,
+       "gamma": 0.005545522360813187,
+       "gex_won": -1415387157.7191105
+      },
+      {
+       "strike": "1090.00",
+       "cp": "C",
+       "source": "fill",
+       "oi": 157,
+       "volume": 45,
+       "price": "29.95",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.4186326627822714,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.511472509948546,
+       "gamma": 0.005272339716793663,
+       "gex_won": 2456616570.064348
+      },
+      {
+       "strike": "1090.00",
+       "cp": "P",
+       "source": "fill",
+       "oi": 162,
+       "volume": 25,
+       "price": "30.40",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.41863266278227074,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.488527490051454,
+       "gamma": 0.005272339716793672,
+       "gex_won": -2534852766.5632176
+      },
+      {
+       "strike": "1092.50",
+       "cp": "C",
+       "source": "fill",
+       "oi": 104,
+       "volume": 20,
+       "price": "27.85",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.4060491995535097,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.4974105726505557,
+       "gamma": 0.0054378636689182925,
+       "gex_won": 1678402019.307002
+      },
+      {
+       "strike": "1092.50",
+       "cp": "P",
+       "source": "fill",
+       "oi": 112,
+       "volume": 2,
+       "price": "30.80",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.40604919955350904,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.5025894273494443,
+       "gamma": 0.005437863668918302,
+       "gex_won": -1807509866.9460049
+      },
+      {
+       "strike": "1095.00",
+       "cp": "C",
+       "source": "fill",
+       "oi": 310,
+       "volume": 23,
+       "price": "27.70",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.42006617788898054,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.485321238070576,
+       "gamma": 0.005252962466859989,
+       "gex_won": 4832816776.176478
+      },
+      {
+       "strike": "1095.00",
+       "cp": "P",
+       "source": "fill",
+       "oi": 202,
+       "volume": 22,
+       "price": "33.15",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.42006617788897993,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.5146787619294241,
+       "gamma": 0.005252962466859997,
+       "gex_won": -3149125770.2827415
+      },
+      {
+       "strike": "1097.50",
+       "cp": "C",
+       "source": "fill",
+       "oi": 119,
+       "volume": 19,
+       "price": "25.15",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.40028233061608043,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.46957416851088923,
+       "gamma": 0.005500272444202777,
+       "gex_won": 1942520013.6546807
+      },
+      {
+       "strike": "1097.50",
+       "cp": "P",
+       "source": "fill",
+       "oi": 166,
+       "volume": 0,
+       "price": "21.40",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": {
+        "sigma": 0.23684220548450735,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "estimated",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": -0.5657149034268218,
+       "gamma": 0.009196257253098073,
+       "gex_won": -4530577234.157289
+      },
+      {
+       "strike": "1100.00",
+       "cp": "C",
+       "source": "fill",
+       "oi": 2519,
+       "volume": 282,
+       "price": "24.40",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.4050451990411969,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.4567862851320313,
+       "gamma": 0.005419444172845594,
+       "gex_won": 40515131524.497765
+      },
+      {
+       "strike": "1100.00",
+       "cp": "P",
+       "source": "fill",
+       "oi": 1874,
+       "volume": 325,
+       "price": "34.85",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.40504519904119624,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.5432137148679688,
+       "gamma": 0.005419444172845602,
+       "gex_won": -30141070455.30326
+      },
+      {
+       "strike": "1102.50",
+       "cp": "C",
+       "source": "fill",
+       "oi": 94,
+       "volume": 43,
+       "price": "24.55",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.42198061191755376,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.44675338116864916,
+       "gamma": 0.005185996184535011,
+       "gex_won": 1446752978.8670127
+      },
+      {
+       "strike": "1102.50",
+       "cp": "P",
+       "source": "fill",
+       "oi": 89,
+       "volume": 0,
+       "price": "23.45",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": {
+        "sigma": 0.22283557924657224,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "estimated",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": -0.6184008322070985,
+       "gamma": 0.00946936280573985,
+       "gex_won": -2501180888.924604
+      },
+      {
+       "strike": "1105.00",
+       "cp": "C",
+       "source": "fill",
+       "oi": 112,
+       "volume": 45,
+       "price": "22.85",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.4125841960654023,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.43187632507050555,
+       "gamma": 0.0052736263506552505,
+       "gex_won": 1752918470.1483967
+      },
+      {
+       "strike": "1105.00",
+       "cp": "P",
+       "source": "fill",
+       "oi": 57,
+       "volume": 40,
+       "price": "38.30",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.4125841960654015,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.5681236749294947,
+       "gamma": 0.005273626350655261,
+       "gex_won": -892110292.8433825
+      },
+      {
+       "strike": "1107.50",
+       "cp": "C",
+       "source": "fill",
+       "oi": 99,
+       "volume": 7,
+       "price": "22.10",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.4160817357586903,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.4198282078469642,
+       "gamma": 0.005199334491451783,
+       "gex_won": 1527626879.2181885
+      },
+      {
+       "strike": "1107.50",
+       "cp": "P",
+       "source": "fill",
+       "oi": 120,
+       "volume": 0,
+       "price": "25.60",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": {
+        "sigma": 0.20561006231857007,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "estimated",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": -0.6780362535178167,
+       "gamma": 0.00965116921602699,
+       "gex_won": -3437126490.876753
+      },
+      {
+       "strike": "1470.00",
+       "cp": "C",
+       "source": "board",
+       "oi": 102,
+       "volume": 85,
+       "price": "0.065",
+       "price_kind": "mid",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.6180691695391869,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.002046188107701221,
+       "gamma": 5.796583564216938e-05,
+       "gex_won": 17547150.927843437
+      },
+      {
+       "strike": "1470.00",
+       "cp": "P",
+       "source": "board",
+       "oi": 18,
+       "volume": 0,
+       "price": "348.55",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": {
+        "sigma": null,
+        "quality": "invalid",
+        "source": null,
+        "reason": "below_intrinsic/kis_missing",
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": "iv_invalid",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1595.00",
+       "cp": "C",
+       "source": "board",
+       "oi": 7470,
+       "volume": 2222,
+       "price": "0.025",
+       "price_kind": "mid",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.7099783767560087,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.0007408526694990375,
+       "gamma": 1.9921275804678972e-05,
+       "gex_won": 441643749.9346671
+      },
+      {
+       "strike": "1595.00",
+       "cp": "P",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "473.05",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": {
+        "sigma": null,
+        "quality": "invalid",
+        "source": null,
+        "reason": "below_intrinsic/kis_missing",
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": "iv_invalid",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      }
+     ],
+     "strike_gex": {
+      "quality": "estimated",
+      "excluded_oi_ratio": 0.0012162162162162162,
+      "rows": [
+       {
+        "strike": "1082.50",
+        "call_won": 4285718100.8045435,
+        "put_won": -768049838.8538618
+       },
+       {
+        "strike": "1085.00",
+        "call_won": 5143775752.204797,
+        "put_won": -1562666051.3027258
+       },
+       {
+        "strike": "1087.50",
+        "call_won": 1431845147.9251454,
+        "put_won": -1415387157.7191105
+       },
+       {
+        "strike": "1090.00",
+        "call_won": 2456616570.064348,
+        "put_won": -2534852766.5632176
+       },
+       {
+        "strike": "1092.50",
+        "call_won": 1678402019.307002,
+        "put_won": -1807509866.9460049
+       },
+       {
+        "strike": "1095.00",
+        "call_won": 4832816776.176478,
+        "put_won": -3149125770.2827415
+       },
+       {
+        "strike": "1097.50",
+        "call_won": 1942520013.6546807,
+        "put_won": -4530577234.157289
+       },
+       {
+        "strike": "1100.00",
+        "call_won": 40515131524.497765,
+        "put_won": -30141070455.30326
+       },
+       {
+        "strike": "1102.50",
+        "call_won": 1446752978.8670127,
+        "put_won": -2501180888.924604
+       },
+       {
+        "strike": "1105.00",
+        "call_won": 1752918470.1483967,
+        "put_won": -892110292.8433825
+       },
+       {
+        "strike": "1107.50",
+        "call_won": 1527626879.2181885,
+        "put_won": -3437126490.876753
+       },
+       {
+        "strike": "1470.00",
+        "call_won": 17547150.927843437,
+        "put_won": 0.0
+       },
+       {
+        "strike": "1595.00",
+        "call_won": 441643749.9346671,
+        "put_won": 0.0
+       }
+      ]
+     },
+     "net_gex": {
+      "value_won": 14733658319.957918,
+      "quality": "estimated",
+      "excluded_oi_ratio": 0.0012162162162162162,
+      "expiries": [
+       "202610"
+      ]
+     },
+     "atm_iv": {
+      "sigma": 0.4148146946173369,
+      "quality": "ok",
+      "strikes": [
+       "1087.50",
+       "1090.00"
+      ],
+      "reasons": []
+     },
+     "expected_move": {
+      "calendar": {
+       "minutes": 77.69751136666667,
+       "dt_years": 0.0001478263153855911,
+       "sigma_pt": 5.495119911026689,
+       "lower_pt": 1084.0548800889733,
+       "upper_pt": 1095.0451199110266,
+       "quality": "ok"
+      },
+      "trading": {
+       "minutes": 77.69751136666667,
+       "dt_years": 0.0007341034709624591,
+       "sigma_pt": 12.245596257094642,
+       "lower_pt": 1077.3044037429054,
+       "upper_pt": 1101.7955962570945,
+       "quality": "ok"
+      }
+     }
+    },
+    {
+     "label": "MONTH:202611",
+     "expiry": "202611",
+     "expiry_date": "2026-11-12",
+     "expiry_source": "computed",
+     "now_kst": "2026-09-28T14:27:19.257682+09:00",
+     "T_years": 0.12338789771429479,
+     "T_kis_years": 0.1232876712328767,
+     "basis_in_pt": null,
+     "forward": {
+      "F_pt": null,
+      "quality": "invalid",
+      "reasons": [
+       "no_parity_strikes"
+      ],
+      "notes": [
+       "no_futures_ref"
+      ],
+      "atm": "1347.50",
+      "strikes": [],
+      "prev_session_skipped": [
+       "1347.50",
+       "1350.00",
+       "1352.50"
+      ],
+      "reference": null,
+      "futures_gap_pt": null
+     },
+     "quality": "invalid",
+     "options": [
+      {
+       "strike": "1347.50",
+       "cp": "C",
+       "source": "board",
+       "oi": 5,
+       "volume": 3,
+       "price": "15.85",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1347.50",
+       "cp": "P",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "250.80",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1350.00",
+       "cp": "C",
+       "source": "board",
+       "oi": 187,
+       "volume": 3,
+       "price": "16.25",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1350.00",
+       "cp": "P",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "253.10",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1352.50",
+       "cp": "C",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "25.30",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1352.50",
+       "cp": "P",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "255.40",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      }
+     ],
+     "strike_gex": {
+      "quality": "invalid",
+      "excluded_oi_ratio": 1.0,
+      "rows": []
+     },
+     "net_gex": {
+      "value_won": null,
+      "quality": "invalid",
+      "excluded_oi_ratio": 1.0,
+      "expiries": [
+       "202611"
+      ]
+     },
+     "atm_iv": {
+      "sigma": null,
+      "quality": "invalid",
+      "strikes": [],
+      "reasons": [
+       "no_forward"
+      ]
+     },
+     "expected_move": {
+      "calendar": {
+       "minutes": 77.67903863333332,
+       "dt_years": 0.00014779116939370876,
+       "sigma_pt": null,
+       "lower_pt": null,
+       "upper_pt": null,
+       "quality": "invalid"
+      },
+      "trading": {
+       "minutes": 77.67903863333332,
+       "dt_years": 0.0007339289364449482,
+       "sigma_pt": null,
+       "lower_pt": null,
+       "upper_pt": null,
+       "quality": "invalid"
+      }
+     }
+    },
+    {
+     "label": "WKM:260904",
+     "expiry": "260904",
+     "expiry_date": "2026-09-28",
+     "expiry_source": "kis",
+     "now_kst": "2026-09-28T14:27:20.308950+09:00",
+     "T_years": 0.0001001931459284627,
+     "T_kis_years": 0.0013698630136986301,
+     "basis_in_pt": null,
+     "forward": {
+      "F_pt": 1094.46,
+      "quality": "ok",
+      "reasons": [],
+      "notes": [
+       "no_futures_ref"
+      ],
+      "atm": "1095.00",
+      "strikes": [
+       "1090.00",
+       "1092.50",
+       "1095.00",
+       "1097.50",
+       "1100.00"
+      ],
+      "prev_session_skipped": [],
+      "reference": null,
+      "futures_gap_pt": null
+     },
+     "quality": "estimated",
+     "options": [
+      {
+       "strike": "1087.50",
+       "cp": "P",
+       "source": "board",
+       "oi": 493,
+       "volume": 11844,
+       "price": "0.38",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.5560504433691099,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.12528133362387403,
+       "gamma": 0.03384597748672884,
+       "gex_won": -49968208222.150955
+      },
+      {
+       "strike": "1090.00",
+       "cp": "C",
+       "source": "board",
+       "oi": 1316,
+       "volume": 4531,
+       "price": "5.24",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.5439264616686551,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.7741920529726629,
+       "gamma": 0.0504332365160878,
+       "gex_won": 198752465618.20377
+      },
+      {
+       "strike": "1090.00",
+       "cp": "P",
+       "source": "board",
+       "oi": 453,
+       "volume": 19455,
+       "price": "0.74",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.5316980164029268,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.22067610877453356,
+       "gamma": 0.050922418456827524,
+       "gex_won": -69079155486.39958
+      },
+      {
+       "strike": "1092.50",
+       "cp": "C",
+       "source": "board",
+       "oi": 1048,
+       "volume": 27694,
+       "price": "3.50",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.5481194692312457,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.6290902174824509,
+       "gamma": 0.06292860662147338,
+       "gex_won": 197491857419.35056
+      },
+      {
+       "strike": "1092.50",
+       "cp": "P",
+       "source": "board",
+       "oi": 1279,
+       "volume": 18762,
+       "price": "1.39",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.5117467129954741,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.3622379482476873,
+       "gamma": 0.0668739182295407,
+       "gex_won": -256133928386.1915
+      },
+      {
+       "strike": "1095.00",
+       "cp": "C",
+       "source": "board",
+       "oi": 523,
+       "volume": 21671,
+       "price": "1.93",
+       "price_kind": "mid",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.5008312824370191,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.46180429956046604,
+       "gamma": 0.07237742155356632,
+       "gex_won": 113356020819.0652
+      },
+      {
+       "strike": "1095.00",
+       "cp": "P",
+       "source": "board",
+       "oi": 435,
+       "volume": 16476,
+       "price": "2.51",
+       "price_kind": "mid",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.5100249704853497,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.537473016252956,
+       "gamma": 0.07108503405801662,
+       "gex_won": -92599198774.77888
+      },
+      {
+       "strike": "1097.50",
+       "cp": "C",
+       "source": "board",
+       "oi": 1809,
+       "volume": 12573,
+       "price": "1.06",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.5169651306494211,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.2968627875491582,
+       "gamma": 0.06109950915392504,
+       "gex_won": 330990923262.95233
+      },
+      {
+       "strike": "1097.50",
+       "cp": "P",
+       "source": "board",
+       "oi": 1991,
+       "volume": 11928,
+       "price": "4.10",
+       "price_kind": "mid",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.5169651306494305,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.7031372124508385,
+       "gamma": 0.06109950915392423,
+       "gex_won": -364291281490.6188
+      },
+      {
+       "strike": "1100.00",
+       "cp": "C",
+       "source": "board",
+       "oi": 1113,
+       "volume": 1770,
+       "price": "0.49",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.5150117045852024,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.16431914378747028,
+       "gamma": 0.0438793284572523,
+       "gex_won": 146249682807.70502
+      },
+      {
+       "strike": "1100.00",
+       "cp": "P",
+       "source": "board",
+       "oi": 1953,
+       "volume": 2865,
+       "price": "6.14",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.554210003637802,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.8178997710417165,
+       "gamma": 0.04353385090551254,
+       "gex_won": -254606287867.3975
+      },
+      {
+       "strike": "1102.50",
+       "cp": "P",
+       "source": "board",
+       "oi": 641,
+       "volume": 9269,
+       "price": "6.53",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.44057236759446566,
+        "quality": "estimated",
+        "source": "kis",
+        "reason": "below_intrinsic",
+        "below_min_premium": false,
+        "rescaled": true,
+        "t_kis_years": 0.0013698630136986301
+       },
+       "excluded": null,
+       "quality": "estimated",
+       "quality_reasons": [],
+       "delta": -0.9512902731894258,
+       "gamma": 0.020927029662178843,
+       "gex_won": -40170331484.22409
+      }
+     ],
+     "strike_gex": {
+      "quality": "estimated",
+      "excluded_oi_ratio": 0.0,
+      "rows": [
+       {
+        "strike": "1087.50",
+        "call_won": 0.0,
+        "put_won": -49968208222.150955
+       },
+       {
+        "strike": "1090.00",
+        "call_won": 198752465618.20377,
+        "put_won": -69079155486.39958
+       },
+       {
+        "strike": "1092.50",
+        "call_won": 197491857419.35056,
+        "put_won": -256133928386.1915
+       },
+       {
+        "strike": "1095.00",
+        "call_won": 113356020819.0652,
+        "put_won": -92599198774.77888
+       },
+       {
+        "strike": "1097.50",
+        "call_won": 330990923262.95233,
+        "put_won": -364291281490.6188
+       },
+       {
+        "strike": "1100.00",
+        "call_won": 146249682807.70502,
+        "put_won": -254606287867.3975
+       },
+       {
+        "strike": "1102.50",
+        "call_won": 0.0,
+        "put_won": -40170331484.22409
+       }
+      ]
+     },
+     "net_gex": {
+      "value_won": -140007441784.4844,
+      "quality": "estimated",
+      "excluded_oi_ratio": 0.0,
+      "expiries": [
+       "260904"
+      ]
+     },
+     "atm_iv": {
+      "sigma": 0.5107211988260539,
+      "quality": "ok",
+      "strikes": [
+       "1092.50",
+       "1095.00"
+      ],
+      "reasons": []
+     },
+     "expected_move": {
+      "calendar": {
+       "minutes": 77.6615175,
+       "dt_years": 0.0001477578339041096,
+       "sigma_pt": 6.794523990350985,
+       "lower_pt": 1087.665476009649,
+       "upper_pt": 1101.2545239903511,
+       "quality": "ok"
+      },
+      "trading": {
+       "minutes": 77.6615175,
+       "dt_years": 0.0007337633928571429,
+       "sigma_pt": 15.141252400702648,
+       "lower_pt": 1079.3187475992975,
+       "upper_pt": 1109.6012524007026,
+       "quality": "ok"
+      }
+     }
+    },
+    {
+     "label": "WKM:261001",
+     "expiry": "261001",
+     "expiry_date": "2026-10-06",
+     "expiry_source": "kis",
+     "now_kst": "2026-09-28T14:27:22.438099+09:00",
+     "T_years": 0.02201793385023465,
+     "T_kis_years": 0.021917808219178082,
+     "basis_in_pt": null,
+     "forward": {
+      "F_pt": null,
+      "quality": "invalid",
+      "reasons": [
+       "no_parity_strikes"
+      ],
+      "notes": [
+       "no_futures_ref"
+      ],
+      "atm": "1095.00",
+      "strikes": [],
+      "prev_session_skipped": [
+       "1092.50",
+       "1095.00"
+      ],
+      "reference": null,
+      "futures_gap_pt": null
+     },
+     "quality": "invalid",
+     "options": [
+      {
+       "strike": "1092.50",
+       "cp": "C",
+       "source": "board",
+       "oi": 2,
+       "volume": 2,
+       "price": "23.50",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1092.50",
+       "cp": "P",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "15.80",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1095.00",
+       "cp": "C",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "43.15",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1095.00",
+       "cp": "P",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "17.45",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      }
+     ],
+     "strike_gex": {
+      "quality": "invalid",
+      "excluded_oi_ratio": 1.0,
+      "rows": []
+     },
+     "net_gex": {
+      "value_won": null,
+      "quality": "invalid",
+      "excluded_oi_ratio": 1.0,
+      "expiries": [
+       "261001"
+      ]
+     },
+     "atm_iv": {
+      "sigma": null,
+      "quality": "invalid",
+      "strikes": [],
+      "reasons": [
+       "no_forward"
+      ]
+     },
+     "expected_move": {
+      "calendar": {
+       "minutes": 77.62603168333334,
+       "dt_years": 0.00014769031903221717,
+       "sigma_pt": null,
+       "lower_pt": null,
+       "upper_pt": null,
+       "quality": "invalid"
+      },
+      "trading": {
+       "minutes": 77.62603168333334,
+       "dt_years": 0.0007334281149218948,
+       "sigma_pt": null,
+       "lower_pt": null,
+       "upper_pt": null,
+       "quality": "invalid"
+      }
+     }
+    }
+   ],
+   "expired": [],
+   "skipped": [],
+   "scopes": {
+    "all": {
+     "expiries": [
+      "MONTH:202610",
+      "MONTH:202611",
+      "WKM:260904",
+      "WKM:261001"
+     ],
+     "net_gex": {
+      "value_won": -125273783464.52649,
+      "quality": "invalid",
+      "excluded_oi_ratio": 0.0075584711922418715,
+      "expiries": [
+       "MONTH:202610",
+       "MONTH:202611",
+       "WKM:260904",
+       "WKM:261001"
+      ]
+     },
+     "dex": {
+      "value_won": 2931250004615.7075,
+      "quality": "invalid",
+      "excluded_oi_ratio": 0.0075584711922418715,
+      "expiries": [
+       "MONTH:202610",
+       "MONTH:202611",
+       "WKM:260904",
+       "WKM:261001"
+      ]
+     },
+     "call_wall": {
+      "strike": "1097.50",
+      "value_won": 332933443276.607,
+      "quality": "invalid"
+     },
+     "put_wall": {
+      "strike": "1097.50",
+      "value_won": 368821858724.77606,
+      "quality": "invalid"
+     },
+     "abs_gamma": {
+      "strike": "1097.50",
+      "value_won": 701755302001.383,
+      "quality": "invalid"
+     },
+     "flip": {
+      "level_pt": 1088.7395979420855,
+      "multi_cross": true,
+      "crossings_pt": [
+       1088.7395979420855,
+       1115.6000000625618
+      ],
+      "f_ref_pt": 1094.46,
+      "distance_pct": 0.5226689013682088,
+      "quality": "invalid",
+      "grid_points": 439,
+      "profile_sample": [
+       {
+        "x_pt": 1039.737,
+        "gex_won": 14587681751.128542
+       },
+       {
+        "x_pt": 1044.737,
+        "gex_won": 15039643396.68473
+       },
+       {
+        "x_pt": 1049.737,
+        "gex_won": 15383394489.930222
+       },
+       {
+        "x_pt": 1054.737,
+        "gex_won": 15615771464.568726
+       },
+       {
+        "x_pt": 1059.737,
+        "gex_won": 15737329634.402185
+       },
+       {
+        "x_pt": 1064.737,
+        "gex_won": 15712133815.162498
+       },
+       {
+        "x_pt": 1069.737,
+        "gex_won": 15069586427.55824
+       },
+       {
+        "x_pt": 1074.737,
+        "gex_won": 12551900151.712786
+       },
+       {
+        "x_pt": 1079.737,
+        "gex_won": 12614538489.294271
+       },
+       {
+        "x_pt": 1084.737,
+        "gex_won": 19753563653.57705
+       },
+       {
+        "x_pt": 1089.737,
+        "gex_won": -13224879457.514454
+       },
+       {
+        "x_pt": 1094.737,
+        "gex_won": -133841452962.56369
+       },
+       {
+        "x_pt": 1099.737,
+        "gex_won": -276547254445.1367
+       },
+       {
+        "x_pt": 1104.737,
+        "gex_won": -254585492176.71808
+       },
+       {
+        "x_pt": 1109.737,
+        "gex_won": -95537073791.52283
+       },
+       {
+        "x_pt": 1114.737,
+        "gex_won": -6211264075.537669
+       },
+       {
+        "x_pt": 1119.737,
+        "gex_won": 12489823375.77938
+       },
+       {
+        "x_pt": 1124.737,
+        "gex_won": 14527098730.227737
+       },
+       {
+        "x_pt": 1129.737,
+        "gex_won": 14816647871.884754
+       },
+       {
+        "x_pt": 1134.737,
+        "gex_won": 15030593721.590532
+       },
+       {
+        "x_pt": 1139.737,
+        "gex_won": 15252384342.42382
+       },
+       {
+        "x_pt": 1144.737,
+        "gex_won": 15467794025.8487
+       },
+       {
+        "x_pt": 1149.183,
+        "gex_won": 15640823398.004652
+       }
+      ]
+     }
+    },
+    "nearest": {
+     "expiries": [
+      "WKM:260904"
+     ],
+     "net_gex": {
+      "value_won": -140007441784.4844,
+      "quality": "estimated",
+      "excluded_oi_ratio": 0.0,
+      "expiries": [
+       "WKM:260904"
+      ]
+     },
+     "dex": {
+      "value_won": 1944164134054.0605,
+      "quality": "estimated",
+      "excluded_oi_ratio": 0.0,
+      "expiries": [
+       "WKM:260904"
+      ]
+     },
+     "call_wall": {
+      "strike": "1097.50",
+      "value_won": 330990923262.95233,
+      "quality": "estimated"
+     },
+     "put_wall": {
+      "strike": "1097.50",
+      "value_won": 364291281490.6188,
+      "quality": "estimated"
+     },
+     "abs_gamma": {
+      "strike": "1097.50",
+      "value_won": 695282204753.571,
+      "quality": "estimated"
+     },
+     "flip": {
+      "level_pt": 1086.8557003235005,
+      "multi_cross": true,
+      "crossings_pt": [
+       1081.5125202377135,
+       1086.8557003235005
+      ],
+      "f_ref_pt": 1094.46,
+      "distance_pct": 0.6947992321783822,
+      "quality": "estimated",
+      "grid_points": 439,
+      "profile_sample": [
+       {
+        "x_pt": 1039.737,
+        "gex_won": -0.0006689462515474787
+       },
+       {
+        "x_pt": 1044.737,
+        "gex_won": -0.4771536576774628
+       },
+       {
+        "x_pt": 1049.737,
+        "gex_won": -155.66483571602777
+       },
+       {
+        "x_pt": 1054.737,
+        "gex_won": -23258.736749874053
+       },
+       {
+        "x_pt": 1059.737,
+        "gex_won": -1582740.1768323665
+       },
+       {
+        "x_pt": 1064.737,
+        "gex_won": -48129243.658959955
+       },
+       {
+        "x_pt": 1069.737,
+        "gex_won": -623042486.7723871
+       },
+       {
+        "x_pt": 1074.737,
+        "gex_won": -3001530506.0018783
+       },
+       {
+        "x_pt": 1079.737,
+        "gex_won": -2749130111.9560347
+       },
+       {
+        "x_pt": 1084.737,
+        "gex_won": 4607062138.319765
+       },
+       {
+        "x_pt": 1089.737,
+        "gex_won": -28150459220.14391
+       },
+       {
+        "x_pt": 1094.737,
+        "gex_won": -148564738442.3582
+       },
+       {
+        "x_pt": 1099.737,
+        "gex_won": -291106305761.16986
+       },
+       {
+        "x_pt": 1104.737,
+        "gex_won": -269033418784.23486
+       },
+       {
+        "x_pt": 1109.737,
+        "gex_won": -109936609191.5584
+       },
+       {
+        "x_pt": 1114.737,
+        "gex_won": -20628791574.449673
+       },
+       {
+        "x_pt": 1119.737,
+        "gex_won": -2009744419.1696095
+       },
+       {
+        "x_pt": 1124.737,
+        "gex_won": -110749799.65613489
+       },
+       {
+        "x_pt": 1129.737,
+        "gex_won": -3404627.1377846915
+       },
+       {
+        "x_pt": 1134.737,
+        "gex_won": -56354.30461771651
+       },
+       {
+        "x_pt": 1139.737,
+        "gex_won": -498.7598226121023
+       },
+       {
+        "x_pt": 1144.737,
+        "gex_won": -2.384505844114205
+       },
+       {
+        "x_pt": 1149.183,
+        "gex_won": -0.012416403484540948
+       }
+      ]
+     }
+    },
+    "0dte": {
+     "expiries": [
+      "WKM:260904"
+     ],
+     "net_gex": {
+      "value_won": -140007441784.4844,
+      "quality": "estimated",
+      "excluded_oi_ratio": 0.0,
+      "expiries": [
+       "WKM:260904"
+      ]
+     },
+     "dex": {
+      "value_won": 1944164134054.0605,
+      "quality": "estimated",
+      "excluded_oi_ratio": 0.0,
+      "expiries": [
+       "WKM:260904"
+      ]
+     },
+     "call_wall": {
+      "strike": "1097.50",
+      "value_won": 330990923262.95233,
+      "quality": "estimated"
+     },
+     "put_wall": {
+      "strike": "1097.50",
+      "value_won": 364291281490.6188,
+      "quality": "estimated"
+     },
+     "abs_gamma": {
+      "strike": "1097.50",
+      "value_won": 695282204753.571,
+      "quality": "estimated"
+     },
+     "flip": {
+      "level_pt": 1086.8557003235005,
+      "multi_cross": true,
+      "crossings_pt": [
+       1081.5125202377135,
+       1086.8557003235005
+      ],
+      "f_ref_pt": 1094.46,
+      "distance_pct": 0.6947992321783822,
+      "quality": "estimated",
+      "grid_points": 439,
+      "profile_sample": [
+       {
+        "x_pt": 1039.737,
+        "gex_won": -0.0006689462515474787
+       },
+       {
+        "x_pt": 1044.737,
+        "gex_won": -0.4771536576774628
+       },
+       {
+        "x_pt": 1049.737,
+        "gex_won": -155.66483571602777
+       },
+       {
+        "x_pt": 1054.737,
+        "gex_won": -23258.736749874053
+       },
+       {
+        "x_pt": 1059.737,
+        "gex_won": -1582740.1768323665
+       },
+       {
+        "x_pt": 1064.737,
+        "gex_won": -48129243.658959955
+       },
+       {
+        "x_pt": 1069.737,
+        "gex_won": -623042486.7723871
+       },
+       {
+        "x_pt": 1074.737,
+        "gex_won": -3001530506.0018783
+       },
+       {
+        "x_pt": 1079.737,
+        "gex_won": -2749130111.9560347
+       },
+       {
+        "x_pt": 1084.737,
+        "gex_won": 4607062138.319765
+       },
+       {
+        "x_pt": 1089.737,
+        "gex_won": -28150459220.14391
+       },
+       {
+        "x_pt": 1094.737,
+        "gex_won": -148564738442.3582
+       },
+       {
+        "x_pt": 1099.737,
+        "gex_won": -291106305761.16986
+       },
+       {
+        "x_pt": 1104.737,
+        "gex_won": -269033418784.23486
+       },
+       {
+        "x_pt": 1109.737,
+        "gex_won": -109936609191.5584
+       },
+       {
+        "x_pt": 1114.737,
+        "gex_won": -20628791574.449673
+       },
+       {
+        "x_pt": 1119.737,
+        "gex_won": -2009744419.1696095
+       },
+       {
+        "x_pt": 1124.737,
+        "gex_won": -110749799.65613489
+       },
+       {
+        "x_pt": 1129.737,
+        "gex_won": -3404627.1377846915
+       },
+       {
+        "x_pt": 1134.737,
+        "gex_won": -56354.30461771651
+       },
+       {
+        "x_pt": 1139.737,
+        "gex_won": -498.7598226121023
+       },
+       {
+        "x_pt": 1144.737,
+        "gex_won": -2.384505844114205
+       },
+       {
+        "x_pt": 1149.183,
+        "gex_won": -0.012416403484540948
+       }
+      ]
+     }
+    }
+   },
+   "top_levels": {
+    "from": "WKM:260904",
+    "basis": "calendar",
+    "lower_pt": 1087.6600391162392,
+    "upper_pt": 1101.2599608837609,
+    "quality": "invalid",
+    "levels": [
+     {
+      "strike": "1090.00",
+      "gex_won": 129595073935.30533
+     },
+     {
+      "strike": "1100.00",
+      "gex_won": -97982543990.49796
+     },
+     {
+      "strike": "1092.50",
+      "gex_won": -58771178814.47995
+     },
+     {
+      "strike": "1097.50",
+      "gex_won": -35888415448.16907
+     },
+     {
+      "strike": "1095.00",
+      "gex_won": 22440513050.180054
+     }
+    ]
+   },
+   "gamma_by_expiry": [
+    {
+     "expiry": "WKM:260904",
+     "expiry_date": "2026-09-28",
+     "value_won": -140007441784.4844,
+     "quality": "estimated",
+     "excluded_oi_ratio": 0.0
+    },
+    {
+     "expiry": "WKM:261001",
+     "expiry_date": "2026-10-06",
+     "value_won": null,
+     "quality": "invalid",
+     "excluded_oi_ratio": 1.0
+    },
+    {
+     "expiry": "MONTH:202610",
+     "expiry_date": "2026-10-08",
+     "value_won": 14733658319.957918,
+     "quality": "estimated",
+     "excluded_oi_ratio": 0.0012162162162162162
+    },
+    {
+     "expiry": "MONTH:202611",
+     "expiry_date": "2026-11-12",
+     "value_won": null,
+     "quality": "invalid",
+     "excluded_oi_ratio": 1.0
+    }
+   ]
+  },
+  {
+   "input": "tests/fixtures/validation/chain_snapshot_synthetic_20260928_1452_small.json",
+   "derived": null,
+   "started_kst": "2026-09-28T14:52:36.745683+09:00",
+   "s_ref": {
+    "code": "A01612",
+    "price_pt": 1092.5
+   },
+   "state": "DAY",
+   "trade_date": "2026-09-28",
+   "session": "day",
+   "expiries": [
+    {
+     "label": "MONTH:202610",
+     "expiry": "202610",
+     "expiry_date": "2026-10-08",
+     "expiry_source": "kis",
+     "now_kst": "2026-09-28T14:52:42.043734+09:00",
+     "T_years": 0.027449199526445967,
+     "T_kis_years": 0.0273972602739726,
+     "basis_in_pt": -5.55,
+     "forward": {
+      "F_pt": 1087.65,
+      "quality": "ok",
+      "reasons": [],
+      "notes": [],
+      "atm": "1092.50",
+      "strikes": [
+       "1087.50",
+       "1090.00",
+       "1092.50",
+       "1095.00"
+      ],
+      "prev_session_skipped": [
+       "1097.50"
+      ],
+      "reference": {
+       "kind": "near_basis",
+       "price_pt": 1086.95,
+       "basis_pt": -5.55
+      },
+      "futures_gap_pt": 0.7
+     },
+     "quality": "estimated",
+     "options": [
+      {
+       "strike": "1080.00",
+       "cp": "C",
+       "source": "fill",
+       "oi": 174,
+       "volume": 7,
+       "price": "32.15",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.39316403625506297,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.5560367587544606,
+       "gamma": 0.005575316826329033,
+       "gex_won": 2869043527.882126
+      },
+      {
+       "strike": "1080.00",
+       "cp": "P",
+       "source": "fill",
+       "oi": 165,
+       "volume": 35,
+       "price": "24.50",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.3931640362550643,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.44396324124553954,
+       "gamma": 0.005575316826329014,
+       "gex_won": -2720644724.7158
+      },
+      {
+       "strike": "1082.50",
+       "cp": "C",
+       "source": "fill",
+       "oi": 90,
+       "volume": 6,
+       "price": "32.20",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.4121555026644821,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.5412758738795792,
+       "gamma": 0.005342716615459573,
+       "gex_won": 1422076585.2207816
+      },
+      {
+       "strike": "1082.50",
+       "cp": "P",
+       "source": "fill",
+       "oi": 123,
+       "volume": 15,
+       "price": "27.05",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.41215550266448336,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.4587241261204208,
+       "gamma": 0.005342716615459557,
+       "gex_won": -1943504666.468396
+      },
+      {
+       "strike": "1085.00",
+       "cp": "C",
+       "source": "fill",
+       "oi": 109,
+       "volume": 17,
+       "price": "30.35",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.40404571387304705,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.5278680694969589,
+       "gamma": 0.005465931863796747,
+       "gex_won": 1762012757.952917
+      },
+      {
+       "strike": "1085.00",
+       "cp": "P",
+       "source": "fill",
+       "oi": 163,
+       "volume": 35,
+       "price": "27.70",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.40404571387304833,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.47213193050304114,
+       "gamma": 0.005465931863796731,
+       "gex_won": -2634936509.599309
+      },
+      {
+       "strike": "1087.50",
+       "cp": "C",
+       "source": "fill",
+       "oi": 143,
+       "volume": 4,
+       "price": "29.70",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.4121997638442213,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.5144249176048962,
+       "gamma": 0.005367404180925046,
+       "gex_won": 2269962458.0589232
+      },
+      {
+       "strike": "1087.50",
+       "cp": "P",
+       "source": "fill",
+       "oi": 44,
+       "volume": 42,
+       "price": "29.55",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.4121997638442226,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.48557508239510383,
+       "gamma": 0.005367404180925029,
+       "gex_won": -698449987.0950513
+      },
+      {
+       "strike": "1090.00",
+       "cp": "C",
+       "source": "fill",
+       "oi": 64,
+       "volume": 1,
+       "price": "28.50",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.41221654680495795,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.5010154004389933,
+       "gamma": 0.005370679448041406,
+       "gex_won": 1016547187.3572688
+      },
+      {
+       "strike": "1090.00",
+       "cp": "P",
+       "source": "fill",
+       "oi": 104,
+       "volume": 3,
+       "price": "30.85",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.41221654680495917,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.4989845995610067,
+       "gamma": 0.005370679448041389,
+       "gex_won": -1651889179.4555566
+      },
+      {
+       "strike": "1092.50",
+       "cp": "C",
+       "source": "fill",
+       "oi": 182,
+       "volume": 4,
+       "price": "27.05",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.40828893399865396,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.4872553013749102,
+       "gamma": 0.005419594119925742,
+       "gex_won": 2917134730.9267445
+      },
+      {
+       "strike": "1092.50",
+       "cp": "P",
+       "source": "fill",
+       "oi": 85,
+       "volume": 46,
+       "price": "31.90",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.40828893399865523,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.5127446986250896,
+       "gamma": 0.005419594119925724,
+       "gex_won": -1362398088.6196291
+      },
+      {
+       "strike": "1095.00",
+       "cp": "C",
+       "source": "fill",
+       "oi": 851,
+       "volume": 42,
+       "price": "25.10",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.3969132421875474,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.4722808248401909,
+       "gamma": 0.00556429899255372,
+       "gex_won": 14004201644.725636
+      },
+      {
+       "strike": "1095.00",
+       "cp": "P",
+       "source": "fill",
+       "oi": 89,
+       "volume": 37,
+       "price": "32.45",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.39691324218754864,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.5277191751598089,
+       "gamma": 0.005564298992553703,
+       "gex_won": -1464599231.939574
+      },
+      {
+       "strike": "1097.50",
+       "cp": "C",
+       "source": "fill",
+       "oi": 223,
+       "volume": 41,
+       "price": "24.60",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.40528034726225864,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.4598969104426734,
+       "gamma": 0.005434990916541567,
+       "gex_won": 3584445839.7998238
+      },
+      {
+       "strike": "1097.50",
+       "cp": "P",
+       "source": "fill",
+       "oi": 75,
+       "volume": 0,
+       "price": "21.40",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": {
+        "sigma": 0.22150183691045808,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "estimated",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": -0.589911526648212,
+       "gamma": 0.009739979322410535,
+       "gex_won": -2160417245.2355733
+      },
+      {
+       "strike": "1100.00",
+       "cp": "C",
+       "source": "fill",
+       "oi": 2637,
+       "volume": 295,
+       "price": "23.45",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.40411176272673094,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.44624168094884076,
+       "gamma": 0.005428596016355713,
+       "gex_won": 42336601273.2408
+      },
+      {
+       "strike": "1100.00",
+       "cp": "P",
+       "source": "fill",
+       "oi": 1766,
+       "volume": 334,
+       "price": "35.80",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.40411176272673227,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.553758319051159,
+       "gamma": 0.005428596016355696,
+       "gex_won": -28352839533.00835
+      },
+      {
+       "strike": "1102.50",
+       "cp": "C",
+       "source": "fill",
+       "oi": 212,
+       "volume": 39,
+       "price": "22.85",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.41022332761171443,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.43425727993646623,
+       "gamma": 0.0053233461997332695,
+       "gex_won": 3337635523.215664
+      },
+      {
+       "strike": "1102.50",
+       "cp": "P",
+       "source": "fill",
+       "oi": 239,
+       "volume": 0,
+       "price": "23.40",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": {
+        "sigma": 0.20456202180785915,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "estimated",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": -0.6492078489946544,
+       "gamma": 0.010056515872752128,
+       "gex_won": -7108267802.538988
+      },
+      {
+       "strike": "1105.00",
+       "cp": "C",
+       "source": "fill",
+       "oi": 93,
+       "volume": 24,
+       "price": "21.45",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.4045895860126975,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.4197313582231776,
+       "gamma": 0.005360803151757325,
+       "gex_won": 1474453721.1588511
+      },
+      {
+       "strike": "1105.00",
+       "cp": "P",
+       "source": "fill",
+       "oi": 380,
+       "volume": 18,
+       "price": "38.80",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.40458958601269873,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.5802686417768221,
+       "gamma": 0.0053608031517573115,
+       "gex_won": -6024649613.337226
+      },
+      {
+       "strike": "1470.00",
+       "cp": "C",
+       "source": "board",
+       "oi": 46,
+       "volume": 17,
+       "price": "0.075",
+       "price_kind": "mid",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.6300755410004046,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.0023016302453745833,
+       "gamma": 6.34270044681578e-05,
+       "gex_won": 8628799.340141412
+      },
+      {
+       "strike": "1470.00",
+       "cp": "P",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "348.60",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": {
+        "sigma": null,
+        "quality": "invalid",
+        "source": null,
+        "reason": "below_intrinsic/kis_missing",
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": "iv_invalid",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1595.00",
+       "cp": "C",
+       "source": "board",
+       "oi": 5011,
+       "volume": 3048,
+       "price": "0.02",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.701782973932981,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.0006089188945973076,
+       "gamma": 1.68625543113777e-05,
+       "gex_won": 249899910.88179994
+      },
+      {
+       "strike": "1595.00",
+       "cp": "P",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "473.05",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": {
+        "sigma": null,
+        "quality": "invalid",
+        "source": null,
+        "reason": "below_intrinsic/kis_missing",
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": "iv_invalid",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      }
+     ],
+     "strike_gex": {
+      "quality": "estimated",
+      "excluded_oi_ratio": 0.0,
+      "rows": [
+       {
+        "strike": "1080.00",
+        "call_won": 2869043527.882126,
+        "put_won": -2720644724.7158
+       },
+       {
+        "strike": "1082.50",
+        "call_won": 1422076585.2207816,
+        "put_won": -1943504666.468396
+       },
+       {
+        "strike": "1085.00",
+        "call_won": 1762012757.952917,
+        "put_won": -2634936509.599309
+       },
+       {
+        "strike": "1087.50",
+        "call_won": 2269962458.0589232,
+        "put_won": -698449987.0950513
+       },
+       {
+        "strike": "1090.00",
+        "call_won": 1016547187.3572688,
+        "put_won": -1651889179.4555566
+       },
+       {
+        "strike": "1092.50",
+        "call_won": 2917134730.9267445,
+        "put_won": -1362398088.6196291
+       },
+       {
+        "strike": "1095.00",
+        "call_won": 14004201644.725636,
+        "put_won": -1464599231.939574
+       },
+       {
+        "strike": "1097.50",
+        "call_won": 3584445839.7998238,
+        "put_won": -2160417245.2355733
+       },
+       {
+        "strike": "1100.00",
+        "call_won": 42336601273.2408,
+        "put_won": -28352839533.00835
+       },
+       {
+        "strike": "1102.50",
+        "call_won": 3337635523.215664,
+        "put_won": -7108267802.538988
+       },
+       {
+        "strike": "1105.00",
+        "call_won": 1474453721.1588511,
+        "put_won": -6024649613.337226
+       },
+       {
+        "strike": "1470.00",
+        "call_won": 8628799.340141412,
+        "put_won": 0.0
+       },
+       {
+        "strike": "1595.00",
+        "call_won": 249899910.88179994,
+        "put_won": 0.0
+       }
+      ]
+     },
+     "net_gex": {
+      "value_won": 21130047377.748024,
+      "quality": "estimated",
+      "excluded_oi_ratio": 0.0,
+      "expiries": [
+       "202610"
+      ]
+     },
+     "atm_iv": {
+      "sigma": 0.4122007708218662,
+      "quality": "ok",
+      "strikes": [
+       "1087.50",
+       "1090.00"
+      ],
+      "reasons": []
+     },
+     "expected_move": {
+      "calendar": {
+       "minutes": 52.299271100000006,
+       "dt_years": 9.950394044901067e-05,
+       "sigma_pt": 4.472167936072075,
+       "lower_pt": 1083.177832063928,
+       "upper_pt": 1092.1221679360722,
+       "quality": "ok"
+      },
+      "trading": {
+       "minutes": 52.299271100000006,
+       "dt_years": 0.0004941352144746788,
+       "sigma_pt": 9.96599961889292,
+       "lower_pt": 1077.6840003811071,
+       "upper_pt": 1097.615999618893,
+       "quality": "ok"
+      }
+     }
+    },
+    {
+     "label": "MONTH:202611",
+     "expiry": "202611",
+     "expiry_date": "2026-11-12",
+     "expiry_source": "computed",
+     "now_kst": "2026-09-28T14:52:43.164576+09:00",
+     "T_years": 0.1233395749436834,
+     "T_kis_years": 0.1232876712328767,
+     "basis_in_pt": null,
+     "forward": {
+      "F_pt": null,
+      "quality": "invalid",
+      "reasons": [
+       "no_parity_strikes"
+      ],
+      "notes": [
+       "no_futures_ref"
+      ],
+      "atm": "1347.50",
+      "strikes": [],
+      "prev_session_skipped": [
+       "1347.50",
+       "1350.00",
+       "1352.50"
+      ],
+      "reference": null,
+      "futures_gap_pt": null
+     },
+     "quality": "invalid",
+     "options": [
+      {
+       "strike": "1347.50",
+       "cp": "C",
+       "source": "board",
+       "oi": 2,
+       "volume": 3,
+       "price": "16.45",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1347.50",
+       "cp": "P",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "250.95",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1350.00",
+       "cp": "C",
+       "source": "board",
+       "oi": 159,
+       "volume": 3,
+       "price": "16.20",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1350.00",
+       "cp": "P",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "253.25",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1352.50",
+       "cp": "C",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "25.45",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1352.50",
+       "cp": "P",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "255.55",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      }
+     ],
+     "strike_gex": {
+      "quality": "invalid",
+      "excluded_oi_ratio": 1.0,
+      "rows": []
+     },
+     "net_gex": {
+      "value_won": null,
+      "quality": "invalid",
+      "excluded_oi_ratio": 1.0,
+      "expiries": [
+       "202611"
+      ]
+     },
+     "atm_iv": {
+      "sigma": null,
+      "quality": "invalid",
+      "strikes": [],
+      "reasons": [
+       "no_forward"
+      ]
+     },
+     "expected_move": {
+      "calendar": {
+       "minutes": 52.2805904,
+       "dt_years": 9.9468398782344e-05,
+       "sigma_pt": null,
+       "lower_pt": null,
+       "upper_pt": null,
+       "quality": "invalid"
+      },
+      "trading": {
+       "minutes": 52.2805904,
+       "dt_years": 0.0004939587150415722,
+       "sigma_pt": null,
+       "lower_pt": null,
+       "upper_pt": null,
+       "quality": "invalid"
+      }
+     }
+    },
+    {
+     "label": "WKM:260904",
+     "expiry": "260904",
+     "expiry_date": "2026-09-28",
+     "expiry_source": "kis",
+     "now_kst": "2026-09-28T14:52:44.226146+09:00",
+     "T_years": 5.18700486428209e-05,
+     "T_kis_years": 0.0013698630136986301,
+     "basis_in_pt": -0.64,
+     "forward": {
+      "F_pt": 1091.88,
+      "quality": "ok",
+      "reasons": [],
+      "notes": [],
+      "atm": "1092.50",
+      "strikes": [
+       "1087.50",
+       "1090.00",
+       "1092.50",
+       "1095.00",
+       "1097.50"
+      ],
+      "prev_session_skipped": [],
+      "reference": {
+       "kind": "near_basis",
+       "price_pt": 1091.86,
+       "basis_pt": -0.64
+      },
+      "futures_gap_pt": 0.02
+     },
+     "quality": "estimated",
+     "options": [
+      {
+       "strike": "1085.00",
+       "cp": "P",
+       "source": "board",
+       "oi": 1971,
+       "volume": 4053,
+       "price": "0.195",
+       "price_kind": "mid",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.639275423579321,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.08453433203773904,
+       "gamma": 0.030826474932106582,
+       "gex_won": -181092439953.20563
+      },
+      {
+       "strike": "1087.50",
+       "cp": "C",
+       "source": "board",
+       "oi": 59,
+       "volume": 10069,
+       "price": "4.815",
+       "price_kind": "mid",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.593904258519548,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.8268666649966276,
+       "gamma": 0.0548189723597867,
+       "gex_won": 9639904521.150784
+      },
+      {
+       "strike": "1087.50",
+       "cp": "P",
+       "source": "board",
+       "oi": 962,
+       "volume": 2909,
+       "price": "0.43",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.5914161881852212,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.17212535013668248,
+       "gamma": 0.05484503463461572,
+       "gex_won": -157254187102.61545
+      },
+      {
+       "strike": "1090.00",
+       "cp": "C",
+       "source": "board",
+       "oi": 227,
+       "volume": 17851,
+       "price": "2.855",
+       "price_kind": "mid",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.5606429563304662,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.6659681904166592,
+       "gamma": 0.08253960667959735,
+       "gex_won": 55844201189.507675
+      },
+      {
+       "strike": "1090.00",
+       "cp": "P",
+       "source": "board",
+       "oi": 1808,
+       "volume": 6591,
+       "price": "0.965",
+       "price_kind": "mid",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.5571464610097129,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.3330622760212466,
+       "gamma": 0.08296241687747839,
+       "gex_won": -447063951554.907
+      },
+      {
+       "strike": "1092.50",
+       "cp": "C",
+       "source": "board",
+       "oi": 417,
+       "volume": 4156,
+       "price": "1.30",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.5069345553982512,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.43893984351438337,
+       "gamma": 0.0989003751911672,
+       "gex_won": 122920360406.96666
+      },
+      {
+       "strike": "1092.50",
+       "cp": "P",
+       "source": "board",
+       "oi": 840,
+       "volume": 19633,
+       "price": "2.06",
+       "price_kind": "mid",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.5520455863830499,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.5559819646247457,
+       "gamma": 0.09099083454115482,
+       "gex_won": -227806842800.53375
+      },
+      {
+       "strike": "1095.00",
+       "cp": "C",
+       "source": "board",
+       "oi": 143,
+       "volume": 7356,
+       "price": "0.625",
+       "price_kind": "mid",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.5611610578865907,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.24071810579764819,
+       "gamma": 0.07056174992813716,
+       "gex_won": 30074278076.33328
+      },
+      {
+       "strike": "1095.00",
+       "cp": "P",
+       "source": "board",
+       "oi": 1769,
+       "volume": 6965,
+       "price": "3.745",
+       "price_kind": "mid",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.5611610578866352,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.7592818942023343,
+       "gamma": 0.07056174992813434,
+       "gex_won": -372037747671.5485
+      },
+      {
+       "strike": "1097.50",
+       "cp": "C",
+       "source": "board",
+       "oi": 193,
+       "volume": 25098,
+       "price": "0.25",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.5856157670113007,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.11215866656825092,
+       "gamma": 0.04140362958204842,
+       "gex_won": 23816917612.068863
+      },
+      {
+       "strike": "1097.50",
+       "cp": "P",
+       "source": "board",
+       "oi": 2016,
+       "volume": 5567,
+       "price": "5.96",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.6418326417085958,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.8661360238229175,
+       "gamma": 0.04276829899277017,
+       "gex_won": -256981781902.49802
+      },
+      {
+       "strike": "1100.00",
+       "cp": "P",
+       "source": "board",
+       "oi": 1464,
+       "volume": 17737,
+       "price": "7.82",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 0.7049038499189371,
+        "quality": "estimated",
+        "source": "kis",
+        "reason": "below_intrinsic",
+        "below_min_premium": false,
+        "rescaled": true,
+        "t_kis_years": 0.0013698630136986301
+       },
+       "excluded": null,
+       "quality": "estimated",
+       "quality_reasons": [],
+       "delta": -0.9274267367714718,
+       "gamma": 0.02490263125995001,
+       "gex_won": -108661612484.73009
+      }
+     ],
+     "strike_gex": {
+      "quality": "estimated",
+      "excluded_oi_ratio": 0.0,
+      "rows": [
+       {
+        "strike": "1085.00",
+        "call_won": 0.0,
+        "put_won": -181092439953.20563
+       },
+       {
+        "strike": "1087.50",
+        "call_won": 9639904521.150784,
+        "put_won": -157254187102.61545
+       },
+       {
+        "strike": "1090.00",
+        "call_won": 55844201189.507675,
+        "put_won": -447063951554.907
+       },
+       {
+        "strike": "1092.50",
+        "call_won": 122920360406.96666,
+        "put_won": -227806842800.53375
+       },
+       {
+        "strike": "1095.00",
+        "call_won": 30074278076.33328,
+        "put_won": -372037747671.5485
+       },
+       {
+        "strike": "1097.50",
+        "call_won": 23816917612.068863,
+        "put_won": -256981781902.49802
+       },
+       {
+        "strike": "1100.00",
+        "call_won": 0.0,
+        "put_won": -108661612484.73009
+       }
+      ]
+     },
+     "net_gex": {
+      "value_won": -1508602901664.0112,
+      "quality": "estimated",
+      "excluded_oi_ratio": 0.0,
+      "expiries": [
+       "260904"
+      ]
+     },
+     "atm_iv": {
+      "sigma": 0.5367824210599501,
+      "quality": "ok",
+      "strikes": [
+       "1090.00",
+       "1092.50"
+      ],
+      "reasons": []
+     },
+     "expected_move": {
+      "calendar": {
+       "minutes": 52.262897566666666,
+       "dt_years": 9.943473661846778e-05,
+       "sigma_pt": 5.844431323925679,
+       "lower_pt": 1086.0355686760745,
+       "upper_pt": 1097.7244313239257,
+       "quality": "ok"
+      },
+      "trading": {
+       "minutes": 52.262897566666666,
+       "dt_years": 0.0004937915491937516,
+       "sigma_pt": 13.024019039420628,
+       "lower_pt": 1078.8559809605795,
+       "upper_pt": 1104.9040190394207,
+       "quality": "ok"
+      }
+     }
+    },
+    {
+     "label": "WKM:261001",
+     "expiry": "261001",
+     "expiry_date": "2026-10-06",
+     "expiry_source": "kis",
+     "now_kst": "2026-09-28T14:52:46.327346+09:00",
+     "T_years": 0.021969611639205987,
+     "T_kis_years": 0.021917808219178082,
+     "basis_in_pt": null,
+     "forward": {
+      "F_pt": null,
+      "quality": "invalid",
+      "reasons": [
+       "no_parity_strikes"
+      ],
+      "notes": [
+       "no_futures_ref"
+      ],
+      "atm": "1092.50",
+      "strikes": [],
+      "prev_session_skipped": [
+       "1090.00",
+       "1092.50"
+      ],
+      "reference": null,
+      "futures_gap_pt": null
+     },
+     "quality": "invalid",
+     "options": [
+      {
+       "strike": "1090.00",
+       "cp": "C",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "46.25",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1090.00",
+       "cp": "P",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "14.80",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1092.50",
+       "cp": "C",
+       "source": "board",
+       "oi": 2,
+       "volume": 2,
+       "price": "23.05",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1092.50",
+       "cp": "P",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "16.50",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      }
+     ],
+     "strike_gex": {
+      "quality": "invalid",
+      "excluded_oi_ratio": 1.0,
+      "rows": []
+     },
+     "net_gex": {
+      "value_won": null,
+      "quality": "invalid",
+      "excluded_oi_ratio": 1.0,
+      "expiries": [
+       "261001"
+      ]
+     },
+     "atm_iv": {
+      "sigma": null,
+      "quality": "invalid",
+      "strikes": [],
+      "reasons": [
+       "no_forward"
+      ]
+     },
+     "expected_move": {
+      "calendar": {
+       "minutes": 52.22787756666666,
+       "dt_years": 9.936810800355148e-05,
+       "sigma_pt": null,
+       "lower_pt": null,
+       "upper_pt": null,
+       "quality": "invalid"
+      },
+      "trading": {
+       "minutes": 52.22787756666666,
+       "dt_years": 0.000493460672398589,
+       "sigma_pt": null,
+       "lower_pt": null,
+       "upper_pt": null,
+       "quality": "invalid"
+      }
+     }
+    }
+   ],
+   "expired": [],
+   "skipped": [],
+   "scopes": {
+    "all": {
+     "expiries": [
+      "MONTH:202610",
+      "MONTH:202611",
+      "WKM:260904",
+      "WKM:261001"
+     ],
+     "net_gex": {
+      "value_won": -1487472854286.2632,
+      "quality": "invalid",
+      "excluded_oi_ratio": 0.00649402390438247,
+      "expiries": [
+       "MONTH:202610",
+       "MONTH:202611",
+       "WKM:260904",
+       "WKM:261001"
+      ]
+     },
+     "dex": {
+      "value_won": 2798805374868.734,
+      "quality": "invalid",
+      "excluded_oi_ratio": 0.00649402390438247,
+      "expiries": [
+       "MONTH:202610",
+       "MONTH:202611",
+       "WKM:260904",
+       "WKM:261001"
+      ]
+     },
+     "call_wall": {
+      "strike": "1092.50",
+      "value_won": 125837495137.8934,
+      "quality": "invalid"
+     },
+     "put_wall": {
+      "strike": "1090.00",
+      "value_won": 448715840734.36255,
+      "quality": "invalid"
+     },
+     "abs_gamma": {
+      "strike": "1090.00",
+      "value_won": 505576589111.2275,
+      "quality": "invalid"
+     },
+     "flip": {
+      "level_pt": 1072.562222624092,
+      "multi_cross": true,
+      "crossings_pt": [
+       1072.562222624092,
+       1113.5390938401845
+      ],
+      "f_ref_pt": 1091.88,
+      "distance_pct": 1.7692216521877868,
+      "quality": "invalid",
+      "grid_points": 438,
+      "profile_sample": [
+       {
+        "x_pt": 1037.286,
+        "gex_won": 18083117089.69144
+       },
+       {
+        "x_pt": 1042.286,
+        "gex_won": 18919699164.922825
+       },
+       {
+        "x_pt": 1047.286,
+        "gex_won": 19640603110.781403
+       },
+       {
+        "x_pt": 1052.286,
+        "gex_won": 20234982694.406734
+       },
+       {
+        "x_pt": 1057.286,
+        "gex_won": 20697778000.59645
+       },
+       {
+        "x_pt": 1062.286,
+        "gex_won": 21018746469.04547
+       },
+       {
+        "x_pt": 1067.286,
+        "gex_won": 20457453130.933228
+       },
+       {
+        "x_pt": 1072.286,
+        "gex_won": 2901724067.9481583
+       },
+       {
+        "x_pt": 1077.286,
+        "gex_won": -143802941121.9905
+       },
+       {
+        "x_pt": 1082.286,
+        "gex_won": -610931323307.7565
+       },
+       {
+        "x_pt": 1087.286,
+        "gex_won": -1212705311523.1943
+       },
+       {
+        "x_pt": 1092.286,
+        "gex_won": -1493722705554.173
+       },
+       {
+        "x_pt": 1097.286,
+        "gex_won": -1293538133635.734
+       },
+       {
+        "x_pt": 1102.286,
+        "gex_won": -686570642421.618
+       },
+       {
+        "x_pt": 1107.286,
+        "gex_won": -196386999505.79898
+       },
+       {
+        "x_pt": 1112.286,
+        "gex_won": -15357645008.790718
+       },
+       {
+        "x_pt": 1117.286,
+        "gex_won": 17796153688.02134
+       },
+       {
+        "x_pt": 1122.286,
+        "gex_won": 20832646090.019966
+       },
+       {
+        "x_pt": 1127.286,
+        "gex_won": 21022642576.613068
+       },
+       {
+        "x_pt": 1132.286,
+        "gex_won": 21076667772.86798
+       },
+       {
+        "x_pt": 1137.286,
+        "gex_won": 21102391142.143005
+       },
+       {
+        "x_pt": 1142.286,
+        "gex_won": 21084716038.042812
+       },
+       {
+        "x_pt": 1146.4740000000002,
+        "gex_won": 21025029591.632866
+       }
+      ]
+     }
+    },
+    "nearest": {
+     "expiries": [
+      "WKM:260904"
+     ],
+     "net_gex": {
+      "value_won": -1508602901664.0112,
+      "quality": "estimated",
+      "excluded_oi_ratio": 0.0,
+      "expiries": [
+       "WKM:260904"
+      ]
+     },
+     "dex": {
+      "value_won": 1716305147057.6372,
+      "quality": "estimated",
+      "excluded_oi_ratio": 0.0,
+      "expiries": [
+       "WKM:260904"
+      ]
+     },
+     "call_wall": {
+      "strike": "1092.50",
+      "value_won": 122920360406.96666,
+      "quality": "estimated"
+     },
+     "put_wall": {
+      "strike": "1090.00",
+      "value_won": 447063951554.907,
+      "quality": "estimated"
+     },
+     "abs_gamma": {
+      "strike": "1090.00",
+      "value_won": 502908152744.4147,
+      "quality": "estimated"
+     },
+     "flip": {
+      "level_pt": null,
+      "multi_cross": false,
+      "crossings_pt": [],
+      "f_ref_pt": 1091.88,
+      "distance_pct": null,
+      "quality": "estimated",
+      "grid_points": 438,
+      "profile_sample": [
+       {
+        "x_pt": 1037.286,
+        "gex_won": -8.666862912060228e-10
+       },
+       {
+        "x_pt": 1042.286,
+        "gex_won": -1.3572060215107875e-05
+       },
+       {
+        "x_pt": 1047.286,
+        "gex_won": -0.06870921313700865
+       },
+       {
+        "x_pt": 1052.286,
+        "gex_won": -114.26936112475018
+       },
+       {
+        "x_pt": 1057.286,
+        "gex_won": -63449.60235054664
+       },
+       {
+        "x_pt": 1062.286,
+        "gex_won": -11971067.124974782
+       },
+       {
+        "x_pt": 1067.286,
+        "gex_won": -784387103.8158042
+       },
+       {
+        "x_pt": 1072.286,
+        "gex_won": -18443950835.81525
+       },
+       {
+        "x_pt": 1077.286,
+        "gex_won": -165164791284.41718
+       },
+       {
+        "x_pt": 1082.286,
+        "gex_won": -632244861250.1816
+       },
+       {
+        "x_pt": 1087.286,
+        "gex_won": -1233930746475.697
+       },
+       {
+        "x_pt": 1092.286,
+        "gex_won": -1514844260433.776
+       },
+       {
+        "x_pt": 1097.286,
+        "gex_won": -1314561208018.9473
+       },
+       {
+        "x_pt": 1102.286,
+        "gex_won": -707517118252.5901
+       },
+       {
+        "x_pt": 1107.286,
+        "gex_won": -217289194417.96658
+       },
+       {
+        "x_pt": 1112.286,
+        "gex_won": -36251561992.17419
+       },
+       {
+        "x_pt": 1117.286,
+        "gex_won": -3122428876.264516
+       },
+       {
+        "x_pt": 1122.286,
+        "gex_won": -134427083.97039324
+       },
+       {
+        "x_pt": 1127.286,
+        "gex_won": -2824919.537986038
+       },
+       {
+        "x_pt": 1132.286,
+        "gex_won": -28628.181970953432
+       },
+       {
+        "x_pt": 1137.286,
+        "gex_won": -139.85123597066973
+       },
+       {
+        "x_pt": 1142.286,
+        "gex_won": -0.33133957722834784
+       },
+       {
+        "x_pt": 1146.4740000000002,
+        "gex_won": -0.001208048635684213
+       }
+      ]
+     }
+    },
+    "0dte": {
+     "expiries": [
+      "WKM:260904"
+     ],
+     "net_gex": {
+      "value_won": -1508602901664.0112,
+      "quality": "estimated",
+      "excluded_oi_ratio": 0.0,
+      "expiries": [
+       "WKM:260904"
+      ]
+     },
+     "dex": {
+      "value_won": 1716305147057.6372,
+      "quality": "estimated",
+      "excluded_oi_ratio": 0.0,
+      "expiries": [
+       "WKM:260904"
+      ]
+     },
+     "call_wall": {
+      "strike": "1092.50",
+      "value_won": 122920360406.96666,
+      "quality": "estimated"
+     },
+     "put_wall": {
+      "strike": "1090.00",
+      "value_won": 447063951554.907,
+      "quality": "estimated"
+     },
+     "abs_gamma": {
+      "strike": "1090.00",
+      "value_won": 502908152744.4147,
+      "quality": "estimated"
+     },
+     "flip": {
+      "level_pt": null,
+      "multi_cross": false,
+      "crossings_pt": [],
+      "f_ref_pt": 1091.88,
+      "distance_pct": null,
+      "quality": "estimated",
+      "grid_points": 438,
+      "profile_sample": [
+       {
+        "x_pt": 1037.286,
+        "gex_won": -8.666862912060228e-10
+       },
+       {
+        "x_pt": 1042.286,
+        "gex_won": -1.3572060215107875e-05
+       },
+       {
+        "x_pt": 1047.286,
+        "gex_won": -0.06870921313700865
+       },
+       {
+        "x_pt": 1052.286,
+        "gex_won": -114.26936112475018
+       },
+       {
+        "x_pt": 1057.286,
+        "gex_won": -63449.60235054664
+       },
+       {
+        "x_pt": 1062.286,
+        "gex_won": -11971067.124974782
+       },
+       {
+        "x_pt": 1067.286,
+        "gex_won": -784387103.8158042
+       },
+       {
+        "x_pt": 1072.286,
+        "gex_won": -18443950835.81525
+       },
+       {
+        "x_pt": 1077.286,
+        "gex_won": -165164791284.41718
+       },
+       {
+        "x_pt": 1082.286,
+        "gex_won": -632244861250.1816
+       },
+       {
+        "x_pt": 1087.286,
+        "gex_won": -1233930746475.697
+       },
+       {
+        "x_pt": 1092.286,
+        "gex_won": -1514844260433.776
+       },
+       {
+        "x_pt": 1097.286,
+        "gex_won": -1314561208018.9473
+       },
+       {
+        "x_pt": 1102.286,
+        "gex_won": -707517118252.5901
+       },
+       {
+        "x_pt": 1107.286,
+        "gex_won": -217289194417.96658
+       },
+       {
+        "x_pt": 1112.286,
+        "gex_won": -36251561992.17419
+       },
+       {
+        "x_pt": 1117.286,
+        "gex_won": -3122428876.264516
+       },
+       {
+        "x_pt": 1122.286,
+        "gex_won": -134427083.97039324
+       },
+       {
+        "x_pt": 1127.286,
+        "gex_won": -2824919.537986038
+       },
+       {
+        "x_pt": 1132.286,
+        "gex_won": -28628.181970953432
+       },
+       {
+        "x_pt": 1137.286,
+        "gex_won": -139.85123597066973
+       },
+       {
+        "x_pt": 1142.286,
+        "gex_won": -0.33133957722834784
+       },
+       {
+        "x_pt": 1146.4740000000002,
+        "gex_won": -0.001208048635684213
+       }
+      ]
+     }
+    }
+   },
+   "top_levels": {
+    "from": "WKM:260904",
+    "basis": "calendar",
+    "lower_pt": 1086.0286018136424,
+    "upper_pt": 1097.7313981863579,
+    "quality": "invalid",
+    "levels": [
+     {
+      "strike": "1090.00",
+      "gex_won": -391855092357.4976
+     },
+     {
+      "strike": "1095.00",
+      "gex_won": -329423867182.4292
+     },
+     {
+      "strike": "1097.50",
+      "gex_won": -231740835695.8649
+     },
+     {
+      "strike": "1087.50",
+      "gex_won": -146042770110.5008
+     },
+     {
+      "strike": "1092.50",
+      "gex_won": -103331745751.25998
+     }
+    ]
+   },
+   "gamma_by_expiry": [
+    {
+     "expiry": "WKM:260904",
+     "expiry_date": "2026-09-28",
+     "value_won": -1508602901664.0112,
+     "quality": "estimated",
+     "excluded_oi_ratio": 0.0
+    },
+    {
+     "expiry": "WKM:261001",
+     "expiry_date": "2026-10-06",
+     "value_won": null,
+     "quality": "invalid",
+     "excluded_oi_ratio": 1.0
+    },
+    {
+     "expiry": "MONTH:202610",
+     "expiry_date": "2026-10-08",
+     "value_won": 21130047377.748024,
+     "quality": "estimated",
+     "excluded_oi_ratio": 0.0
+    },
+    {
+     "expiry": "MONTH:202611",
+     "expiry_date": "2026-11-12",
+     "value_won": null,
+     "quality": "invalid",
+     "excluded_oi_ratio": 1.0
+    }
+   ]
+  },
+  {
+   "input": "tests/fixtures/validation/chain_snapshot_synthetic_20260928_1452_small.json",
+   "derived": {
+    "shift_minutes": 13380,
+    "note": "야간 파생 — 14:52 의 시각만 2026-10-07(수) 21:52 로 옮김(가격·OI 그대로, 실측 아님): 귀속 T+1·0dte·만기 지난 만기 빼기·±1σ 06:00 끝 갈래용"
+   },
+   "started_kst": "2026-10-07T21:52:36.745683+09:00",
+   "s_ref": {
+    "code": "A01612",
+    "price_pt": 1092.5
+   },
+   "state": "NIGHT",
+   "trade_date": "2026-10-08",
+   "session": "night",
+   "expiries": [
+    {
+     "label": "MONTH:202610",
+     "expiry": "202610",
+     "expiry_date": "2026-10-08",
+     "expiry_source": "kis",
+     "now_kst": "2026-10-07T21:52:42.043734+09:00",
+     "T_years": 0.0019925785218797565,
+     "T_kis_years": 0.0027397260273972603,
+     "basis_in_pt": -4.85,
+     "forward": {
+      "F_pt": 1087.65,
+      "quality": "ok",
+      "reasons": [],
+      "notes": [],
+      "atm": "1092.50",
+      "strikes": [
+       "1087.50",
+       "1090.00",
+       "1092.50",
+       "1095.00"
+      ],
+      "prev_session_skipped": [
+       "1097.50"
+      ],
+      "reference": {
+       "kind": "near_basis",
+       "price_pt": 1087.65,
+       "basis_pt": -4.85
+      },
+      "futures_gap_pt": 0.0
+     },
+     "quality": "estimated",
+     "options": [
+      {
+       "strike": "1080.00",
+       "cp": "C",
+       "source": "fill",
+       "oi": 174,
+       "volume": 7,
+       "price": "32.15",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 1.4592540408550276,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.5560367587544606,
+       "gamma": 0.005575316826329033,
+       "gex_won": 2869043527.882126
+      },
+      {
+       "strike": "1080.00",
+       "cp": "P",
+       "source": "fill",
+       "oi": 165,
+       "volume": 35,
+       "price": "24.50",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 1.4592540408550325,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.44396324124553954,
+       "gamma": 0.005575316826329014,
+       "gex_won": -2720644724.7158
+      },
+      {
+       "strike": "1082.50",
+       "cp": "C",
+       "source": "fill",
+       "oi": 90,
+       "volume": 6,
+       "price": "32.20",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 1.5297421108313174,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.5412758738795792,
+       "gamma": 0.005342716615459573,
+       "gex_won": 1422076585.2207816
+      },
+      {
+       "strike": "1082.50",
+       "cp": "P",
+       "source": "fill",
+       "oi": 123,
+       "volume": 15,
+       "price": "27.05",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 1.529742110831322,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.4587241261204208,
+       "gamma": 0.005342716615459557,
+       "gex_won": -1943504666.468396
+      },
+      {
+       "strike": "1085.00",
+       "cp": "C",
+       "source": "fill",
+       "oi": 109,
+       "volume": 17,
+       "price": "30.35",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 1.4996420991997728,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.5278680694969589,
+       "gamma": 0.005465931863796748,
+       "gex_won": 1762012757.9529176
+      },
+      {
+       "strike": "1085.00",
+       "cp": "P",
+       "source": "fill",
+       "oi": 163,
+       "volume": 35,
+       "price": "27.70",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 1.4996420991997774,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.47213193050304114,
+       "gamma": 0.0054659318637967315,
+       "gex_won": -2634936509.5993094
+      },
+      {
+       "strike": "1087.50",
+       "cp": "C",
+       "source": "fill",
+       "oi": 143,
+       "volume": 4,
+       "price": "29.70",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 1.5299063890954299,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.5144249176048962,
+       "gamma": 0.005367404180925046,
+       "gex_won": 2269962458.0589232
+      },
+      {
+       "strike": "1087.50",
+       "cp": "P",
+       "source": "fill",
+       "oi": 44,
+       "volume": 42,
+       "price": "29.55",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 1.5299063890954345,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.48557508239510383,
+       "gamma": 0.00536740418092503,
+       "gex_won": -698449987.0950514
+      },
+      {
+       "strike": "1090.00",
+       "cp": "C",
+       "source": "fill",
+       "oi": 64,
+       "volume": 1,
+       "price": "28.50",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 1.529968680152124,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.5010154004389932,
+       "gamma": 0.005370679448041407,
+       "gex_won": 1016547187.3572692
+      },
+      {
+       "strike": "1090.00",
+       "cp": "P",
+       "source": "fill",
+       "oi": 104,
+       "volume": 3,
+       "price": "30.85",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 1.5299686801521286,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.4989845995610067,
+       "gamma": 0.005370679448041389,
+       "gex_won": -1651889179.4555566
+      },
+      {
+       "strike": "1092.50",
+       "cp": "C",
+       "source": "fill",
+       "oi": 182,
+       "volume": 4,
+       "price": "27.05",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 1.5153910882820607,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.4872553013749102,
+       "gamma": 0.005419594119925742,
+       "gex_won": 2917134730.9267445
+      },
+      {
+       "strike": "1092.50",
+       "cp": "P",
+       "source": "fill",
+       "oi": 85,
+       "volume": 46,
+       "price": "31.90",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 1.5153910882820654,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.5127446986250896,
+       "gamma": 0.005419594119925725,
+       "gex_won": -1362398088.6196296
+      },
+      {
+       "strike": "1095.00",
+       "cp": "C",
+       "source": "fill",
+       "oi": 851,
+       "volume": 42,
+       "price": "25.10",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 1.4731694639417574,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.47228082484019085,
+       "gamma": 0.005564298992553721,
+       "gex_won": 14004201644.725637
+      },
+      {
+       "strike": "1095.00",
+       "cp": "P",
+       "source": "fill",
+       "oi": 89,
+       "volume": 37,
+       "price": "32.45",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 1.473169463941762,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.5277191751598089,
+       "gamma": 0.005564298992553703,
+       "gex_won": -1464599231.939574
+      },
+      {
+       "strike": "1097.50",
+       "cp": "C",
+       "source": "fill",
+       "oi": 223,
+       "volume": 41,
+       "price": "24.60",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 1.5042245217919876,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.4598969104426734,
+       "gamma": 0.005434990916541568,
+       "gex_won": 3584445839.799824
+      },
+      {
+       "strike": "1097.50",
+       "cp": "P",
+       "source": "fill",
+       "oi": 75,
+       "volume": 0,
+       "price": "21.40",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": {
+        "sigma": 0.8221185580633964,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "estimated",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": -0.589911526648212,
+       "gamma": 0.009739979322410535,
+       "gex_won": -2160417245.2355733
+      },
+      {
+       "strike": "1100.00",
+       "cp": "C",
+       "source": "fill",
+       "oi": 2637,
+       "volume": 295,
+       "price": "23.45",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 1.499887243841053,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.44624168094884076,
+       "gamma": 0.005428596016355714,
+       "gex_won": 42336601273.2408
+      },
+      {
+       "strike": "1100.00",
+       "cp": "P",
+       "source": "fill",
+       "oi": 1766,
+       "volume": 334,
+       "price": "35.80",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 1.499887243841058,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.553758319051159,
+       "gamma": 0.005428596016355696,
+       "gex_won": -28352839533.00835
+      },
+      {
+       "strike": "1102.50",
+       "cp": "C",
+       "source": "fill",
+       "oi": 212,
+       "volume": 39,
+       "price": "22.85",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 1.5225707167225202,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.43425727993646623,
+       "gamma": 0.0053233461997332695,
+       "gex_won": 3337635523.215664
+      },
+      {
+       "strike": "1102.50",
+       "cp": "P",
+       "source": "fill",
+       "oi": 239,
+       "volume": 0,
+       "price": "23.40",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": {
+        "sigma": 0.7592453261288055,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "estimated",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": -0.6492078489946544,
+       "gamma": 0.010056515872752126,
+       "gex_won": -7108267802.538986
+      },
+      {
+       "strike": "1105.00",
+       "cp": "C",
+       "source": "fill",
+       "oi": 93,
+       "volume": 24,
+       "price": "21.45",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 1.5016607162255133,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.4197313582231776,
+       "gamma": 0.005360803151757326,
+       "gex_won": 1474453721.1588514
+      },
+      {
+       "strike": "1105.00",
+       "cp": "P",
+       "source": "fill",
+       "oi": 380,
+       "volume": 18,
+       "price": "38.80",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 1.501660716225518,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": -0.5802686417768221,
+       "gamma": 0.0053608031517573115,
+       "gex_won": -6024649613.337226
+      },
+      {
+       "strike": "1470.00",
+       "cp": "C",
+       "source": "board",
+       "oi": 46,
+       "volume": 17,
+       "price": "0.075",
+       "price_kind": "mid",
+       "prev_session": false,
+       "iv": {
+        "sigma": 2.338566589168589,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.0023016302453745833,
+       "gamma": 6.342700446815782e-05,
+       "gex_won": 8628799.340141414
+      },
+      {
+       "strike": "1470.00",
+       "cp": "P",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "348.60",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": {
+        "sigma": null,
+        "quality": "invalid",
+        "source": null,
+        "reason": "below_intrinsic/kis_missing",
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": "iv_invalid",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1595.00",
+       "cp": "C",
+       "source": "board",
+       "oi": 5011,
+       "volume": 3048,
+       "price": "0.02",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": {
+        "sigma": 2.604713417507483,
+        "quality": "ok",
+        "source": "model",
+        "reason": null,
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": null,
+       "quality": "ok",
+       "quality_reasons": [],
+       "delta": 0.0006089188945973076,
+       "gamma": 1.686255431137773e-05,
+       "gex_won": 249899910.88180035
+      },
+      {
+       "strike": "1595.00",
+       "cp": "P",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "473.05",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": {
+        "sigma": null,
+        "quality": "invalid",
+        "source": null,
+        "reason": "below_intrinsic/kis_missing",
+        "below_min_premium": false,
+        "rescaled": false,
+        "t_kis_years": null
+       },
+       "excluded": "iv_invalid",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      }
+     ],
+     "strike_gex": {
+      "quality": "estimated",
+      "excluded_oi_ratio": 0.0,
+      "rows": [
+       {
+        "strike": "1080.00",
+        "call_won": 2869043527.882126,
+        "put_won": -2720644724.7158
+       },
+       {
+        "strike": "1082.50",
+        "call_won": 1422076585.2207816,
+        "put_won": -1943504666.468396
+       },
+       {
+        "strike": "1085.00",
+        "call_won": 1762012757.9529176,
+        "put_won": -2634936509.5993094
+       },
+       {
+        "strike": "1087.50",
+        "call_won": 2269962458.0589232,
+        "put_won": -698449987.0950514
+       },
+       {
+        "strike": "1090.00",
+        "call_won": 1016547187.3572692,
+        "put_won": -1651889179.4555566
+       },
+       {
+        "strike": "1092.50",
+        "call_won": 2917134730.9267445,
+        "put_won": -1362398088.6196296
+       },
+       {
+        "strike": "1095.00",
+        "call_won": 14004201644.725637,
+        "put_won": -1464599231.939574
+       },
+       {
+        "strike": "1097.50",
+        "call_won": 3584445839.799824,
+        "put_won": -2160417245.2355733
+       },
+       {
+        "strike": "1100.00",
+        "call_won": 42336601273.2408,
+        "put_won": -28352839533.00835
+       },
+       {
+        "strike": "1102.50",
+        "call_won": 3337635523.215664,
+        "put_won": -7108267802.538986
+       },
+       {
+        "strike": "1105.00",
+        "call_won": 1474453721.1588514,
+        "put_won": -6024649613.337226
+       },
+       {
+        "strike": "1470.00",
+        "call_won": 8628799.340141414,
+        "put_won": 0.0
+       },
+       {
+        "strike": "1595.00",
+        "call_won": 249899910.88180035,
+        "put_won": 0.0
+       }
+      ]
+     },
+     "net_gex": {
+      "value_won": 21130047377.748028,
+      "quality": "estimated",
+      "excluded_oi_ratio": 0.0,
+      "expiries": [
+       "202610"
+      ]
+     },
+     "atm_iv": {
+      "sigma": 1.529910126558834,
+      "quality": "ok",
+      "strikes": [
+       "1087.50",
+       "1090.00"
+      ],
+      "reasons": []
+     },
+     "expected_move": {
+      "calendar": {
+       "minutes": 487.2992711,
+       "dt_years": 0.0009271295112252664,
+       "sigma_pt": 50.66701115692337,
+       "lower_pt": 1036.9829888430768,
+       "upper_pt": 1138.3170111569234,
+       "quality": "ok"
+      },
+      "trading": {
+       "minutes": 487.2992711,
+       "dt_years": 0.004604112538737717,
+       "sigma_pt": 112.90886681769807,
+       "lower_pt": 974.7411331823021,
+       "upper_pt": 1200.5588668176981,
+       "quality": "ok"
+      }
+     }
+    },
+    {
+     "label": "MONTH:202611",
+     "expiry": "202611",
+     "expiry_date": "2026-11-12",
+     "expiry_source": "computed",
+     "now_kst": "2026-10-07T21:52:43.164576+09:00",
+     "T_years": 0.0978829539391172,
+     "T_kis_years": 0.09863013698630137,
+     "basis_in_pt": null,
+     "forward": {
+      "F_pt": null,
+      "quality": "invalid",
+      "reasons": [
+       "no_parity_strikes"
+      ],
+      "notes": [
+       "no_futures_ref"
+      ],
+      "atm": "1347.50",
+      "strikes": [],
+      "prev_session_skipped": [
+       "1347.50",
+       "1350.00",
+       "1352.50"
+      ],
+      "reference": null,
+      "futures_gap_pt": null
+     },
+     "quality": "invalid",
+     "options": [
+      {
+       "strike": "1347.50",
+       "cp": "C",
+       "source": "board",
+       "oi": 2,
+       "volume": 3,
+       "price": "16.45",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1347.50",
+       "cp": "P",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "250.95",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1350.00",
+       "cp": "C",
+       "source": "board",
+       "oi": 159,
+       "volume": 3,
+       "price": "16.20",
+       "price_kind": "last",
+       "prev_session": false,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1350.00",
+       "cp": "P",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "253.25",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1352.50",
+       "cp": "C",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "25.45",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      },
+      {
+       "strike": "1352.50",
+       "cp": "P",
+       "source": "board",
+       "oi": 0,
+       "volume": 0,
+       "price": "255.55",
+       "price_kind": "last",
+       "prev_session": true,
+       "iv": null,
+       "excluded": "no_forward",
+       "quality": "invalid",
+       "quality_reasons": [
+        "prev_session_last"
+       ],
+       "delta": null,
+       "gamma": null,
+       "gex_won": null
+      }
+     ],
+     "strike_gex": {
+      "quality": "invalid",
+      "excluded_oi_ratio": 1.0,
+      "rows": []
+     },
+     "net_gex": {
+      "value_won": null,
+      "quality": "invalid",
+      "excluded_oi_ratio": 1.0,
+      "expiries": [
+       "202611"
+      ]
+     },
+     "atm_iv": {
+      "sigma": null,
+      "quality": "invalid",
+      "strikes": [],
+      "reasons": [
+       "no_forward"
+      ]
+     },
+     "expected_move": {
+      "calendar": {
+       "minutes": 487.2805904,
+       "dt_years": 0.0009270939695585997,
+       "sigma_pt": null,
+       "lower_pt": null,
+       "upper_pt": null,
+       "quality": "invalid"
+      },
+      "trading": {
+       "minutes": 487.2805904,
+       "dt_years": 0.004603936039304611,
+       "sigma_pt": null,
+       "lower_pt": null,
+       "upper_pt": null,
+       "quality": "invalid"
+      }
+     }
+    }
+   ],
+   "expired": [
+    {
+     "label": "WKM:260904",
+     "expiry_date": "2026-09-28"
+    },
+    {
+     "label": "WKM:261001",
+     "expiry_date": "2026-10-06"
+    }
+   ],
+   "skipped": [],
+   "scopes": {
+    "all": {
+     "expiries": [
+      "MONTH:202610",
+      "MONTH:202611"
+     ],
+     "net_gex": {
+      "value_won": 21130047377.748028,
+      "quality": "invalid",
+      "excluded_oi_ratio": 0.012170232065915792,
+      "expiries": [
+       "MONTH:202610",
+       "MONTH:202611"
+      ]
+     },
+     "dex": {
+      "value_won": 1082500227811.0964,
+      "quality": "invalid",
+      "excluded_oi_ratio": 0.012170232065915792,
+      "expiries": [
+       "MONTH:202610",
+       "MONTH:202611"
+      ]
+     },
+     "call_wall": {
+      "strike": "1100.00",
+      "value_won": 42336601273.2408,
+      "quality": "invalid"
+     },
+     "put_wall": {
+      "strike": "1100.00",
+      "value_won": 28352839533.00835,
+      "quality": "invalid"
+     },
+     "abs_gamma": {
+      "strike": "1100.00",
+      "value_won": 70689440806.24915,
+      "quality": "invalid"
+     },
+     "flip": {
+      "level_pt": null,
+      "multi_cross": false,
+      "crossings_pt": [],
+      "f_ref_pt": 1087.65,
+      "distance_pct": null,
+      "quality": "invalid",
+      "grid_points": 437,
+      "profile_sample": [
+       {
+        "x_pt": 1033.2675,
+        "gex_won": 18083117089.69145
+       },
+       {
+        "x_pt": 1038.2675,
+        "gex_won": 18922735646.092793
+       },
+       {
+        "x_pt": 1043.2675,
+        "gex_won": 19645725069.39326
+       },
+       {
+        "x_pt": 1048.2675,
+        "gex_won": 20241144942.299603
+       },
+       {
+        "x_pt": 1053.2675,
+        "gex_won": 20704002335.699566
+       },
+       {
+        "x_pt": 1058.2675,
+        "gex_won": 21035946346.085953
+       },
+       {
+        "x_pt": 1063.2675,
+        "gex_won": 21245418299.230614
+       },
+       {
+        "x_pt": 1068.2675,
+        "gex_won": 21347177161.239494
+       },
+       {
+        "x_pt": 1073.2675,
+        "gex_won": 21361192717.907906
+       },
+       {
+        "x_pt": 1078.2675,
+        "gex_won": 21310981686.024895
+       },
+       {
+        "x_pt": 1083.2675,
+        "gex_won": 21221541080.262108
+       },
+       {
+        "x_pt": 1088.2675,
+        "gex_won": 21117095311.31597
+       },
+       {
+        "x_pt": 1093.2675,
+        "gex_won": 21018907260.034435
+       },
+       {
+        "x_pt": 1098.2675,
+        "gex_won": 20943402183.07376
+       },
+       {
+        "x_pt": 1103.2675,
+        "gex_won": 20900816089.128113
+       },
+       {
+        "x_pt": 1108.2675,
+        "gex_won": 20894512849.568386
+       },
+       {
+        "x_pt": 1113.2675,
+        "gex_won": 20921027676.645832
+       },
+       {
+        "x_pt": 1118.2675,
+        "gex_won": 20970802682.68706
+       },
+       {
+        "x_pt": 1123.2675,
+        "gex_won": 21029497330.037937
+       },
+       {
+        "x_pt": 1128.2675,
+        "gex_won": 21079694682.8067
+       },
+       {
+        "x_pt": 1133.2675,
+        "gex_won": 21102791133.25182
+       },
+       {
+        "x_pt": 1138.2675,
+        "gex_won": 21080855018.09333
+       },
+       {
+        "x_pt": 1142.0325000000003,
+        "gex_won": 21025029591.63408
+       }
+      ]
+     }
+    },
+    "nearest": {
+     "expiries": [
+      "MONTH:202610"
+     ],
+     "net_gex": {
+      "value_won": 21130047377.748028,
+      "quality": "estimated",
+      "excluded_oi_ratio": 0.0,
+      "expiries": [
+       "MONTH:202610"
+      ]
+     },
+     "dex": {
+      "value_won": 1082500227811.0964,
+      "quality": "estimated",
+      "excluded_oi_ratio": 0.0,
+      "expiries": [
+       "MONTH:202610"
+      ]
+     },
+     "call_wall": {
+      "strike": "1100.00",
+      "value_won": 42336601273.2408,
+      "quality": "estimated"
+     },
+     "put_wall": {
+      "strike": "1100.00",
+      "value_won": 28352839533.00835,
+      "quality": "estimated"
+     },
+     "abs_gamma": {
+      "strike": "1100.00",
+      "value_won": 70689440806.24915,
+      "quality": "estimated"
+     },
+     "flip": {
+      "level_pt": null,
+      "multi_cross": false,
+      "crossings_pt": [],
+      "f_ref_pt": 1087.65,
+      "distance_pct": null,
+      "quality": "estimated",
+      "grid_points": 437,
+      "profile_sample": [
+       {
+        "x_pt": 1033.2675,
+        "gex_won": 18083117089.69145
+       },
+       {
+        "x_pt": 1038.2675,
+        "gex_won": 18922735646.092793
+       },
+       {
+        "x_pt": 1043.2675,
+        "gex_won": 19645725069.39326
+       },
+       {
+        "x_pt": 1048.2675,
+        "gex_won": 20241144942.299603
+       },
+       {
+        "x_pt": 1053.2675,
+        "gex_won": 20704002335.699566
+       },
+       {
+        "x_pt": 1058.2675,
+        "gex_won": 21035946346.085953
+       },
+       {
+        "x_pt": 1063.2675,
+        "gex_won": 21245418299.230614
+       },
+       {
+        "x_pt": 1068.2675,
+        "gex_won": 21347177161.239494
+       },
+       {
+        "x_pt": 1073.2675,
+        "gex_won": 21361192717.907906
+       },
+       {
+        "x_pt": 1078.2675,
+        "gex_won": 21310981686.024895
+       },
+       {
+        "x_pt": 1083.2675,
+        "gex_won": 21221541080.262108
+       },
+       {
+        "x_pt": 1088.2675,
+        "gex_won": 21117095311.31597
+       },
+       {
+        "x_pt": 1093.2675,
+        "gex_won": 21018907260.034435
+       },
+       {
+        "x_pt": 1098.2675,
+        "gex_won": 20943402183.07376
+       },
+       {
+        "x_pt": 1103.2675,
+        "gex_won": 20900816089.128113
+       },
+       {
+        "x_pt": 1108.2675,
+        "gex_won": 20894512849.568386
+       },
+       {
+        "x_pt": 1113.2675,
+        "gex_won": 20921027676.645832
+       },
+       {
+        "x_pt": 1118.2675,
+        "gex_won": 20970802682.68706
+       },
+       {
+        "x_pt": 1123.2675,
+        "gex_won": 21029497330.037937
+       },
+       {
+        "x_pt": 1128.2675,
+        "gex_won": 21079694682.8067
+       },
+       {
+        "x_pt": 1133.2675,
+        "gex_won": 21102791133.25182
+       },
+       {
+        "x_pt": 1138.2675,
+        "gex_won": 21080855018.09333
+       },
+       {
+        "x_pt": 1142.0325000000003,
+        "gex_won": 21025029591.63408
+       }
+      ]
+     }
+    },
+    "0dte": {
+     "expiries": [
+      "MONTH:202610"
+     ],
+     "net_gex": {
+      "value_won": 21130047377.748028,
+      "quality": "estimated",
+      "excluded_oi_ratio": 0.0,
+      "expiries": [
+       "MONTH:202610"
+      ]
+     },
+     "dex": {
+      "value_won": 1082500227811.0964,
+      "quality": "estimated",
+      "excluded_oi_ratio": 0.0,
+      "expiries": [
+       "MONTH:202610"
+      ]
+     },
+     "call_wall": {
+      "strike": "1100.00",
+      "value_won": 42336601273.2408,
+      "quality": "estimated"
+     },
+     "put_wall": {
+      "strike": "1100.00",
+      "value_won": 28352839533.00835,
+      "quality": "estimated"
+     },
+     "abs_gamma": {
+      "strike": "1100.00",
+      "value_won": 70689440806.24915,
+      "quality": "estimated"
+     },
+     "flip": {
+      "level_pt": null,
+      "multi_cross": false,
+      "crossings_pt": [],
+      "f_ref_pt": 1087.65,
+      "distance_pct": null,
+      "quality": "estimated",
+      "grid_points": 437,
+      "profile_sample": [
+       {
+        "x_pt": 1033.2675,
+        "gex_won": 18083117089.69145
+       },
+       {
+        "x_pt": 1038.2675,
+        "gex_won": 18922735646.092793
+       },
+       {
+        "x_pt": 1043.2675,
+        "gex_won": 19645725069.39326
+       },
+       {
+        "x_pt": 1048.2675,
+        "gex_won": 20241144942.299603
+       },
+       {
+        "x_pt": 1053.2675,
+        "gex_won": 20704002335.699566
+       },
+       {
+        "x_pt": 1058.2675,
+        "gex_won": 21035946346.085953
+       },
+       {
+        "x_pt": 1063.2675,
+        "gex_won": 21245418299.230614
+       },
+       {
+        "x_pt": 1068.2675,
+        "gex_won": 21347177161.239494
+       },
+       {
+        "x_pt": 1073.2675,
+        "gex_won": 21361192717.907906
+       },
+       {
+        "x_pt": 1078.2675,
+        "gex_won": 21310981686.024895
+       },
+       {
+        "x_pt": 1083.2675,
+        "gex_won": 21221541080.262108
+       },
+       {
+        "x_pt": 1088.2675,
+        "gex_won": 21117095311.31597
+       },
+       {
+        "x_pt": 1093.2675,
+        "gex_won": 21018907260.034435
+       },
+       {
+        "x_pt": 1098.2675,
+        "gex_won": 20943402183.07376
+       },
+       {
+        "x_pt": 1103.2675,
+        "gex_won": 20900816089.128113
+       },
+       {
+        "x_pt": 1108.2675,
+        "gex_won": 20894512849.568386
+       },
+       {
+        "x_pt": 1113.2675,
+        "gex_won": 20921027676.645832
+       },
+       {
+        "x_pt": 1118.2675,
+        "gex_won": 20970802682.68706
+       },
+       {
+        "x_pt": 1123.2675,
+        "gex_won": 21029497330.037937
+       },
+       {
+        "x_pt": 1128.2675,
+        "gex_won": 21079694682.8067
+       },
+       {
+        "x_pt": 1133.2675,
+        "gex_won": 21102791133.25182
+       },
+       {
+        "x_pt": 1138.2675,
+        "gex_won": 21080855018.09333
+       },
+       {
+        "x_pt": 1142.0325000000003,
+        "gex_won": 21025029591.63408
+       }
+      ]
+     }
+    }
+   },
+   "top_levels": {
+    "from": "MONTH:202610",
+    "basis": "calendar",
+    "lower_pt": 1036.9783985042836,
+    "upper_pt": 1138.3216014957165,
+    "quality": "invalid",
+    "levels": [
+     {
+      "strike": "1100.00",
+      "gex_won": 13983761740.232449
+     },
+     {
+      "strike": "1095.00",
+      "gex_won": 12539602412.786064
+     },
+     {
+      "strike": "1105.00",
+      "gex_won": -4550195892.178374
+     },
+     {
+      "strike": "1102.50",
+      "gex_won": -3770632279.3233223
+     },
+     {
+      "strike": "1087.50",
+      "gex_won": 1571512470.963872
+     }
+    ]
+   },
+   "gamma_by_expiry": [
+    {
+     "expiry": "MONTH:202610",
+     "expiry_date": "2026-10-08",
+     "value_won": 21130047377.748028,
+     "quality": "estimated",
+     "excluded_oi_ratio": 0.0
+    },
+    {
+     "expiry": "MONTH:202611",
+     "expiry_date": "2026-11-12",
+     "value_won": null,
+     "quality": "invalid",
+     "excluded_oi_ratio": 1.0
+    }
+   ]
+  }
+ ]
+}

@@ -30,6 +30,7 @@ kis_token.json
 # ── legacy 런타임 산출물 (원본 프로젝트가 실행 중에 만드는 것) ─────────────────────────────
 # raw/ 는 루트 앵커만 둔다 — legacy/gexlab/tests/golden/raw/ 는 시험 골든이라 무시하면 안 된다
 legacy/**/state/
+legacy/**/state_us/
 legacy/**/cache/
 legacy/**/.cache/
 legacy/**/out/

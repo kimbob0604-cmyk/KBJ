@@ -1,0 +1,255 @@
+/* web/prototype.html 의 디자인을 그대로 옮긴다.
+   국내 관례대로 상승 적색·하락 청색. 숫자는 tabular-nums 로 세로를 맞춘다. */
+:root{
+  --paper:#F6F7F8; --card:#FFFFFF; --ink:#14171C; --ink-2:#565D68; --ink-3:#8A929D;
+  --rule:#E2E5E9; --rule-2:#CDD2D9;
+  --up:#D5352E; --up-bg:#FBEAE9; --down:#1B62C4; --down-bg:#E8F0FB;
+  --flag:#8A5A00; --flag-bg:#FDF3DF; --warn:#8A2723; --warn-bg:#FBEAE9;
+  --slate:#232B36; --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);
+  font-family:Pretendard,'Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.up{color:var(--up)} .down{color:var(--down)} .mut{color:var(--ink-3)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 64px}
+code{font-family:var(--mono);font-size:.92em;background:#EEF0F2;padding:1px 5px;border-radius:3px}
+
+header{border-bottom:1px solid var(--rule);background:var(--card)}
+.head-in{max-width:1180px;margin:0 auto;padding:16px 20px 0}
+.title-row{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+h1{font-size:19px;font-weight:600;margin:0;letter-spacing:-.02em}
+.stamp{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+.close-src{font-weight:600}
+.close-src.ok{color:var(--ink-2,#555)}
+.close-src.bad{color:var(--warn,#B3261E)}
+.strip{display:flex;gap:26px;flex-wrap:wrap;margin:14px 0 0;padding:0;list-style:none}
+.strip li{display:flex;align-items:baseline;gap:7px}
+.strip .k{font-size:12px;color:var(--ink-3)}
+.strip .v{font-family:var(--mono);font-size:15px;font-weight:500}
+.strip .d{font-family:var(--mono);font-size:12px}
+
+nav{display:flex;gap:2px;margin-top:16px;overflow-x:auto;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{appearance:none;border:0;background:transparent;cursor:pointer;font:inherit;
+  font-size:13.5px;color:var(--ink-2);padding:10px 14px;border-bottom:2px solid transparent;
+  white-space:nowrap}
+nav button:hover{color:var(--ink)}
+nav button[aria-selected="true"]{color:var(--ink);font-weight:600;border-bottom-color:var(--slate)}
+nav button:focus-visible{outline:2px solid var(--slate);outline-offset:-2px}
+
+.panel{display:none;padding-top:24px}
+.panel.on{display:block}
+.sec{margin-bottom:30px}
+.sec-h{display:flex;align-items:baseline;gap:10px;margin:0 0 10px;flex-wrap:wrap}
+.sec-h h2{font-size:14px;font-weight:600;margin:0;letter-spacing:-.01em}
+.sec-h .note{font-size:12px;color:var(--ink-3)}
+
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;align-items:center}
+.pill{border:1px solid var(--rule-2);background:var(--card);border-radius:999px;
+  padding:6px 14px;font-size:13px;color:var(--ink-2);cursor:pointer;display:flex;
+  align-items:center;gap:7px;font-family:inherit}
+.pill .c{font-family:var(--mono);font-weight:600;color:var(--ink)}
+.pill[aria-pressed="true"]{background:var(--slate);border-color:var(--slate);color:#fff}
+.pill[aria-pressed="true"] .c{color:#fff}
+.pill-note{font-size:12px;color:var(--ink-3);margin-left:4px}
+
+table{width:100%;border-collapse:collapse;background:var(--card);
+  border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--rule);font-size:13px}
+th{font-size:11.5px;font-weight:500;color:var(--ink-3);letter-spacing:.02em;
+  background:#FBFBFC;white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:#FAFBFC}
+td.r,th.r{text-align:right}
+/* 정렬 가능한 머리. 화살표는 정렬된 열에만 붙는다. */
+table.sortable th{cursor:pointer;user-select:none;white-space:nowrap}
+table.sortable th:hover{color:var(--ink)}
+table.sortable th[aria-sort=ascending]::after{content:" ▲";font-size:9px}
+table.sortable th[aria-sort=descending]::after{content:" ▼";font-size:9px}
+td a{color:inherit;text-decoration:none}
+td a:hover{text-decoration:underline}
+.code{color:var(--ink-3);font-family:var(--mono);font-size:11px;margin-left:6px}
+/* 섹터 순위 옆의 전일 대비 변동. 순위 숫자보다 작고 옅게 — 본값은 순위다. */
+.rk{font-size:11px;margin-left:5px;font-family:var(--mono)}
+.theme-row td{background:#F1F3F5;font-weight:600;font-size:12.5px;color:var(--slate)}
+.theme-row td span{font-weight:400;color:var(--ink-3);font-family:var(--mono);
+  font-size:11.5px;margin-left:8px}
+.tag{display:inline-block;font-size:10.5px;padding:2px 7px;border-radius:3px;
+  font-weight:500;letter-spacing:.01em}
+.tag-hist{background:#EDE9FB;color:#463C8C}
+.tag-52{background:var(--up-bg);color:#8E1F1A}
+.tag-60{background:#EAF2E4;color:#3A5C1E}
+.tag-new{background:var(--slate);color:#fff}
+.tag-warn{background:var(--warn-bg);color:var(--warn);margin-left:6px}
+/* 종가 기준으로는 갱신하지 못했다는 표시. 판정을 부정하는 게 아니라 조건을
+   덧붙이는 것이라 눈에 덜 띄게 둔다. */
+.tag-mut{background:transparent;color:var(--ink-3);border:1px solid var(--rule-2);
+  margin-left:5px;font-weight:400}
+.stage{font-size:11px;color:var(--ink-3)}
+
+.breadth{display:flex;height:9px;border-radius:2px;overflow:hidden;min-width:96px;
+  background:var(--rule)}
+.breadth i{display:block;height:100%}
+.breadth .b-up{background:var(--up)}
+.breadth .b-flat{background:var(--rule-2)}
+.breadth .b-dn{background:var(--down)}
+
+.banner{display:flex;gap:10px;align-items:flex-start;background:var(--flag-bg);
+  border:1px solid #F0DFB4;border-radius:6px;padding:11px 14px;font-size:13px;
+  color:var(--flag);margin:18px 0}
+.banner b{font-weight:600;white-space:nowrap}
+.banner.warn{background:var(--warn-bg);border-color:#F0C4C1;color:var(--warn);
+  flex-direction:column;gap:4px}
+/* 설계상 제외는 읽히되 눈을 끌지 않는다. 빨강은 진짜 실패에만 쓴다. */
+.banner.info{background:var(--card);border-color:var(--rule);color:var(--ink-2);
+  flex-direction:column;gap:4px}
+.miss{margin:0;padding-left:18px}
+.miss li{margin:2px 0}
+.card.empty{background:var(--card);border:1px solid var(--rule);border-radius:6px;
+  padding:18px 20px;color:var(--ink-2);font-size:13px;line-height:1.75}
+
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.tool{display:flex;align-items:center;gap:6px;border:1px solid var(--rule-2);
+  background:var(--card);border-radius:5px;padding:5px 10px;font-size:12px;color:var(--ink-3)}
+.tool select{appearance:none;border:0;background:transparent;font:inherit;font-size:12.5px;
+  color:var(--ink);font-weight:500;cursor:pointer;padding-right:2px}
+.tool select:focus-visible{outline:2px solid var(--slate);outline-offset:2px}
+.hm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:10px}
+.hm-group{background:var(--card);border:1px solid var(--rule);border-radius:6px;padding:9px}
+.hm-cap{display:flex;justify-content:space-between;align-items:baseline;margin:0 2px 7px}
+.hm-cap b{font-size:12.5px;font-weight:600}
+.hm-cap span{font-family:var(--mono);font-size:12px}
+.hm-cells{display:grid;grid-template-columns:repeat(6,1fr);grid-auto-rows:38px;gap:2px}
+.cell{border-radius:3px;padding:5px 6px;display:flex;flex-direction:column;
+  justify-content:center;overflow:hidden;cursor:default}
+.cell .n{font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+.cell .p{font-family:var(--mono);font-size:11px}
+.cell.big .n{font-size:13px}
+.cell.big .p{font-size:15px}
+.cell.nh{outline:2px solid var(--ink);outline-offset:-2px}
+.legend{display:flex;align-items:center;gap:12px;margin-top:14px;font-size:12px;
+  color:var(--ink-3);flex-wrap:wrap}
+.scale{display:flex}
+.scale i{width:26px;height:11px;display:block}
+.swatch{width:12px;height:12px;border-radius:2px;outline:2px solid var(--ink);
+  outline-offset:-2px;display:inline-block}
+
+footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--rule);
+  color:var(--ink-3);font-size:12px;line-height:1.8}
+
+@media (max-width:700px){
+  .hm-cells{grid-auto-rows:34px}
+  th,td{padding:8px 9px;font-size:12.5px}
+  .wrap{padding:0 12px 48px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* 일간 코멘트 */
+.doc{background:var(--card);border:1px solid var(--rule);border-radius:6px;
+  padding:26px 30px;max-width:780px}
+.doc h3{font-size:14px;font-weight:600;margin:26px 0 9px;letter-spacing:-.01em}
+.doc h3:first-child{margin-top:0}
+.doc p{margin:0 0 8px;font-size:13.5px;line-height:1.75}
+.doc .cite{font-size:12px;color:var(--flag);background:var(--flag-bg);
+  border:1px solid #F0DFB4;border-radius:5px;padding:8px 11px;margin:0 0 12px}
+.draft-ul{margin:0 0 12px;padding:0;list-style:none}
+.draft-ul li{font-size:13.5px;line-height:1.75;padding-left:14px;position:relative;
+  margin-bottom:5px}
+.draft-ul li:before{content:"";position:absolute;left:0;top:10px;width:4px;height:4px;
+  border-radius:50%;background:var(--rule-2)}
+.draft-ul li.sub{padding-left:28px;color:var(--ink-2);font-size:13px}
+.draft-ul li.sub:before{left:14px;background:none;border-left:1px solid var(--rule-2);
+  border-radius:0;width:6px;height:0;top:11px}
+.draft-tbl{margin:6px 0 14px;font-size:12.5px}
+.draft-tbl td{border-bottom:1px solid var(--rule);padding:6px 10px}
+.draft-tbl td:not(:first-child){text-align:right;font-family:var(--mono)}
+.draft-bar{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.draft-bar .st{font-size:12px;color:var(--ink-3);font-family:var(--mono)}
+.btn{appearance:none;font:inherit;font-size:12.5px;border:1px solid var(--rule-2);
+  background:var(--card);border-radius:5px;padding:6px 13px;cursor:pointer;color:var(--ink)}
+.btn:hover{border-color:var(--ink-3)}
+
+/* 랭킹 표 */
+tbody tr.cross td{background:#EAF2FB}
+tbody tr.cross:hover td{background:#E0EBF7}
+tbody tr.cross td:nth-child(2){font-weight:600}
+
+/* 날짜 선택기 · 내려받기 */
+.spacer{flex:1}
+.daypick{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-3);
+  border:1px solid var(--rule-2);background:var(--card);border-radius:5px;padding:4px 10px}
+.daypick select{appearance:none;border:0;background:transparent;font:inherit;
+  font-family:var(--mono);font-size:12.5px;color:var(--ink);cursor:pointer}
+.daypick select:focus-visible{outline:2px solid var(--slate);outline-offset:2px}
+.dl{font-size:12px;color:var(--ink-2);border:1px solid var(--rule-2);background:var(--card);
+  border-radius:5px;padding:5px 11px;text-decoration:none;white-space:nowrap}
+.dl:hover{border-color:var(--ink-3);color:var(--ink)}
+@media (max-width:700px){.spacer{display:none}.title-row{gap:8px}}
+
+/* ── 섹터 뉴스 ─────────────────────────────────────────── */
+/* 카드가 왜 세로로 안 흐르고 그리드인가: 테마별로 읽는 게 아니라 훑는 화면이다.
+   한 화면에 여러 테마의 재료가 같이 보여야 "오늘 뭐 때문에 움직였나"가 잡힌다. */
+.news-grid{display:grid;gap:14px;margin-top:14px;
+  grid-template-columns:repeat(auto-fill,minmax(360px,1fr))}
+.news-card{background:var(--card);border:1px solid var(--rule);border-radius:6px;
+  padding:14px 16px}
+.news-h{display:flex;align-items:baseline;gap:9px;margin-bottom:10px;
+  padding-bottom:9px;border-bottom:1px solid var(--rule)}
+.news-h b{font-size:14px}
+.news-h .mut{font-size:11px}
+ul.news{list-style:none;margin:0;padding:0}
+ul.news li{padding:9px 0;border-bottom:1px solid var(--rule)}
+ul.news li:last-child{border-bottom:0;padding-bottom:0}
+ul.news a{color:var(--ink);text-decoration:none;font-weight:500;line-height:1.45}
+ul.news a:hover{text-decoration:underline}
+/* 매체명과 검색어는 기사 자체가 아니라 출처 표시다. 본문보다 뒤로 물린다. */
+ul.news .src{margin-left:7px;font-size:11px;color:var(--ink-3);
+  font-family:var(--mono)}
+ul.news .q{margin-left:6px;font-size:10.5px;color:var(--ink-3);
+  border:1px solid var(--rule-2);border-radius:3px;padding:1px 5px}
+ul.news p{margin:5px 0 0;font-size:12.5px;color:var(--ink-2);line-height:1.5}
+
+/* 판정 기준 전환. 증권사 스크리너 상당수가 종가 기준이라 두 목록이 갈린다.
+   어느 쪽을 보고 있는지가 항상 눈에 보여야 한다. */
+.basis-sw{display:inline-flex;border:1px solid var(--rule-2);border-radius:5px;
+  overflow:hidden}
+.basis-sw button{border:0;background:var(--card);color:var(--ink-2);cursor:pointer;
+  font:500 12px/1 inherit;padding:6px 11px}
+.basis-sw button+button{border-left:1px solid var(--rule-2)}
+.basis-sw button[aria-pressed=true]{background:var(--slate);color:#fff}
+.sec-h .spacer{flex:1}
+
+/* 뉴스 탭 카드 위의 테마 서술 (레퍼런스 양식, --write 산출) */
+.narr{list-style:none;margin:0 0 10px;padding:8px 10px;border-left:3px solid var(--rule);
+  display:flex;flex-direction:column;gap:4px;font-size:13px;line-height:1.55}
+.narr .n1{padding-left:0}
+.narr .n1::before{content:"– ";color:var(--mut)}
+.narr .n2{padding-left:14px;color:var(--mut)}
+.narr .n2::before{content:"» ";}
+
+/* ── 히트맵 재무 카드 (D-075) ─────────────────────────── */
+.hm-tip{position:fixed;z-index:50;pointer-events:none;background:var(--card);color:var(--ink);
+  border:1px solid var(--rule-2);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);
+  padding:10px 12px;font-size:12px;line-height:1.45;max-width:340px}
+.hm-tip .t{margin-bottom:4px}.hm-tip .t b{font-size:13px}.hm-tip .t span{color:var(--ink-3)}
+.hm-tip .cap{margin:6px 0 2px;color:var(--ink-3);font-size:11px}
+.hm-tip table{border-collapse:collapse;width:100%}
+.hm-tip th,.hm-tip td{padding:2px 6px;font-size:12px;border:0;text-align:right;
+  font-variant-numeric:tabular-nums}
+.hm-tip th{color:var(--ink-3);font-weight:500;font-size:11px}
+.hm-tip td:first-child,.hm-tip th:first-child{text-align:left;padding-left:0}
+.hm-tip td.down{color:var(--down,#1e63c8)}
+.hm-tip .src{margin-top:6px;color:var(--ink-3);font-size:11px}
+.hm-tip .mut{color:var(--ink-3)}
+.hm-tip sup{font-size:9px}
+
+/* 종목별 순매수. 52주 이상만 받으므로 나머지 행은 빈칸이 맞다. */
+.flows{white-space:nowrap;font-size:12px}
+.flows .fl{display:inline-flex;align-items:baseline;gap:2px;margin-left:7px}
+.flows .fl:first-child{margin-left:0}
+.flows .fl i{font-style:normal;color:#8A94A6;font-size:10.5px}
+.flows .fl b{font-weight:600}

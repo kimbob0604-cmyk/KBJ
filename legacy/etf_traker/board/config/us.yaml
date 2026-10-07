@@ -1,0 +1,159 @@
+# 미국장 신고가 보드 — 임계값 한 곳 모음.
+# 국장(settings.yaml)과 같은 규칙이다: 코드에 숫자를 박지 않는다.
+# 값을 바꿀 때는 docs/DECISIONS.md 에 근거를 남긴다. 미국장 착수 근거는 D-076.
+
+meta:
+  version: "0.1"
+  timezone: "America/New_York"
+  market: "US"
+
+# ── 소스 ──────────────────────────────────────────────────
+# 무료·무키 조합을 기본으로 둔다(D-076). 유료 소스는 어댑터만 갈아 끼운다.
+sources:
+  universe: nasdaq          # nasdaq — api.nasdaq.com 스크리너 (시총·섹터·산업·거래량)
+  # nasdaq | stooq | yahoo. 기본이 nasdaq 인 이유는 실측이다(D-077, run #1) —
+  # 러너에서 stooq 는 HTTP 200 에 본문이 비어 오고 yahoo 는 429 를 준다.
+  # 스크리너와 같은 호스트라 한쪽이 되면 다른 쪽도 된다.
+  history: nasdaq
+  workers: 4                # 일봉 동시 수집 수. 같은 호스트를 두드리므로 낮게 잡는다
+  pause_sec: 0.2            # 호출 사이 지연
+  retries: 2
+
+# ── 유니버스 ──────────────────────────────────────────────
+# 레퍼런스 화면의 머리말과 같은 하한이다: 시총 $500M↑ · 거래대금 $30M↑ · $5↑.
+# **화면 필터가 아니라 생성 단계**에서 건다 — 브리프·HTML·엑셀이 같은 목록을 쓴다.
+universe:
+  min_mktcap_usd: 500000000
+  min_turnover_usd: 30000000
+  min_price_usd: 5.0
+  exchanges: [NASDAQ, NYSE, AMEX]
+  # 스크리너는 ETF·우선주·워런트·유닛을 같은 표에 섞어 준다. 신고가 보드는
+  # 기업만 본다. 이름 판정이라 완전하지 않아 걸러낸 수를 배너에 남긴다.
+  exclude_funds: true
+  exclude_name_tokens:
+    - " ETF"
+    - " ETN"
+    - "Preferred"
+    - "Warrant"
+    - "Depositary"
+    - " Units"
+    - " Unit "
+    - "Right"
+    - "Trust Units"
+    - "Acquisition Corp"
+
+# ── 신고가 판정 ────────────────────────────────────────────
+# board/engine/newhigh.py 를 그대로 쓴다. 국장과 정의가 같아야 두 보드를
+# 나란히 읽을 수 있다 (CLAUDE.md 4장).
+#   신고가  = 직전 60거래일(당일 제외) 최고가 갱신
+#   52주    = 직전 252거래일(당일 제외) 최고가 갱신
+# 미국장에는 '역사적' 을 넣지 않는다 — 무료 소스의 일봉이 상장 이후 전 구간을
+# 주지 않아 사상 최고가 스칼라를 신뢰할 수 없다. 넣는 순간 2장 1번을 어긴다.
+newhigh:
+  lookback:
+    d60: 60
+    w52: 252
+  labels:
+    w52: 52주
+    d60: 신고가
+  priority: [w52, d60]
+  min_display_kind: d60
+  # 레퍼런스 화면과 같이 **종가 기준**이 기본이다. 고가 기준도 함께 계산한다.
+  default_basis: close
+
+# ── 신저가 (미국장 전용) ───────────────────────────────────
+# 52주 신저가 = 직전 252거래일(당일 제외) 최저가를 당일 하회. 신고가의 거울이다.
+# 국장 보드에는 없는 정의라 여기서만 쓴다 (D-076).
+newlow:
+  lookback:
+    w52: 252
+  basis: close
+
+# ── 근접 ──────────────────────────────────────────────────
+proximity:
+  max_gap_pct: 5.0
+  min_mktcap_usd: 2000000000
+  narrow_days: 5
+
+# ── 파생 지표 ─────────────────────────────────────────────
+volume:
+  avg_days: 20
+resistance:
+  thin_below: 3.0
+  thick_above: 8.0
+giveback:
+  ratio: 0.70
+  max_chg_pct: 3.0
+  min_pp: 3.0
+integrity:
+  # 미국장에는 가격제한폭이 없다. 국장의 0.31 을 그대로 쓰면 실제 등락(+35%
+  # 인수합병 프리미엄, -40% 임상 실패)이 전부 '수정주가 의심'으로 잡힌다.
+  # 0.51 은 하루 반토막·두 배를 계단으로 보는 값이다.
+  split_guard_ratio: 0.51
+  suppress_hist_on_suspect: true
+  min_history_days:
+    hist: 60
+
+# ── 브리프 (간밤 미국장 마감) ──────────────────────────────
+# 레퍼런스 산출물의 ①~⑧ 각 절이 읽는 값이다.
+brief:
+  trend_days: 5             # ② 5일 흐름에 남길 영업일 수
+  move_pct: 5.0             # ① ±5% 급등·급락 경계
+  megacap_usd: 100000000000 # ⑤ 대형주 경계 ($100B)
+  cap_tiers:                # ④ 등락 온도. 위에서부터 큰 구간
+    - {name: "시총 $10B+",      min: 10000000000, max: null}
+    - {name: "시총 $2~10B",     min: 2000000000,  max: 10000000000}
+    - {name: "시총 $500M~2B",   min: 500000000,   max: 2000000000}
+  sector_top: 6             # ③ 섹터 로테이션에 올릴 섹터 수
+  sector_min_members: 3     # 구성종목이 이 수 미만인 섹터는 순위에서 뺀다
+  movers_rows: 5            # ⑤ 상승·하락 각 행 수
+  leaders_rows: 7           # ⑦ 52주 신고가 대장 행 수
+  streak_min: 3             # ⑥ '연속' 으로 볼 최소 일수
+  streak_rows: 10           # ⑥ 연속 신고가에 이름을 적을 종목 수
+  fresh_days: 5             # ⑥ '최근 N일 중 52주 첫 진입'
+  fresh_rows: 10
+  movers_min_mktcap_usd: 2000000000   # ⑧ 등락 상위의 시총 하한
+  movers_scan: 40           # ⑧ 산업으로 묶기 전에 훑을 상·하위 종목 수
+  movers_group_rows: 6      # ⑧ 산업 묶음 하나에 적을 종목 수
+  list_sector_min: 1        # 📋 전 종목 목록에 남길 섹터 최소 종목 수
+  # ◆ 내 섹터 — 사용자가 보는 종목. 브리프에 항상 한 줄로 나온다.
+  my_tickers: [AAPL, META, GOOGL, CRWD, BRK.B, IBM, APP, NET]
+  my_label: "내 섹터(AI·인프라)"
+
+# ── 화면 ──────────────────────────────────────────────────
+display:
+  max_rows_achieved: 200
+  max_rows_proximity: 80
+
+# ── 시스템 조합 탐색 (us/btsearch.py) ─────────────────────────
+# 국장 search(signals.yaml)와 같은 방법이다: 조합 표·기준을 먼저 고정하고, 최근
+# holdout_days 를 봉인해 1단계 통과 조합에만 한 번 연다. 값은 전부 새정의다.
+backtest:
+  fetch_years: 5.6          # 받을 일봉 연수 = 검증 창 4년 + 워밍업 300봉 + 여유
+  # 종목 선정은 **오늘** 스크리너 시총으로 한다 — 과거에 작았던 종목이 들어오고
+  # 폐지 종목은 빠진다(미래 정보·생존편향). 결과를 좋게 만드는 쪽이다
+  min_mktcap_usd_now: 300000000
+  # 그날그날(점 시점) 판정하는 하한 — 코너스 원문 유니버스(5달러·거래량)의 달러 판
+  min_price_usd: 5.0
+  min_turnover_avg20_usd: 20000000   # 20일 평균 종가×거래량(추정)
+  warmup_bars: 300
+  # 국내 증권사 해외주식 수수료(편도 약 0.07%) 두 번 + SEC 수수료를 매도에 몰아 뺀다.
+  # 환전 비용은 넣지 않는다
+  cost_sell_pct: 0.15
+  slippage_pct: 0.1         # 편도
+  limit_gap_pct: 1000       # 미국장에는 가격제한폭이 없다 — 사실상 끈다
+  max_hold_bars: 120
+  gate:                     # 지수 게이트 — SPY 종가가 200일선 위일 때만 연다
+    symbol: SPY
+    ma: 200
+search:
+  years: 4
+  holdout_days: 250
+  screen:                   # 1단계 — 국장 signals.yaml screen 과 같은 값
+    min_trades: 200
+    min_win_rate: 55
+    min_profit_factor: 1.2
+  holdout:                  # 2단계 — 국장 search.holdout 과 같은 값
+    min_trades: 50
+    min_win_rate: 55
+    min_profit_factor: 1.2

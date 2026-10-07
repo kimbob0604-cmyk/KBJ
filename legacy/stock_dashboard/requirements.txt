@@ -1,0 +1,11 @@
+Flask>=3.0
+pykrx>=1.0.51
+pandas>=2.0
+APScheduler>=3.10
+gunicorn>=21.2
+yfinance>=0.2.40
+requests>=2.31
+beautifulsoup4>=4.12
+lxml>=5.0
+flask-socketio>=5.3
+simple-websocket>=1.0

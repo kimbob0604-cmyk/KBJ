@@ -1,0 +1,119 @@
+name: CI
+
+# KBJ CI (PLAN §8 P1). 신규 kbj/ 의 린트·타입·시험과 legacy 세 프로젝트의 기존 시험을 돌린다.
+# - 트리거는 push(main)·pull_request·workflow_dispatch 만 — 예약(schedule) 실행은 두지 않는다
+# - 비밀(secrets)을 쓰지 않는다. 시험은 전부 네트워크 없이 도는 합성 fixture 로 돈다
+# - 해석기는 루트 uv.lock 하나(Python 3.12). legacy 잡은 legacy 의존성 그룹까지 설치한다
+# - legacy 시험은 scripts/test_legacy.sh 의 부분 이름으로 돌린다(프로젝트마다 import 루트 분리 —
+#   docs/conflict_map.md §3.4)
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_PYTHON: "3.12"
+  PYTHONIOENCODING: utf-8
+
+jobs:
+  lint:
+    name: lint (kbj — ruff·pyright·import-linter)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: 의존성(dev)
+        run: uv sync --frozen
+      - name: ruff check
+        run: uv run ruff check --output-format github
+      - name: ruff format
+        run: uv run ruff format --check
+      - name: pyright
+        run: uv run pyright
+      - name: import-linter
+        run: uv run lint-imports
+
+  test-kbj:
+    name: test (kbj)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: 의존성(dev)
+        run: uv sync --frozen
+      - name: pytest
+        run: uv run pytest
+
+  legacy:
+    name: legacy (${{ matrix.part }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        # gexlab: 단위·속성·골든(통합 49개는 아래 gexlab-integration 잡)
+        # board: unittest 1,319 / etf-rest: monitor/kr 94·monitor/flow 129·flowlab 44·dart-report·etf_tracker_v9
+        # stock_dashboard: 검사 스크립트 10개 pytest 래퍼
+        part: [gexlab, board, etf-rest, stock_dashboard]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: 의존성(dev + legacy)
+        run: uv sync --frozen --all-groups
+      - name: scripts/test_legacy.sh ${{ matrix.part }}
+        run: uv run bash scripts/test_legacy.sh ${{ matrix.part }}
+
+  gexlab-integration:
+    # GEXLAB 통합 시험 49개. 원본 GEXLAB CI 처럼 러너의 Docker 를 그대로 쓴다 — 시험이 docker CLI 로
+    # TimescaleDB(pg16)·Redis 컨테이너를 직접 띄우고 지운다(legacy/gexlab/tests/integration/conftest.py,
+    # docker-compose.test.yml). 그래서 job services 는 두지 않고 이미지만 미리 받는다.
+    # KBJ_REQUIRE_DOCKER=1 — Docker 를 못 써서 건너뛰면 녹색이 아니라 실패로 본다.
+    name: gexlab-integration (TimescaleDB pg16·Redis)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: 의존성(dev + legacy)
+        run: uv sync --frozen --all-groups
+      - name: 이미지 받기
+        run: |
+          docker pull timescale/timescaledb:latest-pg16
+          docker pull redis:7-alpine
+      - name: scripts/test_legacy.sh gexlab-integration
+        env:
+          KBJ_REQUIRE_DOCKER: "1"
+        run: uv run bash scripts/test_legacy.sh gexlab-integration
+
+  public-safety:
+    name: public-safety (레포 전체, legacy 포함)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: 의존성(dev)
+        run: uv sync --frozen
+      - name: 공개 안전 검사
+        run: uv run python scripts/check_public_safety.py

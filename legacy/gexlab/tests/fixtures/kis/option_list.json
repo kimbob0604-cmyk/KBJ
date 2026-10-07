@@ -1,0 +1,49 @@
+{
+ "_source": "SYNTHETIC — scripts/make_synthetic_fixtures.py(시드 고정)가 만든 합성 데이터. 실측 아님 — 월물리스트 형태(2026-09-28 13:33), 상장 규칙으로 만든 목록",
+ "by_class": {
+  "(blank)": {
+   "rt_cd": "0",
+   "output": [
+    {"mtrt_yymm_code": "0610", "mtrt_yymm": "202610"},
+    {"mtrt_yymm_code": "0611", "mtrt_yymm": "202611"},
+    {"mtrt_yymm_code": "0612", "mtrt_yymm": "202612"},
+    {"mtrt_yymm_code": "0701", "mtrt_yymm": "202701"},
+    {"mtrt_yymm_code": "0702", "mtrt_yymm": "202702"},
+    {"mtrt_yymm_code": "0703", "mtrt_yymm": "202703"},
+    {"mtrt_yymm_code": "0706", "mtrt_yymm": "202706"},
+    {"mtrt_yymm_code": "0709", "mtrt_yymm": "202709"},
+    {"mtrt_yymm_code": "0712", "mtrt_yymm": "202712"},
+    {"mtrt_yymm_code": "0806", "mtrt_yymm": "202806"},
+    {"mtrt_yymm_code": "0812", "mtrt_yymm": "202812"}
+   ]
+  },
+  "K21": {
+   "rt_cd": "0",
+   "output": []
+  },
+  "WKM": {
+   "rt_cd": "0",
+   "output": [
+    {"mtrt_yymm_code": "0904", "mtrt_yymm": "260904"},
+    {"mtrt_yymm_code": "1001", "mtrt_yymm": "261001"}
+   ]
+  },
+  "WKI": {
+   "rt_cd": "0",
+   "output": [
+    {"mtrt_yymm_code": "1001", "mtrt_yymm": "261001"}
+   ]
+  },
+  "MKI": {
+   "rt_cd": "0",
+   "output": [
+    {"mtrt_yymm_code": "0610", "mtrt_yymm": "202610"},
+    {"mtrt_yymm_code": "0611", "mtrt_yymm": "202611"},
+    {"mtrt_yymm_code": "0612", "mtrt_yymm": "202612"},
+    {"mtrt_yymm_code": "0701", "mtrt_yymm": "202701"},
+    {"mtrt_yymm_code": "0702", "mtrt_yymm": "202702"},
+    {"mtrt_yymm_code": "0703", "mtrt_yymm": "202703"}
+   ]
+  }
+ }
+}

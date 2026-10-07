@@ -1,0 +1,7 @@
+# exchange_calendars XKRX 에 없는 임시공휴일·휴장일 (PLAN §2.2)
+# 넣을 때는 KRX 일별 데이터 등 근거를 reason 에 함께 적는다.
+closed:
+  - date: 2026-06-03
+    reason: "제9회 전국동시지방선거(공휴일). XKRX 4.13 은 거래일로 봄. KRX fut_bydd_trd 06-03 0행(06-02·06-04 385행) 확인 2026-09-28"
+# XKRX 가 휴장으로 잘못 보는 날 (드묾)
+open: []

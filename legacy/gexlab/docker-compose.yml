@@ -1,0 +1,184 @@
+# GEXLAB 스택 — Phase 1 수집·녹화 + Phase 3 engine (PLAN §4.1·§6.5·§11.3, docs/phase1_design.md §2,
+# docs/phase3_design.md §1).
+#
+# - 비밀은 .env(로컬, git 제외)에만. 이 파일엔 값이 없다 — .env.example 을 복사해 채운다
+#   (KIS_APP_KEY·KIS_APP_SECRET·POSTGRES_PASSWORD·DATABASE_URL). DATABASE_URL 의 비밀번호는
+#   POSTGRES_PASSWORD 와 같게, 호스트는 db (postgresql://gexlab:<비밀번호>@db:5432/gexlab)
+# - 이미지는 모두 멀티아키텍처(맥 arm64·VM amd64): timescale/timescaledb:latest-pg16,
+#   redis:7-alpine, 앱은 Dockerfile(python:3.12-slim)
+# - 공개 포트 없음(PLAN §11.2). 시각은 UTC(TZ=UTC), 표시는 앱이 KST 로
+# - restart: always + healthcheck(서비스 하트비트 — Redis health:heartbeat:<서비스>,
+#   `python -m services.healthcheck`). migrate 는 한 번 돌고 끝난다
+# - DB 장애 동안 쓰기 묶음은 서비스마다 state/spool/<서비스>/ (볼륨 spool)에 쌓였다가 복구 뒤 재적재
+# - probe 는 tools 프로파일: docker compose --profile tools run --rm probe
+
+name: gexlab
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "10"
+
+x-env: &env
+  env_file:
+    - path: .env
+      required: false
+
+x-app: &app
+  <<: *env
+  build: .
+  image: gexlab-app:local
+  environment:
+    TZ: UTC
+    REDIS_URL: redis://redis:6379/0
+    SPOOL_DIR: /app/state/spool
+  volumes:
+    - spool:/app/state/spool
+  restart: always
+  stop_grace_period: 30s
+  logging: *logging
+  depends_on:
+    redis:
+      condition: service_healthy
+    migrate:
+      condition: service_completed_successfully
+
+x-heartbeat: &heartbeat
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 60s
+
+services:
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]  # 토큰·상태가 재기동을 넘기게
+    environment:
+      TZ: UTC
+    volumes:
+      - redis:/data
+    restart: always
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  db:
+    image: timescale/timescaledb:latest-pg16
+    environment:
+      TZ: UTC
+      POSTGRES_USER: gexlab
+      POSTGRES_DB: gexlab
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}  # .env 에서 (없으면 db 가 기동하지 않는다)
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    shm_size: 256mb
+    restart: always
+    logging: *logging
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U gexlab -d gexlab"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  migrate:
+    <<: *env
+    build: .
+    image: gexlab-app:local
+    command: ["python", "-m", "db.migrate"]
+    environment:
+      TZ: UTC
+    restart: "no"
+    logging: *logging
+    depends_on:
+      db:
+        condition: service_healthy
+
+  auth:
+    <<: *app
+    command: ["python", "-m", "services.auth"]
+    healthcheck:
+      test: ["CMD", "python", "-m", "services.healthcheck", "auth", "120"]
+      <<: *heartbeat
+
+  scheduler:
+    <<: *app
+    command: ["python", "-m", "services.scheduler"]
+    healthcheck:
+      test: ["CMD", "python", "-m", "services.healthcheck", "scheduler", "60"]
+      <<: *heartbeat
+
+  recorder:
+    <<: *app
+    command: ["python", "-m", "services.recorder"]
+    healthcheck:
+      test: ["CMD", "python", "-m", "services.healthcheck", "recorder", "60"]
+      <<: *heartbeat
+
+  poller:
+    <<: *app
+    command: ["python", "-m", "services.poller"]
+    healthcheck:
+      test: ["CMD", "python", "-m", "services.healthcheck", "poller", "60"]
+      <<: *heartbeat
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      auth:
+        condition: service_started
+      scheduler:
+        condition: service_started
+
+  ws-gateway:
+    <<: *app
+    command: ["python", "-m", "services.ws_gateway"]
+    # 멈출 때 작업 스레드가 큐(최대 20만 건)를 비우길 40초(WORKER_JOIN_S)까지 기다린다 — SIGKILL 전에
+    # 다 비우거나, 못 비우면 남은 수를 critical 로 남길 여유
+    stop_grace_period: 60s
+    healthcheck:
+      test: ["CMD", "python", "-m", "services.healthcheck", "ws-gateway", "60"]
+      <<: *heartbeat
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      auth:
+        condition: service_started
+      scheduler:
+        condition: service_started
+
+  # 지표 계산 — DB(체인·선물·최종거래일)와 Redis(chain.ready·마스터·poller 문맥)만 읽는다. KIS 를
+  # 부르지 않아 auth 를 기다리지 않는다(Phase 3 설계 §1)
+  engine:
+    <<: *app
+    command: ["python", "-m", "services.engine"]
+    # 기능 플래그(docs/phase3_design.md §4)는 호스트 파일을 읽기 전용으로 — 30초마다 mtime 으로 다시
+    # 읽는다. 파일을 새로 만들어 바꾸면(inode 가 바뀐다) 컨테이너가 못 본다: 제자리에 고치거나 재기동
+    volumes:
+      - spool:/app/state/spool
+      - ./config/features.yaml:/app/config/features.yaml:ro
+    healthcheck:
+      test: ["CMD", "python", "-m", "services.healthcheck", "engine", "60"]
+      <<: *heartbeat
+
+  probe:
+    <<: *env
+    build: .
+    image: gexlab-app:local
+    environment:
+      TZ: UTC
+    volumes:
+      - ./probe_out:/app/probe_out
+    profiles: ["tools"]
+
+volumes:
+  pgdata:
+  redis:
+  spool:

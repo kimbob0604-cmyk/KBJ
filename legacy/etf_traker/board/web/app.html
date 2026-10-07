@@ -1,0 +1,38 @@
+<header>
+  <div class="wrap">
+    <div class="head-top">
+      <div class="brand">
+        <h1>국장 신고가 보드</h1>
+        <span class="as-of" id="asof"></span>
+      </div>
+      <span class="spacer"></span>
+      <div class="ctl">
+        <span class="live" id="live" data-state="loading">
+          <span class="dot"></span><span id="live-t">받는 중</span>
+        </span>
+        <button class="hbtn" id="refresh" title="지금 다시 받기">갱신</button>
+        <select class="hsel" id="daysel" aria-label="날짜"></select>
+        <a class="hbtn" id="xlsx" href="#" download hidden>엑셀</a>
+        <button class="hbtn" id="theme" title="밝게 / 어둡게">◐</button>
+      </div>
+    </div>
+    <ul class="strip" id="strip"></ul>
+  </div>
+</header>
+
+<nav class="tabbar"><div class="wrap" id="tabbar"></div></nav>
+
+<main class="wrap">
+  <div id="boot" class="boot">보드를 받는 중입니다…</div>
+  <div id="app" hidden>
+    <div id="body"></div>
+    <footer id="foot"></footer>
+  </div>
+</main>
+
+<noscript>
+  <div class="wrap" style="padding:40px 20px">
+    이 화면은 자바스크립트로 데이터를 받아 그립니다. 스크립트가 꺼져 있으면
+    표가 보이지 않습니다. 데이터 자체는 <code>api/latest.json</code> 에 그대로 있습니다.
+  </div>
+</noscript>

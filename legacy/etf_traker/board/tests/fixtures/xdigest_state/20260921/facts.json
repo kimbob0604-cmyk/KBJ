@@ -1,0 +1,348 @@
+{
+ "asof": "2026-09-21",
+ "counts": {
+  "analyzed": 68
+ },
+ "missing": [],
+ "themes": [
+  {
+   "title": "가상 GPU사 대표 방송 인터뷰 (다수 계정 인용)",
+   "facts": [
+    {
+     "text": "\"올해 들어 추론 수요가 학습 수요를 앞질렀다. 토큰 단가가 내려가며 사용량이 더 빨리 늘고 있다\"",
+     "post_ids": [
+      "at://did:plc:fixture0029/app.bsky.feed.post/3l4x0029"
+     ]
+    },
+    {
+     "text": "규제론: \"새 법보다 기존 사이버보안·제조물책임·계약법을 먼저 적용하는 편이 빠르다\"",
+     "post_ids": [
+      "at://did:plc:fixture0030/app.bsky.feed.post/3l4x0030"
+     ]
+    },
+    {
+     "text": "수출: 차세대 플랫폼은 양산 단계이며 경쟁사보다 \"한 세대 앞서\" 있다는 주장. 판매 제한 확대 주장에는 반대",
+     "post_ids": [
+      "at://did:plc:fixture0031/app.bsky.feed.post/3l4x0031"
+     ]
+    },
+    {
+     "text": "데이터센터 입지 이슈: \"지역사회와 먼저 이야기했어야 했다\"",
+     "post_ids": [
+      "at://did:plc:fixture0032/app.bsky.feed.post/3l4x0032"
+     ]
+    },
+    {
+     "text": "향후 5년 설비 투자 약 60억 달러 계획 — \"공급망 병목은 전력이지 칩이 아니다\"",
+     "post_ids": [
+      "at://did:plc:fixture0033/app.bsky.feed.post/3l4x0033"
+     ]
+    }
+   ]
+  },
+  {
+   "title": "첨단 패키징·광 인터커넥트 병목 이동",
+   "facts": [
+    {
+     "text": "가상 칩 설계사 L, 가상 파운드리 O의 2.5D 패키징 오버플로 물량을 노리고 브리지 계열 기술에 집중. 별도로 가상 디스플레이사와 글라스 기판 협의설",
+     "post_ids": [
+      "at://did:plc:fixture0025/app.bsky.feed.post/3l4x0025"
+     ]
+    },
+    {
+     "text": "가상 광부품사 P의 광회로 스위치 분기 매출이 첫 매출 인식(작년 8월) 1년 만에 1억 달러 돌파",
+     "post_ids": [
+      "at://did:plc:fixture0026/app.bsky.feed.post/3l4x0026"
+     ]
+    },
+    {
+     "text": "광 인터커넥트 전환 경로: Pluggable Optics → NPO → CPO",
+     "post_ids": [
+      "at://did:plc:fixture0027/app.bsky.feed.post/3l4x0027"
+     ]
+    },
+    {
+     "text": "성숙 공정 웨이퍼도 다시 타이트 — AI 서버당 전력관리칩·MCU·센서·MOSFET 수요 급증, 가상 파운드리 O 물량이 다른 파운드리로 넘치고 일부는 가격 인상 준비",
+     "post_ids": [
+      "at://did:plc:fixture0028/app.bsky.feed.post/3l4x0028"
+     ]
+    }
+   ]
+  },
+  {
+   "title": "가상 후발 메모리사 M 신세대 DRAM 양산 — 위협인가",
+   "facts": [
+    {
+     "text": "가상 후발 메모리사 M, 신세대 DRAM 플랫폼 양산 개시 발표. 셀 간격 12.3nm, DUV 다중 패터닝 적용. 24Gb LPDDR5X 2종 공개",
+     "post_ids": [
+      "at://did:plc:fixture0021/app.bsky.feed.post/3l4x0021"
+     ]
+    },
+    {
+     "text": "9/20 가상 산업박람회 부스에서 실물 전시",
+     "post_ids": [
+      "at://did:plc:fixture0022/app.bsky.feed.post/3l4x0022"
+     ]
+    },
+    {
+     "text": "반론: \"세대 격차가 줄었다는 주장은 실제 스택을 보면 성립하지 않는다. 웨이퍼당 그로스 다이 +40%는 공정 주장이지 출하 양품 기준이 아님\"",
+     "post_ids": [
+      "at://did:plc:fixture0023/app.bsky.feed.post/3l4x0023"
+     ]
+    },
+    {
+     "text": "가상 PC 제조사 N 대표: \"신규 DRAM 캐파가 계속 나온다, 이미 공급 부족은 없다\" / 후발 업체를 '가격 파괴자'로 지칭",
+     "post_ids": [
+      "at://did:plc:fixture0024/app.bsky.feed.post/3l4x0024"
+     ]
+    }
+   ]
+  },
+  {
+   "title": "가상 메모리사 A, 차세대 HBM 증산·후공정은 외주로",
+   "facts": [
+    {
+     "text": "가상 메모리사 A, 내년 차세대 HBM 생산량을 올해 대비 최소 2배로 확대 계획",
+     "post_ids": [
+      "at://did:plc:fixture0018/app.bsky.feed.post/3l4x0018"
+     ]
+    },
+    {
+     "text": "HBM 공정 소모재인 캐리어 외주 세정 물량을 올해 월 2만 장 → 내년 월 5만 장으로 증량 (작년 월 1만 장)",
+     "post_ids": [
+      "at://did:plc:fixture0019/app.bsky.feed.post/3l4x0019"
+     ]
+    },
+    {
+     "text": "동시에 DDR5 모듈·SSD 백엔드 캐파를 외부 파트너로 넘기고 자사 패키징 캐파는 HBM에 집중 재배치",
+     "post_ids": [
+      "at://did:plc:fixture0020/app.bsky.feed.post/3l4x0020"
+     ]
+    }
+   ]
+  },
+  {
+   "title": "CPU 수요, 갑자기 메인 토픽으로",
+   "facts": [
+    {
+     "text": "학습 → 추론 → 에이전틱 AI로 워크로드가 이동하면서 GPU 개수보다 CPU:GPU 비율이 핵심 지표로 부상",
+     "post_ids": [
+      "at://did:plc:fixture0013/app.bsky.feed.post/3l4x0013"
+     ]
+    },
+    {
+     "text": "가상 칩 설계사 L 자료 기준 구간별 비율: 학습기 6~8 GPU:1 CPU → 추론기 3~4:1 → 에이전틱기 1:1",
+     "post_ids": [
+      "at://did:plc:fixture0014/app.bsky.feed.post/3l4x0014"
+     ]
+    },
+    {
+     "text": "\"CPU가 GPU 일을 뺏는다는 게 아니라, GPU 공장 옆에 훨씬 큰 CPU 공장이 필요해졌다는 얘기\"",
+     "post_ids": [
+      "at://did:plc:fixture0015/app.bsky.feed.post/3l4x0015"
+     ]
+    },
+    {
+     "text": "@ParallaxFxLabs: \"CPU 성장률이 HBM 포함 거의 모든 데이터센터 부품보다 높을 수 있다\"",
+     "post_ids": [
+      "at://did:plc:fixture0016/app.bsky.feed.post/3l4x0016"
+     ]
+    },
+    {
+     "text": "9/14~20 주간 가상 칩 설계사 L 관련 화제는 ①메모리 제휴 가능성 ②CPU 수급 타이트 ③공정 로드맵 가속 3가지",
+     "post_ids": [
+      "at://did:plc:fixture0017/app.bsky.feed.post/3l4x0017"
+     ]
+    }
+   ]
+  },
+  {
+   "title": "메모리 시장 규모·Capex 전망 동반 상향",
+   "facts": [
+    {
+     "text": "가상 증권사 F: 2030년 글로벌 DRAM+NAND TAM 1.9조 달러 전망 (기존 1.6조 달러에서 상향)",
+     "post_ids": [
+      "at://did:plc:fixture0009/app.bsky.feed.post/3l4x0009"
+     ]
+    },
+    {
+     "text": "비교치 — 2018년 클라우드 붐 정점 약 1,500억 달러, 2025년 약 1,900억 달러",
+     "post_ids": [
+      "at://did:plc:fixture0010/app.bsky.feed.post/3l4x0010"
+     ]
+    },
+    {
+     "text": "가상 증권사 G: 글로벌 메모리 Capex 2026년 $48.2B(+31.7% YoY) → 2027년 $66.9B(+38.8% YoY). 수혜 후보로 가상 장비사 H·I·J 제시",
+     "post_ids": [
+      "at://did:plc:fixture0011/app.bsky.feed.post/3l4x0011"
+     ]
+    },
+    {
+     "text": "가상 증권사 K: 가상 메모리사 A 매수 의견, 목표주가 보통주 41만원 / 우선주 30만원. \"2027년이 2026년보다 더 타이트\"",
+     "post_ids": [
+      "at://did:plc:fixture0012/app.bsky.feed.post/3l4x0012"
+     ]
+    }
+   ]
+  },
+  {
+   "title": "가상 메모리 3사, 장기공급계약(LTA) 체제로 재편",
+   "facts": [
+    {
+     "text": "가상 메모리사 A·B·C가 3~5년 장기 공급계약 체결 중. C사는 take-or-pay 방식 전략 고객 계약까지 진행",
+     "post_ids": [
+      "at://did:plc:fixture0005/app.bsky.feed.post/3l4x0005"
+     ]
+    },
+    {
+     "text": "가상 메모리사 D는 이미 캐파의 약 절반이 기간 계약으로 묶임",
+     "post_ids": [
+      "at://did:plc:fixture0006/app.bsky.feed.post/3l4x0006"
+     ]
+    },
+    {
+     "text": "기존 분기·반기·연간 단위 단기 거래 관행이 빠르게 LTA 중심으로 전환",
+     "post_ids": [
+      "at://did:plc:fixture0007/app.bsky.feed.post/3l4x0007"
+     ]
+    },
+    {
+     "text": "가상 증권사 E 애널리스트: LTA 비중이 높아지는데도 3Q ASP는 견조. 대부분 DRAM 제품 QoQ +18~25%, NAND +12% 이상",
+     "post_ids": [
+      "at://did:plc:fixture0008/app.bsky.feed.post/3l4x0008"
+     ]
+    }
+   ]
+  },
+  {
+   "title": "가상 HBM 수출단가, 5개월 만에 첫 하락",
+   "facts": [
+    {
+     "text": "가상 무역통계 기준 8월 HBM 평균 수출단가 $61.27, 전월 대비 -2.9%",
+     "post_ids": [
+      "at://did:plc:fixture0001/app.bsky.feed.post/3l4x0001",
+      "at://did:plc:fixture0002/app.bsky.feed.post/3l4x0002"
+     ]
+    },
+    {
+     "text": "가상대학 소속 교수 A: \"공급 물량 증가 때문일 수 있다. 후발 공급사 물량이 늘면 단가 하방 압력이 커질 것\"",
+     "post_ids": [
+      "at://did:plc:fixture0003/app.bsky.feed.post/3l4x0003"
+     ]
+    },
+    {
+     "text": "다만 복수 계정이 \"수요가 꺾인 것과는 다르다\"며 단가≠수요 해석에 선을 그음",
+     "post_ids": [
+      "at://did:plc:fixture0004/app.bsky.feed.post/3l4x0004"
+     ]
+    }
+   ]
+  }
+ ],
+ "standalone": [
+  {
+   "text": "가상 업종 통계: 전자·통신업 월평균 총임금 912.6만원, 전년 상반기 대비 +21.4%. 고정급 +1.2%인 반면 특별급여 +61.8%",
+   "post_ids": [
+    "at://did:plc:fixture0045/app.bsky.feed.post/3l4x0045"
+   ]
+  },
+  {
+   "text": "가상 GPU사 차세대 제품, 하이엔드 MLCC 수요 견인 — 가상 부품사 2곳 우위 부각",
+   "post_ids": [
+    "at://did:plc:fixture0044/app.bsky.feed.post/3l4x0044"
+   ]
+  },
+  {
+   "text": "가상 증권사 Z: MLCC·ABF 기판은 사이클 초입, 메모리는 고점 근접",
+   "post_ids": [
+    "at://did:plc:fixture0043/app.bsky.feed.post/3l4x0043"
+   ]
+  },
+  {
+   "text": "가상 증권사 X, 가상 광통신칩사 Y 비중확대·목표가 $210. 신형 서버 램프가 기대보다 크게 강하고 2H26~2027까지 이어진다는 채널 체크",
+   "post_ids": [
+    "at://did:plc:fixture0042/app.bsky.feed.post/3l4x0042"
+   ]
+  },
+  {
+   "text": "가상 리서치사 W: 가상 GPU사 2027년 점유율 약 75%에서 안정 또는 소폭 상승 전망. 주요 고객 컴퓨트 플릿의 70% 안팎도 GPU 유지",
+   "post_ids": [
+    "at://did:plc:fixture0041/app.bsky.feed.post/3l4x0041"
+   ]
+  },
+  {
+   "text": "가상 보험사 V, AI 데이터센터 건설 등에 1.5조 엔 투입 계획. 생보업계 AI 인프라 투자 확대",
+   "post_ids": [
+    "at://did:plc:fixture0040/app.bsky.feed.post/3l4x0040"
+   ]
+  },
+  {
+   "text": "가상 소재사 T × 가상 전자그룹 U, 해외 7,500만 달러 소재 공장 MoU. 포토레지스트·CMP·고순도 화학을 300mm 팹 옆에 직결",
+   "post_ids": [
+    "at://did:plc:fixture0039/app.bsky.feed.post/3l4x0039"
+   ]
+  },
+  {
+   "text": "가상 기기 제조사 S, 자체 칩 2~4개를 얹은 엔터프라이즈급 AI 서버 개발설",
+   "post_ids": [
+    "at://did:plc:fixture0038/app.bsky.feed.post/3l4x0038"
+   ]
+  },
+  {
+   "text": "가상 파운드리 O 2nm급 라인 가동. 이전 세대 대비 동일 전력에서 속도 +10~15%, 동일 속도에서 전력 -20~25%, 밀도 +15% 이상. 나노시트 GAA로 식각·증착·계측 스텝 증가 → 장비 수요 확대",
+   "post_ids": [
+    "at://did:plc:fixture0037/app.bsky.feed.post/3l4x0037"
+   ]
+  },
+  {
+   "text": "가상 NPU사 R의 추론 칩, 가상 통신사 4개 AI 서비스 핵심 작업 담당 — 통화 요약·음성, AI 컨택센터 등 일 1,200만 건 처리",
+   "post_ids": [
+    "at://did:plc:fixture0036/app.bsky.feed.post/3l4x0036"
+   ]
+  },
+  {
+   "text": "가상 낸드사 Q(가상 메모리사 A 자회사), 해외 첫 NAND 생산시설 설립 검토",
+   "post_ids": [
+    "at://did:plc:fixture0035/app.bsky.feed.post/3l4x0035"
+   ]
+  },
+  {
+   "text": "한미반도체, 합성 시나리오 속 가상 고객사向 패키징 장비 수주",
+   "post_ids": [
+    "at://did:plc:fixture0034/app.bsky.feed.post/3l4x0034"
+   ]
+  }
+ ],
+ "views": [
+  {
+   "text": "메모리는 '가격 지표 혼조 vs 물량·계약 강세' 국면. HBM 수출단가 -2.9%는 첫 균열이지만 3Q DRAM ASP +18~25%, NAND +12%가 함께 나온 만큼 단가 하락은 수요 훼손보다 후발 공급 증가 쪽 해석이 우세. 단기 헤드라인 리스크는 있으나 LTA 확산이 실적 가시성을 높이는 구조.",
+   "fact_ids": [
+    "v1"
+   ]
+  },
+  {
+   "text": "수혜 — 메모리 Capex 사이클: 2027년 $66.9B(+38.8%) 전망에 직결되는 가상 장비사 H·I·J. 가상 메모리사 A 차세대 HBM 2배 증산과 캐리어 월 5만 장은 국내 후공정·소재 밸류체인(한미반도체 포함)에 직접 수치로 연결됨.",
+   "fact_ids": [
+    "v2"
+   ]
+  },
+  {
+   "text": "수혜 — CPU 리레이팅: CPU:GPU 비율이 1:1로 수렴한다는 프레임이 확산되면 가상 칩 설계사 L의 데이터센터 TAM 가정이 상향. 메모리 제휴·CPU 타이트·공정 가속 3개 촉매가 겹친 상태.",
+   "fact_ids": [
+    "v3"
+   ]
+  },
+  {
+   "text": "수혜 — 광/패키징 병목: 가상 광부품사 P 분기 1억 달러 돌파, CPO 전환, 2.5D 패키징 오버플로 → 광부품·브리지 패키징 장비군.",
+   "fact_ids": [
+    "v4"
+   ]
+  },
+  {
+   "text": "피해·주의 — 컨슈머 실리콘: 성숙 공정 웨이퍼 타이트와 가격 인상은 스마트폰·가전 칩 원가 압박. 가상 후발 메모리사 M 양산과 \"이미 공급 부족 없다\" 발언은 레거시 DRAM 가격에 하방 요인.",
+   "fact_ids": [
+    "v5"
+   ]
+  }
+ ]
+}

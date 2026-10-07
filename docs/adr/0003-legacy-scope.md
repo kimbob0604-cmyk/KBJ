@@ -15,7 +15,7 @@
 2. **legacy 시험은 프로젝트마다 따로 돈다.** 루트 `pytest` 의 `testpaths` 는 `tests` 하나다. legacy 는 각 프로젝트 루트를 작업 디렉터리·`PYTHONPATH` 로 삼아 원래 명령 그대로 돌린다(conflict_map §3.2 표의 명령 — GX `pytest -m "not network"`, ET `python -m unittest discover …`, SD 검사 스크립트). CI 잡도 프로젝트별로 나눈다(conflict_map §3.5 단계 7).
 3. **`kbj` 는 `legacy` 를 import 하지 않는다.** import-linter 계약 ②, 그리고 `tests/test_import_contracts.py` 가 `kbj/` 의 모든 import 를 "kbj·표준 라이브러리·선언한 런타임 의존성"으로 제한한다 — legacy 의 최상위 이름(`core`·`db`·`board` …)으로 우회해도 걸린다. 의존 방향은 legacy → kbj 만 허용한다(정본으로 갈아 끼울 때 legacy 가 kbj 를 부르게 바꾼다).
 4. **의존성**: 루트 `pyproject.toml` 의 런타임 의존성은 신규 `kbj/` 에 필요한 것만이다. legacy 의존성은 통합 단계가 `legacy` 의존성 그룹으로 넣고 다시 lock 한다(P0 해석: pandas 2.3.3 — conflict_map §3.3).
-5. **legacy 의 실행 산출물은 git 에 들어가지 않는다**: `.gitignore` 의 `legacy/**/state/`·`cache/`·`.cache/`·`out/`·`ci-out/`·`probe_out/`·`runs/`·`data_store/`. 루트 산출물 패턴은 `/data/`·`/state/` 처럼 **루트에 앵커**한다 — 앵커 없는 `data/` 는 코드 패키지 `kbj/data/`·`legacy/gexlab/data/` 까지 무시한다. `raw/` 는 루트만(`legacy/gexlab/tests/golden/raw/` 는 시험 골든).
+5. **legacy 의 실행 산출물은 git 에 들어가지 않는다**: `.gitignore` 의 `legacy/**/state/`·`state_us/`(board 미국장 시험 산출)·`cache/`·`.cache/`·`out/`·`ci-out/`·`probe_out/`·`runs/`·`data_store/`. 루트 산출물 패턴은 `/data/`·`/state/` 처럼 **루트에 앵커**한다 — 앵커 없는 `data/` 는 코드 패키지 `kbj/data/`·`legacy/gexlab/data/` 까지 무시한다. `raw/` 는 루트만(`legacy/gexlab/tests/golden/raw/` 는 시험 골든).
 6. **원본의 `.github/workflows` 는 루트 `.github` 에 두지 않는다**(공개 레포에서 실행되면 안 된다). 시험이 읽는 파일만 legacy 안의 원래 상대 위치에 둔다.
 7. **삭제 시점**: 한 영역을 정본(`kbj/…`)으로 갈아 끼우면 그 영역의 legacy 코드와 시험을 지운다(PLAN §2·D8). 마지막 단계(P9)에서 `legacy/` 를 비우고, 그때 이 ADR 의 제외 설정과 `legacy` 의존성 그룹도 지운다.
 

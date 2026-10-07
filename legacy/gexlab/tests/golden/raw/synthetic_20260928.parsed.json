@@ -1,0 +1,876 @@
+{
+ "_about": "raw 녹화 골든의 파서 출력 스냅샷(PLAN §6.3) — 비교 tests/golden/test_raw_golden.py. 손으로 고치지 않는다",
+ "_regenerate": "uv run python -m scripts.make_golden raw-parse --name synthetic_20260928 --write",
+ "recording": "synthetic_20260928.jsonl",
+ "sha256": "25f5b7430357b3254f793ead6ae6ee23cbdf53009a7aa46955535274de5dc33d",
+ "cut": {
+  "from": "jsonl",
+  "start": "2026-09-28T00:00:00+00:00",
+  "end": "2026-09-28T16:00:00+00:00",
+  "sources": [],
+  "tr_ids": []
+ },
+ "counts": {
+  "control": 3,
+  "data": 1,
+  "data_error": 1,
+  "encrypted": 1,
+  "error": 1,
+  "raw_only": 1,
+  "rest": 6,
+  "ticks": 5,
+  "unparsed": 2
+ },
+ "messages": [
+  {
+   "i": 0,
+   "ts": "2026-09-28T00:00:00+00:00",
+   "source": "kis_ws",
+   "tr_id": "PINGPONG",
+   "key": "",
+   "kind": "control",
+   "frame_tr_id": "PINGPONG",
+   "tr_key": null,
+   "rt_cd": null,
+   "msg_cd": null,
+   "msg1": null,
+   "pingpong": true,
+   "ok": true,
+   "output_keys": []
+  },
+  {
+   "i": 1,
+   "ts": "2026-09-28T00:00:00.250000+00:00",
+   "source": "kis_ws",
+   "tr_id": "H0IFCNT0",
+   "key": "A01612",
+   "kind": "control",
+   "frame_tr_id": "H0IFCNT0",
+   "tr_key": "A01612",
+   "rt_cd": "0",
+   "msg_cd": "OPSP0000",
+   "msg1": "SUBSCRIBE SUCCESS",
+   "pingpong": false,
+   "ok": true,
+   "output_keys": []
+  },
+  {
+   "i": 2,
+   "ts": "2026-09-28T00:00:00.300000+00:00",
+   "source": "kis_ws",
+   "tr_id": "H0IFCNI0",
+   "key": "REDACTED",
+   "kind": "control",
+   "frame_tr_id": "H0IFCNI0",
+   "tr_key": "REDACTED",
+   "rt_cd": "0",
+   "msg_cd": "OPSP0000",
+   "msg1": "SUBSCRIBE SUCCESS",
+   "pingpong": false,
+   "ok": true,
+   "output_keys": [
+    "iv",
+    "key"
+   ]
+  },
+  {
+   "i": 3,
+   "ts": "2026-09-28T00:00:01.100000+00:00",
+   "source": "kis_ws",
+   "tr_id": "H0IFCNT0",
+   "key": "A01612",
+   "kind": "ticks",
+   "frame_tr_id": "H0IFCNT0",
+   "count": 2,
+   "width": 50,
+   "width_mismatch": false,
+   "ticks": [
+    {
+     "tr_id": "H0IFCNT0",
+     "session": "day",
+     "hhmmss": "090001",
+     "qty": 2,
+     "cum_vol": 1502,
+     "cum_value": 0,
+     "cum_sell_qty": 38000,
+     "cum_buy_qty": 40000,
+     "oi": 231456,
+     "oi_chg": 0,
+     "code": "A01612",
+     "price": "1092.50",
+     "bid": "1092.50",
+     "ask": "1092.55",
+     "ts": "2026-09-28T00:00:01+00:00"
+    },
+    {
+     "tr_id": "H0IFCNT0",
+     "session": "day",
+     "hhmmss": "090001",
+     "qty": 1,
+     "cum_vol": 1503,
+     "cum_value": 0,
+     "cum_sell_qty": 38000,
+     "cum_buy_qty": 40000,
+     "oi": 231456,
+     "oi_chg": 0,
+     "code": "A01612",
+     "price": "1092.55",
+     "bid": "1092.55",
+     "ask": "1092.60",
+     "ts": "2026-09-28T00:00:01+00:00"
+    }
+   ]
+  },
+  {
+   "i": 4,
+   "ts": "2026-09-28T00:00:01.200000+00:00",
+   "source": "kis_ws",
+   "tr_id": "H0IOCNT0",
+   "key": "B01610AA2",
+   "kind": "ticks",
+   "frame_tr_id": "H0IOCNT0",
+   "count": 1,
+   "width": 58,
+   "width_mismatch": false,
+   "ticks": [
+    {
+     "tr_id": "H0IOCNT0",
+     "session": "day",
+     "hhmmss": "090001",
+     "qty": 3,
+     "cum_vol": 1200,
+     "cum_value": 0,
+     "cum_sell_qty": 0,
+     "cum_buy_qty": 0,
+     "oi": 883,
+     "oi_chg": 0,
+     "code": "B01610AA2",
+     "price": "2.90",
+     "bid": "2.90",
+     "ask": "2.91",
+     "delta": "0.4120",
+     "gamma": "0.0712",
+     "vega": "0",
+     "theta": "0",
+     "rho": "0",
+     "iv": "11.6494",
+     "ts": "2026-09-28T00:00:01+00:00"
+    }
+   ]
+  },
+  {
+   "i": 5,
+   "ts": "2026-09-28T00:00:02+00:00",
+   "source": "kis_ws",
+   "tr_id": "H0IFCNI0",
+   "key": "",
+   "kind": "encrypted",
+   "frame_tr_id": "H0IFCNI0",
+   "count": 1
+  },
+  {
+   "i": 6,
+   "ts": "2026-09-28T00:00:03+00:00",
+   "source": "kis_ws",
+   "tr_id": "unknown",
+   "key": "",
+   "kind": "error",
+   "error": "알 수 없는 프레임: 'garbage-frame'"
+  },
+  {
+   "i": 7,
+   "ts": "2026-09-28T00:00:04+00:00",
+   "source": "kis_ws",
+   "tr_id": "H0ZZZZZ0",
+   "key": "",
+   "kind": "data",
+   "frame_tr_id": "H0ZZZZZ0",
+   "count": 1,
+   "width": 3,
+   "width_mismatch": false
+  },
+  {
+   "i": 8,
+   "ts": "2026-09-28T00:00:05+00:00",
+   "source": "kis_ws",
+   "tr_id": "H0IFCNT0",
+   "key": "A01612",
+   "kind": "data_error",
+   "frame_tr_id": "H0IFCNT0",
+   "count": 1,
+   "width": 47,
+   "width_mismatch": true,
+   "error": "WsParseError: H0IFCNT0: 레코드 폭 47 ≠ 설정 컬럼 50 — 필드 변경 의심"
+  },
+  {
+   "i": 9,
+   "ts": "2026-09-28T00:00:30+00:00",
+   "source": "kis_rest",
+   "tr_id": "FHPIF05030100",
+   "key": "board:WKM:260904|x",
+   "kind": "rest",
+   "rt_cd": "0",
+   "msg_cd": null,
+   "msg1": null,
+   "outputs": {
+    "output1": {
+     "rows": [
+      {
+       "optn_shrn_iscd": "BAFBZWZCK",
+       "acpr": "1130.00",
+       "unch_prpr": "7124.31",
+       "optn_prpr": "0.14",
+       "optn_prdy_vrss": "-12.16",
+       "prdy_vrss_sign": "5",
+       "optn_prdy_ctrt": "-98.86",
+       "optn_bidp": "0.13",
+       "optn_askp": "0.16",
+       "tmvl_val": "0.14",
+       "nmix_sdpr": "12.30",
+       "acml_vol": 26792,
+       "seln_rsqn": 60,
+       "shnu_rsqn": 58,
+       "acml_tr_pbmn": 867635,
+       "hts_otst_stpl_qty": 809,
+       "otst_stpl_qty_icdc": 173,
+       "delta_val": "0.0228",
+       "gama": "0.0031",
+       "vega": "0.0219",
+       "theta": "-0.9365",
+       "rho": "0.0003",
+       "hts_ints_vltl": "42.7890",
+       "invl_val": "0.00",
+       "esdg": "0.14",
+       "dprt": "9999.99",
+       "hist_vltl": "0.0000",
+       "hts_thpr": "0.00",
+       "optn_oprc": "11.25",
+       "optn_hgpr": "11.27",
+       "optn_lwpr": "0.12",
+       "optn_mxpr": "22.70",
+       "optn_llam": "0.01",
+       "atm_cls_name": "OTM",
+       "rgbf_vrss_icdc": 4,
+       "total_askp_rsqn": 196,
+       "total_bidp_rsqn": 178,
+       "futs_antc_cnpr": "0.00",
+       "futs_antc_cntg_vrss": "0.00",
+       "antc_cntg_vrss_sign": "0",
+       "antc_cntg_prdy_ctrt": "0.00"
+      },
+      {
+       "optn_shrn_iscd": "BAFBZWZCJ",
+       "acpr": "1127.50",
+       "unch_prpr": "7108.55",
+       "optn_prpr": "0.12",
+       "optn_prdy_vrss": "-13.28",
+       "prdy_vrss_sign": "5",
+       "optn_prdy_ctrt": "-99.10",
+       "optn_bidp": "0.06",
+       "optn_askp": "0.16",
+       "tmvl_val": "0.12",
+       "nmix_sdpr": "13.40",
+       "acml_vol": 15248,
+       "seln_rsqn": 55,
+       "shnu_rsqn": 9,
+       "acml_tr_pbmn": 435165,
+       "hts_otst_stpl_qty": 695,
+       "otst_stpl_qty_icdc": -31,
+       "delta_val": "0.0218",
+       "gama": "0.0033",
+       "vega": "0.0211",
+       "theta": "-0.8262",
+       "rho": "0.0003",
+       "hts_ints_vltl": "39.0927",
+       "invl_val": "0.00",
+       "esdg": "0.12",
+       "dprt": "9999.99",
+       "hist_vltl": "0.0000",
+       "hts_thpr": "0.00",
+       "optn_oprc": "14.05",
+       "optn_hgpr": "14.05",
+       "optn_lwpr": "0.08",
+       "optn_mxpr": "23.75",
+       "optn_llam": "0.01",
+       "atm_cls_name": "OTM",
+       "rgbf_vrss_icdc": 9,
+       "total_askp_rsqn": 246,
+       "total_bidp_rsqn": 36,
+       "futs_antc_cnpr": "0.00",
+       "futs_antc_cntg_vrss": "0.00",
+       "antc_cntg_vrss_sign": "0",
+       "antc_cntg_prdy_ctrt": "0.00"
+      }
+     ],
+     "bad": [
+      {
+       "index": 2,
+       "error": "[{'type': 'decimal_parsing', 'loc': ('acpr',), 'msg': 'Input should be a valid decimal'}]"
+      }
+     ]
+    },
+    "output2": {
+     "rows": [
+      {
+       "optn_shrn_iscd": "CAFBZWZCK",
+       "acpr": "1130.00",
+       "unch_prpr": "7124.31",
+       "optn_prpr": "38.10",
+       "optn_prdy_vrss": "18.20",
+       "prdy_vrss_sign": "2",
+       "optn_prdy_ctrt": "91.46",
+       "optn_bidp": "35.60",
+       "optn_askp": "35.80",
+       "tmvl_val": "2.97",
+       "nmix_sdpr": "19.90",
+       "acml_vol": 14125,
+       "seln_rsqn": 33,
+       "shnu_rsqn": 3,
+       "acml_tr_pbmn": 124668986,
+       "hts_otst_stpl_qty": 730,
+       "otst_stpl_qty_icdc": 247,
+       "delta_val": "-0.8442",
+       "gama": "0.0071",
+       "vega": "0.0969",
+       "theta": "-8.0385",
+       "rho": "-0.0132",
+       "hts_ints_vltl": "82.9513",
+       "invl_val": "35.13",
+       "esdg": "2.71",
+       "dprt": "7.66",
+       "hist_vltl": "0.0000",
+       "hts_thpr": "35.39",
+       "optn_oprc": "21.05",
+       "optn_hgpr": "38.35",
+       "optn_lwpr": "21.05",
+       "optn_mxpr": "30.30",
+       "optn_llam": "0.01",
+       "atm_cls_name": "ITM",
+       "rgbf_vrss_icdc": 10,
+       "total_askp_rsqn": 199,
+       "total_bidp_rsqn": 19,
+       "futs_antc_cnpr": "0.00",
+       "futs_antc_cntg_vrss": "0.00",
+       "antc_cntg_vrss_sign": "0",
+       "antc_cntg_prdy_ctrt": "0.00"
+      },
+      {
+       "optn_shrn_iscd": "CAFBZWZCJ",
+       "acpr": "1127.50",
+       "unch_prpr": "7108.55",
+       "optn_prpr": "35.10",
+       "optn_prdy_vrss": "16.60",
+       "prdy_vrss_sign": "2",
+       "optn_prdy_ctrt": "89.73",
+       "optn_bidp": "33.15",
+       "optn_askp": "33.30",
+       "tmvl_val": "2.47",
+       "nmix_sdpr": "18.50",
+       "acml_vol": 7746,
+       "seln_rsqn": 23,
+       "shnu_rsqn": 1,
+       "acml_tr_pbmn": 72295443,
+       "hts_otst_stpl_qty": 1427,
+       "otst_stpl_qty_icdc": -7,
+       "delta_val": "-0.8589",
+       "gama": "0.0075",
+       "vega": "0.0906",
+       "theta": "-6.6564",
+       "rho": "-0.0134",
+       "hts_ints_vltl": "73.4367",
+       "invl_val": "32.63",
+       "esdg": "2.33",
+       "dprt": "7.11",
+       "hist_vltl": "0.0000",
+       "hts_thpr": "32.77",
+       "optn_oprc": "18.25",
+       "optn_hgpr": "35.15",
+       "optn_lwpr": "18.15",
+       "optn_mxpr": "28.85",
+       "optn_llam": "0.01",
+       "atm_cls_name": "ITM",
+       "rgbf_vrss_icdc": -3,
+       "total_askp_rsqn": 78,
+       "total_bidp_rsqn": 6,
+       "futs_antc_cnpr": "0.00",
+       "futs_antc_cntg_vrss": "0.00",
+       "antc_cntg_vrss_sign": "0",
+       "antc_cntg_prdy_ctrt": "0.00"
+      }
+     ],
+     "bad": []
+    }
+   }
+  },
+  {
+   "i": 10,
+   "ts": "2026-09-28T00:00:31+00:00",
+   "source": "kis_rest",
+   "tr_id": "FHMIF10000000",
+   "key": "fill1:M:202610:1092.50:C|x",
+   "kind": "rest",
+   "rt_cd": "0",
+   "msg_cd": "MCA00000",
+   "msg1": null,
+   "outputs": {
+    "output1": {
+     "rows": [
+      {
+       "hts_kor_isnm": "C 202610 1,092.5",
+       "futs_prpr": "27.85",
+       "futs_prdy_vrss": "-21.55",
+       "prdy_vrss_sign": "5",
+       "futs_prdy_clpr": "0.00",
+       "futs_prdy_ctrt": "-43.62",
+       "acml_vol": 20,
+       "acml_tr_pbmn": 132778,
+       "hts_otst_stpl_qty": 104,
+       "otst_stpl_qty_icdc": 5,
+       "futs_oprc": "42.90",
+       "futs_hgpr": "42.90",
+       "futs_lwpr": "27.80",
+       "futs_mxpr": "140.80",
+       "futs_llam": "0.01",
+       "futs_sdpr": "49.40",
+       "hts_thpr": "59.79",
+       "dprt": "-53.42",
+       "futs_last_tr_date": "2026-10-08",
+       "hts_rmnn_dynu": 11,
+       "futs_lstn_medm_hgpr": "84.00",
+       "futs_lstn_medm_lwpr": "20.90",
+       "delta_val": "0.5340",
+       "gama": "0.0027",
+       "theta": "-2.9200",
+       "vega": "0.7206",
+       "rho": "0.1438",
+       "hist_vltl": "81.0490",
+       "hts_ints_vltl": "36.7365",
+       "acpr": "1092.50"
+      }
+     ],
+     "bad": []
+    }
+   }
+  },
+  {
+   "i": 11,
+   "ts": "2026-09-28T00:00:32+00:00",
+   "source": "kis_rest",
+   "tr_id": "FHPIF05030200",
+   "key": "futures_board|F",
+   "kind": "rest",
+   "rt_cd": "0",
+   "msg_cd": "MCA00000",
+   "msg1": null,
+   "outputs": {
+    "output": {
+     "rows": [
+      {
+       "futs_shrn_iscd": "A01612",
+       "hts_kor_isnm": "F 202612",
+       "futs_prpr": "1095.10",
+       "futs_prdy_vrss": "-31.05",
+       "prdy_vrss_sign": "5",
+       "futs_prdy_ctrt": "-2.76",
+       "hts_thpr": "1100.70",
+       "acml_vol": 77504,
+       "futs_askp": "1095.10",
+       "futs_bidp": "1095.00",
+       "hts_otst_stpl_qty": 137340,
+       "futs_hgpr": "1123.70",
+       "futs_lwpr": "1090.10",
+       "hts_rmnn_dynu": 74,
+       "total_askp_rsqn": 498,
+       "total_bidp_rsqn": 423,
+       "futs_antc_cnpr": "0.00",
+       "futs_antc_cntg_vrss": "0.00",
+       "antc_cntg_vrss_sign": "0",
+       "antc_cntg_prdy_ctrt": "0.00"
+      },
+      {
+       "futs_shrn_iscd": "A01703",
+       "hts_kor_isnm": "F 202703",
+       "futs_prpr": "1085.00",
+       "futs_prdy_vrss": "-27.60",
+       "prdy_vrss_sign": "5",
+       "futs_prdy_ctrt": "-2.48",
+       "hts_thpr": "1107.91",
+       "acml_vol": 8,
+       "futs_askp": "1086.35",
+       "futs_bidp": "1083.85",
+       "hts_otst_stpl_qty": 4662,
+       "futs_hgpr": "1111.50",
+       "futs_lwpr": "1085.00",
+       "hts_rmnn_dynu": 165,
+       "total_askp_rsqn": 4,
+       "total_bidp_rsqn": 2,
+       "futs_antc_cnpr": "0.00",
+       "futs_antc_cntg_vrss": "0.00",
+       "antc_cntg_vrss_sign": "0",
+       "antc_cntg_prdy_ctrt": "0.00"
+      }
+     ],
+     "bad": []
+    }
+   }
+  },
+  {
+   "i": 12,
+   "ts": "2026-09-28T00:00:33+00:00",
+   "source": "kis_rest",
+   "tr_id": "FHPTJ04030000",
+   "key": "investor:K2I/F001|x",
+   "kind": "rest",
+   "rt_cd": "0",
+   "msg_cd": null,
+   "msg1": null,
+   "outputs": {
+    "output": {
+     "rows": [
+      {
+       "flows": [
+        {
+         "investor": "frgn",
+         "sell_qty": 52251,
+         "buy_qty": 49791,
+         "net_qty": -2460,
+         "sell_value": 14534080,
+         "buy_value": 13940890,
+         "net_value": -593191
+        },
+        {
+         "investor": "prsn",
+         "sell_qty": 9273,
+         "buy_qty": 7895,
+         "net_qty": -1378,
+         "sell_value": 2590484,
+         "buy_value": 2187997,
+         "net_value": -402487
+        },
+        {
+         "investor": "orgn",
+         "sell_qty": 6143,
+         "buy_qty": 10845,
+         "net_qty": 4702,
+         "sell_value": 1730111,
+         "buy_value": 2989531,
+         "net_value": 1259421
+        },
+        {
+         "investor": "scrt",
+         "sell_qty": 5722,
+         "buy_qty": 9672,
+         "net_qty": 3950,
+         "sell_value": 1615553,
+         "buy_value": 2667290,
+         "net_value": 1051737
+        },
+        {
+         "investor": "ivtr",
+         "sell_qty": 311,
+         "buy_qty": 699,
+         "net_qty": 388,
+         "sell_value": 84480,
+         "buy_value": 190770,
+         "net_value": 106290
+        },
+        {
+         "investor": "pe_fund",
+         "sell_qty": 0,
+         "buy_qty": 0,
+         "net_qty": 0,
+         "sell_value": 0,
+         "buy_value": 0,
+         "net_value": 0
+        },
+        {
+         "investor": "bank",
+         "sell_qty": 31,
+         "buy_qty": 40,
+         "net_qty": 9,
+         "sell_value": 8701,
+         "buy_value": 11146,
+         "net_value": 2445
+        },
+        {
+         "investor": "insu",
+         "sell_qty": 0,
+         "buy_qty": 227,
+         "net_qty": 227,
+         "sell_value": 0,
+         "buy_value": 63204,
+         "net_value": 63204
+        },
+        {
+         "investor": "mrbn",
+         "sell_qty": 8,
+         "buy_qty": 15,
+         "net_qty": 7,
+         "sell_value": 2257,
+         "buy_value": 4195,
+         "net_value": 1938
+        },
+        {
+         "investor": "fund",
+         "sell_qty": 71,
+         "buy_qty": 192,
+         "net_qty": 121,
+         "sell_value": 19119,
+         "buy_value": 52926,
+         "net_value": 33808
+        },
+        {
+         "investor": "etc_orgt",
+         "sell_qty": 610,
+         "buy_qty": 446,
+         "net_qty": -164,
+         "sell_value": 168623,
+         "buy_value": 125527,
+         "net_value": -43096
+        },
+        {
+         "investor": "etc_corp",
+         "sell_qty": 3223,
+         "buy_qty": 2523,
+         "net_qty": -700,
+         "sell_value": 866789,
+         "buy_value": 695711,
+         "net_value": -171078
+        }
+       ]
+      }
+     ],
+     "bad": []
+    }
+   }
+  },
+  {
+   "i": 13,
+   "ts": "2026-09-28T00:00:34+00:00",
+   "source": "kis_rest",
+   "tr_id": "FHPIO056104C0",
+   "key": "option_list:WKM|x",
+   "kind": "rest",
+   "rt_cd": "0",
+   "msg_cd": null,
+   "msg1": null,
+   "outputs": {
+    "output": {
+     "rows": [
+      {
+       "mtrt_yymm": "260904",
+       "mtrt_yymm_code": "0904"
+      },
+      {
+       "mtrt_yymm": "261001",
+       "mtrt_yymm_code": "1001"
+      }
+     ],
+     "bad": []
+    }
+   }
+  },
+  {
+   "i": 14,
+   "ts": "2026-09-28T00:00:35+00:00",
+   "source": "kis_rest",
+   "tr_id": "FHPIF05030000",
+   "key": "underlying|A01612",
+   "kind": "raw_only",
+   "rt_cd": "0",
+   "msg_cd": "MCA00000",
+   "msg1": "정상처리 되었습니다.",
+   "keys": [
+    "msg1",
+    "msg_cd",
+    "output1",
+    "output2",
+    "rt_cd"
+   ]
+  },
+  {
+   "i": 15,
+   "ts": "2026-09-28T00:00:36+00:00",
+   "source": "kis_rest",
+   "tr_id": "FHZZZ0000000",
+   "key": "unknown|x",
+   "kind": "unparsed",
+   "rt_cd": "0",
+   "msg_cd": null,
+   "msg1": null
+  },
+  {
+   "i": 16,
+   "ts": "2026-09-28T07:00:05+00:00",
+   "source": "kis_rest",
+   "tr_id": "FHKIF03020200",
+   "key": "minute:F:A01612|x",
+   "kind": "rest",
+   "rt_cd": "0",
+   "msg_cd": null,
+   "msg1": null,
+   "outputs": {
+    "output2": {
+     "rows": [
+      {
+       "stck_bsop_date": "20260928",
+       "stck_cntg_hour": "140100",
+       "futs_oprc": "1097.10",
+       "futs_hgpr": "1098.25",
+       "futs_lwpr": "1096.90",
+       "futs_prpr": "1098.05",
+       "cntg_vol": 347,
+       "acml_tr_pbmn": 21592073175
+      },
+      {
+       "stck_bsop_date": "20260928",
+       "stck_cntg_hour": "140000",
+       "futs_oprc": "1095.65",
+       "futs_hgpr": "1097.15",
+       "futs_lwpr": "1095.65",
+       "futs_prpr": "1097.10",
+       "cntg_vol": 400,
+       "acml_tr_pbmn": 21496817337
+      },
+      {
+       "stck_bsop_date": "20260928",
+       "stck_cntg_hour": "135900",
+       "futs_oprc": "1093.85",
+       "futs_hgpr": "1095.80",
+       "futs_lwpr": "1093.75",
+       "futs_prpr": "1095.65",
+       "cntg_vol": 255,
+       "acml_tr_pbmn": 21387107337
+      }
+     ],
+     "bad": []
+    }
+   }
+  },
+  {
+   "i": 17,
+   "ts": "2026-09-28T09:00:01+00:00",
+   "source": "kis_ws",
+   "tr_id": "H0MFCNT0",
+   "key": "A01612",
+   "kind": "ticks",
+   "frame_tr_id": "H0MFCNT0",
+   "count": 1,
+   "width": 49,
+   "width_mismatch": false,
+   "ticks": [
+    {
+     "tr_id": "H0MFCNT0",
+     "session": "night",
+     "hhmmss": "180001",
+     "qty": 1,
+     "cum_vol": 12,
+     "cum_value": 0,
+     "cum_sell_qty": 38000,
+     "cum_buy_qty": 40000,
+     "oi": 231456,
+     "oi_chg": 0,
+     "code": "A01612",
+     "price": "1093.00",
+     "bid": "1093.00",
+     "ask": "1093.05",
+     "ts": "2026-09-28T09:00:01+00:00"
+    }
+   ]
+  },
+  {
+   "i": 18,
+   "ts": "2026-09-28T09:00:02+00:00",
+   "source": "kis_ws",
+   "tr_id": "H0EUCNT0",
+   "key": "B01610AA2",
+   "kind": "ticks",
+   "frame_tr_id": "H0EUCNT0",
+   "count": 1,
+   "width": 56,
+   "width_mismatch": false,
+   "ticks": [
+    {
+     "tr_id": "H0EUCNT0",
+     "session": "night",
+     "hhmmss": "180002",
+     "qty": 3,
+     "cum_vol": 1200,
+     "cum_value": 0,
+     "cum_sell_qty": 0,
+     "cum_buy_qty": 0,
+     "oi": 883,
+     "oi_chg": 0,
+     "code": "B01610AA2",
+     "price": "2.50",
+     "bid": "2.50",
+     "ask": "2.51",
+     "delta": "0.4120",
+     "gamma": "0.0712",
+     "vega": "0",
+     "theta": "0",
+     "rho": "0",
+     "iv": "11.6494",
+     "ts": "2026-09-28T09:00:02+00:00"
+    }
+   ]
+  },
+  {
+   "i": 19,
+   "ts": "2026-09-28T15:30:00+00:00",
+   "source": "kis_ws",
+   "tr_id": "H0MFCNT0",
+   "key": "A01612",
+   "kind": "ticks",
+   "frame_tr_id": "H0MFCNT0",
+   "count": 2,
+   "width": 49,
+   "width_mismatch": false,
+   "ticks": [
+    {
+     "tr_id": "H0MFCNT0",
+     "session": "night",
+     "hhmmss": "003000",
+     "qty": 1,
+     "cum_vol": 900,
+     "cum_value": 0,
+     "cum_sell_qty": 38000,
+     "cum_buy_qty": 40000,
+     "oi": 231456,
+     "oi_chg": 0,
+     "code": "A01612",
+     "price": "1091.00",
+     "bid": "1091.00",
+     "ask": "1091.05",
+     "ts": "2026-09-28T15:30:00+00:00"
+    },
+    {
+     "tr_id": "H0MFCNT0",
+     "session": "night",
+     "hhmmss": "243000",
+     "qty": 1,
+     "cum_vol": 901,
+     "cum_value": 0,
+     "cum_sell_qty": 38000,
+     "cum_buy_qty": 40000,
+     "oi": 231456,
+     "oi_chg": 0,
+     "code": "A01612",
+     "price": "1091.05",
+     "bid": "1091.05",
+     "ask": "1091.10",
+     "ts": "2026-09-28T15:30:00+00:00"
+    }
+   ]
+  },
+  {
+   "i": 20,
+   "ts": "2026-09-28T15:30:01+00:00",
+   "source": "krx",
+   "tr_id": "drv_opt_bydd_trd",
+   "key": "20260925",
+   "kind": "unparsed",
+   "why": "KRX 원문 파서 없음(krx 원문은 아직 녹화하지 않는다)"
+  }
+ ]
+}

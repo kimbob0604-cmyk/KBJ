@@ -290,7 +290,7 @@ U3가 정해지기 전이므로 "U3 대기" 표시가 있는 파일은 옮길지
 
 ### 3.2 프로젝트별 테스트 실행 명령과 지금 테스트 수 (2026-10-06 직접 실행)
 
-실행 위치: `/tmp/p0test/<레포>` 사본(원본 `/home/user/p0src` 는 읽기만). Python 3.11 venv와 3.12 단일 lock venv 둘 다에서 돌렸다. SD 검사 스크립트 7개는 `/home/user/stock-dashboard/server.py` 절대경로를 하드코딩하고 있어 **사본 안에서만** 경로를 바꿔 돌렸다(이 세션의 작업 디렉터리 `/home/user/stock-dashboard` 는 스냅샷과 다른 커밋이다).
+실행 위치: `/tmp/p0test/<레포>` 사본(원본 `/home/user/p0src` 는 읽기만). Python 3.11 venv와 3.12 단일 lock venv 둘 다에서 돌렸다. SD 검사 스크립트 7개는 `<작업 머신 홈>/stock-dashboard/server.py` 절대경로를 하드코딩하고 있어 **사본 안에서만** 경로를 바꿔 돌렸다(이 세션의 작업 디렉터리 `<작업 머신 홈>/stock-dashboard` 는 스냅샷과 다른 커밋이다).
 
 | 프로젝트 | 명령(legacy 루트 기준) | 결과 | 소요 | 조건 |
 |---|---|---|---|---|
@@ -358,7 +358,7 @@ legacy 프로젝트마다 import 루트가 다르다(GX `pythonpath=["."]`, ET�
 | 3 | `legacy/etf_traker/board/` + `.github/workflows` 사본 이동 | 1,319 OK |
 | 4 | `legacy/etf_traker/monitor/`·`flowlab/` 이동(board에 의존) | kr 94·flow 129·flowlab 44 |
 | 5 | `legacy/etf_traker/etf_tracker_v9/`·`dart-report/` 이동 | 스모크 "built" |
-| 6 | `legacy/stock_dashboard/` 이동, 검사 스크립트의 `/home/user/stock-dashboard` 절대경로(7개 파일)를 상대경로로(경로만) | 9/10(E4 1건은 원래 실패로 기록) |
+| 6 | `legacy/stock_dashboard/` 이동, 검사 스크립트의 `<작업 머신 홈>/stock-dashboard` 절대경로(7개 파일)를 상대경로로(경로만) | 9/10(E4 1건은 원래 실패로 기록) |
 | 7 | CI: 프로젝트별 잡 6개(GX·board·monitor+flowlab·dart-report·SD·ruff/pyright 신규 코드만), 금지 규칙 초안(`oauth2/tokenP`·`api.telegram.org`·네이버 호스트 문자열을 신규 `kbj/` 에서 금지) | CI 녹색 |
 
 ---

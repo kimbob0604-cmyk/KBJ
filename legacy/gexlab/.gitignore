@@ -1,0 +1,27 @@
+# 비밀정보 — 절대 커밋 금지
+.env
+.env.*
+!.env.example
+state/
+*.token.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.hypothesis/
+*.egg-info/
+
+# 산출물
+probe_out/
+data_store/
+*.parquet
+*.duckdb
+
+# OS·에디터
+.DS_Store
+.idea/
+.vscode/
+.claude/settings.local.json

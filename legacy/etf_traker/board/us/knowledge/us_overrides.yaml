@@ -1,0 +1,69 @@
+# 종목별 손수정. **규칙이 이 값을 덮지 않는다.**
+#
+# 두 가지에 쓴다.
+#   1. 스크리너 industry 로는 안 갈리는 2층 산업 (보안 소프트웨어가 그냥
+#      'Prepackaged Software' 로 온다. 레퍼런스 브리프의 ⑧은 이 해상도를 쓴다)
+#   2. 스크리너가 틀리게 준 섹터
+#
+# 적을 때는 왜 그렇게 봤는지 why 를 함께 남긴다. 확신이 없으면 비워 두는 쪽이
+# 맞다 — 틀린 매핑은 빈칸보다 나쁘다 (CLAUDE.md 9장 6번과 같은 원칙).
+
+meta:
+  version: "0.1"
+
+tickers:
+  # ── 보안 소프트웨어 ──
+  CRWD: {industry: Cybersecurity, why: 엔드포인트 보안 플랫폼}
+  PANW: {industry: Cybersecurity, why: 네트워크·클라우드 보안}
+  FTNT: {industry: Cybersecurity, why: 방화벽·SASE}
+  ZS:   {industry: Cybersecurity, why: 제로트러스트 프록시}
+  OKTA: {industry: Cybersecurity, why: ID 접근관리}
+  TENB: {industry: Cybersecurity, why: 취약점 관리}
+  QLYS: {industry: Cybersecurity, why: 취약점 관리}
+  VRNS: {industry: Cybersecurity, why: 데이터 보안}
+  CYBR: {industry: Cybersecurity, why: 특권계정 관리}
+  SAIL: {industry: Cybersecurity, why: ID 거버넌스}
+  S:    {industry: Cybersecurity, why: 엔드포인트 보안}
+  RBRK: {industry: Cybersecurity, why: 데이터 보안·백업}
+  NET:  {industry: Cybersecurity, why: 엣지 네트워크·보안}
+  # ── 반도체 밸류체인 ──
+  MU:   {industry: "Memory & Storage", why: DRAM·NAND}
+  WDC:  {industry: "Memory & Storage", why: HDD·스토리지}
+  STX:  {industry: "Memory & Storage", why: HDD}
+  SIMO: {industry: "Memory & Storage", why: 낸드 컨트롤러}
+  AMAT: {industry: "Semi Cap Equipment", why: 전공정 장비}
+  LRCX: {industry: "Semi Cap Equipment", why: 식각 장비}
+  KLAC: {industry: "Semi Cap Equipment", why: 계측·검사}
+  TER:  {industry: "Semi Cap Equipment", why: 테스터}
+  ONTO: {industry: "Semi Cap Equipment", why: 계측}
+  ASML: {industry: "Semi Cap Equipment", why: 노광}
+  # ── 광·네트워크 ──
+  GLW:  {industry: "Optical & Networking", why: 광섬유}
+  NOK:  {industry: "Optical & Networking", why: 통신장비}
+  CIEN: {industry: "Optical & Networking", why: 광전송}
+  LITE: {industry: "Optical & Networking", why: 광부품}
+  ANET: {industry: "Optical & Networking", why: 데이터센터 스위치}
+  # ── 전력기기 ──
+  GEV:  {industry: "모터·발전기", why: 가스터빈·발전설비}
+  # ── 소스 industry 가 실제 사업과 어긋나는 것 (run #2 실데이터에서 확인) ──
+  TMO:  {sector: 헬스케어, industry: "생명과학 장비",
+         why: 소스는 Industrial Machinery 로 주지만 써모피셔는 생명과학 도구·진단}
+  DHR:  {sector: 헬스케어, industry: "생명과학 장비",
+         why: 소스는 Industrial Machinery. 다나허도 생명과학·진단}
+  RVTY: {sector: 헬스케어, industry: "생명과학 장비", why: 레비티(구 퍼킨엘머) 생명과학}
+  VZ:   {industry: "통신 서비스", why: 소스는 Telecom Equipment 로 주지만 통신사다}
+  T:    {industry: "통신 서비스", why: 같은 이유}
+  GE:   {sector: 산업재, industry: "항공우주",
+         why: 소스는 Consumer Electronics/Appliances. GE 에어로스페이스는 항공엔진}
+  QCOM: {sector: 반도체, industry: "반도체",
+         why: 소스는 Radio And Television Broadcasting 계열로 준다. 퀄컴은 팹리스}
+  SPCX: {sector: 산업재, industry: "항공우주",
+         why: 소스는 Internet Software. 스페이스X 는 발사체·위성통신}
+  # ── 크립토·채굴 (소스는 Finance: Consumer Services 로 뭉뚱그린다) ──
+  COIN: {industry: "크립토", why: 가상자산 거래소}
+  CRCL: {industry: "크립토", why: 스테이블코인 발행}
+  MARA: {industry: "크립토 채굴", why: 비트코인 채굴}
+  RIOT: {industry: "크립토 채굴", why: 비트코인 채굴}
+  CLSK: {industry: "크립토 채굴", why: 비트코인 채굴}
+  IREN: {industry: "크립토 채굴", why: 채굴·AI 데이터센터}
+  WULF: {industry: "크립토 채굴", why: 채굴·AI 데이터센터}

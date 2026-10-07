@@ -1,0 +1,26 @@
+# uv 로 설치된 도구를 그대로 쓴다: `uv run pre-commit install`
+repos:
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff
+        entry: uv run ruff check --fix
+        language: system
+        types: [python]
+      - id: ruff-format
+        name: ruff-format
+        entry: uv run ruff format
+        language: system
+        types: [python]
+      - id: pyright
+        name: pyright
+        entry: uv run pyright
+        language: system
+        types: [python]
+        pass_filenames: false
+      - id: pytest-fast
+        name: pytest (unit + property)
+        entry: uv run pytest tests/unit tests/property -m "not network"
+        language: system
+        types: [python]
+        pass_filenames: false

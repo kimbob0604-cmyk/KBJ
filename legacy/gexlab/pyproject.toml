@@ -1,0 +1,62 @@
+[project]
+name = "gexlab"
+version = "0.0.1"
+description = "코스피200 GEX 실시간 트래커 · 백테스트 · 시스템 트레이딩"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "exchange-calendars>=4.13.2",
+    "httpx>=0.27",
+    "psycopg[binary]>=3.3.6",
+    "pydantic>=2.8",
+    "pydantic-settings>=2.4",
+    "pyyaml>=6.0",
+    "redis>=8.1.0",
+    "vollib>=1.0.11",
+    "websockets>=17.1",
+]
+
+[dependency-groups]
+dev = [
+    "fakeredis[lua]>=2.38.0",
+    "hypothesis>=6.100",
+    "pandas-stubs>=3.0.5.260914",
+    "pre-commit>=3.7",
+    "pyright>=1.1.380",
+    "pytest>=8.3",
+    "ruff>=0.6",
+    "types-pyyaml>=6.0.12.20260906",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["docs"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "DTZ", "S", "RUF"]
+# RUF001~003: 한글 문서·주석의 전각 문자 경고는 끈다
+ignore = ["RUF001", "RUF002", "RUF003"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106"]
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "standard"
+include = ["core", "data", "services", "live", "strategy", "backtest", "exec", "api", "config", "scripts", "tests"]
+strict = ["core", "backtest", "exec"]
+venvPath = "."
+venv = ".venv"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
+markers = [
+    "network: 외부 API를 부르는 테스트 (CI 기본 제외)",
+    "integration: compose·컨테이너 스택(TimescaleDB·Redis)이 필요한 통합 테스트 (Docker 없으면 건너뜀)",
+    "docker: integration 의 옛 이름 — 별칭 (tests/conftest.py 가 둘을 함께 붙인다)",
+]

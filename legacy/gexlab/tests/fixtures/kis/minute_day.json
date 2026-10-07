@@ -1,0 +1,10 @@
+{
+ "_source": "SYNTHETIC — scripts/make_synthetic_fixtures.py(시드 고정)가 만든 합성 데이터. 실측 아님 — 분봉 조회 첫 응답 형태(A01612 시장 F, 14:01), output2 앞 3봉",
+ "rt_cd": "0",
+ "output1": {"futs_prdy_vrss": "-28.10", "prdy_vrss_sign": "5", "futs_prdy_ctrt": "-2.50", "futs_prdy_clpr": "1126.15", "prdy_nmix": "1126.15", "acml_vol": "77999", "acml_tr_pbmn": "21592073175", "hts_kor_isnm": "F 202612", "futs_prpr": "1098.05", "futs_shrn_iscd": "A01612", "prdy_vol": "79587", "futs_mxpr": "1216.25", "futs_llam": "1036.05", "futs_oprc": "1121.40", "futs_hgpr": "1123.70", "futs_lwpr": "1090.10", "futs_prdy_oprc": "1133.85", "futs_prdy_hgpr": "1137.20", "futs_prdy_lwpr": "1114.35", "futs_askp": "1098.10", "futs_bidp": "1098.00", "basis": "5.85", "kospi200_nmix": "1097.62", "hts_otst_stpl_qty": "136253", "otst_stpl_qty_icdc": "1310", "tday_rltv": "97.37", "hts_thpr": "1103.47", "dprt": "-0.49"},
+ "output2": [
+  {"stck_bsop_date": "20260928", "stck_cntg_hour": "140100", "futs_prpr": "1098.05", "futs_oprc": "1097.10", "futs_hgpr": "1098.25", "futs_lwpr": "1096.90", "cntg_vol": "347", "acml_tr_pbmn": "21592073175"},
+  {"stck_bsop_date": "20260928", "stck_cntg_hour": "140000", "futs_prpr": "1097.10", "futs_oprc": "1095.65", "futs_hgpr": "1097.15", "futs_lwpr": "1095.65", "cntg_vol": "400", "acml_tr_pbmn": "21496817337"},
+  {"stck_bsop_date": "20260928", "stck_cntg_hour": "135900", "futs_prpr": "1095.65", "futs_oprc": "1093.85", "futs_hgpr": "1095.80", "futs_lwpr": "1093.75", "cntg_vol": "255", "acml_tr_pbmn": "21387107337"}
+ ]
+}

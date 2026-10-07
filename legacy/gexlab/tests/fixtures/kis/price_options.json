@@ -1,0 +1,65 @@
+{
+ "_source": "SYNTHETIC — scripts/make_synthetic_fixtures.py(시드 고정)가 만든 합성 데이터. 실측 아님 — 옵션 단건 현재가(FHMIF10000000 시장 O) output1 형태, 14:27 합성 스냅샷의 보강 행 — 행사가 1092.5·1095.0·1097.5 콜·풋",
+ "items": [
+  {
+   "ts_kst": "2026-09-28T14:27:29.270000+09:00",
+   "code": "B01610ZC5",
+   "series": "C 202610",
+   "body": {
+    "rt_cd": "0",
+    "msg_cd": "MCA00000",
+    "output1": {"hts_kor_isnm": "C 202610 1,092.5", "futs_prpr": "27.85", "futs_prdy_vrss": "-21.55", "prdy_vrss_sign": "5", "futs_prdy_clpr": "0.00", "futs_prdy_ctrt": "-43.62", "acml_vol": "20", "acml_tr_pbmn": "132778", "hts_otst_stpl_qty": "104", "otst_stpl_qty_icdc": "5", "futs_oprc": "42.90", "futs_hgpr": "42.90", "futs_lwpr": "27.80", "futs_mxpr": "140.80", "futs_llam": "0.01", "futs_sdpr": "49.40", "hts_thpr": "59.79", "dprt": "-53.42", "futs_last_tr_date": "20261008", "hts_rmnn_dynu": "11", "futs_lstn_medm_hgpr": "84.00", "futs_lstn_medm_lwpr": "20.90", "delta_val": "0.5340", "gama": "0.0027", "theta": "-2.9200", "vega": "0.7206", "rho": "0.1438", "hist_vltl": "81.0490", "hts_ints_vltl": "36.7365", "acpr": "1092.50"}
+   }
+  },
+  {
+   "ts_kst": "2026-09-28T14:27:29.525000+09:00",
+   "code": "B01610ZC6",
+   "series": "C 202610",
+   "body": {
+    "rt_cd": "0",
+    "msg_cd": "MCA00000",
+    "output1": {"hts_kor_isnm": "C 202610 1,095.0", "futs_prpr": "27.70", "futs_prdy_vrss": "-20.15", "prdy_vrss_sign": "5", "futs_prdy_clpr": "47.85", "futs_prdy_ctrt": "-42.11", "acml_vol": "23", "acml_tr_pbmn": "153777", "hts_otst_stpl_qty": "310", "otst_stpl_qty_icdc": "4", "futs_oprc": "53.55", "futs_hgpr": "53.80", "futs_lwpr": "27.60", "futs_mxpr": "139.25", "futs_llam": "0.01", "futs_sdpr": "47.85", "hts_thpr": "58.60", "dprt": "-52.73", "futs_last_tr_date": "20261008", "hts_rmnn_dynu": "11", "futs_lstn_medm_hgpr": "81.35", "futs_lstn_medm_lwpr": "20.80", "delta_val": "0.5272", "gama": "0.0027", "theta": "-2.9239", "vega": "0.7215", "rho": "0.1421", "hist_vltl": "81.0509", "hts_ints_vltl": "38.2446", "acpr": "1095.00"}
+   }
+  },
+  {
+   "ts_kst": "2026-09-28T14:27:29.780000+09:00",
+   "code": "B01610ZC7",
+   "series": "C 202610",
+   "body": {
+    "rt_cd": "0",
+    "msg_cd": "MCA00000",
+    "output1": {"hts_kor_isnm": "C 202610 1,097.5", "futs_prpr": "25.15", "futs_prdy_vrss": "-21.15", "prdy_vrss_sign": "5", "futs_prdy_clpr": "0.00", "futs_prdy_ctrt": "-45.68", "acml_vol": "19", "acml_tr_pbmn": "114504", "hts_otst_stpl_qty": "119", "otst_stpl_qty_icdc": "4", "futs_oprc": "51.55", "futs_hgpr": "51.85", "futs_lwpr": "25.00", "futs_mxpr": "137.70", "futs_llam": "0.01", "futs_sdpr": "46.30", "hts_thpr": "57.43", "dprt": "-56.21", "futs_last_tr_date": "20261008", "hts_rmnn_dynu": "11", "futs_lstn_medm_hgpr": "78.70", "futs_lstn_medm_lwpr": "18.85", "delta_val": "0.5204", "gama": "0.0027", "theta": "-2.9269", "vega": "0.7222", "rho": "0.1404", "hist_vltl": "81.0512", "hts_ints_vltl": "36.3803", "acpr": "1097.50"}
+   }
+  },
+  {
+   "ts_kst": "2026-09-28T14:27:39.670000+09:00",
+   "code": "C01610ZC5",
+   "series": "P 202610",
+   "body": {
+    "rt_cd": "0",
+    "msg_cd": "MCA00000",
+    "output1": {"hts_kor_isnm": "P 202610 1,092.5", "futs_prpr": "30.80", "futs_prdy_vrss": "11.30", "prdy_vrss_sign": "2", "futs_prdy_clpr": "0.00", "futs_prdy_ctrt": "57.95", "acml_vol": "2", "acml_tr_pbmn": "15132", "hts_otst_stpl_qty": "112", "otst_stpl_qty_icdc": "4", "futs_oprc": "16.85", "futs_hgpr": "30.85", "futs_lwpr": "16.75", "futs_mxpr": "94.00", "futs_llam": "0.01", "futs_sdpr": "19.50", "hts_thpr": "57.14", "dprt": "-46.10", "futs_last_tr_date": "20261008", "hts_rmnn_dynu": "11", "futs_lstn_medm_hgpr": "52.35", "futs_lstn_medm_lwpr": "14.65", "delta_val": "-0.4660", "gama": "0.0027", "theta": "-2.9201", "vega": "0.7206", "rho": "-0.1555", "hist_vltl": "81.0512", "hts_ints_vltl": "44.4298", "acpr": "1092.50"}
+   }
+  },
+  {
+   "ts_kst": "2026-09-28T14:27:39.925000+09:00",
+   "code": "C01610ZC6",
+   "series": "P 202610",
+   "body": {
+    "rt_cd": "0",
+    "msg_cd": "MCA00000",
+    "output1": {"hts_kor_isnm": "P 202610 1,095.0", "futs_prpr": "33.15", "futs_prdy_vrss": "12.70", "prdy_vrss_sign": "2", "futs_prdy_clpr": "20.45", "futs_prdy_ctrt": "62.10", "acml_vol": "22", "acml_tr_pbmn": "190096", "hts_otst_stpl_qty": "202", "otst_stpl_qty_icdc": "5", "futs_oprc": "21.75", "futs_hgpr": "33.35", "futs_lwpr": "21.65", "futs_mxpr": "94.95", "futs_llam": "0.01", "futs_sdpr": "20.45", "hts_thpr": "58.44", "dprt": "-43.28", "futs_last_tr_date": "20261008", "hts_rmnn_dynu": "11", "futs_lstn_medm_hgpr": "56.35", "futs_lstn_medm_lwpr": "15.35", "delta_val": "-0.4728", "gama": "0.0027", "theta": "-2.9238", "vega": "0.7215", "rho": "-0.1579", "hist_vltl": "81.0474", "hts_ints_vltl": "45.9245", "acpr": "1095.00"}
+   }
+  },
+  {
+   "ts_kst": "2026-09-28T14:27:40.180000+09:00",
+   "code": "C01610ZC7",
+   "series": "P 202610",
+   "body": {
+    "rt_cd": "0",
+    "msg_cd": "MCA00000",
+    "output1": {"hts_kor_isnm": "P 202610 1,097.5", "futs_prpr": "21.40", "futs_prdy_vrss": "0.00", "prdy_vrss_sign": "3", "futs_prdy_clpr": "21.40", "futs_prdy_ctrt": "0.00", "acml_vol": "0", "acml_tr_pbmn": "0", "hts_otst_stpl_qty": "166", "otst_stpl_qty_icdc": "0", "futs_oprc": "0.00", "futs_hgpr": "0.00", "futs_lwpr": "0.00", "futs_mxpr": "95.90", "futs_llam": "0.01", "futs_sdpr": "21.40", "hts_thpr": "59.77", "dprt": "-64.20", "futs_last_tr_date": "20261008", "hts_rmnn_dynu": "11", "futs_lstn_medm_hgpr": "36.40", "futs_lstn_medm_lwpr": "16.05", "delta_val": "-0.4796", "gama": "0.0027", "theta": "-2.9268", "vega": "0.7222", "rho": "-0.1603", "hist_vltl": "81.0492", "hts_ints_vltl": "27.8746", "acpr": "1097.50"}
+   }
+  }
+ ]
+}

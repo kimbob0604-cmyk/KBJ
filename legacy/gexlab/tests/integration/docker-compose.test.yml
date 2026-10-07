@@ -1,0 +1,30 @@
+# 통합 시험용 compose 덧씌우기 (tests/integration/test_full_day.py) — docker-compose.yml 위에 얹는다.
+#
+# - redis·db 만 띄운다(`up redis db`). 앱 서비스는 시험이 프로세스 안에서 조립한다(가짜 시계·가짜 KIS)
+# - 시험 프로세스가 붙도록 호스트 127.0.0.1 의 임의 포트로만 연다(`127.0.0.1::<포트>` — 밖으로는
+#   열지 않는다, PLAN §11.2). 실제 포트는 `docker compose port` 로 읽는다
+# - 프로젝트 이름은 시험마다 무작위(gexlab-fd-<hex>)라 볼륨·네트워크가 운영 스택과 섞이지 않고,
+#   끝나면 `down -v` 로 그 프로젝트 것만 지운다
+# - 시험은 docker-compose.yml 을 임시 폴더로 복사해 쓴다 — 저장소의 .env 를 읽지 않게(비밀번호는
+#   임시 .env 의 무작위 값)
+# - healthcheck 는 1초마다 보되(빨리 뜨게) unhealthy 판정(start_period + retries × interval)은
+#   `up --wait` 상한(STACK_WAIT_S 240초)보다 늦게 — `up --wait` 는 unhealthy 가 되는 순간 실패한다.
+#   느린 기계에서 TimescaleDB 첫 초기화(initdb → 재시작)가 1분을 넘어도 스택이 뜨게
+# - restart: "no" — 운영의 always 를 이어받지 않는다. 시험 프로세스가 `down -v` 전에 죽어도(SIGKILL·
+#   CI 취소) 남은 컨테이너가 Docker 데몬이 뜰 때마다 다시 켜지지 않게
+services:
+  redis:
+    ports:
+      - "127.0.0.1::6379"
+    command: ["redis-server", "--appendonly", "no", "--save", ""]  # 시험 — 디스크에 남기지 않는다
+    restart: "no"
+    healthcheck:
+      interval: 1s
+      retries: 240
+  db:
+    ports:
+      - "127.0.0.1::5432"
+    restart: "no"
+    healthcheck:
+      interval: 1s
+      retries: 240

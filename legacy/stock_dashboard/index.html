@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>테마 트리맵</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<link rel="stylesheet" href="/static/css/style.css">
+<script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+</head>
+<body class="page-thememap">
+
+<!-- SIDEBAR NAV (Phase 9) -->
+<nav id="sidebar">
+  <div class="sidebar-logo">📊 DASHBOARD</div>
+  <!-- Phase 14: 시장 전환 토글 -->
+  <div class="market-toggle" id="market-toggle">
+    <button class="market-btn active" data-market="kr">🇰🇷 국내</button>
+    <button class="market-btn"        data-market="us">🇺🇸 미국</button>
+  </div>
+  <!-- Step 4-5-2-B: 시간 컨텍스트 배지 자리 (다음 단계에서 콘텐츠 삽입) -->
+  <div id="market-context-badge" class="market-context"></div>
+
+  <ul class="sidebar-menu" id="sidebar-menu">
+    <!-- 🌍 시장 상태 (Tier 1) -->
+    <li class="sidebar-group-label">🌍 시장 상태</li>
+    <li class="sidebar-item"        data-page="dashboard"><span class="mi">📊</span>대시보드</li>
+    <li class="sidebar-item active" data-page="thememap"><span class="mi">🗺️</span>테마맵</li>
+    <li class="sidebar-item"        data-page="valuechain"><span class="mi">🔗</span>밸류체인</li>
+    <li class="sidebar-item"        data-page="market"><span class="mi">📈</span>시황분석</li>
+    <li class="sidebar-item"        data-page="globalmacro"><span class="mi">🌍</span>글로벌 매크로</li>
+    <li class="sidebar-item"        data-page="disclosure"><span class="mi">📢</span>공시</li>
+
+    <!-- 🔬 분석 작업 (Tier 2) -->
+    <li class="sidebar-group-label">🔬 분석 작업</li>
+    <li class="sidebar-item"        data-page="stockdetail"><span class="mi">🔎</span>종목 상세<span class="nav-badge-new">NEW</span></li>
+    <li class="sidebar-item"        data-page="verification"><span class="mi">✅</span>검증 시트<span class="nav-badge-new">NEW</span></li>
+    <li class="sidebar-item"        data-page="journal"><span class="mi">📓</span>분석 일지<span class="nav-badge-new">NEW</span></li>
+    <li class="sidebar-item"        data-page="discover"><span class="mi">🔬</span>종목발굴</li>
+    <li class="sidebar-item"        data-page="agent"><span class="mi">🤖</span>AI추천</li>
+    <li class="sidebar-item"        data-page="watchlist"><span class="mi">★</span>관심종목<span class="sidebar-badge" id="sidebar-watchlist-badge"></span></li>
+    <li class="sidebar-item"        data-page="backtest"><span class="mi">📊</span>백테스트</li>
+    <li class="sidebar-item"        data-page="recperf"><span class="mi">🎯</span>추천성과</li>
+    <li class="sidebar-item"        data-page="correlation"><span class="mi">🔗</span>상관관계</li>
+
+    <!-- ⚙ 운영 점검 (Tier 3, NEW) -->
+    <li class="sidebar-group-label">⚙ 운영 점검</li>
+    <li class="sidebar-item"        data-page="ops-freshness"><span class="mi">🌡</span>데이터 신선도<span class="nav-badge-new">NEW</span></li>
+    <li class="sidebar-item"        data-page="ops-cron"><span class="mi">⏱</span>Cron 모니터<span class="nav-badge-new">NEW</span></li>
+    <li class="sidebar-item"        data-page="ops-health"><span class="mi">📊</span>헬스 대시보드<span class="nav-badge-new">NEW</span></li>
+
+    <!-- 💼 매매 -->
+    <li class="sidebar-group-label">💼 매매</li>
+    <li class="sidebar-item"        data-page="portfolio"><span class="mi">💼</span>포트폴리오</li>
+    <li class="sidebar-item"        data-page="pnljournal"><span class="mi">📈</span>수익률 저널</li>
+
+    <!-- 🛠 더보기 (hidden) -->
+    <li class="sidebar-group-label sidebar-toggle" id="sidebar-more-toggle">
+      🛠 더보기 <span id="sidebar-more-arrow">▼</span>
+    </li>
+    <li class="sidebar-item sidebar-more-item" data-page="research" style="display:none"><span class="mi">📑</span>리서치</li>
+    <li class="sidebar-item sidebar-more-item" data-page="etfmap" style="display:none"><span class="mi">📦</span>ETF맵</li>
+    <li class="sidebar-item sidebar-more-item" data-page="dividend" style="display:none"><span class="mi">💰</span>배당</li>
+  </ul>
+  <div class="sidebar-bottom">
+    <div class="sidebar-item" id="sidebar-settings"><span class="mi">⚙️</span>설정</div>
+  </div>
+</nav>
+
+<div id="main-wrap">
+
+<!-- TOP BAR -->
+<header id="topbar">
+  <div class="ctrl-left">
+    <span class="ctrl-label">정렬</span>
+    <select id="sel-sort">
+      <option value="weighted_avg_pct">가중평균%</option>
+      <option value="volume">거래대금</option>
+      <option value="stock_count">종목수</option>
+    </select>
+    <span class="ctrl-label" style="margin-left:4px;">표시</span>
+    <select id="sel-count">
+      <option value="20" selected>20개</option>
+      <option value="10">10개</option>
+      <option value="5">5개</option>
+    </select>
+    <div class="tab-group" style="margin-left:6px;">
+      <button class="tab-btn active" data-tab="map">Map</button>
+      <button class="tab-btn"        data-tab="list">List</button>
+    </div>
+  </div>
+  <div class="ctrl-right">
+    <button class="settings-btn" id="settings-btn" title="테마 설정" style="display:none;">⚙</button>
+    <div id="server-status">
+      <span class="ctrl-label">갱신주기</span>
+      <select id="sel-interval" title="자동 갱신 주기">
+        <option value="1">1분</option>
+        <option value="3">3분</option>
+        <option value="5" selected>5분</option>
+        <option value="10">10분</option>
+        <option value="30">30분</option>
+        <option value="0">수동</option>
+      </select>
+      <button class="refresh-btn" id="refresh-btn" title="데이터 새로고침">↺</button>
+      <span class="fetch-badge" id="fetch-badge" style="display:none;"></span>
+    </div>
+    <button class="gsearch-btn" id="gsearch-btn" title="종목 검색 (Ctrl+K)">🔍</button>
+    <span class="updated-at" id="updated-at">—</span>
+    <span class="live-wrap" id="live-indicator">
+      <span class="live-dot offline" id="live-dot"></span>
+      <span id="live-label">장외</span>
+    </span>
+    <div class="idx-pill kr">
+      <span class="idx-label">KOSPI</span>
+      <span class="idx-val"  id="kospi-val">—</span>
+      <span class="idx-chg"  id="kospi-chg">—</span>
+    </div>
+    <div class="idx-pill kr">
+      <span class="idx-label">KOSDAQ</span>
+      <span class="idx-val"  id="kosdaq-val">—</span>
+      <span class="idx-chg"  id="kosdaq-chg">—</span>
+    </div>
+    <div class="idx-pill us">
+      <span class="idx-label">S&amp;P 500</span>
+      <span class="idx-val"  id="sp500-val">—</span>
+      <span class="idx-chg"  id="sp500-chg">—</span>
+    </div>
+    <div class="idx-pill us">
+      <span class="idx-label">NASDAQ</span>
+      <span class="idx-val"  id="nasdaq-val">—</span>
+      <span class="idx-chg"  id="nasdaq-chg">—</span>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN CONTENT -->
+<div id="content">
+
+  <!-- ========= PAGE: 테마맵 ========= -->
+  <div class="page active" id="page-thememap">
+    <div id="map-view">
+      <div class="loading" id="tm-loading"><div class="spin"></div>데이터 로딩 중…</div>
+      <svg id="treemap-svg" style="display:none;"></svg>
+    </div>
+
+    <div id="list-view">
+      <table class="list-table">
+        <thead>
+          <tr>
+            <th style="width:52px;">#</th>
+            <th>테마명</th>
+            <th class="r">가중평균%</th>
+            <th class="r">활성/전체</th>
+            <th class="r">거래대금</th>
+          </tr>
+        </thead>
+        <tbody id="list-tbody"></tbody>
+      </table>
+    </div>
+
+    <div id="detail-panel">
+      <div class="dp-wrap">
+        <div class="dp-head">
+          <div class="dp-title">
+            <div>
+              <div class="dp-name" id="dp-name">—</div>
+              <div class="dp-meta" id="dp-meta">—</div>
+            </div>
+            <span class="badge" id="dp-badge" style="font-size:16px;">—</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="ctrl-label">종목정렬</span>
+            <select id="sel-stock-sort">
+              <option value="change_pct">등락률</option>
+              <option value="volume_mn">거래대금</option>
+              <option value="name">종목명</option>
+            </select>
+            <button class="dp-close" id="dp-close">✕ 닫기</button>
+          </div>
+        </div>
+        <div id="stock-grid"></div>
+      </div>
+    </div>
+
+    <div id="newhigh-section" style="display:none;">
+      <div class="nh-header">
+        <span class="nh-title">저번 주 52주 신고가 5종목 이상 섹터</span>
+        <span class="nh-sub" id="nh-sub"></span>
+      </div>
+      <div id="nh-cards"></div>
+    </div>
+  </div>
+
+  <!-- ========= PAGE: 시황분석 ========= -->
+  <div class="page" id="page-market">
+    <div id="market-view"></div>
+  </div>
+
+  <!-- ========= PAGE: 종목비교 ========= -->
+  <div class="page" id="page-compare">
+    <div id="compare-panel"></div>
+  </div>
+
+  <!-- ========= PAGE: 종목스크리너 ========= -->
+  <div class="page" id="page-screener">
+    <div id="screener-view"></div>
+  </div>
+
+  <!-- ========= PAGE: 수급동향 ========= -->
+  <div class="page" id="page-flow">
+    <div id="flow-view"></div>
+  </div>
+
+  <!-- ========= PAGE: 포트폴리오 (Phase 21) ========= -->
+  <div class="page" id="page-portfolio">
+    <div id="portfolio-view"></div>
+  </div>
+
+  <!-- ========= PAGE: 매매일지 (Phase 21) ========= -->
+  <div class="page" id="page-journal">
+    <div id="journal-view"></div>
+  </div>
+
+  <!-- ========= PAGE: ETF맵 (Phase 23) ========= -->
+  <div class="page" id="page-etfmap">
+    <div id="etfmap-view"></div>
+  </div>
+
+  <!-- ========= PAGE: 배당 (Phase 23) ========= -->
+  <div class="page" id="page-dividend">
+    <div id="dividend-view"></div>
+  </div>
+  <div class="page" id="page-disclosure">
+    <div id="disclosure-view"></div>
+  </div>
+  <div class="page" id="page-stockdetail">
+    <div id="stockdetail-view"></div>
+  </div>
+  <div class="page" id="page-backtest">
+    <div id="backtest-view"></div>
+  </div>
+  <div class="page" id="page-correlation">
+    <div id="correlation-view"></div>
+  </div>
+  <div class="page" id="page-recperf">
+    <div id="recperf-view"></div>
+  </div>
+  <div class="page" id="page-dashboard">
+    <div id="dashboard-view"></div>
+  </div>
+  <div class="page" id="page-pnljournal">
+    <div id="pnljournal-view"></div>
+  </div>
+  <div class="page" id="page-globalmacro">
+    <div id="globalmacro-view"></div>
+  </div>
+  <div class="page" id="page-valuechain">
+    <div id="valuechain-view"></div>
+  </div>
+
+  <!-- ========= PAGE: 업종별맵 ========= -->
+  <div class="page" id="page-sector">
+    <div id="sector-view"></div>
+  </div>
+
+  <!-- ========= PAGE: 관심종목 (Phase 12-2) ========= -->
+  <div class="page" id="page-watchlist">
+    <div id="watchlist-view"></div>
+  </div>
+
+  <!-- ========= PAGE: 종목발굴 (Phase 15 Stage 1) ========= -->
+  <div class="page" id="page-discover">
+    <div id="discover-view"></div>
+  </div>
+  <div class="page" id="page-agent">
+    <div id="agent-view"></div>
+  </div>
+
+  <!-- ========= PAGE: 캘린더 (Phase 16) ========= -->
+  <div class="page" id="page-calendar">
+    <div id="calendar-view"></div>
+  </div>
+
+  <!-- ========= PAGE: 리서치 (Phase 17) ========= -->
+  <div class="page" id="page-research">
+    <div id="research-view"></div>
+  </div>
+
+  <!-- ========= PAGE: 52주 신고가 (Phase 19) ========= -->
+  <div class="page" id="page-newhighs">
+    <div id="newhighs-view"></div>
+  </div>
+
+  <!-- ========= Phase 4-5-2-A: 신규 페이지 placeholder ========= -->
+  <div class="page" id="page-verification"></div>
+  <div class="page" id="page-ops-freshness"></div>
+  <div class="page" id="page-ops-cron"></div>
+  <div class="page" id="page-ops-health"></div>
+
+  <!-- SHARED: CHART PANEL (모든 페이지에서 종목 클릭 시 열림) -->
+  <!-- SHARED: CHART MODAL OVERLAY (Phase 18) -->
+  <div id="chart-panel-overlay" style="display:none;">
+    <div id="chart-panel"></div>
+  </div>
+
+</div>
+</div><!-- /#main-wrap -->
+
+<!-- TOOLTIP -->
+<div id="tooltip">
+  <div class="tt-name" id="tt-name"></div>
+  <div class="tt-row"><span>가중평균</span><span class="tt-val" id="tt-pct"></span></div>
+  <div class="tt-row"><span>활성/전체</span><span class="tt-val" id="tt-cnt"></span></div>
+  <div class="tt-row"><span>거래대금</span><span class="tt-val" id="tt-vol"></span></div>
+</div>
+
+<!-- SETTINGS MODAL (must be parsed before <script> so getElementById works) -->
+<div id="settings-overlay">
+  <div id="settings-modal">
+    <div class="sm-head">
+      <span class="sm-title">테마 그룹 관리</span>
+      <button class="sm-close" id="sm-close">✕ 닫기</button>
+    </div>
+    <div class="sm-body">
+      <div class="sm-tg-section">
+        <div class="sm-section-title">📲 텔레그램 알림</div>
+        <button class="sm-tg-test" id="sm-tg-test">테스트 메시지 전송</button>
+        <span class="sm-tg-result" id="sm-tg-result"></span>
+      </div>
+      <div class="sm-section-title">🗂️ 테마 그룹</div>
+      <button class="sm-add-theme-btn" id="sm-add-theme">+ 새 테마 추가</button>
+      <div id="mt-list"></div>
+    </div>
+    <div class="sm-foot">
+      <button class="sm-cancel-btn" id="sm-cancel">취소</button>
+      <button class="sm-save-btn"   id="sm-save">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- GLOBAL SEARCH OVERLAY -->
+<div id="gsearch-overlay" style="display:none;">
+  <div class="gsearch-box">
+    <div class="gsearch-input-wrap">
+      <span class="gsearch-icon">🔍</span>
+      <input type="text" id="gsearch-input" class="gsearch-input"
+             placeholder="종목명, 코드, 티커 검색... (Ctrl+K)"
+             autocomplete="off" spellcheck="false">
+      <span class="gsearch-hint">ESC</span>
+    </div>
+    <div id="gsearch-results" class="gsearch-results"></div>
+  </div>
+</div>
+
+<!-- Split modules (load before main script) -->
+<script src="/static/js/utils.js"></script>
+<script src="/static/js/freshness.js"></script>
+<script src="/static/js/marketContext.js"></script>
+<script src="/static/js/websocket.js"></script>
+<script src="/static/js/chart.js"></script>
+<script src="/static/js/pages.js"></script>
+<script src="/static/js/trading.js"></script>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>

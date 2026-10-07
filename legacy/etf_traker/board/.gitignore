@@ -1,0 +1,27 @@
+# sqlite 파일은 GitHub Actions 캐시로 나른다. 레포에 넣지 않는다.
+*.db
+*.db-wal
+*.db-shm
+*.db.demo*
+
+# 단계별 산출 JSON. 하루 700KB 씩 쌓여서 레포에 넣으면 1년에 175MB 가 된다.
+# Actions 캐시로 나르고, 사람이 보는 결과물은 docs/ 사이트다.
+state/*/
+# 미국장 단계별 산출 JSON. 같은 이유로 레포에 넣지 않는다.
+state_us/*/
+__pycache__/
+*.pyc
+state/.kis_token.json
+.kis_token.json
+state/.dart_corp.json
+state/financials.json
+# 텔레그램 인박스. 날짜 디렉터리가 아니라 루트에 있어 따로 적는다. 캐시로 나른다.
+state/inbox.json
+state/.inbox_offset.json
+
+# X 24시간 다이제스트의 단계별 산출물은 **커밋으로 남긴다** — 위 state/*/ 규칙의
+# 예외다. 이 경로는 board.yml 이 아니라 별도 워크플로가 돌리고 state 캐시를
+# 복원하지 않으므로(XDIGEST.md 3·4장), 캐시에만 두면 캐시가 비워진 날 어제 것을
+# 못 읽고 발송한 다이제스트의 근거(posts.json)를 나중에 재현할 수 없다.
+# 보관처가 캐시가 아니라 커밋이다.
+!state/xdigest/

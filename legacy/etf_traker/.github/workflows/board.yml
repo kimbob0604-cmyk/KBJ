@@ -1,0 +1,475 @@
+name: 신고가 보드
+
+on:
+  # ── 예약 실행 전부 끔 (2026-09-29) ─────────────────────────────
+  # daily 는 맥 로컬로 갔다(아래 16~20행 주석). 남아 있던 크론은 전부 빈손으로
+  # 끝나는 실행이었다 — 재시도 두 개는 로컬이 이미 보낸 날 `--once` 로 아무것도
+  # 안 하고, 주말 인박스 두 개는 인박스가 기본 꺼짐(settings.yaml
+  # triggers.inbox_enabled: false)이다. 그래도 실행마다 설치·검증으로 1분 이상을
+  # 써 월 ~60회가 Actions 무료 분을 먹었다(GITHUB.md 5-4). 되살릴 때는 아래
+  # 블록의 `schedule:` 과 원하는 cron 줄 주석을 함께 푼다(`schedule:` 만 두고
+  # 줄이 없으면 워크플로가 깨진다).
+  #
+  # schedule:
+    # **분을 붐비는 자리에서 뺀다.** GitHub 예약 실행은 큐다 — 정시(:00)와
+    # :10 · :30 에 전 세계가 몰려 그 시간대가 가장 많이 밀린다(공식 문서도
+    # "start of every hour" 를 피하라고 적는다). 이 레포가 실제로 그랬다:
+    # '10 7'(16:10 KST) 이 12:1x UTC 에, '30 8'(17:30 KST) 이 13:3x UTC 에
+    # 깨어났다 — 다섯 시간이다. 같은 계정의 daily.yml '0 7' 도 똑같이 밀렸다.
+    #
+    # 평일 16:07 KST = 07:07 UTC. 장 마감(15:30) 후 확정 데이터로 보드를 만들고
+    # **같은 실행에서 텔레그램까지 보낸다**. 예전에는 발송이 별도 크론이라 큐를
+    # 두 번 기다렸고, 앞 실행이 아직 커밋을 못 했으면 발송 쪽은 낡은 보드를
+    # 보고 --only-fresh 로 조용히 건너뛰었다.
+    #
+    # **2026-09-28 부터 daily 는 맥 로컬에서 돈다** (board/scripts/local_daily.sh ·
+    # launchd 평일 16:10, DASHBOARD.md '로컬 실행'). private 레포의 Actions 무료 분이
+    # 9/27 소진됐고, 10월 초 초기화 뒤에도 여기가 살아 있으면 같은 날 보드가 두 번
+    # 커밋·발송된다. 되살리려면 로컬 예약을 먼저 해제하고 이 줄의 주석을 푼다.
+    # - cron: '7 7 * * 1-5'
+    # 못 보낸 날을 위한 재시도. 이미 보낸 기준일이면 아무 일도 하지 않는다
+    # (--once). 보드 생성이 크게 밀려 앞 실행이 실패했을 때만 여기서 나간다.
+    # - cron: '23 9 * * 1-5'
+    # - cron: '23 11 * * 1-5'
+    # 주말 인박스. 텔레그램은 봇에 온 갱신을 **24시간**만 두므로, 금요일 저녁부터
+    # 일요일까지 X 앱에서 봇 대화로 공유한 게시물은 월요일 daily 가 깨어나기 전에
+    # 사라진다. 토·일 09:23·20:23 KST 에 읽기만 하고 아무것도 보내지 않는다.
+    #
+    # 하루 한 번(21:23)으로는 안 됐다 — 금요일 마지막 재시도(20:23)에서 토요일
+    # 21:23 까지 25시간이고 토→일도 정확히 24시간이라, 위에 적은 큐 지연이
+    # 조금만 있어도 창을 넘긴다. 두 번이면 어느 실행 사이도 13시간 이하다
+    # (금 20:23 → 토 09:23 → 토 20:23 → 일 09:23 → 일 20:23 → 월 16:07). 그래도
+    # 실행이 큐에 밀린 만큼은 잃을 수 있다 — 크론은 제때를 보장하지 않는다.
+    # - cron: '23 0,11 * * 6,0'
+  # 크론을 못 믿을 때 밖에서 깨우는 자리. 무료 스케줄러(cron-job.org 등)가
+  # POST /repos/:owner/:repo/dispatches 로 부르면 분 단위로 정확히 돈다.
+  # 보내는 type: board-daily · board-send(발송만).
+  # **board-daily 도 이제 발송만 한다**(아래 '모드 결정'). 보드는 로컬이 만든다 —
+  # 외부 스케줄러가 아직 board-daily 를 부르고 있어도 같은 날 보드를 두 번 만들지
+  # 않고, `--only-fresh --once` 라 로컬이 이미 보냈으면 아무것도 안 보낸다.
+  repository_dispatch:
+    types: [board-daily, board-send]
+  workflow_dispatch:
+    inputs:
+      codes:
+        description: '진단 인자 — diagnose-banner 종목코드(공백 구분) · kis-probe 시장코드 · bsky-probe 후보 질의(질의|키=값;…)'
+        required: false
+        default: ''
+      mode:
+        description: '실행 모드'
+        type: choice
+        default: daily
+        options: [daily, send, send-text, send-note, signals, backtest, screen, search, inbox, init, check, engine, render, write, news, stockflows,
+                  triggers, trigger-probe, x-probe, bsky-probe, classify,
+                  reclassify-semis, reclassify-unmapped, excel, verify-adjust,
+                  diagnose-banner, kis-probe, test]
+
+concurrency:
+  group: newhigh-board
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: pip install -r board/requirements.txt
+
+      # 무엇을 하러 깨어났는지 한 곳에서 정한다. 예전에는 크론 문자열 비교가
+      # 두 단계의 env 에 각각 적혀 있어서, 크론을 옮기면 한쪽만 고쳐질 자리였다.
+      - name: 모드 결정
+        env:
+          EV: ${{ github.event_name }}
+          SCHED: ${{ github.event.schedule }}
+          DISPATCH: ${{ github.event.action }}
+          INPUT_MODE: ${{ github.event.inputs.mode }}
+        run: |
+          case "$EV" in
+            workflow_dispatch)   MODE="${INPUT_MODE:-daily}" ;;
+            # board-daily 도 send — 보드는 로컬이 만든다(2026-09-29, on: 주석).
+            repository_dispatch) MODE=send ;;
+            # 보드를 만드는 크론은 하나다. 주말 크론은 인박스만 읽는다.
+            # 나머지 예약 실행은 못 보낸 날의 재시도다.
+            schedule)            if   [ "$SCHED" = "7 7 * * 1-5" ];   then MODE=daily
+                                 elif [ "$SCHED" = "23 0,11 * * 6,0" ]; then MODE=inbox
+                                 else MODE=send; fi ;;
+            *)                   MODE=daily ;;
+          esac
+          echo "MODE=$MODE" >> "$GITHUB_ENV"
+          echo "이 실행의 모드: $MODE (event=$EV schedule='$SCHED' action='$DISPATCH')"
+
+      # 정의 검증은 네트워크가 필요 없다. 수집 전에 먼저 막는다.
+      - name: 정의 단위 검증
+        run: python3 -m board.run --test
+
+      # 캐시 키에 DB 규약 버전을 넣는다. 수집 단위가 바뀌었는데 옛 DB 를 복원하면
+      # 고쳐진 코드가 틀린 값 위에서 돈다 — 2026-08-29 에 그랬다(D-039).
+      # 코드가 단일 출처이므로 워크플로에 숫자를 박지 않고 읽어 온다.
+      - name: DB 규약 버전
+        id: dv
+        run: |
+          v=$(python3 -c 'from board.ingest.pipeline import DATA_VERSION; print(DATA_VERSION)')
+          echo "v=$v" >> "$GITHUB_OUTPUT"
+          echo "DB 규약 v$v"
+
+      # state/ 도 함께 나른다. 탐지기 10(돌파 실패)이 전일 newhigh.json 을 읽는다.
+      - name: DB·state 복원
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            board/board.db
+            board/state
+          key: board-db-v${{ steps.dv.outputs.v }}-${{ github.run_id }}
+          restore-keys: board-db-v${{ steps.dv.outputs.v }}-
+
+      - name: 실행
+        env:
+          # MODE 는 '모드 결정' 단계가 GITHUB_ENV 로 넘긴다.
+          CODES: ${{ github.event.inputs.codes }}
+          # 자격증명은 레포 Settings -> Secrets and variables -> Actions 에 넣는다.
+          # 이름은 board/.env.example 과 같게 맞춘다.
+          KIS_APP_KEY:     ${{ secrets.KIS_APP_KEY }}
+          KIS_APP_SECRET:  ${{ secrets.KIS_APP_SECRET }}
+          KIS_ENV:         ${{ vars.KIS_ENV || 'real' }}
+          KRX_API_KEY:     ${{ secrets.KRX_API_KEY }}
+          DART_API_KEY:    ${{ secrets.DART_API_KEY }}
+          NAVER_CLIENT_ID:     ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          ANTHROPIC_API_KEY:   ${{ secrets.ANTHROPIC_API_KEY }}
+          TELEGRAM_BOT_TOKEN:  ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:    ${{ secrets.TELEGRAM_CHAT_ID }}
+          # 인박스가 읽을 대화방 (선택, 쉼표 구분). 없으면 TELEGRAM_CHAT_ID 를 읽는다.
+          TRIGGER_INBOX_CHAT_IDS: ${{ secrets.TRIGGER_INBOX_CHAT_IDS }}
+          # 블루스카이 로그인(선택). 없으면 공개 호스트만 쓴다 — XDIGEST.md 3-1.
+          BSKY_HANDLE:         ${{ secrets.BSKY_HANDLE }}
+          BSKY_APP_PASSWORD:   ${{ secrets.BSKY_APP_PASSWORD }}
+          DATAGO_KEY:      ${{ secrets.DATAGO_KEY }}
+        run: |
+          # -e 가 없으면 init 이 실패해도 그대로 daily 로 넘어가 깨진 DB 위에서
+          # 리포트를 만든다. 아래 'if ... then exit 0; fi' 형태도 -e 때문에
+          # `[ ... ] && exit 0` 대신 쓴 것이다 — 그 형태는 조건이 거짓일 때
+          # 스크립트를 종료시킨다.
+          set -eo pipefail
+          if [ "$MODE" = "test" ]; then exit 0; fi
+          if [ "$MODE" = "send" ] || [ "$MODE" = "send-files" ]; then
+            # 못 보낸 날의 재시도. 보드 기준일이 오늘이 아니면(휴장일) 스스로
+            # 생략하고(--only-fresh), 이미 보낸 기준일이면 다시 보내지 않는다
+            # (--once). 크론이 여러 번 깨어나도 파일은 하루 한 번만 온다.
+            python3 -m board.run --send files --only-fresh --once
+            exit 0
+          fi
+          if [ "$MODE" = "send-note" ]; then
+            # 사람이 쓴 일일 노트를 보낸다 (board/docs/NOTE.md). 손으로만 돈다 —
+            # 판단을 쓰는 데 시간이 걸리는데 크론에 얹으면 빈 노트가 나간다(D7).
+            # 이름 하나라도 못 찾으면 세 통 모두 안 나가고 사유만 남는다(D3).
+            python3 -m board.run --send note
+            exit 0
+          fi
+          if [ "$MODE" = "send-text" ]; then
+            # 본문만 다시 보낸다. 첨부는 --send files 가 따로 맡는다.
+            python3 -m board.run --send draft  || true
+            python3 -m board.run --send rankings
+            exit 0
+          fi
+          if [ "$MODE" = "check" ]; then
+            # 진단 명령이다. 실패 항목이 있어도 잡을 빨갛게 만들지 않는다.
+            # 결과는 아래 '실행 요약' 단계가 런 페이지에 표로 올린다.
+            python3 -m board.run --check 2>&1 | tee /tmp/check.txt || true
+            exit 0
+          fi
+          # DB 를 안 읽는 진단은 초기 적재보다 **먼저** 끝낸다.
+          #
+          # verify-adjust 는 소스에서 직접 받아 두 시계열을 대조할 뿐 DB 를
+          # 건드리지 않는다. 그런데 아래 '없으면 적재' 게이트 뒤에 있어서,
+          # 캐시가 빈 브랜치에서는 전 종목 전 구간 적재(30~60분)를 기다린
+          # 다음에야 시작했다. 진단 한 번 보려고 40분을 쓴다.
+          if [ "$MODE" = "verify-adjust" ]; then
+            # /tmp/check.txt 에 남겨야 마지막 단계가 찍는다. 안 그러면 결과가
+            # 잡 로그 한가운데 묻혀서 원격에서 끝부분만 받으면 안 보인다.
+            python3 -m board.run --verify-adjust 2>&1 | tee /tmp/check.txt
+            exit 0
+          fi
+          # 같은 이유로 배너 진단도 적재 앞에 둔다. 마스터와 ETF 목록만 받는다.
+          # CODES 로 종목코드를 주면 그 코드의 현재 이름을 마스터에서 찍는다 —
+          # 사명 변경 후보를 기억이 아니라 원자료로 확인하는 자리다.
+          if [ "$MODE" = "diagnose-banner" ]; then
+            # shellcheck disable=SC2086
+            python3 -m board.run --diagnose-banner $CODES 2>&1 | tee /tmp/check.txt
+            exit 0
+          fi
+          # KIS 시장 수급 파라미터 실측 (CLAUDE.md 9장 2번). 이것도 DB 를 안 읽는다.
+          # 개발 환경은 외부 접속이 막혀 있어 여기서만 답이 나온다.
+          # CODES 로 시장코드를 주면 그것만 본다 (0001 코스피 · 1001 코스닥).
+          if [ "$MODE" = "kis-probe" ]; then
+            # shellcheck disable=SC2086
+            python3 -m board.run --kis-probe $CODES 2>&1 | tee /tmp/check.txt || true
+            exit 0
+          fi
+          # 트리거 소스 프로브 (D-085). DB 를 안 읽고 소스만 찌른다 — 네이버 질의별 제목
+          # 포함 비율, Google News RSS 의 XML·내성, DART corp 별 공시, 비공식 URL 상태,
+          # 텔레그램 웹훅. 개발 환경은 외부 접속이 막혀 있어 여기서만 답이 나온다.
+          if [ "$MODE" = "trigger-probe" ]; then
+            python3 -m board.run --trigger-probe 2>&1 | tee /tmp/check.txt || true
+            exit 0
+          fi
+          # X 자동 수집 경로 실측 (XDIGEST.md 2장 (b)). DB 를 안 읽는다.
+          # 규약 위반 경로라 사용자가 고른 뒤에만 돈다 — 크론에 얹지 않고 손으로만 부른다.
+          if [ "$MODE" = "x-probe" ]; then
+            python3 -m board.run --x-probe 2>&1 | tee /tmp/check.txt || true
+            exit 0
+          fi
+          # 블루스카이 설계 실측 — 예시 계정이 거기 있나, 주제가 물량을 주나.
+          # codes 입력을 주면 후보 질의만 잰다(xsource._probe_topics — `질의|키=값;…`).
+          if [ "$MODE" = "bsky-probe" ]; then
+            BSKY_PROBE_SPEC="$CODES" python3 -m board.run --bsky-probe 2>&1 | tee /tmp/check.txt || true
+            exit 0
+          fi
+          # DB 가 없으면 무슨 모드를 골랐든 초기 적재부터 한다.
+          if [ ! -f board/board.db ] || [ "$MODE" = "init" ]; then
+            python3 -m board.run --init
+            if [ "$MODE" = "init" ]; then exit 0; fi
+          fi
+          case "$MODE" in
+            engine)   python3 -m board.run --engine ;;
+            render)   python3 -m board.run --render ;;
+            write)    python3 -m board.run --write ;;
+            news)     python3 -m board.run --news && python3 -m board.run --render ;;
+            # 종목별 수급만 다시 받아 화면을 갱신한다 — KIS 가 23시 전후 막혀 빈 날(D-083).
+            stockflows) python3 -m board.run --stockflows && python3 -m board.run --render ;;
+            # 신고가와 무관하게 아무 종목이나 하루치 수급을 물어본다. 읽기만
+            # 하므로 보드 산출물을 건드리지 않는다 — 커밋할 것이 없다.
+            triggers) python3 -m board.run --triggers && python3 -m board.run --render ;;
+            classify) python3 -m board.run --classify ;;
+            # 반도체 5개 세분류 재배정 (D-061) 후 화면까지 다시 만든다.
+            # 재분류 결과는 sector_map.yaml 커밋으로 남는다. 1차(반도체 해체)가
+            # 끝난 뒤에는 세분류 5개 + 미분류를 다시 묻는다 — KSIC 근거가 붙어
+            # 판정이 실제로 좋아진 것만 0.7 을 넘겨 올라온다.
+            # 1차에서 신뢰도 미달로 떨어진 종목은 '미분류' 에 있다. 세분류
+            # 이름만 다시 물으면 그 종목들이 빠진다 — 미분류를 함께 묻는다.
+            reclassify-semis)
+              python3 -m board.run --reclassify \
+                  반도체 반도체제조 반도체장비 반도체후공정 반도체소재부품 반도체설계 미분류 \
+                && python3 -m board.run --engine \
+                && python3 -m board.run --render ;;
+            # 미분류 전체 재도전. KSIC 근거가 새로 붙었을 때 돌릴 가치가 있다.
+            reclassify-unmapped)
+              python3 -m board.run --reclassify 미분류 \
+                && python3 -m board.run --engine \
+                && python3 -m board.run --render ;;
+            excel)    python3 -m board.run --excel ;;
+            # 스윙 시그널만 다시 계산해 보낸다 (docs/SIGNALS.md). 보드 산출물은 건드리지 않는다.
+            signals)  python3 -m board.run --signals && python3 -m board.run --send signals ;;
+            # 스윙 시그널 백테스트 — 손으로만 돈다. 보드 DB 는 420일만 남겨 짧으므로
+            # 전용 DB(board/backtest.db, 캐시하지 않는다)에 긴 이력을 받는다(--live).
+            # 요약을 텔레그램으로 보낸다.
+            backtest) python3 -m board.run --backtest --live 2>&1 | tee /tmp/check.txt \
+                        && python3 -m board.run --send backtest ;;
+            # 매매 시스템 점검 — 원문 시스템들을 같은 조건으로 돌려 통과 기준만 남긴다.
+            screen)   python3 -m board.run --screen --live 2>&1 | tee /tmp/check.txt \
+                        && python3 -m board.run --send screen ;;
+            # 시스템 조합 탐색 — 최근 1년 봉인. 봉인 구간은 한 번만 본다(docs/SIGNALS.md 12장).
+            search)   python3 -m board.run --search --live 2>&1 | tee /tmp/check.txt \
+                        && python3 -m board.run --send search ;;
+            # 텔레그램 인박스만 읽는다 (주말 크론). 초기 적재 게이트 **뒤**에 두는 이유:
+            # inbox.json 은 board/state 에 있고 그 캐시는 아래 'px 행이 있나' 가드를
+            # 통과해야 저장된다. DB 없이 읽으면 텔레그램은 지웠는데 우리는 못 남긴다.
+            # 토큰·대화방이 없으면 '건너뜀' 을 찍고 0 으로 끝난다 — 빨갛지 않다.
+            inbox)    python3 -m board.run --inbox ;;
+            # 진단이다. 판정을 내리지 않고 두 소스를 대조해 로그로만 남긴다.
+            # 결과를 보고 사람이 D-001 을 확정한다 (CLAUDE.md 9장 1번).
+            # 보드를 만든 **그 실행에서** 바로 보낸다. 발송을 별도 크론으로
+            # 떼어 놨을 때는 큐를 두 번 기다렸고, 앞 실행이 아직 커밋을 못 한
+            # 상태면 발송 쪽이 낡은 보드를 보고 조용히 건너뛰었다.
+            #
+            # 나가는 것은 셋이다 — 일간 코멘트(문체), 랭킹 요약(52주 이상
+            # 신고가 + 종목별 수급 + 섹터), 그리고 파일 두 개.
+            # 코멘트는 ANTHROPIC_API_KEY 가 없거나 검증에 걸리면 못 만든다.
+            # 그때도 랭킹과 파일은 나가야 하므로 여기만 || true 다.
+            # 스윙 시그널(docs/SIGNALS.md)은 맨 뒤다. 보드·파일이 먼저 나가야 하고,
+            # 시그널이 실패해도 잡을 빨갛게 만들지 않는다 — 경고만 남긴다.
+            # 인박스는 --daily 가 맨 앞에서 읽었다. --send files 의 것은 건너뛴다
+            # (--no-inbox) — 안 그러면 몇 분 뒤에 또 읽어 '새 0건' 이 로그에 한 번 더 찍힌다.
+            *)        python3 -m board.run --daily \
+                        && python3 -m board.run --excel \
+                        && { python3 -m board.run --send draft || true; } \
+                        && python3 -m board.run --send rankings \
+                        && python3 -m board.run --send files --only-fresh --once --no-inbox \
+                        && { { python3 -m board.run --signals \
+                               && python3 -m board.run --send signals; } \
+                             || echo "::warning::스윙 시그널 실패 — 보드·파일 발송은 끝났다"; } ;;
+          esac
+
+      # 런 페이지에서 결과를 바로 볼 수 있게 요약을 올린다.
+      # Actions 로그를 뒤지지 않아도 무엇이 나왔는지 알 수 있어야 한다.
+      - name: 실행 요약
+        if: always()
+        run: |
+          python3 -m board.tools.summary "$MODE" /tmp/check.txt \
+            >> "$GITHUB_STEP_SUMMARY" || \
+            echo "_요약을 만들지 못했습니다._" >> "$GITHUB_STEP_SUMMARY"
+
+      # 대시보드·엑셀·단계별 JSON 을 런 페이지에서 바로 내려받을 수 있게 한다.
+      - name: 산출물 업로드
+        id: upload
+        if: always()
+        continue-on-error: true   # 판정은 아래 "업로드 결과" 가 한다
+        uses: actions/upload-artifact@v4
+        with:
+          name: board-${{ github.run_number }}
+          path: |
+            docs/index.html
+            docs/x/*.xlsx
+            board/state/*/*.json
+            board/state/*/*.md
+          if-no-files-found: warn
+          # 내려받기 편의물이다 — DB·state 의 보관처는 아래 캐시다. 30일 × 하루
+          # 3회로 310MB 를 먹고 있었다(2026-09-20 실측). 지난주 것까지면 된다.
+          retention-days: 7
+
+      # 이 캐시는 board.db(일봉 이력)와 state(당일 산출)를 실행 사이에 나르는
+      # 유일한 통로다. board·flow·flowlab 이 같은 접두사(board-db-v<규약>-)로
+      # 집어 가고 restore-keys 는 **가장 최근 것**을 집으므로, 쓸모없는 것을 한
+      # 번 올리면 그 뒤의 모든 실행이 그걸 받는다.
+      #
+      # 2026-09-18 run 104 가 그 일을 했다. check 모드였는데 --check 는 보드를
+      # 만들지 않고 소스만 찔러 본다. 그 과정에 스키마만 있는 빈 board.db(32KB)가
+      # 생겼고, 조건이 '파일이 있나' 였던 탓에 그게 board-db-v4- 로 저장됐다.
+      # DATA_VERSION 이 3→4 로 올라간 직후라 v4 캐시는 그것 하나뿐이었고,
+      # flowlab 이 9/17~9/20 일곱 번 내리 그 빈 것을 받아 죽었다(board/state 가
+      # 비어 IndexError). board 자신은 daily 의 stale_reason 이 재적재로 끌고
+      # 가서(D-039) 멀쩡했다 — 재적재를 못 하는 소비자만 맞았다.
+      #
+      # 그래서 '파일이 있나' 가 아니라 '**데이터가 들었나**' 를 묻는다. px 는
+      # 일봉 테이블이다. 모드 이름으로 거르지 않는 이유는, 모드가 늘 때마다
+      # 여기를 같이 고쳐야 하고 빠뜨리면 조용히 같은 사고가 나기 때문이다.
+      # COUNT(*) 가 아니라 LIMIT 1 인 것은 수백만 행을 세지 않으려는 것이다.
+
+      # 2026-09-20 에 계정 아티팩트 저장 한도를 넘겼다(살아 있는 것 1,375MB /
+      # 포함 512MB). 1,266MB 를 지워 109MB 로 내렸지만 GitHub 은 이번 청구
+      # 주기의 **누적**으로 셈하므로 지운다고 되돌아가지 않는다. 그래서 10/1
+      # 리셋까지 어떤 업로드도 통과하지 못한다 — 실측으로 확인했다(9/20 15:30
+      # UTC 삭제 뒤 12시간 20분이 지나도 그대로였고, 그 사이 올라간 아티팩트가
+      # 하나도 없다).
+      #
+      # 그동안 실행이 매번 빨갛게 뜨면 진짜 실패를 놓친다. 그렇다고 그냥
+      # continue-on-error 로 덮으면 10/1 이후의 진짜 업로드 실패까지 영영
+      # 안 보인다. 그래서 **날짜로 스스로 끝나는** 가드를 둔다 — 그 날이
+      # 지나면 이 단계는 아무것도 하지 않고 업로드 실패가 원래대로 잡을
+      # 빨갛게 만든다. 되돌리는 것을 사람이 기억할 필요가 없다.
+      #
+      # 창 안에서 관대하게 굴어도 잃는 정보가 없다. 한도가 걸린 동안은 어떤
+      # 업로드도 성공할 수 없어서, 여기서 걸러낼 '진짜 실패' 자체가 없다.
+      - name: 업로드 결과
+        if: always()
+        env:
+          OUTCOME: ${{ steps.upload.outcome }}
+          # 계정 청구 주기 리셋일(UTC). 이 날부터 가드가 저절로 꺼진다.
+          UNTIL: '2026-10-01'
+        run: |
+          if [ "$OUTCOME" != "failure" ]; then exit 0; fi
+          TODAY=$(date -u +%F)
+          if [[ "$TODAY" < "$UNTIL" ]]; then
+            echo "::warning::아티팩트 업로드 실패 — 계정 저장 한도로 본다." \
+                 "$UNTIL(UTC) 까지는 이것으로 잡을 빨갛게 만들지 않는다. 그 뒤에는 실패로 잡는다"
+            exit 0
+          fi
+          echo "::error::아티팩트 업로드 실패 — 저장 한도 유예($UNTIL)가 끝났다. 원인을 봐야 한다"
+          exit 1
+      - name: 캐시에 올릴 값이 있나
+        if: always()
+        id: worth
+        run: |
+          has=0
+          if [ -f board/board.db ]; then
+            has=$(python3 -c "import sqlite3;print(1 if sqlite3.connect('board/board.db').execute('SELECT 1 FROM px LIMIT 1').fetchone() else 0)" 2>/dev/null || echo 0)
+          fi
+          echo "has=$has" >> "$GITHUB_OUTPUT"
+          if [ "$has" = "1" ]; then
+            echo "일봉이 들어 있다 — 캐시에 올린다"
+          else
+            echo "::notice::일봉이 없다 — 캐시에 올리지 않는다. 빈 DB 가 공용 키를 덮어쓰면 flowlab·flow 가 그걸 받는다"
+          fi
+
+      - name: DB·state 저장
+        if: always() && steps.worth.outputs.has == '1'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            board/board.db
+            board/state
+          key: board-db-v${{ steps.dv.outputs.v }}-${{ github.run_id }}
+
+      # 실패 줄만 잡 로그 맨 끝에 다시 찍는다. 점검 결과는 로그 중간에 묻히는데,
+      # 원격에서 로그를 볼 때는 끝부분만 받아 보는 경우가 많다.
+
+      - name: 결과 커밋
+        if: success()
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # docs/ 전체가 사이트다 (index.html · d/ 보관본 · x/ 엑셀).
+          # sector_map.yaml 은 사람이 고치라고 만든 파일이라 함께 남긴다.
+          # 커밋하지 않으면 실행이 끝나면서 사라지고, 캐시가 날아가면 분류를
+          # 처음부터 다시 돌려야 한다.
+          #
+          # 경로를 한 줄에 몰면 안 된다. sector_map.yaml 이 아직 없을 때
+          # `git add docs board/knowledge/sector_map.yaml` 은 pathspec 오류로
+          # **통째로 실패**해서 docs 까지 스테이징되지 않는다. || true 가 그걸
+          # 삼켜서 "성공했는데 아무것도 안 올라간" 상태가 된다. 따로 부른다.
+          git add docs || true
+          git add board/knowledge/sector_map.yaml 2>/dev/null || true
+          git diff --cached --quiet && echo "바뀐 산출물 없음" && exit 0
+          git commit -m "보드 갱신 $(date -u +%F)"
+          # 브랜치를 지정해 dispatch 하면 체크아웃이 detached HEAD 라 맨 git push
+          # 는 아무 데도 안 간다("Everything up-to-date"). 명시적으로 밀어준다.
+          #
+          # `|| true` 로 끝내면 안 된다. 실행 중에 누가 그 브랜치에 푸시하면
+          # non-fast-forward 로 거부되는데, 잡은 초록색인 채 보드만 사라진다 —
+          # 2026-08-31 run 26 이 정확히 그랬다. 08-31 보드를 다 만들어 놓고
+          # 거부당한 뒤 조용히 끝났다.
+          #
+          # 원격 위로 다시 얹어 재시도한다. 충돌은 docs/ 생성물뿐이고 방금 만든
+          # 쪽이 최신이므로 -X theirs(리베이스에서는 얹는 쪽 = 우리 커밋)로 잡는다.
+          for i in 1 2 3; do
+            if git push origin "HEAD:${GITHUB_REF_NAME}"; then
+              echo "푸시 성공 (시도 $i)"
+              exit 0
+            fi
+            echo "푸시 거부 — 원격이 앞서 있다. 다시 얹는다 (시도 $i)"
+            git fetch origin "${GITHUB_REF_NAME}"
+            git rebase -X theirs "origin/${GITHUB_REF_NAME}" || {
+              git rebase --abort || true
+              echo "::error::리베이스 실패 — 손으로 봐야 한다"
+              exit 1
+            }
+            sleep $((i * 3))
+          done
+          # 세 번 다 실패했으면 보드가 사라진 것이다. 조용히 넘기지 않는다.
+          echo "::error::결과를 푸시하지 못했습니다. 이 실행의 보드는 산출물(Artifacts)에만 있습니다."
+          exit 1
+
+      # **맨 마지막에 둔다.** 원격에서 잡 로그를 끝에서부터 받아 보는데, 앞에
+      # 두면 커밋 단계의 긴 스크립트에 밀려 안 보인다. 실제로 표본 종목 확인
+      # 결과를 읽으려다 로그를 세 번 다시 받았다.
+      - name: 점검 결과 다시 찍기
+        if: always()
+        run: |
+          if [ -f /tmp/check.txt ]; then
+            echo "── 실패 항목 ──"
+            grep -E '^\s*FAIL' /tmp/check.txt || echo "없음 — 전부 PASS"
+            echo ""
+            # PASS 줄도 찍는다. FAIL 만 보면 "안 깨졌다"는 알지만 **얼마나 받았는지**
+            # 를 모른다. KRX 가 몇 종목·업종 몇 건을 줬는지는 PASS 쪽 사유에 있고,
+            # 그걸 읽으려고 로그를 두 번 다시 받았다. --check 출력은 60줄 남짓이라
+            # 통째로 찍어도 로그 꼬리를 잡아먹지 않는다.
+            echo "── 전문 ──"
+            cat /tmp/check.txt
+          fi

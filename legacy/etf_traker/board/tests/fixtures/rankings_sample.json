@@ -1,0 +1,2277 @@
+{
+  "as_of": "2026-08-26",
+  "prev_asof": "2026-08-25",
+  "market": "KR",
+  "source": "synthetic",
+  "generated_at": "2026-08-26T18:00:00+09:00",
+  "taxonomy": "wics_like",
+  "missing": [
+    "투자자별 수급: 합성 픽스처 — 소스 미확보 상태를 흉내 낸 결손 문구",
+    "뉴스: 합성 픽스처 — 수집 소스가 없어 섹터 트리거를 적을 수 없다는 결손 문구"
+  ],
+  "sector_boards": [
+    {
+      "key": "1d",
+      "label": "금일",
+      "ret_label": "금일 상승률",
+      "weighting": "mktcap",
+      "sectors": [
+        {
+          "rank": 1,
+          "name": "게임",
+          "ret": "+2.63%",
+          "ret_raw": 2.63,
+          "n": 28,
+          "breadth": {
+            "up": 16,
+            "flat": 0,
+            "down": 12
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00547",
+              "name": "가상547테크",
+              "ret": "+8.31%",
+              "ret_raw": 8.31,
+              "mktcap": "640억",
+              "mktcap_raw": 639.7
+            },
+            {
+              "rank": 2,
+              "code": "S00534",
+              "name": "가상534파마",
+              "ret": "+7.55%",
+              "ret_raw": 7.55,
+              "mktcap": "2.34조",
+              "mktcap_raw": 23388.0
+            },
+            {
+              "rank": 3,
+              "code": "S00556",
+              "name": "가상556게임즈",
+              "ret": "+6.47%",
+              "ret_raw": 6.47,
+              "mktcap": "6,361억",
+              "mktcap_raw": 6361.1
+            },
+            {
+              "rank": 4,
+              "code": "S00552",
+              "name": "가상552해운",
+              "ret": "+6.02%",
+              "ret_raw": 6.02,
+              "mktcap": "1.34조",
+              "mktcap_raw": 13397.3
+            },
+            {
+              "rank": 5,
+              "code": "S00540",
+              "name": "가상540시스템",
+              "ret": "+5.00%",
+              "ret_raw": 5.0,
+              "mktcap": "3,119억",
+              "mktcap_raw": 3118.9
+            }
+          ]
+        },
+        {
+          "rank": 2,
+          "name": "전력기기",
+          "ret": "+1.29%",
+          "ret_raw": 1.29,
+          "n": 73,
+          "breadth": {
+            "up": 55,
+            "flat": 0,
+            "down": 18
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00285",
+              "name": "가상285해운",
+              "ret": "+11.12%",
+              "ret_raw": 11.12,
+              "mktcap": "6,978억",
+              "mktcap_raw": 6978.1
+            },
+            {
+              "rank": 2,
+              "code": "S00265",
+              "name": "가상265중공업",
+              "ret": "+7.59%",
+              "ret_raw": 7.59,
+              "mktcap": "3,254억",
+              "mktcap_raw": 3253.6
+            },
+            {
+              "rank": 3,
+              "code": "S00266",
+              "name": "가상266정밀",
+              "ret": "+6.99%",
+              "ret_raw": 6.99,
+              "mktcap": "1,784억",
+              "mktcap_raw": 1784.1
+            },
+            {
+              "rank": 4,
+              "code": "S00247",
+              "name": "가상247파마",
+              "ret": "+6.94%",
+              "ret_raw": 6.94,
+              "mktcap": "3,726억",
+              "mktcap_raw": 3725.5
+            },
+            {
+              "rank": 5,
+              "code": "S00232",
+              "name": "가상232건설",
+              "ret": "+6.35%",
+              "ret_raw": 6.35,
+              "mktcap": "4,224억",
+              "mktcap_raw": 4224.4
+            }
+          ]
+        },
+        {
+          "rank": 3,
+          "name": "방산",
+          "ret": "+1.28%",
+          "ret_raw": 1.28,
+          "n": 41,
+          "breadth": {
+            "up": 24,
+            "flat": 0,
+            "down": 17
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00471",
+              "name": "가상471메디칼",
+              "ret": "+8.60%",
+              "ret_raw": 8.6,
+              "mktcap": "1.67조",
+              "mktcap_raw": 16650.1
+            },
+            {
+              "rank": 2,
+              "code": "S00469",
+              "name": "가상469건설",
+              "ret": "+6.19%",
+              "ret_raw": 6.19,
+              "mktcap": "800억",
+              "mktcap_raw": 800.1
+            },
+            {
+              "rank": 3,
+              "code": "S00498",
+              "name": "가상498바이오",
+              "ret": "+6.14%",
+              "ret_raw": 6.14,
+              "mktcap": "8,583억",
+              "mktcap_raw": 8582.8
+            },
+            {
+              "rank": 4,
+              "code": "S00477",
+              "name": "가상477네트웍스",
+              "ret": "+5.63%",
+              "ret_raw": 5.63,
+              "mktcap": "2,487억",
+              "mktcap_raw": 2487.1
+            },
+            {
+              "rank": 5,
+              "code": "S00483",
+              "name": "가상483중공업",
+              "ret": "+4.97%",
+              "ret_raw": 4.97,
+              "mktcap": "814억",
+              "mktcap_raw": 813.8
+            }
+          ]
+        },
+        {
+          "rank": 4,
+          "name": "바이오",
+          "ret": "+0.92%",
+          "ret_raw": 0.92,
+          "n": 62,
+          "breadth": {
+            "up": 45,
+            "flat": 0,
+            "down": 17
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00347",
+              "name": "가상347시스템",
+              "ret": "+7.13%",
+              "ret_raw": 7.13,
+              "mktcap": "7,398억",
+              "mktcap_raw": 7398.3
+            },
+            {
+              "rank": 2,
+              "code": "S00317",
+              "name": "가상317테크",
+              "ret": "+6.71%",
+              "ret_raw": 6.71,
+              "mktcap": "3,483억",
+              "mktcap_raw": 3483.0
+            },
+            {
+              "rank": 3,
+              "code": "S00355",
+              "name": "가상355정밀",
+              "ret": "+5.86%",
+              "ret_raw": 5.86,
+              "mktcap": "2,748억",
+              "mktcap_raw": 2748.4
+            },
+            {
+              "rank": 4,
+              "code": "S00312",
+              "name": "가상312테크",
+              "ret": "+5.32%",
+              "ret_raw": 5.32,
+              "mktcap": "1,352억",
+              "mktcap_raw": 1352.3
+            },
+            {
+              "rank": 5,
+              "code": "S00349",
+              "name": "가상349로직",
+              "ret": "+5.05%",
+              "ret_raw": 5.05,
+              "mktcap": "1,128억",
+              "mktcap_raw": 1127.8
+            }
+          ]
+        },
+        {
+          "rank": 5,
+          "name": "2차전지",
+          "ret": "+0.57%",
+          "ret_raw": 0.57,
+          "n": 96,
+          "breadth": {
+            "up": 59,
+            "flat": 0,
+            "down": 37
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00219",
+              "name": "가상219시스템",
+              "ret": "+8.95%",
+              "ret_raw": 8.95,
+              "mktcap": "2,718억",
+              "mktcap_raw": 2718.5
+            },
+            {
+              "rank": 2,
+              "code": "S00139",
+              "name": "가상139모빌리티",
+              "ret": "+8.57%",
+              "ret_raw": 8.57,
+              "mktcap": "3,706억",
+              "mktcap_raw": 3705.5
+            },
+            {
+              "rank": 3,
+              "code": "S00178",
+              "name": "가상178바이오",
+              "ret": "+8.21%",
+              "ret_raw": 8.21,
+              "mktcap": "1,445억",
+              "mktcap_raw": 1444.6
+            },
+            {
+              "rank": 4,
+              "code": "S00209",
+              "name": "가상209모빌리티",
+              "ret": "+7.81%",
+              "ret_raw": 7.81,
+              "mktcap": "7,372억",
+              "mktcap_raw": 7371.5
+            },
+            {
+              "rank": 5,
+              "code": "S00147",
+              "name": "가상147메디칼",
+              "ret": "+7.61%",
+              "ret_raw": 7.61,
+              "mktcap": "4,866억",
+              "mktcap_raw": 4865.8
+            }
+          ]
+        },
+        {
+          "rank": 6,
+          "name": "우주항공",
+          "ret": "+0.31%",
+          "ret_raw": 0.31,
+          "n": 9,
+          "breadth": {
+            "up": 2,
+            "flat": 0,
+            "down": 1
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00618",
+              "name": "가상618테크",
+              "ret": "+4.35%",
+              "ret_raw": 4.35,
+              "mktcap": "4,501억",
+              "mktcap_raw": 4501.4
+            },
+            {
+              "rank": 2,
+              "code": "S00620",
+              "name": "가상620정밀",
+              "ret": "+1.40%",
+              "ret_raw": 1.4,
+              "mktcap": "2,616억",
+              "mktcap_raw": 2615.9
+            },
+            {
+              "rank": 3,
+              "code": "S00619",
+              "name": "가상619게임즈",
+              "ret": "-1.45%",
+              "ret_raw": -1.45,
+              "mktcap": "1.20조",
+              "mktcap_raw": 11977.2
+            }
+          ]
+        },
+        {
+          "rank": 7,
+          "name": "인터넷",
+          "ret": "-0.13%",
+          "ret_raw": -0.13,
+          "n": 31,
+          "breadth": {
+            "up": 16,
+            "flat": 0,
+            "down": 15
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00507",
+              "name": "가상507시스템",
+              "ret": "+7.98%",
+              "ret_raw": 7.98,
+              "mktcap": "796억",
+              "mktcap_raw": 795.7
+            },
+            {
+              "rank": 2,
+              "code": "S00505",
+              "name": "가상505솔루션",
+              "ret": "+5.77%",
+              "ret_raw": 5.77,
+              "mktcap": "2,592억",
+              "mktcap_raw": 2592.0
+            },
+            {
+              "rank": 3,
+              "code": "S00529",
+              "name": "가상529테크",
+              "ret": "+4.84%",
+              "ret_raw": 4.84,
+              "mktcap": "2,597억",
+              "mktcap_raw": 2596.7
+            },
+            {
+              "rank": 4,
+              "code": "S00512",
+              "name": "가상512소재",
+              "ret": "+3.65%",
+              "ret_raw": 3.65,
+              "mktcap": "9,904억",
+              "mktcap_raw": 9904.5
+            },
+            {
+              "rank": 5,
+              "code": "S00501",
+              "name": "가상501중공업",
+              "ret": "+3.58%",
+              "ret_raw": 3.58,
+              "mktcap": "1,952억",
+              "mktcap_raw": 1951.9
+            }
+          ]
+        },
+        {
+          "rank": 8,
+          "name": "은행",
+          "ret": "-1.80%",
+          "ret_raw": -1.8,
+          "n": 19,
+          "breadth": {
+            "up": 9,
+            "flat": 0,
+            "down": 10
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00583",
+              "name": "가상583파마",
+              "ret": "+6.12%",
+              "ret_raw": 6.12,
+              "mktcap": "2,714억",
+              "mktcap_raw": 2714.0
+            },
+            {
+              "rank": 2,
+              "code": "S00582",
+              "name": "가상582건설",
+              "ret": "+6.11%",
+              "ret_raw": 6.11,
+              "mktcap": "1,439억",
+              "mktcap_raw": 1438.7
+            },
+            {
+              "rank": 3,
+              "code": "S00591",
+              "name": "가상591솔루션",
+              "ret": "+4.33%",
+              "ret_raw": 4.33,
+              "mktcap": "1,300억",
+              "mktcap_raw": 1299.9
+            },
+            {
+              "rank": 4,
+              "code": "S00595",
+              "name": "가상595물산",
+              "ret": "+3.89%",
+              "ret_raw": 3.89,
+              "mktcap": "645억",
+              "mktcap_raw": 645.3
+            },
+            {
+              "rank": 5,
+              "code": "S00586",
+              "name": "가상586물산",
+              "ret": "+3.25%",
+              "ret_raw": 3.25,
+              "mktcap": "626억",
+              "mktcap_raw": 626.4
+            }
+          ]
+        },
+        {
+          "rank": 9,
+          "name": "조선",
+          "ret": "-2.23%",
+          "ret_raw": -2.23,
+          "n": 54,
+          "breadth": {
+            "up": 15,
+            "flat": 0,
+            "down": 39
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00406",
+              "name": "가상406솔루션",
+              "ret": "+7.25%",
+              "ret_raw": 7.25,
+              "mktcap": "5,173억",
+              "mktcap_raw": 5173.2
+            },
+            {
+              "rank": 2,
+              "code": "S00394",
+              "name": "가상394솔루션",
+              "ret": "+6.01%",
+              "ret_raw": 6.01,
+              "mktcap": "1.02조",
+              "mktcap_raw": 10243.7
+            },
+            {
+              "rank": 3,
+              "code": "S00409",
+              "name": "가상409솔루션",
+              "ret": "+4.19%",
+              "ret_raw": 4.19,
+              "mktcap": "722억",
+              "mktcap_raw": 722.0
+            },
+            {
+              "rank": 4,
+              "code": "S00391",
+              "name": "가상391케미칼",
+              "ret": "+3.05%",
+              "ret_raw": 3.05,
+              "mktcap": "4,194억",
+              "mktcap_raw": 4194.3
+            },
+            {
+              "rank": 5,
+              "code": "S00407",
+              "name": "가상407로직",
+              "ret": "+2.99%",
+              "ret_raw": 2.99,
+              "mktcap": "2.30조",
+              "mktcap_raw": 23004.6
+            }
+          ]
+        },
+        {
+          "rank": 10,
+          "name": "원전",
+          "ret": "-2.26%",
+          "ret_raw": -2.26,
+          "n": 23,
+          "breadth": {
+            "up": 5,
+            "flat": 0,
+            "down": 18
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00560",
+              "name": "가상560정밀",
+              "ret": "+4.18%",
+              "ret_raw": 4.18,
+              "mktcap": "1,470억",
+              "mktcap_raw": 1470.5
+            },
+            {
+              "rank": 2,
+              "code": "S00574",
+              "name": "가상574케미칼",
+              "ret": "+1.73%",
+              "ret_raw": 1.73,
+              "mktcap": "2,144억",
+              "mktcap_raw": 2143.8
+            },
+            {
+              "rank": 3,
+              "code": "S00559",
+              "name": "가상559파마",
+              "ret": "+0.80%",
+              "ret_raw": 0.8,
+              "mktcap": "4,202억",
+              "mktcap_raw": 4201.9
+            },
+            {
+              "rank": 4,
+              "code": "S00572",
+              "name": "가상572소재",
+              "ret": "+0.23%",
+              "ret_raw": 0.23,
+              "mktcap": "1.11조",
+              "mktcap_raw": 11122.0
+            },
+            {
+              "rank": 5,
+              "code": "S00581",
+              "name": "가상581파마",
+              "ret": "+0.09%",
+              "ret_raw": 0.09,
+              "mktcap": "2,943억",
+              "mktcap_raw": 2943.4
+            }
+          ]
+        },
+        {
+          "rank": 11,
+          "name": "화장품",
+          "ret": "-2.86%",
+          "ret_raw": -2.86,
+          "n": 45,
+          "breadth": {
+            "up": 8,
+            "flat": 0,
+            "down": 37
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00419",
+              "name": "가상419로직",
+              "ret": "+3.70%",
+              "ret_raw": 3.7,
+              "mktcap": "1,441억",
+              "mktcap_raw": 1441.2
+            },
+            {
+              "rank": 2,
+              "code": "S00454",
+              "name": "가상454시스템",
+              "ret": "+3.67%",
+              "ret_raw": 3.67,
+              "mktcap": "2.54조",
+              "mktcap_raw": 25437.6
+            },
+            {
+              "rank": 3,
+              "code": "S00431",
+              "name": "가상431중공업",
+              "ret": "+2.10%",
+              "ret_raw": 2.1,
+              "mktcap": "1,821억",
+              "mktcap_raw": 1821.4
+            },
+            {
+              "rank": 4,
+              "code": "S00455",
+              "name": "가상455모빌리티",
+              "ret": "+1.87%",
+              "ret_raw": 1.87,
+              "mktcap": "4,431억",
+              "mktcap_raw": 4431.3
+            },
+            {
+              "rank": 5,
+              "code": "S00456",
+              "name": "가상456에너지",
+              "ret": "+1.69%",
+              "ret_raw": 1.69,
+              "mktcap": "2,292억",
+              "mktcap_raw": 2291.8
+            }
+          ]
+        },
+        {
+          "rank": 12,
+          "name": "반도체",
+          "ret": "-3.54%",
+          "ret_raw": -3.54,
+          "n": 128,
+          "breadth": {
+            "up": 21,
+            "flat": 0,
+            "down": 107
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00069",
+              "name": "가상069모빌리티",
+              "ret": "+5.19%",
+              "ret_raw": 5.19,
+              "mktcap": "383억",
+              "mktcap_raw": 382.6
+            },
+            {
+              "rank": 2,
+              "code": "S00083",
+              "name": "가상083건설",
+              "ret": "+3.74%",
+              "ret_raw": 3.74,
+              "mktcap": "5,983억",
+              "mktcap_raw": 5983.2
+            },
+            {
+              "rank": 3,
+              "code": "S00084",
+              "name": "가상084네트웍스",
+              "ret": "+3.31%",
+              "ret_raw": 3.31,
+              "mktcap": "2,041억",
+              "mktcap_raw": 2041.3
+            },
+            {
+              "rank": 4,
+              "code": "S00031",
+              "name": "가상031에너지",
+              "ret": "+3.24%",
+              "ret_raw": 3.24,
+              "mktcap": "1,889억",
+              "mktcap_raw": 1888.9
+            },
+            {
+              "rank": 5,
+              "code": "S00127",
+              "name": "가상127게임즈",
+              "ret": "+2.79%",
+              "ret_raw": 2.79,
+              "mktcap": "8,337억",
+              "mktcap_raw": 8337.4
+            }
+          ]
+        },
+        {
+          "rank": 13,
+          "name": "해운",
+          "ret": "-5.68%",
+          "ret_raw": -5.68,
+          "n": 17,
+          "breadth": {
+            "up": 0,
+            "flat": 0,
+            "down": 17
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00616",
+              "name": "가상616네트웍스",
+              "ret": "-0.35%",
+              "ret_raw": -0.35,
+              "mktcap": "1,672억",
+              "mktcap_raw": 1672.5
+            },
+            {
+              "rank": 2,
+              "code": "S00603",
+              "name": "가상603소재",
+              "ret": "-1.49%",
+              "ret_raw": -1.49,
+              "mktcap": "1,768억",
+              "mktcap_raw": 1767.9
+            },
+            {
+              "rank": 3,
+              "code": "S00607",
+              "name": "가상607케미칼",
+              "ret": "-2.38%",
+              "ret_raw": -2.38,
+              "mktcap": "842억",
+              "mktcap_raw": 841.6
+            },
+            {
+              "rank": 4,
+              "code": "S00609",
+              "name": "가상609시스템",
+              "ret": "-2.53%",
+              "ret_raw": -2.53,
+              "mktcap": "2,721억",
+              "mktcap_raw": 2721.1
+            },
+            {
+              "rank": 5,
+              "code": "S00613",
+              "name": "가상613시스템",
+              "ret": "-3.68%",
+              "ret_raw": -3.68,
+              "mktcap": "1,199억",
+              "mktcap_raw": 1199.1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "7d",
+      "label": "7거래일",
+      "ret_label": "7거래일 상승률",
+      "weighting": "mktcap",
+      "sectors": [
+        {
+          "rank": 1,
+          "name": "방산",
+          "ret": "+7.17%",
+          "ret_raw": 7.17,
+          "n": 41,
+          "breadth": {
+            "up": 33,
+            "flat": 0,
+            "down": 8
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00470",
+              "name": "가상470모빌리티",
+              "ret": "+17.50%",
+              "ret_raw": 17.5,
+              "mktcap": "6.01조",
+              "mktcap_raw": 60063.7
+            },
+            {
+              "rank": 2,
+              "code": "S00486",
+              "name": "가상486에너지",
+              "ret": "+15.49%",
+              "ret_raw": 15.49,
+              "mktcap": "3,649억",
+              "mktcap_raw": 3649.3
+            },
+            {
+              "rank": 3,
+              "code": "S00498",
+              "name": "가상498바이오",
+              "ret": "+14.08%",
+              "ret_raw": 14.08,
+              "mktcap": "8,583억",
+              "mktcap_raw": 8582.8
+            },
+            {
+              "rank": 4,
+              "code": "S00473",
+              "name": "가상473해운",
+              "ret": "+13.78%",
+              "ret_raw": 13.78,
+              "mktcap": "1,509억",
+              "mktcap_raw": 1508.7
+            },
+            {
+              "rank": 5,
+              "code": "S00472",
+              "name": "가상472케미칼",
+              "ret": "+9.50%",
+              "ret_raw": 9.5,
+              "mktcap": "1,669억",
+              "mktcap_raw": 1668.9
+            }
+          ]
+        },
+        {
+          "rank": 2,
+          "name": "게임",
+          "ret": "+7.07%",
+          "ret_raw": 7.07,
+          "n": 28,
+          "breadth": {
+            "up": 20,
+            "flat": 0,
+            "down": 8
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00534",
+              "name": "가상534파마",
+              "ret": "+21.66%",
+              "ret_raw": 21.66,
+              "mktcap": "2.34조",
+              "mktcap_raw": 23388.0
+            },
+            {
+              "rank": 2,
+              "code": "S00550",
+              "name": "가상550소재",
+              "ret": "+14.48%",
+              "ret_raw": 14.48,
+              "mktcap": "2,226억",
+              "mktcap_raw": 2225.8
+            },
+            {
+              "rank": 3,
+              "code": "S00555",
+              "name": "가상555모빌리티",
+              "ret": "+13.75%",
+              "ret_raw": 13.75,
+              "mktcap": "666억",
+              "mktcap_raw": 665.8
+            },
+            {
+              "rank": 4,
+              "code": "S00556",
+              "name": "가상556게임즈",
+              "ret": "+11.89%",
+              "ret_raw": 11.89,
+              "mktcap": "6,361억",
+              "mktcap_raw": 6361.1
+            },
+            {
+              "rank": 5,
+              "code": "S00545",
+              "name": "가상545전자",
+              "ret": "+11.88%",
+              "ret_raw": 11.88,
+              "mktcap": "320억",
+              "mktcap_raw": 320.0
+            }
+          ]
+        },
+        {
+          "rank": 3,
+          "name": "바이오",
+          "ret": "+5.01%",
+          "ret_raw": 5.01,
+          "n": 62,
+          "breadth": {
+            "up": 49,
+            "flat": 0,
+            "down": 13
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00325",
+              "name": "가상325전자",
+              "ret": "+14.06%",
+              "ret_raw": 14.06,
+              "mktcap": "1,450억",
+              "mktcap_raw": 1450.4
+            },
+            {
+              "rank": 2,
+              "code": "S00328",
+              "name": "가상328바이오",
+              "ret": "+13.60%",
+              "ret_raw": 13.6,
+              "mktcap": "9,145억",
+              "mktcap_raw": 9144.7
+            },
+            {
+              "rank": 3,
+              "code": "S00299",
+              "name": "가상299전자",
+              "ret": "+13.06%",
+              "ret_raw": 13.06,
+              "mktcap": "2,058억",
+              "mktcap_raw": 2058.2
+            },
+            {
+              "rank": 4,
+              "code": "S00343",
+              "name": "가상343바이오",
+              "ret": "+12.03%",
+              "ret_raw": 12.03,
+              "mktcap": "2,303억",
+              "mktcap_raw": 2303.1
+            },
+            {
+              "rank": 5,
+              "code": "S00316",
+              "name": "가상316해운",
+              "ret": "+11.93%",
+              "ret_raw": 11.93,
+              "mktcap": "5,826억",
+              "mktcap_raw": 5826.0
+            }
+          ]
+        },
+        {
+          "rank": 4,
+          "name": "2차전지",
+          "ret": "+4.79%",
+          "ret_raw": 4.79,
+          "n": 96,
+          "breadth": {
+            "up": 80,
+            "flat": 0,
+            "down": 16
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00144",
+              "name": "가상144파마",
+              "ret": "+24.14%",
+              "ret_raw": 24.14,
+              "mktcap": "328억",
+              "mktcap_raw": 327.9
+            },
+            {
+              "rank": 2,
+              "code": "S00140",
+              "name": "가상140솔루션",
+              "ret": "+21.76%",
+              "ret_raw": 21.76,
+              "mktcap": "1,605억",
+              "mktcap_raw": 1605.1
+            },
+            {
+              "rank": 3,
+              "code": "S00219",
+              "name": "가상219시스템",
+              "ret": "+19.58%",
+              "ret_raw": 19.58,
+              "mktcap": "2,718억",
+              "mktcap_raw": 2718.5
+            },
+            {
+              "rank": 4,
+              "code": "S00157",
+              "name": "가상157바이오",
+              "ret": "+18.47%",
+              "ret_raw": 18.47,
+              "mktcap": "1,561억",
+              "mktcap_raw": 1561.0
+            },
+            {
+              "rank": 5,
+              "code": "S00160",
+              "name": "가상160건설",
+              "ret": "+16.17%",
+              "ret_raw": 16.17,
+              "mktcap": "1,411억",
+              "mktcap_raw": 1411.4
+            }
+          ]
+        },
+        {
+          "rank": 5,
+          "name": "은행",
+          "ret": "+1.97%",
+          "ret_raw": 1.97,
+          "n": 19,
+          "breadth": {
+            "up": 11,
+            "flat": 0,
+            "down": 8
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00582",
+              "name": "가상582건설",
+              "ret": "+12.59%",
+              "ret_raw": 12.59,
+              "mktcap": "1,439억",
+              "mktcap_raw": 1438.7
+            },
+            {
+              "rank": 2,
+              "code": "S00596",
+              "name": "가상596정밀",
+              "ret": "+11.65%",
+              "ret_raw": 11.65,
+              "mktcap": "1,669억",
+              "mktcap_raw": 1669.3
+            },
+            {
+              "rank": 3,
+              "code": "S00587",
+              "name": "가상587에너지",
+              "ret": "+11.00%",
+              "ret_raw": 11.0,
+              "mktcap": "1,803억",
+              "mktcap_raw": 1802.9
+            },
+            {
+              "rank": 4,
+              "code": "S00598",
+              "name": "가상598네트웍스",
+              "ret": "+9.24%",
+              "ret_raw": 9.24,
+              "mktcap": "8,848억",
+              "mktcap_raw": 8848.0
+            },
+            {
+              "rank": 5,
+              "code": "S00584",
+              "name": "가상584테크",
+              "ret": "+7.12%",
+              "ret_raw": 7.12,
+              "mktcap": "7,362억",
+              "mktcap_raw": 7361.5
+            }
+          ]
+        },
+        {
+          "rank": 6,
+          "name": "전력기기",
+          "ret": "-1.74%",
+          "ret_raw": -1.74,
+          "n": 73,
+          "breadth": {
+            "up": 34,
+            "flat": 0,
+            "down": 39
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00293",
+              "name": "가상293건설",
+              "ret": "+17.47%",
+              "ret_raw": 17.47,
+              "mktcap": "4,062억",
+              "mktcap_raw": 4062.1
+            },
+            {
+              "rank": 2,
+              "code": "S00253",
+              "name": "가상253식품",
+              "ret": "+14.25%",
+              "ret_raw": 14.25,
+              "mktcap": "3,938억",
+              "mktcap_raw": 3937.9
+            },
+            {
+              "rank": 3,
+              "code": "S00226",
+              "name": "가상226테크",
+              "ret": "+13.61%",
+              "ret_raw": 13.61,
+              "mktcap": "3,182억",
+              "mktcap_raw": 3182.0
+            },
+            {
+              "rank": 4,
+              "code": "S00252",
+              "name": "가상252메디칼",
+              "ret": "+10.24%",
+              "ret_raw": 10.24,
+              "mktcap": "1.21조",
+              "mktcap_raw": 12100.0
+            },
+            {
+              "rank": 5,
+              "code": "S00248",
+              "name": "가상248바이오",
+              "ret": "+9.80%",
+              "ret_raw": 9.8,
+              "mktcap": "4,332억",
+              "mktcap_raw": 4332.4
+            }
+          ]
+        },
+        {
+          "rank": 7,
+          "name": "원전",
+          "ret": "-3.54%",
+          "ret_raw": -3.54,
+          "n": 23,
+          "breadth": {
+            "up": 7,
+            "flat": 0,
+            "down": 16
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00566",
+              "name": "가상566메디칼",
+              "ret": "+11.88%",
+              "ret_raw": 11.88,
+              "mktcap": "5,062억",
+              "mktcap_raw": 5062.1
+            },
+            {
+              "rank": 2,
+              "code": "S00576",
+              "name": "가상576테크",
+              "ret": "+4.57%",
+              "ret_raw": 4.57,
+              "mktcap": "1,247억",
+              "mktcap_raw": 1247.0
+            },
+            {
+              "rank": 3,
+              "code": "S00578",
+              "name": "가상578에너지",
+              "ret": "+4.14%",
+              "ret_raw": 4.14,
+              "mktcap": "725억",
+              "mktcap_raw": 725.0
+            },
+            {
+              "rank": 4,
+              "code": "S00568",
+              "name": "가상568케미칼",
+              "ret": "+3.46%",
+              "ret_raw": 3.46,
+              "mktcap": "4,538억",
+              "mktcap_raw": 4537.6
+            },
+            {
+              "rank": 5,
+              "code": "S00570",
+              "name": "가상570식품",
+              "ret": "+1.76%",
+              "ret_raw": 1.76,
+              "mktcap": "2,878억",
+              "mktcap_raw": 2878.5
+            }
+          ]
+        },
+        {
+          "rank": 8,
+          "name": "반도체",
+          "ret": "-3.83%",
+          "ret_raw": -3.83,
+          "n": 128,
+          "breadth": {
+            "up": 27,
+            "flat": 0,
+            "down": 101
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00098",
+              "name": "가상098모빌리티",
+              "ret": "+17.18%",
+              "ret_raw": 17.18,
+              "mktcap": "1,989억",
+              "mktcap_raw": 1988.6
+            },
+            {
+              "rank": 2,
+              "code": "S00019",
+              "name": "가상019바이오",
+              "ret": "+9.32%",
+              "ret_raw": 9.32,
+              "mktcap": "1.49조",
+              "mktcap_raw": 14880.9
+            },
+            {
+              "rank": 3,
+              "code": "S00004",
+              "name": "가상004메디칼",
+              "ret": "+7.95%",
+              "ret_raw": 7.95,
+              "mktcap": "523억",
+              "mktcap_raw": 522.9
+            },
+            {
+              "rank": 4,
+              "code": "S00109",
+              "name": "가상109중공업",
+              "ret": "+7.92%",
+              "ret_raw": 7.92,
+              "mktcap": "5,533억",
+              "mktcap_raw": 5532.6
+            },
+            {
+              "rank": 5,
+              "code": "S00110",
+              "name": "가상110테크",
+              "ret": "+7.85%",
+              "ret_raw": 7.85,
+              "mktcap": "3,516억",
+              "mktcap_raw": 3516.3
+            }
+          ]
+        },
+        {
+          "rank": 9,
+          "name": "우주항공",
+          "ret": "-4.64%",
+          "ret_raw": -4.64,
+          "n": 9,
+          "breadth": {
+            "up": 0,
+            "flat": 0,
+            "down": 3
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00619",
+              "name": "가상619게임즈",
+              "ret": "-3.71%",
+              "ret_raw": -3.71,
+              "mktcap": "1.20조",
+              "mktcap_raw": 11977.2
+            },
+            {
+              "rank": 2,
+              "code": "S00618",
+              "name": "가상618테크",
+              "ret": "-4.96%",
+              "ret_raw": -4.96,
+              "mktcap": "4,501억",
+              "mktcap_raw": 4501.4
+            },
+            {
+              "rank": 3,
+              "code": "S00620",
+              "name": "가상620정밀",
+              "ret": "-8.36%",
+              "ret_raw": -8.36,
+              "mktcap": "2,616억",
+              "mktcap_raw": 2615.9
+            }
+          ]
+        },
+        {
+          "rank": 10,
+          "name": "인터넷",
+          "ret": "-5.37%",
+          "ret_raw": -5.37,
+          "n": 31,
+          "breadth": {
+            "up": 12,
+            "flat": 0,
+            "down": 19
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00525",
+              "name": "가상525에너지",
+              "ret": "+7.56%",
+              "ret_raw": 7.56,
+              "mktcap": "1,175억",
+              "mktcap_raw": 1175.4
+            },
+            {
+              "rank": 2,
+              "code": "S00502",
+              "name": "가상502전자",
+              "ret": "+4.67%",
+              "ret_raw": 4.67,
+              "mktcap": "678억",
+              "mktcap_raw": 678.3
+            },
+            {
+              "rank": 3,
+              "code": "S00520",
+              "name": "가상520게임즈",
+              "ret": "+4.36%",
+              "ret_raw": 4.36,
+              "mktcap": "393억",
+              "mktcap_raw": 393.1
+            },
+            {
+              "rank": 4,
+              "code": "S00522",
+              "name": "가상522정밀",
+              "ret": "+3.99%",
+              "ret_raw": 3.99,
+              "mktcap": "766억",
+              "mktcap_raw": 765.8
+            },
+            {
+              "rank": 5,
+              "code": "S00507",
+              "name": "가상507시스템",
+              "ret": "+3.89%",
+              "ret_raw": 3.89,
+              "mktcap": "796억",
+              "mktcap_raw": 795.7
+            }
+          ]
+        },
+        {
+          "rank": 11,
+          "name": "화장품",
+          "ret": "-5.60%",
+          "ret_raw": -5.6,
+          "n": 45,
+          "breadth": {
+            "up": 9,
+            "flat": 0,
+            "down": 36
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00450",
+              "name": "가상450솔루션",
+              "ret": "+10.45%",
+              "ret_raw": 10.45,
+              "mktcap": "997억",
+              "mktcap_raw": 997.0
+            },
+            {
+              "rank": 2,
+              "code": "S00458",
+              "name": "가상458식품",
+              "ret": "+6.01%",
+              "ret_raw": 6.01,
+              "mktcap": "1,664억",
+              "mktcap_raw": 1664.3
+            },
+            {
+              "rank": 3,
+              "code": "S00432",
+              "name": "가상432건설",
+              "ret": "+4.53%",
+              "ret_raw": 4.53,
+              "mktcap": "2,052억",
+              "mktcap_raw": 2051.7
+            },
+            {
+              "rank": 4,
+              "code": "S00445",
+              "name": "가상445테크",
+              "ret": "+4.41%",
+              "ret_raw": 4.41,
+              "mktcap": "677억",
+              "mktcap_raw": 676.8
+            },
+            {
+              "rank": 5,
+              "code": "S00439",
+              "name": "가상439파마",
+              "ret": "+3.39%",
+              "ret_raw": 3.39,
+              "mktcap": "1.09조",
+              "mktcap_raw": 10903.4
+            }
+          ]
+        },
+        {
+          "rank": 12,
+          "name": "조선",
+          "ret": "-5.77%",
+          "ret_raw": -5.77,
+          "n": 54,
+          "breadth": {
+            "up": 12,
+            "flat": 0,
+            "down": 42
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00384",
+              "name": "가상384솔루션",
+              "ret": "+11.72%",
+              "ret_raw": 11.72,
+              "mktcap": "2,571억",
+              "mktcap_raw": 2571.1
+            },
+            {
+              "rank": 2,
+              "code": "S00396",
+              "name": "가상396게임즈",
+              "ret": "+6.11%",
+              "ret_raw": 6.11,
+              "mktcap": "787억",
+              "mktcap_raw": 787.2
+            },
+            {
+              "rank": 3,
+              "code": "S00391",
+              "name": "가상391케미칼",
+              "ret": "+4.81%",
+              "ret_raw": 4.81,
+              "mktcap": "4,194억",
+              "mktcap_raw": 4194.3
+            },
+            {
+              "rank": 4,
+              "code": "S00368",
+              "name": "가상368식품",
+              "ret": "+4.50%",
+              "ret_raw": 4.5,
+              "mktcap": "5,799억",
+              "mktcap_raw": 5799.2
+            },
+            {
+              "rank": 5,
+              "code": "S00376",
+              "name": "가상376네트웍스",
+              "ret": "+4.38%",
+              "ret_raw": 4.38,
+              "mktcap": "1,820억",
+              "mktcap_raw": 1820.5
+            }
+          ]
+        },
+        {
+          "rank": 13,
+          "name": "해운",
+          "ret": "-8.17%",
+          "ret_raw": -8.17,
+          "n": 17,
+          "breadth": {
+            "up": 2,
+            "flat": 0,
+            "down": 15
+          },
+          "top": [
+            {
+              "rank": 1,
+              "code": "S00602",
+              "name": "가상602물산",
+              "ret": "+3.06%",
+              "ret_raw": 3.06,
+              "mktcap": "939억",
+              "mktcap_raw": 939.2
+            },
+            {
+              "rank": 2,
+              "code": "S00614",
+              "name": "가상614중공업",
+              "ret": "+0.32%",
+              "ret_raw": 0.32,
+              "mktcap": "5,477억",
+              "mktcap_raw": 5476.6
+            },
+            {
+              "rank": 3,
+              "code": "S00609",
+              "name": "가상609시스템",
+              "ret": "-0.01%",
+              "ret_raw": -0.01,
+              "mktcap": "2,721억",
+              "mktcap_raw": 2721.1
+            },
+            {
+              "rank": 4,
+              "code": "S00616",
+              "name": "가상616네트웍스",
+              "ret": "-1.01%",
+              "ret_raw": -1.01,
+              "mktcap": "1,672억",
+              "mktcap_raw": 1672.5
+            },
+            {
+              "rank": 5,
+              "code": "S00604",
+              "name": "가상604에너지",
+              "ret": "-1.04%",
+              "ret_raw": -1.04,
+              "mktcap": "1,028억",
+              "mktcap_raw": 1028.2
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "stock_boards": [
+    {
+      "key": "ret_1w",
+      "title": "1w 주가수익률 순위",
+      "sort_by": "ret_1w",
+      "columns": [
+        {
+          "key": "mktcap",
+          "label": "시가총액",
+          "kind": "amount"
+        },
+        {
+          "key": "ret_1d",
+          "label": "1d",
+          "kind": "pct"
+        },
+        {
+          "key": "ret_1w",
+          "label": "1w",
+          "kind": "pct"
+        },
+        {
+          "key": "ret_1m",
+          "label": "1m",
+          "kind": "pct"
+        },
+        {
+          "key": "vol_3d_1m",
+          "label": "거래량 3일/1달",
+          "kind": "ratio"
+        },
+        {
+          "key": "n_newhigh",
+          "label": "신고가",
+          "kind": "int"
+        }
+      ],
+      "rows": [
+        {
+          "rank": 1,
+          "code": "S00144",
+          "name": "가상144파마",
+          "cross": false,
+          "cells": {
+            "mktcap": "328억",
+            "ret_1d": "+5.77%",
+            "ret_1w": "+18.08%",
+            "ret_1m": "+4.70%",
+            "vol_3d_1m": "293%",
+            "n_newhigh": "1"
+          },
+          "cells_raw": {
+            "mktcap": 327.9,
+            "ret_1d": 5.77,
+            "ret_1w": 18.08,
+            "ret_1m": 4.7,
+            "vol_3d_1m": 293.4,
+            "n_newhigh": 1
+          }
+        },
+        {
+          "rank": 2,
+          "code": "S00550",
+          "name": "가상550소재",
+          "cross": true,
+          "cells": {
+            "mktcap": "2,226억",
+            "ret_1d": "-2.70%",
+            "ret_1w": "+17.87%",
+            "ret_1m": "+9.91%",
+            "vol_3d_1m": "635%",
+            "n_newhigh": "1"
+          },
+          "cells_raw": {
+            "mktcap": 2225.8,
+            "ret_1d": -2.7,
+            "ret_1w": 17.87,
+            "ret_1m": 9.91,
+            "vol_3d_1m": 635.1,
+            "n_newhigh": 1
+          }
+        },
+        {
+          "rank": 3,
+          "code": "S00534",
+          "name": "가상534파마",
+          "cross": true,
+          "cells": {
+            "mktcap": "2.34조",
+            "ret_1d": "+7.55%",
+            "ret_1w": "+17.65%",
+            "ret_1m": "+24.70%",
+            "vol_3d_1m": "317%",
+            "n_newhigh": "1"
+          },
+          "cells_raw": {
+            "mktcap": 23388.0,
+            "ret_1d": 7.55,
+            "ret_1w": 17.65,
+            "ret_1m": 24.7,
+            "vol_3d_1m": 316.9,
+            "n_newhigh": 1
+          }
+        },
+        {
+          "rank": 4,
+          "code": "S00140",
+          "name": "가상140솔루션",
+          "cross": false,
+          "cells": {
+            "mktcap": "1,605억",
+            "ret_1d": "-1.68%",
+            "ret_1w": "+16.93%",
+            "ret_1m": "+15.99%",
+            "vol_3d_1m": "121%",
+            "n_newhigh": "0"
+          },
+          "cells_raw": {
+            "mktcap": 1605.1,
+            "ret_1d": -1.68,
+            "ret_1w": 16.93,
+            "ret_1m": 15.99,
+            "vol_3d_1m": 120.7,
+            "n_newhigh": 0
+          }
+        },
+        {
+          "rank": 5,
+          "code": "S00299",
+          "name": "가상299전자",
+          "cross": true,
+          "cells": {
+            "mktcap": "2,058억",
+            "ret_1d": "-1.53%",
+            "ret_1w": "+16.59%",
+            "ret_1m": "+15.90%",
+            "vol_3d_1m": "446%",
+            "n_newhigh": "0"
+          },
+          "cells_raw": {
+            "mktcap": 2058.2,
+            "ret_1d": -1.53,
+            "ret_1w": 16.59,
+            "ret_1m": 15.9,
+            "vol_3d_1m": 446.4,
+            "n_newhigh": 0
+          }
+        },
+        {
+          "rank": 6,
+          "code": "S00160",
+          "name": "가상160건설",
+          "cross": false,
+          "cells": {
+            "mktcap": "1,411억",
+            "ret_1d": "+0.29%",
+            "ret_1w": "+16.32%",
+            "ret_1m": null,
+            "vol_3d_1m": null,
+            "n_newhigh": "0"
+          },
+          "cells_raw": {
+            "mktcap": 1411.4,
+            "ret_1d": 0.29,
+            "ret_1w": 16.32,
+            "ret_1m": null,
+            "vol_3d_1m": null,
+            "n_newhigh": 0
+          }
+        },
+        {
+          "rank": 7,
+          "code": "S00304",
+          "name": "가상304로직",
+          "cross": false,
+          "cells": {
+            "mktcap": "320억",
+            "ret_1d": "+0.63%",
+            "ret_1w": "+16.17%",
+            "ret_1m": "+15.77%",
+            "vol_3d_1m": "126%",
+            "n_newhigh": "2"
+          },
+          "cells_raw": {
+            "mktcap": 320.0,
+            "ret_1d": 0.63,
+            "ret_1w": 16.17,
+            "ret_1m": 15.77,
+            "vol_3d_1m": 125.7,
+            "n_newhigh": 2
+          }
+        },
+        {
+          "rank": 8,
+          "code": "S00193",
+          "name": "가상193전자",
+          "cross": true,
+          "cells": {
+            "mktcap": "1,233억",
+            "ret_1d": "+2.80%",
+            "ret_1w": "+16.02%",
+            "ret_1m": "+6.11%",
+            "vol_3d_1m": "352%",
+            "n_newhigh": "0"
+          },
+          "cells_raw": {
+            "mktcap": 1232.6,
+            "ret_1d": 2.8,
+            "ret_1w": 16.02,
+            "ret_1m": 6.11,
+            "vol_3d_1m": 352.2,
+            "n_newhigh": 0
+          }
+        },
+        {
+          "rank": 9,
+          "code": "S00098",
+          "name": "가상098모빌리티",
+          "cross": false,
+          "cells": {
+            "mktcap": "1,989억",
+            "ret_1d": "-3.99%",
+            "ret_1w": "+15.53%",
+            "ret_1m": "+19.90%",
+            "vol_3d_1m": "153%",
+            "n_newhigh": "2"
+          },
+          "cells_raw": {
+            "mktcap": 1988.6,
+            "ret_1d": -3.99,
+            "ret_1w": 15.53,
+            "ret_1m": 19.9,
+            "vol_3d_1m": 153.4,
+            "n_newhigh": 2
+          }
+        },
+        {
+          "rank": 10,
+          "code": "S00157",
+          "name": "가상157바이오",
+          "cross": false,
+          "cells": {
+            "mktcap": "1,561억",
+            "ret_1d": "-4.67%",
+            "ret_1w": "+15.46%",
+            "ret_1m": "+17.16%",
+            "vol_3d_1m": "234%",
+            "n_newhigh": "2"
+          },
+          "cells_raw": {
+            "mktcap": 1561.0,
+            "ret_1d": -4.67,
+            "ret_1w": 15.46,
+            "ret_1m": 17.16,
+            "vol_3d_1m": 234.0,
+            "n_newhigh": 2
+          }
+        },
+        {
+          "rank": 11,
+          "code": "S00498",
+          "name": "가상498바이오",
+          "cross": false,
+          "cells": {
+            "mktcap": "8,583억",
+            "ret_1d": "+6.14%",
+            "ret_1w": "+14.87%",
+            "ret_1m": "+11.62%",
+            "vol_3d_1m": "136%",
+            "n_newhigh": "2"
+          },
+          "cells_raw": {
+            "mktcap": 8582.8,
+            "ret_1d": 6.14,
+            "ret_1w": 14.87,
+            "ret_1m": 11.62,
+            "vol_3d_1m": 135.8,
+            "n_newhigh": 2
+          }
+        },
+        {
+          "rank": 12,
+          "code": "S00470",
+          "name": "가상470모빌리티",
+          "cross": true,
+          "cells": {
+            "mktcap": "6.01조",
+            "ret_1d": "-0.87%",
+            "ret_1w": "+14.38%",
+            "ret_1m": "+18.95%",
+            "vol_3d_1m": "426%",
+            "n_newhigh": "0"
+          },
+          "cells_raw": {
+            "mktcap": 60063.7,
+            "ret_1d": -0.87,
+            "ret_1w": 14.38,
+            "ret_1m": 18.95,
+            "vol_3d_1m": 425.9,
+            "n_newhigh": 0
+          }
+        },
+        {
+          "rank": 13,
+          "code": "S00197",
+          "name": "가상197메디칼",
+          "cross": true,
+          "cells": {
+            "mktcap": "6,998억",
+            "ret_1d": "-2.02%",
+            "ret_1w": "+14.22%",
+            "ret_1m": "+24.70%",
+            "vol_3d_1m": "592%",
+            "n_newhigh": "0"
+          },
+          "cells_raw": {
+            "mktcap": 6998.2,
+            "ret_1d": -2.02,
+            "ret_1w": 14.22,
+            "ret_1m": 24.7,
+            "vol_3d_1m": 592.4,
+            "n_newhigh": 0
+          }
+        },
+        {
+          "rank": 14,
+          "code": "S00486",
+          "name": "가상486에너지",
+          "cross": true,
+          "cells": {
+            "mktcap": "3,649억",
+            "ret_1d": "-2.08%",
+            "ret_1w": "+14.10%",
+            "ret_1m": "+0.81%",
+            "vol_3d_1m": "404%",
+            "n_newhigh": "3"
+          },
+          "cells_raw": {
+            "mktcap": 3649.3,
+            "ret_1d": -2.08,
+            "ret_1w": 14.1,
+            "ret_1m": 0.81,
+            "vol_3d_1m": 404.1,
+            "n_newhigh": 3
+          }
+        },
+        {
+          "rank": 15,
+          "code": "S00219",
+          "name": "가상219시스템",
+          "cross": false,
+          "cells": {
+            "mktcap": "2,718억",
+            "ret_1d": "+8.95%",
+            "ret_1w": "+13.96%",
+            "ret_1m": "+16.84%",
+            "vol_3d_1m": "203%",
+            "n_newhigh": "0"
+          },
+          "cells_raw": {
+            "mktcap": 2718.5,
+            "ret_1d": 8.95,
+            "ret_1w": 13.96,
+            "ret_1m": 16.84,
+            "vol_3d_1m": 203.1,
+            "n_newhigh": 0
+          }
+        }
+      ]
+    },
+    {
+      "key": "vol_3d_1m",
+      "title": "거래량 3일/1달 순위",
+      "sort_by": "vol_3d_1m",
+      "columns": [
+        {
+          "key": "mktcap",
+          "label": "시가총액",
+          "kind": "amount"
+        },
+        {
+          "key": "ret_1d",
+          "label": "1d",
+          "kind": "pct"
+        },
+        {
+          "key": "ret_1w",
+          "label": "1w",
+          "kind": "pct"
+        },
+        {
+          "key": "ret_1m",
+          "label": "1m",
+          "kind": "pct"
+        },
+        {
+          "key": "vol_3d_1m",
+          "label": "거래량 3일/1달",
+          "kind": "ratio"
+        },
+        {
+          "key": "n_newhigh",
+          "label": "신고가",
+          "kind": "int"
+        }
+      ],
+      "rows": [
+        {
+          "rank": 1,
+          "code": "S00550",
+          "name": "가상550소재",
+          "cross": true,
+          "cells": {
+            "mktcap": "2,226억",
+            "ret_1d": "-2.70%",
+            "ret_1w": "+17.87%",
+            "ret_1m": "+9.91%",
+            "vol_3d_1m": "635%",
+            "n_newhigh": "1"
+          },
+          "cells_raw": {
+            "mktcap": 2225.8,
+            "ret_1d": -2.7,
+            "ret_1w": 17.87,
+            "ret_1m": 9.91,
+            "vol_3d_1m": 635.1,
+            "n_newhigh": 1
+          }
+        },
+        {
+          "rank": 2,
+          "code": "S00197",
+          "name": "가상197메디칼",
+          "cross": true,
+          "cells": {
+            "mktcap": "6,998억",
+            "ret_1d": "-2.02%",
+            "ret_1w": "+14.22%",
+            "ret_1m": "+24.70%",
+            "vol_3d_1m": "592%",
+            "n_newhigh": "0"
+          },
+          "cells_raw": {
+            "mktcap": 6998.2,
+            "ret_1d": -2.02,
+            "ret_1w": 14.22,
+            "ret_1m": 24.7,
+            "vol_3d_1m": 592.4,
+            "n_newhigh": 0
+          }
+        },
+        {
+          "rank": 3,
+          "code": "S00038",
+          "name": "가상038바이오",
+          "cross": false,
+          "cells": {
+            "mktcap": "581억",
+            "ret_1d": "-3.42%",
+            "ret_1w": "+9.10%",
+            "ret_1m": "-8.77%",
+            "vol_3d_1m": "503%",
+            "n_newhigh": "0"
+          },
+          "cells_raw": {
+            "mktcap": 580.6,
+            "ret_1d": -3.42,
+            "ret_1w": 9.1,
+            "ret_1m": -8.77,
+            "vol_3d_1m": 503.3,
+            "n_newhigh": 0
+          }
+        },
+        {
+          "rank": 4,
+          "code": "S00299",
+          "name": "가상299전자",
+          "cross": true,
+          "cells": {
+            "mktcap": "2,058억",
+            "ret_1d": "-1.53%",
+            "ret_1w": "+16.59%",
+            "ret_1m": "+15.90%",
+            "vol_3d_1m": "446%",
+            "n_newhigh": "0"
+          },
+          "cells_raw": {
+            "mktcap": 2058.2,
+            "ret_1d": -1.53,
+            "ret_1w": 16.59,
+            "ret_1m": 15.9,
+            "vol_3d_1m": 446.4,
+            "n_newhigh": 0
+          }
+        },
+        {
+          "rank": 5,
+          "code": "S00470",
+          "name": "가상470모빌리티",
+          "cross": true,
+          "cells": {
+            "mktcap": "6.01조",
+            "ret_1d": "-0.87%",
+            "ret_1w": "+14.38%",
+            "ret_1m": "+18.95%",
+            "vol_3d_1m": "426%",
+            "n_newhigh": "0"
+          },
+          "cells_raw": {
+            "mktcap": 60063.7,
+            "ret_1d": -0.87,
+            "ret_1w": 14.38,
+            "ret_1m": 18.95,
+            "vol_3d_1m": 425.9,
+            "n_newhigh": 0
+          }
+        },
+        {
+          "rank": 6,
+          "code": "S00564",
+          "name": "가상564솔루션",
+          "cross": false,
+          "cells": {
+            "mktcap": "1.18조",
+            "ret_1d": "-2.76%",
+            "ret_1w": "-0.46%",
+            "ret_1m": "-3.14%",
+            "vol_3d_1m": "409%",
+            "n_newhigh": "0"
+          },
+          "cells_raw": {
+            "mktcap": 11817.8,
+            "ret_1d": -2.76,
+            "ret_1w": -0.46,
+            "ret_1m": -3.14,
+            "vol_3d_1m": 408.6,
+            "n_newhigh": 0
+          }
+        },
+        {
+          "rank": 7,
+          "code": "S00486",
+          "name": "가상486에너지",
+          "cross": true,
+          "cells": {
+            "mktcap": "3,649억",
+            "ret_1d": "-2.08%",
+            "ret_1w": "+14.10%",
+            "ret_1m": "+0.81%",
+            "vol_3d_1m": "404%",
+            "n_newhigh": "3"
+          },
+          "cells_raw": {
+            "mktcap": 3649.3,
+            "ret_1d": -2.08,
+            "ret_1w": 14.1,
+            "ret_1m": 0.81,
+            "vol_3d_1m": 404.1,
+            "n_newhigh": 3
+          }
+        },
+        {
+          "rank": 8,
+          "code": "S00204",
+          "name": "가상204정밀",
+          "cross": false,
+          "cells": {
+            "mktcap": "1,946억",
+            "ret_1d": "+4.87%",
+            "ret_1w": "+4.07%",
+            "ret_1m": "+0.96%",
+            "vol_3d_1m": "397%",
+            "n_newhigh": "1"
+          },
+          "cells_raw": {
+            "mktcap": 1946.2,
+            "ret_1d": 4.87,
+            "ret_1w": 4.07,
+            "ret_1m": 0.96,
+            "vol_3d_1m": 396.8,
+            "n_newhigh": 1
+          }
+        },
+        {
+          "rank": 9,
+          "code": "S00293",
+          "name": "가상293건설",
+          "cross": false,
+          "cells": {
+            "mktcap": "4,062억",
+            "ret_1d": "+2.79%",
+            "ret_1w": "+13.43%",
+            "ret_1m": "+6.85%",
+            "vol_3d_1m": "378%",
+            "n_newhigh": "2"
+          },
+          "cells_raw": {
+            "mktcap": 4062.1,
+            "ret_1d": 2.79,
+            "ret_1w": 13.43,
+            "ret_1m": 6.85,
+            "vol_3d_1m": 378.0,
+            "n_newhigh": 2
+          }
+        },
+        {
+          "rank": 10,
+          "code": "S00193",
+          "name": "가상193전자",
+          "cross": true,
+          "cells": {
+            "mktcap": "1,233억",
+            "ret_1d": "+2.80%",
+            "ret_1w": "+16.02%",
+            "ret_1m": "+6.11%",
+            "vol_3d_1m": "352%",
+            "n_newhigh": "0"
+          },
+          "cells_raw": {
+            "mktcap": 1232.6,
+            "ret_1d": 2.8,
+            "ret_1w": 16.02,
+            "ret_1m": 6.11,
+            "vol_3d_1m": 352.2,
+            "n_newhigh": 0
+          }
+        },
+        {
+          "rank": 11,
+          "code": "S00194",
+          "name": "가상194메디칼",
+          "cross": false,
+          "cells": {
+            "mktcap": "335억",
+            "ret_1d": "+6.07%",
+            "ret_1w": "+8.13%",
+            "ret_1m": "+11.09%",
+            "vol_3d_1m": "331%",
+            "n_newhigh": "2"
+          },
+          "cells_raw": {
+            "mktcap": 335.0,
+            "ret_1d": 6.07,
+            "ret_1w": 8.13,
+            "ret_1m": 11.09,
+            "vol_3d_1m": 330.8,
+            "n_newhigh": 2
+          }
+        },
+        {
+          "rank": 12,
+          "code": "S00450",
+          "name": "가상450솔루션",
+          "cross": false,
+          "cells": {
+            "mktcap": "997억",
+            "ret_1d": "-4.27%",
+            "ret_1w": "+7.83%",
+            "ret_1m": "+16.58%",
+            "vol_3d_1m": "328%",
+            "n_newhigh": "1"
+          },
+          "cells_raw": {
+            "mktcap": 997.0,
+            "ret_1d": -4.27,
+            "ret_1w": 7.83,
+            "ret_1m": 16.58,
+            "vol_3d_1m": 328.2,
+            "n_newhigh": 1
+          }
+        },
+        {
+          "rank": 13,
+          "code": "S00534",
+          "name": "가상534파마",
+          "cross": true,
+          "cells": {
+            "mktcap": "2.34조",
+            "ret_1d": "+7.55%",
+            "ret_1w": "+17.65%",
+            "ret_1m": "+24.70%",
+            "vol_3d_1m": "317%",
+            "n_newhigh": "1"
+          },
+          "cells_raw": {
+            "mktcap": 23388.0,
+            "ret_1d": 7.55,
+            "ret_1w": 17.65,
+            "ret_1m": 24.7,
+            "vol_3d_1m": 316.9,
+            "n_newhigh": 1
+          }
+        },
+        {
+          "rank": 14,
+          "code": "S00151",
+          "name": "가상151전자",
+          "cross": false,
+          "cells": {
+            "mktcap": "320억",
+            "ret_1d": "+0.85%",
+            "ret_1w": "+9.67%",
+            "ret_1m": "+15.39%",
+            "vol_3d_1m": "316%",
+            "n_newhigh": "2"
+          },
+          "cells_raw": {
+            "mktcap": 320.0,
+            "ret_1d": 0.85,
+            "ret_1w": 9.67,
+            "ret_1m": 15.39,
+            "vol_3d_1m": 315.7,
+            "n_newhigh": 2
+          }
+        },
+        {
+          "rank": 15,
+          "code": "S00188",
+          "name": "가상188메디칼",
+          "cross": false,
+          "cells": {
+            "mktcap": "7,448억",
+            "ret_1d": "-2.96%",
+            "ret_1w": "+9.46%",
+            "ret_1m": "+14.59%",
+            "vol_3d_1m": "315%",
+            "n_newhigh": "0"
+          },
+          "cells_raw": {
+            "mktcap": 7447.5,
+            "ret_1d": -2.96,
+            "ret_1w": 9.46,
+            "ret_1m": 14.59,
+            "vol_3d_1m": 315.1,
+            "n_newhigh": 0
+          }
+        }
+      ]
+    }
+  ],
+  "cross_codes": [
+    "S00193",
+    "S00197",
+    "S00299",
+    "S00470",
+    "S00486",
+    "S00534",
+    "S00550"
+  ]
+}
