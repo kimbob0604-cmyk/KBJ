@@ -1,0 +1,642 @@
+<title>KBJ 터미널 미리보기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Nanum+Gothic+Coding:wght@400;700&display=swap">
+<style>
+/* 레이아웃: 상단 띠 → 페이지 탭/미니맵 → 좌우 스와이프 페이지(패널 격자). 터미널 화면, 스킨 5종 */
+:root {
+  --bg: #120d03; --panel: #1a1306; --line: #3a2a0c; --fg: #ffcf73; --dim: #a8823d; --accent: #ffb000;
+  --up: #ff6b5b; --down: #5fa8ff; --lock: #6b5326; --warn: #ffd84d; --sel: #2a1d07;
+  --mono: "IBM Plex Mono", "Nanum Gothic Coding", ui-monospace, Menlo, monospace;
+  --kr: "Nanum Gothic Coding", "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+.app[data-skin="phosphor"] { --bg:#020d05; --panel:#06160a; --line:#0f3a1a; --fg:#7dffa0; --dim:#3f9e5c; --accent:#33ff66; --lock:#24502f; --up:#ff7a6b; --down:#6fb4ff; --warn:#e6ff4d; --sel:#0b2a14; }
+.app[data-skin="uv"] { --bg:#0c0616; --panel:#140b22; --line:#2d1c4a; --fg:#dcc6ff; --dim:#8a6fbf; --accent:#b388ff; --lock:#3d2a62; --up:#ff7aa0; --down:#7ab8ff; --warn:#ffe16b; --sel:#22143a; }
+.app[data-skin="dark"] { --bg:#0e1116; --panel:#151a21; --line:#273040; --fg:#d9e0ea; --dim:#7d8a9c; --accent:#8fb3ff; --lock:#33405a; --up:#ff6b6b; --down:#5aa5ff; --warn:#f4c84a; --sel:#1d2532; }
+.app[data-skin="white"] { --bg:#f4f3ef; --panel:#ffffff; --line:#d9d6cc; --fg:#1d2228; --dim:#6a6f76; --accent:#1f4fd8; --lock:#c9c5b8; --up:#d6332a; --down:#1f62d6; --warn:#a86b00; --sel:#e8eefc; color-scheme: light; }
+
+html, body { height: 100%; }
+body { background: #120d03; margin: 0; }
+.app { background: var(--bg); color: var(--fg); font-family: var(--mono); font-size: 13px; min-height: 100%; padding-block: 0 24px; transition: background .25s, color .25s; }
+.app * { box-sizing: border-box; }
+.wrap { padding-inline: 16px; max-width: 1320px; margin: 0 auto; }
+
+.top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding-block: 12px 10px; border-bottom: 1px solid var(--line); }
+.brand { font-weight: 600; letter-spacing: .18em; color: var(--accent); font-size: 15px; }
+.brand small { color: var(--dim); letter-spacing: .05em; font-weight: 400; margin-left: 8px; font-size: 11px; }
+.clock { color: var(--dim); font-variant-numeric: tabular-nums; }
+.spacer { flex: 1; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); }
+.seg button { font: inherit; font-family: var(--kr); font-size: 11px; background: transparent; color: var(--dim); border: 0; padding: 5px 9px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--bg); }
+button:focus-visible, select:focus-visible, tr:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+.badge { font-size: 10px; letter-spacing: .08em; border: 1px dashed var(--dim); color: var(--dim); padding: 2px 6px; font-family: var(--kr); }
+
+.ribbon { display: flex; overflow-x: auto; border-bottom: 1px solid var(--line); scrollbar-width: thin; }
+.chip { flex: 0 0 auto; padding: 8px 14px; border-right: 1px solid var(--line); display: grid; gap: 2px; min-width: 124px; }
+.chip .k { font-size: 10px; color: var(--dim); letter-spacing: .04em; font-family: var(--kr); }
+.chip .v { font-variant-numeric: tabular-nums; font-weight: 500; white-space: nowrap; }
+.chip.locked .v { color: var(--lock); }
+.up { color: var(--up); } .down { color: var(--down); } .warn { color: var(--warn); } .dim { color: var(--dim); }
+
+.nav { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding-block: 12px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+.tabs button { font: inherit; font-family: var(--kr); font-size: 12px; background: transparent; border: 1px solid var(--line); color: var(--dim); padding: 5px 10px; cursor: pointer; }
+.tabs button[aria-current="true"] { color: var(--accent); border-color: var(--accent); }
+.minimap { display: flex; gap: 4px; align-items: center; }
+.minimap i { width: 14px; height: 6px; background: var(--line); display: block; }
+.minimap i.on { background: var(--accent); }
+.minimap i.todo { background: transparent; border: 1px dashed var(--line); }
+.hint { color: var(--dim); font-size: 11px; font-family: var(--kr); }
+
+.pages { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; align-items: flex-start; }
+.pages::-webkit-scrollbar { display: none; }
+.page { flex: 0 0 100%; scroll-snap-align: start; padding-inline: 1px; min-width: 0; }
+.grid { display: grid; gap: 12px; grid-template-columns: repeat(12, minmax(0, 1fr)); }
+.span-8 { grid-column: span 8; } .span-4 { grid-column: span 4; } .span-6 { grid-column: span 6; } .span-12 { grid-column: span 12; } .span-3 { grid-column: span 3; } .span-9 { grid-column: span 9; }
+@media (max-width: 980px) { .span-8, .span-4, .span-6, .span-3, .span-9 { grid-column: span 12; } }
+
+.panel { border: 1px solid var(--line); background: var(--panel); min-width: 0; position: relative; }
+.panel h3 { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .08em; color: var(--accent); padding: 8px 12px; border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-family: var(--kr); }
+.panel h3 .src { color: var(--dim); font-weight: 400; letter-spacing: .02em; font-family: var(--mono); font-size: 10px; }
+.body { padding: 10px 12px; }
+.def { color: var(--dim); font-size: 10.5px; font-family: var(--kr); padding: 0 12px 10px; line-height: 1.5; }
+.panel.locked .body, .panel.locked .def { filter: blur(3px); opacity: .3; pointer-events: none; user-select: none; }
+.lockmsg { display: none; position: absolute; inset: 34px 0 0 0; place-items: center; text-align: center; color: var(--dim); font-family: var(--kr); font-size: 12px; padding: 12px; }
+.panel.locked .lockmsg { display: grid; }
+.lockmsg b { color: var(--fg); display: block; margin-bottom: 4px; letter-spacing: .1em; }
+
+.idx { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.tile { border: 1px solid var(--line); padding: 8px 10px; display: grid; gap: 4px; }
+.tile .n { font-size: 11px; color: var(--dim); font-family: var(--kr); }
+.tile .p { font-size: 18px; font-variant-numeric: tabular-nums; }
+.tile svg { width: 100%; height: 34px; display: block; }
+
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { padding: 5px 6px; text-align: right; border-bottom: 1px dotted var(--line); white-space: nowrap; }
+th { color: var(--dim); font-weight: 400; font-size: 11px; font-family: var(--kr); position: sticky; top: 0; background: var(--panel); }
+td:first-child, th:first-child, td.l, th.l { text-align: left; }
+td.nm { font-family: var(--kr); }
+td.nm small { color: var(--dim); font-family: var(--mono); margin-left: 4px; }
+tbody tr { cursor: pointer; }
+tbody tr:hover, tbody tr[aria-selected="true"] { background: var(--sel); }
+.tbl { overflow: auto; max-height: 460px; }
+.tag { font-size: 10px; border: 1px solid currentColor; padding: 0 4px; margin-left: 3px; font-family: var(--kr); }
+
+.filters { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.filters label { color: var(--dim); font-family: var(--kr); font-size: 11px; display: inline-flex; gap: 6px; align-items: center; }
+select { font: inherit; font-size: 11px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); padding: 4px 6px; }
+.count { color: var(--dim); font-size: 11px; font-family: var(--kr); }
+
+.heat { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 3px; }
+.cell { padding: 8px 6px; font-family: var(--kr); font-size: 11px; display: grid; gap: 2px; color: #fff; }
+.cell b { font-family: var(--mono); font-weight: 500; font-size: 12px; }
+.cell span { font-family: var(--mono); font-size: 10px; opacity: .85; }
+
+.levels { display: grid; gap: 8px; }
+.lvl { display: grid; grid-template-columns: 120px 1fr 80px; gap: 8px; align-items: center; font-family: var(--kr); font-size: 12px; }
+.lvl > span:last-child { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.bar { height: 8px; background: var(--line); position: relative; }
+.bar span { position: absolute; top: 0; bottom: 0; background: var(--accent); }
+.bar.c span { background: var(--up); } .bar.c span.neg { background: var(--down); }
+.bar.c::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--dim); }
+.verdict { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; margin-bottom: 10px; }
+.verdict .big { font-size: 28px; color: var(--accent); font-weight: 600; letter-spacing: .05em; font-family: var(--kr); }
+.feed div { display: grid; grid-template-columns: 46px 1fr auto; gap: 8px; padding: 6px 0; border-bottom: 1px dotted var(--line); font-family: var(--kr); font-size: 12px; }
+.feed time { color: var(--dim); font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 10px; }
+.kv div { border: 1px solid var(--line); padding: 6px 8px; display: grid; gap: 2px; }
+.kv span { color: var(--dim); font-size: 10px; font-family: var(--kr); }
+.kv b { font-weight: 500; font-variant-numeric: tabular-nums; }
+.check { font-size: 11px; font-family: var(--kr); border: 1px dashed var(--line); padding: 6px 8px; margin-top: 8px; color: var(--dim); }
+.check b { color: var(--fg); font-family: var(--mono); font-weight: 500; }
+svg { display: block; width: 100%; height: auto; }
+svg text { fill: var(--dim); font-family: var(--mono); font-size: 10px; }
+.foot { margin-top: 16px; color: var(--dim); font-size: 11px; font-family: var(--kr); border-top: 1px solid var(--line); padding-top: 10px; }
+@media (prefers-reduced-motion: reduce) { .app { transition: none; } }
+</style>
+
+<div class="app" id="app" data-skin="amber">
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">KBJ<small>국장 터미널 · 예시</small></div>
+      <div class="clock" id="clock">KST --:--:--</div>
+      <span class="badge">합성 데이터</span>
+      <div class="spacer"></div>
+      <div class="seg" role="group" aria-label="보기 등급">
+        <button id="tier-public" aria-pressed="false">비로그인(공개)</button>
+        <button id="tier-login" aria-pressed="true">로그인</button>
+      </div>
+      <div class="seg" role="group" aria-label="스킨" id="skins">
+        <button data-skin="amber" aria-pressed="true">Amber</button>
+        <button data-skin="phosphor" aria-pressed="false">Phosphor</button>
+        <button data-skin="uv" aria-pressed="false">UV</button>
+        <button data-skin="dark" aria-pressed="false">Dark</button>
+        <button data-skin="white" aria-pressed="false">White</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ribbon wrap" id="ribbon"></div>
+
+  <div class="wrap">
+    <div class="nav">
+      <div class="tabs" id="tabs"></div>
+      <div class="spacer"></div>
+      <div class="minimap" id="minimap" title="전체 13개 페이지 중 미리보기 7개"></div>
+      <span class="hint">좌우로 밀어 페이지 이동</span>
+    </div>
+
+    <div class="pages" id="pages">
+      <!-- 1 시장 -->
+      <section class="page" data-title="1 시장">
+        <div class="grid">
+          <div class="panel span-8" data-tier="login">
+            <h3>지수 · 선물 · 환율 <span class="src">KIS · 실시간</span></h3>
+            <div class="body"><div class="idx" id="idx"></div></div>
+            <div class="lockmsg"><div><b>LOGIN</b>KIS 시세는 제3자 제공 금지라 로그인 후 표시</div></div>
+          </div>
+          <div class="panel span-4" data-tier="login">
+            <h3>시장 거래대금 <span class="src">KRX · 20영업일</span></h3>
+            <div class="body"><div class="kv" id="tvkv"></div><svg id="tv" viewBox="0 0 320 130" role="img" aria-label="시장 거래대금 20일 추이"></svg></div>
+            <div class="def">코스피+코스닥 정규장 거래대금. 막대 위 선 = 20일 평균.</div>
+            <div class="lockmsg"><div><b>LOGIN</b>KRX 일별 거래대금</div></div>
+          </div>
+          <div class="panel span-8" data-tier="login">
+            <h3>업종 히트맵 <span class="src">KRX · 등락률 / 거래대금</span></h3>
+            <div class="body"><div class="heat" id="heat"></div></div>
+            <div class="lockmsg"><div><b>LOGIN</b>KRX 원시세 재배포 금지 — 공개판은 TradingView 위젯으로 대체</div></div>
+          </div>
+          <div class="panel span-4" data-tier="login">
+            <h3>시장폭 <span class="src">유니버스 기준</span></h3>
+            <div class="body"><div class="levels" id="breadth"></div></div>
+            <div class="lockmsg"><div><b>LOGIN</b>시세 기반 집계</div></div>
+          </div>
+          <div class="panel span-12" data-tier="public">
+            <h3>신용잔고 · 예탁금 · 펀드 자금 <span class="src">금융위 금투협 종합통계 · D-1 13시</span></h3>
+            <div class="body"><svg id="credit" viewBox="0 0 900 150" role="img" aria-label="신용잔고와 예탁금 추이"></svg></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 신고가 -->
+      <section class="page" data-title="2 신고가 보드">
+        <div class="grid">
+          <div class="panel span-8" data-tier="login">
+            <h3>신고가 종목 <span class="src">board 엔진 · 종가 기준 · 거래대금 순</span></h3>
+            <div class="body tbl"><table id="nh"></table></div>
+            <div class="lockmsg"><div><b>LOGIN</b>시세 원천이 모두 KRX 계열</div></div>
+          </div>
+          <div class="panel span-4" data-tier="login">
+            <h3>섹터 집계 <span class="src">신고가 종목 수</span></h3>
+            <div class="body"><svg id="sector" viewBox="0 0 300 230" role="img" aria-label="섹터별 신고가 종목 수"></svg></div>
+            <div class="lockmsg"><div><b>LOGIN</b>신고가 집계</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3 진단 -->
+      <section class="page" data-title="3 진단">
+        <div class="grid">
+          <div class="panel span-6" data-tier="public">
+            <h3>공공지표 진단 <span class="src">ECOS 817Y002 · 금투협 · 관세청</span></h3>
+            <div class="body">
+              <div class="verdict"><span class="big">중립</span><span class="hint">공공데이터만으로 만든 판정 · 예시</span></div>
+              <div class="levels" id="pubdiag"></div>
+            </div>
+          </div>
+          <div class="panel span-6" data-tier="login">
+            <h3>GEX 레벨 <span class="src">GEXLAB · KOSPI200 옵션</span></h3>
+            <div class="body"><svg id="gex" viewBox="0 0 420 200" role="img" aria-label="행사가별 감마 익스포저"></svg>
+              <div class="levels" id="gexlv"></div></div>
+            <div class="lockmsg"><div><b>LOGIN</b>KIS 옵션 체인 기반</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4 수급 -->
+      <section class="page" data-title="4 수급·스크리닝">
+        <div class="grid">
+          <div class="panel span-9" data-tier="login">
+            <h3>종목 스크리너 <span class="src">KRX 투자자별 · 일별 집계</span></h3>
+            <div class="filters">
+              <div class="seg" role="group" aria-label="스크리닝 기준" id="scr-mode">
+                <button data-m="value" aria-pressed="true">거래대금 상위</button>
+                <button data-m="foreign" aria-pressed="false">외국인 순매수</button>
+                <button data-m="inst" aria-pressed="false">기관 순매수</button>
+                <button data-m="both" aria-pressed="false">외인·기관 동반</button>
+                <button data-m="streak" aria-pressed="false">연속 순매수</button>
+                <button data-m="spike" aria-pressed="false">거래대금 급증</button>
+              </div>
+              <label>시장 <select id="scr-mkt"><option value="all">전체</option><option value="KOSPI">코스피</option><option value="KOSDAQ">코스닥</option></select></label>
+              <label>기간 <select id="scr-per"><option value="1">1일</option><option value="5">5일</option><option value="20">20일</option></select></label>
+              <label>일평균 거래대금 ≥ <select id="scr-min"><option value="0">제한 없음</option><option value="100">100억</option><option value="300" selected>300억</option><option value="1000">1,000억</option></select></label>
+              <span class="count" id="scr-count"></span>
+            </div>
+            <div class="body tbl"><table id="scr"></table></div>
+            <div class="def" id="scr-def"></div>
+            <div class="lockmsg"><div><b>LOGIN</b>투자자별 매매는 KRX·KIS 원천</div></div>
+          </div>
+          <div class="panel span-3" data-tier="login">
+            <h3>투자자별 순매수 <span class="src">유니버스 합계 · 억</span></h3>
+            <div class="body"><div class="levels" id="inv"></div></div>
+            <h3>기관 세부 7구분 <span class="src">오늘 · 억</span></h3>
+            <div class="body"><div class="levels" id="inst7"></div></div>
+            <div class="def">기관 = 금융투자+투신+사모+보험+은행+연기금+기타금융. 세부 합은 기관 합계와 같다(검산).</div>
+            <div class="lockmsg"><div><b>LOGIN</b>KRX 투자자별</div></div>
+          </div>
+          <div class="panel span-12" data-tier="login">
+            <h3 id="detail-title">종목 상세 <span class="src">표에서 종목을 고르세요</span></h3>
+            <div class="body"><div class="kv" id="detail-kv"></div><svg id="detail" viewBox="0 0 900 200" role="img" aria-label="선택 종목의 20일 거래대금과 누적 순매수"></svg></div>
+            <div class="def">막대 = 일별 거래대금, 선 = 기간 누적 순매수(외국인·기관·개인). 개인 = −(외국인+기관+기타법인)으로 맞춰 합이 0이 되는지 검산한다.</div>
+            <div class="lockmsg"><div><b>LOGIN</b>종목별 투자자 매매</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5 공시 -->
+      <section class="page" data-title="5 공시·일정">
+        <div class="grid">
+          <div class="panel span-8" data-tier="public">
+            <h3>DART 공시 피드 <span class="src">OpenDART · 실시간</span></h3>
+            <div class="body feed" id="dart"></div>
+          </div>
+          <div class="panel span-4" data-tier="public">
+            <h3>경제 캘린더 <span class="src">KST</span></h3>
+            <div class="body feed">
+              <div><time>10/08</time><span>KOSPI200 위클리 옵션 만기</span><span></span></div>
+              <div><time>10/10</time><span>美 CPI 21:30</span><span></span></div>
+              <div><time>10/11</time><span>수출 1~10일 잠정치</span><span></span></div>
+              <div><time>10/16</time><span>금통위 통화정책방향</span><span></span></div>
+              <div><time>10/30</time><span>FOMC 결과 03:00</span><span></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7 수출입 -->
+      <section class="page" data-title="7 수출입">
+        <div class="grid">
+          <div class="panel span-8" data-tier="public">
+            <h3>수출 1~20일 잠정치 YoY <span class="src">관세청 · 10대 품목</span></h3>
+            <div class="body"><svg id="export" viewBox="0 0 520 230" role="img" aria-label="품목별 수출 증감률"></svg></div>
+          </div>
+          <div class="panel span-4" data-tier="public">
+            <h3>국가별 <span class="src">관세청 · 10대 국가</span></h3>
+            <div class="body tbl"><table id="cty"></table></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 10 ETF -->
+      <section class="page" data-title="10 ETF 수급">
+        <div class="grid">
+          <div class="panel span-8" data-tier="login">
+            <h3>ETF 자금 흐름 <span class="src">설정·환매 + 투자자별 매매</span></h3>
+            <div class="filters">
+              <div class="seg" role="group" aria-label="ETF 정렬" id="etf-mode">
+                <button data-m="in" aria-pressed="true">순유입 상위</button>
+                <button data-m="out" aria-pressed="false">순유출 상위</button>
+                <button data-m="value" aria-pressed="false">거래대금 상위</button>
+                <button data-m="indiv" aria-pressed="false">개인 순매수</button>
+                <button data-m="foreign" aria-pressed="false">외국인 순매수</button>
+                <button data-m="inst" aria-pressed="false">기관 순매수</button>
+              </div>
+              <label>유형 <select id="etf-cat"></select></label>
+              <label>기간 <select id="etf-per"><option value="1">1일</option><option value="5" selected>5일</option><option value="20">20일</option></select></label>
+            </div>
+            <div class="body tbl"><table id="etf"></table></div>
+            <div class="def">순유입(설정−환매) = Σ(상장좌수 변화 × 그날 NAV). 가격 변동으로 늘어난 순자산은 넣지 않는다. 투자자별 순매수는 장내 매매(대부분 LP가 상대)라 순유입과 다를 수 있어 따로 보여 준다.</div>
+            <div class="lockmsg"><div><b>LOGIN</b>KRX ETF 시세·투자자별</div></div>
+          </div>
+          <div class="panel span-4" data-tier="login">
+            <h3>유형별 순유입 <span class="src">억 · 선택 기간</span></h3>
+            <div class="body"><div class="levels" id="etfcat"></div>
+              <div class="check" id="etfcheck"></div></div>
+            <div class="lockmsg"><div><b>LOGIN</b>ETF 집계</div></div>
+          </div>
+          <div class="panel span-6" data-tier="login">
+            <h3>괴리율 경고 <span class="src">|시장가/NAV − 1| ≥ 0.5%</span></h3>
+            <div class="body tbl"><table id="gap"></table></div>
+            <div class="lockmsg"><div><b>LOGIN</b>ETF iNAV</div></div>
+          </div>
+          <div class="panel span-6" data-tier="login">
+            <h3>구성종목 변동 <span class="src">etf_tracker · CU 비교</span></h3>
+            <div class="body feed" id="pdf"></div>
+            <div class="lockmsg"><div><b>LOGIN</b>운용사 구성종목</div></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="foot">모든 숫자·종목명·ETF명은 화면 확인용 합성 데이터입니다. 화면의 모든 집계는 종목·ETF별 20영업일 일별 데이터 한 벌에서 계산합니다(페이지끼리 숫자가 어긋나지 않게). 디자인은 MD6를 참고해 새로 만들었습니다.</div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  // ---------- 공용 ----------
+  let seed = 20261007;
+  const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
+  const gauss = () => { let u = 0, v = 0; while (!u) u = rnd(); while (!v) v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+  const N = 20; // 영업일
+  const sum = a => a.reduce((x, y) => x + y, 0);
+  const tail = (a, n) => a.slice(a.length - n);
+  const f0 = v => Math.round(v).toLocaleString('ko-KR');
+  const f1 = v => v.toLocaleString('ko-KR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const f2 = v => v.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const sg = (v, f = f0) => (v > 0 ? '+' : '') + f(v);
+  const cls = v => v > 0 ? 'up' : v < 0 ? 'down' : 'dim';
+  const $ = id => document.getElementById(id);
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = (tag, attrs, parent, text) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; if (parent) parent.appendChild(e); return e; };
+  const clear = n => { while (n.firstChild) n.removeChild(n.firstChild); };
+  const streak = a => { let k = 0; for (let i = a.length - 1; i >= 0 && a[i] > 0; i--) k++; return k; };
+  const jo = v => Math.abs(v) >= 10000 ? f1(v / 10000) + '조' : f0(v) + '억';
+
+  // ---------- 종목 유니버스 (합성) ----------
+  const PRE = ['가상', '샘플', '예시', '모의', '테스트', '합성', '가정', '임시', '견본', '데모', '시범', '연습'];
+  const SUF = [['전자', '반도체'], ['반도체', '반도체'], ['중공업', '조선'], ['조선', '조선'], ['전력', '전력기기'], ['방산', '방산'], ['바이오', '바이오'], ['제약', '바이오'], ['화학', '화학'], ['증권', '증권'], ['금융', '은행'], ['엔진', '자동차'], ['모빌리티', '자동차'], ['소재', '2차전지'], ['에너지', '2차전지'], ['통신', '통신'], ['게임즈', '게임'], ['엔터', '엔터'], ['건설', '건설'], ['로봇', '로봇']];
+  const INST7 = ['금융투자', '투신', '사모', '보험', '은행', '연기금', '기타금융'];
+  const stocks = [];
+  const used = new Set();
+  while (stocks.length < 90) {
+    const p = PRE[Math.floor(rnd() * PRE.length)], s = SUF[Math.floor(rnd() * SUF.length)];
+    const name = p + s[0]; if (used.has(name)) continue; used.add(name);
+    const mkt = rnd() < 0.55 ? 'KOSPI' : 'KOSDAQ';
+    const mcap = Math.round(Math.exp(7 + rnd() * 5.2)); // 억: 약 1,100억 ~ 20조
+    const turn = 0.002 + rnd() * 0.025;
+    const bias = gauss() * 0.04; // 종목별 외국인 성향
+    const ibias = gauss() * 0.03;
+    const close = [Math.round(5000 + rnd() * 150000)];
+    const value = [], foreign = [], inst = [], corp = [], indiv = [], inst7 = [];
+    for (let d = 0; d < N; d++) {
+      const spike = d === N - 1 && rnd() < 0.12 ? 2.5 + rnd() * 3 : 1;
+      const v = mcap * turn * Math.exp(gauss() * 0.35) * spike;
+      const f = v * (bias + gauss() * 0.06), i = v * (ibias + gauss() * 0.05), c = v * gauss() * 0.01;
+      value.push(v); foreign.push(f); inst.push(i); corp.push(c);
+      indiv.push(-(f + i + c)); // 장내 순매수 합 = 0
+      // 기관 세부: 합이 정확히 inst 가 되도록 나눈다
+      const w = INST7.map(() => rnd() + 0.05), ws = sum(w), part = w.map(x => i * x / ws);
+      part[part.length - 1] = i - sum(part.slice(0, -1));
+      inst7.push(part);
+      const ret = (f + i) / (mcap * 4) + gauss() * 0.018;
+      close.push(Math.max(500, Math.round(close[close.length - 1] * (1 + ret))));
+    }
+    const hi20 = Math.max(...close.slice(0, -1)), kr = rnd(); // 20일 밖 과거 고점은 합성 확률로 대신한다
+    stocks.push({ name, code: String(900000 + stocks.length * 97).slice(0, 6), mkt, sector: s[1], mcap, close, value, foreign, inst, corp, indiv, inst7,
+      newHigh: close[N] > hi20, nhKind: kr < 0.2 ? 'ATH' : kr < 0.55 ? '52W' : '60D' });
+  }
+  const per = (s, k, n) => sum(tail(s[k], n));
+  const ret = (s, n) => (s.close[N] / s.close[N - n] - 1) * 100;
+  const avgValue = (s, n) => per(s, 'value', n) / n;
+  const spikeX = s => s.value[N - 1] / (sum(s.value.slice(0, N - 1)) / (N - 1));
+
+  // ---------- 상단 띠 ----------
+  const mktValueToday = sum(stocks.map(s => s.value[N - 1])) * 12; // 유니버스 → 시장 규모로 환산(예시)
+  const mktValueAvg = sum(stocks.map(s => sum(s.value) / N)) * 12;
+  const fToday = sum(stocks.map(s => s.foreign[N - 1])), iToday = sum(stocks.map(s => s.inst[N - 1]));
+  const ribbon = [
+    { k: '세션', v: '정규장', t: 'public' },
+    { k: '금통위 D-9', v: '기준 2.50%', t: 'public' },
+    { k: '신용스프레드 AA-', v: '58bp ▲2', t: 'public', c: 'up' },
+    { k: '신용잔고', v: '17.4조 ▲0.3%', t: 'public', c: 'up' },
+    { k: '수출 속보 1~20일', v: 'YoY +6.8%', t: 'public', c: 'up' },
+    { k: '시장 거래대금', v: `${jo(mktValueToday)} · ${f2(mktValueToday / mktValueAvg)}x`, t: 'login', c: mktValueToday > mktValueAvg ? 'up' : 'down' },
+    { k: '외국인 현물', v: sg(fToday) + '억', t: 'login', c: cls(fToday) },
+    { k: '기관 현물', v: sg(iToday) + '억', t: 'login', c: cls(iToday) },
+    { k: '신고가 수', v: `${stocks.filter(s => s.newHigh).length} / ${stocks.length}`, t: 'login' },
+    { k: 'GEX Flip 거리', v: '-1.4%', t: 'login', c: 'warn' },
+  ];
+  $('ribbon').innerHTML = ribbon.map(r => `<div class="chip" data-tier="${r.t}"><span class="k">${r.k}${r.t === 'login' ? ' 🔒' : ''}</span><span class="v ${r.c || ''}">${r.v}</span></div>`).join('');
+
+  // ---------- 탭·미니맵 ----------
+  const pages = [...document.querySelectorAll('.page')];
+  $('tabs').innerHTML = pages.map((p, i) => `<button data-i="${i}" aria-current="${i === 0}">${p.dataset.title}</button>`).join('');
+  const shown = pages.map(p => parseInt(p.dataset.title, 10));
+  $('minimap').innerHTML = Array.from({ length: 13 }, (_, i) => `<i class="${shown.includes(i + 1) ? '' : 'todo'}" data-p="${i + 1}"></i>`).join('');
+  const box = $('pages');
+  const setCurrent = i => {
+    document.querySelectorAll('#tabs button').forEach((b, j) => b.setAttribute('aria-current', String(i === j)));
+    const num = shown[i];
+    document.querySelectorAll('#minimap i').forEach(m => m.classList.toggle('on', +m.dataset.p === num));
+  };
+  $('tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) box.scrollTo({ left: box.clientWidth * +b.dataset.i, behavior: 'smooth' }); });
+  box.addEventListener('scroll', () => setCurrent(Math.round(box.scrollLeft / box.clientWidth)), { passive: true });
+  setCurrent(0);
+
+  const seg = (id, onChange) => $(id).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
+    $(id).querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); onChange(b.dataset.m); });
+  const pressed = id => $(id).querySelector('[aria-pressed="true"]').dataset.m;
+
+  // ---------- 1 시장 ----------
+  const walk = (n, start, vol) => { const a = [start]; for (let i = 1; i < n; i++) a.push(a[i - 1] * (1 + gauss() * vol)); return a; };
+  const idx = [['코스피', 3412.6, 0.006], ['코스닥', 912.3, 0.008], ['코스피200', 458.1, 0.006], ['K200 야간선물', 459.3, 0.006], ['VKOSPI', 18.4, 0.03], ['원/달러', 1384.2, 0.003]];
+  $('idx').innerHTML = idx.map(([n, base, vol]) => {
+    const w = walk(40, base, vol), last = w[39], chg = (last / w[38] - 1) * 100, mn = Math.min(...w), mx = Math.max(...w);
+    const pts = w.map((v, i) => `${(i / 39) * 100},${30 - ((v - mn) / (mx - mn || 1)) * 26 - 2}`).join(' ');
+    return `<div class="tile"><span class="n">${n}</span><span class="p">${f2(last)}</span><span class="${cls(chg)}">${sg(chg, f2)}%</span>
+      <svg viewBox="0 0 100 32" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="1.2" vector-effect="non-scaling-stroke"/></svg></div>`;
+  }).join('');
+
+  (() => { // 시장 거래대금
+    const days = Array.from({ length: N }, (_, d) => ({ k: sum(stocks.filter(s => s.mkt === 'KOSPI').map(s => s.value[d])) * 12, q: sum(stocks.filter(s => s.mkt === 'KOSDAQ').map(s => s.value[d])) * 12 }));
+    const tot = days.map(d => d.k + d.q), avg = sum(tot) / N, mx = Math.max(...tot) * 1.1, svg = $('tv');
+    $('tvkv').innerHTML = `<div><span>오늘</span><b>${jo(tot[N - 1])}</b></div><div><span>20일 평균 대비</span><b class="${cls(tot[N - 1] - avg)}">${f2(tot[N - 1] / avg)}x</b></div><div><span>코스피 / 코스닥</span><b>${jo(days[N - 1].k)} / ${jo(days[N - 1].q)}</b></div>`;
+    days.forEach((d, i) => { const x = 10 + i * 15, hk = d.k / mx * 100, hq = d.q / mx * 100;
+      el('rect', { x, y: 110 - hk, width: 11, height: hk, fill: 'var(--accent)', opacity: 0.85 }, svg);
+      el('rect', { x, y: 110 - hk - hq, width: 11, height: hq, fill: 'var(--dim)', opacity: 0.7 }, svg); });
+    el('line', { x1: 10, x2: 310, y1: 110 - avg / mx * 100, y2: 110 - avg / mx * 100, stroke: 'var(--warn)', 'stroke-dasharray': '3 3' }, svg);
+    el('text', { x: 10, y: 126 }, svg, '■ 코스피  ■ 코스닥(위)  --- 20일 평균');
+  })();
+
+  (() => { // 업종 히트맵: 업종별 시총가중 등락 + 거래대금
+    const bySec = {};
+    stocks.forEach(s => { const o = bySec[s.sector] || (bySec[s.sector] = { cap: 0, w: 0, v: 0 }); o.cap += s.mcap; o.w += s.mcap * ret(s, 1); o.v += s.value[N - 1]; });
+    const color = v => { const a = Math.min(Math.abs(v) / 3, 1); return v >= 0 ? `rgba(214,51,42,${0.25 + a * 0.7})` : `rgba(31,98,214,${0.25 + a * 0.7})`; };
+    $('heat').innerHTML = Object.entries(bySec).sort((a, b) => b[1].v - a[1].v).map(([n, o]) => { const r = o.w / o.cap;
+      return `<div class="cell" style="background:${color(r)}">${n}<b>${sg(r, f2)}%</b><span>${jo(o.v)}</span></div>`; }).join('');
+  })();
+
+  (() => { // 시장폭
+    const up = stocks.filter(s => ret(s, 1) > 0).length, dn = stocks.filter(s => ret(s, 1) < 0).length;
+    const above = stocks.filter(s => s.close[N] > sum(tail(s.close, 20)) / 20).length;
+    const lv = (n, pct, label) => `<div class="lvl"><span>${n}</span><div class="bar"><span style="left:0;width:${pct}%"></span></div><span>${label}</span></div>`;
+    $('breadth').innerHTML = lv('상승 비율', up / stocks.length * 100, `${up}:${dn}`) + lv('20일선 위', above / stocks.length * 100, `${Math.round(above / stocks.length * 100)}%`) +
+      lv('신고가 비율', stocks.filter(s => s.newHigh).length / stocks.length * 100, `${stocks.filter(s => s.newHigh).length}종목`);
+  })();
+
+  (() => { // 신용잔고·예탁금
+    const svg = $('credit'), a = walk(60, 17.1, 0.004), b = walk(60, 55.4, 0.008), c = walk(60, 82.0, 0.003);
+    const draw = (arr, color, dash, label, y) => { const mn = Math.min(...arr), mx = Math.max(...arr);
+      el('polyline', { points: arr.map((v, i) => `${40 + i * 14},${120 - ((v - mn) / (mx - mn || 1)) * 90}`).join(' '), fill: 'none', stroke: color, 'stroke-width': 1.6, 'stroke-dasharray': dash || '' }, svg);
+      el('text', { x: 40 + 59 * 14 + 6, y }, svg, label + ' ' + f1(arr[59]) + '조'); };
+    for (let y = 30; y <= 120; y += 30) el('line', { x1: 40, x2: 866, y1: y, y2: y, stroke: 'var(--line)' }, svg);
+    draw(a, 'var(--accent)', '', '신용', 40); draw(b, 'var(--dim)', '4 3', '예탁', 70); draw(c, 'var(--warn)', '1 3', 'MMF', 100);
+    el('text', { x: 40, y: 142 }, svg, '최근 60영업일 · 각 선은 자기 범위로 정규화(예시)');
+  })();
+
+  // ---------- 2 신고가 ----------
+  const nh = stocks.filter(s => s.newHigh).sort((a, b) => b.value[N - 1] - a.value[N - 1]);
+  $('nh').innerHTML = '<thead><tr><th>종목</th><th>시장</th><th>등락</th><th>거래대금</th><th>20일 평균 대비</th><th>외국인</th><th>기관</th><th>구분</th></tr></thead><tbody>' +
+    nh.map(s => `<tr><td class="nm">${s.name}<small>${s.code}</small></td><td>${s.mkt === 'KOSPI' ? '코스피' : '코스닥'}</td><td class="${cls(ret(s, 1))}">${sg(ret(s, 1), f2)}%</td><td>${f0(s.value[N - 1])}억</td><td class="${spikeX(s) >= 2 ? 'warn' : ''}">${f2(spikeX(s))}x</td><td class="${cls(s.foreign[N - 1])}">${sg(s.foreign[N - 1])}</td><td class="${cls(s.inst[N - 1])}">${sg(s.inst[N - 1])}</td><td><span class="tag" style="color:var(--${s.nhKind === 'ATH' ? 'warn' : 'accent'})">${s.nhKind}</span></td></tr>`).join('') + '</tbody>';
+  (() => { const svg = $('sector'), cnt = {}; nh.forEach(s => cnt[s.sector] = (cnt[s.sector] || 0) + 1);
+    const data = Object.entries(cnt).sort((a, b) => b[1] - a[1]).slice(0, 7), max = data.length ? data[0][1] : 1;
+    data.forEach(([n, v], i) => { const y = 10 + i * 31; el('text', { x: 0, y: y + 12 }, svg, n);
+      el('rect', { x: 70, y, width: (v / max) * 190, height: 16, fill: 'var(--accent)', opacity: 0.85 }, svg); el('text', { x: 74 + (v / max) * 190, y: y + 12 }, svg, v); }); })();
+
+  // ---------- 3 진단 ----------
+  const lv = (n, pct, label) => `<div class="lvl"><span>${n}</span><div class="bar"><span style="left:0;width:${pct}%"></span></div><span>${label}</span></div>`;
+  $('pubdiag').innerHTML = lv('신용스프레드', 46, '58bp') + lv('신용잔고 추세', 62, '증가') + lv('예탁금 추세', 40, '감소') + lv('수출 모멘텀', 71, '+6.8%') + lv('금리 방향', 35, '인하 기대');
+  (() => { const svg = $('gex'), strikes = []; for (let k = 440; k <= 480; k += 2.5) strikes.push(k);
+    const spot = 458.1, flip = 451.7, g = strikes.map(k => Math.round(Math.exp(-((k - 462) ** 2) / 60) * 900 - Math.exp(-((k - 445) ** 2) / 40) * 600 + gauss() * 60));
+    const mx = Math.max(...g.map(Math.abs)), x0 = 30, w = 380, mid = 100, xs = v => x0 + ((v - 440) / 40) * w;
+    el('line', { x1: x0, x2: x0 + w, y1: mid, y2: mid, stroke: 'var(--line)' }, svg);
+    g.forEach((v, i) => { const x = xs(strikes[i]), h = (v / mx) * 80;
+      el('rect', { x: x - 8, y: v >= 0 ? mid - h : mid, width: 16, height: Math.abs(h), fill: v >= 0 ? 'var(--up)' : 'var(--down)', opacity: 0.8 }, svg);
+      if (i % 4 === 0) el('text', { x: x - 10, y: 196 }, svg, strikes[i]); });
+    el('line', { x1: xs(spot), x2: xs(spot), y1: 10, y2: 185, stroke: 'var(--accent)', 'stroke-dasharray': '3 3' }, svg); el('text', { x: xs(spot) + 4, y: 18 }, svg, '현재 ' + spot);
+    el('line', { x1: xs(flip), x2: xs(flip), y1: 10, y2: 185, stroke: 'var(--warn)', 'stroke-dasharray': '2 4' }, svg); el('text', { x: xs(flip) - 58, y: 30 }, svg, 'Flip ' + flip); })();
+  $('gexlv').innerHTML = lv('콜월', 82, '470.0') + lv('풋월', 30, '445.0') + lv('기대변동폭(1일)', 44, '±1.12%');
+
+  // ---------- 4 수급·스크리닝 ----------
+  const MODES = {
+    value: { key: s => s._v, def: '기간 거래대금 합계 순. 거래대금 = 정규장 체결 금액(억).' },
+    foreign: { key: s => s._f, def: '기간 외국인 순매수 금액(매수−매도, 억) 순. 외국인 = 외국인+기타외국인.' },
+    inst: { key: s => s._i, def: '기간 기관 순매수 금액(억) 순. 기관 = 7구분 합계.' },
+    both: { key: s => s._f + s._i, filter: s => s._f > 0 && s._i > 0, def: '기간 외국인·기관이 모두 순매수인 종목만, 둘의 합 순.' },
+    streak: { key: s => Math.max(s._sf, s._si) * 1e6 + s._f + s._i, filter: s => Math.max(s._sf, s._si) >= 3, def: '오늘까지 외국인 또는 기관이 연속 순매수한 날 수(3일 이상), 같으면 순매수 합 순. 하루라도 순매도면 끊긴다.' },
+    spike: { key: s => s._x, filter: s => s._x >= 1.5, def: '오늘 거래대금 ÷ 직전 19일 평균 거래대금(1.5배 이상). 기간 선택과 무관하게 오늘 기준.' },
+  };
+  let selected = null;
+  const renderScreen = () => {
+    const mode = pressed('scr-mode'), mkt = $('scr-mkt').value, n = +$('scr-per').value, min = +$('scr-min').value, M = MODES[mode];
+    stocks.forEach(s => { s._v = per(s, 'value', n); s._f = per(s, 'foreign', n); s._i = per(s, 'inst', n); s._p = per(s, 'indiv', n); s._r = ret(s, n);
+      s._sf = streak(s.foreign); s._si = streak(s.inst); s._x = spikeX(s); s._turn = avgValue(s, n) / s.mcap * 100; });
+    const rows = stocks.filter(s => (mkt === 'all' || s.mkt === mkt) && avgValue(s, n) >= min && (!M.filter || M.filter(s))).sort((a, b) => M.key(b) - M.key(a)).slice(0, 30);
+    $('scr-count').textContent = `${rows.length}종목 표시`;
+    $('scr-def').textContent = '정의: ' + M.def + ' 회전율 = 일평균 거래대금 ÷ 시가총액.';
+    $('scr').innerHTML = '<thead><tr><th>#</th><th class="l">종목</th><th>시장</th><th class="l">업종</th><th>등락</th><th>거래대금</th><th>회전율</th><th>외국인</th><th>기관</th><th>개인</th><th>연속 외/기</th><th class="l">표시</th></tr></thead><tbody>' +
+      rows.map((s, i) => `<tr tabindex="0" data-code="${s.code}" aria-selected="${selected === s.code}"><td>${i + 1}</td><td class="nm l">${s.name}<small>${s.code}</small></td><td>${s.mkt === 'KOSPI' ? '코스피' : '코스닥'}</td><td class="l nm">${s.sector}</td>
+        <td class="${cls(s._r)}">${sg(s._r, f2)}%</td><td>${f0(s._v)}</td><td>${f2(s._turn)}%</td><td class="${cls(s._f)}">${sg(s._f)}</td><td class="${cls(s._i)}">${sg(s._i)}</td><td class="${cls(s._p)}">${sg(s._p)}</td>
+        <td><span class="${s._sf >= 3 ? 'up' : 'dim'}">${s._sf}</span>/<span class="${s._si >= 3 ? 'up' : 'dim'}">${s._si}</span></td>
+        <td class="l">${s._x >= 2 ? `<span class="tag warn">${f1(s._x)}x</span>` : ''}${s.newHigh ? '<span class="tag" style="color:var(--accent)">신고가</span>' : ''}${s._f > 0 && s._i > 0 ? '<span class="tag up">동반</span>' : ''}</td></tr>`).join('') + '</tbody>';
+    if (!selected && rows.length) showDetail(rows[0].code);
+  };
+  const showDetail = code => {
+    const s = stocks.find(x => x.code === code); if (!s) return; selected = code;
+    document.querySelectorAll('#scr tbody tr').forEach(r => r.setAttribute('aria-selected', String(r.dataset.code === code)));
+    $('detail-title').innerHTML = `<span>${s.name} · ${s.code} 상세</span><span class="src">20영업일 · 표에서 다른 종목을 고르면 바뀜</span>`;
+    const tf = sum(s.foreign), ti = sum(s.inst), tp = sum(s.indiv), tc = sum(s.corp);
+    $('detail-kv').innerHTML = `<div><span>종가</span><b>${f0(s.close[N])}원</b></div><div><span>20일 등락</span><b class="${cls(ret(s, 20))}">${sg(ret(s, 20), f2)}%</b></div>
+      <div><span>시가총액</span><b>${jo(s.mcap)}</b></div><div><span>20일 거래대금</span><b>${jo(sum(s.value))}</b></div>
+      <div><span>외국인 누적</span><b class="${cls(tf)}">${sg(tf)}억</b></div><div><span>기관 누적</span><b class="${cls(ti)}">${sg(ti)}억</b></div>
+      <div><span>개인 누적</span><b class="${cls(tp)}">${sg(tp)}억</b></div><div><span>검산(외+기+개+기타법인)</span><b>${f1(tf + ti + tp + tc)}억</b></div>`;
+    const svg = $('detail'); clear(svg);
+    const vmx = Math.max(...s.value), cum = k => s[k].reduce((a, v) => (a.push((a.length ? a[a.length - 1] : 0) + v), a), []);
+    const series = [['foreign', 'var(--up)', '외국인'], ['inst', 'var(--warn)', '기관'], ['indiv', 'var(--down)', '개인']].map(([k, c, n]) => ({ c, n, a: cum(k) }));
+    const cmx = Math.max(...series.flatMap(x => x.a.map(Math.abs))) || 1, x0 = 50, w = 800, mid = 100;
+    el('line', { x1: x0, x2: x0 + w, y1: mid, y2: mid, stroke: 'var(--line)' }, svg);
+    s.value.forEach((v, i) => { const h = v / vmx * 60; el('rect', { x: x0 + i * 40 + 8, y: 190 - h, width: 24, height: h, fill: 'var(--dim)', opacity: 0.35 }, svg); });
+    series.forEach((sr, j) => { el('polyline', { points: sr.a.map((v, i) => `${x0 + i * 40 + 20},${mid - v / cmx * 80}`).join(' '), fill: 'none', stroke: sr.c, 'stroke-width': 1.8 }, svg);
+      el('text', { x: x0 + w + 4, y: mid - sr.a[N - 1] / cmx * 80 + 4 }, svg, sr.n); });
+    el('text', { x: 0, y: 24 }, svg, '+' + f0(cmx)); el('text', { x: 0, y: 184 }, svg, '-' + f0(cmx));
+  };
+  seg('scr-mode', renderScreen); ['scr-mkt', 'scr-per', 'scr-min'].forEach(id => $(id).addEventListener('change', renderScreen));
+  $('scr').addEventListener('click', e => { const r = e.target.closest('tbody tr'); if (r) showDetail(r.dataset.code); });
+  $('scr').addEventListener('keydown', e => { const r = e.target.closest('tbody tr'); if (r && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); showDetail(r.dataset.code); } });
+  renderScreen();
+
+  (() => { // 투자자별·기관 7구분 (오늘, 유니버스 합계)
+    const today = k => sum(stocks.map(s => s[k][N - 1]));
+    const vals = [['외국인', today('foreign')], ['기관', today('inst')], ['기타법인', today('corp')], ['개인', today('indiv')]];
+    const mx = Math.max(...vals.map(v => Math.abs(v[1])));
+    const cbar = (n, v, m) => { const w = Math.abs(v) / m * 50; return `<div class="lvl"><span>${n}</span><div class="bar c"><span class="${v < 0 ? 'neg' : ''}" style="left:${v < 0 ? 50 - w : 50}%;width:${w}%"></span></div><span class="${cls(v)}">${sg(v)}</span></div>`; };
+    $('inv').innerHTML = vals.map(([n, v]) => cbar(n, v, mx)).join('') + `<div class="check">검산 합계 <b>${f1(sum(vals.map(v => v[1])))}</b>억 (0이어야 정상)</div>`;
+    const p7 = INST7.map((n, j) => [n, sum(stocks.map(s => s.inst7[N - 1][j]))]), m7 = Math.max(...p7.map(v => Math.abs(v[1])));
+    $('inst7').innerHTML = p7.map(([n, v]) => cbar(n, v, m7)).join('') + `<div class="check">7구분 합 <b>${sg(sum(p7.map(v => v[1])))}</b> = 기관 <b>${sg(today('inst'))}</b></div>`;
+  })();
+
+  // ---------- 10 ETF ----------
+  const BRAND = ['모의', '예시', '가상', '합성'];
+  const ETF_T = [['반도체TOP10', '국내 테마'], ['2차전지산업', '국내 테마'], ['조선TOP3', '국내 테마'], ['방산', '국내 테마'], ['AI전력설비', '국내 테마'], ['K200', '국내 대표지수'], ['코스닥150', '국내 대표지수'], ['고배당', '국내 대표지수'],
+    ['미국S&P500', '해외주식'], ['미국나스닥100', '해외주식'], ['일본TOPIX', '해외주식'], ['인도Nifty50', '해외주식'], ['미국배당커버드콜', '해외주식'],
+    ['K200레버리지', '레버리지·인버스'], ['K200선물인버스2X', '레버리지·인버스'], ['코스닥150레버리지', '레버리지·인버스'],
+    ['국고채10년', '채권·현금'], ['단기채권', '채권·현금'], ['머니마켓액티브', '채권·현금'], ['CD금리액티브', '채권·현금'], ['금현물', '원자재'], ['WTI원유선물', '원자재']];
+  const etfs = [];
+  ETF_T.forEach(([t, cat]) => BRAND.slice(0, 1 + Math.floor(rnd() * 2)).forEach(b => {
+    const nav = [10000 + rnd() * 30000], shares = [Math.round(2e6 + rnd() * 6e7)], price = [], value = [], indiv = [], foreign = [], inst = [];
+    const vol = cat === '채권·현금' ? 0.0008 : cat === '레버리지·인버스' ? 0.03 : 0.012, flowBias = gauss() * 0.01;
+    for (let d = 0; d < N; d++) {
+      const n1 = nav[nav.length - 1] * (1 + gauss() * vol + (cat === '채권·현금' ? 0.0001 : 0)); nav.push(n1);
+      const dsh = Math.round(shares[shares.length - 1] * (flowBias + gauss() * 0.012)); shares.push(Math.max(100000, shares[shares.length - 1] + dsh));
+      price.push(n1 * (1 + gauss() * (d === N - 1 && rnd() < 0.15 ? 0.008 : 0.0015)));
+      const v = shares[shares.length - 1] * n1 / 1e8 * (0.01 + rnd() * 0.08); value.push(v);
+      const fb = v * gauss() * 0.06, ib = v * gauss() * 0.05; foreign.push(fb); inst.push(ib); indiv.push(-(fb + ib) * (0.6 + rnd() * 0.3));
+    }
+    etfs.push({ name: `${b} ${t}`, cat, nav, shares, price, value, indiv, foreign, inst, code: String(470000 + etfs.length * 37) });
+  }));
+  // 순유입(억) = (좌수_t − 좌수_t−1) × NAV_t / 1e8
+  etfs.forEach(e => { e.flow = Array.from({ length: N }, (_, d) => (e.shares[d + 1] - e.shares[d]) * e.nav[d + 1] / 1e8); e.aum = e.shares.map((s, i) => s * e.nav[i] / 1e8); });
+  const cats = ['전체', ...new Set(ETF_T.map(x => x[1]))];
+  $('etf-cat').innerHTML = cats.map(c => `<option>${c}</option>`).join('');
+  const renderEtf = () => {
+    const mode = pressed('etf-mode'), cat = $('etf-cat').value, n = +$('etf-per').value;
+    const key = { in: e => sum(tail(e.flow, n)), out: e => -sum(tail(e.flow, n)), value: e => sum(tail(e.value, n)), indiv: e => sum(tail(e.indiv, n)), foreign: e => sum(tail(e.foreign, n)), inst: e => sum(tail(e.inst, n)) }[mode];
+    const rows = etfs.filter(e => cat === '전체' || e.cat === cat).sort((a, b) => key(b) - key(a)).slice(0, 15);
+    $('etf').innerHTML = '<thead><tr><th class="l">ETF</th><th class="l">유형</th><th>순자산</th><th>순유입</th><th>수익률</th><th>거래대금</th><th>개인</th><th>외국인</th><th>기관</th></tr></thead><tbody>' +
+      rows.map(e => { const fl = sum(tail(e.flow, n)), r = (e.nav[N] / e.nav[N - n] - 1) * 100, pi = sum(tail(e.indiv, n)), pf = sum(tail(e.foreign, n)), pn = sum(tail(e.inst, n));
+        return `<tr><td class="nm l">${e.name}<small>${e.code}</small></td><td class="l nm dim">${e.cat}</td><td>${jo(e.aum[N])}</td><td class="${cls(fl)}">${sg(fl)}억</td><td class="${cls(r)}">${sg(r, f2)}%</td><td>${f0(sum(tail(e.value, n)))}억</td><td class="${cls(pi)}">${sg(pi)}</td><td class="${cls(pf)}">${sg(pf)}</td><td class="${cls(pn)}">${sg(pn)}</td></tr>`; }).join('') + '</tbody>';
+    // 유형별 순유입
+    const byCat = cats.slice(1).map(c => [c, sum(etfs.filter(e => e.cat === c).map(e => sum(tail(e.flow, n))))]), m = Math.max(...byCat.map(v => Math.abs(v[1]))) || 1;
+    $('etfcat').innerHTML = byCat.sort((a, b) => b[1] - a[1]).map(([c, v]) => { const w = Math.abs(v) / m * 50;
+      return `<div class="lvl"><span>${c}</span><div class="bar c"><span class="${v < 0 ? 'neg' : ''}" style="left:${v < 0 ? 50 - w : 50}%;width:${w}%"></span></div><span class="${cls(v)}">${sg(v)}</span></div>`; }).join('');
+    // 검산: 순자산 변화 = 순유입 + 가격효과(좌수_t−1 × NAV 변화)
+    const sel = etfs.filter(e => cat === '전체' || e.cat === cat);
+    const dA = sum(sel.map(e => e.aum[N] - e.aum[N - n])), fl = sum(sel.map(e => sum(tail(e.flow, n))));
+    const pe = sum(sel.map(e => { let x = 0; for (let d = N - n; d < N; d++) x += e.shares[d] * (e.nav[d + 1] - e.nav[d]) / 1e8; return x; }));
+    $('etfcheck').innerHTML = `검산(${cat}, ${n}일): 순자산 변화 <b>${sg(dA)}</b> = 순유입 <b>${sg(fl)}</b> + 가격효과 <b>${sg(pe)}</b> · 차이 <b>${f2(dA - fl - pe)}</b>억`;
+  };
+  seg('etf-mode', renderEtf); ['etf-cat', 'etf-per'].forEach(id => $(id).addEventListener('change', renderEtf)); renderEtf();
+  (() => { const g = etfs.map(e => ({ e, gp: (e.price[N - 1] / e.nav[N] - 1) * 100 })).filter(x => Math.abs(x.gp) >= 0.5).sort((a, b) => Math.abs(b.gp) - Math.abs(a.gp));
+    $('gap').innerHTML = '<thead><tr><th class="l">ETF</th><th>시장가</th><th>NAV</th><th>괴리율</th></tr></thead><tbody>' +
+      (g.length ? g.map(({ e, gp }) => `<tr><td class="nm l">${e.name}</td><td>${f0(e.price[N - 1])}</td><td>${f0(e.nav[N])}</td><td class="warn">${sg(gp, f2)}%</td></tr>`).join('') : '<tr><td class="l dim" colspan="4">기준 넘는 ETF 없음</td></tr>') + '</tbody>'; })();
+  (() => { const pick = () => stocks[Math.floor(rnd() * stocks.length)].name, e = () => etfs[Math.floor(rnd() * etfs.length)].name;
+    const rows = [['편입', 'up'], ['편출', 'down'], ['비중↑', 'up'], ['비중↓', 'down'], ['편입', 'up'], ['비중↑', 'up']].map(([k, c]) => `<div><time>10/07</time><span>${e()} · ${pick()}</span><span class="tag ${c}">${k}${k.startsWith('비중') ? ' ' + f1(0.5 + rnd() * 3) + '%p' : ''}</span></div>`);
+    $('pdf').innerHTML = rows.join(''); })();
+
+  // ---------- 5 공시 · 7 수출입 ----------
+  const dart = [['15:41', '연결재무제표기준영업(잠정)실적', '실적'], ['15:22', '자기주식취득결정', '자사주'], ['14:58', '단일판매·공급계약체결', '수주'], ['14:31', '전환사채권발행결정', '오버행'], ['13:47', '임원·주요주주특정증권등소유상황보고서', '내부자'], ['11:05', '주식등의대량보유상황보고서', '지분']];
+  $('dart').innerHTML = dart.map(([t, m, k]) => `<div><time>${t}</time><span>${stocks[Math.floor(rnd() * stocks.length)].name} · ${m}</span><span class="tag dim">${k}</span></div>`).join('');
+  (() => { const svg = $('export'), items = ['반도체', '승용차', '석유제품', '선박', '무선통신', '자동차부품', '철강', '합성수지', '컴퓨터', '정밀화학'];
+    const vals = items.map(() => (rnd() - 0.3) * 60).map((v, i) => [items[i], v]).sort((a, b) => b[1] - a[1]), zero = 220, sc = 3;
+    el('line', { x1: zero, x2: zero, y1: 4, y2: 224, stroke: 'var(--line)' }, svg);
+    vals.forEach(([n, v], i) => { const y = 6 + i * 22; el('text', { x: 4, y: y + 12 }, svg, n);
+      el('rect', { x: v >= 0 ? zero : zero + v * sc, y, width: Math.abs(v) * sc, height: 14, fill: v >= 0 ? 'var(--up)' : 'var(--down)', opacity: 0.85 }, svg);
+      el('text', { x: v >= 0 ? zero + v * sc + 4 : zero + v * sc - 46, y: y + 12 }, svg, sg(v, f1) + '%'); }); })();
+  $('cty').innerHTML = '<thead><tr><th class="l">국가</th><th>수출(억$)</th><th>YoY</th></tr></thead><tbody>' +
+    ['중국', '미국', '베트남', '홍콩', '대만', '일본', '인도', '싱가포르', '멕시코', '호주'].map(c => { const v = 5 + rnd() * 70, y = (rnd() - 0.35) * 40; return `<tr><td class="l nm">${c}</td><td>${f1(v)}</td><td class="${cls(y)}">${sg(y, f1)}%</td></tr>`; }).join('') + '</tbody>';
+
+  // ---------- 등급 · 스킨 · 시계 ----------
+  const setTier = tier => {
+    $('tier-public').setAttribute('aria-pressed', String(tier === 'public')); $('tier-login').setAttribute('aria-pressed', String(tier === 'login'));
+    document.querySelectorAll('.panel[data-tier="login"]').forEach(p => p.classList.toggle('locked', tier === 'public'));
+    document.querySelectorAll('.chip[data-tier="login"]').forEach(c => { c.classList.toggle('locked', tier === 'public'); const v = c.querySelector('.v');
+      if (tier === 'public') { v.dataset.v = v.dataset.v || v.textContent; v.textContent = '로그인 필요'; } else if (v.dataset.v) v.textContent = v.dataset.v; });
+  };
+  $('tier-public').onclick = () => setTier('public'); $('tier-login').onclick = () => setTier('login');
+  const app = $('app');
+  $('skins').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; app.dataset.skin = b.dataset.skin;
+    document.querySelectorAll('#skins button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    document.body.style.background = getComputedStyle(app).getPropertyValue('--bg'); try { localStorage.setItem('kbj-skin', b.dataset.skin); } catch (_) {} });
+  try { const saved = localStorage.getItem('kbj-skin'); if (saved) { const b = document.querySelector(`#skins button[data-skin="${saved}"]`); if (b) b.click(); } } catch (_) {}
+  const tick = () => { const now = new Date(), kst = new Date(now.getTime() + (now.getTimezoneOffset() + 540) * 60000);
+    const close = new Date(kst); close.setHours(15, 30, 0, 0); const d = (close - kst) / 1000, mins = kst.getHours() * 60 + kst.getMinutes();
+    const open = mins >= 540 && d > 0 && kst.getDay() % 6 !== 0, t = kst.toTimeString().slice(0, 8);
+    if (!open) { $('clock').textContent = `KST ${t} · 장 마감`; return; }
+    const p = x => String(Math.floor(x)).padStart(2, '0'); $('clock').textContent = `KST ${t} · 마감까지 ${p(d / 3600)}:${p(d % 3600 / 60)}:${p(d % 60)}`; };
+  tick(); setInterval(tick, 1000);
+})();
+</script>
