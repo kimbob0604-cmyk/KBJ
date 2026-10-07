@@ -39,7 +39,11 @@ def test_the_phase1_services_and_the_engine_are_all_there() -> None:
     for name, image in MULTI_ARCH.items():
         assert SERVICES[name]["image"] == image
     for name in (*APP, "migrate", "probe"):
-        assert SERVICES[name]["build"] == ".", name  # Dockerfile(python:3.12-slim, 멀티아키텍처)
+        # Dockerfile(python:3.12-slim, 멀티아키텍처). KBJ P2: 맥락은 레포 루트(kbj 포함 — MIGRATION.md 6.1)
+        assert SERVICES[name]["build"] == {
+            "context": "../..",
+            "dockerfile": "legacy/gexlab/Dockerfile",
+        }, name
 
 
 @pytest.mark.parametrize(("service", "module"), APP.items())

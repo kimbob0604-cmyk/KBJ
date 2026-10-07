@@ -221,6 +221,7 @@ kbj 패키지가 없어 `migrate` 컨테이너가 import 에서 종료 1 로 끝
 | `docker-compose.yml` | `build: .` 3곳 → `build: {context: ../.., dockerfile: legacy/gexlab/Dockerfile}` | `config -q` 통과 |
 | `tests/integration/test_compose.py` | 이미지 빌드 명령의 맥락·`-f` 만 바꿈(경로만, 단언 그대로) | 로컬 Docker 로 2/2 통과 확인 |
 | `uv.lock` | **지움** — 쓰는 곳이 없다. lock 은 루트 하나 | 없음 |
+| `tests/unit/test_compose_file.py` | compose `build` 기대값을 `"."` → `{context: ../.., dockerfile: legacy/gexlab/Dockerfile}`(같은 엄밀함, 경로만) | 1개 단언의 기대값 |
 
 
 | 항목 | 원본 lock(이 폴더) | KBJ 루트 lock |
