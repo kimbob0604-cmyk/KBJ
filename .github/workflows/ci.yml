@@ -77,6 +77,9 @@ jobs:
           enable-cache: true
       - name: 의존성(dev + legacy)
         run: uv sync --frozen --all-groups
+      - name: 한글 폰트 (monitor/flow 차트 시험 — 원본 ETF-Traker flow.yml 과 같음)
+        if: matrix.part == 'etf-rest'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq fonts-nanum && fc-cache -f
       - name: scripts/test_legacy.sh ${{ matrix.part }}
         run: uv run bash scripts/test_legacy.sh ${{ matrix.part }}
 
