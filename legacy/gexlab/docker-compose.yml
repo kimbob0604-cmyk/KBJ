@@ -27,7 +27,7 @@ x-env: &env
 
 x-app: &app
   <<: *env
-  build: .
+  build: {context: ../.., dockerfile: legacy/gexlab/Dockerfile}  # 레포 루트 맥락(kbj 포함)
   image: gexlab-app:local
   environment:
     TZ: UTC
@@ -87,7 +87,7 @@ services:
 
   migrate:
     <<: *env
-    build: .
+    build: {context: ../.., dockerfile: legacy/gexlab/Dockerfile}  # 레포 루트 맥락(kbj 포함)
     image: gexlab-app:local
     command: ["python", "-m", "db.migrate"]
     environment:
@@ -170,7 +170,7 @@ services:
 
   probe:
     <<: *env
-    build: .
+    build: {context: ../.., dockerfile: legacy/gexlab/Dockerfile}  # 레포 루트 맥락(kbj 포함)
     image: gexlab-app:local
     environment:
       TZ: UTC

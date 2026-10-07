@@ -1,0 +1,20 @@
+# legacy/gexlab/Dockerfile 전용(빌드 맥락 = 레포 루트). 필요한 것만 넣는다 — 비밀·산출물·다른 legacy 는 뺀다.
+*
+!pyproject.toml
+!uv.lock
+!README.md
+!kbj/
+!config/
+!legacy/gexlab/
+**/__pycache__
+**/.hypothesis
+**/.pytest_cache
+**/.ruff_cache
+**/.venv
+**/*token*.json
+legacy/gexlab/.env
+legacy/gexlab/.env.*
+!legacy/gexlab/.env.example
+legacy/gexlab/state
+legacy/gexlab/probe_out
+legacy/gexlab/tests

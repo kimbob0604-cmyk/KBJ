@@ -91,7 +91,10 @@ def stack(tmp_path: Path) -> Iterator[Stack]:
     if reason is not None:
         pytest.skip(f"Docker 없음 — {reason}")
     tag = f"gexlab-it-app:{uuid.uuid4().hex[:12]}"
-    built = _docker("build", "-q", "-t", tag, str(ROOT), timeout=900)
+    # KBJ P2: 맥락은 레포 루트(kbj 포함), Dockerfile 은 이 폴더 것(MIGRATION.md P2)
+    built = _docker(
+        "build", "-q", "-t", tag, "-f", str(ROOT / "Dockerfile"), str(ROOT.parents[1]), timeout=900
+    )
     if built.returncode != 0:
         pytest.skip(f"앱 이미지를 만들지 못했다: {built.stderr.strip()[-300:]}")
     pw = secrets.token_hex(16)

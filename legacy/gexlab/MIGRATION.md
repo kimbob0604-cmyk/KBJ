@@ -204,9 +204,24 @@ Docker 데몬을 켜고(`redis:7-alpine`·`timescale/timescaledb:latest-pg16`) `
 
 **정본 lock**: 레포 루트 `pyproject.toml` 의 `legacy` 의존성 그룹과 루트 `uv.lock` 이 정본이다. 이 폴더의
 `pyproject.toml`·`uv.lock` 은 원본 기록으로 남긴 것이고 KBJ 의 시험·CI 는 쓰지 않는다. 의존성을 바꿀 때는 루트만 고치고
-`uv lock` 한다. 예외 하나: 통합 시험 `tests/integration/test_compose.py` 가 이 폴더의 `Dockerfile` 로 앱 이미지를 만들 때
-Dockerfile 이 이 폴더 `uv.lock`(pandas 3.0.6)을 `uv sync --frozen` 으로 읽는다. 그래서 이 lock 은 지우지 않는다(내용은
-고치지 않음 — 원본 그대로).
+`uv lock` 한다. (P1 때는 통합 시험 `tests/integration/test_compose.py` 의 앱 이미지가 이 폴더 `uv.lock` 을 읽어서 남겨
+뒀다 — P2 에서 지웠다. 아래 '6.1 P2 — 이미지 빌드' 참고.)
+
+### 6.1 P2 — 이미지 빌드를 레포 루트 맥락으로 (2026-10-07, 메인)
+
+P2 재배선 뒤 legacy GX 는 kbj 정본을 다시 내보낸다(`config/settings.py` → `kbj.data.private.kis`,
+`core/calendar.py` → `kbj.core.calendar`, `data/spool.py` → `kbj.store.spool` 등). 그런데 이 폴더만 맥락으로 만든 이미지에는
+kbj 패키지가 없어 `migrate` 컨테이너가 import 에서 종료 1 로 끝났다(GitHub CI `gexlab-integration` 의
+`test_stack_records_raw_messages_and_survives_a_db_outage` 실패, 커밋 17698d5). 고친 것:
+
+| 파일 | 무엇을 | 시험 영향 |
+|---|---|---|
+| `Dockerfile` | 맥락 = 레포 루트. 루트 `pyproject.toml`·`uv.lock`(legacy 그룹)·`kbj/`·`config/` 를 `/opt/kbj` 에 편집 가능 설치하고 GX 코드는 `/app` 에. `KBJ_CONFIG_DIR=/opt/kbj/config` | 없음(이미지 내용) |
+| `Dockerfile.dockerignore` (새) | 이 Dockerfile 전용 맥락 필터 — 필요한 것만 넣고 비밀·산출물·다른 legacy·시험은 뺀다(루트 `.dockerignore` 는 legacy 를 통째로 뺀다) | 없음 |
+| `docker-compose.yml` | `build: .` 3곳 → `build: {context: ../.., dockerfile: legacy/gexlab/Dockerfile}` | `config -q` 통과 |
+| `tests/integration/test_compose.py` | 이미지 빌드 명령의 맥락·`-f` 만 바꿈(경로만, 단언 그대로) | 로컬 Docker 로 2/2 통과 확인 |
+| `uv.lock` | **지움** — 쓰는 곳이 없다. lock 은 루트 하나 | 없음 |
+
 
 | 항목 | 원본 lock(이 폴더) | KBJ 루트 lock |
 |---|---|---|
