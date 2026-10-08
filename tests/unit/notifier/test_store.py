@@ -30,7 +30,7 @@ from kbj.services.notifier.store import (
 )
 from tests.unit.notifier.conftest import KST
 
-AT = datetime(2026, 10, 6, 7, 40, tzinfo=UTC)
+AT = datetime(2026, 10, 6, 7, 0, tzinfo=UTC)
 
 
 def _entry(**kw: Any) -> NotifyLogEntry:
@@ -211,7 +211,7 @@ def test_pg_inbox_upsert_and_items_round_trip() -> None:
     assert q == SQL_INBOX_UPSERT and p["date"] == AT and p["received_at"] == AT
     conn.rows = [(1, 7, AT, "t", ["u"], ["9"], "a", "x", None, AT)]
     ((item, rec),) = store.items(since=AT - timedelta(days=1))
-    assert item["date"] == "2026-10-06T16:40:00+09:00" and item["chat_id"] == 7
+    assert item["date"] == "2026-10-06T16:00:00+09:00" and item["chat_id"] == 7
     assert item["urls"] == ["u"] and item["text_via"] is None and rec == AT
     conn.rowcount = 3
     assert store.expire(AT) == 3

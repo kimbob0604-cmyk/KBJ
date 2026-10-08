@@ -181,8 +181,24 @@ def test_u2_one_morning_and_one_closing_brief_both_suppressed(day: SimDay) -> No
     morning = day.notify_log.of("brief.morning")
     closing = day.notify_log.of("brief.closing")
     assert [(r.status, _hm(r.requested_at)) for r in morning] == [("suppressed", "10-06 08:10")]
-    assert [(r.status, _hm(r.requested_at)) for r in closing] == [("suppressed", "10-06 16:40")]
+    assert [(r.status, _hm(r.requested_at)) for r in closing] == [("suppressed", "10-06 16:00")]
     assert {r.status for r in day.notify_log.rows} == {"suppressed"}
+
+
+def test_post_close_sends_fire_at_1600_after_the_board(day: SimDay) -> None:  # ADR 0018
+    """장 마감 뒤 발송 작업(마감 요약·수급 리포트·리비전)은 16:00 에 돌고, 마감 요약·수급 리포트는
+    같은 16:00 의 보드가 끝난 뒤에 시작한다(무른 의존 wait_min)."""
+    board = day.final_runs()[("board.daily", "2026-10-06")]
+    assert board.status == "ok" and board.started_at is not None and board.finished_at is not None
+    assert _hm(board.started_at) == "10-06 16:00"
+    for job in ("brief.closing", "flows.report", "consensus.snapshot"):
+        (run,) = [r for r in day.runs.history if r.job == job and r.status == "running"]
+        assert run.started_at is not None and _hm(run.started_at) == "10-06 16:00", job
+        if job != "consensus.snapshot":
+            assert run.started_at >= board.finished_at, job
+            assert run.detail["soft_deps"] == {"board.daily": "ok"}, job
+    flows = day.notify_log.of("flows.report")
+    assert [(r.status, _hm(r.requested_at)) for r in flows] == [("suppressed", "10-06 16:00")]
 
 
 def test_disabled_mode_calls_telegram_zero_times(day: SimDay) -> None:

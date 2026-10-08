@@ -143,7 +143,7 @@ def test_다음_날_보드_뒤의_늦은_확정은_보드를_덮지_않고_실�
         loaded_by="t",
     )
     nxt_rep = svc.run_board(
-        w.repos, nxt, now=datetime(2026, 10, 7, 7, 20, tzinfo=UTC), loaded_by="board.daily",
+        w.repos, nxt, now=datetime(2026, 10, 7, 7, 0, tzinfo=UTC), loaded_by="board.daily",
         cfg=CFG, knowledge=KNOW,
     )  # fmt: skip
     assert nxt_rep.status == "ok"

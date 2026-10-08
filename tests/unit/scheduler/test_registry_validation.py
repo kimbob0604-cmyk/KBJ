@@ -2,13 +2,15 @@
 
 1 형식(모르는 키·이름) · 2 cron·tz·when·as_of · 3 의존 존재·비순환 · 4 같은 데이터셋은 한 곳만 ·
 5 카탈로그·등급↔스키마 · 6 enabled ⇒ 처리기 import, external ⇒ 꺼짐 · 7 U2 · 8 inventory (c) 전부 ·
-9 예산 · 10 단계별 켜진 작업 목록(P2 셋 + P3 아홉 — docs/p3_design.md §0.4).
+9 예산 · 10 단계별 켜진 작업 목록(P2 셋 + P3 아홉 — docs/p3_design.md §0.4) · 11 장 마감 뒤 발송은
+16:00 과 무른 의존 wait_min(ADR 0018).
 """
 
 from __future__ import annotations
 
 import copy
 from collections.abc import Callable
+from datetime import time
 from pathlib import Path
 from typing import Any
 
@@ -128,10 +130,53 @@ def test_inventory_c_lines_appear_exactly_once() -> None:  # §6.6-8
 
 
 def test_u2_one_morning_and_one_closing_brief() -> None:  # §6.6-7
-    for kind, time_ in (("brief.morning", "10 8 * * *"), ("brief.closing", "40 16 * * 1-5")):
+    for kind, time_ in (("brief.morning", "10 8 * * *"), ("brief.closing", "0 16 * * 1-5")):
         senders = [j for j in REG.jobs if j.notify is not None and j.notify.kind == kind]
         assert len(senders) == 1 and senders[0].schedule.cron == time_
         assert POLICIES[kind] == "daily"
+
+
+# 장 마감 뒤 발송 작업(ADR 0018 — 사용자 결정 2026-10-08). 아침·장중·사건·운영 감시 발송은 그대로.
+POST_CLOSE_SENDERS = {
+    "brief.closing": "brief.closing",
+    "flows.report": "flows.report",
+    "consensus.snapshot": "alert.revision",
+}
+
+
+def test_every_post_close_telegram_fires_at_1600() -> None:  # ADR 0018
+    close = time(15, 30)
+    senders = {
+        j.name: j.notify.kind
+        for j in REG.jobs
+        if j.notify is not None
+        and (first := j.schedule.first_time()) is not None
+        and first >= close
+        and j.schedule.tz == "Asia/Seoul"
+    }
+    assert senders == POST_CLOSE_SENDERS
+    for name in senders:
+        spec = REG.by_name(name)
+        assert spec.schedule.cron == "0 16 * * 1-5" and spec.schedule.when == "trading_day", name
+    # 그대로 두는 것: 아침 브리핑·장중 규칙·공시 사건 알림·운영 감시(장중부터 30분마다)
+    assert REG.by_name("brief.morning").schedule.cron == "10 8 * * *"
+    assert REG.by_name("filings.dart_feed").schedule.cron == "* 7-19 * * 1-5"
+    assert REG.by_name("ops.watchdog").schedule.cron == "0,30 8-20 * * 1-5"
+    assert REG.by_name("brief.closing").schedule.catch_up_until == "20:30"
+
+
+def test_post_close_data_is_ready_for_the_1600_sends() -> None:  # ADR 0018
+    """보드는 16:00 에 발화해 마감 수집(굳은)을 기다리고, 발송은 같은 16:00 의 보드를 무른 의존
+    wait_min 으로 기다린다(보드 실패가 발송을 막지 않는다)."""
+    board = REG.by_name("board.daily")
+    assert board.schedule.cron == "0 16 * * 1-5"
+    assert [(d.job, d.hard) for d in board.depends_on] == [("market.close_collect", True)]
+    for name in ("brief.closing", "flows.report"):
+        deps = {d.job: d for d in REG.by_name(name).depends_on}
+        assert deps["market.close_collect"].hard, name
+        assert not deps["board.daily"].hard and deps["board.daily"].wait_min == 20, name
+    consensus = REG.by_name("consensus.snapshot")
+    assert [(d.job, d.hard) for d in consensus.depends_on] == [("market.close_collect", True)]
 
 
 def test_d7_flow_datasets_are_registered_with_venues() -> None:
@@ -212,6 +257,45 @@ def test_depends_missing_and_cycle() -> None:  # §6.6-3
 
     errs = mutated(cycle)
     assert any("순환" in e for e in errs)
+
+
+def soft_board(d: dict[str, Any], name: str = "brief.closing") -> dict[str, Any]:
+    for dep in job(d, name)["depends_on"]:
+        if dep["job"] == "board.daily":
+            return dep
+    raise KeyError("board.daily")
+
+
+@pytest.mark.parametrize(
+    ("change", "match"),
+    [
+        ({"hard": True}, "무른 의존"),
+        ({"as_of": "prev"}, "as_of same"),
+        ({"wait_min": 0}, "wait_min"),
+    ],
+)
+def test_soft_wait_shape(change: dict[str, Any], match: str) -> None:  # ADR 0018
+    data = raw()
+    soft_board(data).update(change)
+    with pytest.raises(RegistryError, match=match):
+        Registry.parse(data)
+
+
+def test_soft_wait_rules() -> None:  # ADR 0018 — 실행기는 진행 중인 실행만 기다린다
+    errs = mutated(lambda d: job(d, "board.daily")["schedule"].update(cron="10 16 * * 1-5"))
+    assert any("brief.closing" in e and "늦다" in e for e in errs)
+    assert any("flows.report" in e and "늦다" in e for e in errs)
+    errs = mutated(lambda d: soft_board(d).update(wait_min=120))
+    assert any("brief.closing" in e and "마감 120분" in e for e in errs)
+
+    def external(d: dict[str, Any]) -> None:
+        job(d, "brief.closing")["depends_on"].append(
+            {"job": "gex.day_minutes", "hard": False, "wait_min": 10}
+        )
+
+    errs = mutated(external)
+    assert any("gex.day_minutes" in e and "external" in e for e in errs)
+    assert any("gex.day_minutes" in e and "발화 시각" in e for e in errs)
 
 
 def test_hard_dependency_needs_same_as_of_kind() -> None:
@@ -315,8 +399,10 @@ def test_budget_missing_or_over_cap() -> None:  # §6.6-9
 def test_retry_until_and_catch_up_must_be_after_first_run() -> None:
     errs = mutated(lambda d: job(d, "krx.daily")["retry"].update(until="08:00"))
     assert any("retry.until" in e for e in errs)
-    errs = mutated(lambda d: job(d, "brief.closing")["schedule"].update(catch_up_until="16:00"))
+    errs = mutated(lambda d: job(d, "brief.closing")["schedule"].update(catch_up_until="15:50"))
     assert any("catch_up_until" in e for e in errs)
+    errs = mutated(lambda d: job(d, "brief.closing")["schedule"].update(catch_up_until="16:00"))
+    assert any("catch_up_until" in e for e in errs)  # 첫 실행과 같아도 안 된다
 
 
 def test_defaults_fill_jobs() -> None:

@@ -19,6 +19,8 @@
 # - absorbs 의 문자열은 tests/unit/scheduler/legacy_jobs.txt 의 줄 이름이다(inventory (c) — 줄마다
 #   absorbs·retired 에 정확히 한 번). 그 밖의 문자열(코드 위치)은 근거 메모다.
 # - 아침 브리핑·마감 요약은 하루 1회씩(U2): notify.kind brief.morning·brief.closing 을 보내는 작업은 각 1개.
+# - 장 마감 뒤 텔레그램(notify)은 전부 16:00 에 발화한다(ADR 0018 — 사용자 결정 2026-10-08). 아침·장중·
+#   사건(공시 alert.earnings)·운영 감시(ops.*) 발송은 그대로. 등록부 시험이 지킨다.
 version: 1
 
 defaults:
@@ -472,30 +474,64 @@ jobs:
     absorbs: ["GX:scheduler:minute_day", "GX:scheduler:gap_day", "GX:scheduler:open_check_day"]
     note: "GX 규칙 그대로 — POST_DAY 16:00~17:50 주간(F) 분봉·무결측, 08:48 개장 확인"
 
+  # 장 끝난 뒤 텔레그램은 전부 16:00(ADR 0018 — 사용자 결정 2026-10-08, 원본 SD·ET 와 같다). 16:00 에
+  # 발화해 굳은 의존(market.close_collect — 15:35 시작, 약 24분)을 기다리고, 발송 작업은 같은 16:00 의
+  # board.daily 를 무른 의존 wait_min 으로 기다린다(보드 실패는 발송을 막지 않는다). 실제 도착은 마감 수집이
+  # 끝난 뒤 — 평소 16:00~16:05 [추정 — 실측 전], 마감 수집이 늦으면 그만큼 늦다(수능일은 close+5 = 16:35 뒤).
   - name: board.daily
     phase: P3
     enabled: true               # 웨이브 3(묶음 S) — 처리기 import 검증 통과
     owner: "kbj.services.engine.board:daily"    # D-P3-5 — 순수 계산은 kbj.engines.board, 실행은 services.engine
-    schedule: {cron: "20 16 * * 1-5", when: trading_day}
+    # 실행기에 '의존이 끝나면 시작' 트리거가 없다(triggered_by 미구현 — D-P4-4) → 16:00 cron + 굳은 의존.
+    # close_collect 가 16:00 전에 끝났으면 16:00 에 바로, 늦으면 끝난 뒤 30초(DEP_POLL_S) 안에 시작한다.
+    schedule: {cron: "0 16 * * 1-5", when: trading_day}
     retry: {max: 2, backoff_s: [600]}
     depends_on: [{job: market.close_collect, hard: true}]
     writes: [prv_board.alltime, prv_board.label, prv_board.split_check, prv_board.stock_day,
              prv_board.artifact]
     absorbs: ["SD:prewarm_new_highs", "SD:stage2_auto", "ET:board@16:10:compute"]
-    note: "신고가 계산·랭킹·탐지(DB 만 — LLM 서술은 P8). KIS 마감 스냅으로 잠정 보드(quality estimated), 다음 날 board.confirm 이 KRX 확정으로 덮는다. 수능일은 close_collect(16:35) 를 기다린다"
+    note: "신고가 계산·랭킹·탐지(DB 만 — LLM 서술은 P8). KIS 마감 스냅으로 잠정 보드(quality estimated), 다음 날 board.confirm 이 KRX 확정으로 덮는다. 16:00 발송(마감 요약·수급 리포트)이 기다리므로 16:00 에 발화해 close_collect(평소 15:35~약 16:00, 수능일 16:35~) 가 끝나는 대로 돈다(ADR 0018)"
 
   - name: brief.closing
     phase: P5                 # D-P3-17·메인 결정 R18 — 마감 요약은 P5(아침 브리핑과 같은 묶음)
     owner: "kbj.reports.briefs:closing"
-    schedule: {cron: "40 16 * * 1-5", when: trading_day, catch_up_until: "20:30"}
+    schedule: {cron: "0 16 * * 1-5", when: trading_day, catch_up_until: "20:30"}
     retry: {max: 0}
     depends_on:
       - {job: market.close_collect, hard: true}
-      - {job: board.daily, hard: false}
+      - {job: board.daily, hard: false, wait_min: 20}   # 진행 중인 보드를 최대 20분(재시도 1번) 기다린다
     notify: {kind: brief.closing}
     absorbs: ["SD:tg_closing", "SD:tg_closing_summary", "SD:closing_brief_catchup", "SD:agent_pipeline",
               "ET:board@16:10:send", "GX:plan:brief_1550"]
-    note: "U2 하루 1회(16:40, 캐치업 20:30). 본문은 P5(R18)"
+    note: "U2 하루 1회(16:00, 캐치업 20:30 — ADR 0018). 마감 수집(굳은)·보드(무른, 최대 20분 기다림)가 끝난 뒤 나간다 — 평소 16:00~16:05. 보드가 시한 안에 없으면 '미준비'로 적는다. 본문은 P5(R18)"
+
+  - name: flows.report
+    phase: P5                 # D-P3-17
+    owner: "kbj.reports.flows:daily"
+    schedule: {cron: "0 16 * * 1-5", when: trading_day}
+    retry: {max: 0}
+    depends_on:
+      - {job: market.close_collect, hard: true}
+      - {job: board.daily, hard: false, wait_min: 20}
+    notify: {kind: flows.report}
+    absorbs: ["SD:tg_flow_signals", "ET:flow.yml:report"]
+    note: "수급 리포트 발송 16:00(ADR 0018) — P5(D-P3-17). 수집(market.close_collect)은 P3. 16:00 의 투자자 수급을 그날 확정치로 볼 수 없다: 오늘 행은 KIS 마감 수집(15:35~약 16:00) 값이라 잠정일 수 있고(SD 기록 — 투자자별 확정치는 KRX 약 18:00·네이버 약 18:30. KIS 가 이 시각에 당일 행을 주는지·저녁 값과 같은지는 [확인 필요 — probe_results §7 #22]), 당일 행이 없는 종목은 전 거래일 값이다. 리포트는 수급 섹션에 실제 기준일·원천·quality 를 적고 오늘 값인 척 내보내지 않는다(SD 2026-09-18 결정과 같은 원칙)"
+
+  - name: consensus.snapshot
+    phase: P4
+    owner: "kbj.services.collectors.consensus:run"
+    schedule: {cron: "0 16 * * 1-5", when: trading_day}
+    retry: {max: 2, backoff_s: [1800]}
+    # 굳은 의존은 가격 때문이 아니다(유니버스 = 관심종목 ∪ 전 거래일 시총 상위 — ADR 0015 6). 같은 KIS 앱키
+    # 버킷(초당 4건)을 마감 수집 약 5,700건과 겹치지 않게 차례를 잡는 것 — 16:00 발화 그대로 둔다.
+    depends_on: [{job: market.close_collect, hard: true}]
+    collects:
+      - {source: KIS, dataset: consensus_estimate, as_of: trade_date}
+    writes: [prv_fin.consensus_snapshot]
+    notify: {kind: alert.revision}
+    absorbs: ["SD:consensus_snapshot_daily", "SD:tg_revision_signals", "SD:consensus_quarterly_weekly",
+              "SD:mac-crontab:consensus_collector"]
+    note: "⚠ 대체 출처 미확인(conflict_map §1.13, R20) — KIS TR 실측 뒤 확정. 리비전 알림(alert.revision) 16:00(ADR 0018) — 마감 수집이 끝난 뒤 약 640호출(4/s 로 약 3분)을 받고 보내므로 평소 16:00~16:05. 수집과 알림은 한 작업이다(SD 처럼 14:30 수집·16:00 발송으로 나누면 장중 KIS 버킷과 겹친다 — p4_design §3.6)"
 
   - name: themes.monitor
     phase: P5
@@ -529,32 +565,6 @@ jobs:
       - {source: ECOS, dataset: 731Y001, as_of: trade_date}
     writes: [prv_macro.series]
     note: "ECOS 타기관 작성 표(한국거래소·서울외국환중개) — 로그인(DATA_TIERS §1)"
-
-  - name: flows.report
-    phase: P5                 # D-P3-17
-    owner: "kbj.reports.flows:daily"
-    schedule: {cron: "20 18 * * 1-5", when: trading_day}
-    retry: {max: 0}
-    depends_on:
-      - {job: market.close_collect, hard: true}
-      - {job: board.daily, hard: false}
-    notify: {kind: flows.report}
-    absorbs: ["SD:tg_flow_signals", "ET:flow.yml:report"]
-    note: "수급 리포트 발송 — P5(D-P3-17). 수집(market.close_collect)은 P3"
-
-  - name: consensus.snapshot
-    phase: P4
-    owner: "kbj.services.collectors.consensus:run"
-    schedule: {cron: "30 18 * * 1-5", when: trading_day}
-    retry: {max: 2, backoff_s: [1800]}
-    depends_on: [{job: market.close_collect, hard: true}]
-    collects:
-      - {source: KIS, dataset: consensus_estimate, as_of: trade_date}
-    writes: [prv_fin.consensus_snapshot]
-    notify: {kind: alert.revision}
-    absorbs: ["SD:consensus_snapshot_daily", "SD:tg_revision_signals", "SD:consensus_quarterly_weekly",
-              "SD:mac-crontab:consensus_collector"]
-    note: "⚠ 대체 출처 미확인(conflict_map §1.13, R20) — KIS TR 실측 뒤 확정"
 
   - name: fin.valuation_band
     phase: P4

@@ -1,5 +1,6 @@
-"""신고가 보드 작업 — `board.daily`(16:20, KIS 마감 → 잠정 보드)·`board.confirm`(08:40, KRX
-확정으로 전 거래일 보드를 다시 계산해 덮는다). docs/p3_design.md §1.3·§3.2·§3.5·§4.1, D-P3-5·8·11.
+"""신고가 보드 작업 — `board.daily`(16:00 발화, 마감 수집이 끝나면 — KIS 마감 → 잠정 보드,
+ADR 0018)·`board.confirm`(08:40, KRX 확정으로 전 거래일 보드를 다시 계산해 덮는다).
+docs/p3_design.md §1.3·§3.2·§3.5·§4.1, D-P3-5·8·11.
 
 순수 계산은 `kbj.engines.board`(I/O 없음), SQL 은 `kbj.store.repos`, 이 모듈은 둘을 잇는 실행만
 한다.
@@ -632,7 +633,7 @@ def _handle(ctx: JobContext, mode: Literal["daily", "confirm"]) -> JobResult:
 
 
 def daily(ctx: JobContext) -> JobResult:
-    """`board.daily`(16:20) — KIS 마감 스냅으로 잠정 보드(quality estimated). as_of = 그날."""
+    """`board.daily`(16:00, 마감 수집 뒤) — KIS 마감 스냅으로 잠정 보드(estimated). as_of = 그날."""
     return _handle(ctx, "daily")
 
 

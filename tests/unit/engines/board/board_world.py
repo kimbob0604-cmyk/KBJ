@@ -25,7 +25,7 @@ CFG = BoardConfig.load()
 N_DAYS = 300
 D = date(2026, 10, 6)  # 화요일
 NEXT = date(2026, 10, 7)
-NOW_DAILY = datetime(2026, 10, 6, 7, 20, tzinfo=UTC)  # 16:20 KST
+NOW_DAILY = datetime(2026, 10, 6, 7, 0, tzinfo=UTC)  # 16:00 KST(ADR 0018)
 NOW_CONFIRM = datetime(2026, 10, 6, 23, 40, tzinfo=UTC)  # 다음 날 08:40 KST
 CAP = 500_000_000_000  # 5,000억(원) — 보드 하한(1,000억) 위
 KNOW = BoardKnowledge(
@@ -117,7 +117,7 @@ CODES = ("000010", "000020", "000030", "000040", "000050", "000060")
 
 
 def build_world() -> World:
-    """D 의 KIS 마감까지(16:20 board.daily 직전) — 이전 날은 전부 KRX 확정."""
+    """D 의 KIS 마감까지(16:00 board.daily 직전) — 이전 날은 전부 KRX 확정."""
     repos = memory_repos()
     bars: list[Bar] = []
     for code in CODES:

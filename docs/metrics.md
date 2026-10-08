@@ -208,7 +208,7 @@
 
 화면·API 는 역사적을 "YYYY-MM-DD 이후" 로 내세우지 않는다 — 기준 줄은 "역사적 = 상장 이후, 52주 = 달력 52주, 120일 = 120거래일". 이력을 상장일까지 채우는 길: `python -m kbj.services.scheduler backfill market.backfill --to-listing`(이미 받은 첫날 전날부터 max(가장 이른 상장일, 원천 바닥)까지, 최근부터 과거로, 하루 예산 `krx.backfill_cap` 에서 멈추면 다음 날 같은 명령이 이어 받는다) → 범위를 다 받으면 `rebuild_alltime`.
 
-**확정:** 장 마감 보드(`board.daily` 16:20 — KIS 마감 스냅)는 `estimated`, 다음 영업일 08:40 `board.confirm` 이 KRX 확정 일봉으로 다시 계산해 `ok` 로 덮는다(바뀐 라벨 목록을 남긴다).
+**확정:** 장 마감 보드(`board.daily` 16:00 — 마감 수집이 끝나면, KIS 마감 스냅. ADR 0018)는 `estimated`, 다음 영업일 08:40 `board.confirm` 이 KRX 확정 일봉으로 다시 계산해 `ok` 로 덮는다(바뀐 라벨 목록을 남긴다).
 
 ## 8. ETF 유형·분할 규칙 (P3 — 페이지 10)
 

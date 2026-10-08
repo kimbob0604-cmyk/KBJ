@@ -12,7 +12,8 @@
   (하드코딩 없이).
 - 원장 quality 전이: 장중 `kis.prelim`(estimated) → 마감 `kis`(ok, 차이는 investor_revision) →
   다음 날 `krx`(ok). KRX 대조에서 어긋난 KIS 행은 invalid + `prv_market.eod_reconcile` 행.
-- 보드 artifact 5종: 16:20 잠정(estimated) → 다음 날 08:40 확정(ok, confirm 기록).
+- 보드 artifact 5종: 16:00(마감 수집 뒤 — ADR 0018) 잠정(estimated) → 다음 날 08:40 확정(ok,
+  confirm 기록). 16:00 발송(마감 요약·수급 리포트)은 그 보드가 끝난 뒤 나간다.
 - 검산 ③·분할 감지 기록이 `krx.daily` 끝 단계에서 돈다(메인이 본 열린 항목 — record_flow_checks).
 - 공개 산출물: calendar·events·manifest, 로그인 등급 출처 이름 0(`check_tree`).
 """
@@ -77,8 +78,8 @@ def watch() -> Watch:
 def day(watch: Watch) -> Iterator[SimDay]:
     hooks = (
         watch.at("intraday", at(10, 7, 15, 30)),
-        watch.at("close", at(10, 7, 16, 10)),
-        watch.at("board_daily", at(10, 7, 16, 30)),
+        watch.at("close", at(10, 7, 16, 0)),
+        watch.at("board_daily", at(10, 7, 16, 5)),  # 16:00 발송이 기다리는 보드(ADR 0018)
         (at(10, 8, 0, 0), _issuers_next_day),
         watch.at("krx_next_day", at(10, 8, 8, 30)),
         watch.at("confirmed", at(10, 8, 9, 0)),
@@ -200,6 +201,23 @@ def test_board_estimated_then_confirmed(day: SimDay, watch: Watch) -> None:
     assert newhigh is not None and "confirm" in newhigh.payload
     assert newhigh.payload["confirm"]["previous_quality"] == "estimated"
     assert day.repos.board.artifact(D6, "newhigh") is not None  # 10-07 08:40 이 10-06 을 확정
+
+
+def test_board_is_ready_before_the_1600_sends(day: SimDay) -> None:  # ADR 0018
+    final = day.final_runs()
+    close = final[("market.close_collect", "2026-10-07")]
+    board = final[("board.daily", "2026-10-07")]
+    assert close.finished_at is not None and board.started_at is not None
+    assert board.finished_at is not None
+    assert close.finished_at <= board.started_at  # 굳은 의존
+    assert at(10, 7, 16, 0) <= board.started_at and board.finished_at <= at(10, 7, 16, 5)
+    for job in ("brief.closing", "flows.report"):
+        (run,) = [r for r in day.runs.history if r.job == job and r.status == "running"]
+        assert run.started_at is not None and run.started_at >= board.finished_at, job
+        assert run.started_at < at(10, 7, 16, 5), job
+        assert run.detail["soft_deps"] == {"board.daily": "ok"}, job
+        (sent,) = day.notify_log.of(job)
+        assert at(10, 7, 16, 0) <= sent.requested_at < at(10, 7, 16, 5), job
 
 
 # ── ETF·공개 ─────────────────────────────────────────────────────────────────────────────

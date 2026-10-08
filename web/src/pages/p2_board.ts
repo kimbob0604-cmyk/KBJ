@@ -439,7 +439,7 @@ async function mount(ctx: PageContext): Promise<void> {
   if (pNh.locked) return; // 공개판: 자물쇠만, 요청 없음
 
   pNear.setDef('남은 폭 = (기준 최고가 − 현재가) ÷ 기준 최고가. 5일 변화가 음수면 좁혀지는 중.');
-  const hint = 'board.daily 16:20';
+  const hint = 'board.daily 16:00~16:05';
   const q = { basis: 'close' as Basis, kind: 'all' as Kind, min: '0' as MinTurn };
   let labels: Record<string, string> = DEFAULT_LABELS;
   const names = new Map<string, string>();

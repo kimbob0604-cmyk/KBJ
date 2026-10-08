@@ -124,7 +124,7 @@ describe('페이지 2 신고가 — 로그인', () => {
 
   it('보드가 아직 없으면(404) 예정 작업 — 다른 응답 위젯은 계속', async () => {
     const { root } = await mountLogin({ board_newhigh: () => notFound() });
-    expect(text(panelByTitle(root, '신고가 종목').querySelector('.msg'))).toBe('아직 없음 — board.daily 16:20');
+    expect(text(panelByTitle(root, '신고가 종목').querySelector('.msg'))).toBe('아직 없음 — board.daily 16:00~16:05');
     expect(panelByTitle(root, '탐지 이벤트').querySelectorAll('tbody tr')).toHaveLength(20);
   });
 
@@ -139,7 +139,7 @@ describe('페이지 2 신고가 — 로그인', () => {
     every[0]?.fn();
     await flush(10);
     expect(near.querySelectorAll('tbody tr')).toHaveLength(0);
-    expect(text(near.querySelector('.msg'))).toBe('아직 없음 — board.daily 16:20');
+    expect(text(near.querySelector('.msg'))).toBe('아직 없음 — board.daily 16:00~16:05');
   });
 
   it('고가 기준이면 행의 high_basis 라벨·갭을 읽고, 종가 기준 신규·이어감은 보이지 않는다', async () => {

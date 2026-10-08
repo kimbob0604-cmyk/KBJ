@@ -243,6 +243,8 @@ P3 의 새 표는 모두 `prv_*` 다(원천 KIS·KRX·운용사). 시세로 계�
 
 ### 3.1 한눈에
 
+> **2026-10-08 갱신: 장 마감 뒤 텔레그램은 전부 16:00 — [ADR 0018](adr/0018-post-close-1600.md)**(사용자 결정). `board.daily` 는 16:20 → 16:00 cron + `market.close_collect` 굳은 의존(끝나는 대로), 마감 요약·수급 리포트(P5)는 16:00 에 발화해 그 보드를 무른 의존 `wait_min` 으로 기다린다. 아래 표·그림의 시각은 고쳤다.
+
 ```
 (KST)  05:30 public.export ─────────────────────────────────────────► public-data 브랜치 → Pages(수동)
        08:05 krx.daily ── KRX sto/idx/etp @ 전 거래일 ──► prv_market.daily_bar·stock_snapshot(krx)·universe
@@ -256,7 +258,8 @@ P3 의 새 표는 모두 `prv_*` 다(원천 KIS·KRX·운용사). 시세로 계�
                     ─► prv_flows.stock_investor_daily·prv_market.stock_snapshot 오늘 행 (estimated)
        15:35 market.close_collect ── KIS 종목 현재가·투자자·시장 투자자·가집계·ETF 투자자
                     ─► 같은 오늘 행을 덮어씀(ok) + prv_flows.investor_revision(차이)
-       16:20 board.daily ── 일봉(어제까지 krx + 오늘 kis) ─► engines.board.compute_day ─► prv_board.*(estimated)
+       16:00 board.daily ── 일봉(어제까지 krx + 오늘 kis) ─► engines.board.compute_day ─► prv_board.*(estimated)
+             (close_collect 가 끝나는 대로 — 평소 16:00~16:05. 16:00 발송이 이 보드를 기다린다 — ADR 0018)
   (요청 때) api readers ── repos ─► engines.flows/market/etf(순수) ─► Envelope[...] ─► SPA 위젯
 ```
 
@@ -271,7 +274,7 @@ P3 의 새 표는 모두 `prv_*` 다(원천 KIS·KRX·운용사). 시세로 계�
 | `market.intraday` (신규) | `equity {open~close, every_min: 10}`, T | `KIS:index_quote_intraday`·`KIS:sector_quote_intraday @ slot10m` | `prv_market.index_intraday`·`sector_intraday` | 2×(20·40 s), 마감 9분 | `kbj.services.collectors.market_intraday:market` |
 | `flows.intraday` | `equity {open~close, every_min: 10}`, T | `KIS:inst_foreign_intraday`[venue]·`turnover_rank_intraday`[venue]·`etf_quote_intraday @ slot10m` | `prv_flows.investor_intraday`·`stock_investor_daily`, `prv_market.turnover_rank_intraday`·`stock_snapshot`, `prv_etf.quote_intraday` | 같음 | `…market_intraday:flows` |
 | `market.close_collect` | `equity {start: close+5}`, T | `KIS:stock_quote_eod`[venue]·`stock_investor_daily`[venue]·`market_investor_daily`[venue]·`inst_foreign_top`[venue]·**`etf_investor_daily`[venue]** @ trade_date | `prv_market.stock_snapshot`, `prv_flows.stock_investor_daily`·`market_investor_daily`·`investor_revision` | 5×300 s | `kbj.services.collectors.market_close:run` |
-| `board.daily` | `20 16 * * 1-5`, T, `depends_on market.close_collect(hard)` | — | `prv_board.*` | 2×600 s | `kbj.services.engine.board:daily` |
+| `board.daily` | `0 16 * * 1-5`(ADR 0018 — 원래 `20 16`), T, `depends_on market.close_collect(hard)` | — | `prv_board.*` | 2×600 s | `kbj.services.engine.board:daily` |
 | `public.export` (신규) | `30 5 * * *`, always | — | (파일) | 1×600 s | `kbj.services.public_export:run` |
 
 [venue] = `config/markets.yaml` `kis.venues`(기본 `[KRX]` — D-P3-9)로 `kbj.data.catalog.keys_for(spec, as_of, venues)` 가 펼친다.
@@ -342,7 +345,7 @@ P2 설계 §8.2 의 0007 계획에 있던 `pub_themes.sector_map` 은 P5(분류 
 | `market.intraday` 슬롯 | 지수 3 + 업종 2 = **5** | 2초 | |
 | `flows.intraday` 슬롯 | 가집계 시장×구분 4 [실측 필요] + 순위 2 + ETF 50 = **약 56** | 14초 | ETF 전체(900여)면 225초 — 감시 상위 N 으로 제한(D-P3-14) |
 | 장중 합계 | 38슬롯 × 61 ≈ **2,300** | — | GX poller(P7)와 같은 버킷 — P3 에는 legacy GX 가 VM 에서 돌지 않는다 [확인 필요] |
-| `market.close_collect` | 현재가 2,700 + 투자자 2,700 + 시장 2 + 가집계 4 + ETF 투자자 약 300 = **약 5,700** | **약 24분**(15:35 → 16:00 전후) | venue 를 2개로 늘리면 약 48분 → `board.daily` 16:20 이 `depends_on` 으로 기다린다. 멀티종목 시세 TR(FHKST11300006, 30종목/건 [추정 — conflict_map §1.13])로 현재가를 90건으로 줄일 수 있는지 [실측 필요] |
+| `market.close_collect` | 현재가 2,700 + 투자자 2,700 + 시장 2 + 가집계 4 + ETF 투자자 약 300 = **약 5,700** | **약 24분**(15:35 → 16:00 전후) | venue 를 2개로 늘리면 약 48분 → `board.daily`(16:00 — ADR 0018)가 `depends_on` 으로 기다리고, 16:00 발송도 그만큼 늦는다. 멀티종목 시세 TR(FHKST11300006, 30종목/건 [추정 — conflict_map §1.13])로 현재가를 90건으로 줄일 수 있는지 [실측 필요] |
 | 하루 합계 | 약 8,000 | — | KIS 일 한도는 공표 없음(`limits.yaml` 주석) |
 
 ### 3.8 일봉 이력 KRX 백필 (P2 R11)

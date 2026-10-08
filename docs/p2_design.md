@@ -401,11 +401,13 @@ telegram: {rate: 25.0, per_chat_rate: 1.0, retry_after_max: 4}
 
 ### 5.2 토픽·메시지 종류 (`config/notify.yaml`)
 
+> **2026-10-08 갱신: 장 마감 뒤 텔레그램은 전부 16:00 — [ADR 0018](adr/0018-post-close-1600.md)**(사용자 결정). 마감 요약·수급 리포트·리비전 알림을 16:00 에 발화하고(실제 도착은 재료가 준비된 뒤 — 평소 16:00~16:05), `board.daily` 도 16:00(마감 수집 굳은 의존). 아래 표의 시각은 고쳤다.
+
 | 종류 | 토픽 | 규칙 | 보내는 작업 | 흡수하는 legacy(inventory d-1 #) |
 |---|---|---|---|---|
 | `brief.morning` | 시장 | **하루 1회**(U2) | `brief.morning` 08:10 | #3·#4·#5·#15(오전)·#29·#30·#38, GX 계획 06:05·08:30 |
-| `brief.closing` | 시장 | **하루 1회**(U2), 캐치업 20:30 까지 | `brief.closing` 16:40 | #8·#9·#15(오후)·#23·#24·#25(엑셀 첨부)·#26, GX 계획 15:50 |
-| `flows.report` | 시장 | 하루 1회 | `flows.report` 18:20 | #11·#39·#40 |
+| `brief.closing` | 시장 | **하루 1회**(U2), 캐치업 20:30 까지 | `brief.closing` 16:00(ADR 0018 — 원래 16:40) | #8·#9·#15(오후)·#23·#24·#25(엑셀 첨부)·#26, GX 계획 15:50 |
+| `flows.report` | 시장 | 하루 1회 | `flows.report` 16:00(ADR 0018 — 원래 18:20) | #11·#39·#40 |
 | `etf.report` | 시장 | 하루 1회 | `etf.collect` 08:00 | #34 |
 | `board.note` | 신고가 | 수동 | (명령·운영 화면) | #27 |
 | `board.manual` | 운영 | 수동 | 백테스트·탐색 요약 | #28 |
@@ -623,9 +625,9 @@ jobs:
   - name: brief.closing
     phase: P3
     owner: "kbj.reports.briefs:closing"
-    schedule: {cron: "40 16 * * 1-5", when: trading_day, catch_up_until: "20:30"}
+    schedule: {cron: "0 16 * * 1-5", when: trading_day, catch_up_until: "20:30"}   # ADR 0018
     depends_on: [{job: market.close_collect, as_of: same, hard: true},
-                 {job: board.daily, as_of: same, hard: false}]
+                 {job: board.daily, as_of: same, hard: false, wait_min: 20}]
     collects: []
     notify: {kind: brief.closing}
 
@@ -656,7 +658,7 @@ jobs:
 | `schedule.catch_up_until` | 놓친 실행을 이 시각까지 따라잡는다 | 하루 1회 종류와 함께 |
 | `retry` | `max`·`backoff_s` 또는 `every_s`+`until` | `until` > 시작 |
 | `deadline_min` | 마감 | > 0 |
-| `depends_on` | `{job, as_of: same \| prev, hard}` | 존재·비순환 |
+| `depends_on` | `{job, as_of: same \| prev, hard, wait_min}` — `wait_min`(무른 의존만, ADR 0018): 굳은 의존 준비 뒤 최대 N분, 진행 중인 의존 실행이 끝나기를 기다린다(결과 무관) | 존재·비순환·`wait_min` 규칙(external·늦게 발화하는 의존 금지, 마감보다 짧게) |
 | `collects` | 데이터 키 규칙 `{source, dataset, as_of}` | **카탈로그에 있어야 하고, 같은 `(source, dataset)` 은 등록부 전체에서 한 작업만** |
 | `budget` | 일 예산 이름 | `limits.yaml` 에 있음 |
 | `writes` | 쓰는 `스키마.표` | 수집 등급과 스키마 접두사 일치(공개 출처만 → `pub_*` 가능) |
@@ -712,6 +714,8 @@ jobs:
 
 ### 6.7 통합 시간표 → 등록부 (inventory c-3 반영, U2 적용)
 
+> **2026-10-08 갱신: 장 마감 뒤 텔레그램은 전부 16:00 — [ADR 0018](adr/0018-post-close-1600.md)**(사용자 결정). 마감 요약·수급 리포트·리비전 알림을 16:00 에 발화하고(실제 도착은 재료가 준비된 뒤 — 평소 16:00~16:05), `board.daily` 도 16:00(마감 수집 굳은 의존). 아래 표의 시각은 고쳤다.
+
 시각은 KST, 조건 약어: T = `trading_day`, U = `after_us_session`, K∨U = `kr_or_after_us`. "단계" 는 kbj 실행을 연결하는 단계(그 전에는 `enabled: false` 로 등록만).
 
 | 작업 | cron(KST)·트리거 | 조건 | 의존 | 재시도 | 수집 데이터 키(source:dataset @ as_of) | 소유 모듈 | 단계 | 흡수하는 legacy |
@@ -734,12 +738,12 @@ jobs:
 | `rules.intraday` | 10분마다 09:00~15:30 | T | — | 없음 | `KIS:watch_quotes_intraday @ slot10m` | `kbj.engines.rules:intraday` | P8 | SD `tg_custom_alerts`·`tg_watchlist`·`tg_trailing`·`price_sync_intraday`·`stage2_realtime_kr` |
 | `market.close_collect` | 15:35, 16:00 까지 | T | — | 5분×5 | `KIS:stock_quote_eod`·`KIS:stock_investor_daily`·`KIS:market_investor_daily`·`KIS:inst_foreign_top` **@ trade_date** (Q1 결정 전 기본값 — ADR 0001) | `kbj.services.collectors.market_close:run` | P3 | SD `price_sync_close`·`flow_batch`·`ohlcv_autofill`·`price_sync_afterhours`, ET board 16:10 수집부(네이버 일봉 2,800회 대체), ET kr 09:30·15:30 KIS 수급, ET flow 18:17 수집부 |
 | `gex.day_minutes` | `state_enter: POST_DAY` 16:00~17:50 | T | — | GX 규칙 | `KIS:fut_minute_day @ trade_date` | `legacy:gexlab/services/scheduler/minute.py` (external) | P7 | GX `MinuteDaily`·`GapDaily`·`OpenCheck` |
-| `board.daily` | 16:20 | T | market.close_collect(hard) | 2 | — (DB 만) | `kbj.engines.board:daily` | P3 | ET board 16:10 계산·랭킹·탐지·LLM 초안, SD `prewarm_new_highs` 15:48·`stage2_auto` 16:00, SD `data_json_close`·`data_json_evening`(폐지) |
-| **`brief.closing`** | **16:40**, 캐치업 20:30 | T | market.close_collect(hard)·board.daily(soft) | 하루 1회 | — | `kbj.reports.briefs:closing` | P3 | SD `tg_closing` 15:40·`tg_closing_summary` 16:00·`closing_brief_catchup`·`agent_pipeline` 15:45, ET board 16:10 발송 4종, GX 계획 15:50 |
+| `board.daily` | 16:00(ADR 0018 — 원래 16:20) | T | market.close_collect(hard) | 2 | — (DB 만) | `kbj.engines.board:daily` | P3 | ET board 16:10 계산·랭킹·탐지·LLM 초안, SD `prewarm_new_highs` 15:48·`stage2_auto` 16:00, SD `data_json_close`·`data_json_evening`(폐지) |
+| **`brief.closing`** | **16:00**(ADR 0018 — 원래 16:40), 캐치업 20:30 | T | market.close_collect(hard)·board.daily(soft, `wait_min` 20) | 하루 1회 | — | `kbj.reports.briefs:closing` | P3 | SD `tg_closing` 15:40·`tg_closing_summary` 16:00·`closing_brief_catchup`·`agent_pipeline` 15:45, ET board 16:10 발송 4종, GX 계획 15:50 |
 | `themes.monitor` | 16:50 | T | market.close_collect | 1 | — | `kbj.engines.themes:monitor` | P5 | ET `kr.yml` 09:30·15:30(장중판 폐지 [제안]) |
 | `macro.evening` | 17:00 | T | — | 3×30분 | `ECOS:817Y002 @ trade_date`, `ECOS:722Y001 @ trade_date` | `kbj.services.collectors.macro:evening` | P5 | ET bok 16:30·22:00 |
-| `flows.report` | 18:20 | T | board.daily·market.close_collect | 하루 1회 | — | `kbj.reports.flows:daily` | P3(수집)·P5(발송) [제안 — U2 범위 밖] | ET `flow.yml` 18:17, SD `tg_flow_signals` 19:30 |
-| `consensus.snapshot` | 18:30 | T | market.close_collect | 2 | `KIS:consensus_estimate @ trade_date` [추정 TR] | `kbj.services.collectors.consensus:run` | P4 | SD `consensus_snapshot_daily` 18:00·`tg_revision_signals` 18:30·`consensus_quarterly_weekly`(월 06:00) — ⚠ 대체 출처 미확인(conflict_map §1.13) |
+| `flows.report` | 16:00(ADR 0018 — 원래 18:20) | T | market.close_collect(hard)·board.daily(soft, `wait_min` 20) | 하루 1회 | — | `kbj.reports.flows:daily` | P3(수집)·P5(발송) [제안 — U2 범위 밖] | ET `flow.yml` 18:17, SD `tg_flow_signals` 19:30 |
+| `consensus.snapshot` | 16:00(ADR 0018 — 원래 18:30) | T | market.close_collect | 2 | `KIS:consensus_estimate @ trade_date` [추정 TR] | `kbj.services.collectors.consensus:run` | P4 | SD `consensus_snapshot_daily` 18:00·`tg_revision_signals` 18:30·`consensus_quarterly_weekly`(월 06:00) — ⚠ 대체 출처 미확인(conflict_map §1.13) |
 | `fin.valuation_band` | 18:40 | T | market.close_collect | 1 | — | `kbj.engines.valuation:band` | P4 | SD 맥 crontab `valuation_calculator` |
 | `earnings.backfill` | 06:30 | always | — | 1 | — | `kbj.engines.earnings:backfill` | P4 | SD `earnings_backfill_daily` |
 | `trade.customs_tenday` | 10:00 매월 1·11·21일 | `month_days` | — | 1시간×6 | `DATAGO:15157908`·`15157941`·`15157901`·`15157909 @ ten_day` | `kbj.services.collectors.customs:tenday` | P6 | (신규 — bok 수출 워크북 수동 입력 대체) |
@@ -1086,7 +1090,7 @@ legacy 로 옮길 범위(SD 전체, ET `board`·`monitor/kr`·`monitor/flow`·`f
 | 6 | 가짜 서버 요청 목록과 대조 | KRX `requested()` 의 `(엔드포인트, basDd)` 각 1회(공표 지연 변형에서는 '빈 응답 재시도'만 추가), DART `list.json` 은 07:00~19:59 분마다 1회, KIS 종목 TR 은 `(tr_id, 종목, 날짜)` 각 1회 |
 | 7 | 한 데이터셋을 두 작업이 받지 않았다 | `data_claim` 의 `(source, dataset)` 별 `job` 이 하나 |
 | 8 | 일 예산 안 | KRX `krx:calls:20261006` ≤ 상한, DART·DATAGO 예산 ≤ 상한 |
-| 9 | **U2** | `ops.notify_log` 에 `brief.morning` 1건(08:10), `brief.closing` 1건(16:40), 둘 다 `suppressed`(꺼짐 기본) |
+| 9 | **U2** | `ops.notify_log` 에 `brief.morning` 1건(08:10), `brief.closing` 1건(16:00 — ADR 0018, 원래 16:40), 둘 다 `suppressed`(꺼짐 기본) |
 | 10 | 꺼짐 모드 | `FakeTelegram` 요청 0 |
 | 11 | 세션 전이 | `session.events` 가 IDLE→PRE_DAY→DAY→POST_DAY→PRE_NIGHT→NIGHT 순서, NIGHT 귀속 10-07(GX `test_scheduler_service.py:184` 와 같은 기대) |
 | 12 | 실행 기록 | `enabled`·시뮬레이션 작업마다 `ops.job_run` ok, 마감 초과 0 |

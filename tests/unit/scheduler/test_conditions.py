@@ -72,7 +72,7 @@ def test_as_of_dates_around_the_substitute_holiday() -> None:
     assert resolve_as_of("trade_date", now, KR, US) == "2026-10-06"
     assert resolve_as_of("run_date", now, KR, US) == "2026-10-06"
     with pytest.raises(AsOfUnavailable):
-        resolve_as_of("trade_date", kst(2026, 10, 5, 16, 40), KR, US)
+        resolve_as_of("trade_date", kst(2026, 10, 5, 16, 0), KR, US)
     with pytest.raises(AsOfUnavailable):
         resolve_as_of("event", now, KR, US)
 

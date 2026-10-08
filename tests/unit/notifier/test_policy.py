@@ -26,7 +26,7 @@ from kbj.services.notifier.policy import (
 
 KST = ZoneInfo("Asia/Seoul")
 D = date(2026, 10, 6)
-AT = datetime(2026, 10, 6, 16, 40, tzinfo=KST)
+AT = datetime(2026, 10, 6, 16, 0, tzinfo=KST)
 BODY = "a" * 64
 
 

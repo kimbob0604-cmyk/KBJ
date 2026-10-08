@@ -163,7 +163,7 @@ def test_다음_날_보드는_전일_라벨로_신규_이어감을_적는다() -
     nxt = date(2026, 10, 7)
     w.repos.market.upsert_daily_bars([bar("000020", nxt, 10300.0, "kis")], loaded_by="t")
     w.repos.market.upsert_snapshots([snap("000020", nxt, 10300.0, "kis")], loaded_by="t")
-    rep = _run(w, now=datetime(2026, 10, 7, 7, 20, tzinfo=NOW_DAILY.tzinfo), asof=nxt)
+    rep = _run(w, now=datetime(2026, 10, 7, 7, 0, tzinfo=NOW_DAILY.tzinfo), asof=nxt)
     assert rep.status == "ok"
     s = w.repos.board.stock_days(nxt)["000020"]
     assert s.label == "d120" and s.status == "이어감"
@@ -193,7 +193,7 @@ def test_정의_전환일에는_전일과_비교하지_않고_재실행해도_�
     nxt = date(2026, 10, 7)
     w.repos.market.upsert_daily_bars([bar("000020", nxt, 10300.0, "kis")], loaded_by="t")
     w.repos.market.upsert_snapshots([snap("000020", nxt, 10300.0, "kis")], loaded_by="t")
-    now = datetime(2026, 10, 7, 7, 20, tzinfo=NOW_DAILY.tzinfo)
+    now = datetime(2026, 10, 7, 7, 0, tzinfo=NOW_DAILY.tzinfo)
     for _ in range(2):  # 같은 날 재실행 — 결과가 같아야 한다
         rep = _run(w, now=now, asof=nxt)
         assert rep.status == "ok" and rep.day is not None

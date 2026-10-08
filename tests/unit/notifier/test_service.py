@@ -43,7 +43,7 @@ class Rig:
         clock: FakeClock | None = None,
         **settings_kw: Any,
     ) -> None:
-        self.clock = clock or FakeClock(datetime(2026, 10, 6, 16, 40, tzinfo=KST))
+        self.clock = clock or FakeClock(datetime(2026, 10, 6, 16, 0, tzinfo=KST))
         self.redis = fakeredis.FakeRedis()
         self.tg = tg or FakeTelegram()
         self.store = store if store is not None else MemoryNotifyLogStore()

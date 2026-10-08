@@ -28,11 +28,11 @@ kinds:
     topic: market
     dedup: daily
     catch_up_until: "20:30"
-    note: "U2 하루 1회, 캐치업 20:30 까지. 작업 brief.closing 16:40(본문은 P3). 흡수 #8·#9·#15(오후)·#23~#26"
+    note: "U2 하루 1회, 캐치업 20:30 까지. 작업 brief.closing 16:00(ADR 0018 — 마감 수집·보드가 끝난 뒤, 평소 16:00~16:05. 본문은 P5). 흡수 #8·#9·#15(오후)·#23~#26"
   flows.report:
     topic: market
     dedup: daily
-    note: "작업 flows.report 18:20. 흡수 #11·#39·#40"
+    note: "작업 flows.report 16:00(ADR 0018 — 평소 16:00~16:05). 16:00 수급은 KIS 마감 수집 값(잠정일 수 있음)이거나 전 거래일 값 — 본문에 실제 기준일을 적는다. 흡수 #11·#39·#40"
   etf.report:
     topic: market
     dedup: daily
@@ -87,7 +87,7 @@ kinds:
   alert.revision:
     topic: alert
     dedup: daily
-    note: "작업 consensus.snapshot(P4). 흡수 #10"
+    note: "작업 consensus.snapshot 16:00(P4, ADR 0018 — 마감 수집 뒤 약 3분 수집하고 보낸다, 평소 16:00~16:05). 흡수 #10"
   alert.gex_level:
     topic: alert
     dedup: cooldown

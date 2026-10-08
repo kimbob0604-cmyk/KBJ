@@ -88,10 +88,10 @@ def test_next_after_crosses_months_and_leap_day() -> None:
 
 
 def test_prev_at_or_before_same_day_only() -> None:
-    spec = CronSpec.parse("40 16 * * 1-5")
-    assert spec.prev_at_or_before(dt(2026, 10, 6, 18, 0)) == dt(2026, 10, 6, 16, 40)
-    assert spec.prev_at_or_before(dt(2026, 10, 6, 16, 40, 30)) == dt(2026, 10, 6, 16, 40)
-    assert spec.prev_at_or_before(dt(2026, 10, 6, 16, 39)) is None
+    spec = CronSpec.parse("0 16 * * 1-5")  # 마감 요약(ADR 0018)
+    assert spec.prev_at_or_before(dt(2026, 10, 6, 18, 0)) == dt(2026, 10, 6, 16, 0)
+    assert spec.prev_at_or_before(dt(2026, 10, 6, 16, 0, 30)) == dt(2026, 10, 6, 16, 0)
+    assert spec.prev_at_or_before(dt(2026, 10, 6, 15, 59)) is None
     assert spec.prev_at_or_before(dt(2026, 10, 10, 18, 0)) is None  # 토
 
 

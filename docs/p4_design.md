@@ -71,7 +71,7 @@
 | `fin.quarterly` | P4, `cron "30 7 * * *"`, `triggered_by [filings.dart_feed]`, collects `fnlttSinglAcntAll@quarter`·`fnlttMultiAcnt@quarter` | **켜짐**, `cron "*/30 7-21 * * *"`, `when: always`, `triggered_by` 지움(D-P4-4), collects `DART:fnlttMultiAcnt @ run_date`·`DART:fnlttSinglAcntAll @ event`(`<corp>:<연도>:<보고서>:<CFS/OFS>`), writes `pub_fin.statement_raw`·`quarterly`·`ratio` |
 | `fin.backfill` | (없음) | **신규·켜짐(수동)**: `manual`, `backfill_of [fin.quarterly]`, 예산 `dart.backfill_cap`(§3.5) |
 | `reports.dart_excel` | P4, owner `kbj.reports.dart_excel:run`, `cron "0 9 16 2,5,8,11 *"` | **켜짐**, owner `kbj.reports.dart_excel.job:run`, `cron "0 21 * * *"`(대상 = 관심종목 ∪ 공개 데모 중 재무가 바뀐 종목) + 기존 분기 cron 은 지움(같은 작업 하나 — 매일 21:00 이 덮는다), collects `DART:report_inputs @ event`(`<종목>:<실행일>`), writes `pub_fin.report` |
-| `consensus.snapshot` | P4, collects `KIS:consensus_estimate`, notify `alert.revision` | **켜짐**, collects `KIS:consensus_estimate`·**`KIS:invest_opinion`**(신규) `@ trade_date`, writes `prv_fin.consensus_snapshot`·`invest_opinion`·`target_consensus`·`revision`, notify 그대로 |
+| `consensus.snapshot` | P4, collects `KIS:consensus_estimate`, notify `alert.revision` | **켜짐**, collects `KIS:consensus_estimate`·**`KIS:invest_opinion`**(신규) `@ trade_date`, writes `prv_fin.consensus_snapshot`·`invest_opinion`·`target_consensus`·`revision`, notify 그대로, `cron "0 16 * * 1-5"`(ADR 0018 — 리비전 알림 16:00) |
 | `fin.valuation_band` | P4, owner `kbj.engines.valuation:band`, `cron "40 18 * * 1-5"`, `depends_on market.close_collect` | **켜짐**, owner `kbj.services.engine.valuation:band`(D-P3-5 — 엔진은 순수), **`cron "50 8 * * 1-5"`**, `depends_on [krx.daily(hard), fin.quarterly(soft)]`(전 거래일 KRX 확정 시총 — `ok`), writes `prv_fin.valuation_daily`·`valuation_band`·`scenario`. retired 의 `SD:mac-crontab:tam_modeler` 를 absorbs 로 옮김(D-P4-12) |
 | `earnings.alerts` | (없음) | **신규·켜짐**: `cron "*/5 7-20 * * 1-5"`, `when: always`, owner `kbj.services.engine.earnings:alerts`, writes `prv_fin.earnings_surprise`, notify `alert.earnings`, absorbs `SD:earnings_pipeline_5min` |
 | `earnings.backfill` | P4, owner `kbj.engines.earnings:backfill`, `30 6 * * *` | **켜짐**, owner `kbj.services.engine.earnings:backfill`, `when: trading_day`(알림 후 3·5·7 **거래일** 수익률 — SD 는 달력일) |
@@ -323,6 +323,8 @@
 
 ### 3.1 한눈에
 
+> **2026-10-08 갱신: 장 마감 뒤 텔레그램은 전부 16:00 — [ADR 0018](adr/0018-post-close-1600.md)**(사용자 결정). `consensus.snapshot`(리비전 알림 `alert.revision`)은 18:30 → 16:00 — 마감 수집이 끝난 뒤 약 3분 수집하고 같은 작업이 보낸다(평소 16:00~16:05). `market.close_collect` 굳은 의존은 가격 때문이 아니라 KIS 앱키 버킷 차례(유니버스는 전 거래일 시총). 아래 시각은 고쳤다.
+
 ```
 (KST)  03:05 filings.corp_code (P2) ─────────────► pub_filings.corp_code
   토   04:00 filings.company_profile ── DART company ─► pub_filings.corp_profile(결산월·업종)
@@ -339,7 +341,7 @@
        08:05 krx.daily (P3) ─► prv_market.stock_snapshot(krx — 시총·상장주식수)
        08:50 fin.valuation_band ── 원장 + pub_fin.quarterly(PIT) + 컨센 ─► prv_fin.valuation_daily·band·scenario
  07:10~20:40 filings.derive (30분) + 21:30 ─► pub_filings.overhang_state·summary·insider_window·earnings_schedule·점수
-       18:30 consensus.snapshot ── KIS 추정실적·투자의견 ─► prv_fin.consensus_snapshot·invest_opinion
+       16:00 consensus.snapshot ── KIS 추정실적·투자의견 ─► prv_fin.consensus_snapshot·invest_opinion   (ADR 0018 — 원래 18:30)
                    ─► target_consensus·revision ─► 관심종목 리비전 notify alert.revision(일 1통)
        21:00 reports.dart_excel ── 관심종목 ∪ 공개 데모(재무 바뀐 것) ─► pub_fin.report(payload + xlsx)
   (요청 때) api readers ── repos ─► engines(순수) ─► Envelope[...] ─► 페이지 5·8
@@ -356,7 +358,7 @@
 | `filings.derive` | `10,40 7-20 * * 1-5` + `30 21 * * *`, always | — (DB 만) | `pub_filings.overhang_state`·`overhang_summary`·`insider_window`·`earnings_schedule`, `disclosure.kw_score` | 1×300 s | `kbj.services.engine.filings:derive` |
 | `earnings.alerts` | `*/5 7-20 * * 1-5`, always | — | `prv_fin.earnings_surprise` | 0(다음 5분) | `kbj.services.engine.earnings:alerts` |
 | `earnings.backfill` | `30 6 * * *`, trading_day | — | `prv_fin.earnings_surprise`(성과 열) | 1×600 s | `kbj.services.engine.earnings:backfill` |
-| `consensus.snapshot` | `30 18 * * 1-5`, T, `depends_on market.close_collect(hard)` | `KIS:consensus_estimate @ trade_date`, `KIS:invest_opinion @ trade_date` | `prv_fin.consensus_snapshot`·`invest_opinion`·`target_consensus`·`revision` | 2×1800 s | `kbj.services.collectors.consensus:run` |
+| `consensus.snapshot` | `0 16 * * 1-5`(ADR 0018 — 원래 `30 18`), T, `depends_on market.close_collect(hard)` — 가격이 아니라 KIS 버킷 차례 | `KIS:consensus_estimate @ trade_date`, `KIS:invest_opinion @ trade_date` | `prv_fin.consensus_snapshot`·`invest_opinion`·`target_consensus`·`revision` | 2×1800 s | `kbj.services.collectors.consensus:run` |
 | `fin.valuation_band` | `50 8 * * 1-5`, T, `depends_on krx.daily(hard)`, `fin.quarterly(soft)` | — | `prv_fin.valuation_daily`·`valuation_band`·`scenario`, `prv_market.share_class` | 1×600 s | `kbj.services.engine.valuation:band` |
 | `reports.dart_excel` | `0 21 * * *`, always | `DART:report_inputs @ event`(`<종목>:<실행일>`) | `pub_fin.report` | 1×1800 s | `kbj.reports.dart_excel.job:run` |
 
@@ -437,7 +439,7 @@
 
 | 작업 | 호출 수 | 시간 | 비고 |
 |---|---|---|---|
-| `consensus.snapshot` 18:30 | (관심 20 ∪ 시총 상위 300) × 2 TR ≈ **640** | 약 3분(P3 우선순위) | `market.close_collect`(15:35~약 16:00)가 끝난 뒤. 장중 버킷과 겹치지 않는다 |
+| `consensus.snapshot` 16:00(ADR 0018) | (관심 20 ∪ 시총 상위 300) × 2 TR ≈ **640** | 약 3분(P3 우선순위) | `market.close_collect`(15:35~약 16:00)가 끝난 뒤 — 리비전 알림은 평소 16:00~16:05. 장중 버킷과 겹치지 않는다 |
 | 그 밖 P4 | 0 | — | 밸류에이션은 DB(KRX 확정 시총)만. API 는 KIS 를 부르지 않는다(D-P4-16) |
 
 ### 3.7 `config/fin.yaml`·`config/reports.yaml` (신규 — 숫자는 한 곳)
@@ -721,7 +723,7 @@ P3 `api` 서비스 그대로(같은 프로세스·로그인·CSRF·보안 헤더
 
 | 상태 | 표시 |
 |---|---|
-| `applicable=false` | 패널·칸에 사유 문구(`na_reason` → 한국어 표: "적자 — PER 산출 안 함", "금융업 — EV/EBITDA 해당 없음", "상장 1년 미만 — 5년 밴드 없음", "상세 수집 대상 아님 — 관심종목에 넣으면 다음 수집(18:30·21:00)", "스팩 — 실적 지표 해당 없음") |
+| `applicable=false` | 패널·칸에 사유 문구(`na_reason` → 한국어 표: "적자 — PER 산출 안 함", "금융업 — EV/EBITDA 해당 없음", "상장 1년 미만 — 5년 밴드 없음", "상세 수집 대상 아님 — 관심종목에 넣으면 다음 수집(16:00·21:00)", "스팩 — 실적 지표 해당 없음") |
 | 404 `no_data` | "아직 없음 — <작업> <예정 시각>" |
 | `quality=estimated` | '추정' 배지(오버행 상한·보호예수 추정·결산월 추정·KIS 단일 추정·3개월 대조 차이) |
 | 거래정지 | 머리 배지 + 시세 칸 `stale`("정지 — 마지막 거래 YYYY-MM-DD") |

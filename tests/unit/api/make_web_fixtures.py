@@ -15,6 +15,7 @@ import json
 from pathlib import Path
 from typing import Any, Final
 
+from kbj.services.api.readers.board import BOARD_DAILY_ETA
 from tests.unit.api.api_world import ROOT, World, build_world
 
 OUT: Final = ROOT / "web" / "test" / "fixtures" / "api"
@@ -41,7 +42,7 @@ FIXTURES: Final[tuple[tuple[str, str, bool], ...]] = (
 AUTH: Final[dict[str, Any]] = {
     "auth_me.json": {"user": "kbj-user", "csrf_token": "csrf-token-synthetic"},
     "auth_login.json": {"csrf_token": "csrf-token-synthetic"},
-    "no_data.json": {"code": "no_data", "message": "아직 없음 — board.daily 16:20"},
+    "no_data.json": {"code": "no_data", "message": f"아직 없음 — {BOARD_DAILY_ETA}"},
     "unauthorized.json": {"code": "unauthorized", "message": "로그인이 필요하다", "detail": {}},
 }
 

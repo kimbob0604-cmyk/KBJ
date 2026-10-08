@@ -245,9 +245,28 @@ class CollectSpec(_Model):
 
 
 class DependsSpec(_Model):
+    """의존. 굳은 의존(`hard`)은 그 작업의 같은(또는 앞 — `as_of: prev`) as_of 실행이 `ok` 일 때까지
+    기다리고, 그것이 실패로 끝나면 이 작업도 실패한다. 무른 의존은 기다리지 않고 상태만 기록한다.
+
+    `wait_min`(무른 의존만 — ADR 0018): 굳은 의존이 다 준비된 때부터 최대 이 분 동안, 그 의존의 같은
+    as_of 실행이 실행기에서 **진행 중**(발화해 제 의존을 기다리거나·돌거나·재시도를 기다리는 중)이면
+    끝나기를 기다린다. 끝나면 결과(ok·failed·timeout·skipped)를 묻지 않고 시작하고, 시한이 지나면
+    기다리지 않고 시작한다 — 무른 의존이라 그 실패가 이 작업을 실패시키지 않는다. 아직 발화하지 않은
+    실행은 기다리지 않으므로 의존 작업이 이 작업보다 늦게 발화하면 안 된다(등록부 검증).
+    """
+
     job: str
     as_of: Literal["same", "prev"] = "same"
     hard: bool = True
+    wait_min: int | None = Field(default=None, gt=0, le=240)
+
+    @model_validator(mode="after")
+    def _shape(self) -> DependsSpec:
+        if self.wait_min is not None and self.hard:
+            raise ValueError("wait_min 은 무른 의존(hard: false)에만 — 굳은 의존은 이미 기다린다")
+        if self.wait_min is not None and self.as_of != "same":
+            raise ValueError("wait_min 은 as_of same 의존에만")
+        return self
 
 
 class NotifySpec(_Model):
@@ -493,6 +512,8 @@ class Registry(_Model):
                         f"{j.name}: 굳은 의존 {d.job} 의 as_of 종류가 다르다"
                         f"({dep.run_as_of()} ≠ {j.run_as_of()})"
                     )
+                if d.wait_min is not None:
+                    errs += _check_soft_wait(j, dep, d.wait_min)
             for b in j.backfill_of:
                 if b not in jobs:
                     errs.append(f"{j.name}: backfill_of 대상이 없다: {b}")
@@ -668,6 +689,33 @@ class Registry(_Model):
             if n != 1:
                 errs.append(f"legacy 작업 {line!r} 가 absorbs·retired 에 {n}번 나온다(정확히 1번)")
         return errs
+
+
+def _check_soft_wait(j: JobSpec, dep: JobSpec, wait_min: int) -> list[str]:
+    """무른 의존 `wait_min` 이 실행기에서 뜻대로 도는지(DependsSpec 설명 — ADR 0018).
+
+    실행기는 진행 중인 실행만 기다린다. 그래서 의존 작업은 kbj 가 돌려야 하고(external 은 진행
+    기록이 없다), 이 작업보다 늦게 발화하면 안 되며(아직 발화하지 않은 실행은 기다리지 않는다),
+    기다림이 이 작업의 마감보다 짧아야 한다.
+    """
+    errs: list[str] = []
+    where = f"{j.name}: 무른 의존 {dep.name} wait_min"
+    if dep.external:
+        errs.append(
+            f"{where} — runner external 작업은 kbj 실행기에 진행 기록이 없다(기다릴 수 없다)"
+        )
+    if wait_min >= j.deadline_min:
+        errs.append(f"{where} {wait_min}분이 마감 {j.deadline_min}분보다 짧아야 한다")
+    dep_first = dep.schedule.first_time()
+    own_first = j.schedule.first_time()
+    if dep_first is None:
+        errs.append(f"{where} — 발화 시각이 정해지지 않은 작업(수동·상태 진입)은 기다릴 수 없다")
+    elif own_first is not None and dep.schedule.tz == j.schedule.tz and dep_first > own_first:
+        errs.append(
+            f"{where} — 의존이 {dep_first:%H:%M} 에 발화해 이 작업({own_first:%H:%M})보다 늦다"
+            "(아직 발화하지 않은 실행은 기다리지 않는다)"
+        )
+    return errs
 
 
 def read_legacy_jobs(path: Path) -> list[str]:

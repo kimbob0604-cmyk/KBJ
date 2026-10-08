@@ -1,8 +1,8 @@
 """발송 켬 변형 — `KBJ_NOTIFY_ENABLED=true`, 24시간 창 2026-10-06 05:00 KST 부터(설계 §10.5).
 
 기대: 가짜 텔레그램의 sendMessage 성공 수 = 발송 기록 `sent` 수 = 브리핑 2건(U2) + 하루 1회
-리포트(ETF 08:00·수급 18:20). 첫 발송에 429 를 한 번 주면 `retry_after` 를 따라 다시 보내고
-한 번만 나간다.
+리포트(수급 — 장 마감 뒤 발송은 16:00, ADR 0018). 첫 발송에 429 를 한 번 주면 `retry_after` 를
+따라 다시 보내고 한 번만 나간다.
 """
 
 from __future__ import annotations
@@ -49,7 +49,7 @@ def test_send_count_equals_briefs_plus_daily_reports(notify_on: SimDay) -> None:
     assert len(ok) == 3
     assert {str(c.data.get("chat_id")) for c in ok} == {TG_CHAT}
     times = [c.at.astimezone(KST).strftime("%H:%M") for c in ok]
-    assert times == ["08:10", "16:40", "18:20"]
+    assert times == ["08:10", "16:00", "16:00"]  # 마감 요약·수급 리포트 모두 16:00(ADR 0018)
 
 
 def test_429_is_retried_and_sent_once(notify_on: SimDay) -> None:

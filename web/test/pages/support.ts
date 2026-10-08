@@ -144,6 +144,6 @@ export function selectByLabel(root: ParentNode, label: string): HTMLSelectElemen
   throw new Error(`선택 상자 없음: ${label}`);
 }
 
-export function notFound(message = '아직 없음 — board.daily 16:20'): Response {
+export function notFound(message = '아직 없음 — board.daily 16:00~16:05'): Response {
   return json({ code: 'no_data', message }, 404);
 }

@@ -15,7 +15,10 @@
    무시한다. 앞 시도가 실패로 끝났으면(예: 월 15~17일 재시도) 시도 번호를 이어 다시 돈다.
 4. **의존**: 굳은 의존(hard)은 그 작업의 같은(또는 앞) as_of 실행이 `ok` 일 때까지 기다린다 —
    `catch_up_until`(없으면 마감)까지. 의존 작업이 실패로 끝났으면 바로 실패. 무른 의존(soft)은
-   기다리지 않고 상태만 기록한다.
+   기다리지 않고 상태만 기록한다 — 단 `wait_min` 을 준 무른 의존은 굳은 의존이 다 준비된 때부터
+   최대 그 분(그리고 위 시한까지) 동안, 그 의존의 같은 as_of 실행이 이 실행기에서 진행 중(`_pending`
+   — 제 의존 대기·실행·재시도 대기)이면 끝나기를 기다린다. 끝난 결과는 묻지 않는다(ADR 0018 — 16:00
+   마감 요약이 같은 16:00 보드를 기다리되, 보드 실패가 요약을 막지 않게).
 5. **선점**: 수집 데이터 키를 모두 잡아 본다(`claims.py`). 하나도 못 잡으면 `skipped(duplicate)`.
    잡은 키만 처리기에 넘긴다. 처리기가 돌려준 키는 `done`, 못 돌려준 키는 재시도가 이어 쓰거나
    끝내 실패면 `failed` 로 놓아 준다. 재시도는 같은 시리즈가 이미 `done` 으로 만든 키를 다시 잡지
@@ -133,6 +136,8 @@ class _Pending:
         default_factory=set[DataKey]
     )  # 이 시리즈가 이미 받은 키(재시도 제외)
     waiting_logged: bool = False
+    soft_since: datetime | None = None  # UTC — 굳은 의존이 다 준비된 때(무른 의존 wait_min 의 기준)
+    soft_logged: bool = False
 
 
 def _utc(ts: datetime) -> datetime:
@@ -490,7 +495,7 @@ class JobRunner:
                 return False
             waiting.append(f"{d.job}@{dep_as_of}")
         if not waiting:
-            return True
+            return self._soft_ready(p, now, events)
         if now >= p.wait_until:
             self._give_up(
                 p, now, events, f"굳은 의존을 기다리다 시한을 넘겼다: {', '.join(waiting)}"
@@ -501,6 +506,36 @@ class JobRunner:
             p.waiting_logged = True
             events.append(
                 RunEvent("waiting", p.job.name, p.as_of, now, p.attempt, {"deps": waiting})
+            )
+        return False
+
+    def _soft_ready(self, p: _Pending, now: datetime, events: list[RunEvent]) -> bool:
+        """`wait_min` 무른 의존 — 진행 중인 같은 as_of 실행이 끝나기를 시한까지 기다린다.
+
+        시한 = min(굳은 의존이 다 준비된 때 + wait_min, `wait_until`). 진행 중이 아니면(끝났거나
+        아직 발화하지 않았으면) 기다리지 않는다. 결과는 묻지 않는다 — 무른 의존이다."""
+        if p.soft_since is None:
+            p.soft_since = now
+        holding: list[str] = []
+        for d in p.job.depends_on:
+            if d.hard or d.wait_min is None:
+                continue
+            if now >= min(p.soft_since + timedelta(minutes=d.wait_min), p.wait_until):
+                continue
+            dep = self.registry.by_name(d.job)
+            try:
+                dep_as_of = resolve_as_of(dep.run_as_of(), p.fire_at, self.kr, self.us)
+            except AsOfUnavailable:
+                continue
+            if (d.job, dep_as_of) in self._pending:
+                holding.append(f"{d.job}@{dep_as_of}")
+        if not holding:
+            return True
+        p.next_at = now + timedelta(seconds=DEP_POLL_S)
+        if not p.soft_logged:
+            p.soft_logged = True
+            events.append(
+                RunEvent("waiting", p.job.name, p.as_of, now, p.attempt, {"soft_deps": holding})
             )
         return False
 

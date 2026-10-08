@@ -223,7 +223,7 @@ def close_and_brief(close_retry: Any = None, **brief: Any) -> list[dict[str, Any
         "name": "brief.closing",
         "phase": "P3",
         "owner": "tests.fake:brief",
-        "schedule": {"cron": "40 16 * * 1-5", "when": "trading_day", "catch_up_until": "20:30"},
+        "schedule": {"cron": "0 16 * * 1-5", "when": "trading_day", "catch_up_until": "20:30"},
         "retry": {"max": 0},
         "depends_on": [{"job": "market.close_collect", "hard": True}],
     }
@@ -265,6 +265,118 @@ def test_hard_dependency_failure_fails_the_dependent() -> None:
     assert subjects == ["market.close_collect:2026-10-06", "brief.closing:2026-10-06"]
 
 
+# ── 무른 의존 wait_min(ADR 0018 — 16:00 발송이 같은 16:00 보드를 기다린다) ──────────────────
+
+
+def close_board_brief(
+    board_retry: Any = None, wait_min: int | None = 20, **close: Any
+) -> list[dict[str, Any]]:
+    """마감 수집(close+5) → 보드(16:00, 굳은 의존) → 마감 요약(16:00, 보드는 무른 의존)."""
+    jobs = close_and_brief(**close)
+    board = {
+        "name": "board.daily",
+        "phase": "P3",
+        "owner": "tests.fake:board",
+        "schedule": {"cron": "0 16 * * 1-5", "when": "trading_day"},
+        "retry": board_retry or {"max": 2, "backoff_s": [600]},
+        "depends_on": [{"job": "market.close_collect", "hard": True}],
+    }
+    soft: dict[str, Any] = {"job": "board.daily", "hard": False}
+    if wait_min is not None:
+        soft["wait_min"] = wait_min
+    jobs[1]["depends_on"] = [{"job": "market.close_collect", "hard": True}, soft]
+    return [jobs[0], board, jobs[1]]
+
+
+def _brief_rig(board: Publisher, *jobs_args: Any, **jobs_kw: Any) -> tuple[Rig, list[JobContext]]:
+    briefs: list[JobContext] = []
+
+    def brief(ctx: JobContext) -> JobResult:
+        briefs.append(ctx)
+        return JobResult("ok")
+
+    close = jobs_kw.pop("close", Publisher(kst(2026, 10, 6, 0, 0)))
+    rig = Rig(
+        close_board_brief(*jobs_args, **jobs_kw),
+        {"tests.fake:close": close, "tests.fake:board": board, "tests.fake:brief": brief},
+        kst(2026, 10, 6, 15, 30),
+    )
+    return rig, briefs
+
+
+def _brief_started(rig: Rig) -> tuple[datetime, dict[str, Any]]:
+    (ev,) = [e for e in rig.events if e.job == "brief.closing" and e.kind == "started"]
+    return ev.at.astimezone(KST), dict(ev.detail)
+
+
+def test_soft_wait_holds_the_brief_until_the_board_finishes() -> None:
+    rig, briefs = _brief_rig(Publisher(kst(2026, 10, 6, 16, 10)))  # 보드는 두 번째 시도(16:10)에 ok
+    rig.run_until(kst(2026, 10, 6, 17, 0))
+    assert rig.times("board.daily", "started") == [
+        kst(2026, 10, 6, 16, 0),
+        kst(2026, 10, 6, 16, 10),
+    ]
+    waits = [e for e in rig.events if e.job == "brief.closing" and e.kind == "waiting"]
+    assert [dict(e.detail) for e in waits] == [{"soft_deps": ["board.daily@2026-10-06"]}]
+    started, detail = _brief_started(rig)
+    assert kst(2026, 10, 6, 16, 10) <= started <= kst(2026, 10, 6, 16, 11)
+    assert detail["soft_deps"] == {"board.daily": "ok"}  # 보드가 끝난 뒤에 시작했다
+    assert len(briefs) == 1 and rig.kinds("brief.closing")[-1] == "ok"
+
+
+def test_soft_wait_does_not_care_how_the_board_ended() -> None:
+    board = {"max": 1, "backoff_s": [600]}  # 16:00·16:10 둘 다 실패 → 보드 실패
+    rig, briefs = _brief_rig(Publisher(None), board)
+    rig.run_until(kst(2026, 10, 6, 17, 0))
+    assert rig.kinds("board.daily")[-1] == "failed"
+    started, detail = _brief_started(rig)
+    assert kst(2026, 10, 6, 16, 10) <= started <= kst(2026, 10, 6, 16, 11)  # 시한(16:20) 전
+    assert detail["soft_deps"] == {"board.daily": "failed"}
+    # 무른 의존 — 보드가 실패해도 마감 요약은 실패하지 않는다
+    assert len(briefs) == 1 and rig.kinds("brief.closing")[-1] == "ok"
+    assert [n["subject"] for n in rig.notes.sent] == ["board.daily:2026-10-06"]
+
+
+def test_soft_wait_stops_at_wait_min_and_starts_anyway() -> None:
+    rig, briefs = _brief_rig(Publisher(None), None, 15)  # 보드는 16:00·16:10·16:20 시도
+    rig.run_until(kst(2026, 10, 6, 17, 0))
+    started, detail = _brief_started(rig)
+    assert started == kst(2026, 10, 6, 16, 15)  # 굳은 의존 준비(16:00) + 15분
+    assert detail["soft_deps"] == {"board.daily": "failed"}  # 첫 실패 뒤 재시도 대기 중이었다
+    assert len(briefs) == 1 and rig.kinds("brief.closing")[-1] == "ok"
+    assert rig.times("board.daily", "started")[-1] == kst(2026, 10, 6, 16, 20)
+
+
+def test_soft_dependency_without_wait_min_does_not_hold() -> None:
+    rig, briefs = _brief_rig(Publisher(kst(2026, 10, 6, 16, 10)), None, None)
+    rig.run_until(kst(2026, 10, 6, 17, 0))
+    started, detail = _brief_started(rig)
+    assert started == kst(2026, 10, 6, 16, 0)
+    assert "waiting" not in rig.kinds("brief.closing")
+    assert detail["soft_deps"] == {"board.daily": "running"}
+    assert len(briefs) == 1
+
+
+def test_soft_wait_counts_from_when_hard_dependencies_are_ready() -> None:
+    """수능일처럼 마감 수집이 늦으면(16:50) 보드도 늦다 — 기다림은 발화(16:00)가 아니라 굳은 의존이
+    준비된 때부터 센다. 그래서 16:20 이 지났어도 보드를 기다린다."""
+    rig, briefs = _brief_rig(
+        Publisher(kst(2026, 10, 6, 17, 0)),
+        close_retry={"max": 5, "backoff_s": [900]},
+        deadline_min=240,
+        close=Publisher(kst(2026, 10, 6, 16, 50)),
+    )
+    rig.run_until(kst(2026, 10, 6, 18, 0))
+    assert rig.times("market.close_collect", "ok") == [kst(2026, 10, 6, 16, 50)]
+    board = rig.times("board.daily", "started")
+    assert kst(2026, 10, 6, 16, 50) <= board[0] <= kst(2026, 10, 6, 16, 51)
+    assert rig.times("board.daily", "ok") == [board[0] + timedelta(minutes=10)]
+    started, detail = _brief_started(rig)
+    assert board[1] <= started <= board[1] + timedelta(minutes=1)
+    assert detail["soft_deps"] == {"board.daily": "ok"}
+    assert len(briefs) == 1
+
+
 def test_catch_up_after_restart_and_not_after_deadline() -> None:
     calls: list[JobContext] = []
 
@@ -274,7 +386,7 @@ def test_catch_up_after_restart_and_not_after_deadline() -> None:
 
     jobs = close_and_brief(depends_on=[])
     handlers = {"tests.fake:close": Publisher(kst(2026, 10, 6, 0, 0)), "tests.fake:brief": brief}
-    rig = Rig(jobs, handlers, kst(2026, 10, 6, 18, 0))  # 16:40 에 꺼져 있었다
+    rig = Rig(jobs, handlers, kst(2026, 10, 6, 18, 0))  # 16:00 에 꺼져 있었다
     rig.run_until(kst(2026, 10, 6, 18, 10))
     assert len(calls) == 1 and calls[0].as_of == "2026-10-06"
     rig.run_until(kst(2026, 10, 6, 20, 40))

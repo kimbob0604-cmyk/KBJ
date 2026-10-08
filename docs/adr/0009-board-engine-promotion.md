@@ -3,6 +3,9 @@
 상태: **확정**(2026-10-07 — 초안 P3 묶음 E1, 번호·상태는 웨이브 3 묶음 S 가 확정 — 아래 'S 확정 메모', `docs/p3_design.md` §9.3).
 
 > **2026-10-08: 신고가 정의(축·창·역사적 깊이)는 [ADR 0017](0017-newhigh-three-axes.md) 이 대체했다**(사용자 요청 — d60·252봉 → d120 = 120 시장 거래일·w52 = 달력 364일·hist = 상장 이후 전체, 원천 바닥). 골든은 새 엔진으로 재캡처했고 정의는 독립 오라클이 지킨다. 아래 1~8 의 나머지(골든 먼저·순수/IO 분리·shim·잠정 → 확정)는 그대로다.
+
+> **2026-10-08: `board.daily` 시각 16:20 은 [ADR 0018](0018-post-close-1600.md) 이 16:00 으로 바꿨다**(16:00 cron + `market.close_collect` 굳은 의존 — 마감 수집이 끝나는 대로, 16:00 마감 요약이 이 보드를 기다린다). 아래 7 의 '16:20' 은 그때 기록이다.
+
 근거: `docs/p3_design.md` D-P3-5·8·10·11, §1.3·§3.8·§4.1·§8.1, 메인 결정 R8(2026-10-07), ADR 0001 Q2,
 conflict_map §1.7·§1.8.
 구현: `kbj/engines/board/{config,newhigh,aggregate,rankings,kinds,themes,build}.py`, `config/board.yaml`,

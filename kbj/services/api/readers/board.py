@@ -1,8 +1,8 @@
 """신고가 보드 readers — `prv_board.artifact` 의 산출 JSON(docs/p3_design.md §4.1·§5.3).
 
-- 보드는 `board.daily`(16:20, KIS 마감 — estimated)·`board.confirm`(다음 영업일 08:40,
-  KRX 확정 — ok)
-  이 계산해 저장한다. 여기서는 읽고 거르기만 한다(계산하지 않는다).
+- 보드는 `board.daily`(16:00 발화 — 마감 수집이 끝나면, 평소 16:00~16:05. KIS 마감 — estimated)·
+  `board.confirm`(다음 영업일 08:40, KRX 확정 — ok)이 계산해 저장한다(ADR 0018). 여기서는 읽고
+  거르기만 한다(계산하지 않는다).
 - 신고가 행에는 그날 원장 외국인·기관 순매수(원)를 붙인다(§5.2 — 기간 1일).
 - 역사적 신고가(R8·D-P3-11·ADR 0017)는 '상장 이후 전체' 다 — 특정일 이후로 내세우지 않는다.
   이력이 상장일(또는 원천 가장 이른 봉)까지 닿지 않아 보류한 종목 수와, 원천 바닥 기준으로 판정한
@@ -33,6 +33,8 @@ from kbj.services.api.readers._common import NoData, ReadContext, envelope, labe
 __all__ = ["board_events", "board_newhigh", "board_rankings", "board_sectors", "hist_notes"]
 
 EOK_NOTE: Final = "보드 금액(turnover·mktcap·*_eok)은 억원(ET 산출 그대로)"
+# 보드가 아직 없을 때 안내(ADR 0018 — 16:00 발화, 마감 수집이 끝나야 돈다)
+BOARD_DAILY_ETA: Final = "board.daily 16:00~16:05"
 Basis = Literal["close", "high"]
 Kind = Literal["hist", "w52", "d120"]
 
@@ -63,10 +65,10 @@ def hist_notes(scope: Mapping[str, Any] | None) -> list[str]:
 def _artifact(ctx: ReadContext, name: str, day: date | None) -> BoardArtifact:
     d = day if day is not None else ctx.repos.board.last_day(ctx.today())
     if d is None:
-        raise NoData("아직 없음 — board.daily 16:20")
+        raise NoData(f"아직 없음 — {BOARD_DAILY_ETA}")
     art = ctx.repos.board.artifact(d, name)
     if art is None:
-        raise NoData(f"아직 없음 — {d} 보드 산출 없음(board.daily 16:20)")
+        raise NoData(f"아직 없음 — {d} 보드 산출 없음({BOARD_DAILY_ETA})")
     return art
 
 
