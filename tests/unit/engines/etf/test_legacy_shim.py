@@ -13,6 +13,13 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
+# legacy tracker 가 import 시점에 requests(legacy 의존성 그룹)를 부른다.
+# dev 만 설치한 CI test (kbj) 잡에서는 빼고, 모든 그룹을 설치하는
+# legacy (etf-rest) 잡에서 `pytest -m legacy` 로 돌린다(건너뛰지 않는다).
+pytestmark = pytest.mark.legacy
+
 ROOT = Path(__file__).resolve().parents[4]
 ET = ROOT / "legacy" / "etf_traker" / "etf_tracker_v9"
 

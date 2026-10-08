@@ -62,8 +62,8 @@ jobs:
           enable-cache: true
       - name: 의존성(dev)
         run: uv sync --frozen
-      - name: pytest (sim·통합 제외 — 아래 sim·kbj-integration 잡)
-        run: uv run pytest -m "not sim and not integration"
+      - name: pytest (sim·통합·legacy 의존 제외 — 아래 sim·kbj-integration·legacy 잡)
+        run: uv run pytest -m "not sim and not integration and not legacy"
       - name: openapi 신선도(web/src/api/openapi.json — 묶음 A)
         run: uv run python -m kbj.services.api openapi --check
       - name: 등록부 정적 검증(config/jobs.yaml — 켜진 작업의 처리기 import 포함)
@@ -152,6 +152,9 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y -qq fonts-nanum && fc-cache -f
       - name: scripts/test_legacy.sh ${{ matrix.part }}
         run: uv run bash scripts/test_legacy.sh ${{ matrix.part }}
+      - name: kbj 다리 시험 중 legacy 의존성이 필요한 것(pytest -m legacy)
+        if: matrix.part == 'etf-rest'
+        run: uv run pytest -m legacy -rs
 
   gexlab-integration:
     # GEXLAB 통합 시험 49개. 원본 GEXLAB CI 처럼 러너의 Docker 를 그대로 쓴다 — 시험이 docker CLI 로

@@ -126,6 +126,7 @@ markers = [
     "network: 외부 API 를 실제로 부르는 시험 (CI 기본 제외 — 키가 있는 운영 환경에서만)",
     "sim: 하루 운영 시뮬레이션(가짜 시계·가짜 서버 — tests/sim)",
     "slow: 오래 걸리는 시뮬레이션(장중 하루 판 — CI sim 잡은 -m \"sim and not slow\", P3 묶음 S)",
+    "legacy: legacy 의존성 그룹(requests 등)이 있어야 도는 다리 시험 — CI 는 dev 만 설치한 test (kbj) 잡에서 빼고 legacy (etf-rest) 잡에서 돌린다",
 ]
 
 # ── import-linter — 구조로 막는 의존 규칙 (DATA_TIERS §3, ADR 0002·0003) ─────────────────────
