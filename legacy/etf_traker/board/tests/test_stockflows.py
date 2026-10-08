@@ -56,14 +56,14 @@ def row(code, name, close=None, high=None, **kw):
 
 NEWHIGH = dict(
     as_of='2026-09-17',
-    labels=dict(hist='역사적', w52='52주', d60='60일'),
+    labels=dict(hist='역사적', w52='52주', d120='120일'),
     achieved=[
         row('001', '종가52', close='w52', high='w52', chg_pct=3.0, vol_mult=4.0),
         row('002', '고가만52', close=None, high='w52', chg_pct=-0.4, vol_mult=0.5),
         row('003', '종가역사적', close='hist', high='hist', chg_pct=1.2, vol_mult=0.9),
-        # 종가로는 60일, 고가로는 52주. 52주 목록에 들어야 한다.
-        row('004', '섞인것', close='d60', high='w52', chg_pct=3.6, vol_mult=10.1),
-        row('005', '60일뿐', close='d60', high='d60', chg_pct=1.0, vol_mult=2.0),
+        # 종가로는 120일, 고가로는 52주. 52주 목록에 들어야 한다.
+        row('004', '섞인것', close='d120', high='w52', chg_pct=3.6, vol_mult=10.1),
+        row('005', '120일뿐', close='d120', high='d120', chg_pct=1.0, vol_mult=2.0),
     ])
 
 
@@ -74,14 +74,14 @@ class Targets(unittest.TestCase):
         self.assertEqual(got, ['종가52', '고가만52', '종가역사적', '섞인것'])
 
     def test_60d_only_is_left_out(self):
-        self.assertNotIn('60일뿐', [x['name'] for x in SF.targets(NEWHIGH)])
+        self.assertNotIn('120일뿐', [x['name'] for x in SF.targets(NEWHIGH)])
 
     def test_reads_the_basis_by_name_not_the_default_label(self):
         """`label` 은 설정이 가리키는 기본 기준이다. 그걸 보면 대상이 흔들린다."""
         # 기본 기준이 무엇이든 close_basis/high_basis 만 보므로 결과가 같아야 한다.
         nh = dict(NEWHIGH, basis='high')
         for x in nh['achieved']:
-            x['label'] = 'd60'          # 기본 라벨을 일부러 낮춰 놓는다
+            x['label'] = 'd120'          # 기본 라벨을 일부러 낮춰 놓는다
         self.assertEqual(len(SF.targets(nh)), 4)
 
     def test_same_code_is_counted_once(self):
@@ -589,7 +589,7 @@ class Message(unittest.TestCase):
         t = self.msg(stockflows=self.FLOWS)
         for name in ('종가52', '고가만52', '종가역사적', '섞인것'):
             self.assertIn(name, t)
-        self.assertNotIn('60일뿐', t)
+        self.assertNotIn('120일뿐', t)
 
     def test_flow_line_follows_the_stock(self):
         t = self.msg(stockflows=self.FLOWS)
@@ -607,11 +607,11 @@ class Message(unittest.TestCase):
         self.assertNotIn('-0억', t)
 
     def test_label_matches_why_it_qualified(self):
-        """종가 60일·고가 52주인 종목을 '60일' 로 적으면 목록이 틀려 보인다."""
+        """종가 120일·고가 52주인 종목을 '120일' 로 적으면 목록이 틀려 보인다."""
         t = self.msg(stockflows=self.FLOWS)
         line = [x for x in t.split('\n') if '섞인것' in x][0]
         self.assertIn('52주(고가)', line)
-        self.assertNotIn('60일', line)
+        self.assertNotIn('120일', line)
 
     def test_high_only_stock_is_marked(self):
         line = [x for x in self.msg().split('\n') if '고가만52' in x][0]

@@ -3,7 +3,8 @@
 // - 로그인 등급 전부(공개판은 자물쇠 — 시세 원천이 모두 KRX 계열). 공개 빌드는 아무것도 요청하지 않는다.
 // - 보드 응답의 금액(turnover·mktcap·*_eok)은 **억원**(ET 산출 그대로 — API notes 에도 적혀 있다). 원장 외국인·기관
 //   (`flows`)만 원 단위다.
-// - 역사적 신고가는 KRX 백필이 닿는 범위에서만 계산한다(R8) — 범위 시작일(`history_from`)을 화면에 적는다.
+// - 신고가 3축(ADR 0017): 역사적 = 상장 이후 전체 · 52주 = 달력 52주 · 120일 = 120거래일. 역사적을 특정일 '이후'로
+//   내세우지 않는다 — 이력이 상장일에 닿지 않은 종목 수·원천 바닥 기준 수만 품질 메모(`hist_notes`)로 적는다.
 // - KIS 마감값은 잠정(estimated) — 다음 영업일 08:40 KRX 확정으로 덮인다(board.confirm).
 import type { components } from '../api/types.gen';
 import type { PageContext, PageModule } from '../app/types';
@@ -48,7 +49,7 @@ export interface BasisView {
   gap?: Record<string, number | null> | null;
 }
 
-const DEFAULT_LABELS: Record<string, string> = { hist: '역사적', w52: '52주', d60: '60일' };
+const DEFAULT_LABELS: Record<string, string> = { hist: '역사적', w52: '52주', d120: '120일' };
 
 export const EVENT_LABEL: Record<string, string> = {
   material_giveback: '재료 반납',
@@ -76,7 +77,7 @@ const eokVal = (v: number | null | undefined): string => (n(v) === null ? DASH :
 // ── 신고가 표·근접 표 ──────────────────────────────────────
 
 type Basis = 'close' | 'high';
-type Kind = 'all' | 'hist' | 'w52' | 'd60';
+type Kind = 'all' | 'hist' | 'w52' | 'd120';
 type MinTurn = '0' | '50' | '100' | '300';
 
 /**
@@ -171,7 +172,7 @@ export function proximityColumns(d: Newhigh): Column<BoardRow>[] {
   ];
 }
 
-/** 신고가 개수 줄: '역사적 12 · 52주 22 · 60일 32' */
+/** 신고가 개수 줄: '역사적 12 · 52주 22 · 120일 32' */
 export function countsText(d: Newhigh, basis: Basis): string {
   const labels = d.labels ?? DEFAULT_LABELS;
   const counts = (basis === 'high' ? d.counts_high : d.counts_close) ?? {};
@@ -179,27 +180,21 @@ export function countsText(d: Newhigh, basis: Basis): string {
   return order.map((k) => `${labels[k] ?? k} ${num(counts[k])}`).join(' · ');
 }
 
-/** 역사적 신고가 계산 범위 시작일(R8 — KRX 백필이 닿는 범위). 모르면 null */
-export function historyFrom(d: Newhigh): string | null {
-  return d.history_from ?? str(d.hist_scope?.history_from);
+/** 축 기준 한 줄(ADR 0017) — 특정일 표기 없이 */
+export const AXES_DEF =
+  '역사적 = 상장 이후, 52주 = 달력 52주, 120일 = 120거래일 — 판정일 당일 제외 최고가를 초과(엄격)';
+
+/** 역사적 신고가 품질 메모(이력이 상장일에 닿지 않은 종목·원천 바닥 기준 종목). 없으면 빈 목록 */
+export function histNotes(d: Newhigh): string[] {
+  return (d.hist_notes ?? []).filter((x): x is string => typeof x === 'string' && x.length > 0);
 }
 
-/** 표 머리용 짧은 범위 문구 */
-export function histScope(d: Newhigh): string {
-  const from = historyFrom(d);
-  return from ? `역사적 범위 ${from}~` : '역사적 범위 모름';
-}
-
-/** 기준 설명 — 역사적 신고가 범위(R8)를 늘 함께 */
+/** 기준 설명 — 축 기준 한 줄 + 역사적 품질 메모(있을 때만) */
 export function newhighDef(d: Newhigh): string {
-  const from = historyFrom(d);
-  const hist = from
-    ? `역사적 = ${from} 이후 일봉(KRX 백필 범위) 최고가 — 그 전 상장 종목은 역사적 신고가를 계산하지 않는다`
-    : '역사적 = 이력 범위를 모름 — 역사적 신고가를 단정하지 않는다';
   const below = n(d.n_below_mktcap);
   const parts = [
-    '60일 = 직전 60영업일, 52주 = 직전 252영업일 최고가 대비 당일 제외·초과(엄격)',
-    hist,
+    AXES_DEF,
+    ...histNotes(d),
     d.min_mktcap_eok ? `시총 ${num(d.min_mktcap_eok)}억 미만${below === null ? '' : ` ${num(below)}종목`} 제외` : null,
     n(d.n_suspect) ? `분할 의심 ${num(d.n_suspect)}종목` : null,
   ];
@@ -469,7 +464,7 @@ async function mount(ctx: PageContext): Promise<void> {
         count.textContent = countsText(d, q.basis);
         pNh.body.append(
           table({
-            caption: `${q.basis === 'high' ? '고가' : '종가'} 기준 · 거래대금 순 · ${histScope(d)}`,
+            caption: `${q.basis === 'high' ? '고가' : '종가'} 기준 · 거래대금 순`,
             columns: achievedColumns(d),
             rows: achieved,
             rowKey: (r) => r.code,
@@ -508,7 +503,7 @@ async function mount(ctx: PageContext): Promise<void> {
         { value: 'all', label: '전체' },
         { value: 'hist', label: '역사적' },
         { value: 'w52', label: '52주' },
-        { value: 'd60', label: '60일' },
+        { value: 'd120', label: '120일' },
       ],
       value: q.kind,
       onChange: (v) => {

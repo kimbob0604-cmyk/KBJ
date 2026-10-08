@@ -27,7 +27,7 @@ def newhigh(
     request: Request,
     day: DateQ = None,
     basis: Annotated[Literal["close", "high"], Query()] = "close",
-    kind: Annotated[Literal["hist", "w52", "d60"] | None, Query()] = None,
+    kind: Annotated[Literal["hist", "w52", "d120"] | None, Query()] = None,
     min_turnover_eok: Annotated[float | None, Query(ge=0, le=1_000_000)] = None,
 ) -> Response:
     st = get_state(request)

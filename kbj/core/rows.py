@@ -83,7 +83,12 @@ KINDS: Final[tuple[str, ...]] = ("common", "pref", "spac", "reit", "etf", "etn")
 # 스크리닝이 기본으로 빼는 상태(metrics §3 — 관리종목·거래정지·정리매매)
 EXCLUDE_FLAGS: Final[frozenset[str]] = frozenset({"managed", "halted", "liquidation"})
 BASES: Final[tuple[str, ...]] = ("close", "high")  # 신고가 기준(ET newhigh.BASES)
-LABEL_KINDS: Final[tuple[str, ...]] = ("hist", "w52", "d60", "w52_low")  # w52_low 는 US 보드용
+LABEL_KINDS: Final[tuple[str, ...]] = (
+    "hist",
+    "w52",
+    "d120",
+    "w52_low",
+)  # w52_low 는 US 보드용(ADR 0017 — d60 없앰)
 CHANGE_KINDS: Final[tuple[str, ...]] = ("NEW", "DROP", "IN10", "OUT10", "ADD", "CUT")
 CHECK_IDS: Final[tuple[str, ...]] = ("c1", "c2", "c3")  # 검산 ①②③(metrics §2·§4)
 
@@ -871,12 +876,12 @@ class AllTime:
 
 @dataclass(frozen=True)
 class Label:
-    """일자별 신고가 라벨(`prv_board.label`). rank 0=hist 1=w52 2=d60(ET 그대로)."""
+    """일자별 신고가 라벨(`prv_board.label`). rank 0=hist 1=w52 2=d120(우선순위 — ADR 0017)."""
 
     code: str
     date: date
     basis: Literal["close", "high"]
-    kind: Literal["hist", "w52", "d60", "w52_low"]
+    kind: Literal["hist", "w52", "d120", "w52_low"]
     rank: int
     source: str
     quality: Quality

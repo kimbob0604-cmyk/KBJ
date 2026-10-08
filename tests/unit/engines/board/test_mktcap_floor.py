@@ -62,8 +62,10 @@ class Floor(unittest.TestCase):
 class Labels(unittest.TestCase):
     """20일 신고가를 없앴다 (D-071)."""
 
-    def test_창은_60일과_252일뿐이다(self):
-        self.assertEqual(CFG["newhigh"]["lookback"], dict(d60=60, w52=252))
+    def test_창은_120거래일과_달력_52주뿐이다(self):
+        # ADR 0017: 60일(직전 60봉)·252봉 → 120 시장 거래일·달력 364일
+        self.assertEqual(CFG["newhigh"]["lookback_trading_days"], dict(d120=120))
+        self.assertEqual(CFG["newhigh"]["lookback_calendar_days"], dict(w52=364))
 
     def test_라벨과_우선순위에도_없다(self):
         self.assertNotIn("d20", CFG["newhigh"]["labels"])
@@ -72,7 +74,8 @@ class Labels(unittest.TestCase):
     def test_탐지기_6_집합에서도_빠졌다(self):
         from kbj.engines.board import aggregate as agg
 
-        self.assertEqual(agg.MULTI_LABEL_SET, ("d60", "w52", "hist"))
+        self.assertEqual(agg.MULTI_LABEL_SET, ("d120", "w52", "hist"))
+        self.assertNotIn("d60", agg.MULTI_LABEL_SET)  # ADR 0017
 
     def test_탐지기_집합은_계산하는_라벨과_같다(self):
         # 이 둘이 어긋나면 '3종 이상'의 뜻이 조용히 바뀐다 (D-010 이 그랬다).
@@ -93,9 +96,9 @@ if __name__ == "__main__":
 class Detector6(unittest.TestCase):
     """탐지기 6은 '몇 종'이 아니라 '어느 등급 이상'을 고르는 손잡이다 (D-073).
 
-    라벨이 중첩이라(52주를 뚫으면 60일도 뚫린다) 라벨을 하나 빼면 같은 숫자가
-    다른 등급을 가리킨다. D-071 로 20일을 빼면서 3 이 '52주 이상'에서 '역사적'으로
-    조용히 옮겨 갔다. 2 가 원래 동작이다.
+    라벨이 중첩이라(52주를 뚫으면 120일도 뚫린다 — ADR 0017 전에는 60일) 라벨을 하나 빼면 같은
+    숫자가 다른 등급을 가리킨다. D-071 로 20일을 빼면서 3 이 '52주 이상'에서 '역사적'으로 조용히
+    옮겨 갔다. 2 가 원래 동작이다.
     """
 
     from kbj.engines.board import aggregate as agg
@@ -105,29 +108,31 @@ class Detector6(unittest.TestCase):
         n = len([k for k in self.agg.MULTI_LABEL_SET if hits.get(k)])
         return n >= cfg["detect"]["multi_label_min"]
 
-    def test_60일만_뚫으면_안_잡힌다(self):
-        self.assertFalse(self.fires(dict(d60=True)))
+    def test_120일만_뚫으면_안_잡힌다(self):
+        self.assertFalse(self.fires(dict(d120=True)))
 
     def test_52주를_뚫으면_잡힌다(self):
-        # 52주가 뚫리면 60일은 자동으로 따라온다.
-        self.assertTrue(self.fires(dict(d60=True, w52=True)))
+        # 52주가 뚫리면 120일은 자동으로 따라온다.
+        self.assertTrue(self.fires(dict(d120=True, w52=True)))
 
     def test_역사적도_당연히_잡힌다(self):
-        self.assertTrue(self.fires(dict(d60=True, w52=True, hist=True)))
+        self.assertTrue(self.fires(dict(d120=True, w52=True, hist=True)))
 
     def test_이력이_짧아_52주를_못_센_역사적도_잡힌다(self):
-        # 상장 70일짜리는 w52 를 계산할 수 없다. 그렇다고 빠지면 안 된다.
-        self.assertTrue(self.fires(dict(d60=True, hist=True)))
+        # 상장 130거래일짜리는 w52 를 계산할 수 없다. 그렇다고 빠지면 안 된다.
+        self.assertTrue(self.fires(dict(d120=True, hist=True)))
 
     def test_20일이_있던_시절과_같은_것을_잡는다(self):
         # 옛 구성(4라벨·min 3)과 지금 구성(3라벨·min 2)이 같은 집합을 낸다는 것을
         # 네 가지 경우로 못 박는다. 여기가 깨지면 D-071 이 의미를 또 바꾼 것이다.
-        old_set = ("d20", "d60", "w52", "hist")
+        # ADR 0017: 최하위 창 라벨 자리(옛 60일)는 120일이다 — 구조(4라벨·min 3 = 3라벨·min 2)는
+        # 같다.
+        old_set = ("d20", "d120", "w52", "hist")
         cases = [
-            dict(d20=True, d60=True),  # 60일만
-            dict(d20=True, d60=True, w52=True),  # 52주
-            dict(d20=True, d60=True, w52=True, hist=True),  # 역사적
-            dict(d20=True, d60=True, hist=True),
+            dict(d20=True, d120=True),  # 120일만
+            dict(d20=True, d120=True, w52=True),  # 52주
+            dict(d20=True, d120=True, w52=True, hist=True),  # 역사적
+            dict(d20=True, d120=True, hist=True),
         ]  # 이력 부족
         for h in cases:
             old = len([k for k in old_set if h.get(k)]) >= 3

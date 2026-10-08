@@ -49,8 +49,8 @@ NEWHIGH = dict(as_of=ASOF, achieved=[
     row('029460', '케이씨', close='w52', high='w52'),
     row('086670', '비엠티', close='hist', high='hist'),
     row('010955', 'S-Oil우', close='w52', high='w52'),
-    row('000500', '가온전선', close='hist', high='d60'),
-    row('999999', '60일뿐', close='d60', high='d60'),
+    row('000500', '가온전선', close='hist', high='d120'),
+    row('999999', '120일뿐', close='d120', high='d120'),
 ])
 NAVER_ALL = ['케이씨 029460', '케이씨 신고가', '비엠티 086670', '비엠티 신고가',
              'S-Oil 010950', 'S-Oil 신고가', '가온전선 000500', '가온전선 신고가']

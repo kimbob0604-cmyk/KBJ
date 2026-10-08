@@ -89,7 +89,7 @@ class CloseMark(unittest.TestCase):
         from board.web import render
         # 라벨의 한글 이름은 newhigh.json 이 매 렌더마다 채운다. 시험에서는 직접 넣는다.
         self._saved = dict(render.LABEL_KO)
-        render.LABEL_KO.update(hist='역사적', w52='52주', d60='60일')
+        render.LABEL_KO.update(hist='역사적', w52='52주', d120='120일')
         self.render = render
         self.f = render._close_mark
 
@@ -113,4 +113,4 @@ class CloseMark(unittest.TestCase):
 
     def test_missing_close_basis_is_treated_as_no_close_label(self):
         # close_basis 가 아예 없는 옛 state 를 읽어도 조용히 빈칸이 되면 안 된다.
-        self.assertIn('종가 미달', self.f(dict(high_basis=dict(label='d60'))))
+        self.assertIn('종가 미달', self.f(dict(high_basis=dict(label='d120'))))

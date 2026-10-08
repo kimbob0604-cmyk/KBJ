@@ -8,6 +8,11 @@
 
 KBJ P3 묶음 E1 — ET `board/tests/test_newhigh.py`(35 전부) — 에서 승격했다(import 경로만 바꿨다,
 docs/p3_design.md §1.3·§1.11). 대상 모듈 `kbj.engines.board`.
+
+신고가 3축(ADR 0017 — 사용자 요청 2026-10-08): d60(직전 60봉)·w52(직전 252봉) 단정을 d120(직전 120
+거래일)·w52(달력 364일) 단정으로 바꿨다 — 시험 수·단정 수는 줄이지 않았다. 여기 합성 일봉은 날짜가
+하루씩이고 시장 달력을 넣지 않으므로 거래일 창 = 그 종목 봉 120개, 52주 창 = 364봉이다(52주 창을
+채우려고 앞 구간을 365봉 이상으로 늘렸다). 시장 달력·공휴일·거래정지 경계는 test_newhigh_axes.py.
 """
 
 import unittest
@@ -60,16 +65,19 @@ class TestGuard(unittest.TestCase):
 
 class TestEvaluate(unittest.TestCase):
     def setUp(self):
-        # 300영업일: 앞 299일은 100 근방 횡보(최고 120), 마지막 날 신고가
-        self.flat = [100.0] * 250 + [120.0] + [110.0] * 48
+        # 370일: 앞 369일은 100 근방 횡보(170일 전에 최고 120 — 120일 창 밖·52주 창 안), 마지막 날
+        # 신고가
+        self.flat = [100.0] * 200 + [120.0] + [110.0] * 168
         self.rows = bars(self.flat + [130.0])  # noqa: RUF005 — 원본 그대로(승격)
         self.asof = self.rows[-1]["asof"]
 
-    def test_hits_60d_and_52w(self):
+    def test_hits_120d_and_52w(self):
         ev = nh.evaluate(self.rows, self.asof, CFG)
         b = ev["basis"]["high"]
-        self.assertTrue(b["hit"]["d60"])  # 직전 60일 최고 110 < 130
-        self.assertTrue(b["hit"]["w52"])  # 직전 252일 최고 120 < 130
+        self.assertTrue(b["hit"]["d120"])  # 직전 120거래일 최고 110 < 130
+        self.assertEqual(b["refs"]["d120"], 110.0)
+        self.assertTrue(b["hit"]["w52"])  # 직전 52주 최고 120 < 130
+        self.assertEqual(b["refs"]["w52"], 120.0)
         self.assertFalse(b["hit"]["hist"])  # hist_ref 없음 -> 판정 안 함
         self.assertEqual(b["label"], "w52")  # 우선순위상 상위가 라벨
 
@@ -82,39 +90,39 @@ class TestEvaluate(unittest.TestCase):
 
     def test_hist_suppressed_when_series_suspect(self):
         # 5:1 분할이 260일차에 있었고 수정주가가 반영되지 않은 시계열.
-        # 분할 후 100영업일이 지나 60일 룩백은 분할 뒤 구간으로만 채워진다.
-        rows = bars([1000.0] * 260 + [200.0] * 100 + [260.0])
+        # 분할 후 130거래일이 지나 120일 룩백은 분할 뒤 구간으로만 채워진다.
+        rows = bars([1000.0] * 260 + [200.0] * 130 + [260.0])
         ev = nh.evaluate(
             rows, rows[-1]["asof"], CFG, hist_ref={"high": 250.0, "close": 250.0}, hist_days=3000
         )
         self.assertTrue(ev["suspect"])
         self.assertIsNone(ev["basis"]["high"]["refs"]["hist"])
         self.assertFalse(ev["basis"]["high"]["hit"]["hist"])
-        # 60일 기준 최고가는 분할 전 1000 이 아니라 분할 후 200 이어야 한다
-        self.assertEqual(ev["basis"]["high"]["refs"]["d60"], 200.0)
-        self.assertTrue(ev["basis"]["high"]["hit"]["d60"])
+        # 120일 기준 최고가는 분할 전 1000 이 아니라 분할 후 200 이어야 한다
+        self.assertEqual(ev["basis"]["high"]["refs"]["d120"], 200.0)
+        self.assertTrue(ev["basis"]["high"]["hit"]["d120"])
 
     def test_pre_split_prices_never_leak_into_lookback(self):
-        # 분할 직후 30일차. 60일 창을 채우려면 분할 전 구간을 써야 하므로
-        # 60일 라벨 자체를 계산하지 않는다. 1000원을 최고가로 들고 있으면
+        # 분할 직후 30일차. 120일 창을 채우려면 분할 전 구간을 써야 하므로
+        # 120일 라벨 자체를 계산하지 않는다. 1000원을 최고가로 들고 있으면
         # 이 종목은 몇 달간 신고가가 뜨지 않는 거짓 음성이 된다.
         rows = bars([1000.0] * 260 + [200.0] * 30 + [260.0])
         ev = nh.evaluate(rows, rows[-1]["asof"], CFG)
-        self.assertIsNone(ev["basis"]["high"]["refs"]["d60"])
+        self.assertIsNone(ev["basis"]["high"]["refs"]["d120"])
         self.assertIsNone(ev["basis"]["high"]["refs"]["w52"])
         self.assertEqual(ev["usable_days"], 30)
 
     def test_gap_sign_and_value(self):
-        rows = bars([100.0] * 300 + [90.0])
+        rows = bars([100.0] * 370 + [90.0])
         ev = nh.evaluate(rows, rows[-1]["asof"], CFG)
         self.assertAlmostEqual(ev["basis"]["high"]["gap"]["w52"], 10.0, places=6)
-        rows2 = bars([100.0] * 300 + [110.0])
+        rows2 = bars([100.0] * 370 + [110.0])
         ev2 = nh.evaluate(rows2, rows2[-1]["asof"], CFG)
         self.assertAlmostEqual(ev2["basis"]["high"]["gap"]["w52"], -10.0, places=6)
 
     def test_narrow5_negative_when_closing_in(self):
         # 5일 전 갭 20% -> 오늘 갭 5%  => 축소폭 -15%p
-        rows = bars([100.0] * 295 + [80.0, 82.0, 85.0, 88.0, 92.0, 95.0])
+        rows = bars([100.0] * 370 + [80.0, 82.0, 85.0, 88.0, 92.0, 95.0])
         ev = nh.evaluate(rows, rows[-1]["asof"], CFG)
         self.assertAlmostEqual(ev["basis"]["high"]["gap"]["w52"], 5.0, places=6)
         self.assertAlmostEqual(ev["basis"]["high"]["narrow5"]["w52"], -15.0, places=6)
@@ -135,34 +143,36 @@ class TestEvaluate(unittest.TestCase):
         self.assertIsNone(nh.evaluate(rows, rows[-1]["asof"], CFG)["giveback"])
 
     def test_short_history_blocks_longer_labels_only(self):
-        # 61영업일 — 60일 창은 채워지지만 252일은 못 채운다
+        # 121거래일 — 120일 창은 채워지지만 52주는 못 채운다
         # (+29% 는 가격제한폭 안이라 수정주가 가드에 걸리지 않는다)
-        rows = bars([100.0] * 60 + [129.0])
+        rows = bars([100.0] * 120 + [129.0])
         ev = nh.evaluate(rows, rows[-1]["asof"], CFG)
         b = ev["basis"]["high"]
         self.assertIsNone(b["refs"]["w52"])
-        self.assertEqual(b["refs"]["d60"], 100.0)
-        self.assertEqual(b["label"], "d60")
+        self.assertEqual(b["refs"]["d120"], 100.0)
+        self.assertEqual(b["label"], "d120")
 
     def test_계산하는_창은_설정이_정하는_셋뿐이다(self):
-        # 20일을 뺐다(D-071). 창을 늘렸다 줄였다 할 때 여기가 먼저 걸린다.
-        self.assertEqual(sorted(CFG["newhigh"]["lookback"]), ["d60", "w52"])
-        self.assertEqual(CFG["newhigh"]["priority"], ["hist", "w52", "d60"])
+        # 20일을 뺐다(D-071). 60일을 120일로 바꿨다(ADR 0017). 창을 늘렸다 줄였다 할 때 여기가 먼저
+        # 걸린다.
+        self.assertEqual(nh.lookbacks(CFG), {"w52": ("calendar", 364), "d120": ("trading", 120)})
+        self.assertEqual(CFG["newhigh"]["priority"], ["hist", "w52", "d120"])
 
     def test_all_windows_computed(self):
-        rows = bars([100.0] * 300 + [130.0])
+        rows = bars([100.0] * 370 + [130.0])
         refs = nh.evaluate(rows, rows[-1]["asof"], CFG)["basis"]["high"]["refs"]
-        for k in ("d60", "w52"):
+        for k in ("d120", "w52"):
             self.assertEqual(refs[k], 100.0, k)
         self.assertNotIn("d20", refs, "20일은 더 이상 계산하지 않는다")
+        self.assertNotIn("d60", refs, "60일은 더 이상 계산하지 않는다(ADR 0017)")
 
     def test_close_and_high_basis_differ(self):
         # 장중 고가로는 갱신했지만 종가로는 못 갱신한 날
-        rows = bars([100.0] * 300 + [105.0], highs=[100.0] * 300 + [130.0])
+        rows = bars([100.0] * 370 + [105.0], highs=[100.0] * 370 + [130.0])
         ev = nh.evaluate(rows, rows[-1]["asof"], CFG)
         self.assertTrue(ev["basis"]["high"]["hit"]["w52"])
         self.assertTrue(ev["basis"]["close"]["hit"]["w52"])  # 105 > 100 이라 종가도 갱신
-        rows2 = bars([100.0] * 300 + [99.0], highs=[100.0] * 300 + [130.0])
+        rows2 = bars([100.0] * 370 + [99.0], highs=[100.0] * 370 + [130.0])
         ev2 = nh.evaluate(rows2, rows2[-1]["asof"], CFG)
         self.assertTrue(ev2["basis"]["high"]["hit"]["w52"])
         self.assertFalse(ev2["basis"]["close"]["hit"]["w52"])
@@ -197,9 +207,9 @@ class TestEvaluate(unittest.TestCase):
             )
         )
         b = nh.evaluate(rows, rows[-1]["asof"], CFG)["basis"]["high"]
-        # 구간 [98.5, 100] · 앞 60봉의 범위 96~100 이 전부 겹친다
-        self.assertEqual(b["resistance"]["d60"], 60.0)
-        self.assertEqual(b["resistance_label"]["d60"], "두꺼움")
+        # 구간 [98.5, 100] · 앞 120봉의 범위 96~100 이 전부 겹친다
+        self.assertEqual(b["resistance"]["d120"], 120.0)
+        self.assertEqual(b["resistance_label"]["d120"], "두꺼움")
 
     def test_resistance_zero_when_band_is_empty(self):
         """구간에 봉이 하나도 안 겹치면 0 이 맞다. 그건 진짜 얇은 것이다."""
@@ -213,12 +223,12 @@ class TestEvaluate(unittest.TestCase):
                 close=50.0,
                 volume=1000.0,
             )
-            for i in range(60)
+            for i in range(120)
         ]
-        # 직전 60봉은 48~52 인데 오늘 고가는 60, 기준 최고가는 52 -> 이미 돌파
+        # 직전 120봉은 48~52 인데 오늘 고가는 60, 기준 최고가는 52 -> 이미 돌파
         rows.append(
             dict(
-                asof=(d0 + timedelta(days=61)).isoformat(),
+                asof=(d0 + timedelta(days=121)).isoformat(),
                 open=59.0,
                 high=60.0,
                 low=58.0,
@@ -227,15 +237,15 @@ class TestEvaluate(unittest.TestCase):
             )
         )
         b = nh.evaluate(rows, rows[-1]["asof"], CFG)["basis"]["high"]
-        self.assertTrue(b["hit"]["d60"])
-        self.assertIsNone(b["resistance"]["d60"])  # 돌파했으면 구간이 없다
+        self.assertTrue(b["hit"]["d120"])
+        self.assertIsNone(b["resistance"]["d120"])  # 돌파했으면 구간이 없다
 
     def test_resistance_thickness(self):
         # 현재가 95, 기준최고가 100. 그 구간(95~100)에 20일치 거래량이 쌓여 있다.
-        closes = [90.0] * 260 + [98.0] * 40 + [95.0]
-        vols = [1000.0] * 260 + [2000.0] * 40 + [1000.0]
+        closes = [90.0] * 330 + [98.0] * 40 + [95.0]
+        vols = [1000.0] * 330 + [2000.0] * 40 + [1000.0]
         rows = bars(closes, vols=vols)
-        # 직전 252일 최고가는 98
+        # 직전 52주 최고가는 98
         ev = nh.evaluate(rows, rows[-1]["asof"], CFG)
         r = ev["basis"]["high"]["resistance"]["w52"]
         self.assertIsNotNone(r)
@@ -254,7 +264,7 @@ class TestContinuity(unittest.TestCase):
         self.assertEqual(nh.continuity(1, 0), "이어감")
 
     def test_new_when_upgrading(self):
-        # 어제 60일(2), 오늘 52주(1) -> 신규
+        # 어제 120일(2), 오늘 52주(1) -> 신규
         self.assertEqual(nh.continuity(1, 2), "신규")
 
 

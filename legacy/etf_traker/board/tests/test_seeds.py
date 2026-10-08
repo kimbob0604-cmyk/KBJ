@@ -46,7 +46,7 @@ class BannerWording(unittest.TestCase):
                   thresholds=dict(
                       proximity=dict(max_gap_pct=5.0, min_mktcap_eok=200.0,
                                      narrow_days=5),
-                      lookback=dict(d60=60, w52=252)))
+                      lookback_trading_days=dict(d120=120), lookback_calendar_days=dict(w52=364)))
         return R.build(nh, {}, {}, {}, dict(theme_seeds_unresolved=unresolved),
                        meta={})
 

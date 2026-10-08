@@ -24,7 +24,7 @@ export interface PageDef {
 
 export const PAGES: readonly PageDef[] = [
   { n: 1, title: '시장', phase: 'P3', tier: 'mixed', plan: '지수·시장 거래대금·업종 히트맵·시장폭·투자자 수급' },
-  { n: 2, title: '신고가 보드', phase: 'P3', tier: 'login', lock: 'board', plan: '60일·52주·역사적 신고가, 섹터·테마 집계, 랭킹, 탐지' },
+  { n: 2, title: '신고가 보드', phase: 'P3', tier: 'login', lock: 'board', plan: '역사적·52주·120일 신고가, 섹터·테마 집계, 랭킹, 탐지' },
   { n: 3, title: '진단', phase: 'P7', tier: 'login', lock: 'options', plan: '종합 판정·공포탐욕·GEX 레벨(Flip·월·기대변동폭)' },
   { n: 4, title: '수급·스크리닝', phase: 'P3', tier: 'login', lock: 'investor', plan: '스크리너 6기준·투자자별·기관 7구분·종목 상세·장중 잠정' },
   { n: 5, title: '공시·일정', phase: 'P4', tier: 'public', plan: 'DART 공시 피드·잠정실적·경제 캘린더·오버행' },

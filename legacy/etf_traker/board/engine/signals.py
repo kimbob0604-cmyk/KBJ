@@ -34,7 +34,7 @@ from .config import ROOT
 
 SIGNALS_CFG = os.path.join(ROOT, 'config', 'signals.yaml')
 SOURCE = 'board-signals'
-KIND_RANK = {'hist': 0, 'w52': 1, 'd60': 2}
+KIND_RANK = {'hist': 0, 'w52': 1, 'd120': 2}  # KBJ ADR 0017(d60 → d120)
 DISCLAIMER = ('백테스트 전 후보 규칙 · 성과 검증 아님 · [복원]/[2차]/새정의 값 포함 '
               '(docs/SIGNALS.md)')
 

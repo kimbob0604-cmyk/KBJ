@@ -107,16 +107,16 @@ class TestBoardFillsNumbers(unittest.TestCase):
         note = {'date': '2026-09-21', 'verdict': 'x',
                 'picks': {'w52': [{'name': '비엠티'}]}}
         uni = _universe(['비엠티'], chg=8.0)
-        nh = {'achieved': [{'code': '000001', 'hits': {'w52': True, 'd60': True}}]}
+        nh = {'achieved': [{'code': '000001', 'hits': {'w52': True, 'd120': True}}]}
         msgs, _ = N.note_messages(note, uni, nh)
         self.assertIn('(52주)', '\n'.join(msgs))
 
     def test_strongest_hit_only(self):
-        """역사적이면 52주·60일도 참이다. 가장 센 것 하나만 적는다."""
+        """역사적이면 52주·120일도 참이다. 가장 센 것 하나만 적는다."""
         note = {'date': '2026-09-21', 'verdict': 'x',
                 'picks': {'w52': [{'name': '비엠티'}]}}
         nh = {'achieved': [{'code': '000001',
-                            'hits': {'hist': True, 'w52': True, 'd60': True}}]}
+                            'hits': {'hist': True, 'w52': True, 'd120': True}}]}
         msgs, _ = N.note_messages(note, _universe(['비엠티']), nh)
         body = '\n'.join(msgs)
         self.assertIn('(역사적)', body)

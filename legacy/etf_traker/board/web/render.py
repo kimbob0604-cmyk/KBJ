@@ -17,7 +17,16 @@ from ..engine import kinds as K
 
 
 # 라벨 → CSS 클래스. 알 수 없는 라벨은 기본 칩으로 떨어진다.
-TAG = {'hist': 'tag-hist', 'w52': 'tag-52', 'd60': 'tag-60'}
+TAG = {'hist': 'tag-hist', 'w52': 'tag-52', 'd120': 'tag-60'}  # KBJ ADR 0017 — 최하위 축 d120(색 클래스는 그대로)
+
+
+def _lookback_note(th):
+    """창 설명 한 줄 — KBJ ADR 0017: 거래일 창(lookback_trading_days)·달력 창(lookback_calendar_days).
+    옛 키(lookback — 직전 N영업일)도 읽는다."""
+    parts = [f"{LABEL_KO.get(k, k)} {v}영업일" for k, v in (th.get('lookback') or {}).items()]
+    parts += [f"{LABEL_KO.get(k, k)} {v}거래일" for k, v in (th.get('lookback_trading_days') or {}).items()]
+    parts += [f"{LABEL_KO.get(k, k)} 달력 {v}일" for k, v in (th.get('lookback_calendar_days') or {}).items()]
+    return ' / '.join(parts)
 LABEL_KO = {}          # newhigh.json 의 labels 로 매 렌더마다 채운다
 CSS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'board.css')
 
@@ -864,7 +873,7 @@ def build(newhigh, sectors, market, events, universe, meta,
     TRIGGERS.update((triggers or {}).get('by_code') or {})
     LABEL_KO.clear()
     LABEL_KO.update(newhigh.get('labels') or
-                    {'hist': '역사적', 'w52': '52주', 'd60': '60일'})
+                    {'hist': '역사적', 'w52': '52주', 'd120': '120일'})
     counts = newhigh.get('counts') or {}
     ach = newhigh.get('achieved') or []
     near = newhigh.get('proximity') or []
@@ -918,12 +927,12 @@ def build(newhigh, sectors, market, events, universe, meta,
     # 두 표에 같은 종목이 있을 수 있어 코드로 한 번만 센다.
     other = K.counts({x['code']: x for x in list(ach) + list(near)}.values())
     P.append(_pills(newhigh.get('counts_high') or counts, len(near),
-                    newhigh.get('displayed') or ['hist', 'w52', 'd60'],
+                    newhigh.get('displayed') or ['hist', 'w52', 'd120'],
                     newhigh.get('counts_close'), other,
                     turn_min=newhigh.get('min_turnover_eok'), dflt=dflt))
     P.append(_cluster_banner(evs, tmeta))
     P.append(f'''<div class="sec"><div class="sec-h"><h2>달성</h2>
-      <span class="note">{e(" / ".join(f"{LABEL_KO.get(k,k)} {v}영업일" for k, v in (th.get("lookback") or {}).items()))} ·
+      <span class="note">{e(_lookback_note(th))} ·
       거래량 배수는 20일 평균 대비</span>
       <span class="spacer"></span>
       <div class="basis-sw" role="group" aria-label="신고가 판정 기준">

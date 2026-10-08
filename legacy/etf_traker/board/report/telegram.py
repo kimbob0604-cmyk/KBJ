@@ -69,7 +69,7 @@ MISSING_ITEM_MAX = 40        # 결손 항목 하나의 글자 상한
 SECTOR_BOARD_PREF = ('1d',)  # 섹터 보드가 여럿이면 이 키부터 쓴다
 NEWHIGH_MAX = 20             # 신고가·수급 줄 상한. 52주 이상은 보통 한 자릿수다
 NEWHIGH_KIND = 'w52'         # 본문에 수급까지 싣는 최소 등급 (역사적 포함)
-KIND_ORDER = ('d60', 'w52', 'hist')
+KIND_ORDER = ('d120', 'w52', 'hist')  # KBJ ADR 0017(d60 → d120)
 TRIGGER_LINES_MAX = 2        # 종목당 재료 줄 상한. 셋째부터는 대시보드(app.js 재료 줄)에 있다
 TRIGGER_TITLE_MAX = 60       # 재료 제목 글자 수. triggers.json 의 title_chars_tg 가 우선
 # triggers.json 이 없을 때 결손 첫 줄에 넣는 문장. ingest/triggers.ABSENT_LINE 과 같아야

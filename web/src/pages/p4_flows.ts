@@ -104,7 +104,7 @@ export function screenColumns(mode: Mode): Column<ScreenRow>[] {
   ];
 }
 
-const NH_LABEL: Record<string, string> = { hist: '역사적', w52: '52주', d60: '60일' };
+const NH_LABEL: Record<string, string> = { hist: '역사적', w52: '52주', d120: '120일' };
 
 export function excludedText(d: Screen): string {
   const x = d.n_excluded;

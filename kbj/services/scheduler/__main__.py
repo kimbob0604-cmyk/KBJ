@@ -1,5 +1,6 @@
 """`python -m kbj.services.scheduler [run | validate [경로] | run-once <작업> [--as-of 값] |
-backfill <작업> --from YYYY-MM-DD --to YYYY-MM-DD [--max-days N]]`.
+backfill <작업> (--from YYYY-MM-DD --to YYYY-MM-DD | --to-listing [--to YYYY-MM-DD])
+[--max-days N]]`.
 
 - `validate`: 등록부를 카탈로그·limits.yaml·notify.yaml·마이그레이션 표와 대조한다(설계 §6.5 정적
   겹). 오류가 있으면 한 줄씩 찍고 종료 코드 1. Redis·DB·키가 없어도 된다(CI).
@@ -15,6 +16,13 @@ backfill <작업> --from YYYY-MM-DD --to YYYY-MM-DD [--max-days N]]`.
   받은 일봉 전체로 다시 쌓는다(`board.rebuild_alltime` — §3.8 'board 연결', `history_from` = 받은
   이력의 첫날). 다시 쌓기가 실패하면 종료 코드 1(삼키지 않는다 — 같은 명령을 다시 돌리면 받은 날은
   건너뛰고 다시 쌓기만 한다).
+- `backfill market.backfill --to-listing`(ADR 0017 — 역사적 신고가 = 상장 이후 전체): 범위를
+  저장소에서 정한다 — 끝 = 이미 받은 시장 일봉 첫날의 전날(없으면 `--to`·오늘), 시작 = 유니버스
+  종목의 가장 이른 상장일과 원천 바닥(`config/board.yaml newhigh.hist_source_floor` [실측 필요]) 중
+  늦은 날. 최근부터 과거로 받으므로 하루 예산(`krx.backfill_cap`)·`--max-days` 에서 멈추면 다음 날
+  같은 명령이 이어 받는다(여러 날에 나눠 받는다). 그 범위를 다 받으면 역사적 신고가 스칼라를 다시
+  쌓는다(`history_from` = 시장 일봉을 빠짐없이 받은 첫날 — 그 뒤 상장한 종목과 원천 바닥에 닿은
+  종목부터 역사적 신고가를 판정한다).
 """
 
 from __future__ import annotations
@@ -23,7 +31,7 @@ import argparse
 import logging
 import sys
 import threading
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -31,7 +39,7 @@ from typing import Any
 from kbj.config.files import config_path
 from kbj.config.settings import Settings
 from kbj.core.calendar import TradingCalendar, load_override, us_calendar
-from kbj.core.time import utcnow
+from kbj.core.time import KST, utcnow
 from kbj.data.catalog import all_datasets
 from kbj.data.limits import load_limits
 from kbj.services.runtime.health import ServiceHealthSink
@@ -142,6 +150,35 @@ def backfill_days(cal: TradingCalendar, start: date, end: date, max_days: int) -
     return out
 
 
+def listing_backfill_range(
+    listed_on: Iterable[date | None], have_from: date | None, floor: date, today: date
+) -> tuple[date, date] | None:
+    """`--to-listing` 범위 (시작, 끝) — 이미 다 받았으면 None.
+
+    끝 = 이미 받은 시장 일봉의 첫날 전날(없으면 today), 시작 = max(가장 이른 상장일, 원천 바닥).
+    상장일을 아는 종목이 없으면 바닥까지(상장일을 모르는 종목도 바닥에 닿으면 판정된다 — ADR
+    0017)."""
+    known = [d for d in listed_on if d is not None]
+    start = max(min(known), floor) if known else floor
+    end = (have_from - timedelta(days=1)) if have_from is not None else today
+    return None if end < start else (start, end)
+
+
+def _listing_range_from_db(settings: Settings, today: date) -> tuple[date, date] | None:
+    """저장소(유니버스 상장일·받은 일봉 첫날)와 board.yaml 원천 바닥으로 `--to-listing` 범위."""
+    from kbj.engines.board.config import BoardConfig
+    from kbj.store.db import connect
+    from kbj.store.repos import pg_repos
+
+    floor = date.fromisoformat(
+        str(BoardConfig.load(settings=settings)["newhigh"]["hist_source_floor"])
+    )
+    repos = pg_repos(lambda: connect(settings, service=SERVICE))
+    listed = [u.listed_on for u in repos.market.universe(today) if u.kind not in ("etf", "etn")]
+    days = repos.market.trading_days(today, 100_000)
+    return listing_backfill_range(listed, days[-1] if days else None, floor, today)
+
+
 def run_backfill(
     runner: Any,
     job: str,
@@ -215,8 +252,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     o.add_argument("--as-of", dest="as_of", default=None)
     b = sub.add_parser("backfill", help="백필 작업을 날짜 범위의 거래일마다(최근부터 과거로)")
     b.add_argument("job")
-    b.add_argument("--from", dest="start", type=date.fromisoformat, required=True)
-    b.add_argument("--to", dest="end", type=date.fromisoformat, required=True)
+    b.add_argument("--from", dest="start", type=date.fromisoformat, default=None)
+    b.add_argument("--to", dest="end", type=date.fromisoformat, default=None)
+    b.add_argument(
+        "--to-listing",
+        dest="to_listing",
+        action="store_true",
+        help="상장일(또는 원천 바닥)까지 — 범위를 저장소에서 정하고 여러 날에 이어 받는다",
+    )
     b.add_argument("--max-days", dest="max_days", type=int, default=BACKFILL_MAX_DAYS)
     args = p.parse_args(argv)
     cmd = args.cmd or "run"
@@ -253,7 +296,21 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if cmd == "backfill":
         try:
-            days = backfill_days(_calendar(settings), args.start, args.end, args.max_days)
+            if args.to_listing:
+                if args.start is not None:
+                    raise ValueError("--to-listing 은 --from 과 함께 쓰지 않는다")
+                today = args.end or utcnow().astimezone(KST).date()
+                rng = _listing_range_from_db(settings, today)
+                if rng is None:
+                    print("상장일(또는 원천 바닥)까지 이미 받았다 — 받을 날이 없다")
+                    return 0
+                start, end = rng
+                print(f"상장일까지 백필: {start} ~ {end}(최근부터, 최대 {args.max_days}일)")
+            elif args.start is None or args.end is None:
+                raise ValueError("--from·--to 둘 다, 또는 --to-listing")
+            else:
+                start, end = args.start, args.end
+            days = backfill_days(_calendar(settings), start, end, args.max_days)
         except ValueError as e:
             print(f"오류: {e}")
             return 1

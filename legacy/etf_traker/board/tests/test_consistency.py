@@ -19,8 +19,8 @@ def row(code='000001', hits=None, gap=None, label=None, near=None, refs=None):
 
 def ok(**kw):
     """정상 행 — 52주 갱신, 하위도 갱신, 갭 음수."""
-    base = dict(hits={'hist': False, 'w52': True, 'd60': True, 'd20': True},
-                gap={'w52': -1.2, 'd60': -5.0, 'd20': -6.0},
+    base = dict(hits={'hist': False, 'w52': True, 'd120': True, 'd20': True},
+                gap={'w52': -1.2, 'd120': -5.0, 'd20': -6.0},
                 label='w52')
     base.update(kw)
     return row(**base)
@@ -35,6 +35,9 @@ class LabelKindSyncTest(unittest.TestCase):
 
     d120 을 빼자 어제 행의 rank 가 옛 우선순위 숫자로 남았다. 숫자로 비교하는
     신규/이어감 판정이 하루 동안 '이어감'을 '신규'로 적는다.
+
+    KBJ ADR 0017(사용자 요청 2026-10-08): 이번엔 d60 을 빼고 d120 을 되살렸다 — 같은 시험을 새
+    구성(hist·w52·d120)으로 옮겼다(빠진 라벨 = d60, 옛 rank 로 남은 행 = d120). 단정 수는 그대로.
     """
 
     def setUp(self):
@@ -42,8 +45,8 @@ class LabelKindSyncTest(unittest.TestCase):
         self.conn = DB.connect(':memory:')
         self.conn.executemany(
             'INSERT INTO label VALUES(?,?,?,?,?)',
-            [('000001', '2026-08-31', 'high', 'd120', 2),   # 빠진 라벨
-             ('000002', '2026-08-31', 'high', 'd60', 3),    # 옛 rank
+            [('000001', '2026-08-31', 'high', 'd60', 2),    # 빠진 라벨(ADR 0017)
+             ('000002', '2026-08-31', 'high', 'd120', 3),   # 옛 rank(4라벨 시절 숫자)
              ('000003', '2026-08-31', 'high', 'w52', 1)])   # 맞는 행
         self.conn.commit()
 
@@ -56,7 +59,7 @@ class LabelKindSyncTest(unittest.TestCase):
         rows = {r['code']: (r['kind'], r['rank']) for r in
                 self.conn.execute('SELECT code, kind, rank FROM label')}
         self.assertNotIn('000001', rows)
-        self.assertEqual(rows['000002'], ('d60', 2))
+        self.assertEqual(rows['000002'], ('d120', 2))
         self.assertEqual(rows['000003'], ('w52', 1))
 
     def test_idempotent(self):

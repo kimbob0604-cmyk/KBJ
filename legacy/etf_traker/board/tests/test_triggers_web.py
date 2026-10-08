@@ -20,10 +20,10 @@ NH = dict(labels={}, counts={}, achieved=[
     dict(code='029460', name='케이씨', chg_pct=5.43, turnover=100.0, mktcap=2000.0,
          close_basis=dict(label='w52'), high_basis=dict(label='w52')),
     dict(code='000500', name='가온전선', chg_pct=-0.31, turnover=1106.0, mktcap=97075.0,
-         close_basis=dict(label='hist'), high_basis=dict(label='d60')),
+         close_basis=dict(label='hist'), high_basis=dict(label='d120')),
 ], proximity=[], as_of='2026-09-21', basis='close',
     thresholds=dict(proximity=dict(max_gap_pct=5.0, min_mktcap_eok=1000.0, narrow_days=5),
-                    lookback=dict(d60=60, w52=252)))
+                    lookback_trading_days=dict(d120=120), lookback_calendar_days=dict(w52=364)))
 TRIG = dict(source='triggers', as_of='2026-09-21', collected_at='2026-09-21T17:05:00+09:00',
             by_code={
                 '029460': dict(code='029460', name='케이씨', items=[

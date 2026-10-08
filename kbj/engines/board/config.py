@@ -5,7 +5,7 @@ ET `board/engine/config.py`(`load`:13·`themes`:19) + ET `board/config/settings.
 `rankings`)을 옮겼다(docs/p3_design.md §1.3). legacy `config.load` 는 이 파일을 합쳐 읽는다 —
 값이 두 벌이 되지 않는다.
 
-- `BoardConfig` 는 dict 처럼 읽히는 `Mapping`(엔진 함수는 ET 그대로 `cfg['newhigh']['lookback']`
+- `BoardConfig` 는 dict 처럼 읽히는 `Mapping`(엔진 함수는 ET 그대로 `cfg['newhigh']['priority']`
   처럼 읽는다 — 골든 비교와 legacy shim 이 같은 함수를 부른다). 엔진 함수는 아무 `Mapping` 이나
   받는다(legacy 시험의 dict 그대로).
 - **모르는 키는 거부한다**(절·키 둘 다) — 철자 틀린 임계값이 조용히 기본값으로 돌지 않게.
@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import copy
 from collections.abc import Iterator, Mapping
+from datetime import date
 from pathlib import Path
 from typing import Any, Final
 
@@ -41,7 +42,17 @@ UNMAPPED: Final = "미분류"
 
 # 절 → 허용 키. 값의 뜻·근거는 config/board.yaml 주석(ET settings.yaml 주석 그대로).
 SECTIONS: Final[Mapping[str, frozenset[str]]] = {
-    "newhigh": frozenset({"lookback", "labels", "priority", "min_display_kind", "default_basis"}),
+    "newhigh": frozenset(
+        {
+            "lookback_trading_days",
+            "lookback_calendar_days",
+            "labels",
+            "priority",
+            "min_display_kind",
+            "default_basis",
+            "hist_source_floor",
+        }
+    ),
     "proximity": frozenset({"max_gap_pct", "min_mktcap_eok", "narrow_days"}),
     "volume": frozenset({"avg_days"}),
     "resistance": frozenset({"thin_below", "thick_above"}),
@@ -74,7 +85,9 @@ SECTIONS: Final[Mapping[str, frozenset[str]]] = {
 }
 # 엔진이 `cfg[절][키]` 로 바로 읽는 것(없으면 KeyError 가 계산 중간에 난다 → 읽을 때 막는다)
 _REQUIRED: Final[Mapping[str, frozenset[str]]] = {
-    "newhigh": frozenset({"lookback", "labels", "priority", "default_basis"}),
+    "newhigh": frozenset(
+        {"lookback_trading_days", "lookback_calendar_days", "labels", "priority", "default_basis"}
+    ),
     "proximity": frozenset({"max_gap_pct", "min_mktcap_eok", "narrow_days"}),
     "volume": frozenset({"avg_days"}),
     "resistance": frozenset({"thin_below", "thick_above"}),
@@ -162,8 +175,32 @@ def _validate(data: Mapping[str, Any]) -> None:
     pri = list(nh["priority"])
     if "hist" not in pri or len(set(pri)) != len(pri):
         raise ValueError("newhigh.priority 는 hist 를 포함하고 겹치지 않아야 한다")
-    if set(nh["lookback"]) - set(pri):
-        raise ValueError("newhigh.lookback 의 라벨이 priority 에 없다")
+    # 신고가 창(ADR 0017): 거래일 창(시장 거래일 수)·달력 창(달력 일수). 한 라벨은 한 창만.
+    trading = dict(nh["lookback_trading_days"] or {})
+    calendar = dict(nh["lookback_calendar_days"] or {})
+    both = sorted(set(trading) & set(calendar))
+    if both:
+        raise ValueError(f"newhigh: 거래일 창과 달력 창에 함께 있는 라벨 {both}")
+    windowed = set(trading) | set(calendar)
+    if windowed - set(pri):
+        raise ValueError("newhigh.lookback_* 의 라벨이 priority 에 없다")
+    if "hist" in windowed:
+        raise ValueError("newhigh: hist 는 창이 아니라 상장 이후 전체(스칼라)다")
+    missing_win = sorted(set(pri) - windowed - {"hist"})
+    if missing_win:
+        raise ValueError(f"newhigh: 창이 없는 라벨 {missing_win}")
+    for k, v in {**trading, **calendar}.items():
+        if isinstance(v, bool) or not isinstance(v, int) or v < 1:
+            raise ValueError(f"newhigh.lookback_*.{k}: 1 이상의 정수여야 한다")
+    floor = nh.get("hist_source_floor")
+    if floor is not None:
+        try:
+            date.fromisoformat(str(floor))
+        except ValueError:
+            raise ValueError("newhigh.hist_source_floor 는 YYYY-MM-DD") from None
+    cut = nh.get("min_display_kind")
+    if cut is not None and cut not in pri:
+        raise ValueError("newhigh.min_display_kind 가 priority 에 없다")
     if nh["default_basis"] not in ("close", "high"):
         raise ValueError("newhigh.default_basis 는 close 또는 high")
 

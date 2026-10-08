@@ -8,9 +8,11 @@
 1. 저장소에서 읽는다: 일봉 창(`config/board.yaml service.series_days` 거래일), 그날 이하 가장 최근
    스냅, 유니버스(상장일), 역사적 최고가 스칼라, 전일 라벨·전일 산출(newhigh·rankings), 공시 대조.
 2. 스칼라를 그날까지 굴린다(`roll_alltime` — 같은 날을 두 번 반영하지 않는다). 새 스칼라의
-   `history_from` = 받은 일봉 이력의 첫날(R8·D-P3-11 — 상장일이 그보다 앞이면 역사적 신고가를
-   계산하지 않고 사유를 남긴다. 범위 시작일은 newhigh 산출의 `hist_scope` 에 싣는다).
-3. `compute_day` → `BoardDay`.
+   `history_from` = 시장 일봉을 받아 둔 첫날(R8·D-P3-11 — 상장일이 그보다 앞이면 역사적 신고가를
+   계산하지 않고 사유를 남긴다. '상장 이후 전체'가 되도록 KRX 백필이 상장일까지 채운다 —
+   `python -m kbj.services.scheduler backfill market.backfill --to-listing`, ADR 0017).
+3. 시장 거래일 달력(KRX — `kbj.core.calendar`)으로 신고가 거래일 창의 경계를 정해(ADR 0017)
+   `compute_day` → `BoardDay`.
 4. `BoardDayRecord`(라벨·종목 하루·산출 JSON 5개)로 옮겨 `BoardRepo.put_day`(그날을 통째로 바꾼다 —
    같은 as_of 재실행 멱등). 금액은 **원**(엔진 안의 억원 × 1e8 — 계약: kbj.core.rows.StockDay).
 
@@ -34,6 +36,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, time
 from typing import Any, Final, Literal, Protocol, cast
 
+from kbj.core.calendar import TradingCalendar
 from kbj.core.quality import Quality
 from kbj.core.rows import (
     AllTime,
@@ -65,10 +68,13 @@ __all__ = [
     "BoardKnowledge",
     "BoardRepos",
     "BoardRunReport",
+    "board_market_days",
     "build_record",
     "confirm",
     "daily",
     "label_changes",
+    "market_history_from",
+    "newhigh_definition",
     "rebuild_alltime",
     "run_board",
 ]
@@ -203,7 +209,7 @@ def build_record(
             code=x.code,
             date=d,
             basis=cast(Literal["close", "high"], x.basis),
-            kind=cast(Literal["hist", "w52", "d60", "w52_low"], x.kind),
+            kind=cast(Literal["hist", "w52", "d120", "w52_low"], x.kind),
             rank=x.rank,
             source=snaps[x.code].source if x.code in snaps else day.source,
             quality=day.quality,
@@ -330,6 +336,65 @@ def _digest(
 # ── 실행 ────────────────────────────────────────────────────────────────────────────────
 
 
+# 시장 일봉을 '받은 날'로 볼 최소 종목 수 비율(최근 20거래일 중앙값 대비) — 한 종목만 들어온 옛 날짜
+# (개별 적재·잘못 들어온 행)가 시장 이력의 첫날을 과거로 끌고 가지 않게 [제안]
+MARKET_DAY_MIN_RATIO: Final = 0.5
+
+
+def market_history_from(series: Mapping[str, Sequence[Bar]], cal: TradingCalendar) -> date | None:
+    """시장 일봉을 **빠짐없이** 받아 둔 첫날(ADR 0017 — 역사적 신고가 `history_from`).
+
+    가장 최근 날부터 KRX 거래일을 거꾸로 걸으며, 그날 일봉 종목 수가 최근 20거래일 중앙값의
+    `MARKET_DAY_MIN_RATIO` 이상인 동안 이어 간다. 받지 못한 거래일(구멍)이나 몇 종목뿐인 날에서
+    멈춘다 — 그 뒤 상장한 종목만 '상장 이후 전체'를 가진 것이다. 일봉이 없으면 None."""
+    counts: dict[date, int] = {}
+    for bars in series.values():
+        for b in bars:
+            counts[b.date] = counts.get(b.date, 0) + 1
+    if not counts:
+        return None
+    recent = sorted(sorted(counts)[-20:], key=lambda d: counts[d])
+    need = counts[recent[len(recent) // 2]] * MARKET_DAY_MIN_RATIO
+    d = max(counts)
+    start: date | None = None
+    while counts.get(d, 0) >= need:
+        start = d
+        d = cal.prev_trading_day(d)
+    return start
+
+
+def newhigh_definition(src: Mapping[str, Any]) -> tuple[Any, ...]:
+    """신고가 정의의 지문 — (우선순위, 거래일 창, 달력 창). 설정(newhigh 절이 있는 Mapping)이나
+    저장된 newhigh 산출(`priority`·`thresholds`) 어느 쪽에서도 같은 모양으로 뽑는다(ADR 0017)."""
+    if "newhigh" in src:
+        nhc = src["newhigh"]
+        win: Mapping[str, Any] = nhc
+        pri = nhc.get("priority")
+    else:
+        win = src.get("thresholds") or {}
+        pri = src.get("priority")
+    return (
+        tuple(pri or ()),
+        tuple(sorted(dict(win.get(nh.TRADING_KEY) or {}).items())),
+        tuple(sorted(dict(win.get(nh.CALENDAR_KEY) or {}).items())),
+        tuple(sorted(dict(win.get("lookback") or {}).items())),  # 옛 정의(d60·252봉)
+    )
+
+
+def board_market_days(cal: TradingCalendar, start: date, asof: date) -> list[date]:
+    """[start, asof] 의 KRX 거래일(오름차순) + 판정일 — 신고가 거래일 창의 경계(ADR 0017).
+
+    판정일은 달력이 휴장이라고 해도 넣는다(그날 일봉이 있으면 그날이 판정일이다)."""
+    out = [asof]
+    d = asof
+    while True:
+        d = cal.prev_trading_day(d)
+        if d < start:
+            break
+        out.append(d)
+    return out[::-1]
+
+
 def run_board(
     repos: BoardRepos,
     asof: date,
@@ -339,8 +404,11 @@ def run_board(
     mode: Literal["daily", "confirm"] = "daily",
     cfg: BoardConfig | None = None,
     knowledge: BoardKnowledge | None = None,
+    calendar: TradingCalendar | None = None,
 ) -> BoardRunReport:
-    """그날 보드를 계산해 저장한다. 시험은 메모리 저장소·사전을 넣는다."""
+    """그날 보드를 계산해 저장한다. 시험은 메모리 저장소·사전을 넣는다.
+
+    calendar  KRX 거래일 달력(없으면 `TradingCalendar.default()`) — 신고가 120거래일 창의 경계."""
     if now.tzinfo is None:
         raise ValueError("now 는 시간대가 있어야 한다")
     cfg = cfg if cfg is not None else BoardConfig.load()
@@ -372,8 +440,14 @@ def run_board(
 
     series = repos.market.series(None, asof, cfg.series_days)
     listed_on = {u.code: u.listed_on for u in universe}
+    kr = calendar if calendar is not None else TradingCalendar.default()
+    # 읽은 일봉 창의 첫날(시장 기준) — 신고가 창의 달력이 여기서 시작한다
+    window_from = min((b[0].date for b in series.values() if b), default=asof)
+    # 스칼라가 없는 종목의 history_from — 창 안에서 시장 일봉을 빠짐없이 받은 첫날
+    hist_from = market_history_from(series, kr) or window_from
 
-    # 스칼라: 수집 → 갱신 → 계산(ET 순서). 새 스칼라의 history_from = 받은 이력의 첫날.
+    # 스칼라: 수집 → 갱신 → 계산(ET 순서). 새 스칼라의 history_from = 시장 일봉 창의 첫날 — 그 뒤에
+    # 상장한 종목은 상장 이후 전체를 갖고, 그 전에 상장한 종목은 백필·다시 쌓기 전까지 hist 보류.
     prev_at = repos.board.alltime()
     rolled: dict[str, dict[str, Any]] = {}
     changed_at: list[AllTime] = []
@@ -394,7 +468,7 @@ def run_board(
             # 몫만 다시 쓴다(값이 같으면 그대로 — 멱등)
             old_d = nh.restate_last_day(old_d, bars[-1])
         new = nh.roll_alltime(old_d, bars, cfg)
-        new["history_from"] = (old_d or {}).get("history_from") or bars[0].date.isoformat()
+        new["history_from"] = (old_d or {}).get("history_from") or hist_from.isoformat()
         rolled[code] = new
         last_src = bars[-1].source
         row = _alltime_row(code, new, last_src, _row_quality(last_src))
@@ -420,6 +494,14 @@ def run_board(
 
     prev_nh = repos.board.artifact(prev_asof, "newhigh") if prev_asof else None
     prev_rk = repos.board.artifact(prev_asof, "rankings") if prev_asof else None
+    # 전일 보드가 다른 신고가 정의로 계산됐으면(정의 전환일 — ADR 0017) 전일 라벨·근접과 비교하지
+    # 않는다. 저장된 전일 산출에서 매번 다시 판단하므로 같은 날 재실행해도 결과가 같다(상태를 들고
+    # 있지 않는다 — ET 전환일 재실행 버그와 같은 일이 생기지 않는다)
+    incomparable = None
+    if prev_nh is not None and newhigh_definition(prev_nh.payload) != newhigh_definition(cfg):
+        incomparable = (
+            f"전일({prev_asof}) 보드는 예전 신고가 정의로 계산돼 오늘 라벨과 비교할 수 없습니다"
+        )
     notes: list[tuple[str, str]] = []
     if invalid:
         notes.append(
@@ -439,10 +521,15 @@ def run_board(
         alltime=rolled,
         sectors=know.sectors,
         taxonomy_counts=[(know.sector_taxonomy, len(know.sectors))] if know.sectors else [],
-        prev_ranks=prev_ranks_from(repos.board.labels(prev_asof, basis)) if prev_asof else {},
+        prev_ranks=(
+            prev_ranks_from(repos.board.labels(prev_asof, basis))
+            if prev_asof and incomparable is None
+            else {}
+        ),
+        prev_incomparable=incomparable,
         split_cleared=frozenset(repos.board.split_cleared()),
         split_unknown=repos.board.split_unknown(),
-        prev_near=prev_near_from(prev_nh.payload if prev_nh else None),
+        prev_near=prev_near_from(prev_nh.payload if prev_nh and incomparable is None else None),
         collect_notes=notes,
         close_note=None if confirmed else NEXT_DAY_CONFIRM,
         funds_excluded=(
@@ -453,6 +540,7 @@ def run_board(
         taxonomy=know.taxonomy,
         prev_rankings=prev_rk.payload if prev_rk else None,
         listed_on=listed_on,
+        trading_days=board_market_days(kr, window_from, asof),
     )
     day = compute_day(inp, cfg)
 
@@ -492,21 +580,27 @@ def rebuild_alltime(
     codes: Sequence[str] | None = None,
     max_days: int = 20_000,
     cfg: BoardConfig | None = None,
+    calendar: TradingCalendar | None = None,
 ) -> int:
     """역사적 최고가 스칼라를 받은 일봉 전체로 **처음부터** 다시 쌓는다(설계 §3.8 'board 연결').
 
-    KRX 백필(`market.backfill`)이 과거 구간을 채운 뒤 부른다 — `roll_alltime` 은 이미 지난 날을
-    다시 반영하지 않으므로(ET `--init` 와 같은 뜻) 늘어난 이력을 보려면 다시 쌓아야 한다.
-    `history_from` = 받은 이력의 첫날(D-P3-11). 반환: 쓴 스칼라 수.
+    KRX 백필(`market.backfill` — `--to-listing` 이면 상장일까지)이 과거 구간을 채운 뒤 부른다 —
+    `roll_alltime` 은 이미 지난 날을 다시 반영하지 않으므로(ET `--init` 와 같은 뜻) 늘어난 이력을
+    보려면 다시 쌓아야 한다. `history_from` = **시장 일봉을 빠짐없이 받아 둔 첫날**
+    (`market_history_from` — D-P3-11·ADR 0017. 종목의 첫 봉이 아니다: 상장 직후 거래정지로 첫 봉이
+    늦은 종목도 상장 이후 전체를 가진 것이다. 상장일이 이 날보다 앞인 종목은 원천 바닥에 닿지
+    않았으면 hist 보류). 반환: 쓴 스칼라 수.
     """
     cfg = cfg if cfg is not None else BoardConfig.load()
+    kr = calendar if calendar is not None else TradingCalendar.default()
     series = repos.market.series(codes, upto, max_days)
+    market_from = market_history_from(series, kr)
     rows: list[AllTime] = []
     for code, bars in series.items():
         if not bars:
             continue
         a = nh.roll_alltime(None, bars, cfg)
-        a["history_from"] = bars[0].date.isoformat()
+        a["history_from"] = (market_from or bars[0].date).isoformat()
         src = bars[-1].source
         rows.append(_alltime_row(code, a, src, _row_quality(src)))
     return repos.board.put_alltime(rows, loaded_by=loaded_by, now=now) if rows else 0
@@ -525,7 +619,15 @@ def _repos(ctx: JobContext) -> BoardRepos:
 
 def _handle(ctx: JobContext, mode: Literal["daily", "confirm"]) -> JobResult:
     asof = date.fromisoformat(ctx.as_of)
-    rep = run_board(_repos(ctx), asof, now=ctx.now, loaded_by=ctx.job, mode=mode)
+    kr = ctx.resources.get("kr")  # 실행기 공용 KRX 달력(없으면 기본)
+    rep = run_board(
+        _repos(ctx),
+        asof,
+        now=ctx.now,
+        loaded_by=ctx.job,
+        mode=mode,
+        calendar=kr if isinstance(kr, TradingCalendar) else None,
+    )
     return JobResult(status=rep.status, rows=rep.rows, detail=rep.detail())
 
 

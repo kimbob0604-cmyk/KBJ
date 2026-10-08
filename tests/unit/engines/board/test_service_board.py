@@ -54,9 +54,9 @@ def test_하루_보드를_잠정으로_쓴다() -> None:
     # 금액은 원(엔진 안의 억원 × 1e8) — 정수
     assert s10.turnover == 10500 * 100_000 and isinstance(s10.turnover, int)
     assert s10.mktcap == 500_000_000_000
-    assert days["000020"].label == "d60"
+    assert days["000020"].label == "d120"
     labels = board.labels(D, "close")
-    assert {c: lb.kind for c, lb in labels.items()}["000020"] == "d60"
+    assert {c: lb.kind for c, lb in labels.items()}["000020"] == "d120"
     assert all(lb.quality is Quality.ESTIMATED for lb in labels.values())
 
 
@@ -166,8 +166,45 @@ def test_다음_날_보드는_전일_라벨로_신규_이어감을_적는다() -
     rep = _run(w, now=datetime(2026, 10, 7, 7, 20, tzinfo=NOW_DAILY.tzinfo), asof=nxt)
     assert rep.status == "ok"
     s = w.repos.board.stock_days(nxt)["000020"]
-    assert s.label == "d60" and s.status == "이어감"
+    assert s.label == "d120" and s.status == "이어감"
     assert s.extra["status_unknown"] is False
+
+
+def test_정의_전환일에는_전일과_비교하지_않고_재실행해도_같다() -> None:
+    """전일 보드가 예전 신고가 정의(d60·252봉)로 계산됐으면 신규/이어감을 판정하지 않는다(ADR 0017).
+
+    ETF-Traker 검토에서 나온 버그(전환일 같은 날 재실행 시 '비교 불가' 표시가 풀려 '신규' 가
+    거짓으로 찍힘)가 생기지 않는지 — 판단을 저장된 전일 산출에서 매번 다시 하므로 재실행해도 같아야
+    한다."""
+    import dataclasses
+
+    from tests.unit.engines.board.board_world import add_krx_confirm, bar, snap
+
+    w = build_world()
+    _run(w)
+    add_krx_confirm(w, close_000010=10500.0)
+    old = w.repos.board.artifact_rows[(D, "newhigh")]
+    payload = dict(old.payload)
+    payload.update(
+        priority=["hist", "w52", "d60"],
+        thresholds={"proximity": {}, "lookback": {"d60": 60, "w52": 252}},
+    )
+    w.repos.board.artifact_rows[(D, "newhigh")] = dataclasses.replace(old, payload=payload)
+    nxt = date(2026, 10, 7)
+    w.repos.market.upsert_daily_bars([bar("000020", nxt, 10300.0, "kis")], loaded_by="t")
+    w.repos.market.upsert_snapshots([snap("000020", nxt, 10300.0, "kis")], loaded_by="t")
+    now = datetime(2026, 10, 7, 7, 20, tzinfo=NOW_DAILY.tzinfo)
+    for _ in range(2):  # 같은 날 재실행 — 결과가 같아야 한다
+        rep = _run(w, now=now, asof=nxt)
+        assert rep.status == "ok" and rep.day is not None
+        s = w.repos.board.stock_days(nxt)["000020"]
+        assert s.label == "d120" and s.status is None
+        assert s.extra["status_unknown"] is True
+        assert any("예전 신고가 정의" in n for n in rep.day.notes)
+    assert svc.newhigh_definition(payload) != svc.newhigh_definition(CFG)
+    assert svc.newhigh_definition(w.repos.board.artifact(nxt, "newhigh").payload) == (  # type: ignore[union-attr]
+        svc.newhigh_definition(CFG)
+    )
 
 
 def test_백필_뒤에는_스칼라를_처음부터_다시_쌓는다() -> None:
@@ -180,8 +217,41 @@ def test_백필_뒤에는_스칼라를_처음부터_다시_쌓는다() -> None:
     n = svc.rebuild_alltime(w.repos, D, now=NOW_DAILY, loaded_by="market.backfill", cfg=CFG)
     assert n == 6
     a = w.repos.board.alltime()["000020"]
-    assert a.history_from == old and a.hi == 20000.0 and a.hi_date == old
+    assert a.hi == 20000.0 and a.hi_date == old  # 받은 일봉 전체로 다시 쌓는다
     assert a.last_date == D and a.n_days == 301
+    # 한 종목만 들어온 옛 날짜는 '시장 일봉을 받은 날'이 아니다 — history_from 은 시장 기준(ADR
+    # 0017)
+    assert a.history_from == FIRST
+
+
+def test_시장_전체를_백필하면_history_from_이_그만큼_과거로_간다() -> None:
+    """KRX 백필은 날짜마다 전 종목을 받는다 — 빠짐없이 받은 첫날이 모든 종목의 history_from 이다.
+
+    그 뒤에 상장한 종목은 첫 봉이 늦어도(상장 직후 거래정지) 상장 이후 전체를 가진 것이다."""
+    from kbj.core.calendar import TradingCalendar
+    from tests.unit.engines.board.board_world import CODES, bar
+
+    w = build_world()
+    _run(w)
+    kr = TradingCalendar.default()
+    old: list[date] = []
+    d = FIRST
+    for _ in range(5):
+        d = kr.prev_trading_day(d)
+        old.append(d)
+    w.repos.market.upsert_daily_bars(
+        [bar(c, x, 10000.0, "krx") for c in CODES for x in old], loaded_by="backfill"
+    )
+    svc.rebuild_alltime(w.repos, D, now=NOW_DAILY, loaded_by="market.backfill", cfg=CFG)
+    at = w.repos.board.alltime()
+    assert {a.history_from for a in at.values()} == {min(old)}
+    # 하루라도 빠진 거래일(구멍)이 있으면 그 뒤부터다 — 구멍 너머를 '받았다'고 하지 않는다
+    w2 = build_world()
+    w2.repos.market.upsert_daily_bars(
+        [bar(c, x, 10000.0, "krx") for c in CODES for x in old if x != old[2]], loaded_by="b"
+    )
+    svc.rebuild_alltime(w2.repos, D, now=NOW_DAILY, loaded_by="market.backfill", cfg=CFG)
+    assert {a.history_from for a in w2.repos.board.alltime().values()} == {old[1]}
 
 
 def test_스냅에_종류가_없으면_유니버스_종류로_펀드를_뺀다() -> None:

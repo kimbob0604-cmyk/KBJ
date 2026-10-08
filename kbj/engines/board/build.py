@@ -64,7 +64,7 @@ __all__ = [
 ]
 
 # 산출을 만든 엔진 판(artifact.engine_version). 계산이 바뀌면 올린다.
-ENGINE_VERSION: Final = "board-p3.1"
+ENGINE_VERSION: Final = "board-p3.2"  # p3.2: 신고가 3축(ADR 0017)
 # KRX 확정치를 못 받은 날 종가의 출처 문구(ET 는 '네이버 16:07 값')
 PROVISIONAL_CLOSE_PHRASE: Final = "KIS 마감값(잠정)"
 
@@ -267,15 +267,15 @@ def consistency_notes(rows, cfg):
       2. 갱신한 종류의 갭은 0 이하다 — 이미 넘겼다는 뜻이니까
       3. label 은 갱신한 것 중 최상위다
       4. 근접은 갭 임계 안에 있다
-      5. 역사적 최고가 >= 모든 창의 최고가 — 상장 이후가 직전 252일을 포함한다
+      5. 역사적 최고가 >= 모든 창의 최고가 — 상장 이후가 직전 52주를 포함한다
 
     5번이 1번의 원인 자리다. 1번이 걸린 090410 을 두 번 추측하고 두 번 틀린 뒤,
     갭이 아니라 기준값을 보고서야 원인이 드러났다 — 역사적 기준이 52주 기준보다
     42% 낮았다. 갭은 결과고 기준값이 원인이다. 원인 쪽을 직접 본다.
 
     **1번은 계산된 종류끼리만 본다.** `hits[k]` 는 '갱신 못 했다' 와 '계산하지
-    못했다' 를 둘 다 False 로 적는다. px 는 420일치만 들고 있으므로 최근 상장
-    종목은 252영업일을 못 채워 w52 를 계산하지 못하는데, 역사적 최고가는
+    못했다' 를 둘 다 False 로 적는다. 최근 상장 종목은 52주 창을 못 채워
+    w52 를 계산하지 못하는데, 역사적 최고가는
     스칼라가 들고 있어 hist 는 판정된다. 그러면 'hist 인데 w52 아님' 이 되지만
     이건 모순이 아니라 창이 짧은 것이다.
 
@@ -472,6 +472,11 @@ class BoardInputs:
     market          market.json(kbj 에는 없다 — None)
     listed_on       {code: 상장일} — 스칼라에 history_from 이 있을 때 역사적 신고가 깊이 판정
                     (D-P3-11). None 이면 상장일을 모르는 것으로 본다
+    prev_incomparable  전일 라벨과 비교할 수 없는 사유(전일 보드가 다른 신고가 정의 — ADR 0017).
+                    있으면 신규/이어감을 판정하지 않고 이 사유를 안내에 싣는다(전일 라벨이 없다는
+                    문구 대신)
+    trading_days    시장 거래일 달력(asof 이하 — 신고가 거래일 창의 경계, ADR 0017). None 이면 전
+                    종목 일봉 날짜의 합집합(그날 한 종목이라도 거래했으면 시장 거래일 — 골든·legacy)
     generated_at    주입한 시계의 시각(ISO 문자열)
     """
 
@@ -498,6 +503,8 @@ class BoardInputs:
     prev_rankings: Mapping[str, Any] | None = None
     market: Mapping[str, Any] | None = None
     listed_on: Mapping[str, date | str | None] | None = None
+    trading_days: Sequence[date | str] | None = None
+    prev_incomparable: str | None = None
 
 
 @dataclass(frozen=True)
@@ -542,8 +549,14 @@ class BoardDay:
 
 
 def _hist_scope(
-    alltime: Mapping[str, Mapping[str, Any]], codes: Sequence[str], hist_blocked: Mapping[str, int]
+    alltime: Mapping[str, Mapping[str, Any]],
+    codes: Sequence[str],
+    hist_blocked: Mapping[str, int],
+    source_floor: Any = None,
+    n_since_floor: int = 0,
 ) -> dict[str, Any]:
+    """역사적 신고가 계산 범위(진단 — D-P3-11·ADR 0017). 화면은 날짜를 '역사적 = 그 날 이후' 로
+    내세우지 않는다: 보류 수와 바닥 기준 수만 품질 메모로 적는다."""
     hf = sorted(
         str(h) for c in codes if (h := (alltime.get(c) or {}).get("history_from")) is not None
     )
@@ -553,6 +566,8 @@ def _hist_scope(
         n_with_history_from=len(hf),
         n_before_listing=hist_blocked.get(nh.HIST_BEFORE_LISTING, 0),
         n_listing_unknown=hist_blocked.get(nh.HIST_LISTING_UNKNOWN, 0),
+        source_floor=None if source_floor is None else str(source_floor),
+        n_since_floor=n_since_floor,
     )
 
 
@@ -592,7 +607,7 @@ def compute_day(inp: BoardInputs, cfg: Mapping[str, Any]) -> BoardDay:
     prev_rank = dict(inp.prev_ranks)
     # 어제 라벨 테이블이 통째로 비었으면 '신규'라고 말할 근거가 없다.
     # --init 직후 첫 --daily 는 전 종목이 신규로 나가는데 그건 사실이 아니다.
-    has_prev = bool(prev_asof) and bool(prev_rank)
+    has_prev = bool(prev_asof) and bool(prev_rank) and not inp.prev_incomparable
 
     ty = inp.themes_yaml
     mapping, tmeta, unresolved = TH.build(ty, snap, cfg)
@@ -602,6 +617,17 @@ def compute_day(inp: BoardInputs, cfg: Mapping[str, Any]) -> BoardDay:
     # '물어보지 못해서' 다. 같은 말로 적으면 안 된다 (D-057).
     unknown_split = [(c, n) for c, n in inp.split_unknown]
     listed = inp.listed_on
+    # 원천 바닥(가장 이른 봉) — 이력이 여기 닿았으면 상장일이 더 앞이어도 hist 를 판정한다(ADR 0017)
+    source_floor = cfg["newhigh"].get("hist_source_floor")
+    n_since_floor = 0
+    # 신고가 거래일 창의 경계 — 시장 거래일 달력(ADR 0017). 종목 봉 날짜로 잡으면 거래정지로 창이
+    # 늘어난다
+    cal = nh.market_days(
+        inp.trading_days
+        if inp.trading_days is not None
+        else (r["asof"] for rows in series.values() for r in rows)
+    )
+    cal = nh.MarketDays(d for d in cal.days if d <= asof)
 
     rows, labels, suspects = [], [], []
     # 읽는 사람에게 갈 **결손**과 고치는 사람에게 갈 **진단**을 처음부터 나눈다(ET :466~474).
@@ -614,9 +640,10 @@ def compute_day(inp: BoardInputs, cfg: Mapping[str, Any]) -> BoardDay:
             no_series.append(code)
             continue
         at = alltime.get(code) or {}
-        hist_ref, why = nh.hist_ref_for(
-            at, asof, listed_on=None if listed is None else listed.get(code)
-        )
+        lo = None if listed is None else listed.get(code)
+        hist_ref, why = nh.hist_ref_for(at, asof, listed_on=lo, source_floor=source_floor)
+        if nh.hist_depth(at, lo, source_floor)[0] == "floor":
+            n_since_floor += 1
         if why:
             hist_blocked[why] = hist_blocked.get(why, 0) + 1
         ev = nh.evaluate(
@@ -626,6 +653,7 @@ def compute_day(inp: BoardInputs, cfg: Mapping[str, Any]) -> BoardDay:
             hist_ref=hist_ref,
             hist_days=at.get("n_days"),
             split_cleared=code in cleared,
+            calendar=cal,
         )
         if not ev:
             no_series.append(code)
@@ -701,6 +729,9 @@ def compute_day(inp: BoardInputs, cfg: Mapping[str, Any]) -> BoardDay:
                 status_unknown=not has_prev,
                 suspect=ev["suspect"],
                 usable_days=ev["usable_days"],
+                # 이력이 상장일까지 닿지 않아(또는 상장일을 몰라) 역사적 신고가를 판정하지 않은
+                # 종목의 품질 안내(D-P3-11·ADR 0017). 다른 사유(스칼라 없음 등)는 싣지 않는다
+                hist_note=why if why in (nh.HIST_BEFORE_LISTING, nh.HIST_LISTING_UNKNOWN) else None,
                 # 두 기준을 **이름으로** 같은 줄에 싣는다. label/hits 는 기본 기준
                 # (default_basis)이고 그게 무엇인지는 설정에 달렸다.
                 close_basis=dict(
@@ -763,6 +794,8 @@ def compute_day(inp: BoardInputs, cfg: Mapping[str, Any]) -> BoardDay:
         note = (
             f"전일({prev_asof or '없음'}) 라벨이 없어 신규/이어감을 판정하지 "
             "못했습니다. 첫 실행이면 정상이고, 다음 영업일부터 나옵니다"
+            if not inp.prev_incomparable
+            else f"신규/이어감을 판정하지 못했습니다 — {inp.prev_incomparable}"
         )
         missing_notes.append(note)
         log(f"  {note}")
@@ -846,7 +879,11 @@ def compute_day(inp: BoardInputs, cfg: Mapping[str, Any]) -> BoardDay:
         **prov_close,
         basis=basis,
         prev_asof=prev_asof,
-        thresholds=dict(proximity=cfg["proximity"], lookback=cfg["newhigh"]["lookback"]),
+        thresholds=dict(
+            proximity=cfg["proximity"],
+            lookback_trading_days=dict(cfg["newhigh"].get(nh.TRADING_KEY) or {}),
+            lookback_calendar_days=dict(cfg["newhigh"].get(nh.CALENDAR_KEY) or {}),
+        ),
         labels=cfg["newhigh"]["labels"],
         priority=cfg["newhigh"]["priority"],
         displayed=sorted(show, key=lambda k: rank[k]),
@@ -924,5 +961,5 @@ def compute_day(inp: BoardInputs, cfg: Mapping[str, Any]) -> BoardDay:
         quality=Quality.OK if close_confirmed else Quality.ESTIMATED,
         close_confirmed=close_confirmed,
         source=prov["source"],
-        hist_scope=_hist_scope(alltime, list(snap), hist_blocked),
+        hist_scope=_hist_scope(alltime, list(snap), hist_blocked, source_floor, n_since_floor),
     )

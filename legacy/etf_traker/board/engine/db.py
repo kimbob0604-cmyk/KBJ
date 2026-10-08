@@ -56,8 +56,8 @@ CREATE TABLE IF NOT EXISTS alltime(
 -- 일자별 신고가 라벨. '신규 / 이어감' 판정이 전일 행을 읽는다.
 CREATE TABLE IF NOT EXISTS label(
   code TEXT, asof TEXT, basis TEXT,   -- basis: high | close
-  kind TEXT,                          -- hist | w52 | d60
-  rank INT,                           -- 0=hist 1=w52 2=d60. 작을수록 상위
+  kind TEXT,                          -- hist | w52 | d120 (KBJ ADR 0017 — 예전 d60)
+  rank INT,                           -- 0=hist 1=w52 2=d120. 작을수록 상위
   PRIMARY KEY(code, asof, basis));
 CREATE INDEX IF NOT EXISTS ix_label_asof ON label(asof, basis);
 

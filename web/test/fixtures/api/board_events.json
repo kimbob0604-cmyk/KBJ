@@ -10,7 +10,7 @@
   "data": {
     "as_of": "2026-09-15",
     "source": "kis",
-    "generated_at": "2026-10-08T03:29:01+09:00",
+    "generated_at": "2026-10-07T00:00:00+09:00",
     "events": [
       {
         "type": "material_giveback",
@@ -26,21 +26,6 @@
           "chg_pct": -2.07,
           "high": 6658.0,
           "close": 6259.0
-        }
-      },
-      {
-        "type": "proximity_cluster",
-        "theme": "t_grid",
-        "tickers": [
-          "900055",
-          "900320",
-          "900680",
-          "900950",
-          "901040"
-        ],
-        "severity": 5,
-        "evidence": {
-          "n": 5
         }
       },
       {
@@ -66,20 +51,6 @@
           "900370",
           "900640",
           "900730"
-        ],
-        "severity": 4,
-        "evidence": {
-          "n": 4
-        }
-      },
-      {
-        "type": "proximity_cluster",
-        "theme": "t_ai",
-        "tickers": [
-          "900180",
-          "900360",
-          "900540",
-          "900810"
         ],
         "severity": 4,
         "evidence": {
@@ -127,7 +98,7 @@
         "severity": 3,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52",
             "hist"
           ]
@@ -142,7 +113,7 @@
         "severity": 3,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52",
             "hist"
           ]
@@ -157,7 +128,7 @@
         "severity": 3,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52",
             "hist"
           ]
@@ -172,7 +143,7 @@
         "severity": 3,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52",
             "hist"
           ]
@@ -187,7 +158,7 @@
         "severity": 3,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52",
             "hist"
           ]
@@ -202,7 +173,7 @@
         "severity": 3,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52",
             "hist"
           ]
@@ -217,7 +188,7 @@
         "severity": 3,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52",
             "hist"
           ]
@@ -232,7 +203,7 @@
         "severity": 3,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52",
             "hist"
           ]
@@ -247,7 +218,7 @@
         "severity": 3,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52",
             "hist"
           ]
@@ -262,7 +233,7 @@
         "severity": 3,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52",
             "hist"
           ]
@@ -277,7 +248,7 @@
         "severity": 3,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52",
             "hist"
           ]
@@ -292,7 +263,7 @@
         "severity": 3,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52",
             "hist"
           ]
@@ -307,7 +278,7 @@
         "severity": 3,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52",
             "hist"
           ]
@@ -322,10 +293,23 @@
         "severity": 3,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52",
             "hist"
           ]
+        }
+      },
+      {
+        "type": "proximity_cluster",
+        "theme": "t_ai",
+        "tickers": [
+          "900180",
+          "900360",
+          "900810"
+        ],
+        "severity": 3,
+        "evidence": {
+          "n": 3
         }
       },
       {
@@ -334,7 +318,7 @@
         "tickers": [
           "900200",
           "900650",
-          "900830"
+          "900740"
         ],
         "severity": 3,
         "evidence": {
@@ -342,16 +326,16 @@
         }
       },
       {
-        "type": "breakout_fail",
-        "theme": null,
+        "type": "proximity_cluster",
+        "theme": "t_grid",
         "tickers": [
-          "900610"
+          "900680",
+          "900950",
+          "901040"
         ],
-        "severity": 2.68,
+        "severity": 3,
         "evidence": {
-          "kind": "d60",
-          "gap_prev": 3.52,
-          "gap_now": 6.2
+          "n": 3
         }
       },
       {
@@ -410,13 +394,26 @@
         "type": "breakout_fail",
         "theme": null,
         "tickers": [
-          "901360"
+          "902850"
         ],
-        "severity": 2.17,
+        "severity": 2.19,
         "evidence": {
-          "kind": "d60",
-          "gap_prev": 0.65,
-          "gap_now": 2.82
+          "kind": "hist",
+          "gap_prev": 1.17,
+          "gap_now": 3.36
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "901160"
+        ],
+        "severity": 2.07,
+        "evidence": {
+          "kind": "d120",
+          "gap_prev": 4.4,
+          "gap_now": 6.47
         }
       },
       {
@@ -428,7 +425,7 @@
         "severity": 2,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52"
           ]
         }
@@ -442,7 +439,7 @@
         "severity": 2,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52"
           ]
         }
@@ -456,7 +453,7 @@
         "severity": 2,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52"
           ]
         }
@@ -470,7 +467,7 @@
         "severity": 2,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52"
           ]
         }
@@ -484,7 +481,7 @@
         "severity": 2,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52"
           ]
         }
@@ -498,7 +495,7 @@
         "severity": 2,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52"
           ]
         }
@@ -512,7 +509,7 @@
         "severity": 2,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52"
           ]
         }
@@ -526,7 +523,7 @@
         "severity": 2,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52"
           ]
         }
@@ -540,7 +537,7 @@
         "severity": 2,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52"
           ]
         }
@@ -554,7 +551,7 @@
         "severity": 2,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52"
           ]
         }
@@ -568,7 +565,7 @@
         "severity": 2,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52"
           ]
         }
@@ -582,7 +579,7 @@
         "severity": 2,
         "evidence": {
           "labels": [
-            "d60",
+            "d120",
             "w52"
           ]
         }
@@ -604,19 +601,6 @@
         "type": "breakout_fail",
         "theme": null,
         "tickers": [
-          "902470"
-        ],
-        "severity": 1.91,
-        "evidence": {
-          "kind": "d60",
-          "gap_prev": 4.88,
-          "gap_now": 6.79
-        }
-      },
-      {
-        "type": "breakout_fail",
-        "theme": null,
-        "tickers": [
           "901920"
         ],
         "severity": 1.89,
@@ -624,45 +608,6 @@
           "kind": "w52",
           "gap_prev": 0.09,
           "gap_now": 1.98
-        }
-      },
-      {
-        "type": "breakout_fail",
-        "theme": "t_ai",
-        "tickers": [
-          "900180"
-        ],
-        "severity": 1.78,
-        "evidence": {
-          "kind": "w52",
-          "gap_prev": 1.76,
-          "gap_now": 3.54
-        }
-      },
-      {
-        "type": "breakout_fail",
-        "theme": "t_grid",
-        "tickers": [
-          "901130"
-        ],
-        "severity": 1.68,
-        "evidence": {
-          "kind": "d60",
-          "gap_prev": 3.53,
-          "gap_now": 5.21
-        }
-      },
-      {
-        "type": "breakout_fail",
-        "theme": null,
-        "tickers": [
-          "902980"
-        ],
-        "severity": 1.63,
-        "evidence": {
-          "kind": "d60",
-          "gap_prev": 2.85,
-          "gap_now": 4.48
         }
       },
       {
@@ -686,22 +631,9 @@
         ],
         "severity": 1.47,
         "evidence": {
-          "kind": "d60",
+          "kind": "d120",
           "gap_prev": 2.84,
           "gap_now": 4.31
-        }
-      },
-      {
-        "type": "breakout_fail",
-        "theme": null,
-        "tickers": [
-          "900240"
-        ],
-        "severity": 1.34,
-        "evidence": {
-          "kind": "d60",
-          "gap_prev": 1.88,
-          "gap_now": 3.22
         }
       },
       {
@@ -712,22 +644,9 @@
         ],
         "severity": 1.33,
         "evidence": {
-          "kind": "w52",
+          "kind": "d120",
           "gap_prev": 2.65,
           "gap_now": 3.98
-        }
-      },
-      {
-        "type": "breakout_fail",
-        "theme": null,
-        "tickers": [
-          "901160"
-        ],
-        "severity": 1.28,
-        "evidence": {
-          "kind": "d60",
-          "gap_prev": 4.04,
-          "gap_now": 5.32
         }
       },
       {
@@ -745,52 +664,13 @@
       },
       {
         "type": "breakout_fail",
-        "theme": "t_bat",
-        "tickers": [
-          "900010"
-        ],
-        "severity": 1.24,
-        "evidence": {
-          "kind": "d60",
-          "gap_prev": 4.21,
-          "gap_now": 5.45
-        }
-      },
-      {
-        "type": "breakout_fail",
-        "theme": "t_grid",
-        "tickers": [
-          "900055"
-        ],
-        "severity": 1.19,
-        "evidence": {
-          "kind": "d60",
-          "gap_prev": 0.03,
-          "gap_now": 1.22
-        }
-      },
-      {
-        "type": "breakout_fail",
-        "theme": null,
-        "tickers": [
-          "901140"
-        ],
-        "severity": 1.11,
-        "evidence": {
-          "kind": "d60",
-          "gap_prev": 4.52,
-          "gap_now": 5.63
-        }
-      },
-      {
-        "type": "breakout_fail",
         "theme": null,
         "tickers": [
           "902330"
         ],
         "severity": 1.03,
         "evidence": {
-          "kind": "d60",
+          "kind": "d120",
           "gap_prev": 1.05,
           "gap_now": 2.08
         }
@@ -803,7 +683,7 @@
         ],
         "severity": 0.99,
         "evidence": {
-          "kind": "d60",
+          "kind": "d120",
           "gap_prev": 1.21,
           "gap_now": 2.2
         }
@@ -814,11 +694,11 @@
         "tickers": [
           "902130"
         ],
-        "severity": 0.99,
+        "severity": 0.97,
         "evidence": {
-          "kind": "d60",
-          "gap_prev": 1.4,
-          "gap_now": 2.39
+          "kind": "d120",
+          "gap_prev": 2.52,
+          "gap_now": 3.49
         }
       },
       {
@@ -842,7 +722,7 @@
         ],
         "severity": 0.86,
         "evidence": {
-          "kind": "d60",
+          "kind": "d120",
           "gap_prev": 1.88,
           "gap_now": 2.74
         }
@@ -862,19 +742,6 @@
       },
       {
         "type": "breakout_fail",
-        "theme": "t_ai",
-        "tickers": [
-          "900540"
-        ],
-        "severity": 0.77,
-        "evidence": {
-          "kind": "d60",
-          "gap_prev": 3.81,
-          "gap_now": 4.58
-        }
-      },
-      {
-        "type": "breakout_fail",
         "theme": null,
         "tickers": [
           "900600"
@@ -884,19 +751,6 @@
           "kind": "w52",
           "gap_prev": 0.69,
           "gap_now": 1.45
-        }
-      },
-      {
-        "type": "breakout_fail",
-        "theme": null,
-        "tickers": [
-          "902300"
-        ],
-        "severity": 0.69,
-        "evidence": {
-          "kind": "d60",
-          "gap_prev": 2.77,
-          "gap_now": 3.46
         }
       },
       {
@@ -927,32 +781,6 @@
       },
       {
         "type": "breakout_fail",
-        "theme": null,
-        "tickers": [
-          "900710"
-        ],
-        "severity": 0.46,
-        "evidence": {
-          "kind": "d60",
-          "gap_prev": 1.1,
-          "gap_now": 1.56
-        }
-      },
-      {
-        "type": "breakout_fail",
-        "theme": null,
-        "tickers": [
-          "901620"
-        ],
-        "severity": 0.44,
-        "evidence": {
-          "kind": "d60",
-          "gap_prev": 4.55,
-          "gap_now": 4.99
-        }
-      },
-      {
-        "type": "breakout_fail",
         "theme": "t_bat",
         "tickers": [
           "900100"
@@ -970,11 +798,11 @@
         "tickers": [
           "900650"
         ],
-        "severity": 0.42,
+        "severity": 0.41,
         "evidence": {
-          "kind": "d60",
-          "gap_prev": 4.13,
-          "gap_now": 4.55
+          "kind": "d120",
+          "gap_prev": 4.45,
+          "gap_now": 4.86
         }
       },
       {
@@ -994,26 +822,13 @@
         "type": "breakout_fail",
         "theme": null,
         "tickers": [
-          "902790"
+          "902670"
         ],
-        "severity": 0.23,
+        "severity": 0.09,
         "evidence": {
-          "kind": "d60",
-          "gap_prev": 2.88,
-          "gap_now": 3.11
-        }
-      },
-      {
-        "type": "breakout_fail",
-        "theme": null,
-        "tickers": [
-          "901950"
-        ],
-        "severity": 0.08,
-        "evidence": {
-          "kind": "d60",
-          "gap_prev": 2.47,
-          "gap_now": 2.55
+          "kind": "hist",
+          "gap_prev": 2.93,
+          "gap_now": 3.02
         }
       },
       {
@@ -1027,6 +842,19 @@
           "kind": "hist",
           "gap_prev": 1.63,
           "gap_now": 1.71
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "902490"
+        ],
+        "severity": 0.08,
+        "evidence": {
+          "kind": "hist",
+          "gap_prev": 0.11,
+          "gap_now": 0.19
         }
       },
       {
@@ -1050,7 +878,7 @@
         ],
         "severity": 0.03,
         "evidence": {
-          "kind": "d60",
+          "kind": "d120",
           "gap_prev": 1.41,
           "gap_now": 1.44
         }

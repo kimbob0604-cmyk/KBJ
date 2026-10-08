@@ -17,7 +17,7 @@ from . import telegram as TG
 from ..engine.signals import CONTRACTION_NAMES
 
 DASH = '–'
-LABEL = dict(hist='역사적', w52='52주', d60='60일')
+LABEL = dict(hist='역사적', w52='52주', d120='120일')  # KBJ ADR 0017
 MARKET = dict(KOSPI='코스피', KOSDAQ='코스닥')
 
 

@@ -378,6 +378,8 @@ P2 설계 §8.2 의 0007 계획에 있던 `pub_themes.sector_map` 은 P5(분류 
 
 ### 4.1 신고가 (board 엔진 승격)
 
+> **2026-10-08 갱신: 신고가 정의는 [ADR 0017](adr/0017-newhigh-three-axes.md) 이 대체했다**(사용자 요청) — 역사적(상장 이후 전체 — 이력이 상장일 또는 원천 바닥에 닿아야 판정) · 52주(달력 364일) · 120일(120 시장 거래일), 엄격 `>`, d60 없음. 정본은 `docs/metrics.md` §7 과 `kbj/engines/board/newhigh.py` 머리말. 아래 문단은 승격 당시(옛 정의) 기록이다. 골든은 새 엔진으로 재캡처(`tests/golden/board/recapture.py`).
+
 **정의는 ET `board/engine/newhigh.py` 머리말 그대로**(60일 = 직전 60영업일·52주 = 직전 252영업일·역사적 = 상장 이후, 당일 제외 `cur > ref` 엄격 — ADR 0001 Q2, 종가·고가 두 기준, 기본 기준 종가 `default_basis: close`, 라벨 우선순위 hist > w52 > d60, 신규/이어감, 갭, 5일 축소폭, 저항두께, 거래량 배수, 재료 반납, `split_guard` ±31%). metrics.md §7 에는 이 정의를 요약하고 정본은 엔진 문서화 문자열이라고 적는다(M).
 
 **함수 매핑과 바뀌는 것**

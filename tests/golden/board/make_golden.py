@@ -19,6 +19,8 @@ docs/p3_design.md §4.1 '골든 비교 방법'·§8.1, D-P3-10(골든 먼저 →
 - shim(D-P3-10 ④) 뒤에는 legacy 가 kbj 를 부르므로 다시 돌려도 의미가 없다. 골든은 그 뒤
   고치지 않는다(`tests/golden/test_board_golden_meta.py` 가 체크섬을 고정한다). 바꿀 일이 생기면
   새 골든 세트 + ADR.
+- 2026-10-08: 신고가 정의 변경(사용자 요청, ADR 0017)으로 기대 산출만 kbj 엔진으로 다시
+  캡처했다 — `recapture.py`(입력은 그대로, config.newhigh·전일 순위만 새 정의).
 
 legacy 패키지(`board.*`)는 정적 import 하지 않는다(pyright·ruff 대상 밖 — ADR 0003). importlib 로
 불러 몇 군데(state 폴더·테마·분류 사전)만 바꿔 끼운다. 난수는 합성 데이터용(암호 용도 아님).

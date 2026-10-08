@@ -29,8 +29,8 @@ def row(code="000001", hits=None, gap=None, label=None, near=None, refs=None):
 def ok(**kw):
     """정상 행 — 52주 갱신, 하위도 갱신, 갭 음수."""
     base = dict(
-        hits={"hist": False, "w52": True, "d60": True, "d20": True},
-        gap={"w52": -1.2, "d60": -5.0, "d20": -6.0},
+        hits={"hist": False, "w52": True, "d120": True, "d20": True},
+        gap={"w52": -1.2, "d120": -5.0, "d20": -6.0},
         label="w52",
     )
     base.update(kw)
@@ -48,7 +48,7 @@ class ConsistencyTest(unittest.TestCase):
         self.assertEqual(B.consistency_notes([], CFG), [])
 
     def test_upper_label_without_lower(self):
-        r = ok(hits={"hist": False, "w52": True, "d60": False, "d20": True})
+        r = ok(hits={"hist": False, "w52": True, "d120": False, "d20": True})
         self.assertIn("하위가 미갱신", self._why([r]))
 
     def test_uncomputed_lower_kind_is_not_a_violation(self):
@@ -57,8 +57,8 @@ class ConsistencyTest(unittest.TestCase):
         실측에서 090410 이 이걸로 잘못 찍혔다. 엔진이 아니라 검사가 틀렸다.
         """
         r = row(
-            hits={"hist": True, "w52": False, "d60": True, "d20": True},
-            gap={"hist": -0.5, "w52": None, "d60": -5.0, "d20": -6.0},
+            hits={"hist": True, "w52": False, "d120": True, "d20": True},
+            gap={"hist": -0.5, "w52": None, "d120": -5.0, "d20": -6.0},
             label="hist",
         )
         self.assertEqual(B.consistency_notes([r], CFG), [])
@@ -66,14 +66,14 @@ class ConsistencyTest(unittest.TestCase):
     def test_computed_lower_kind_still_flags(self):
         """계산은 됐는데 갱신이 없으면 여전히 모순이다. 구멍을 만들지 않는다."""
         r = row(
-            hits={"hist": True, "w52": False, "d60": True, "d20": True},
-            gap={"hist": -0.5, "w52": +2.0, "d60": -5.0, "d20": -6.0},
+            hits={"hist": True, "w52": False, "d120": True, "d20": True},
+            gap={"hist": -0.5, "w52": +2.0, "d120": -5.0, "d20": -6.0},
             label="hist",
         )
         self.assertIn("하위가 미갱신", self._why([r]))
 
     def test_label_is_not_the_top(self):
-        r = ok(label="d60")
+        r = ok(label="d120")
         self.assertIn("최상위가 아님", self._why([r]))
 
     def test_label_without_any_hit(self):
@@ -81,7 +81,7 @@ class ConsistencyTest(unittest.TestCase):
         self.assertIn("갱신이 없는데", self._why([r]))
 
     def test_positive_gap_on_a_hit(self):
-        r = ok(gap={"w52": +2.5, "d60": -5.0, "d20": -6.0})
+        r = ok(gap={"w52": +2.5, "d120": -5.0, "d20": -6.0})
         self.assertIn("갭이 양수", self._why([r]))
 
     def test_proximity_outside_the_threshold(self):
@@ -100,7 +100,7 @@ class ConsistencyTest(unittest.TestCase):
         self.assertIn("임계 밖", self._why([r]))
 
     def test_examples_are_bounded(self):
-        rows = [ok(code=f"{i:06d}", label="d60") for i in range(50)]
+        rows = [ok(code=f"{i:06d}", label="d120") for i in range(50)]
         note = self._why(rows)
         self.assertIn("50종목", note)
         self.assertEqual(note.count(" / "), B.CONSIST_EX - 1)
@@ -112,11 +112,11 @@ class ConsistencyTest(unittest.TestCase):
         몰라 두 번 헛다리를 짚었다.
         """
         r = ok(
-            hits={"hist": False, "w52": True, "d60": False, "d20": True},
-            gap={"w52": -1.2, "d60": +0.8, "d20": -6.0},
+            hits={"hist": False, "w52": True, "d120": False, "d20": True},
+            gap={"w52": -1.2, "d120": +0.8, "d20": -6.0},
         )
         note = self._why([r])
-        self.assertIn("d60", note)
+        self.assertIn("d120", note)
         self.assertIn("+0.80%", note)
         self.assertIn("w52 인데", note)
 
@@ -140,7 +140,7 @@ if __name__ == "__main__":
 class HistRefContainsWindowsTest(unittest.TestCase):
     """역사적 최고가는 어떤 창의 최고가보다도 작을 수 없다.
 
-    상장 이후 전체가 직전 252일을 포함하기 때문이다. 작다면 alltime 스칼라와
+    상장 이후 전체가 직전 52주를 포함하기 때문이다. 작다면 alltime 스칼라와
     px 일봉이 서로 다른 시계열을 가리키는 것이고, 그러면 라벨 판정이 통째로
     어긋난다. 실측에서 090410 이 hist 기준 42% 낮았다.
     """
@@ -149,7 +149,7 @@ class HistRefContainsWindowsTest(unittest.TestCase):
         return " / ".join(B.consistency_notes([r], CFG))
 
     def test_hist_below_a_window_is_flagged(self):
-        r = row(refs={"hist": 1000.0, "w52": 1730.0, "d60": 1200.0})
+        r = row(refs={"hist": 1000.0, "w52": 1730.0, "d120": 1200.0})
         note = self._why(r)
         self.assertIn("역사적 최고가가 창 최고가보다 낮음", note)
         self.assertIn("1,730", note)

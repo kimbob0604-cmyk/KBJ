@@ -18,9 +18,9 @@ from ..engine.themes import display_index, near_names, norm
 from .telegram import _inline, _safe
 
 # newhigh.json 의 hits 키 → 사람이 읽는 이름. aggregate.MULTI_LABEL_SET 과 같은 셋이다.
-HIT_LABEL = {'hist': '역사적', 'w52': '52주', 'd60': '60일'}
-# 우선순위. 역사적이면 52주·60일도 참이라 가장 센 것 하나만 적는다.
-HIT_ORDER = ('hist', 'w52', 'd60')
+HIT_LABEL = {'hist': '역사적', 'w52': '52주', 'd120': '120일'}  # KBJ ADR 0017(d60 → d120)
+# 우선순위. 역사적이면 52주·120일도 참이라 가장 센 것 하나만 적는다.
+HIT_ORDER = ('hist', 'w52', 'd120')
 
 PICK_HEAD = {'w52': '52주 신고가', 'watch': '개별', 'surge': '급등 포착'}
 PICK_ORDER = ('w52', 'watch', 'surge')

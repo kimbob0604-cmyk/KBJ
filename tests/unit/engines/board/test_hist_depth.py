@@ -54,7 +54,7 @@ def test_AllTime_행도_받는다() -> None:
 
 def test_Bar_와_dict_행은_같은_결과를_낸다() -> None:
     d0 = date(2025, 1, 1)
-    closes = [100.0 + (i % 5) for i in range(70)] + [130.0]
+    closes = [100.0 + (i % 5) for i in range(130)] + [130.0]  # 120일 창을 채운다(ADR 0017)
     dicts = [
         dict(asof=(d0 + timedelta(days=i)).isoformat(), open=c, high=c, low=c, close=c, volume=10)
         for i, c in enumerate(closes)
@@ -67,7 +67,49 @@ def test_Bar_와_dict_행은_같은_결과를_낸다() -> None:
     a = nh.evaluate(dicts, dicts[-1]["asof"], CFG)
     b = nh.evaluate(bars, bars[-1].date, CFG)
     assert a == b
-    assert a is not None and a["basis"]["close"]["label"] == "d60"
+    assert a is not None and a["basis"]["close"]["label"] == "d120"
     r1 = nh.roll_alltime(None, dicts, CFG)
     r2 = nh.roll_alltime(None, bars, CFG)
     assert r1 == r2
+
+
+# ── 원천 바닥(ADR 0017 — 메인 추가 지시 2026-10-08) ───────────────────────────────────────
+FLOOR = "2010-01-04"
+
+
+def test_이력이_원천_바닥에_닿았으면_상장일이_더_앞이어도_판정한다() -> None:
+    at = dict(AT, history_from=FLOOR)
+    assert nh.hist_depth(at, "1975-06-11", FLOOR) == ("floor", "")
+    assert nh.hist_ref_for(at, "2026-10-06", listed_on="1975-06-11", source_floor=FLOOR) == (
+        {"high": 110.0, "close": 109.0},
+        "",
+    )
+    # 상장일을 몰라도 바닥에 닿았으면 더 받을 것이 없다 — 판정한다(바닥 기준)
+    assert nh.hist_depth(at, None, date(2010, 1, 4)) == ("floor", "")
+    # 바닥보다 앞에서 시작한 이력도 바닥에 닿은 것이다
+    assert nh.hist_depth(dict(AT, history_from="2009-12-30"), "1975-06-11", FLOOR)[0] == "floor"
+
+
+def test_상장일에_닿으면_바닥이_아니라_상장_기준이다() -> None:
+    at = dict(AT, history_from=FLOOR)
+    assert nh.hist_depth(at, "2015-03-02", FLOOR) == ("listing", "")
+    assert nh.hist_depth(at, FLOOR, FLOOR) == ("listing", "")
+
+
+def test_상장일에도_바닥에도_못_닿으면_보류와_사유() -> None:
+    at = dict(AT, history_from="2021-10-01")
+    assert nh.hist_depth(at, "1999-05-03", FLOOR) == (None, nh.HIST_BEFORE_LISTING)
+    assert nh.hist_depth(at, None, FLOOR) == (None, nh.HIST_LISTING_UNKNOWN)
+    assert nh.hist_ref_for(at, "2026-10-06", listed_on="1999-05-03", source_floor=FLOOR) == (
+        None,
+        nh.HIST_BEFORE_LISTING,
+    )
+    # 바닥 설정이 없으면(legacy·ET 설정) 예전 규칙 그대로 — 상장일만 본다
+    assert nh.hist_depth(dict(AT, history_from=FLOOR), "1975-06-11") == (
+        None,
+        nh.HIST_BEFORE_LISTING,
+    )
+
+
+def test_board_yaml_의_원천_바닥은_한_곳이다() -> None:
+    assert CFG["newhigh"]["hist_source_floor"] == FLOOR

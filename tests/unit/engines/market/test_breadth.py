@@ -67,7 +67,7 @@ def test_신고가는_종가_기준_52주_이상만() -> None:
     labels = [
         _label("A00001", "w52"),
         _label("A00002", "hist"),
-        _label("A00003", "d60"),
+        _label("A00003", "d120"),  # 120일은 52주 이상이 아니다(ADR 0017 — 옛 d60 자리)
         _label("A00004", "w52", basis="high"),
         _label("A00005", "w52", d=D[0]),
     ]

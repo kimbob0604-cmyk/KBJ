@@ -428,8 +428,8 @@ export interface components {
             hist_scope?: {
                 [key: string]: unknown;
             } | null;
-            /** History From */
-            history_from?: string | null;
+            /** Hist Notes */
+            hist_notes?: string[];
             /** Flows */
             flows?: {
                 [key: string]: components["schemas"]["RowFlows"];
@@ -1826,7 +1826,7 @@ export interface operations {
             query?: {
                 date?: string | null;
                 basis?: "close" | "high";
-                kind?: ("hist" | "w52" | "d60") | null;
+                kind?: ("hist" | "w52" | "d120") | null;
                 min_turnover_eok?: number | null;
             };
             header?: never;

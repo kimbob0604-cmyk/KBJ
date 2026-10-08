@@ -19,7 +19,7 @@ from kbj.data.spec import DataKey
 from kbj.engines.etf.types import etf_type
 from kbj.services.collectors import krx_daily
 from kbj.services.collectors.krx_daily import Coverage
-from kbj.services.scheduler.__main__ import backfill_days, run_backfill
+from kbj.services.scheduler.__main__ import backfill_days, listing_backfill_range, run_backfill
 from kbj.services.scheduler.runner import RunEvent
 from tests.fakes.krx_server import FakeKrx
 from tests.unit.collectors.p3_fakes import KR, Clock, ctx, krx_client, kst, new_repos
@@ -318,6 +318,29 @@ def test_backfill_days_newest_first_trading_days_only() -> None:
     assert all(KR.is_trading_day(d) for d in days)
     assert date(2026, 10, 5) not in days  # 대체공휴일
     assert backfill_days(KR, date(2026, 9, 28), date(2026, 10, 7), 2) == days[:2]
+
+
+def test_listing_backfill_range_continues_back_to_listing_or_source_floor() -> None:
+    """`--to-listing`(ADR 0017): 받은 첫날 전날부터 max(최초 상장일, 원천 바닥)까지 이어 받기."""
+    floor, today = date(2010, 1, 4), date(2026, 10, 7)
+    listed = [date(1975, 6, 11), date(2015, 3, 2), None]
+    # 아직 아무것도 없으면 오늘부터 바닥까지(상장일이 바닥보다 앞)
+    assert listing_backfill_range(listed, None, floor, today) == (floor, today)
+    # 받은 첫날 전날부터 이어 간다(여러 날에 나눠 받는다)
+    assert listing_backfill_range(listed, date(2021, 10, 1), floor, today) == (
+        floor,
+        date(2021, 9, 30),
+    )
+    # 가장 이른 상장일이 바닥보다 뒤면 그 상장일까지
+    assert listing_backfill_range([date(2015, 3, 2)], date(2021, 10, 1), floor, today) == (
+        date(2015, 3, 2),
+        date(2021, 9, 30),
+    )
+    # 다 받았으면 None
+    assert listing_backfill_range(listed, floor, floor, today) is None
+    assert listing_backfill_range([date(2015, 3, 2)], date(2015, 3, 2), floor, today) is None
+    # 상장일을 아는 종목이 없으면 바닥까지
+    assert listing_backfill_range([None], None, floor, today) == (floor, today)
 
 
 class _Runner:

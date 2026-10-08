@@ -232,3 +232,16 @@ DedupExpiry 5(중복·보존 기간·나중 실행 만료·`keep_days`·손상 �
 | 합계 | | **153** | |
 
 다리 시험 `tests/test_kbj_engine_shim.py` +1. legacy board 시험 **1,267 → 1,115**(`scripts/test_legacy.sh board`).
+
+## KBJ ADR 0017 — 신고가 3축(사용자 요청 2026-10-08)
+
+kbj 엔진(shim 대상)의 축이 `d60·w52(252봉)·hist` → `d120(120 시장 거래일)·w52(달력 364일)·hist(상장 이후
+전체)`, 비교 엄격 `>` 로 바뀌었다(docs/adr/0017-newhigh-three-axes.md). 엔진 산출의 라벨 키가 `d120` 이
+되므로 그 산출을 읽는 legacy 국장 코드의 라벨 표만 맞췄다 — `engine/signals.py KIND_RANK`·
+`report/{note,telegram,signals_tg}.py`·`ingest/stockflows.py ORDER`·`web/{render,payload}.py`(창 설명은
+`lookback_trading_days`·`lookback_calendar_days` 도 읽는다)·`engine/db.py` 주석. 미국장(`us/`·`config/us.yaml`)은
+자체 설정(`lookback` — 직전 N봉)을 그대로 쓴다(엔진은 옛 키를 그 종목 봉 수로 읽는다).
+
+시험은 지우거나 건너뛰지 않고 d60 단정을 d120 으로 옮겼다(`test_artifact`·`test_basis`·`test_consistency`·
+`test_live_board`·`test_note`·`test_seeds`·`test_stockflows`·`test_telegram`·`test_triggers`·`test_triggers_web`
+— `LabelKindSyncTest` 는 '빠진 라벨 = d60, 옛 rank 로 남은 행 = d120'). 시험 수는 그대로 **1,115**.

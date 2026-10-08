@@ -41,7 +41,7 @@ from . import kis
 # 주 소스. 파일 머리의 `source` 는 이 값이 아니라 **실제로 쓴 소스**다 (collect).
 SOURCE = 'kis'
 # 라벨 우선순위. 상위가 하위를 포함한다 (CLAUDE.md 4장).
-ORDER = ('d60', 'w52', 'hist')
+ORDER = ('d120', 'w52', 'hist')  # KBJ ADR 0017(d60 → d120)
 # 받을 최소 등급. 52주 이상이면 역사적도 든다.
 MIN_KIND = 'w52'
 # 투자자 구분. 저장·표기 순서다.

@@ -20,10 +20,10 @@ from ..web import site as S
 
 NEWHIGH = dict(
     as_of='2026-09-01', generated_at='2026-09-01T16:12:40+09:00',
-    basis='close', labels=dict(hist='역사적', w52='52주', d60='60일'),
-    displayed=['hist', 'w52', 'd60'],
-    counts_high=dict(hist=2, w52=5, d60=9), counts_close=dict(hist=1, w52=4, d60=8),
-    thresholds=dict(lookback=dict(d60=60, w52=252),
+    basis='close', labels=dict(hist='역사적', w52='52주', d120='120일'),
+    displayed=['hist', 'w52', 'd120'],
+    counts_high=dict(hist=2, w52=5, d120=9), counts_close=dict(hist=1, w52=4, d120=8),
+    thresholds=dict(lookback_trading_days=dict(d120=120), lookback_calendar_days=dict(w52=364),
                     proximity=dict(max_gap_pct=5.0, min_mktcap_eok=1000,
                                    narrow_days=5)),
     min_turnover_eok=50, min_mktcap_eok=1000,
@@ -38,10 +38,10 @@ NEWHIGH = dict(
                    label=None, chg_pct=None, turnover=999.0,
                    high_basis=dict(label='w52'), close_basis=dict(label=None))],
     proximity=[dict(code='003550', name='LG', theme_name='지주',
-                    near_kind='d60', near_gap=0.4, near_narrow5=-36.2,
+                    near_kind='d120', near_gap=0.4, near_narrow5=-36.2,
                     turnover=371.0, mktcap=178860.0, vol_mult=1.0,
-                    resistance=dict(d60=1.6, w52=9.9),
-                    resistance_label=dict(d60='얇음', w52='두꺼움'))],
+                    resistance=dict(d120=1.6, w52=9.9),
+                    resistance_label=dict(d120='얇음', w52='두꺼움'))],
 )
 SECTORS = dict(themes=[dict(theme='semi', name='반도체', chg_pct=1.2,
                             breadth=dict(up=3, flat=1, down=2))],
@@ -127,8 +127,8 @@ class Payload(unittest.TestCase):
         self.assertIsNone(x['close_label'])
 
     def test_counts_are_split_by_basis(self):
-        self.assertEqual(self.p['counts_high'], dict(hist=2, w52=5, d60=9))
-        self.assertEqual(self.p['counts_close'], dict(hist=1, w52=4, d60=8))
+        self.assertEqual(self.p['counts_high'], dict(hist=2, w52=5, d120=9))
+        self.assertEqual(self.p['counts_close'], dict(hist=1, w52=4, d120=8))
 
     def test_uncomputed_values_are_absent_not_zero(self):
         x = self.p['achieved'][1]

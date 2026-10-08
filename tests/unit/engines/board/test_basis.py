@@ -16,8 +16,8 @@ import unittest
 
 from kbj.engines.board import build as B
 
-SHOW = {"hist", "w52", "d60"}
-RANK = {"hist": 0, "w52": 1, "d60": 2, "d20": 3}
+SHOW = {"hist", "w52", "d120"}
+RANK = {"hist": 0, "w52": 1, "d120": 2, "d20": 3}
 
 
 def row(name, hi=None, cl=None, turnover=0.0, label=...):
@@ -53,7 +53,7 @@ class AchievedRows(unittest.TestCase):
         self.assertEqual(len(got), 2)
 
     def test_rows_with_neither_label_are_dropped(self):
-        rows = [row("아무것도아님"), row("있음", hi="d60")]
+        rows = [row("아무것도아님"), row("있음", hi="d120")]
         self.assertEqual([r["name"] for r in B.achieved_rows(rows, SHOW, RANK)], ["있음"])
 
     def test_below_threshold_labels_are_dropped(self):
@@ -73,7 +73,7 @@ class AchievedRows(unittest.TestCase):
         )
 
     def test_close_only_row_sorts_by_its_close_grade(self):
-        rows = [row("고가60일", hi="d60", turnover=1), row("종가역사적", cl="hist", turnover=1)]
+        rows = [row("고가120일", hi="d120", turnover=1), row("종가역사적", cl="hist", turnover=1)]
         self.assertEqual([r["name"] for r in B.achieved_rows(rows, SHOW, RANK)][0], "종가역사적")  # noqa: RUF015 — 원본 그대로(승격)
 
 

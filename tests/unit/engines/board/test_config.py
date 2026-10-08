@@ -29,8 +29,11 @@ def _raw() -> dict:
 def test_board_yaml_을_읽는다() -> None:
     cfg = BoardConfig.load()
     assert cfg["newhigh"]["default_basis"] == "close"
-    assert cfg["newhigh"]["priority"] == ["hist", "w52", "d60"]
-    assert cfg["newhigh"]["lookback"] == {"d60": 60, "w52": 252}
+    assert cfg["newhigh"]["priority"] == ["hist", "w52", "d120"]
+    # 신고가 3축(ADR 0017): 120일 = 시장 거래일 120, 52주 = 달력 364일
+    assert cfg["newhigh"]["lookback_trading_days"] == {"d120": 120}
+    assert cfg["newhigh"]["lookback_calendar_days"] == {"w52": 364}
+    assert cfg["newhigh"]["min_display_kind"] == "d120"
     assert cfg.series_days == 420
     assert set(cfg) <= set(SECTIONS)
 
@@ -43,7 +46,19 @@ def test_board_yaml_을_읽는다() -> None:
         lambda d: d["proximity"].pop("max_gap_pct"),  # 빠진 키
         lambda d: d.pop("display"),  # 빠진 절
         lambda d: d["newhigh"].__setitem__("default_basis", "open"),
-        lambda d: d["newhigh"].__setitem__("priority", ["w52", "d60"]),
+        lambda d: d["newhigh"].__setitem__("priority", ["w52", "d120"]),
+        # 신고가 창(ADR 0017)
+        lambda d: d["newhigh"].__setitem__("lookback", {"d60": 60}),  # 옛 키는 KR 설정에 없다
+        lambda d: d["newhigh"]["lookback_calendar_days"].__setitem__(
+            "d120", 168
+        ),  # 두 창에 한 라벨
+        lambda d: d["newhigh"]["lookback_trading_days"].__setitem__(
+            "hist", 9999
+        ),  # hist 는 창이 아니다
+        lambda d: d["newhigh"]["lookback_trading_days"].pop("d120"),  # 창이 없는 라벨
+        lambda d: d["newhigh"]["lookback_trading_days"].__setitem__("d120", 0),
+        lambda d: d["newhigh"]["lookback_calendar_days"].__setitem__("w52", "364"),
+        lambda d: d["newhigh"].__setitem__("min_display_kind", "d60"),
     ],
 )
 def test_모르는_키와_빠진_키는_거부한다(mutate) -> None:
@@ -65,8 +80,8 @@ def test_파일에서_읽을_때는_파일_이름을_싣는다(tmp_path: Path) -
 def test_원본을_바꿔도_설정은_그대로다() -> None:
     d = _raw()
     cfg = BoardConfig.from_mapping(d)
-    d["newhigh"]["lookback"]["d60"] = 1
-    assert cfg["newhigh"]["lookback"]["d60"] == 60
+    d["newhigh"]["lookback_trading_days"]["d120"] = 1
+    assert cfg["newhigh"]["lookback_trading_days"]["d120"] == 120
     assert cfg.to_dict() == BoardConfig.from_mapping(copy.deepcopy(_raw())).to_dict()
 
 

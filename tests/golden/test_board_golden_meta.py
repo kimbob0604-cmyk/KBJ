@@ -1,8 +1,13 @@
 """골든 자체를 지킨다 — legacy 커밋 고정·파일 체크섬 고정·비교기가 실제로 다름을 잡는지.
 
-docs/p3_design.md §8.1: 골든은 shim(D-P3-10 ④) **전** legacy 엔진으로 캡처했고, 그 뒤 고치지 않는다
-(바꿀 일은 새 골든 세트 + ADR). shim 뒤에 `make_golden.py` 를 다시 돌리면 legacy 가 kbj 를 부르므로
-자기 자신과 비교하게 된다 — 체크섬이 바뀌면 이 시험이 실패한다.
+docs/p3_design.md §8.1: 골든 입력은 shim(D-P3-10 ④) **전** legacy 엔진으로 캡처했다. shim 뒤에
+`make_golden.py` 를 다시 돌리면 legacy 가 kbj 를 부르므로 자기 자신과 비교하게 된다 — 체크섬이
+바뀌면 이 시험이 실패한다.
+
+2026-10-08 신고가 3축 정의 변경(사용자 요청, ADR 0017)으로 기대 산출을 kbj 엔진으로 **한 번** 다시
+캡처했다(`tests/golden/board/recapture.py` — META `recaptured`). 정의대로인지는 독립 오라클이 지킨다
+(tests/golden/test_board_golden.py `test_골든은_독립_오라클과_같다`,
+tests/property/test_newhigh_oracle.py).
 """
 
 from __future__ import annotations
@@ -19,7 +24,10 @@ LEGACY_COMMIT = "4ea5b7f"
 def test_legacy_커밋이_shim_이전으로_고정돼_있다() -> None:
     meta = load_meta()
     assert meta["legacy_commit"] == LEGACY_COMMIT
-    assert "shim 전" in meta["legacy_engine"]
+    assert "shim 전" in meta["legacy_engine"]  # 입력의 출처
+    rc = meta["recaptured"]
+    assert rc["date"] == "2026-10-08" and rc["adr"] == "docs/adr/0017-newhigh-three-axes.md"
+    assert "사용자 요청" in rc["reason"] and "kbj" in meta["legacy_engine"]
     assert meta["seed"] == 20260826
     assert (meta["n_days"], meta["n_stocks"]) == (30, 300)
     assert meta["compare"] == dict(rel_tol=1e-9, abs_tol=1e-6, ignore=["generated_at"])

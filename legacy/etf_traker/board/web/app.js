@@ -69,7 +69,7 @@
     return '<span class="num ' + c + '">' + (v >= 0 ? '+' : '') + v.toFixed(1) + '%p</span>';
   }
   function label(k) { return (S.data && S.data.labels && S.data.labels[k]) || k || ''; }
-  function tagCls(k) { return k === 'hist' ? 'tag-hist' : (k === 'w52' ? 'tag-52' : 'tag-60'); }
+  function tagCls(k) { return k === 'hist' ? 'tag-hist' : (k === 'w52' ? 'tag-52' : 'tag-60'); }  // 최하위 축(d120 — KBJ ADR 0017)
   function tag(k) {
     return k ? '<span class="tag ' + tagCls(k) + '">' + esc(label(k)) + '</span>' : MUT;
   }

@@ -412,10 +412,10 @@ class TestTriggerLines(unittest.TestCase):
     파일 없음은 '수집되지 않음(단계 실패)'.
     """
     RANK = dict(as_of='2026-09-21', sector_boards=[], stock_boards=[], cross_codes=[], missing=[])
-    NH = dict(as_of='2026-09-21', labels=dict(hist='역사적', w52='52주', d60='60일'), achieved=[
+    NH = dict(as_of='2026-09-21', labels=dict(hist='역사적', w52='52주', d120='120일'), achieved=[
         _nh_row('029460', '케이씨', close='w52', high='w52', chg_pct=5.43, vol_mult=1.3),
         _nh_row('086670', '비엠티', close='hist', high='hist', chg_pct=2.0, vol_mult=0.9),
-        _nh_row('000500', '가온전선', close='hist', high='d60', chg_pct=-0.31, vol_mult=1.0),
+        _nh_row('000500', '가온전선', close='hist', high='d120', chg_pct=-0.31, vol_mult=1.0),
     ])
     LONG = '케이씨 _반도체_ 장비 *대형* 수주 ' + '아' * 80
     TRIG = dict(source='triggers', as_of='2026-09-21',

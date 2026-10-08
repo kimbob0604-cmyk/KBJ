@@ -51,7 +51,8 @@ USER: Final = "kbj-tester"
 PASSWORD: Final = "합성-비밀번호-for-tests-only"
 BASE: Final = "https://testserver"
 LOADED_BY: Final = "test.api"
-HISTORY_FROM: Final = "2021-10-01"
+HISTORY_FROM: Final = "2021-10-01"  # 시장 일봉 첫날(진단 — 화면·notes 에 내세우지 않는다)
+SOURCE_FLOOR: Final = "2010-01-04"  # 원천 바닥(합성)
 
 
 class FakeClock:
@@ -109,7 +110,13 @@ def golden_payloads() -> dict[str, dict[str, Any]]:
 def _fill_board(repos: MemoryRepos, day: date, now: datetime, quality: Quality) -> None:
     g = golden_payloads()
     nh = dict(g["newhigh"])
-    nh["hist_scope"] = {"history_from": HISTORY_FROM, "n_before_listing": 3}
+    nh["hist_scope"] = {
+        "history_from": HISTORY_FROM,
+        "n_before_listing": 3,
+        "n_listing_unknown": 1,
+        "source_floor": SOURCE_FLOOR,
+        "n_since_floor": 5,
+    }
     payloads = {
         "universe_meta": {k: v for k, v in g["universe"].items() if k != "stocks"},
         "newhigh": nh,
@@ -143,7 +150,7 @@ def _fill_board(repos: MemoryRepos, day: date, now: datetime, quality: Quality) 
                         date=day,
                         basis=basis,  # pyright: ignore[reportArgumentType]
                         kind=lab,
-                        rank=("hist", "w52", "d60").index(lab),
+                        rank=("hist", "w52", "d120").index(lab),
                         source="kis",
                         quality=quality,
                     )

@@ -12,8 +12,8 @@ import unittest
 from board.engine import build as B
 from board.web import render as R
 
-SHOW = {'hist', 'w52', 'd60'}
-RANK = {'hist': 0, 'w52': 1, 'd60': 2, 'd20': 3}
+SHOW = {'hist', 'w52', 'd120'}
+RANK = {'hist': 0, 'w52': 1, 'd120': 2, 'd20': 3}
 
 
 def row(name, hi=None, cl=None, turnover=0.0, label=...):
@@ -31,7 +31,7 @@ def row(name, hi=None, cl=None, turnover=0.0, label=...):
 class BasisCell(unittest.TestCase):
     def setUp(self):
         self._saved = dict(R.LABEL_KO)
-        R.LABEL_KO.update(hist='역사적', w52='52주', d60='60일')
+        R.LABEL_KO.update(hist='역사적', w52='52주', d120='120일')
 
     def tearDown(self):
         R.LABEL_KO.clear()

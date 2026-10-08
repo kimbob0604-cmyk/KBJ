@@ -186,7 +186,7 @@ def build(newhigh, sectors, market, events, universe, meta,
           draft=None, rankings=None, news=None, narratives=None, xlsx=None,
           stockflows=None, triggers=None):
     """화면이 받는 한 덩어리. `render.build` 와 같은 입력을 받는다."""
-    labels = newhigh.get('labels') or {'hist': '역사적', 'w52': '52주', 'd60': '60일'}
+    labels = newhigh.get('labels') or {'hist': '역사적', 'w52': '52주', 'd120': '120일'}
     evs = (events or {}).get('events') or []
     tmeta = {t['theme']: t for t in (sectors or {}).get('themes') or []}
     rk = rankings or {}
@@ -212,7 +212,7 @@ def build(newhigh, sectors, market, events, universe, meta,
         close_confirmed=newhigh.get('close_confirmed'),
         close_source=newhigh.get('close_source'),
         labels=labels,
-        displayed=newhigh.get('displayed') or ['hist', 'w52', 'd60'],
+        displayed=newhigh.get('displayed') or ['hist', 'w52', 'd120'],
         # 알약의 수도 기준별로 나뉜다. `counts` 는 기본 기준의 수라 같은 이유로
         # 짐작하면 안 된다 — 없을 때만 폴백으로 쓴다(옛 state).
         counts_high=newhigh.get('counts_high') or newhigh.get('counts') or {},

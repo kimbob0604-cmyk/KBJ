@@ -9,7 +9,6 @@
 
 from __future__ import annotations
 
-from datetime import date
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -64,9 +63,10 @@ class BoardNewhigh(_Payload):
     n_hist_not_evaluated: int | None = None
     achieved: list[dict[str, Any]] = Field(default_factory=list)
     proximity: list[dict[str, Any]] = Field(default_factory=list)
-    # 역사적 신고가 계산 범위(R8·D-P3-11 — KRX 백필 첫날). 이 날보다 앞서 상장한 종목은 hist 없음
+    # 역사적 신고가(상장 이후 전체 — ADR 0017) 계산 범위 진단. 화면은 날짜를 내세우지 않고
+    # hist_notes(보류 수·원천 바닥 기준 수 — 품질 메모)만 적는다
     hist_scope: dict[str, Any] | None = None
-    history_from: date | None = None
+    hist_notes: list[str] = Field(default_factory=list)
     flows: dict[str, RowFlows] = Field(default_factory=dict)  # code → 그날 외국인·기관
     filter: BoardFilter | None = None
 

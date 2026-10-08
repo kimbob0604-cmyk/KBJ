@@ -40,14 +40,14 @@ CREATE TABLE IF NOT EXISTS prv_board.alltime (
 );
 
 -- ── 일자별 신고가 라벨 ('신규 / 이어감' 판정이 전일 행을 읽는다 — ET db.py label) ─────────────
--- basis: close(종가 기준 — 기본)·high(고가 기준). kind: hist·w52·d60(KR), w52_low(US 보드).
--- rank: 0=hist 1=w52 2=d60 — 작을수록 상위(ET 그대로).
+-- basis: close(종가 기준 — 기본)·high(고가 기준). kind: hist·w52·d120(KR — 신고가 3축, ADR 0017), w52_low(US 보드).
+-- rank: 0=hist 1=w52 2=d120 — 작을수록 상위(config/board.yaml newhigh.priority).
 CREATE TABLE IF NOT EXISTS prv_board.label (
     market       text NOT NULL CHECK (market IN ('KR', 'US')),
     code         text NOT NULL CHECK (code <> '' AND code !~ '\s'),
     trade_date   date NOT NULL,
     basis        text NOT NULL CHECK (basis IN ('close', 'high')),
-    kind         text NOT NULL CHECK (kind IN ('hist', 'w52', 'd60', 'w52_low')),
+    kind         text NOT NULL CHECK (kind IN ('hist', 'w52', 'd120', 'w52_low')),
     rank         smallint NOT NULL CHECK (rank >= 0),
     source       text NOT NULL CHECK (source <> ''),
     quality      text NOT NULL CHECK (quality IN ('ok', 'stale', 'estimated', 'invalid')),
@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS prv_board.stock_day (
     turnover              numeric CHECK (turnover IS NULL OR turnover >= 0),
     turnover_is_estimate  boolean NOT NULL DEFAULT false,
     mktcap                numeric CHECK (mktcap IS NULL OR mktcap >= 0),
-    label                 text CHECK (label IN ('hist', 'w52', 'd60', 'w52_low')),
+    label                 text CHECK (label IN ('hist', 'w52', 'd120', 'w52_low')),
     near_kind             text,
     near_gap              numeric,
     status                text,

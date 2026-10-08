@@ -10,7 +10,7 @@
   "data": {
     "as_of": "2026-09-15",
     "source": "kis",
-    "generated_at": "2026-10-08T03:29:01+09:00",
+    "generated_at": "2026-10-07T00:00:00+09:00",
     "taxonomy_layer1": "board48",
     "sectors": [
       {
@@ -27,8 +27,8 @@
           "total": 25,
           "unknown": 0
         },
-        "n_newhigh": 4,
-        "n_near": 6,
+        "n_newhigh": 3,
+        "n_near": 5,
         "turnover": 48761.9,
         "turnover_is_partial": false,
         "turnover_mult": 1.29,
@@ -81,7 +81,7 @@
           "unknown": 0
         },
         "n_newhigh": 2,
-        "n_near": 6,
+        "n_near": 4,
         "turnover": 33578.2,
         "turnover_is_partial": false,
         "turnover_mult": 0.71,
@@ -133,7 +133,7 @@
           "unknown": 0
         },
         "n_newhigh": 1,
-        "n_near": 7,
+        "n_near": 4,
         "turnover": 30391.8,
         "turnover_is_partial": false,
         "turnover_mult": 0.95,
@@ -185,7 +185,7 @@
           "total": 4,
           "unknown": 0
         },
-        "n_newhigh": 1,
+        "n_newhigh": 0,
         "n_near": 1,
         "turnover": 5267.0,
         "turnover_is_partial": false,
@@ -217,8 +217,8 @@
           "total": 25,
           "unknown": 0
         },
-        "n_newhigh": 4,
-        "n_near": 8,
+        "n_newhigh": 3,
+        "n_near": 7,
         "turnover": 40485.5,
         "turnover_is_partial": false,
         "turnover_mult": 1.16,
@@ -323,7 +323,7 @@
           "unknown": 0
         },
         "n_newhigh": 5,
-        "n_near": 7,
+        "n_near": 5,
         "turnover": 41978.4,
         "turnover_is_partial": false,
         "turnover_mult": 1.05,
@@ -376,7 +376,7 @@
           "unknown": 0
         },
         "n_newhigh": 1,
-        "n_near": 4,
+        "n_near": 3,
         "turnover": 16750.0,
         "turnover_is_partial": false,
         "turnover_mult": 0.82,
@@ -480,8 +480,8 @@
           "total": 25,
           "unknown": 0
         },
-        "n_newhigh": 2,
-        "n_near": 6,
+        "n_newhigh": 1,
+        "n_near": 5,
         "turnover": 42135.1,
         "turnover_is_partial": false,
         "turnover_mult": 1.06,
@@ -534,7 +534,7 @@
           "unknown": 0
         },
         "n_newhigh": 4,
-        "n_near": 6,
+        "n_near": 5,
         "turnover": 28773.7,
         "turnover_is_partial": false,
         "turnover_mult": 1.04,
@@ -587,7 +587,7 @@
           "unknown": 0
         },
         "n_newhigh": 1,
-        "n_near": 9,
+        "n_near": 7,
         "turnover": 23287.6,
         "turnover_is_partial": false,
         "turnover_mult": 0.91,
@@ -639,8 +639,8 @@
           "total": 24,
           "unknown": 0
         },
-        "n_newhigh": 5,
-        "n_near": 7,
+        "n_newhigh": 3,
+        "n_near": 5,
         "turnover": 20301.9,
         "turnover_is_partial": false,
         "turnover_mult": 1.06,
@@ -693,7 +693,7 @@
           "total": 14,
           "unknown": 0
         },
-        "n_newhigh": 2,
+        "n_newhigh": 0,
         "n_near": 3,
         "turnover": 9085.1,
         "turnover_is_partial": false,
@@ -727,9 +727,7 @@
         "stages_reacted": [
           "기타"
         ],
-        "stages_newhigh": [
-          "기타"
-        ]
+        "stages_newhigh": []
       },
       {
         "kind": "theme",
@@ -859,7 +857,7 @@
           "unknown": 0
         },
         "n_newhigh": 0,
-        "n_near": 5,
+        "n_near": 3,
         "turnover": 13358.4,
         "turnover_is_partial": false,
         "turnover_mult": 1.09,
@@ -917,7 +915,7 @@
           "unknown": 0
         },
         "n_newhigh": 1,
-        "n_near": 4,
+        "n_near": 3,
         "turnover": 16966.7,
         "turnover_is_partial": false,
         "turnover_mult": 1.28,
@@ -1045,7 +1043,7 @@
             "ret_250d": 24.44,
             "turnover": 1157.1,
             "mktcap": 93009.7,
-            "newhigh": "d60",
+            "newhigh": null,
             "stage": "기타"
           },
           {
@@ -1069,7 +1067,7 @@
             "ret_250d": 9.92,
             "turnover": 993.4,
             "mktcap": 9005.2,
-            "newhigh": "d60",
+            "newhigh": null,
             "stage": "기타"
           },
           {
@@ -1306,7 +1304,7 @@
             "ret_250d": -65.49,
             "turnover": 91.3388744,
             "mktcap": 6037.2,
-            "newhigh": "d60",
+            "newhigh": "d120",
             "stage": "기타"
           },
           {
@@ -2424,7 +2422,7 @@
             "ret_250d": 24.44,
             "turnover": 1157.1,
             "mktcap": 93009.7,
-            "newhigh": "d60",
+            "newhigh": null,
             "stage": "기타"
           },
           {
@@ -2742,7 +2740,7 @@
             "ret_250d": 19.39,
             "turnover": 603.5,
             "mktcap": 9543.4,
-            "newhigh": "d60",
+            "newhigh": "d120",
             "stage": null
           },
           {
@@ -3189,7 +3187,7 @@
             "ret_250d": 47.62,
             "turnover": 1470.3,
             "mktcap": 4790.1,
-            "newhigh": "d60",
+            "newhigh": null,
             "stage": null
           },
           {
@@ -3459,7 +3457,7 @@
             "ret_250d": -16.51,
             "turnover": 997.4,
             "mktcap": 4682.4,
-            "newhigh": "d60",
+            "newhigh": "d120",
             "stage": null
           },
           {
