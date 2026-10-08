@@ -2,7 +2,7 @@
 
 1 형식(모르는 키·이름) · 2 cron·tz·when·as_of · 3 의존 존재·비순환 · 4 같은 데이터셋은 한 곳만 ·
 5 카탈로그·등급↔스키마 · 6 enabled ⇒ 처리기 import, external ⇒ 꺼짐 · 7 U2 · 8 inventory (c) 전부 ·
-9 예산 · 10 P2 에 켜진 작업 목록.
+9 예산 · 10 단계별 켜진 작업 목록(P2 셋 + P3 아홉 — docs/p3_design.md §0.4).
 """
 
 from __future__ import annotations
@@ -15,6 +15,7 @@ from typing import Any
 import pytest
 import yaml
 
+from kbj.config.markets import load_markets
 from kbj.data.catalog import all_datasets, claimable
 from kbj.data.limits import load_limits
 from kbj.services.notifier.policy import load_notify_config
@@ -36,6 +37,19 @@ BUDGETS = budgets_from_limits(load_limits())
 POLICIES = {k: p.dedup for k, p in load_notify_config().kinds.items()}
 TABLES = migration_tables()
 P2_ENABLED = {"ops.nightly", "filings.corp_code", "ops.watchdog"}
+P3_ENABLED = {
+    "krx.daily",
+    "market.backfill",
+    "market.close_collect",
+    "flows.intraday",
+    "market.intraday",
+    "board.daily",
+    "board.confirm",
+    "etf.collect",
+    "public.export",
+}
+# 단계별 켜진 작업(웨이브 3 묶음 S 가 P3 를 켰다). 새 단계가 작업을 켜면 이 표에 한 줄 더한다.
+ENABLED_BY_PHASE = {"P2": P2_ENABLED, "P3": P3_ENABLED}
 
 
 def raw() -> dict[str, Any]:
@@ -87,10 +101,15 @@ def test_cli_validate_exit_codes(tmp_path: Path, capsys: pytest.CaptureFixture[s
     assert "gex.krx_derivatives" in out and "krx.daily" in out
 
 
-def test_p2_enables_only_three_jobs_and_core_services() -> None:  # §6.6-10, §6.9
-    assert {j.name for j in REG.enabled_jobs()} == P2_ENABLED
+def test_enabled_jobs_by_phase_and_core_services() -> None:  # §6.6-10, §6.9, P3 §0.4
+    enabled = {j.name for j in REG.enabled_jobs()}
+    assert enabled == set().union(*ENABLED_BY_PHASE.values())
+    for phase, names in ENABLED_BY_PHASE.items():
+        assert {j.name for j in REG.enabled_jobs() if j.phase == phase} == names, phase
     assert {s.name for s in REG.services if s.enabled} == {"auth", "notifier", "scheduler"}
     assert all(not j.enabled for j in REG.jobs if j.external)
+    # P4 이후 단계는 아직 하나도 켜지 않는다(처리기 없음)
+    assert not [j.name for j in REG.enabled_jobs() if j.phase not in ENABLED_BY_PHASE]
 
 
 def test_every_claimable_catalog_dataset_has_exactly_one_owner() -> None:
@@ -309,3 +328,104 @@ def test_defaults_fill_jobs() -> None:
     assert reg.by_name("board.daily").deadline_min == 120
     assert reg.by_name("board.daily").schedule.tz == "Asia/Seoul"
     assert reg.by_name("us.eod").schedule.tz == "America/New_York"
+
+
+# ── P3 작업 행(docs/p3_design.md §0.4·§3.2 — 웨이브 1 묶음 M: 확정하되 꺼 둔다) ──────────────────
+
+P3_JOBS = {
+    "krx.daily": "kbj.services.collectors.krx_daily:run",
+    "market.backfill": "kbj.services.collectors.krx_daily:backfill",
+    "market.close_collect": "kbj.services.collectors.market_close:run",
+    "flows.intraday": "kbj.services.collectors.market_intraday:flows",
+    "market.intraday": "kbj.services.collectors.market_intraday:market",
+    "board.daily": "kbj.services.engine.board:daily",
+    "board.confirm": "kbj.services.engine.board:confirm",
+    "etf.collect": "kbj.services.collectors.etf_holdings:run",
+    "public.export": "kbj.services.public_export:run",
+}
+MOVED_TO_P5 = {"brief.closing", "flows.report", "us.universe", "us.eod", "market.fsc_daily"}
+
+
+def test_p3_jobs_are_registered_and_on_after_wave_3() -> None:
+    """웨이브 3(묶음 S)이 처리기를 붙인 뒤 enabled 를 뒤집었다 — owner 는 설계 그대로."""
+    p3 = {j.name: j for j in REG.jobs if j.phase == "P3"}
+    assert set(p3) == set(P3_JOBS) == P3_ENABLED
+    for name, owner in P3_JOBS.items():
+        assert p3[name].owner == owner, name
+        assert p3[name].enabled, name
+    assert {j.name for j in REG.jobs if j.phase == "P5"} >= MOVED_TO_P5
+    assert not any(j.enabled for j in REG.jobs if j.name in MOVED_TO_P5)
+
+
+def test_kis_venues_match_markets_config() -> None:
+    """D-P3-9 — KIS 데이터셋의 collects.venues 는 config/markets.yaml kis.venues 와 같다.
+
+    비우면 실행기가 카탈로그의 KRX·NXT·TOTAL 키를 모두 잡고 처리기는 부르지 않은 키를
+    done 으로 돌려준다(묶음 C 요청 — 선점 장부에 '받지 않은 것을 done' 으로 남기지 않는다).
+    """
+    want = tuple(str(v) for v in load_markets().kis.venues)
+    checked = 0
+    for j in REG.jobs:
+        if not j.enabled:
+            continue
+        for c in j.collects:
+            spec = CATALOG[c.dataset_id]
+            if c.source != "KIS" or not spec.venues:
+                continue
+            checked += 1
+            assert tuple(v.value for v in c.venues) == want, (j.name, c.dataset_id)
+    assert checked == 7  # close_collect 5 + flows.intraday 2
+
+
+def test_p3_writes_and_collects_follow_the_design() -> None:
+    w = {j.name: set(j.writes) for j in REG.jobs}
+    board = {"prv_board.alltime", "prv_board.label", "prv_board.split_check",
+             "prv_board.stock_day", "prv_board.artifact"}  # fmt: skip
+    assert w["board.daily"] == board == w["board.confirm"]
+    assert {"prv_market.stock_snapshot", "prv_etf.meta", "prv_market.eod_reconcile"} <= w[
+        "krx.daily"
+    ]
+    # krx.daily 끝 단계가 검산 ③·분할 감지를 기록한다
+    # (etf_holdings.record_flow_checks — 묶음 E3 요청, 묶음 S 연결)
+    assert {"prv_etf.split_event", "prv_flows.ledger_check"} <= w["krx.daily"]
+    assert {"prv_flows.investor_intraday", "prv_market.turnover_rank_intraday"} <= w[
+        "flows.intraday"
+    ]
+    # etf.collect 는 메타 분류(운용사·테마·유형)도 쓴다(묶음 E3 요청)
+    assert w["etf.collect"] == {
+        "prv_etf.fund",
+        "prv_etf.holding",
+        "prv_etf.change_log",
+        "prv_etf.meta",
+    }
+    # close_collect 는 당일 KIS 일봉(board 고가 기준 OHLC)도 쓴다(묶음 C 요청)
+    assert {"prv_flows.investor_revision", "prv_market.daily_bar"} <= w["market.close_collect"]
+    assert w["public.export"] == set()  # 파일만 쓴다 — 표 쓰기·수집 없음
+    for name in P3_JOBS:  # 켤 때 표가 있어야 한다(등록부 검증이 enabled 작업에만 보는 것을 미리)
+        assert w[name] <= TABLES, (name, w[name] - TABLES)
+    collects = {j.name: {c.dataset_id for c in j.collects} for j in REG.jobs}
+    assert collects["market.intraday"] == {"KIS:index_quote_intraday", "KIS:sector_quote_intraday"}
+    assert "KIS:etf_investor_daily" in collects["market.close_collect"]
+    assert collects["public.export"] == set() and collects["board.confirm"] == set()
+
+
+def test_p3_intraday_retry_fits_the_slot() -> None:
+    """D-P3-14 — 슬롯 안 재시도(20·40초), 마감 9분 → 다음 슬롯(10분) 전에 끝난다."""
+    for name in ("flows.intraday", "market.intraday"):
+        j = REG.by_name(name)
+        assert j.schedule.equity is not None and j.schedule.equity.every_min == 10
+        assert j.retry.max == 2 and j.retry.backoff_s == (20, 40) and j.deadline_min == 9
+    confirm = REG.by_name("board.confirm")
+    assert confirm.schedule.cron == "40 8 * * 1-5" and confirm.run_as_of() == "prev_trading_day"
+    assert [(d.job, d.hard) for d in confirm.depends_on] == [("krx.daily", True)]
+    assert REG.by_name("etf.collect").notify is None  # ETF 리포트 발송은 P5
+
+
+def test_p3_handlers_import_and_a_missing_one_is_caught() -> None:
+    """켜진 P3 작업은 처리기를 import 할 수 있어야 하고(실제 등록부 통과), 처리기가 없는
+    owner 로 바꾸면 검증이 잡는다(웨이브 3 의 import 확인과 같은 겹)."""
+    assert errors_of(raw()) == []
+    errs = mutated(
+        lambda d: job(d, "market.intraday").update(owner="kbj.services.collectors.nope:x")
+    )
+    assert any("market.intraday" in e and "처리기를 부를 수 없다" in e for e in errs)

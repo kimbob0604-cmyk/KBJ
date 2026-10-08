@@ -1,0 +1,615 @@
+/* 부품 — 상단 바·띠·탭·미니맵·페이지·패널·표·막대·품질 표시·로그인 폼.
+ * 미리보기(docs/design/preview_synthetic.html)의 구성을 KBJ 가 직접 다시 만든 것. */
+
+/* ── 상단 바 ─────────────────────────────────────────────── */
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding-block: 12px 10px;
+  border-bottom: 1px solid var(--line);
+}
+.brand {
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  font-size: 15px;
+  margin: 0;
+}
+.brand small {
+  color: var(--dim);
+  letter-spacing: 0.05em;
+  font-weight: 400;
+  margin-left: 8px;
+  font-size: 11px;
+}
+.clock {
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+.badge {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  border: 1px dashed var(--dim);
+  color: var(--dim);
+  padding: 2px 6px;
+  font-family: var(--kr);
+}
+
+.seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--line);
+}
+.seg button {
+  font: inherit;
+  font-family: var(--kr);
+  font-size: 11px;
+  background: transparent;
+  color: var(--dim);
+  border: 0;
+  padding: 5px 9px;
+  cursor: pointer;
+}
+.seg button[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--bg);
+}
+.btn {
+  font: inherit;
+  font-family: var(--kr);
+  font-size: 11px;
+  background: transparent;
+  color: var(--dim);
+  border: 1px solid var(--line);
+  padding: 5px 9px;
+  cursor: pointer;
+}
+.btn:hover {
+  color: var(--fg);
+}
+
+/* ── 상단 띠 ─────────────────────────────────────────────── */
+.ribbon {
+  display: flex;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--line);
+  scrollbar-width: thin;
+  min-height: 46px;
+}
+.chip {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border-right: 1px solid var(--line);
+  display: grid;
+  gap: 2px;
+  min-width: 124px;
+}
+.chip .k {
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: 0.04em;
+  font-family: var(--kr);
+}
+.chip .v {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.chip .t {
+  font-size: 9.5px;
+  color: var(--dim);
+  font-family: var(--kr);
+}
+.chip.locked .v,
+.chip.pending .v {
+  color: var(--dim);
+  font-family: var(--kr);
+  font-weight: 400;
+  font-size: 11px;
+}
+.chip.locked {
+  border-bottom: 2px solid var(--lock);
+}
+
+/* ── 탭·미니맵 ───────────────────────────────────────────── */
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  padding-block: 12px;
+}
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.tabs button {
+  font: inherit;
+  font-family: var(--kr);
+  font-size: 12px;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--dim);
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.tabs button.todo {
+  border-style: dashed;
+}
+.tabs button[aria-current='page'] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.minimap {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.minimap i {
+  width: 14px;
+  height: 6px;
+  background: var(--line);
+  display: block;
+}
+.minimap i.on {
+  background: var(--accent);
+}
+.minimap i.todo {
+  background: transparent;
+  border: 1px dashed var(--line);
+}
+.minimap i.todo.on {
+  border-color: var(--accent);
+}
+.hint {
+  color: var(--dim);
+  font-size: 11px;
+  font-family: var(--kr);
+}
+
+/* ── 페이지(좌우 스와이프) ───────────────────────────────── */
+.pages {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  align-items: flex-start;
+  scroll-behavior: smooth;
+}
+.pages::-webkit-scrollbar {
+  display: none;
+}
+.page {
+  /* 페이지 안의 절대 위치 요소(.sr-only 제목 등)를 이 페이지에 가둔다 — 없으면 그 요소의 기준이 body 가 되어
+     .pages 의 가로 스크롤 밖으로 빠져나가 문서 전체가 옆으로 밀린다(P3 데모 점검: 문서 폭 15,534px) */
+  position: relative;
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  padding-inline: 1px;
+  min-width: 0;
+}
+.page > h2 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-family: var(--kr);
+  color: var(--dim);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pages {
+    scroll-behavior: auto;
+  }
+}
+
+/* ── 패널 ────────────────────────────────────────────────── */
+.panel {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  min-width: 0;
+  position: relative;
+}
+.panel h3 {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-family: var(--kr);
+}
+.panel h3 .src {
+  color: var(--dim);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  font-family: var(--mono);
+  font-size: 10px;
+}
+.panel.stale h3 {
+  color: var(--warn);
+}
+.panel .body {
+  padding: 10px 12px;
+}
+.def {
+  color: var(--dim);
+  font-size: 10.5px;
+  font-family: var(--kr);
+  padding: 0 12px 10px;
+  line-height: 1.5;
+  margin: 0;
+}
+.panel .msg {
+  color: var(--dim);
+  font-family: var(--kr);
+  font-size: 12px;
+  padding: 14px 12px;
+  margin: 0;
+}
+.panel .msg.err {
+  color: var(--warn);
+}
+.lockmsg {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: var(--dim);
+  font-family: var(--kr);
+  font-size: 12px;
+  padding: 28px 12px;
+  min-height: 120px;
+  background: repeating-linear-gradient(-45deg, transparent 0 8px, var(--sel) 8px 9px);
+}
+.lockmsg b {
+  color: var(--fg);
+  display: block;
+  margin-bottom: 4px;
+  letter-spacing: 0.1em;
+}
+.pending-box {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: var(--dim);
+  font-family: var(--kr);
+  font-size: 12px;
+  padding: 36px 12px;
+  border: 1px dashed var(--line);
+  margin: 10px 12px 12px;
+}
+.pending-box b {
+  color: var(--fg);
+  display: block;
+  margin-bottom: 4px;
+  letter-spacing: 0.1em;
+}
+
+/* ── 지수 타일·키값 ──────────────────────────────────────── */
+.idx {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+.tile {
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+  display: grid;
+  gap: 4px;
+}
+.tile .n {
+  font-size: 11px;
+  color: var(--dim);
+  font-family: var(--kr);
+}
+.tile .p {
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.tile svg {
+  width: 100%;
+  height: 34px;
+}
+.kv {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin: 0 0 10px;
+}
+.kv div {
+  border: 1px solid var(--line);
+  padding: 6px 8px;
+  display: grid;
+  gap: 2px;
+}
+.kv dt {
+  color: var(--dim);
+  font-size: 10px;
+  font-family: var(--kr);
+}
+.kv dd {
+  margin: 0;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 표 ──────────────────────────────────────────────────── */
+.tbl {
+  overflow: auto;
+  max-height: 460px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+caption {
+  text-align: left;
+  color: var(--dim);
+  font-size: 11px;
+  font-family: var(--kr);
+  padding: 0 0 6px;
+}
+th,
+td {
+  padding: 5px 6px;
+  text-align: right;
+  border-bottom: 1px dotted var(--line);
+  white-space: nowrap;
+}
+th {
+  color: var(--dim);
+  font-weight: 400;
+  font-size: 11px;
+  font-family: var(--kr);
+  position: sticky;
+  top: 0;
+  background: var(--panel);
+}
+th[aria-sort] button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+td:first-child,
+th:first-child,
+td.l,
+th.l {
+  text-align: left;
+}
+td.nm {
+  font-family: var(--kr);
+}
+td.nm small {
+  color: var(--dim);
+  font-family: var(--mono);
+  margin-left: 4px;
+}
+tbody tr.sel {
+  cursor: pointer;
+}
+tbody tr:hover,
+tbody tr[aria-selected='true'] {
+  background: var(--sel);
+}
+.tag {
+  font-size: 10px;
+  border: 1px solid currentColor;
+  padding: 0 4px;
+  margin-left: 3px;
+  font-family: var(--kr);
+}
+.more {
+  margin: 8px 0 0;
+}
+
+/* ── 필터 줄 ─────────────────────────────────────────────── */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.filters label {
+  color: var(--dim);
+  font-family: var(--kr);
+  font-size: 11px;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+select,
+input[type='text'],
+input[type='password'] {
+  font: inherit;
+  font-size: 11px;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  padding: 4px 6px;
+}
+.count {
+  color: var(--dim);
+  font-size: 11px;
+  font-family: var(--kr);
+}
+
+/* ── 히트맵·막대 ─────────────────────────────────────────── */
+.heat {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 3px;
+}
+.cell {
+  padding: 8px 6px;
+  font-family: var(--kr);
+  font-size: 11px;
+  display: grid;
+  gap: 2px;
+  color: var(--fg);
+  border: 1px solid var(--line);
+}
+.cell b {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 12px;
+}
+.cell span {
+  font-family: var(--mono);
+  font-size: 10px;
+}
+.levels {
+  display: grid;
+  gap: 8px;
+}
+.lvl {
+  display: grid;
+  grid-template-columns: 120px 1fr 80px;
+  gap: 8px;
+  align-items: center;
+  font-family: var(--kr);
+  font-size: 12px;
+}
+.lvl > span:last-child {
+  text-align: right;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.bar {
+  height: 8px;
+  background: var(--line);
+  position: relative;
+}
+.bar span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--accent);
+}
+.bar.c span {
+  background: var(--up);
+}
+.bar.c span.neg {
+  background: var(--down);
+}
+.bar.c::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  bottom: -2px;
+  width: 1px;
+  background: var(--dim);
+}
+.check {
+  font-size: 11px;
+  font-family: var(--kr);
+  border: 1px dashed var(--line);
+  padding: 6px 8px;
+  margin-top: 8px;
+  color: var(--dim);
+}
+.check b {
+  color: var(--fg);
+  font-family: var(--mono);
+  font-weight: 500;
+}
+.check.fail b {
+  color: var(--warn);
+}
+.feed > div {
+  display: grid;
+  grid-template-columns: 46px 1fr auto;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px dotted var(--line);
+  font-family: var(--kr);
+  font-size: 12px;
+}
+.feed time {
+  color: var(--dim);
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 품질 표시(§6.7) ─────────────────────────────────────── */
+.q-est {
+  text-decoration: underline dotted var(--est);
+  text-underline-offset: 3px;
+}
+.q-badge {
+  font-size: 9.5px;
+  font-family: var(--kr);
+  border: 1px dashed var(--est);
+  color: var(--dim);
+  padding: 0 3px;
+  margin-left: 4px;
+  vertical-align: 1px;
+}
+.q-badge.stale {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+.q-stale {
+  color: var(--dim);
+}
+
+/* ── 로그인 화면(로그인 빌드) ─────────────────────────────── */
+.login {
+  max-width: 360px;
+  margin: 12vh auto 0;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+.login h1 {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.login form {
+  display: grid;
+  gap: 10px;
+  padding: 14px 12px;
+}
+.login label {
+  display: grid;
+  gap: 4px;
+  color: var(--dim);
+  font-family: var(--kr);
+  font-size: 11px;
+}
+.login input {
+  font-size: 13px;
+  padding: 6px 8px;
+}
+.login button[type='submit'] {
+  font: inherit;
+  font-family: var(--kr);
+  background: var(--accent);
+  color: var(--bg);
+  border: 0;
+  padding: 7px 10px;
+  cursor: pointer;
+}
+.login .msg {
+  color: var(--warn);
+  font-family: var(--kr);
+  font-size: 12px;
+  min-height: 1em;
+  margin: 0;
+}

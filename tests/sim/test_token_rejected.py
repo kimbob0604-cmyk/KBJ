@@ -104,12 +104,16 @@ def test_only_auth_issues(rejected: SimDay) -> None:
 def test_failed_slots_are_recorded_and_keys_not_duplicated(rejected: SimDay) -> None:
     final = rejected.final_runs()
     assert final[("flows.intraday", "2026-10-06T13:50")].status == "ok"
-    for slot in ("14:00", "14:10", "14:20"):  # 14:20 은 거절한 토큰을 다시 쓰지 않아 실패
+    # 재시도 0 인 rules.intraday 는 14:00 한 번 거절로 실패. flows.intraday 는 P3 부터 슬롯 안
+    # 재시도(20·40초 — D-P3-14)라 auth 가 14:00:30 에 다시 발급한 토큰으로 같은 슬롯에 회복한다
+    assert final[("rules.intraday", "2026-10-06T14:00")].status == "failed"
+    assert final[("flows.intraday", "2026-10-06T14:00")].status == "ok"
+    for slot in ("14:10", "14:20"):  # 14:20 은 거절한 토큰을 다시 쓰지 않아 실패
         assert final[("flows.intraday", f"2026-10-06T{slot}")].status == "failed", slot
     assert max(rejected.done_keys().values()) == 1
     assert rejected.claims.refused == []
     alerts = {r.subject for r in rejected.notify_log.of("ops.job_failed")}
-    assert "flows.intraday:2026-10-06T14:00" in alerts
+    assert {"rules.intraday:2026-10-06T14:00", "flows.intraday:2026-10-06T14:10"} <= alerts
 
 
 def test_stale_token_report_does_not_mask_current_rejection(

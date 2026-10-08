@@ -9,16 +9,21 @@ requires-python = ">=3.12,<3.13"
 # - exchange-calendars: 거래 캘린더 XKRX·XNYS(kbj.core.calendar — 지연 import). pandas 는 이 의존성으로
 #   들어오고 단일 lock 이 2.3.3 으로 묶는다(legacy 그룹 `pandas<3.0`, conflict_map §3.3)
 # - defusedxml: 공공데이터포털·DART corpCode.xml XML 파싱(외부 XML 은 표준 xml 로 열지 않는다)
-# - FastAPI·uvicorn 은 넣지 않는다 — 로그인 API 와 웹훅 서버는 P3(메인 결정 D4, R8). P2 웹훅은 순수 처리 함수
+# P3(docs/p3_design.md §1.1·D-P3-3, 묶음 M — 웨이브 2 가 쓸 의존성을 한 번에):
+# - fastapi·uvicorn(extras 없음): 로그인 API·텔레그램 웹훅 수신·로그인 SPA 정적 파일을 한 프로세스로(compose
+#   서비스 api). starlette 은 fastapi 가 끌어온다. 비밀번호 해시는 표준 라이브러리 hashlib.scrypt(새 의존성 없음),
+#   DB 풀은 쓰지 않는다(psycopg pool 은 새 의존성 — §5.1). 프런트(web/)는 npm 쪽(묶음 W)
 dependencies = [
     "defusedxml>=0.7.1",
     "exchange-calendars>=4.13.2",
+    "fastapi>=0.115",
     "httpx>=0.28",
     "psycopg[binary]>=3.3.6",
     "pydantic>=2.13",
     "pydantic-settings>=2.15",
     "pyyaml>=6.0",
     "redis>=8.1.0",
+    "uvicorn>=0.30",
 ]
 
 [dependency-groups]
@@ -120,6 +125,7 @@ markers = [
     "docker: integration 의 옛 이름 — 둘 중 하나가 붙으면 둘 다 붙는다(tests/conftest.py)",
     "network: 외부 API 를 실제로 부르는 시험 (CI 기본 제외 — 키가 있는 운영 환경에서만)",
     "sim: 하루 운영 시뮬레이션(가짜 시계·가짜 서버 — tests/sim)",
+    "slow: 오래 걸리는 시뮬레이션(장중 하루 판 — CI sim 잡은 -m \"sim and not slow\", P3 묶음 S)",
 ]
 
 # ── import-linter — 구조로 막는 의존 규칙 (DATA_TIERS §3, ADR 0002·0003) ─────────────────────
@@ -208,3 +214,50 @@ name = "⑦ 저장소(kbj.store)는 어댑터·서비스·엔진을 모른다"
 type = "forbidden"
 source_modules = ["kbj.store"]
 forbidden_modules = ["kbj.data", "kbj.services", "kbj.engines"]
+
+# ── P3 묶음 S — 공개/로그인·순수 계산 경계(docs/p3_design.md §2·§7.4·D-P3-3·D-P3-5). 소스 모듈이 다 생긴
+# 웨이브 3 에 넣었다(P2 R14·P3 R20). 셋 다 간접 import 까지 막는다(기본값) ──
+# ⑧ 공개 내보내기는 공개 쪽만 — 로그인 원천 어댑터·엔진(prv_* 기반 계산)·API·수집기·SQL 저장소(prv_*)를
+# 끌어오지 않는다. 쓰는 것은 scheduler.handlers(JobContext)·store.db(connect)·config·core 뿐(묶음 X).
+# SQL 문자열의 스키마가 pub_ 뿐인지는 tests/unit/public_export/test_sql_schemas.py 가 따로 본다
+[[tool.importlinter.contracts]]
+name = "⑧ 공개 내보내기(kbj.services.public_export)는 로그인 등급 코드를 import 하지 않는다"
+type = "forbidden"
+source_modules = ["kbj.services.public_export"]
+forbidden_modules = [
+    "kbj.data.private",
+    "kbj.engines",
+    "kbj.services.api",
+    "kbj.services.collectors",
+    "kbj.services.engine",
+    "kbj.store.repos",
+]
+
+# ⑨ 엔진은 순수 계산 — 입력(행 자료형)만으로 결정한다(골든·속성 시험의 전제). 어댑터·서비스·저장소·
+# 네트워크/DB/웹 라이브러리를 모른다. kbj.core(rows·calendar·quality·time)와 다른 엔진(예: market.breadth 가
+# board.aggregate 재사용)은 허용. 설정 읽기(kbj.config — board.yaml·knowledge/*.yaml·markets.yaml)는 입력
+# 준비라 허용하되, 계산 함수(compute_day·screen·window_flows …)는 설정을 인자로 받는다(묶음 E1·E2 요청 — ADR 0009)
+[[tool.importlinter.contracts]]
+name = "⑨ 엔진(kbj.engines)은 순수 계산 — 어댑터·서비스·저장소와 I/O 라이브러리를 import 하지 않는다"
+type = "forbidden"
+source_modules = ["kbj.engines"]
+forbidden_modules = [
+    "kbj.data",
+    "kbj.services",
+    "kbj.store",
+    "kbj.reports",
+    "httpx",
+    "psycopg",
+    "redis",
+    "fastapi",
+    "starlette",
+    "uvicorn",
+]
+
+# ⑩ 로그인 API 는 외부 출처를 부르지 않는다(DB·Redis 읽기만 — D-P3-3). 화면 요청이 KIS 한도를 쓰지 않게
+# 로그인 원천 어댑터와 수집기를 끌어오지 않는다. 런타임 가드는 tests/unit/api/test_no_external.py(묶음 A)
+[[tool.importlinter.contracts]]
+name = "⑩ 로그인 API(kbj.services.api)는 로그인 원천 어댑터·수집기를 import 하지 않는다"
+type = "forbidden"
+source_modules = ["kbj.services.api"]
+forbidden_modules = ["kbj.data.private", "kbj.services.collectors"]

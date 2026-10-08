@@ -1,0 +1,173 @@
+{
+ "source": "KBJ 거래 캘린더(코드 계산)",
+ "as_of": "2026-10-07T05:30:00+09:00",
+ "quality": "ok",
+ "notes": [
+  "휴장일은 거래소 달력과 수기 덮어쓰기(config/holidays_override.yaml)로 계산한 값",
+  "만기는 규칙 계산값(교차검증용) — 원천 공지와 다를 수 있다",
+  "시험용 — public.export(build --now 2026-10-07T05:30:00+09:00 --no-db) 산출을 14일로 줄임"
+ ],
+ "generated_at": "2026-10-07T05:30:00+09:00",
+ "data": {
+  "from": "2026-10-07",
+  "to": "2026-10-20",
+  "next_trading_day": "2026-10-08",
+  "session": {
+   "open": "09:00",
+   "close": "15:30",
+   "tz": "Asia/Seoul",
+   "derivatives_day": {
+    "open": "08:45",
+    "close": "15:45"
+   },
+   "night": {
+    "open": "18:00",
+    "close": "06:00",
+    "next_day_close": true
+   },
+   "expiry_time": "15:20"
+  },
+  "days": [
+   {
+    "date": "2026-10-07",
+    "weekday": 3,
+    "trading": true,
+    "late_open": false,
+    "open": "09:00",
+    "close": "15:30",
+    "expiry": null,
+    "night_session": true
+   },
+   {
+    "date": "2026-10-08",
+    "weekday": 4,
+    "trading": true,
+    "late_open": false,
+    "open": "09:00",
+    "close": "15:30",
+    "expiry": "monthly",
+    "night_session": false
+   },
+   {
+    "date": "2026-10-09",
+    "weekday": 5,
+    "trading": false,
+    "late_open": false,
+    "open": null,
+    "close": null,
+    "expiry": null,
+    "night_session": false
+   },
+   {
+    "date": "2026-10-10",
+    "weekday": 6,
+    "trading": false,
+    "late_open": false,
+    "open": null,
+    "close": null,
+    "expiry": null,
+    "night_session": false
+   },
+   {
+    "date": "2026-10-11",
+    "weekday": 7,
+    "trading": false,
+    "late_open": false,
+    "open": null,
+    "close": null,
+    "expiry": null,
+    "night_session": false
+   },
+   {
+    "date": "2026-10-12",
+    "weekday": 1,
+    "trading": true,
+    "late_open": false,
+    "open": "09:00",
+    "close": "15:30",
+    "expiry": "weekly",
+    "night_session": true
+   },
+   {
+    "date": "2026-10-13",
+    "weekday": 2,
+    "trading": true,
+    "late_open": false,
+    "open": "09:00",
+    "close": "15:30",
+    "expiry": null,
+    "night_session": true
+   },
+   {
+    "date": "2026-10-14",
+    "weekday": 3,
+    "trading": true,
+    "late_open": false,
+    "open": "09:00",
+    "close": "15:30",
+    "expiry": null,
+    "night_session": true
+   },
+   {
+    "date": "2026-10-15",
+    "weekday": 4,
+    "trading": true,
+    "late_open": false,
+    "open": "09:00",
+    "close": "15:30",
+    "expiry": "weekly",
+    "night_session": true
+   },
+   {
+    "date": "2026-10-16",
+    "weekday": 5,
+    "trading": true,
+    "late_open": false,
+    "open": "09:00",
+    "close": "15:30",
+    "expiry": null,
+    "night_session": true
+   },
+   {
+    "date": "2026-10-17",
+    "weekday": 6,
+    "trading": false,
+    "late_open": false,
+    "open": null,
+    "close": null,
+    "expiry": null,
+    "night_session": false
+   },
+   {
+    "date": "2026-10-18",
+    "weekday": 7,
+    "trading": false,
+    "late_open": false,
+    "open": null,
+    "close": null,
+    "expiry": null,
+    "night_session": false
+   },
+   {
+    "date": "2026-10-19",
+    "weekday": 1,
+    "trading": true,
+    "late_open": false,
+    "open": "09:00",
+    "close": "15:30",
+    "expiry": "weekly",
+    "night_session": true
+   },
+   {
+    "date": "2026-10-20",
+    "weekday": 2,
+    "trading": true,
+    "late_open": false,
+    "open": "09:00",
+    "close": "15:30",
+    "expiry": null,
+    "night_session": true
+   }
+  ]
+ }
+}

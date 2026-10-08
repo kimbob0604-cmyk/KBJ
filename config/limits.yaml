@@ -80,3 +80,9 @@ telegram:
   step_rate: 5.0
   per_chat_rate: 1.0
   retry_after_max: 4
+
+# ETF 운용사 PDF(운용사 9곳 — kbj/data/private/etf_issuers, 작업 etf.collect — P3 로 당김 D-P3-12).
+# 운용사 호스트마다 scoped 리미터(rl:etf_issuers:<호스트 해시> — RedisRateLimiter.scoped) 1/s [제안].
+# ET 는 동시 6건(WORKERS — "운용사 서버 배려해서 6 이하")이었다. 일 한도 공표 없음 → 예산 없음.
+etf_issuers:
+  rate: 1.0

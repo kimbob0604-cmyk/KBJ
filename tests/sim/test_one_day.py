@@ -18,6 +18,7 @@ from itertools import pairwise
 
 import pytest
 
+from kbj.config.markets import load_markets
 from kbj.services.auth.issuer import APPROVAL_PATH, TOKEN_PATH
 from tests.fakes.kis_server import SYMBOLS
 from tests.sim.conftest import KST, at
@@ -111,11 +112,15 @@ def test_one_job_per_dataset(day: SimDay) -> None:
 
 
 def test_venue_split_keys(day: SimDay) -> None:
-    """거래대금·순매수는 거래소마다 데이터 키(docs/metrics.md §1, 메인 결정 D7)."""
+    """거래대금·순매수는 거래소마다 데이터 키(docs/metrics.md §1, 메인 결정 D7).
+
+    P3(D-P3-9 — 묶음 S): 실측 전에는 KIS 를 config/markets.yaml kis.venues(기본 [KRX])로만 부른다 —
+    등록부 collects.venues 가 같은 값이라 선점 장부에 NXT·TOTAL 키가 생기지 않는다."""
+    want = tuple(load_markets().kis.venues)
     venues = Counter(
         (k.dataset, k.venue) for k in day.done_keys() if k.dataset == "stock_quote_eod"
     )
-    assert venues == {("stock_quote_eod", v): 1 for v in ("KRX", "NXT", "TOTAL")}
+    assert venues == {("stock_quote_eod", v): 1 for v in want}
     krx = {k.dataset: k.venue for k in day.done_keys() if k.source == "KRX"}
     # 체결 일별(주식·ETF·ETN)은 KRX 시장 체결분 — 데이터 키에 KRX. 기본정보·지수·파생은 구분 없음
     assert {ds for ds, v in krx.items() if v == "KRX"} == {
@@ -155,7 +160,10 @@ def test_close_collect_requests_once_per_tr_venue_symbol(day: SimDay) -> None:
     eod = Counter(
         (c.tr_id, c.params["FID_COND_MRKT_DIV_CODE"], c.params["FID_INPUT_ISCD"]) for c in calls
     )
-    assert len(eod) == 2 * 3 * len(SYMBOLS)  # 2 TR × 3 거래소 × 20 종목
+    # 2 TR × 거래소 × 20 종목 + ETF 투자자(P3 KIS:etf_investor_daily — 합성 ETF 1 × 거래소).
+    # 거래소 = config/markets.yaml kis.venues(P3 기본 [KRX] — D-P3-9. P2 는 KRX·NXT·TOTAL 셋이었다)
+    n_venues = len(load_markets().kis.venues)
+    assert len(eod) == 2 * n_venues * len(SYMBOLS) + n_venues
     assert set(eod.values()) == {1}
     reqs = Counter((job, key, target) for job, key, target in day.kis_requests)
     assert set(reqs.values()) == {1}  # (데이터 키, 대상) 마다 한 번

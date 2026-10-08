@@ -8,6 +8,10 @@ name: CI
 #   docs/conflict_map.md §3.4)
 # - P2 묶음 I: canonical(직접 호출 금지 검사 — scripts/check_canonical.py)·sim(하루 운영 시뮬레이션 —
 #   tests/sim, 가짜 시계·가짜 서버라 네트워크·비밀 없음) 잡. test-kbj 는 sim 을 빼고 돈다(두 번 돌지 않게)
+# - P3 묶음 S(docs/p3_design.md §8.6): web 잡(프런트 eslint·tsc·vitest·두 빌드·번들 검사·타입 신선도·공개
+#   데이터 합치기 dry-run) 신설. test-kbj 에 openapi 신선도·공개 빌드 스크립트 dry-run, sim 에 장중 1시간
+#   무결측(느린 하루 판은 -m slow — CI 에서 빼고 수동). lint 의 import-linter 는 계약 ①~⑩.
+#   Pages 배포(pages.yml)는 CI 가 아니라 수동(workflow_dispatch) — Pages 활성·배포 키·토큰은 사용자 승인 사항
 
 on:
   push:
@@ -60,6 +64,10 @@ jobs:
         run: uv sync --frozen
       - name: pytest (sim·통합 제외 — 아래 sim·kbj-integration 잡)
         run: uv run pytest -m "not sim and not integration"
+      - name: openapi 신선도(web/src/api/openapi.json — 묶음 A)
+        run: uv run python -m kbj.services.api openapi --check
+      - name: 등록부 정적 검증(config/jobs.yaml — 켜진 작업의 처리기 import 포함)
+        run: uv run python -m kbj.services.scheduler validate config/jobs.yaml
 
   kbj-integration:
     # kbj 통합 시험(TimescaleDB pg16 — 마이그레이션 0001~0006·이관·저장소 SQL). 시험이 docker CLI 로
@@ -106,7 +114,8 @@ jobs:
 
   sim:
     # 하루 운영 시뮬레이션(PLAN §8 P2 완료 기준 — 토큰 발급은 auth 한 곳, 중복 수집 0). 24시간 창과
-    # 변형 6개. 가짜 웹소켓 서버만 127.0.0.1 임의 포트에 뜬다
+    # 변형 6개. 가짜 웹소켓 서버만 127.0.0.1 임의 포트에 뜬다. P3: 장중 1시간 무결측(실제 처리기 + 변형 4)·
+    # 하루 운영 확장(test_one_day_p3 — KRX 확정·보드 확정까지 28.5시간)
     name: sim (하루 운영 시뮬레이션)
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -117,8 +126,8 @@ jobs:
           enable-cache: true
       - name: 의존성(dev)
         run: uv sync --frozen
-      - name: pytest tests/sim
-        run: uv run pytest tests/sim -m sim -rx
+      - name: pytest tests/sim (장중 하루 판 slow 는 제외 — 수동 `-m slow`)
+        run: uv run pytest tests/sim -m "sim and not slow" -rx
 
   legacy:
     name: legacy (${{ matrix.part }})
@@ -128,7 +137,7 @@ jobs:
       fail-fast: false
       matrix:
         # gexlab: 단위·속성·골든(통합 49개는 아래 gexlab-integration 잡)
-        # board: unittest 1,319 / etf-rest: monitor/kr 94·monitor/flow 129·flowlab 44·dart-report·etf_tracker_v9
+        # board: unittest(기준 수는 scripts/test_legacy.sh) / etf-rest: monitor/kr 94·monitor/flow 129·flowlab 44·dart-report·etf_tracker_v9
         # stock_dashboard: 검사 스크립트 10개 pytest 래퍼
         part: [gexlab, board, etf-rest, stock_dashboard]
     steps:
@@ -167,6 +176,51 @@ jobs:
         env:
           KBJ_REQUIRE_DOCKER: "1"
         run: uv run bash scripts/test_legacy.sh gexlab-integration
+
+  web:
+    # 프런트(web/ — 묶음 W·W2). node 22.13 이상(eslint 10). 설치 스크립트를 돌리지 않는다(npm ci
+    # --ignore-scripts — R12 공급망). 두 빌드를 만든 뒤 번들 검사(공개 번들에 /api·CSRF·KBJ_ 0, gzip 예산),
+    # openapi → TS 타입 신선도, 공개 데이터 합치기(build_public_site.sh — X)를 합성 견본으로 돌린다.
+    # 비밀·네트워크 데이터 없음
+    name: web (eslint·tsc·vitest·빌드·번들 검사)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: npm ci (lock 그대로·설치 스크립트 안 돌림)
+        run: npm ci --ignore-scripts
+      - name: eslint
+        run: npm run lint
+      - name: tsc
+        run: npm run typecheck
+      - name: vitest
+        run: npm test
+      - name: 공개 빌드·로그인 빌드
+        run: npm run build:public && npm run build:login
+      - name: 번들 검사
+        run: node scripts/check-bundle.mjs
+      - name: openapi → TS 타입 신선도
+        run: npm run gen:types -- --check
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: 의존성(python — 공개 데이터 만들기)
+        working-directory: .
+        run: uv sync --frozen
+      - name: 공개 사이트 조립 dry-run(내보내기 → python 검사 → 합치기 → 번들 검사, 푸시 없음)
+        working-directory: .
+        run: bash scripts/build_public_site.sh --dry-run
+      - name: 공개 사이트 실제 조립(공개 빌드에 데이터 합치기 — 배포는 pages.yml 수동)
+        working-directory: .
+        run: bash scripts/build_public_site.sh --skip-install
 
   public-safety:
     name: public-safety (레포 전체, legacy 포함)

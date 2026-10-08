@@ -54,12 +54,13 @@ def test_jobs_during_the_blip_fail_and_release_keys(blip: SimDay) -> None:
     failed = {k for k, r in final.items() if r.status == "failed"}
     assert failed == {
         ("filings.dart_feed", "2026-10-06T12:00"),
-        ("flows.intraday", "2026-10-06T12:00"),
+        # flows.intraday 는 P3 부터 슬롯 안 재시도(20·40초 — D-P3-14)로 같은 슬롯에 회복한다
         ("rules.intraday", "2026-10-06T12:00"),
         ("ops.watchdog", "2026-10-06T12:00"),
     }
     released = {(r.job, r.key.as_of) for r in blip.claims.rows if r.status == "failed"}
-    assert ("flows.intraday", "2026-10-06T12:00") in released
+    assert ("rules.intraday", "2026-10-06T12:00") in released
+    assert final[("flows.intraday", "2026-10-06T12:00")].status == "ok"  # 재시도로 회복
 
 
 def test_next_runs_recover_and_no_key_is_collected_twice(blip: SimDay) -> None:

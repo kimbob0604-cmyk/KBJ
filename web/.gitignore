@@ -1,0 +1,6 @@
+# web/ 산출물 — 커밋하지 않는다(빌드는 CI·이미지 빌드 단계에서)
+node_modules/
+dist-public/
+dist-login/
+coverage/
+*.tsbuildinfo

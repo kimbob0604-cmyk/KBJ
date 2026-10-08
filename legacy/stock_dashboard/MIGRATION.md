@@ -148,3 +148,16 @@ shim(`kbj.services.notifier.client.legacy_send`)으로, 휴장·장중은 KBJ �
 
 시험: 검사 스크립트 10 + 목록 대조 + 합성 재현 = 12 그대로 통과, 새 다리 시험 `tests/test_kbj_bridge.py`
 (+1 — `kis_api` 가 브리지를 쓰고 토큰을 발급하지 않는다, 직접 주소는 `ValueError`) → **13 통과**.
+
+## P3. legacy 이전 범위 — 묶음 S(웨이브 3, 2026-10-07)
+
+근거: `docs/p3_design.md` §1.10·D-P3-18(SD `server.py` 함수 단위 삭제는 P4)·R17.
+
+| 처리 | 파일 | 대체 | 시험 영향 |
+|---|---|---|---|
+| **삭제** | `scripts/probe_naver_fields.py`·`probe_naver_json_api.py`·`probe_naver_sources.py`·`probe_ohlcv_fill.py`·`probe_ohlcv_sources.py`(네이버·스크랩 진단 5개) | 실측은 kbj `scripts/` 실측 도구·체크리스트 #21 | 없음(import 하는 곳 없음) |
+| **삭제** | `ohlcv_5y_collector.py`(수동 CLI — 5년 일봉, KRX 웹 스크랩) + 폐지된 맥 cron(`scripts/daily_macbook_cron.sh`) 단계 | kbj `market.backfill`(KRX OPEN API — §3.8, 등록부 absorbs `SD:mac-crontab:ohlcv_5y_collector`) | 없음 |
+| 이월 P4 | `ohlcv_autofill.py`·`data_fetcher.py`·`data_freshness.py`·`krx_api.py`·`server.py` | 페이지 1·2·4(P3)·종목 상세(P4) | `server.py` 가 늦은 import·하위 프로세스로 부르고, 남은 SD 검사 스크립트 `check_new_high_logic.py`·`check_ohlcv_autofill.py` 가 `ohlcv_autofill` 을 import — 종목 상세가 SD 화면을 대체할 때(P4) 함수 단위로 |
+
+시험 수: SD 래퍼 13 그대로. 남은 문서 속 `ohlcv_5y_collector.py` 이름(`db_backup.py` 머리말·`data_freshness.py` 의
+출처 표시)은 P4 SD 정리 때 함께 고친다.

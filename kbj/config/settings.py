@@ -16,7 +16,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _SECRET_FIELDS = (
@@ -41,7 +41,11 @@ _SECRET_FIELDS = (
     "database_url",
     "redis_url",
     "healthcheck_url",
+    "web_password_hash",
+    "public_export_database_url",
+    "github_dispatch_token",
 )
+_LOOPBACK = frozenset({"127.0.0.1", "::1", "localhost"})
 
 
 class Settings(BaseSettings):
@@ -54,6 +58,9 @@ class Settings(BaseSettings):
         extra="ignore",
         case_sensitive=False,
         env_ignore_empty=True,  # `.env.example` 을 복사만 한 빈 값은 기본값으로
+        # 검증 오류 문구에 입력값을 싣지 않는다 — 모델 검증기(아래 루프백 검사)의 오류는 입력 dict
+        # 전체를 input_value 로 보여 줘 앞쪽 비밀값 일부가 샌다(절대 규칙 5)
+        hide_input_in_errors=True,
     )
 
     # ── KIS — 발급은 services.auth 만, 요청 헤더는 KIS REST 를 부르는 프로세스(ADR 0004) ──────────
@@ -98,6 +105,25 @@ class Settings(BaseSettings):
     probe_out_dir: Path = Path("probe_out")
     test_timescale_image: str | None = None
 
+    # ── 로그인 웹(P3 — docs/p3_design.md §5.4, D-P3-4). 사용자 1명, 기본 사용자·비밀번호 없음 ──
+    # 둘 중 하나라도 없으면 POST /api/auth/login 은 503(login_not_configured). 해시는
+    # `python -m kbj.services.api hash-password` 가 만든 `scrypt$n=…$r=…$p=…$<salt>$<dk>` 형식.
+    # 형식 검사는 여기서 하지 않는다 — pydantic 검증 오류는 입력값을 문구에 싣는다(값이 샌다).
+    # 쓰는 곳(services.api.auth)이 값 없이 실패시킨다
+    web_user: str | None = None
+    web_password_hash: SecretStr | None = None
+    web_session_ttl_h: int = Field(default=12, gt=0, le=168)  # 고정 만료(활동해도 늘리지 않음)
+    # __Host- 쿠키는 TLS 뒤에서만(VM 역방향 프록시). false 는 api_host 가 루프백일 때만(개발)
+    web_cookie_secure: bool = True
+    web_dist_dir: Path = Path("web/dist-login")  # 로그인 SPA 빌드(api 가 같은 출처로 내보낸다)
+
+    # ── 공개 내보내기(P3 — §7). 공개 등급(pub_*)만 읽는 kbj_public_export 구성원 로그인 역할 ─────
+    public_export_database_url: SecretStr | None = None
+    # public-data 브랜치 푸시·Pages 디스패치는 [사용자 승인 필요] — 기본 꺼짐(§7.2). 값은 VM 에만
+    public_push_enabled: bool = False
+    public_deploy_key_path: Path | None = None  # public-data 푸시용 배포 키 파일 경로(VM)
+    github_dispatch_token: SecretStr | None = None  # pages.yml 디스패치(actions:write 만)
+
     # ── 프로세스·설정 파일 ─────────────────────────────────────────────────────────────
     # 이 프로세스가 어느 서비스인가(compose 가 서비스마다 넣는다: auth·scheduler·notifier …).
     # 비어 있으면 None(시험·스크립트). KIS 발급자는 "auth" 일 때만 만들어진다(ADR 0004 런타임 가드)
@@ -109,12 +135,26 @@ class Settings(BaseSettings):
     # ── 실전 주문 스위치 — 기본 false, 사용자 승인 전엔 바꾸지 않는다(절대 규칙 6) ──────────────
     live_trading: bool = False
 
-    @field_validator(*_SECRET_FIELDS, "public_base_url", "git_commit", "service", mode="before")
+    @field_validator(
+        *_SECRET_FIELDS,
+        "public_base_url",
+        "git_commit",
+        "service",
+        "web_user",
+        "public_deploy_key_path",
+        mode="before",
+    )
     @classmethod
     def _blank_is_none(cls, v: object) -> object:
         if isinstance(v, str) and not v.strip():
             return None
         return v
+
+    @model_validator(mode="after")
+    def _insecure_cookie_only_on_loopback(self) -> Settings:
+        if not self.web_cookie_secure and self.api_host not in _LOOPBACK:
+            raise ValueError("KBJ_WEB_COOKIE_SECURE=false 는 KBJ_API_HOST 가 루프백일 때만(개발)")
+        return self
 
     def secret_values(self) -> list[SecretStr]:
         """설정된 비밀값 전부 — kbj.core.masking.redact(text, settings.secret_values()) 용."""

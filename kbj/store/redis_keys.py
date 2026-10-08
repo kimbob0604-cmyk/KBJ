@@ -27,6 +27,13 @@ Redis 에서 같은 토큰·버킷·상태를 읽고 쓴다(설계 §3.2 끝).
 | `notify:webhook_info` | notifier(10분 점검) → 운영 화면 | getWebhookInfo 요약 | 없음 |
 | `tg:update:<update_id>` | 웹훅 처리(SET NX) | 1 | 48시간 |
 | `sched:run:<작업>:<as_of>` | scheduler 실행기 | 실행 id | 작업 마감 |
+| `web:session:<sha256(sid) 32자>` | api 로그인(P3) | `{user, csrf, created, …}` | 12시간 |
+| `web:login_fail:<sha256(ip) 16자>` | api 로그인 실패 카운터 | 실패 수 | 15분 창 |
+| `web:login_fail:all`·`web:login_lock` | api 전체 실패 수·잠금 | 수·잠근 시각 | 1시간·30분 |
+| `api:data_version:<영역>` | api 캐시(ops.data_claim 최근 done_at) | 버전 문자열 | 15초 |
+
+웹 로그인 키(docs/p3_design.md §5.4)에는 세션 id·IP 원문을 넣지 않는다 — 부르는 쪽이 sha256 해시를
+만들어 넘기고(`web_digest`), 이 모듈은 해시 모양(소문자 16진)만 받는다.
 """
 
 from __future__ import annotations
@@ -68,6 +75,15 @@ TG_UPDATE_PREFIX: Final = "tg:update:"
 
 # ── 스케줄러 ───────────────────────────────────────────────────────────────────────────────
 SCHED_RUN_PREFIX: Final = "sched:run:"
+
+# ── 웹 로그인·API 캐시(P3 — docs/p3_design.md §5.3·§5.4) ─────────────────────────────────────
+WEB_SESSION_PREFIX: Final = "web:session:"
+WEB_LOGIN_FAIL_PREFIX: Final = "web:login_fail:"
+WEB_LOGIN_FAIL_ALL: Final = "web:login_fail:all"  # 전체 1시간 실패 수
+WEB_LOGIN_LOCK: Final = "web:login_lock"  # 전체 잠금(30분)
+API_DATA_VERSION_PREFIX: Final = "api:data_version:"
+_HEX = re.compile(r"[0-9a-f]+")
+_DOMAIN = re.compile(r"[a-z][a-z0-9_]*")
 
 
 def _ymd(day: date) -> str:
@@ -146,3 +162,37 @@ def tg_update_key(update_id: int) -> str:
 def sched_run_lock(job: str, as_of: str) -> str:
     """같은 (작업, as_of) 를 두 번 돌리지 않게 하는 실행 잠금 키."""
     return f"{SCHED_RUN_PREFIX}{_part('job', job)}:{_part('as_of', as_of)}"
+
+
+def web_digest(value: str, length: int = 32) -> str:
+    """세션 id·IP 를 키에 남길 때 쓰는 sha256 앞 `length` 자(원문은 키에 남기지 않는다)."""
+    if not value:
+        raise ValueError("빈 값의 해시는 만들지 않는다")
+    if not 16 <= length <= 64:
+        raise ValueError("length 는 16~64")
+    return hashlib.sha256(value.encode()).hexdigest()[:length]
+
+
+def _digest_part(what: str, digest: str, length: int) -> str:
+    if len(digest) != length or not _HEX.fullmatch(digest):
+        raise ValueError(
+            f"{what} 는 sha256 앞 {length}자(소문자 16진)여야 한다 — 원문을 넣지 않는다"
+        )
+    return digest
+
+
+def web_session_key(digest: str) -> str:
+    """로그인 세션 — `web:session:<sha256(sid) 앞 32자>`. sid 원문은 쿠키에만 있다."""
+    return WEB_SESSION_PREFIX + _digest_part("세션 해시", digest, 32)
+
+
+def web_login_fail_key(ip_digest: str) -> str:
+    """IP 별 로그인 실패 수(15분 창) — `web:login_fail:<sha256(ip) 앞 16자>`."""
+    return WEB_LOGIN_FAIL_PREFIX + _digest_part("IP 해시", ip_digest, 16)
+
+
+def api_data_version_key(domain: str) -> str:
+    """API 캐시 데이터 버전 — `api:data_version:market|board|flows|etf`."""
+    if not _DOMAIN.fullmatch(domain):
+        raise ValueError(f"영역 이름은 소문자 식별자: {domain!r}")
+    return API_DATA_VERSION_PREFIX + domain

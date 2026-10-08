@@ -1,0 +1,5206 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "KBJ API",
+    "description": "KBJ 로그인 등급 API(사용자 1명). 모든 데이터 응답은 봉투(source·as_of·quality·notes·generated_at·data), 금액은 원 단위 정수. 외부 원천을 부르지 않는다(DB·Redis 읽기만).",
+    "version": "0.3.0"
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login",
+        "operationId": "login_api_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CsrfResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported Media Type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Logout",
+        "operationId": "logout_api_auth_logout_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Me",
+        "operationId": "me_api_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/market/summary": {
+      "get": {
+        "tags": [
+          "market"
+        ],
+        "summary": "Summary",
+        "operationId": "summary_api_market_summary_get",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_MarketSummary_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/market/sectors": {
+      "get": {
+        "tags": [
+          "market"
+        ],
+        "summary": "Sectors",
+        "operationId": "sectors_api_market_sectors_get",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                1,
+                5,
+                20
+              ],
+              "type": "integer",
+              "default": 1,
+              "title": "Period"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_SectorHeat_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/market/ribbon": {
+      "get": {
+        "tags": [
+          "market"
+        ],
+        "summary": "Ribbon",
+        "operationId": "ribbon_api_market_ribbon_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_Ribbon_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/board/newhigh": {
+      "get": {
+        "tags": [
+          "board"
+        ],
+        "summary": "Newhigh",
+        "operationId": "newhigh_api_board_newhigh_get",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          },
+          {
+            "name": "basis",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "close",
+                "high"
+              ],
+              "type": "string",
+              "default": "close",
+              "title": "Basis"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "hist",
+                    "w52",
+                    "d60"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "min_turnover_eok",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 1000000,
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Turnover Eok"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_BoardNewhigh_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/board/sectors": {
+      "get": {
+        "tags": [
+          "board"
+        ],
+        "summary": "Sectors",
+        "operationId": "sectors_api_board_sectors_get",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_BoardSectors_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/board/events": {
+      "get": {
+        "tags": [
+          "board"
+        ],
+        "summary": "Events",
+        "operationId": "events_api_board_events_get",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_BoardEvents_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/board/rankings": {
+      "get": {
+        "tags": [
+          "board"
+        ],
+        "summary": "Rankings",
+        "operationId": "rankings_api_board_rankings_get",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_BoardRankings_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/flows/screen": {
+      "get": {
+        "tags": [
+          "flows"
+        ],
+        "summary": "Screen",
+        "operationId": "screen_api_flows_screen_get",
+        "parameters": [
+          {
+            "name": "mode",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "enum": [
+                "value",
+                "foreign",
+                "inst",
+                "both",
+                "streak",
+                "spike"
+              ],
+              "type": "string",
+              "title": "Mode"
+            }
+          },
+          {
+            "name": "market",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "all",
+                "KOSPI",
+                "KOSDAQ"
+              ],
+              "type": "string",
+              "default": "all",
+              "title": "Market"
+            }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                1,
+                5,
+                20
+              ],
+              "type": "integer",
+              "default": 5,
+              "title": "Period"
+            }
+          },
+          {
+            "name": "min_avg_turnover",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 1000000000000000,
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Avg Turnover"
+            }
+          },
+          {
+            "name": "include_flagged",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Flagged"
+            }
+          },
+          {
+            "name": "share_class",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "common",
+                "pref"
+              ],
+              "type": "string",
+              "default": "common",
+              "title": "Share Class"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ScreenResponse_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/flows/investors": {
+      "get": {
+        "tags": [
+          "flows"
+        ],
+        "summary": "Investors",
+        "operationId": "investors_api_flows_investors_get",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_InvestorTotals_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/flows/stock/{code}": {
+      "get": {
+        "tags": [
+          "flows"
+        ],
+        "summary": "Stock",
+        "operationId": "stock_api_flows_stock__code__get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-Z]{6}$",
+              "title": "Code"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 60,
+              "minimum": 1,
+              "default": 20,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_StockFlowDetail_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/flows/intraday": {
+      "get": {
+        "tags": [
+          "flows"
+        ],
+        "summary": "Intraday",
+        "operationId": "intraday_api_flows_intraday_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_IntradayFlows_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/etf/flows": {
+      "get": {
+        "tags": [
+          "etf"
+        ],
+        "summary": "Flows",
+        "operationId": "flows_api_etf_flows_get",
+        "parameters": [
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "in",
+                "out",
+                "value",
+                "indiv",
+                "foreign",
+                "inst"
+              ],
+              "type": "string",
+              "default": "in",
+              "title": "Mode"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/EtfType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type"
+            }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                1,
+                5,
+                20
+              ],
+              "type": "integer",
+              "default": 5,
+              "title": "Period"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_EtfFlows_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/etf/types": {
+      "get": {
+        "tags": [
+          "etf"
+        ],
+        "summary": "Types",
+        "operationId": "types_api_etf_types_get",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                1,
+                5,
+                20
+              ],
+              "type": "integer",
+              "default": 5,
+              "title": "Period"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_EtfTypes_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/etf/premium": {
+      "get": {
+        "tags": [
+          "etf"
+        ],
+        "summary": "Premium",
+        "operationId": "premium_api_etf_premium_get",
+        "parameters": [
+          {
+            "name": "basis",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "nav",
+                "inav"
+              ],
+              "type": "string",
+              "default": "nav",
+              "title": "Basis"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_EtfPremium_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/etf/holdings/changes": {
+      "get": {
+        "tags": [
+          "etf"
+        ],
+        "summary": "Holding Changes",
+        "operationId": "holding_changes_api_etf_holdings_changes_get",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(NEW|DROP|IN10|OUT10|ADD|CUT)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "issuer",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Issuer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_EtfHoldingChanges_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/telegram/webhook": {
+      "post": {
+        "tags": [
+          "telegram"
+        ],
+        "summary": "Telegram Webhook",
+        "operationId": "telegram_webhook_telegram_webhook_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request Entity Too Large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BoardEvents": {
+        "properties": {
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
+          },
+          "events": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Events"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "BoardEvents"
+      },
+      "BoardFilter": {
+        "properties": {
+          "basis": {
+            "type": "string",
+            "title": "Basis"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "min_turnover_eok": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Turnover Eok"
+          },
+          "n_before_filter": {
+            "type": "integer",
+            "title": "N Before Filter"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "basis",
+          "kind",
+          "min_turnover_eok",
+          "n_before_filter"
+        ],
+        "title": "BoardFilter"
+      },
+      "BoardNewhigh": {
+        "properties": {
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
+          },
+          "basis": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Basis"
+          },
+          "prev_asof": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prev Asof"
+          },
+          "thresholds": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Thresholds"
+          },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Labels"
+          },
+          "priority": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Priority"
+          },
+          "counts_close": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts Close"
+          },
+          "counts_high": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts High"
+          },
+          "min_mktcap_eok": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Mktcap Eok"
+          },
+          "min_turnover_eok": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Turnover Eok"
+          },
+          "n_below_mktcap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Below Mktcap"
+          },
+          "n_suspect": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Suspect"
+          },
+          "n_hist_not_evaluated": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Hist Not Evaluated"
+          },
+          "achieved": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Achieved"
+          },
+          "proximity": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Proximity"
+          },
+          "hist_scope": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hist Scope"
+          },
+          "history_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "History From"
+          },
+          "flows": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/RowFlows"
+            },
+            "type": "object",
+            "title": "Flows"
+          },
+          "filter": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BoardFilter"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "BoardNewhigh"
+      },
+      "BoardRankings": {
+        "properties": {
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
+          },
+          "prev_asof": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prev Asof"
+          },
+          "taxonomy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Taxonomy"
+          },
+          "universe": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Universe"
+          },
+          "thresholds": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Thresholds"
+          },
+          "sector_boards": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Sector Boards"
+          },
+          "stock_boards": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Stock Boards"
+          },
+          "cross_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Cross Codes"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "BoardRankings"
+      },
+      "BoardSectors": {
+        "properties": {
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
+          },
+          "taxonomy_layer1": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Taxonomy Layer1"
+          },
+          "sectors": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Sectors"
+          },
+          "themes": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Themes"
+          },
+          "heatmap_theme": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Heatmap Theme"
+          },
+          "heatmap_sector": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Heatmap Sector"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "BoardSectors"
+      },
+      "Breadth": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "up": {
+            "type": "integer",
+            "title": "Up"
+          },
+          "flat": {
+            "type": "integer",
+            "title": "Flat"
+          },
+          "down": {
+            "type": "integer",
+            "title": "Down"
+          },
+          "unknown": {
+            "type": "integer",
+            "title": "Unknown"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "above_ma20_n": {
+            "type": "integer",
+            "title": "Above Ma20 N"
+          },
+          "ma20_base": {
+            "type": "integer",
+            "title": "Ma20 Base"
+          },
+          "above_ma20_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Above Ma20 Pct"
+          },
+          "newhigh_n": {
+            "type": "integer",
+            "title": "Newhigh N"
+          },
+          "newhigh_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Newhigh Pct"
+          },
+          "limit_up": {
+            "type": "integer",
+            "title": "Limit Up"
+          },
+          "limit_down": {
+            "type": "integer",
+            "title": "Limit Down"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "up",
+          "flat",
+          "down",
+          "unknown",
+          "total",
+          "above_ma20_n",
+          "ma20_base",
+          "above_ma20_pct",
+          "newhigh_n",
+          "newhigh_pct",
+          "limit_up",
+          "limit_down",
+          "quality",
+          "source",
+          "notes"
+        ],
+        "title": "Breadth"
+      },
+      "ChangeRow": {
+        "properties": {
+          "fund_id": {
+            "type": "string",
+            "title": "Fund Id"
+          },
+          "etf_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Etf Code"
+          },
+          "fund_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fund Name"
+          },
+          "issuer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issuer"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          },
+          "theme": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Theme"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "NEW",
+              "DROP",
+              "IN10",
+              "OUT10",
+              "ADD",
+              "CUT"
+            ],
+            "title": "Kind"
+          },
+          "kind_label": {
+            "type": "string",
+            "title": "Kind Label"
+          },
+          "prev_qty": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prev Qty"
+          },
+          "cur_qty": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cur Qty"
+          },
+          "prev_wt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prev Wt"
+          },
+          "cur_wt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cur Wt"
+          },
+          "qty_pct_adj": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Qty Pct Adj"
+          },
+          "asof": {
+            "type": "string",
+            "format": "date",
+            "title": "Asof"
+          },
+          "prev_asof": {
+            "type": "string",
+            "format": "date",
+            "title": "Prev Asof"
+          },
+          "gap_days": {
+            "type": "integer",
+            "title": "Gap Days"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "fund_id",
+          "etf_code",
+          "fund_name",
+          "issuer",
+          "is_active",
+          "theme",
+          "code",
+          "name",
+          "kind",
+          "kind_label",
+          "prev_qty",
+          "cur_qty",
+          "prev_wt",
+          "cur_wt",
+          "qty_pct_adj",
+          "asof",
+          "prev_asof",
+          "gap_days"
+        ],
+        "title": "ChangeRow"
+      },
+      "Check3": {
+        "properties": {
+          "net_asset_chg": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Asset Chg"
+          },
+          "inflow": {
+            "type": "integer",
+            "title": "Inflow"
+          },
+          "price_effect": {
+            "type": "integer",
+            "title": "Price Effect"
+          },
+          "residual": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Residual"
+          },
+          "n_checked": {
+            "type": "integer",
+            "title": "N Checked"
+          },
+          "n_failed": {
+            "type": "integer",
+            "title": "N Failed"
+          },
+          "n_unavailable": {
+            "type": "integer",
+            "title": "N Unavailable"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "net_asset_chg",
+          "inflow",
+          "price_effect",
+          "residual",
+          "n_checked",
+          "n_failed",
+          "n_unavailable"
+        ],
+        "title": "Check3",
+        "description": "검산 ③(순자산 변화 = 순유입 + 가격효과) — 집계에 넣은 흐름의 합."
+      },
+      "Chip": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChipValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "public",
+              "login"
+            ],
+            "title": "Tier"
+          },
+          "phase_pending": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phase Pending"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "detail": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Detail"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "value",
+          "tier",
+          "phase_pending",
+          "tags",
+          "note"
+        ],
+        "title": "Chip"
+      },
+      "ChipValue": {
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Value"
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "value",
+          "source",
+          "as_of",
+          "quality"
+        ],
+        "title": "ChipValue",
+        "description": "상단 띠 칩 값(수·문자 — 원천·시각·품질 필수)."
+      },
+      "CsrfResponse": {
+        "properties": {
+          "csrf_token": {
+            "type": "string",
+            "title": "Csrf Token"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "csrf_token"
+        ],
+        "title": "CsrfResponse"
+      },
+      "DayFlow": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "turnover": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover"
+          },
+          "foreign": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Foreign"
+          },
+          "inst": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inst"
+          },
+          "other_corp": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Other Corp"
+          },
+          "indiv": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Indiv"
+          },
+          "check1": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Check1"
+          },
+          "check2": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Check2"
+          },
+          "traded": {
+            "type": "boolean",
+            "title": "Traded"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "turnover",
+          "foreign",
+          "inst",
+          "other_corp",
+          "indiv",
+          "check1",
+          "check2",
+          "traded",
+          "quality"
+        ],
+        "title": "DayFlow"
+      },
+      "DayTotals": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "by_investor": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "By Investor"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "by_investor",
+          "quality"
+        ],
+        "title": "DayTotals"
+      },
+      "DayValue": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "value",
+          "quality",
+          "source"
+        ],
+        "title": "DayValue"
+      },
+      "Envelope_BoardEvents_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/BoardEvents"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[BoardEvents]"
+      },
+      "Envelope_BoardNewhigh_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/BoardNewhigh"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[BoardNewhigh]"
+      },
+      "Envelope_BoardRankings_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/BoardRankings"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[BoardRankings]"
+      },
+      "Envelope_BoardSectors_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/BoardSectors"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[BoardSectors]"
+      },
+      "Envelope_EtfFlows_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/EtfFlows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[EtfFlows]"
+      },
+      "Envelope_EtfHoldingChanges_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/EtfHoldingChanges"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[EtfHoldingChanges]"
+      },
+      "Envelope_EtfPremium_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/EtfPremium"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[EtfPremium]"
+      },
+      "Envelope_EtfTypes_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/EtfTypes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[EtfTypes]"
+      },
+      "Envelope_IntradayFlows_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/IntradayFlows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[IntradayFlows]"
+      },
+      "Envelope_InvestorTotals_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/InvestorTotals"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[InvestorTotals]"
+      },
+      "Envelope_MarketSummary_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/MarketSummary"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[MarketSummary]"
+      },
+      "Envelope_Ribbon_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Ribbon"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[Ribbon]"
+      },
+      "Envelope_ScreenResponse_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ScreenResponse"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[ScreenResponse]"
+      },
+      "Envelope_SectorHeat_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/SectorHeat"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[SectorHeat]"
+      },
+      "Envelope_StockFlowDetail_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/StockFlowDetail"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[StockFlowDetail]"
+      },
+      "ErrorBody": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
+          "detail": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Detail"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "ErrorBody",
+        "description": "오류 응답(401·403·413·415·503) — 사유 코드만, 입력값·내부 문구 없음."
+      },
+      "EtfFlowRow": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "etf_type": {
+            "$ref": "#/components/schemas/EtfType"
+          },
+          "etf_type_label": {
+            "type": "string",
+            "title": "Etf Type Label"
+          },
+          "theme": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Theme"
+          },
+          "issuer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issuer"
+          },
+          "net_asset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Asset"
+          },
+          "net_inflow": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Inflow"
+          },
+          "price_effect": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Effect"
+          },
+          "ret_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ret Pct"
+          },
+          "turnover": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover"
+          },
+          "indiv": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Indiv"
+          },
+          "foreign": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Foreign"
+          },
+          "inst": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inst"
+          },
+          "days": {
+            "type": "integer",
+            "title": "Days"
+          },
+          "n_invalid": {
+            "type": "integer",
+            "title": "N Invalid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "new",
+              "split_adjusted",
+              "invalid"
+            ],
+            "title": "Status"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "etf_type",
+          "etf_type_label",
+          "theme",
+          "issuer",
+          "net_asset",
+          "net_inflow",
+          "price_effect",
+          "ret_pct",
+          "turnover",
+          "indiv",
+          "foreign",
+          "inst",
+          "days",
+          "n_invalid",
+          "status",
+          "quality"
+        ],
+        "title": "EtfFlowRow"
+      },
+      "EtfFlows": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "in",
+              "out",
+              "value",
+              "indiv",
+              "foreign",
+              "inst"
+            ],
+            "title": "Mode"
+          },
+          "etf_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EtfType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "period": {
+            "type": "integer",
+            "title": "Period"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "n_total": {
+            "type": "integer",
+            "title": "N Total"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/EtfFlowRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "new_listings": {
+            "items": {
+              "$ref": "#/components/schemas/NewListing"
+            },
+            "type": "array",
+            "title": "New Listings"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "mode",
+          "etf_type",
+          "period",
+          "start",
+          "end",
+          "n_total",
+          "rows",
+          "new_listings"
+        ],
+        "title": "EtfFlows"
+      },
+      "EtfHoldingChanges": {
+        "properties": {
+          "run_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Run Date"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ChangeRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "run_date",
+          "rows"
+        ],
+        "title": "EtfHoldingChanges"
+      },
+      "EtfPremium": {
+        "properties": {
+          "basis": {
+            "type": "string",
+            "enum": [
+              "nav",
+              "inav"
+            ],
+            "title": "Basis"
+          },
+          "n_checked": {
+            "type": "integer",
+            "title": "N Checked"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/PremiumRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "basis",
+          "n_checked",
+          "rows"
+        ],
+        "title": "EtfPremium"
+      },
+      "EtfType": {
+        "type": "string",
+        "enum": [
+          "kr_index",
+          "kr_theme",
+          "overseas",
+          "leveraged_inverse",
+          "bond_cash",
+          "commodity",
+          "other"
+        ],
+        "title": "EtfType",
+        "description": "ETF 유형(docs/metrics.md §8 정본 — 규칙은 `kbj.engines.etf.types.etf_type`).\n\n값은 DB `prv_etf.meta.etf_type` 에 그대로 들어간다. 화면 이름은 `label`."
+      },
+      "EtfTypes": {
+        "properties": {
+          "period": {
+            "type": "integer",
+            "title": "Period"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/TypeRollup"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "check3": {
+            "$ref": "#/components/schemas/Check3"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "period",
+          "start",
+          "end",
+          "rows",
+          "check3"
+        ],
+        "title": "EtfTypes"
+      },
+      "Excluded": {
+        "properties": {
+          "flagged": {
+            "type": "integer",
+            "title": "Flagged"
+          },
+          "invalid": {
+            "type": "integer",
+            "title": "Invalid"
+          },
+          "below_min": {
+            "type": "integer",
+            "title": "Below Min"
+          },
+          "status_unknown": {
+            "type": "integer",
+            "title": "Status Unknown"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "flagged",
+          "invalid",
+          "below_min",
+          "status_unknown"
+        ],
+        "title": "Excluded"
+      },
+      "Health": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "commit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commit"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "ok",
+          "commit"
+        ],
+        "title": "Health"
+      },
+      "IndexTile": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "chg_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chg Pct"
+          },
+          "spark": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Spark"
+          },
+          "live": {
+            "type": "boolean",
+            "title": "Live"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "value",
+          "chg_pct",
+          "spark",
+          "live",
+          "source",
+          "as_of",
+          "quality"
+        ],
+        "title": "IndexTile"
+      },
+      "IntradayFlows": {
+        "properties": {
+          "slot": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Slot"
+          },
+          "top_foreign": {
+            "items": {
+              "$ref": "#/components/schemas/IntradayRow"
+            },
+            "type": "array",
+            "title": "Top Foreign"
+          },
+          "top_inst": {
+            "items": {
+              "$ref": "#/components/schemas/IntradayRow"
+            },
+            "type": "array",
+            "title": "Top Inst"
+          },
+          "turnover_rank": {
+            "items": {
+              "$ref": "#/components/schemas/RankItem"
+            },
+            "type": "array",
+            "title": "Turnover Rank"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "slot",
+          "top_foreign",
+          "top_inst",
+          "turnover_rank"
+        ],
+        "title": "IntradayFlows"
+      },
+      "IntradayRow": {
+        "properties": {
+          "rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "qty": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Qty"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rank",
+          "code",
+          "value",
+          "qty"
+        ],
+        "title": "IntradayRow"
+      },
+      "InvestorTotals": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "by_investor": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "By Investor"
+          },
+          "inst7": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "integer"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inst7"
+          },
+          "check1_residual": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Check1 Residual"
+          },
+          "check2_residual": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Check2 Residual"
+          },
+          "by_market": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "type": "object",
+            "title": "By Market"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "recent": {
+            "items": {
+              "$ref": "#/components/schemas/DayTotals"
+            },
+            "type": "array",
+            "title": "Recent"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "by_investor",
+          "inst7",
+          "check1_residual",
+          "check2_residual",
+          "by_market",
+          "quality",
+          "source",
+          "notes",
+          "recent"
+        ],
+        "title": "InvestorTotals"
+      },
+      "LoginBody": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Password"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "LoginBody",
+        "description": "POST /api/auth/login 본문. 값은 검증 오류 문구에 싣지 않는다(app 의 422 처리기)."
+      },
+      "MarketSummary": {
+        "properties": {
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "indices": {
+            "items": {
+              "$ref": "#/components/schemas/IndexTile"
+            },
+            "type": "array",
+            "title": "Indices"
+          },
+          "turnover": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TurnoverPanel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "breadth": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Breadth"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "investors": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InvestorTotals"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "indices",
+          "turnover",
+          "breadth",
+          "investors"
+        ],
+        "title": "MarketSummary"
+      },
+      "MeResponse": {
+        "properties": {
+          "user": {
+            "type": "string",
+            "title": "User"
+          },
+          "csrf_token": {
+            "type": "string",
+            "title": "Csrf Token"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "user",
+          "csrf_token"
+        ],
+        "title": "MeResponse"
+      },
+      "NewListing": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "listed_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Listed On"
+          },
+          "net_asset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Asset"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "listed_on",
+          "net_asset"
+        ],
+        "title": "NewListing"
+      },
+      "NoDataBody": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "const": "no_data",
+            "title": "Code",
+            "default": "no_data"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "NoDataBody",
+        "description": "데이터가 아직 없을 때(404) — 화면은 '아직 없음 — <작업> <예정 시각>' 으로 그린다(§6.7)."
+      },
+      "PremiumRow": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "price": {
+            "type": "number",
+            "title": "Price"
+          },
+          "nav": {
+            "type": "number",
+            "title": "Nav"
+          },
+          "premium_pct": {
+            "type": "number",
+            "title": "Premium Pct"
+          },
+          "threshold": {
+            "type": "number",
+            "title": "Threshold"
+          },
+          "warn": {
+            "type": "boolean",
+            "title": "Warn"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "price",
+          "nav",
+          "premium_pct",
+          "threshold",
+          "warn",
+          "as_of",
+          "quality",
+          "source"
+        ],
+        "title": "PremiumRow"
+      },
+      "Quality": {
+        "type": "string",
+        "enum": [
+          "ok",
+          "stale",
+          "estimated",
+          "invalid"
+        ],
+        "title": "Quality",
+        "description": "값의 품질. 문자열 값이 그대로 DB `quality` 열과 API 응답에 들어간다."
+      },
+      "RankItem": {
+        "properties": {
+          "market": {
+            "type": "string",
+            "title": "Market"
+          },
+          "rank": {
+            "type": "integer",
+            "title": "Rank"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "turnover": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover"
+          },
+          "chg_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chg Pct"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "market",
+          "rank",
+          "code",
+          "name",
+          "turnover",
+          "chg_pct"
+        ],
+        "title": "RankItem"
+      },
+      "Ribbon": {
+        "properties": {
+          "chips": {
+            "items": {
+              "$ref": "#/components/schemas/Chip"
+            },
+            "type": "array",
+            "title": "Chips"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "chips"
+        ],
+        "title": "Ribbon"
+      },
+      "RowFlows": {
+        "properties": {
+          "foreign": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Foreign"
+          },
+          "inst": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inst"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "foreign",
+          "inst",
+          "quality"
+        ],
+        "title": "RowFlows",
+        "description": "신고가 행에 붙이는 그날 원장 순매수(원) — 값이 없으면 None."
+      },
+      "ScreenResponse": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "value",
+              "foreign",
+              "inst",
+              "both",
+              "streak",
+              "spike"
+            ],
+            "title": "Mode"
+          },
+          "market": {
+            "type": "string",
+            "enum": [
+              "all",
+              "KOSPI",
+              "KOSDAQ"
+            ],
+            "title": "Market"
+          },
+          "period": {
+            "type": "integer",
+            "title": "Period"
+          },
+          "share_class": {
+            "type": "string",
+            "enum": [
+              "common",
+              "pref"
+            ],
+            "title": "Share Class"
+          },
+          "min_avg_turnover": {
+            "type": "integer",
+            "title": "Min Avg Turnover"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "n_total": {
+            "type": "integer",
+            "title": "N Total"
+          },
+          "n_excluded": {
+            "$ref": "#/components/schemas/Excluded"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ScreenRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "mode",
+          "market",
+          "period",
+          "share_class",
+          "min_avg_turnover",
+          "date",
+          "n_total",
+          "n_excluded",
+          "rows"
+        ],
+        "title": "ScreenResponse"
+      },
+      "ScreenRow": {
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "title": "Rank"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "market": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market"
+          },
+          "sector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sector"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "chg_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chg Pct"
+          },
+          "turnover_sum": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover Sum"
+          },
+          "turnover_avg": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover Avg"
+          },
+          "turnover_rate_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover Rate Pct"
+          },
+          "foreign": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Foreign"
+          },
+          "inst": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inst"
+          },
+          "other_corp": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Other Corp"
+          },
+          "indiv": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Indiv"
+          },
+          "streak_foreign": {
+            "type": "integer",
+            "title": "Streak Foreign"
+          },
+          "streak_inst": {
+            "type": "integer",
+            "title": "Streak Inst"
+          },
+          "spike_mult": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spike Mult"
+          },
+          "newhigh_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Newhigh Label"
+          },
+          "flags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flags"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rank",
+          "code",
+          "name",
+          "market",
+          "sector",
+          "kind",
+          "chg_pct",
+          "turnover_sum",
+          "turnover_avg",
+          "turnover_rate_pct",
+          "foreign",
+          "inst",
+          "other_corp",
+          "indiv",
+          "streak_foreign",
+          "streak_inst",
+          "spike_mult",
+          "newhigh_label",
+          "flags",
+          "quality",
+          "source"
+        ],
+        "title": "ScreenRow"
+      },
+      "SectorCell": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "market": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market"
+          },
+          "chg_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chg Pct"
+          },
+          "turnover": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "market",
+          "chg_pct",
+          "turnover",
+          "quality",
+          "source",
+          "as_of",
+          "note"
+        ],
+        "title": "SectorCell"
+      },
+      "SectorHeat": {
+        "properties": {
+          "period": {
+            "type": "integer",
+            "title": "Period"
+          },
+          "cells": {
+            "items": {
+              "$ref": "#/components/schemas/SectorCell"
+            },
+            "type": "array",
+            "title": "Cells"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "period",
+          "cells"
+        ],
+        "title": "SectorHeat"
+      },
+      "SourcedInt": {
+        "properties": {
+          "value": {
+            "type": "integer",
+            "title": "Value"
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "value",
+          "source",
+          "as_of",
+          "quality"
+        ],
+        "title": "SourcedInt",
+        "description": "원천이 붙은 원 단위 정수."
+      },
+      "StockFlowDetail": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/DayFlow"
+            },
+            "type": "array",
+            "title": "Days"
+          },
+          "cumulative": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Cumulative"
+          },
+          "checks": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Checks"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "days",
+          "cumulative",
+          "checks"
+        ],
+        "title": "StockFlowDetail"
+      },
+      "TurnoverPanel": {
+        "properties": {
+          "today": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SourcedInt"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "basis": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "close",
+                  "intraday_index"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Basis"
+          },
+          "avg20": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg20"
+          },
+          "ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ratio"
+          },
+          "n_prior": {
+            "type": "integer",
+            "title": "N Prior"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/DayValue"
+            },
+            "type": "array",
+            "title": "Series"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "today",
+          "basis",
+          "avg20",
+          "ratio",
+          "n_prior",
+          "series",
+          "tags"
+        ],
+        "title": "TurnoverPanel"
+      },
+      "TypeRollup": {
+        "properties": {
+          "etf_type": {
+            "$ref": "#/components/schemas/EtfType"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "net_inflow": {
+            "type": "integer",
+            "title": "Net Inflow"
+          },
+          "price_effect": {
+            "type": "integer",
+            "title": "Price Effect"
+          },
+          "n_etfs": {
+            "type": "integer",
+            "title": "N Etfs"
+          },
+          "n_new": {
+            "type": "integer",
+            "title": "N New"
+          },
+          "n_invalid": {
+            "type": "integer",
+            "title": "N Invalid"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "etf_type",
+          "label",
+          "net_inflow",
+          "price_effect",
+          "n_etfs",
+          "n_new",
+          "n_invalid"
+        ],
+        "title": "TypeRollup"
+      }
+    }
+  }
+}

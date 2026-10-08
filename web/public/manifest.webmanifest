@@ -1,0 +1,12 @@
+{
+  "name": "KBJ 국장 터미널",
+  "short_name": "KBJ",
+  "description": "국장 통합 터미널 — 시장·신고가·수급·ETF",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#120d03",
+  "theme_color": "#120d03",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

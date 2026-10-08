@@ -9,8 +9,13 @@ GEX 체인·분봉 세부(전광판 행사가·야간 시각 표기)는 P7 승�
   누가 보냈는지(`transport(consumer)` 로 만든 이름)를 `posts` 에 남긴다 → '발급은 auth 에서만' 단언.
 - **조회**: GET. Bearer 토큰이 이 서버가 발급했고 만료 전이어야 한다(아니면 `EGW00123`). 앱키·
   시크릿 헤더가 맞아야 한다. `tr_id` 와 경로가 TR 표(`TRS`)와 맞아야 한다(아니면 `OPSQ0002`).
-- 응답 본문은 (tr_id, 파라미터)로 정해지는 **합성 값**(고정 시드 — sha256). 종목은
-  합성 20개(`SYMBOLS`).
+- 응답 본문은 (tr_id, 파라미터, 날짜, 10분 슬롯)으로 정해지는 **합성 값**(고정 시드 — sha256).
+  종목은 합성 20개(`SYMBOLS` — 앞 10개 코스피·뒤 10개 코스닥, `market_symbols`). P3 TR(묶음 C):
+  FHKST01010100 상태 칸·OHLC, FHKST01010900 3일치 3구분(금액 = 수량 × 종가 — 자릿수 대조가 맞게),
+  FHPTJ04040000 4구분 합 0·기관 7구분 합 = 기관([추정 칸]), FHPTJ04400000·FHPST01710000 시장마다
+  `RANK_ROWS` 행, FHPST02400000 iNAV·괴리율, FHPUP02100000 지수, FHPUP02140000 업종
+  `SECTORS_PER_MARKET` 개. 모양은 `kbj.data.private.kis.{investors,quotes,ranks,etf,index}` 파서가
+  읽는 칸이다(tests/unit/fakes/test_kis_server_p3.py).
 - **오류 주입** `inject(msg_cd, count=1, *, start=None, until=None, tr_id=None, consumers=None)`:
   `EGW00201`(초당 한도)·`EGW00123`(토큰 거절)·`EGW00133`(발급 1분 1회 — POST)·`HTTP500`. 시각은 가짜
   시계 기준, consumers 를 주면 그 프로세스의 요청만.
@@ -72,6 +77,10 @@ TRS: Final[dict[str, str]] = {
     MINUTE_TR: MINUTE_PATH,
     "FHPIF05030100": "/uapi/domestic-futureoption/v1/quotations/display-board-callput",
     "FHPTJ04030000": "/uapi/domestic-stock/v1/quotations/inquire-investor-time-by-market",
+    # P3 지수·업종(market.intraday) — [추정 TR·경로] conflict_map §1.13, 체크리스트 #24.
+    # 경로는 kbj.data.private.kis.parse.PATHS 와 같아야 한다(tests/unit/fakes 가 본다)
+    "FHPUP02100000": "/uapi/domestic-stock/v1/quotations/inquire-index-price",
+    "FHPUP02140000": "/uapi/domestic-stock/v1/quotations/inquire-index-category-price",
 }
 
 OK_MSG: Final = {"rt_cd": "0", "msg_cd": "MCA00000", "msg1": "정상처리 되었습니다."}
@@ -146,38 +155,165 @@ def _num(seed: int, lo: int, hi: int) -> int:
     return lo + seed % (hi - lo + 1)
 
 
-def synthetic_output(tr_id: str, params: dict[str, str], day: str) -> dict[str, Any]:
-    """TR 별 합성 응답 본문(정상). 같은 (tr_id, 파라미터, 날짜)면 같은 값."""
+def _days_back(day: str, n: int) -> list[str]:
+    """day(YYYYMMDD) 부터 달력일로 n 개(최근 먼저) — 합성 일별 행의 날짜."""
+    d = datetime.strptime(day, "%Y%m%d").replace(tzinfo=KST)
+    return [(d - timedelta(days=i)).strftime("%Y%m%d") for i in range(n)]
+
+
+def market_symbols(market: str) -> tuple[str, ...]:
+    """합성 시장 구성: 앞 10종목 코스피(0001)·뒤 10종목 코스닥(1001). 그 밖(0000 등)은 전부."""
+    if market == "0001":
+        return SYMBOLS[:10]
+    if market == "1001":
+        return SYMBOLS[10:]
+    return SYMBOLS
+
+
+def _quote_out(s: int, code: str) -> dict[str, Any]:
+    price = _num(s, 5_000, 300_000)
+    vol = _num(s >> 7, 1_000, 5_000_000)
+    return {
+        "stck_shrn_iscd": code,
+        "hts_kor_isnm": f"합성{code[-3:]}",
+        "rprs_mrkt_kor_name": "KOSPI" if code in SYMBOLS[:10] else "KOSDAQ",
+        "stck_prpr": str(price),
+        "stck_oprc": str(price - _num(s >> 13, 0, price // 50)),
+        "stck_hgpr": str(price + _num(s >> 15, 0, price // 40)),
+        "stck_lwpr": str(price - _num(s >> 17, 0, price // 30)),
+        "prdy_vrss": str(_num(s >> 3, 0, 3_000) - 1_500),
+        "prdy_ctrt": f"{(_num(s >> 5, 0, 600) - 300) / 100:.2f}",
+        "acml_vol": str(vol),
+        "acml_tr_pbmn": str(price * vol),
+        "hts_avls": str(_num(s >> 11, 100, 900_000)),
+        "lstn_stcn": str(_num(s >> 19, 1_000_000, 900_000_000)),
+        "iscd_stat_cls_code": "55",
+        "mang_issu_cls_code": "N",
+        "temp_stop_yn": "N",
+        "sltr_yn": "N",
+    }
+
+
+def _investor_rows(s: int, day: str, close: int) -> list[dict[str, Any]]:
+    """종목 투자자 일별 3구분(최근 3일). 금액(백만원) = 수량 × 종가 ÷ 1e6 — 자릿수 대조가 맞게."""
+    rows: list[dict[str, Any]] = []
+    for i, d in enumerate(_days_back(day, 3)):
+        row: dict[str, Any] = {"stck_bsop_date": d, "stck_clpr": str(close)}
+        for j, who in enumerate(("prsn", "frgn", "orgn")):
+            qty = _num(s >> (i * 3 + j), 0, 200_000) - 100_000
+            row[f"{who}_ntby_qty"] = str(qty)
+            row[f"{who}_ntby_tr_pbmn"] = str(round(qty * close / 1_000_000))
+        rows.append(row)
+    return rows
+
+
+INST7_PREFIX: Final = ("scrt", "ivtr", "pe_fund", "insu", "bank", "fund", "mrbn")
+
+
+def _market_investor_rows(s: int, day: str) -> list[dict[str, Any]]:
+    """시장 투자자 일별(백만원) — 4구분 합 0·기관 7구분 합 = 기관이 되게 만든다(합성 원장 성질)."""
+    rows: list[dict[str, Any]] = []
+    for i, d in enumerate(_days_back(day, 3)):
+        k = s >> i
+        inst7 = [_num(k >> (2 * j), 0, 400_000) - 200_000 for j in range(7)]
+        inst = sum(inst7)
+        frgn = _num(k >> 17, 0, 900_000) - 450_000
+        corp = _num(k >> 19, 0, 200_000) - 100_000
+        prsn = -(inst + frgn + corp)
+        row: dict[str, Any] = {
+            "stck_bsop_date": d,
+            "bstp_nmix_prpr": f"{2_000 + _num(k >> 21, 0, 90_000) / 100:.2f}",
+            "prsn_ntby_tr_pbmn": str(prsn),
+            "frgn_ntby_tr_pbmn": str(frgn),
+            "orgn_ntby_tr_pbmn": str(inst),
+            "etc_corp_ntby_tr_pbmn": str(corp),
+        }
+        for name, v in zip(INST7_PREFIX, inst7, strict=True):
+            row[f"{name}_ntby_tr_pbmn"] = str(v)
+        rows.append(row)
+    return rows
+
+
+RANK_ROWS: Final = 10  # 합성 거래대금 순위 행 수(시장마다)
+SECTORS_PER_MARKET: Final = 5  # 합성 업종 수(시장마다)
+
+
+def synthetic_output(
+    tr_id: str, params: dict[str, str], day: str, slot: str = ""
+) -> dict[str, Any]:
+    """TR 별 합성 응답 본문(정상). 같은 (tr_id, 파라미터, 날짜, 슬롯)이면 같은 값."""
     code = params.get("FID_INPUT_ISCD", "") or params.get("fid_input_iscd", "")
-    s = _seed(tr_id, sorted(params.items()), day)
+    s = _seed(tr_id, sorted(params.items()), day, slot)
     price = _num(s, 5_000, 300_000)
     if tr_id == "FHKST01010100":
+        return {**OK_MSG, "output": _quote_out(s, code)}
+    if tr_id == "FHKST01010900":
+        return {**OK_MSG, "output": _investor_rows(s, day, price)}
+    if tr_id == "FHPTJ04040000":
+        return {**OK_MSG, "output1": _market_investor_rows(s, day)}
+    if tr_id == "FHPTJ04400000":
+        rows = [
+            {
+                "mksc_shrn_iscd": c,
+                "hts_kor_isnm": f"합성{c[-3:]}",
+                "stck_prpr": str(_num(s >> i, 5_000, 300_000)),
+                "frgn_ntby_qty": str(_num(s >> (i + 1), 0, 200_000) - 100_000),
+                "orgn_ntby_qty": str(_num(s >> (i + 2), 0, 200_000) - 100_000),
+                "frgn_ntby_tr_pbmn": str(_num(s >> (i + 3), 0, 90_000) - 45_000),
+                "orgn_ntby_tr_pbmn": str(_num(s >> (i + 4), 0, 90_000) - 45_000),
+            }
+            for i, c in enumerate(market_symbols(code)[:RANK_ROWS])
+        ]
+        return {**OK_MSG, "output": rows}
+    if tr_id == "FHPST01710000":
+        rows = [
+            {
+                "data_rank": str(i + 1),
+                "mksc_shrn_iscd": c,
+                "hts_kor_isnm": f"합성{c[-3:]}",
+                "stck_prpr": str(_num(s >> i, 5_000, 300_000)),
+                "prdy_ctrt": f"{(_num(s >> (i + 1), 0, 600) - 300) / 100:.2f}",
+                "acml_vol": str(_num(s >> (i + 2), 1_000, 5_000_000)),
+                "acml_tr_pbmn": str((RANK_ROWS - i) * 10_000_000_000 + _num(s >> i, 0, 9_999)),
+            }
+            for i, c in enumerate(market_symbols(code)[:RANK_ROWS])
+        ]
+        return {**OK_MSG, "output": rows}
+    if tr_id == "FHPST02400000":
+        nav = price + _num(s >> 3, 0, 200) / 100 - 1
         return {
             **OK_MSG,
             "output": {
-                "stck_shrn_iscd": code,
                 "stck_prpr": str(price),
-                "prdy_vrss": str(_num(s >> 3, 0, 3_000) - 1_500),
-                "prdy_ctrt": f"{(_num(s >> 5, 0, 600) - 300) / 100:.2f}",
-                "acml_vol": str(_num(s >> 7, 1_000, 5_000_000)),
-                "acml_tr_pbmn": str(price * _num(s >> 9, 1_000, 900_000)),
-                "hts_avls": str(_num(s >> 11, 100, 900_000)),
+                "nav": f"{nav:.2f}",
+                "dprt": f"{(price / nav - 1) * 100:.2f}",
+                "acml_vol": str(_num(s >> 5, 1_000, 900_000)),
+                "acml_tr_pbmn": str(price * _num(s >> 7, 1_000, 900_000)),
             },
         }
-    if tr_id == "FHKST01010900":
-        rows = [
+    if tr_id == "FHPUP02100000":
+        return {
+            **OK_MSG,
+            "output": {
+                "bstp_nmix_prpr": f"{500 + _num(s, 0, 300_000) / 100:.2f}",
+                "bstp_nmix_prdy_ctrt": f"{(_num(s >> 3, 0, 600) - 300) / 100:.2f}",
+                "acml_vol": str(_num(s >> 5, 1_000_000, 900_000_000)),
+                "acml_tr_pbmn": str(_num(s >> 7, 1_000_000, 20_000_000)),
+            },
+        }
+    if tr_id == "FHPUP02140000":
+        base = int(code or "0")
+        sectors = [
             {
-                "stck_bsop_date": day,
-                "prsn_ntby_qty": str(_num(s >> i, 0, 200_000) - 100_000),
-                "frgn_ntby_qty": str(_num(s >> (i + 1), 0, 200_000) - 100_000),
-                "orgn_ntby_qty": str(_num(s >> (i + 2), 0, 200_000) - 100_000),
-                "prsn_ntby_tr_pbmn": str(_num(s >> (i + 3), 0, 9_000_000) - 4_500_000),
-                "frgn_ntby_tr_pbmn": str(_num(s >> (i + 4), 0, 9_000_000) - 4_500_000),
-                "orgn_ntby_tr_pbmn": str(_num(s >> (i + 5), 0, 9_000_000) - 4_500_000),
+                "bstp_cls_code": f"{base + 5 + i:04d}",
+                "hts_kor_isnm": f"합성업종{base + 5 + i:04d}",
+                "bstp_nmix_prpr": f"{500 + _num(s >> i, 0, 300_000) / 100:.2f}",
+                "bstp_nmix_prdy_ctrt": f"{(_num(s >> (i + 1), 0, 600) - 300) / 100:.2f}",
+                "acml_tr_pbmn": str(_num(s >> (i + 2), 10_000, 2_000_000)),
             }
-            for i in range(3)
+            for i in range(SECTORS_PER_MARKET)
         ]
-        return {**OK_MSG, "output": rows}
+        return {**OK_MSG, "output1": {"bstp_nmix_prpr": "1.00"}, "output2": sectors}
     if tr_id == MINUTE_TR:
         bars = [
             {
@@ -383,9 +519,12 @@ class FakeKisServer:
         if not self._token_ok(bearer, now):
             status, err = ERRORS["EGW00123"]
             return reply(status, err, "EGW00123")
-        day = now.astimezone(KST).strftime("%Y%m%d")
+        local = now.astimezone(KST)
+        day = local.strftime("%Y%m%d")
+        # 장중 TR 은 10분 슬롯마다 값이 바뀐다
+        slot = f"{local:%H}{local.minute - local.minute % 10:02d}"
         params = {k: v for k, v in req.url.params.items()}
-        return reply(200, synthetic_output(tr_id, params, day))
+        return reply(200, synthetic_output(tr_id, params, day, slot))
 
     # ── 조회(시험) ───────────────────────────────────────────────────────────────────
     def posts(self, path: str | None = None) -> list[KisCall]:
@@ -463,6 +602,8 @@ __all__ = [
     "APP_KEY",
     "APP_SECRET",
     "MASTER_PATH",
+    "RANK_ROWS",
+    "SECTORS_PER_MARKET",
     "SYMBOLS",
     "TRS",
     "FakeKisServer",
@@ -470,6 +611,7 @@ __all__ = [
     "KisCall",
     "fake_credentials",
     "make_client",
+    "market_symbols",
     "master_zip",
     "synthetic_output",
 ]

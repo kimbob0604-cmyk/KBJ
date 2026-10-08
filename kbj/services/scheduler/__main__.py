@@ -1,10 +1,20 @@
-"""`python -m kbj.services.scheduler [run | validate [경로] | run-once <작업> [--as-of 값]]`.
+"""`python -m kbj.services.scheduler [run | validate [경로] | run-once <작업> [--as-of 값] |
+backfill <작업> --from YYYY-MM-DD --to YYYY-MM-DD [--max-days N]]`.
 
 - `validate`: 등록부를 카탈로그·limits.yaml·notify.yaml·마이그레이션 표와 대조한다(설계 §6.5 정적
   겹). 오류가 있으면 한 줄씩 찍고 종료 코드 1. Redis·DB·키가 없어도 된다(CI).
 - `run`: 서비스(세션 상태 발행 + 실행기). 등록부 검증이 실패하면 시작하지 않는다(종료 코드 2).
 - `run-once`: 작업 하나를 지금 한 번(조건 무시, `--as-of` 로 이벤트·백필 날짜). 기록 source=manual.
   인증된 운영 화면은 P3(SD `POST /api/ops/cron/trigger` 폐지 — §6.8).
+- `backfill`(P3 — docs/p3_design.md §3.8): 백필 작업(`backfill_of` 가 있는 작업 —
+  `market.backfill`)을 날짜 범위의 **거래일마다** `run-once --as-of <날짜>` 로 돌린다. **최근
+  날짜부터 과거로**, 한 번에 최대 `--max-days`(기본 1,000일 [제안]). 이미 받은(done) 데이터 키는
+  선점 장부가 건너뛴다(중복 0). 실패·공표 없음(retry)·일 예산 소진이 나오면 그 날짜에서 멈추고 종료
+  코드 1 — 다음 날 같은 명령을 다시 돌리면 받은 날짜는 건너뛰고 이어 간다. 일 예산은
+  `config/limits.yaml` `krx.backfill_cap`. 범위를 다 받으면(종료 코드 0) 역사적 신고가 스칼라를
+  받은 일봉 전체로 다시 쌓는다(`board.rebuild_alltime` — §3.8 'board 연결', `history_from` = 받은
+  이력의 첫날). 다시 쌓기가 실패하면 종료 코드 1(삼키지 않는다 — 같은 명령을 다시 돌리면 받은 날은
+  건너뛰고 다시 쌓기만 한다).
 """
 
 from __future__ import annotations
@@ -14,6 +24,7 @@ import logging
 import sys
 import threading
 from collections.abc import Callable, Sequence
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -112,6 +123,87 @@ def _build(settings: Settings, *, inline: bool = False) -> tuple[Any, Any, Any, 
     return svc, runner, redis, redis.close
 
 
+BACKFILL_MAX_DAYS = 1000  # 한 번에 펼칠 최대 거래일 수 [제안 — §3.8 '하루 최대 1,000일치']
+BACKFILL_STOP = frozenset({"failed", "timeout", "retry", "planned"})
+
+
+def backfill_days(cal: TradingCalendar, start: date, end: date, max_days: int) -> list[date]:
+    """[start, end] 의 거래일 — 최근부터 과거로, 최대 max_days 개."""
+    if start > end:
+        raise ValueError(f"--from({start}) 이 --to({end}) 보다 뒤다")
+    if max_days < 1:
+        raise ValueError("--max-days 는 1 이상")
+    out: list[date] = []
+    d = end
+    while d >= start and len(out) < max_days:
+        if cal.is_trading_day(d):
+            out.append(d)
+        d -= timedelta(days=1)
+    return out
+
+
+def run_backfill(
+    runner: Any,
+    job: str,
+    days: Sequence[date],
+    now: Callable[[], datetime],
+    out: Callable[[str], None] = print,
+    after: Callable[[], int] | None = None,
+) -> int:
+    """날짜마다 `run_once`. 멈춰야 할 사건(실패·재시도·계획됨)이 나오면 그 날짜에서 멈추고 1.
+
+    `after`: 범위를 다 받은 뒤 한 번(역사적 신고가 다시 쌓기 — 쓴 행 수). 예외는 삼키지 않고
+    한 줄로 알린 뒤 1.
+    """
+    spec = runner.registry.by_name(job)
+    if not spec.backfill_of:
+        out(f"오류: {job} 은 백필 작업이 아니다(backfill_of 없음)")
+        return 1
+    for i, d in enumerate(days, start=1):
+        events = runner.run_once(job, now(), as_of=d.isoformat())
+        for ev in events:
+            out(f"[{i}/{len(days)}] {ev.kind} {ev.job} {ev.as_of} 시도 {ev.attempt}")
+        bad = [ev for ev in events if ev.kind in BACKFILL_STOP]
+        if bad:
+            why = bad[0].detail.get("reason", "") if bad[0].detail else ""
+            out(f"멈춤: {d} {bad[0].kind} {why}".rstrip())
+            return 1
+    out(f"백필 끝: {len(days)}일")
+    if after is not None:
+        try:
+            n = after()
+        except Exception as e:  # 다시 쌓기 실패 — 종료 코드로 알린다(백필 받은 날은 그대로)
+            out(f"역사적 신고가 다시 쌓기 실패: {type(e).__name__}")
+            log_event(log, logging.ERROR, SERVICE, "rebuild_alltime_failed", error=type(e).__name__)
+            return 1
+        out(f"역사적 신고가 다시 쌓기: {n}종목")
+    return 0
+
+
+REBUILD_AFTER = frozenset(
+    {"market.backfill"}
+)  # 범위를 다 받으면 역사적 신고가를 다시 쌓는 백필 작업
+
+
+def rebuild_alltime_fn(settings: Settings, job: str) -> Callable[[], int] | None:
+    """`market.backfill` 뒤 board 연결(설계 §3.8) — 오늘(KST)까지 받은 일봉으로 다시 쌓기."""
+    if job not in REBUILD_AFTER:
+        return None
+
+    def run() -> int:
+        from kbj.core.time import now_kst
+        from kbj.services.engine.board import rebuild_alltime
+        from kbj.store.db import connect
+        from kbj.store.repos import pg_repos
+
+        def connect_fn() -> Any:
+            return connect(settings, service=SERVICE)
+
+        return rebuild_alltime(pg_repos(connect_fn), now_kst().date(), now=utcnow(), loaded_by=job)
+
+    return run
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="python -m kbj.services.scheduler")
     sub = p.add_subparsers(dest="cmd")
@@ -121,6 +213,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     o = sub.add_parser("run-once", help="작업 하나를 지금 한 번")
     o.add_argument("job")
     o.add_argument("--as-of", dest="as_of", default=None)
+    b = sub.add_parser("backfill", help="백필 작업을 날짜 범위의 거래일마다(최근부터 과거로)")
+    b.add_argument("job")
+    b.add_argument("--from", dest="start", type=date.fromisoformat, required=True)
+    b.add_argument("--to", dest="end", type=date.fromisoformat, required=True)
+    b.add_argument("--max-days", dest="max_days", type=int, default=BACKFILL_MAX_DAYS)
     args = p.parse_args(argv)
     cmd = args.cmd or "run"
 
@@ -151,6 +248,23 @@ def main(argv: Sequence[str] | None = None) -> int:
             for ev in events:
                 print(f"{ev.kind} {ev.job} {ev.as_of} 시도 {ev.attempt}")
             return 0 if all(ev.kind not in ("failed", "timeout") for ev in events) else 1
+        finally:
+            close()
+
+    if cmd == "backfill":
+        try:
+            days = backfill_days(_calendar(settings), args.start, args.end, args.max_days)
+        except ValueError as e:
+            print(f"오류: {e}")
+            return 1
+        _svc, runner, _redis, close = _build(settings, inline=True)
+        try:
+            return run_backfill(
+                runner, args.job, days, utcnow, after=rebuild_alltime_fn(settings, args.job)
+            )
+        except (KeyError, ValueError) as e:
+            print(f"오류: {e}")
+            return 1
         finally:
             close()
 

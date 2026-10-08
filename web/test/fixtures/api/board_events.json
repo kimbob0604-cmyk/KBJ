@@ -1,0 +1,1061 @@
+{
+  "source": "KIS",
+  "as_of": "2026-09-15T15:30:00+09:00",
+  "quality": "estimated",
+  "notes": [
+    "KIS 마감값(잠정) — 다음 영업일 08:40 KRX 확정",
+    "보드 금액(turnover·mktcap·*_eok)은 억원(ET 산출 그대로)"
+  ],
+  "generated_at": "2026-09-15T18:00:00+09:00",
+  "data": {
+    "as_of": "2026-09-15",
+    "source": "kis",
+    "generated_at": "2026-10-08T03:29:01+09:00",
+    "events": [
+      {
+        "type": "material_giveback",
+        "theme": null,
+        "tickers": [
+          "900170"
+        ],
+        "severity": 6.25,
+        "evidence": {
+          "giveback": 1.494,
+          "giveback_pp": 6.25,
+          "high_chg_pct": 4.18,
+          "chg_pct": -2.07,
+          "high": 6658.0,
+          "close": 6259.0
+        }
+      },
+      {
+        "type": "proximity_cluster",
+        "theme": "t_grid",
+        "tickers": [
+          "900055",
+          "900320",
+          "900680",
+          "900950",
+          "901040"
+        ],
+        "severity": 5,
+        "evidence": {
+          "n": 5
+        }
+      },
+      {
+        "type": "proximity_cluster",
+        "theme": "t_def",
+        "tickers": [
+          "900480",
+          "900750",
+          "900930",
+          "901020",
+          "901110"
+        ],
+        "severity": 5,
+        "evidence": {
+          "n": 5
+        }
+      },
+      {
+        "type": "proximity_cluster",
+        "theme": "t_bat",
+        "tickers": [
+          "900100",
+          "900370",
+          "900640",
+          "900730"
+        ],
+        "severity": 4,
+        "evidence": {
+          "n": 4
+        }
+      },
+      {
+        "type": "proximity_cluster",
+        "theme": "t_ai",
+        "tickers": [
+          "900180",
+          "900360",
+          "900540",
+          "900810"
+        ],
+        "severity": 4,
+        "evidence": {
+          "n": 4
+        }
+      },
+      {
+        "type": "material_giveback",
+        "theme": null,
+        "tickers": [
+          "902690"
+        ],
+        "severity": 3.21,
+        "evidence": {
+          "giveback": 0.958,
+          "giveback_pp": 3.21,
+          "high_chg_pct": 3.35,
+          "chg_pct": 0.14,
+          "high": 70706.0,
+          "close": 68513.0
+        }
+      },
+      {
+        "type": "material_giveback",
+        "theme": null,
+        "tickers": [
+          "901870"
+        ],
+        "severity": 3.16,
+        "evidence": {
+          "giveback": 1.069,
+          "giveback_pp": 3.16,
+          "high_chg_pct": 2.96,
+          "chg_pct": -0.2,
+          "high": 125295.0,
+          "close": 121440.0
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": "t_def",
+        "tickers": [
+          "900030"
+        ],
+        "severity": 3,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52",
+            "hist"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": null,
+        "tickers": [
+          "900150"
+        ],
+        "severity": 3,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52",
+            "hist"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": "t_bio",
+        "tickers": [
+          "900310"
+        ],
+        "severity": 3,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52",
+            "hist"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": "t_def",
+        "tickers": [
+          "900570"
+        ],
+        "severity": 3,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52",
+            "hist"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": "t_bat",
+        "tickers": [
+          "901090"
+        ],
+        "severity": 3,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52",
+            "hist"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": null,
+        "tickers": [
+          "901310"
+        ],
+        "severity": 3,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52",
+            "hist"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": null,
+        "tickers": [
+          "901750"
+        ],
+        "severity": 3,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52",
+            "hist"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": null,
+        "tickers": [
+          "901760"
+        ],
+        "severity": 3,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52",
+            "hist"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": null,
+        "tickers": [
+          "901790"
+        ],
+        "severity": 3,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52",
+            "hist"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": null,
+        "tickers": [
+          "901810"
+        ],
+        "severity": 3,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52",
+            "hist"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": null,
+        "tickers": [
+          "902070"
+        ],
+        "severity": 3,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52",
+            "hist"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": null,
+        "tickers": [
+          "902190"
+        ],
+        "severity": 3,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52",
+            "hist"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": null,
+        "tickers": [
+          "902370"
+        ],
+        "severity": 3,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52",
+            "hist"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": null,
+        "tickers": [
+          "902890"
+        ],
+        "severity": 3,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52",
+            "hist"
+          ]
+        }
+      },
+      {
+        "type": "proximity_cluster",
+        "theme": "t_ship",
+        "tickers": [
+          "900200",
+          "900650",
+          "900830"
+        ],
+        "severity": 3,
+        "evidence": {
+          "n": 3
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "900610"
+        ],
+        "severity": 2.68,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 3.52,
+          "gap_now": 6.2
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": "t_def",
+        "tickers": [
+          "900660"
+        ],
+        "severity": 2.66,
+        "evidence": {
+          "kind": "w52",
+          "gap_prev": 4.2,
+          "gap_now": 6.86
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": "t_ai",
+        "tickers": [
+          "900900"
+        ],
+        "severity": 2.6,
+        "evidence": {
+          "kind": "w52",
+          "gap_prev": 2.87,
+          "gap_now": 5.47
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "901590"
+        ],
+        "severity": 2.32,
+        "evidence": {
+          "kind": "hist",
+          "gap_prev": 2.43,
+          "gap_now": 4.75
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": "t_def",
+        "tickers": [
+          "901020"
+        ],
+        "severity": 2.22,
+        "evidence": {
+          "kind": "w52",
+          "gap_prev": 2.78,
+          "gap_now": 5.0
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "901360"
+        ],
+        "severity": 2.17,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 0.65,
+          "gap_now": 2.82
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": "t_bio",
+        "tickers": [
+          "900400"
+        ],
+        "severity": 2,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": null,
+        "tickers": [
+          "900700"
+        ],
+        "severity": 2,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": null,
+        "tickers": [
+          "900980"
+        ],
+        "severity": 2,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": null,
+        "tickers": [
+          "901340"
+        ],
+        "severity": 2,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": null,
+        "tickers": [
+          "901500"
+        ],
+        "severity": 2,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": null,
+        "tickers": [
+          "901530"
+        ],
+        "severity": 2,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": null,
+        "tickers": [
+          "901840"
+        ],
+        "severity": 2,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": null,
+        "tickers": [
+          "902420"
+        ],
+        "severity": 2,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": null,
+        "tickers": [
+          "902560"
+        ],
+        "severity": 2,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": null,
+        "tickers": [
+          "902620"
+        ],
+        "severity": 2,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": null,
+        "tickers": [
+          "902640"
+        ],
+        "severity": 2,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52"
+          ]
+        }
+      },
+      {
+        "type": "multi_label_high",
+        "theme": null,
+        "tickers": [
+          "902860"
+        ],
+        "severity": 2,
+        "evidence": {
+          "labels": [
+            "d60",
+            "w52"
+          ]
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": "t_def",
+        "tickers": [
+          "900480"
+        ],
+        "severity": 1.92,
+        "evidence": {
+          "kind": "w52",
+          "gap_prev": 1.27,
+          "gap_now": 3.19
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "902470"
+        ],
+        "severity": 1.91,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 4.88,
+          "gap_now": 6.79
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "901920"
+        ],
+        "severity": 1.89,
+        "evidence": {
+          "kind": "w52",
+          "gap_prev": 0.09,
+          "gap_now": 1.98
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": "t_ai",
+        "tickers": [
+          "900180"
+        ],
+        "severity": 1.78,
+        "evidence": {
+          "kind": "w52",
+          "gap_prev": 1.76,
+          "gap_now": 3.54
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": "t_grid",
+        "tickers": [
+          "901130"
+        ],
+        "severity": 1.68,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 3.53,
+          "gap_now": 5.21
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "902980"
+        ],
+        "severity": 1.63,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 2.85,
+          "gap_now": 4.48
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "902250"
+        ],
+        "severity": 1.59,
+        "evidence": {
+          "kind": "hist",
+          "gap_prev": 2.74,
+          "gap_now": 4.33
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "901600"
+        ],
+        "severity": 1.47,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 2.84,
+          "gap_now": 4.31
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "900240"
+        ],
+        "severity": 1.34,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 1.88,
+          "gap_now": 3.22
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "902350"
+        ],
+        "severity": 1.33,
+        "evidence": {
+          "kind": "w52",
+          "gap_prev": 2.65,
+          "gap_now": 3.98
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "901160"
+        ],
+        "severity": 1.28,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 4.04,
+          "gap_now": 5.32
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "902110"
+        ],
+        "severity": 1.25,
+        "evidence": {
+          "kind": "hist",
+          "gap_prev": 4.69,
+          "gap_now": 5.94
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": "t_bat",
+        "tickers": [
+          "900010"
+        ],
+        "severity": 1.24,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 4.21,
+          "gap_now": 5.45
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": "t_grid",
+        "tickers": [
+          "900055"
+        ],
+        "severity": 1.19,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 0.03,
+          "gap_now": 1.22
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "901140"
+        ],
+        "severity": 1.11,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 4.52,
+          "gap_now": 5.63
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "902330"
+        ],
+        "severity": 1.03,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 1.05,
+          "gap_now": 2.08
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "900890"
+        ],
+        "severity": 0.99,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 1.21,
+          "gap_now": 2.2
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "902130"
+        ],
+        "severity": 0.99,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 1.4,
+          "gap_now": 2.39
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "901480"
+        ],
+        "severity": 0.96,
+        "evidence": {
+          "kind": "w52",
+          "gap_prev": 2.73,
+          "gap_now": 3.69
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "901300"
+        ],
+        "severity": 0.86,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 1.88,
+          "gap_now": 2.74
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": "t_def",
+        "tickers": [
+          "900750"
+        ],
+        "severity": 0.86,
+        "evidence": {
+          "kind": "hist",
+          "gap_prev": 2.29,
+          "gap_now": 3.15
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": "t_ai",
+        "tickers": [
+          "900540"
+        ],
+        "severity": 0.77,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 3.81,
+          "gap_now": 4.58
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "900600"
+        ],
+        "severity": 0.76,
+        "evidence": {
+          "kind": "w52",
+          "gap_prev": 0.69,
+          "gap_now": 1.45
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "902300"
+        ],
+        "severity": 0.69,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 2.77,
+          "gap_now": 3.46
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "902010"
+        ],
+        "severity": 0.68,
+        "evidence": {
+          "kind": "hist",
+          "gap_prev": 4.99,
+          "gap_now": 5.67
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "901070"
+        ],
+        "severity": 0.54,
+        "evidence": {
+          "kind": "hist",
+          "gap_prev": 3.34,
+          "gap_now": 3.88
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "900710"
+        ],
+        "severity": 0.46,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 1.1,
+          "gap_now": 1.56
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "901620"
+        ],
+        "severity": 0.44,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 4.55,
+          "gap_now": 4.99
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": "t_bat",
+        "tickers": [
+          "900100"
+        ],
+        "severity": 0.43,
+        "evidence": {
+          "kind": "hist",
+          "gap_prev": 0.13,
+          "gap_now": 0.56
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": "t_ship",
+        "tickers": [
+          "900650"
+        ],
+        "severity": 0.42,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 4.13,
+          "gap_now": 4.55
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "900970"
+        ],
+        "severity": 0.4,
+        "evidence": {
+          "kind": "w52",
+          "gap_prev": 0.03,
+          "gap_now": 0.43
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "902790"
+        ],
+        "severity": 0.23,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 2.88,
+          "gap_now": 3.11
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "901950"
+        ],
+        "severity": 0.08,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 2.47,
+          "gap_now": 2.55
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "900260"
+        ],
+        "severity": 0.08,
+        "evidence": {
+          "kind": "hist",
+          "gap_prev": 1.63,
+          "gap_now": 1.71
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": null,
+        "tickers": [
+          "900530"
+        ],
+        "severity": 0.04,
+        "evidence": {
+          "kind": "hist",
+          "gap_prev": 3.09,
+          "gap_now": 3.13
+        }
+      },
+      {
+        "type": "breakout_fail",
+        "theme": "t_bat",
+        "tickers": [
+          "900370"
+        ],
+        "severity": 0.03,
+        "evidence": {
+          "kind": "d60",
+          "gap_prev": 1.41,
+          "gap_now": 1.44
+        }
+      }
+    ],
+    "note": "뉴스·수급·전일 주장을 요구하는 탐지기(1·2·5·7·8)는 입력 데이터 미확보로 미포함"
+  }
+}

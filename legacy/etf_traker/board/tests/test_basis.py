@@ -28,47 +28,6 @@ def row(name, hi=None, cl=None, turnover=0.0, label=...):
                 close_basis=dict(label=cl, hits={cl: True} if cl else {}))
 
 
-class AchievedRows(unittest.TestCase):
-    def test_high_only_rows_are_kept_when_default_is_close(self):
-        """기본이 종가여도 고가로만 뚫은 종목은 남아야 한다.
-
-        빠지면 화면의 '고가 기준' 토글이 빈 표가 된다 — 토글이 거짓말을 한다.
-        """
-        rows = [row('고가만', hi='w52'), row('종가만', cl='w52')]
-        got = [r['name'] for r in B.achieved_rows(rows, SHOW, RANK)]
-        self.assertIn('고가만', got)
-
-    def test_close_only_rows_are_kept(self):
-        # 이게 이 파일의 존재 이유다. 고가로 거르면 이 종목이 사라진다.
-        rows = [row('고가만', hi='w52'), row('종가만', cl='w52')]
-        got = [r['name'] for r in B.achieved_rows(rows, SHOW, RANK)]
-        self.assertIn('종가만', got)
-        self.assertEqual(len(got), 2)
-
-    def test_rows_with_neither_label_are_dropped(self):
-        rows = [row('아무것도아님'), row('있음', hi='d60')]
-        self.assertEqual([r['name'] for r in B.achieved_rows(rows, SHOW, RANK)],
-                         ['있음'])
-
-    def test_below_threshold_labels_are_dropped(self):
-        # min_display_kind 아래(20일)는 표에 넣지 않는다. 하루 수백 종목이다.
-        rows = [row('이십일', hi='d20', cl='d20')]
-        self.assertEqual(B.achieved_rows(rows, SHOW, RANK), [])
-
-    def test_sorted_by_grade_then_turnover(self):
-        rows = [row('작은역사적', hi='hist', turnover=10),
-                row('큰52주', hi='w52', turnover=9999),
-                row('큰역사적', hi='hist', turnover=500)]
-        self.assertEqual([r['name'] for r in B.achieved_rows(rows, SHOW, RANK)],
-                         ['큰역사적', '작은역사적', '큰52주'])
-
-    def test_close_only_row_sorts_by_its_close_grade(self):
-        rows = [row('고가60일', hi='d60', turnover=1),
-                row('종가역사적', cl='hist', turnover=1)]
-        self.assertEqual([r['name'] for r in B.achieved_rows(rows, SHOW, RANK)][0],
-                         '종가역사적')
-
-
 class BasisCell(unittest.TestCase):
     def setUp(self):
         self._saved = dict(R.LABEL_KO)

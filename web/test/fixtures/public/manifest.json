@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-07T05:30:02+09:00",
+  "files": [
+    { "name": "calendar.json", "source": "KBJ 거래 캘린더(코드 계산)", "as_of": "2026-10-07T05:30:00+09:00", "quality": "ok" },
+    { "name": "events.json", "source": "한국은행 공표 일정(수기 설정)", "as_of": "2026-10-07T05:30:00+09:00", "quality": "ok" }
+  ]
+}

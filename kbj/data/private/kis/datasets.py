@@ -102,8 +102,23 @@ DATASETS: Final[tuple[DatasetSpec, ...]] = (
         notes=(
             "FHPTJ04400000 국내기관·외국인 매매종목 가집계"
             "(/uapi/domestic-stock/v1/quotations/foreign-institution-total). 추정치라 "
-            "quality=estimated 로 넣고 KIS:stock_investor_daily 확정치로 덮어쓴다(metrics §2). "
-            "상위 몇 종목까지·정렬 옵션 [실측 필요]. 저장 표 확정은 P3 [확인 필요]"
+            "quality=estimated·source 'kis.prelim' 으로 일별 원장에 넣고 KIS:stock_investor_daily "
+            "확정치로 덮어쓴다(metrics §2, D-P3-7 — 차이는 prv_flows.investor_revision). "
+            "상위 몇 종목까지·정렬 옵션 [실측 필요]. 저장 표 확정(P3 — docs/p3_design.md §3.3)"
+        ),
+        venues=_SPLIT,
+    ),
+    _kis(
+        "etf_investor_daily",
+        published="장 마감 뒤 당일 확정치 반영 [실측 필요: 반영 시각]",
+        as_of="trade_date",
+        store="prv_flows.stock_investor_daily",
+        notes=(
+            "FHKST01010900 종목별 투자자를 ETF 코드로 [실측 필요: ETF 에 되는지·금액 단위]. "
+            "투자자별 ETF 순매수(장내 — 상대가 대부분 LP 라 순유입과 합치지 않고 따로, "
+            "metrics §4). "
+            "순자산 하한 config/markets.yaml etf.investor_min_net_asset_krw(1,000억 [확인 필요]) "
+            "이상 ETF 만. 작업 market.close_collect(P3). 거래소 구분 [실측 필요]"
         ),
         venues=_SPLIT,
     ),
@@ -112,10 +127,12 @@ DATASETS: Final[tuple[DatasetSpec, ...]] = (
         "inst_foreign_intraday",
         published="장중 가집계 — 증권사 추정치(quality=estimated), 화면에 '잠정' 표시",
         as_of="slot10m",
-        store="prv_flows.stock_investor_daily",
+        store="prv_flows.investor_intraday",
         notes=(
             "FHPTJ04400000 장중 회차(같은 TR 이 장 마감 스냅 inst_foreign_top 과 쓰임이 달라 "
-            "따로 둔다). 가집계 갱신 주기·회차 [실측 필요]. 마감 뒤 확정치로 덮어쓴다"
+            "따로 둔다). 슬롯마다 prv_flows.investor_intraday(이력)에 쌓고, 일별 원장 "
+            "prv_flows.stock_investor_daily 의 오늘 행(source 'kis.prelim')도 갱신한다. "
+            "가집계 갱신 주기·회차·상위 개수 [실측 필요]. 마감 뒤 확정치로 덮어쓴다(D-P3-7)"
         ),
         venues=_SPLIT,
     ),
@@ -123,12 +140,13 @@ DATASETS: Final[tuple[DatasetSpec, ...]] = (
         "turnover_rank_intraday",
         published="장중 실시간 순위(잠정) — 확정은 다음 거래일 KRX 일별",
         as_of="slot10m",
-        store="prv_market.stock_snapshot",
+        store="prv_market.turnover_rank_intraday",
         notes=(
             "FHPST01710000 거래량 순위(/uapi/domestic-stock/v1/quotations/volume-rank). "
             "거래대금 정렬(FID_BLNG_CLS_CODE 거래금액순 추정)·상위 몇 개까지 [실측 필요]. "
-            "turnover_is_estimate=true, quality=estimated. 시장 거래대금(코스피+코스닥)과 "
-            "ETF·ETN 은 따로 집계(metrics §1)"
+            "슬롯마다 prv_market.turnover_rank_intraday(이력)에 쌓고 목록 종목의 오늘 스냅"
+            "(prv_market.stock_snapshot — turnover_is_estimate, quality=estimated)도 갱신. "
+            "시장 거래대금(코스피+코스닥)과 ETF·ETN 은 따로 집계(metrics §1)"
         ),
         venues=_SPLIT,
     ),
@@ -140,8 +158,33 @@ DATASETS: Final[tuple[DatasetSpec, ...]] = (
         notes=(
             "FHPST02400000 ETF/ETN 현재가(/uapi/etfetn/v1/quotations/inquire-price). "
             "장중 NAV(nav)·괴리율·거래대금 필드 이름 [실측 필요]. 괴리율 경고에만 쓴다"
-            "(metrics §4 — 순유입 계산은 마감 NAV 만). 표는 P5(0013) 에서 확정 [확인 필요]. "
+            "(metrics §4 — 순유입 계산은 마감 NAV 만). 표는 0009(P3 로 당김 — D-P3-12). "
+            "대상 = 순자산 상위 config/markets.yaml etf.watch_top_n(50 [확인 필요]). "
             "ETF 의 NXT 거래 여부 [실측 필요] — 지금은 거래소를 나누지 않는다"
+        ),
+    ),
+    _kis(
+        "index_quote_intraday",
+        published="장중 10분마다(09:00~15:30 KST) — 지수 현재가·누적 거래대금(잠정)",
+        as_of="slot10m",
+        store="prv_market.index_intraday",
+        notes=(
+            "[추정 TR] FHPUP02100000 국내업종 현재지수(conflict_map §1.13) [실측 필요: TR·필드]. "
+            "코스피(0001)·코스닥(1001)·코스피200(2001) [실측 필요: 코드]. 누적 거래대금으로 장중 "
+            "시장 거래대금(지수 기준, estimated — ETF 포함 여부 [실측 필요], "
+            "docs/p3_design.md §4.4). "
+            "작업 market.intraday(P3). 지수라 거래소를 나누지 않는다"
+        ),
+    ),
+    _kis(
+        "sector_quote_intraday",
+        published="장중 10분마다(09:00~15:30 KST) — 업종 지수(잠정)",
+        as_of="slot10m",
+        store="prv_market.sector_intraday",
+        notes=(
+            "[추정 TR] FHPUP02140000 업종 구분별 전체시세 [실측 필요: TR·필드·업종 코드]. "
+            "시장(코스피·코스닥)마다 1회 호출로 전 업종. 페이지 1 업종 히트맵(장중). "
+            "작업 market.intraday(P3)"
         ),
     ),
     _kis(

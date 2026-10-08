@@ -1,0 +1,452 @@
+{
+ "_source": "SYNTHETIC — tests/fixtures/synthetic/kis/make_p3.py 가 가짜 KIS 서버의 합성 출력(고정 시드)으로 만든 응답 모양. 실측 아님",
+ "etf_quote": {
+  "body": {
+   "msg1": "정상처리 되었습니다.",
+   "msg_cd": "MCA00000",
+   "output": {
+    "acml_tr_pbmn": "49352871060",
+    "acml_vol": "495910",
+    "dprt": "0.00",
+    "nav": "61769.02",
+    "stck_prpr": "61770"
+   },
+   "rt_cd": "0"
+  },
+  "day": "20261007",
+  "params": {
+   "FID_COND_MRKT_DIV_CODE": "J",
+   "FID_INPUT_ISCD": "995010"
+  },
+  "slot": "1000",
+  "tr_id": "FHPST02400000"
+ },
+ "index_quote": {
+  "body": {
+   "msg1": "정상처리 되었습니다.",
+   "msg_cd": "MCA00000",
+   "output": {
+    "acml_tr_pbmn": "12114437",
+    "acml_vol": "220197136",
+    "bstp_nmix_prdy_ctrt": "2.77",
+    "bstp_nmix_prpr": "1471.09"
+   },
+   "rt_cd": "0"
+  },
+  "day": "20261007",
+  "params": {
+   "FID_COND_MRKT_DIV_CODE": "U",
+   "FID_INPUT_ISCD": "0001"
+  },
+  "slot": "1000",
+  "tr_id": "FHPUP02100000"
+ },
+ "inst_foreign_total": {
+  "body": {
+   "msg1": "정상처리 되었습니다.",
+   "msg_cd": "MCA00000",
+   "output": [
+    {
+     "frgn_ntby_qty": "-64944",
+     "frgn_ntby_tr_pbmn": "33366",
+     "hts_kor_isnm": "합성010",
+     "mksc_shrn_iscd": "990010",
+     "orgn_ntby_qty": "-82472",
+     "orgn_ntby_tr_pbmn": "39183",
+     "stck_prpr": "261062"
+    },
+    {
+     "frgn_ntby_qty": "-82472",
+     "frgn_ntby_tr_pbmn": "39183",
+     "hts_kor_isnm": "합성020",
+     "mksc_shrn_iscd": "990020",
+     "orgn_ntby_qty": "8764",
+     "orgn_ntby_tr_pbmn": "-2909",
+     "stck_prpr": "133031"
+    },
+    {
+     "frgn_ntby_qty": "8764",
+     "frgn_ntby_tr_pbmn": "-2909",
+     "hts_kor_isnm": "합성030",
+     "mksc_shrn_iscd": "990030",
+     "orgn_ntby_qty": "54382",
+     "orgn_ntby_tr_pbmn": "21046",
+     "stck_prpr": "216516"
+    },
+    {
+     "frgn_ntby_qty": "54382",
+     "frgn_ntby_tr_pbmn": "21046",
+     "hts_kor_isnm": "합성040",
+     "mksc_shrn_iscd": "990040",
+     "orgn_ntby_qty": "77191",
+     "orgn_ntby_tr_pbmn": "33023",
+     "stck_prpr": "258258"
+    },
+    {
+     "frgn_ntby_qty": "77191",
+     "frgn_ntby_tr_pbmn": "33023",
+     "hts_kor_isnm": "합성050",
+     "mksc_shrn_iscd": "990050",
+     "orgn_ntby_qty": "88596",
+     "orgn_ntby_tr_pbmn": "-5989",
+     "stck_prpr": "279129"
+    },
+    {
+     "frgn_ntby_qty": "88596",
+     "frgn_ntby_tr_pbmn": "-5989",
+     "hts_kor_isnm": "합성060",
+     "mksc_shrn_iscd": "990060",
+     "orgn_ntby_qty": "94298",
+     "orgn_ntby_tr_pbmn": "19506",
+     "stck_prpr": "142064"
+    },
+    {
+     "frgn_ntby_qty": "94298",
+     "frgn_ntby_tr_pbmn": "19506",
+     "hts_kor_isnm": "합성070",
+     "mksc_shrn_iscd": "990070",
+     "orgn_ntby_qty": "97149",
+     "orgn_ntby_tr_pbmn": "-12747",
+     "stck_prpr": "73532"
+    },
+    {
+     "frgn_ntby_qty": "97149",
+     "frgn_ntby_tr_pbmn": "-12747",
+     "hts_kor_isnm": "합성080",
+     "mksc_shrn_iscd": "990080",
+     "orgn_ntby_qty": "98575",
+     "orgn_ntby_tr_pbmn": "-28874",
+     "stck_prpr": "186766"
+    },
+    {
+     "frgn_ntby_qty": "98575",
+     "frgn_ntby_tr_pbmn": "-28874",
+     "hts_kor_isnm": "합성090",
+     "mksc_shrn_iscd": "990090",
+     "orgn_ntby_qty": "99288",
+     "orgn_ntby_tr_pbmn": "-36937",
+     "stck_prpr": "243383"
+    },
+    {
+     "frgn_ntby_qty": "99288",
+     "frgn_ntby_tr_pbmn": "-36937",
+     "hts_kor_isnm": "합성100",
+     "mksc_shrn_iscd": "990100",
+     "orgn_ntby_qty": "99644",
+     "orgn_ntby_tr_pbmn": "-40969",
+     "stck_prpr": "271692"
+    }
+   ],
+   "rt_cd": "0"
+  },
+  "day": "20261007",
+  "params": {
+   "FID_COND_MRKT_DIV_CODE": "V",
+   "FID_ETC_CLS_CODE": "1",
+   "FID_INPUT_ISCD": "0001"
+  },
+  "slot": "1000",
+  "tr_id": "FHPTJ04400000"
+ },
+ "market_investor": {
+  "body": {
+   "msg1": "정상처리 되었습니다.",
+   "msg_cd": "MCA00000",
+   "output1": [
+    {
+     "bank_ntby_tr_pbmn": "27821",
+     "bstp_nmix_prpr": "2077.75",
+     "etc_corp_ntby_tr_pbmn": "66822",
+     "frgn_ntby_tr_pbmn": "304824",
+     "fund_ntby_tr_pbmn": "-143045",
+     "insu_ntby_tr_pbmn": "-88718",
+     "ivtr_ntby_tr_pbmn": "-19486",
+     "mrbn_ntby_tr_pbmn": "-85761",
+     "orgn_ntby_tr_pbmn": "-342006",
+     "pe_fund_ntby_tr_pbmn": "-154872",
+     "prsn_ntby_tr_pbmn": "-29640",
+     "scrt_ntby_tr_pbmn": "122055",
+     "stck_bsop_date": "20261007"
+    },
+    {
+     "bank_ntby_tr_pbmn": "-86090",
+     "bstp_nmix_prpr": "2038.87",
+     "etc_corp_ntby_tr_pbmn": "-16589",
+     "frgn_ntby_tr_pbmn": "-72588",
+     "fund_ntby_tr_pbmn": "28478",
+     "insu_ntby_tr_pbmn": "-144359",
+     "ivtr_ntby_tr_pbmn": "-109743",
+     "mrbn_ntby_tr_pbmn": "57120",
+     "orgn_ntby_tr_pbmn": "-71002",
+     "pe_fund_ntby_tr_pbmn": "22564",
+     "prsn_ntby_tr_pbmn": "160179",
+     "scrt_ntby_tr_pbmn": "161028",
+     "stck_bsop_date": "20261006"
+    },
+    {
+     "bank_ntby_tr_pbmn": "-143045",
+     "bstp_nmix_prpr": "2019.43",
+     "etc_corp_ntby_tr_pbmn": "-58295",
+     "frgn_ntby_tr_pbmn": "-261294",
+     "fund_ntby_tr_pbmn": "-85761",
+     "insu_ntby_tr_pbmn": "27821",
+     "ivtr_ntby_tr_pbmn": "-154872",
+     "mrbn_ntby_tr_pbmn": "-71440",
+     "orgn_ntby_tr_pbmn": "-535501",
+     "pe_fund_ntby_tr_pbmn": "-88718",
+     "prsn_ntby_tr_pbmn": "855090",
+     "scrt_ntby_tr_pbmn": "-19486",
+     "stck_bsop_date": "20261005"
+    }
+   ],
+   "rt_cd": "0"
+  },
+  "day": "20261007",
+  "params": {
+   "FID_COND_MRKT_DIV_CODE": "U",
+   "FID_INPUT_ISCD": "0001"
+  },
+  "slot": "1000",
+  "tr_id": "FHPTJ04040000"
+ },
+ "sector_quotes": {
+  "body": {
+   "msg1": "정상처리 되었습니다.",
+   "msg_cd": "MCA00000",
+   "output1": {
+    "bstp_nmix_prpr": "1.00"
+   },
+   "output2": [
+    {
+     "acml_tr_pbmn": "705251",
+     "bstp_cls_code": "1006",
+     "bstp_nmix_prdy_ctrt": "-1.72",
+     "bstp_nmix_prpr": "1451.14",
+     "hts_kor_isnm": "합성업종1006"
+    },
+    {
+     "acml_tr_pbmn": "1352626",
+     "bstp_cls_code": "1007",
+     "bstp_nmix_prdy_ctrt": "-2.36",
+     "bstp_nmix_prpr": "2475.57",
+     "hts_kor_isnm": "합성업종1007"
+    },
+    {
+     "acml_tr_pbmn": "681313",
+     "bstp_cls_code": "1008",
+     "bstp_nmix_prdy_ctrt": "-2.68",
+     "bstp_nmix_prpr": "2987.79",
+     "hts_kor_isnm": "합성업종1008"
+    },
+    {
+     "acml_tr_pbmn": "1340657",
+     "bstp_cls_code": "1009",
+     "bstp_nmix_prdy_ctrt": "-2.84",
+     "bstp_nmix_prpr": "3243.90",
+     "hts_kor_isnm": "합성업종1009"
+    },
+    {
+     "acml_tr_pbmn": "675328",
+     "bstp_cls_code": "1010",
+     "bstp_nmix_prdy_ctrt": "-2.92",
+     "bstp_nmix_prpr": "1871.95",
+     "hts_kor_isnm": "합성업종1010"
+    }
+   ],
+   "rt_cd": "0"
+  },
+  "day": "20261007",
+  "params": {
+   "FID_COND_MRKT_DIV_CODE": "U",
+   "FID_INPUT_ISCD": "1001"
+  },
+  "slot": "1000",
+  "tr_id": "FHPUP02140000"
+ },
+ "stock_investor": {
+  "body": {
+   "msg1": "정상처리 되었습니다.",
+   "msg_cd": "MCA00000",
+   "output": [
+    {
+     "frgn_ntby_qty": "-12422",
+     "frgn_ntby_tr_pbmn": "-1291",
+     "orgn_ntby_qty": "43789",
+     "orgn_ntby_tr_pbmn": "4552",
+     "prsn_ntby_qty": "75157",
+     "prsn_ntby_tr_pbmn": "7812",
+     "stck_bsop_date": "20261007",
+     "stck_clpr": "103949"
+    },
+    {
+     "frgn_ntby_qty": "-64053",
+     "frgn_ntby_tr_pbmn": "-6658",
+     "orgn_ntby_qty": "-82027",
+     "orgn_ntby_tr_pbmn": "-8527",
+     "prsn_ntby_qty": "-28106",
+     "prsn_ntby_tr_pbmn": "-2922",
+     "stck_bsop_date": "20261006",
+     "stck_clpr": "103949"
+    },
+    {
+     "frgn_ntby_qty": "-45507",
+     "frgn_ntby_tr_pbmn": "-4730",
+     "orgn_ntby_qty": "27247",
+     "orgn_ntby_tr_pbmn": "2832",
+     "prsn_ntby_qty": "8987",
+     "prsn_ntby_tr_pbmn": "934",
+     "stck_bsop_date": "20261005",
+     "stck_clpr": "103949"
+    }
+   ],
+   "rt_cd": "0"
+  },
+  "day": "20261007",
+  "params": {
+   "FID_COND_MRKT_DIV_CODE": "J",
+   "FID_INPUT_ISCD": "990010"
+  },
+  "slot": "1000",
+  "tr_id": "FHKST01010900"
+ },
+ "stock_quote": {
+  "body": {
+   "msg1": "정상처리 되었습니다.",
+   "msg_cd": "MCA00000",
+   "output": {
+    "acml_tr_pbmn": "152544891996",
+    "acml_vol": "2839788",
+    "hts_avls": "455296",
+    "hts_kor_isnm": "합성010",
+    "iscd_stat_cls_code": "55",
+    "lstn_stcn": "344140810",
+    "mang_issu_cls_code": "N",
+    "prdy_ctrt": "-2.61",
+    "prdy_vrss": "570",
+    "rprs_mrkt_kor_name": "KOSPI",
+    "sltr_yn": "N",
+    "stck_hgpr": "54975",
+    "stck_lwpr": "53250",
+    "stck_oprc": "52766",
+    "stck_prpr": "53717",
+    "stck_shrn_iscd": "990010",
+    "temp_stop_yn": "N"
+   },
+   "rt_cd": "0"
+  },
+  "day": "20261007",
+  "params": {
+   "FID_COND_MRKT_DIV_CODE": "J",
+   "FID_INPUT_ISCD": "990010"
+  },
+  "slot": "1000",
+  "tr_id": "FHKST01010100"
+ },
+ "volume_rank": {
+  "body": {
+   "msg1": "정상처리 되었습니다.",
+   "msg_cd": "MCA00000",
+   "output": [
+    {
+     "acml_tr_pbmn": "100000008264",
+     "acml_vol": "1748601",
+     "data_rank": "1",
+     "hts_kor_isnm": "합성110",
+     "mksc_shrn_iscd": "990110",
+     "prdy_ctrt": "0.71",
+     "stck_prpr": "280402"
+    },
+    {
+     "acml_tr_pbmn": "90000009132",
+     "acml_vol": "3374301",
+     "data_rank": "2",
+     "hts_kor_isnm": "합성120",
+     "mksc_shrn_iscd": "990120",
+     "prdy_ctrt": "1.86",
+     "stck_prpr": "142701"
+    },
+    {
+     "acml_tr_pbmn": "80000009566",
+     "acml_vol": "1687650",
+     "data_rank": "3",
+     "hts_kor_isnm": "합성130",
+     "mksc_shrn_iscd": "990130",
+     "prdy_ctrt": "-0.57",
+     "stck_prpr": "221351"
+    },
+    {
+     "acml_tr_pbmn": "70000004783",
+     "acml_vol": "3343825",
+     "data_rank": "4",
+     "hts_kor_isnm": "합성140",
+     "mksc_shrn_iscd": "990140",
+     "prdy_ctrt": "-1.79",
+     "stck_prpr": "260676"
+    },
+    {
+     "acml_tr_pbmn": "60000002391",
+     "acml_vol": "1672412",
+     "data_rank": "5",
+     "hts_kor_isnm": "합성150",
+     "mksc_shrn_iscd": "990150",
+     "prdy_ctrt": "-2.40",
+     "stck_prpr": "280338"
+    },
+    {
+     "acml_tr_pbmn": "50000001195",
+     "acml_vol": "3336206",
+     "data_rank": "6",
+     "hts_kor_isnm": "합성160",
+     "mksc_shrn_iscd": "990160",
+     "prdy_ctrt": "0.30",
+     "stck_prpr": "290169"
+    },
+    {
+     "acml_tr_pbmn": "40000000597",
+     "acml_vol": "1668603",
+     "data_rank": "7",
+     "hts_kor_isnm": "합성170",
+     "mksc_shrn_iscd": "990170",
+     "prdy_ctrt": "1.65",
+     "stck_prpr": "147584"
+    },
+    {
+     "acml_tr_pbmn": "30000005298",
+     "acml_vol": "834801",
+     "data_rank": "8",
+     "hts_kor_isnm": "합성180",
+     "mksc_shrn_iscd": "990180",
+     "prdy_ctrt": "2.33",
+     "stck_prpr": "223792"
+    },
+    {
+     "acml_tr_pbmn": "20000007649",
+     "acml_vol": "2917401",
+     "data_rank": "9",
+     "hts_kor_isnm": "합성190",
+     "mksc_shrn_iscd": "990190",
+     "prdy_ctrt": "-0.34",
+     "stck_prpr": "114396"
+    },
+    {
+     "acml_tr_pbmn": "10000003824",
+     "acml_vol": "3958701",
+     "data_rank": "10",
+     "hts_kor_isnm": "합성200",
+     "mksc_shrn_iscd": "990200",
+     "prdy_ctrt": "-1.67",
+     "stck_prpr": "207198"
+    }
+   ],
+   "rt_cd": "0"
+  },
+  "day": "20261007",
+  "params": {
+   "FID_BLNG_CLS_CODE": "3",
+   "FID_COND_MRKT_DIV_CODE": "J",
+   "FID_INPUT_ISCD": "1001"
+  },
+  "slot": "1000",
+  "tr_id": "FHPST01710000"
+ }
+}

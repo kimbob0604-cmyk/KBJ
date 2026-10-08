@@ -1,0 +1,74 @@
+{
+  "source": "ETF_ISSUERS:합성운용A+ETF_ISSUERS:합성운용B",
+  "as_of": "2026-09-15T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "운용사 공시 PDF 기준일은 운용사마다 다르다 — 펀드마다 최근 두 스냅 비교"
+  ],
+  "generated_at": "2026-09-15T18:00:00+09:00",
+  "data": {
+    "run_date": "2026-09-15",
+    "rows": [
+      {
+        "fund_id": "kodex:F1",
+        "etf_code": "E00001",
+        "fund_name": "합성ETF01",
+        "issuer": "합성운용A",
+        "is_active": true,
+        "theme": "AI반도체",
+        "code": "Q00002",
+        "name": "합성종목02",
+        "kind": "ADD",
+        "kind_label": "비중확대",
+        "prev_qty": 500.0,
+        "cur_qty": 600.0,
+        "prev_wt": 2.0,
+        "cur_wt": 2.4,
+        "qty_pct_adj": 18.5,
+        "asof": "2026-09-15",
+        "prev_asof": "2026-09-14",
+        "gap_days": 1
+      },
+      {
+        "fund_id": "kodex:F1",
+        "etf_code": "E00001",
+        "fund_name": "합성ETF01",
+        "issuer": "합성운용A",
+        "is_active": true,
+        "theme": "AI반도체",
+        "code": "Q00001",
+        "name": "합성종목01",
+        "kind": "NEW",
+        "kind_label": "신규편입",
+        "prev_qty": null,
+        "cur_qty": 1000.0,
+        "prev_wt": null,
+        "cur_wt": 3.1,
+        "qty_pct_adj": null,
+        "asof": "2026-09-15",
+        "prev_asof": "2026-09-14",
+        "gap_days": 1
+      },
+      {
+        "fund_id": "tiger:F2",
+        "etf_code": "E00002",
+        "fund_name": "합성ETF02",
+        "issuer": "합성운용B",
+        "is_active": false,
+        "theme": "시장대표",
+        "code": "Q00003",
+        "name": "합성종목03",
+        "kind": "OUT10",
+        "kind_label": "TOP10 이탈",
+        "prev_qty": 800.0,
+        "cur_qty": 790.0,
+        "prev_wt": 4.0,
+        "cur_wt": 3.9,
+        "qty_pct_adj": null,
+        "asof": "2026-09-15",
+        "prev_asof": "2026-09-14",
+        "gap_days": 1
+      }
+    ]
+  }
+}

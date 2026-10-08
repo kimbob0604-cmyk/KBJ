@@ -1,0 +1,34 @@
+{
+  "source": "KRX",
+  "as_of": "2026-09-15T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [],
+  "generated_at": "2026-09-15T18:00:00+09:00",
+  "data": {
+    "period": 5,
+    "cells": [
+      {
+        "code": "S0001",
+        "name": null,
+        "market": null,
+        "chg_pct": 0.7885598309298025,
+        "turnover": 73854632187,
+        "quality": "ok",
+        "source": "KRX",
+        "as_of": "2026-09-15T15:30:00+09:00",
+        "note": null
+      },
+      {
+        "code": "S0002",
+        "name": null,
+        "market": null,
+        "chg_pct": 4.845997923567502,
+        "turnover": 93462632459,
+        "quality": "ok",
+        "source": "KRX",
+        "as_of": "2026-09-15T15:30:00+09:00",
+        "note": null
+      }
+    ]
+  }
+}

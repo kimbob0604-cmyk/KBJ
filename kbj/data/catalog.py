@@ -2,8 +2,9 @@
 
 - 각 어댑터의 `datasets.py`(또는 모듈 안 `DATASETS`)를 **명시적으로** 모은다. 자동 탐색은
   하지 않는다 — 새 어댑터는 아래 `_ADAPTERS` 에 한 줄을 더한다.
-- 어댑터가 아직 없는 출처(P3~P5 — NASDAQ·Yahoo·FRED·미 재무부·뉴욕연은·ForexFactory·Anthropic·
-  ETF 운용사)의 데이터셋은 `PLANNED` 로 여기 둔다. 작업 등록부(`config/jobs.yaml`)가 그 데이터 키를
+- 어댑터가 아직 없는 출처(P5 — NASDAQ·Yahoo·FRED·미 재무부·뉴욕연은·ForexFactory·Anthropic)의
+  데이터셋은 `PLANNED` 로 여기 둔다(ETF 운용사는 P3 에 `kbj/data/private/etf_issuers` 로
+  옮겼다). 작업 등록부(`config/jobs.yaml`)가 그 데이터 키를
   P2 부터 등록해 두어 다른 작업이 같은 데이터를 받지 못하게 하려는 것이다(설계 §6.5). 어댑터가
   생기면 그 `datasets.py` 로 옮기고 여기서 지운다(두 벌 금지 — 시험이 겹침을 잡는다).
 - 등급은 DATA_TIERS §1 을 따른다: 애매하면 로그인. FRED 는 미국 정부 시리즈만 공개, 미 재무부·
@@ -21,6 +22,7 @@ from types import MappingProxyType
 from typing import Final
 
 from kbj.data.private import ecos_restricted
+from kbj.data.private.etf_issuers import datasets as etf_issuer_datasets
 from kbj.data.private.fsc_index_price import datasets as fsc_index_datasets
 from kbj.data.private.fsc_stock_price import datasets as fsc_stock_datasets
 from kbj.data.private.kis import datasets as kis_datasets
@@ -81,7 +83,7 @@ PLANNED: Final[tuple[DatasetSpec, ...]] = (
         as_of="run_date",
         store="prv_market.us_universe",
         published="수시(주 1회 갱신이면 충분)",
-        notes="미국 유니버스 — 작업 us.universe(P3). 약관 미확인이라 로그인 [확인 필요]",
+        notes="미국 유니버스 — 작업 us.universe(P5 — D-P3-17). 약관 미확인이라 로그인 [확인 필요]",
     ),
     _planned(
         "NASDAQ",
@@ -91,7 +93,7 @@ PLANNED: Final[tuple[DatasetSpec, ...]] = (
         as_of="us_trade_date",
         store="prv_market.us_daily_bar",
         published="미국 정규장 마감(16:00 ET) 뒤",
-        notes="미국 종목 일봉 — 작업 us.eod(P3). ET us-board 의 Nasdaq 출처",
+        notes="미국 종목 일봉 — 작업 us.eod(P5 — D-P3-17). ET us-board 의 Nasdaq 출처",
     ),
     _planned(
         "YAHOO",
@@ -101,7 +103,7 @@ PLANNED: Final[tuple[DatasetSpec, ...]] = (
         as_of="us_trade_date",
         store="prv_market.us_daily_bar",
         published="미국 정규장 마감 뒤",
-        notes="미국 지수 일봉 — 작업 us.eod(P3). Yahoo 는 로그인(DATA_TIERS §1)",
+        notes="미국 지수 일봉 — 작업 us.eod(P5 — D-P3-17). Yahoo 는 로그인(DATA_TIERS §1)",
     ),
     _planned(
         "YAHOO",
@@ -166,16 +168,6 @@ PLANNED: Final[tuple[DatasetSpec, ...]] = (
         published="작업 실행 때(LLM 요약 — 수치는 만들지 않는다, 절대 규칙 3)",
         notes="구루 브리핑 요약(ET xdigest). 작업 guru.research(P5). 표 이름 [확인 필요]",
     ),
-    _planned(
-        "ETF_ISSUERS",
-        "pdf",
-        tier=Tier.PRIVATE,
-        limiter="etf_issuers",
-        as_of="trade_date",
-        store="prv_etf.holdings",
-        published="운용사마다 다르다(대개 장 시작 전)",
-        notes="ETF 구성종목(PDF) — 운용사 약관이 달라 로그인. 작업 etf.collect(P5)",
-    ),
 )
 
 _ADAPTERS: Final[tuple[Sequence[DatasetSpec], ...]] = (
@@ -191,6 +183,7 @@ _ADAPTERS: Final[tuple[Sequence[DatasetSpec], ...]] = (
     fsc_stock_datasets.DATASETS,
     fsc_index_datasets.DATASETS,
     ecos_restricted.DATASETS,
+    etf_issuer_datasets.DATASETS,  # P3(묶음 M) — PLANNED 에서 옮겼다
     # 어댑터가 아직 없는 출처
     PLANNED,
 )

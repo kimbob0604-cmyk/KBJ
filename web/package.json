@@ -1,0 +1,34 @@
+{
+  "name": "kbj-web",
+  "private": true,
+  "version": "0.3.0",
+  "description": "KBJ 국장 터미널 SPA — 공개(정적 Pages)·로그인(VM API) 두 빌드. 런타임 의존성 0.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13 <23"
+  },
+  "scripts": {
+    "dev": "vite --mode public",
+    "dev:login": "vite --mode login",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build:public": "vite build --mode public",
+    "build:login": "vite build --mode login",
+    "check:bundle": "node scripts/check-bundle.mjs",
+    "gen:types": "openapi-typescript src/api/openapi.json -o src/api/types.gen.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "axe-core": "4.14.0",
+    "eslint": "10.12.0",
+    "jsdom": "26.1.0",
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.1",
+    "vite": "6.4.4",
+    "vitest": "4.1.11"
+  }
+}

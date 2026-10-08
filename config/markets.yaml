@@ -1,0 +1,50 @@
+# 시장·수급·ETF 튜닝값 — 비밀 아님(docs/secrets.md: 튜닝값은 config/*.yaml). 숫자는 이 한 곳(docs/p3_design.md §3.9).
+# 해석기는 kbj/config/markets.py 하나(모르는 키는 오류). 근거와 [확인 필요]·[실측 필요] 는 줄마다 주석.
+# 금액은 원 단위 정수(metrics §0), 비율은 %.
+version: 1
+
+# KIS 거래소 구분(D-P3-9). 실측 전에는 KRX 하나만 부른다 [확인 필요 — 체크리스트 #25].
+# venue 를 늘리면 KIS 호출이 배로 는다(§3.7). 합계(TOTAL)는 계산하지 않는다 — 화면에 "NXT 미포함" 꼬리표.
+kis:
+  venues: [KRX]
+
+# 스크리닝(metrics §3)
+screen:
+  min_avg_turnover_krw: 30_000_000_000   # 일평균 거래대금 하한 300억 [확인 필요]
+  spike_min: 1.5                         # 거래대금 급증 배수 하한(metrics §3)
+  spike_min_prior_days: 10               # 직전 거래일이 이보다 적으면 급증 배수를 계산하지 않는다(metrics §1)
+  streak_min: 3                          # 연속 순매수 기준(일)
+
+# ETF 수급(metrics §4)
+etf:
+  premium_warn_pct: {default: 0.5, overseas: 0.5, bond: 0.5}   # |괴리율| 경고 [확인 필요 — 해외·채권 기준]
+  watch_top_n: 50                                # 장중 iNAV 를 볼 순자산 상위 ETF 수(§3.7) [확인 필요]
+  investor_min_net_asset_krw: 100_000_000_000    # 투자자별 ETF 순매수를 받을 순자산 하한 1,000억 [확인 필요]
+  split_tol: 0.02                                # 분할·병합 감지 상대오차(§4.3)
+  split_ratios: [2, 3, 4, 5, 10, 20, 50, 100]    # 감지할 분할 배수(병합은 1/k)
+  holdings:                                      # 구성종목 변동(ET tracker.py:63·64 — 옛 환경변수 QTY_FLOOR·ACTION_PP 대체)
+    qty_floor: 100            # 이 수량 미만은 반올림 노이즈로 보고 비중 변동에서 뺀다
+    action_pp: 2.0            # CU 재산정 보정 뒤 이 %p 이상 움직여야 ADD·CUT
+    max_gap_days: 14          # 비교할 두 스냅의 최대 간격(ET fund_pairs)
+    min_base_for_cu: 5        # CU 보정 중앙값을 낼 최소 종목 수(미만이면 보정 0)
+
+# KRX D+1 대조(§3.6)
+reconcile:
+  close_tol_pct: 0.0          # 종가는 정확히 같아야 한다
+  turnover_tol_pct: 0.5       # 거래대금 허용 차이 [확인 필요 — KRX 정규장만인지 실측 필요]
+  mktcap_tol_pct: 0.5         # [확인 필요]
+  warn_mismatch_pct: 1.0      # 불일치 종목 비율이 이 % 이상이면 health 경고(reconcile_mismatch)
+
+# 시장 화면(§4.4)
+market:
+  # 장중 지수(KIS:index_quote_intraday) — KIS 업종 코드 [실측 필요 — 체크리스트 #24]
+  intraday_indices: {"0001": 코스피, "1001": 코스닥, "2001": 코스피200}
+  # 업종 히트맵 셀 = KRX 업종지수. 코드 목록 [실측 필요 — #24]. 실측 전에는 비워 둔다(지어내지 않는다)
+  sector_indices: []
+  limit_move_pct: 29.5        # 상한가·하한가 판정(가격제한폭 30% 와 호가 단위 — [추정])
+
+# 상단 띠(§4.4 — v0.2 plan_kr:60~64)
+ribbon:
+  semis: ["005930", "000660"]  # 반도체 쏠림 — 삼성전자·SK하이닉스(시총가중, 전일 시총)
+  cyclical: []                 # 경기민감 업종지수 코드 [확인 필요 — sector_indices 실측 뒤]
+  defensive: []                # 방어 업종지수 코드 [확인 필요]

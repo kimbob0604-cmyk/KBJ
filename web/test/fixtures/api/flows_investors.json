@@ -1,0 +1,98 @@
+{
+  "source": "KIS",
+  "as_of": "2026-09-15T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "NXT 미포함(KRX 구분만 — D-P3-9)"
+  ],
+  "generated_at": "2026-09-15T18:00:00+09:00",
+  "data": {
+    "date": "2026-09-15",
+    "by_investor": {
+      "foreign": -1143000000,
+      "institution": -58000000,
+      "other_corp": -27000000,
+      "individual": 1228000000
+    },
+    "inst7": {
+      "fin_invest": -84000000,
+      "trust": 147000000,
+      "private_fund": -25000000,
+      "insurance": -80000000,
+      "bank": 348000000,
+      "pension": -207000000,
+      "other_fin": -157000000
+    },
+    "check1_residual": 0,
+    "check2_residual": 0,
+    "by_market": {
+      "KOSDAQ": {
+        "foreign": -540000000,
+        "institution": -112000000,
+        "other_corp": 8000000,
+        "individual": 644000000
+      },
+      "KOSPI": {
+        "foreign": -603000000,
+        "institution": 54000000,
+        "other_corp": -35000000,
+        "individual": 584000000
+      }
+    },
+    "quality": "ok",
+    "source": "KIS",
+    "notes": [],
+    "recent": [
+      {
+        "date": "2026-09-09",
+        "by_investor": {
+          "foreign": -1000000,
+          "institution": 593000000,
+          "other_corp": 25000000,
+          "individual": -617000000
+        },
+        "quality": "ok"
+      },
+      {
+        "date": "2026-09-10",
+        "by_investor": {
+          "foreign": -1815000000,
+          "institution": 1509000000,
+          "other_corp": 95000000,
+          "individual": 211000000
+        },
+        "quality": "ok"
+      },
+      {
+        "date": "2026-09-11",
+        "by_investor": {
+          "foreign": -5000000,
+          "institution": 172000000,
+          "other_corp": 23000000,
+          "individual": -190000000
+        },
+        "quality": "ok"
+      },
+      {
+        "date": "2026-09-14",
+        "by_investor": {
+          "foreign": -1479000000,
+          "institution": 1049000000,
+          "other_corp": -51000000,
+          "individual": 481000000
+        },
+        "quality": "ok"
+      },
+      {
+        "date": "2026-09-15",
+        "by_investor": {
+          "foreign": -1143000000,
+          "institution": -58000000,
+          "other_corp": -27000000,
+          "individual": 1228000000
+        },
+        "quality": "ok"
+      }
+    ]
+  }
+}

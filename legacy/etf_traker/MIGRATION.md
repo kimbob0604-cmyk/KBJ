@@ -134,3 +134,23 @@ board 는 `board/MIGRATION.md` 'P2' 절. 그 밖:
 `monitor/kr`(K4)는 board `kis` 를 타므로 코드 변경 없음.
 
 시험: kr 94·flow 129·flowlab 44/44·dart-report built(14·4·9)·etf_tracker_v9 13 모듈 import — P1 과 같다.
+
+## P3. legacy 이전 범위 — 묶음 S(웨이브 3, 2026-10-07)
+
+근거: `docs/p3_design.md` §1.10·D-P3-18·R17. 기준은 **P3 의 kbj 작업이 그 기능을 대체했고, 파일 단위로
+떼어낼 수 있는 것만** 지운다. 지우기 전에 import 그래프(모듈 수준·함수 안 늦은 import)를 확인했다.
+
+| 처리 | 파일 | 대체 | 시험 영향 |
+|---|---|---|---|
+| **삭제** | `flowlab/probe_deal_trend.py`·`probe_frgn.py`·`probe_frgn_api.py`·`probe_market_flows.py`·`probe_market_unit.py`·`probe_market_unit2.py`·`probe_trend_pages.py`(네이버 진단 7개) | KIS 투자자 TR(kbj `market.close_collect`), 실측은 체크리스트 #22·#23 | 없음(import 하는 곳 없음, selftest 44/44 그대로) |
+| **삭제** | `flowlab/krx.py`(KRX 웹 스크랩 공매도, 옛 `KRX_ID`·`KRX_PW`) + `__main__ flows --shorts` | KRX OPEN API(kbj `krx.daily`) | 없음 |
+| **삭제** | `etf_tracker_v9/verify.py`(네이버 시세 대조 10항목) + `tracker.py --verify` | `python -m kbj.services.engine.verify`(검산 ③ — 체크리스트 #20) | 없음(import 스모크 13개 그대로 — verify 는 원래 빠져 있었다) |
+| **삭제(함수)** | `etf_tracker_v9/collectors.py:NaverTop10`·`_session`, `tracker.py:naver_names`·`NAVER_ETF` | kbj `etf.collect`(운용사 9곳 어댑터 — KRX 메타 이름·유형 규칙). legacy `build_universe` 는 운용사 어댑터 목록만 쓰고, 추적 판정은 네이버 탭 대신 `kbj.engines.etf.types.etf_type`(국내 대표지수·국내 테마) + `classify`. 시총은 모름(0), 이름 없는 목록 행은 건너뜀 | 없음 |
+| 이월 P4~P8 | `board/ingest/{naver,flows,stockflows,funds,pipeline,datago,kis,krx}.py` | (P3 kbj 가 수집은 대체했다) | 남은 legacy 명령이 import — `triggers.py`(P4)가 `kis.connect_failed`·`stockflows.short/targets`, `run.py` 의 signals·backtest·search·screen(P8)·classify·reclassify(P5)·diagnose_banner·verify_adjust·check 가 naver·pipeline·datago·funds 를, `tests/demo.py` 가 `funds.looks_like_fund` 를 쓴다. 파일 단위로 뗄 수 없어(R17) 그 기능을 kbj 가 대체할 때 지운다. 그 시험(test_stale_px·test_universe·test_close_source·test_kis_call 등)은 살아 있는 코드를 보므로 그대로 — board 1,115 그대로 |
+| 이월 P5 | `monitor/flow/{krx,kissrc,capture}.py` + `tests/test_krx.py` | — | `monitor/flow/run.py`(flows.report 의 종목 수급 수집 `build_one`)가 모듈 수준에서 import — 수급 리포트(P5)를 kbj 원장으로 바꿀 때 지운다. flow 129 그대로 |
+| 이월 P5 | `etf_tracker_v9/market.py`(네이버 ETF 목록·시세) | KRX `etp/etf_bydd_trd`(kbj `krx.daily`) | `tracker.py`(DDL·AUM·시세)·`live_update.py` 가 import — ETF 리포트를 kbj `prv_etf.etf_daily` 로 바꿀 때 지운다 |
+| 이월 P8 | `flowlab/naver.py`·`config.py` 의 네이버 줄 | — | `flows.py`·`verify.py`·`tests.py`(selftest 44)가 `_pages_needed`·`_empty_flow` 를 import — 이벤트 스터디(P8) 때 |
+
+기준선(`scripts/canonical_baseline.txt`): naver 176 → 88, krx_scrape 81 → 69, datago 2 → 1(전체 레포 기준 — SD 분은
+`legacy/stock_dashboard/MIGRATION.md` 'P3'). 시험 수(`scripts/test_legacy.sh`): board 1,115(E1 승격분만 줄었다)·kr 94·
+flow 129·flowlab 44/44·dart-report·etf_tracker_v9 import 13 — 모두 그대로.

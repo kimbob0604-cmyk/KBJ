@@ -14,7 +14,7 @@ import os
 
 import yaml
 
-from ..engine.config import ROOT
+from ..engine.config import KNOWLEDGE, ROOT  # noqa: F401 — 사전은 config/knowledge(KBJ P3 E1)
 
 # ─────────────────────────── 매일 동일한 접두사 ───────────────────────────
 
@@ -70,7 +70,7 @@ AXES_NOTE = """
 
 def _themes_digest():
     """테마 사전 요약. 전체 yaml 을 넣으면 접두사가 너무 커진다."""
-    with open(os.path.join(ROOT, 'knowledge', 'themes.yaml'), encoding='utf-8') as f:
+    with open(os.path.join(KNOWLEDGE, 'themes.yaml'), encoding='utf-8') as f:
         ty = yaml.safe_load(f) or {}
     axes = {k: v.get('stages') for k, v in (ty.get('axes') or {}).items()}
     themes = {t['id']: dict(name=t.get('name'), axis=t.get('axis'))

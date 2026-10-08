@@ -1,9 +1,13 @@
-"""마이그레이션 0001~0006 을 실제 TimescaleDB 에 적용(docs/p2_design.md §8.2·§8.8 — Docker).
+"""마이그레이션 0001~0009 를 실제 TimescaleDB 에 적용(Docker).
+
+근거: docs/p2_design.md §8.2·§8.8, docs/p3_design.md §3.4.
 
 - 적용기: 두 번 적용(두 번째는 할 일 없음)·기록·동시 실행·autocommit 요구·compose initdb 뒤 재적용
 - 파일 자체도 멱등: 적용된 DB 에 각 파일을 한 번 더 돌려도 오류가 없다
 - hypertable·청크 간격·압축 정책(GX 그대로 + daily_bar·stock_investor_daily 365일)
-- 권한: kbj_public_export 는 pub_* 만 읽고, prv_*·ops 는 못 읽고, 아무것도 쓰지 못한다
+- P3(0007~0009): 장중 이력 표는 청크 1일 + 보존 정책(90일·ETF 30일), 일 단위 표는 365일
+- 권한: kbj_public_export 는 pub_* 만 읽고, prv_*(P3 새 표 포함)·ops 는 못 읽고, 아무것도
+  쓰지 못한다
 - 제약: data_claim 부분 유일(claimed·done 하나), notify_message → notify_log 외래키(커밋 때 검사),
   pub_filings.corp_code 출처는 DART 만, 뷰 market_investor_intraday = GX investor_flow
 - kbj.store.db: connect(UTC·search_path·접속 오류 문구에 비밀 없음), PgHealthStore(멱등)
@@ -34,7 +38,10 @@ P2 = [
     "0004_filings_corp.sql",
     "0005_alerts_inbox.sql",
     "0006_gex.sql",
-]
+    "0007_board.sql",
+    "0008_market_flows_p3.sql",
+    "0009_etf.sql",
+]  # 이름은 P2 시험 그대로 — 0001~0009 전부(P3 는 0007~0009 를 더했다)
 GX_DAILY = {
     "prv_gex.raw_messages", "prv_gex.fut_ticks", "prv_gex.opt_ticks", "prv_gex.chain_snapshots",
     "prv_gex.fut_board", "prv_gex.investor_flow", "prv_gex.series_expiries",
@@ -45,6 +52,25 @@ GX_DAILY = {
 YEARLY = {
     "prv_gex.krx_fut_daily", "prv_gex.krx_opt_daily", "prv_gex.master_snapshots",
     "prv_market.daily_bar", "prv_flows.stock_investor_daily",
+    # P3(0007~0009)
+    "prv_board.label", "prv_board.stock_day", "prv_market.eod_reconcile",
+    "prv_flows.investor_revision", "prv_etf.etf_daily", "prv_etf.holding",
+}  # fmt: skip
+# P3 장중 이력 — 청크 1일 + 보존(docs/p3_design.md §3.4, R21 [제안])
+P3_INTRADAY = {
+    "prv_market.index_intraday": "90 days",
+    "prv_market.sector_intraday": "90 days",
+    "prv_market.turnover_rank_intraday": "90 days",
+    "prv_flows.investor_intraday": "90 days",
+    "prv_etf.quote_intraday": "30 days",
+}
+P3_TABLES = {
+    "prv_board.alltime", "prv_board.label", "prv_board.split_check", "prv_board.stock_day",
+    "prv_board.artifact", "prv_market.index_intraday", "prv_market.sector_intraday",
+    "prv_market.turnover_rank_intraday", "prv_market.eod_reconcile",
+    "prv_flows.investor_intraday", "prv_flows.investor_revision", "prv_flows.ledger_check",
+    "prv_etf.etf_daily", "prv_etf.quote_intraday", "prv_etf.meta", "prv_etf.split_event",
+    "prv_etf.fund", "prv_etf.holding", "prv_etf.change_log",
 }  # fmt: skip
 
 
@@ -104,11 +130,16 @@ def test_hypertables_and_chunk_intervals(dsn: str) -> None:
         "JOIN timescaledb_information.dimensions d USING (hypertable_schema, hypertable_name)",
     )
     got = {name: (col, iv) for name, col, iv in ht}
-    assert set(got) == GX_DAILY | YEARLY
+    assert set(got) == GX_DAILY | YEARLY | set(P3_INTRADAY)
     assert {t: iv for t, (_, iv) in got.items() if t in YEARLY} == dict.fromkeys(
         YEARLY, timedelta(days=365)
     )
-    assert {iv for t, (_, iv) in got.items() if t in GX_DAILY} == {timedelta(days=1)}
+    assert {iv for t, (_, iv) in got.items() if t in GX_DAILY | set(P3_INTRADAY)} == {
+        timedelta(days=1)
+    }
+    assert {got[t][0] for t in P3_INTRADAY} == {"ts"}
+    assert got["prv_etf.holding"][0] == "asof"
+    assert got["prv_board.label"][0] == "trade_date"
     assert got["prv_market.daily_bar"][0] == "trade_date"
     assert got["ops.collection_gaps"][0] == "start_ts"
     assert got["ops.health_events"][0] == "ts"
@@ -133,6 +164,26 @@ def test_raw_messages_compression_policy(dsn: str) -> None:
         "WHERE proc_name = 'policy_compression' AND hypertable_name = 'raw_messages'",
     )
     assert after == "3 days"
+
+
+def test_p3_retention_policies(dsn: str) -> None:
+    rows = _rows(
+        dsn,
+        "SELECT hypertable_schema || '.' || hypertable_name, config->>'drop_after' "
+        "FROM timescaledb_information.jobs WHERE proc_name = 'policy_retention'",
+    )
+    assert dict(rows) == P3_INTRADAY  # 보존 정책은 P3 장중 이력 표에만(원본 녹화는 P7 — 0006 주석)
+
+
+def test_p3_tables_exist(dsn: str) -> None:
+    rows = _rows(
+        dsn,
+        "SELECT table_schema || '.' || table_name FROM information_schema.tables "
+        "WHERE table_schema IN ('prv_board', 'prv_etf') OR table_name IN ('index_intraday', "
+        "'sector_intraday', 'turnover_rank_intraday', 'eod_reconcile', 'investor_intraday', "
+        "'investor_revision', 'ledger_check')",
+    )
+    assert {r[0] for r in rows} == P3_TABLES
 
 
 def test_no_table_lands_in_the_public_schema(dsn: str) -> None:
@@ -169,7 +220,7 @@ def _as_export(dsn: str, query: str) -> None:
 def test_export_role_reads_pub_only(dsn: str) -> None:
     _as_export(dsn, "SELECT count(*) FROM pub_filings.corp_code")
     for table in ("prv_market.daily_bar", "prv_flows.stock_investor_daily", "ops.kv",
-                  "prv_alerts.tg_inbox", "prv_gex.investor_flow"):  # fmt: skip
+                  "prv_alerts.tg_inbox", "prv_gex.investor_flow", *sorted(P3_TABLES)):  # fmt: skip
         with pytest.raises(psycopg.errors.InsufficientPrivilege):
             _as_export(dsn, f"SELECT 1 FROM {table} LIMIT 1")  # noqa: S608 — 상수 표 이름
     with pytest.raises(psycopg.errors.InsufficientPrivilege):
@@ -298,4 +349,13 @@ def test_migration_files_only_touch_tiered_schemas(dsn: str) -> None:
     )
     schemas = {r[0] for r in owned}
     assert schemas <= {s for s in schemas if s == "ops" or s.startswith(("pub_", "prv_"))}
-    assert {"ops", "prv_market", "prv_flows", "prv_gex", "prv_alerts", "pub_filings"} <= schemas
+    assert {
+        "ops",
+        "prv_market",
+        "prv_flows",
+        "prv_gex",
+        "prv_alerts",
+        "pub_filings",
+        "prv_board",
+        "prv_etf",
+    } <= schemas

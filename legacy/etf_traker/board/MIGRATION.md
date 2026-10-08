@@ -195,3 +195,40 @@ DedupExpiry 5(중복·보존 기간·나중 실행 만료·`keep_days`·손상 �
 없어진 것은 getUpdates·offset 에 묶인 8개(Paging 4·Webhook 3·손상 offset 1)뿐이다.
 
 결과: `scripts/test_legacy.sh board` **1,267 실행**(P1 1,319 − 63 + 1 + 10), 1 건너뜀(그대로).
+
+## P3. 신고가 엔진 승격 — kbj 정본으로 (묶음 E1, 2026-10-07)
+
+설계 `docs/p3_design.md` §1.3·§4.1·§8.1, D-P3-10·11, ADR 0009(초안). 순서: ① shim 전 이 엔진으로 합성 골든을
+캡처(`tests/golden/board/`, legacy 커밋 `4ea5b7f`) → ② `kbj/engines/board` 로 함수 본문 그대로 이식 → ③ 골든 비교
+30일 통과(허용오차) → ④ 이 폴더의 엔진을 shim 으로.
+
+### 파일별
+
+| 파일 | 바꾼 것 |
+|---|---|
+| `engine/{newhigh,aggregate,kinds,themes}.py` | 본문 삭제 → `from kbj.engines.board.<m> import *` + `__all__`(같은 함수 객체) |
+| `engine/rankings.py` | 다시 내보내기 + `load_taxonomy()`(레포 루트 `config/knowledge/sectors.yaml`)·`build(asof, cfg, log)`(state 파일을 읽어 kbj `build_rankings` 에 넘긴다 — 시각은 `kbj.core.time.now_kst`). `_fmt` = kbj 공개 별칭 `format_cell` |
+| `engine/build.py` | 계산 본문 삭제. `run(db_path, asof, cfg, log)` 은 sqlite 에서 엔진이 읽던 것(스냅·일봉·스칼라·섹터·전일 라벨·공시 대조·run_log 실패·state 의 전일 newhigh/rankings·market.json)을 모아 kbj `compute_day` 를 부르고, label 표·run_log(`BoardDay.steps`)·state 파일 5개를 쓴다. `state_dir`·`read`·`write`·`sync_label_kinds`·`_prev_labels` 는 그대로. 잠정 종가 문구는 "네이버 16:07 값" → "KIS 마감값(잠정)" |
+| `engine/config.py` | `load()` = `config/settings.yaml` + 레포 루트 `config/board.yaml`(엔진 절 — 파일에 같은 절이 있으면 파일이 이긴다). `themes()`·`KNOWLEDGE` 는 `config/knowledge` |
+| `engine/facts.py` | `eok` → kbj `rankings.eok` 다시 내보내기(같은 규칙 하나) |
+| `config/settings.yaml` | 엔진 절 10개(newhigh·proximity·volume·resistance·giveback·themes·display·integrity·detect·rankings)를 `config/board.yaml` 로 옮기고 지웠다(주석 포함 그대로 옮김) |
+| `knowledge/{themes,sectors,sector_map}.yaml` | 레포 루트 `config/knowledge/` 로 옮겼다(자체 사전 — 공개 등급). `events`·`notes`·`xdigest_names` 는 그대로 |
+| `classify/sectors.py`·`writer/prompts.py` | 사전 경로 `ROOT/knowledge` → `engine.config.KNOWLEDGE` |
+
+### 시험 — 승격(kbj `tests/unit/engines/board/`, import 경로만)
+
+| legacy 파일 | 옮긴 것 | 수 | legacy 에 남긴 것 |
+|---|---|---|---|
+| `test_newhigh.py` | 전부(파일 삭제) | 35 | — |
+| `test_turnover.py` | TurnoverTest | 6 | NaverUniverseTest 1 |
+| `test_consistency.py` | ConsistencyTest·HistRefContainsWindowsTest | 20 | LabelKindSyncTest 2(sqlite 라벨 표 — shim) |
+| `test_seeds.py` | Renames·Unresolved·RealFile | 10 | BannerWording 3(web.render) |
+| `test_rankings.py` | TestSectorBoard·TestStockBoard·TestCross·TestFormat·TestThinSectors·RankDelta·TestTaxonomy 2 | 30 | TestTaxonomy(classify 후보) 2·RankDeltaRender 5 |
+| `test_kinds.py` | Classify·Counts | 13 | RenderTag·ProximityRowsAreNotHidden 9 |
+| `test_mktcap_floor.py` | Floor·Labels(5)·Detector6 | 18 | Banner·TurnoverToggle·Labels 화면 꼬리표 9 |
+| `test_basis.py` | AchievedRows | 6 | BasisCell 6 |
+| `test_universe.py` | TestTurnoverFallback·TestVolRatio | 7 | funds 판정 시험 |
+| 소스 검사 8개(`test_close_source` 1·`test_reader_voice` 5·`test_mktcap_floor` 1·`test_stale_px` 1) | 계산 본문이 kbj 로 가서 함께 옮김 — 따옴표·보는 함수 이름만 kbj 코드에 맞춤(`test_build_source.py`) | 8 | 나머지 |
+| 합계 | | **153** | |
+
+다리 시험 `tests/test_kbj_engine_shim.py` +1. legacy board 시험 **1,267 → 1,115**(`scripts/test_legacy.sh board`).

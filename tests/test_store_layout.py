@@ -1,4 +1,4 @@
-"""DB 스키마 마이그레이션 0001~0006 과 docker-compose.yml 의 구조 검사(정적 — DB·데몬 없이).
+"""DB 스키마 마이그레이션 0001~0009 와 docker-compose.yml 의 구조 검사(정적 — DB·데몬 없이).
 
 ADR 0002: 공개 등급은 pub_*, 로그인 등급은 prv_*, 운영은 ops. kbj_public_export 는 pub_* 에만
 USAGE·SELECT. compose 는 비밀번호 기본값이 없고 포트는 127.0.0.1 에만 연다.
@@ -153,10 +153,11 @@ def test_app_services_wait_for_storage_and_migration() -> None:
         assert test[:5] == ["CMD", "python", "-m", "kbj.services.runtime.healthcheck", name]
 
 
-def test_kis_app_key_goes_only_to_the_issuer_in_p2() -> None:
-    """D1 안 A: 앱키는 KIS 를 부르는 프로세스에만 — P2 는 auth 하나(발급자)."""
+def test_kis_app_key_goes_only_to_processes_that_call_kis() -> None:
+    """D1 안 A: 앱키는 KIS 를 부르는 프로세스에만 — P2 는 auth 하나(발급자), P3 부터 KIS 수집 작업을
+    돌리는 scheduler 도(ADR 0004 'P3 에 scheduler 에도' — 묶음 S). 발급은 그래도 auth 만(계약 ④)."""
     holders = {n for n in APP if "KBJ_KIS_APP_KEY" in _env(n) or "KBJ_KIS_APP_SECRET" in _env(n)}
-    assert holders == {"auth"}
+    assert holders == {"auth", "scheduler"}
     tg = {n for n in APP if any(k.startswith("KBJ_TELEGRAM_") for k in _env(n))}
     assert tg == {"notifier"}
     assert {n for n in APP if "KBJ_DART_API_KEY" in _env(n)} == {"scheduler"}
@@ -397,3 +398,175 @@ def test_market_investor_intraday_is_a_view_over_gx_investor_flow() -> None:
         r"CREATE OR REPLACE VIEW prv_flows\.market_investor_intraday AS(.*?);", body, re.S
     )
     assert m and re.search(r"FROM prv_gex\.investor_flow\s*$", m.group(1).strip() + "\n")
+
+
+# ── P3 마이그레이션 0007~0009 (docs/p3_design.md §3.4, D-P3-6) ──────────────────────────────
+
+P3_FILES = ("0007_board.sql", "0008_market_flows_p3.sql", "0009_etf.sql")
+ET_BOARD_DB = ROOT / "legacy" / "etf_traker" / "board" / "engine" / "db.py"
+ET_TRACKER = ROOT / "legacy" / "etf_traker" / "etf_tracker_v9" / "tracker.py"
+# 값이 아니라 대조·차이·검산 결과를 담는 기록 표 — 출처는 열 이름(kis_value·final_source …)이 말한다
+P3_RECORD_TABLES = {
+    "prv_market.eod_reconcile",
+    "prv_flows.investor_revision",
+    "prv_flows.ledger_check",
+    "prv_board.split_check",
+    "prv_etf.fund",
+    "prv_etf.change_log",
+}
+
+
+def _all_p3_tables() -> dict[str, list[str]]:
+    found: dict[str, list[str]] = {}
+    for name in P3_FILES:
+        found.update(_tables(_body(name)))
+    return found
+
+
+def _et_sqlite_tables(path: Path) -> dict[str, list[str]]:
+    """ET 원본의 DDL 문자열(sqlite)에서 표 열 이름."""
+    text = path.read_text(encoding="utf-8")
+    out: dict[str, list[str]] = {}
+    for m in re.finditer(r"CREATE TABLE IF NOT EXISTS (\w+)\s*\((.*?)\);", text, flags=re.S):
+        body = "\n".join(line.split("--", 1)[0] for line in m.group(2).splitlines())
+        cols = []
+        for part in body.split(","):
+            s = part.strip()
+            if not s or s.startswith(("PRIMARY", "UNIQUE")) or s[0].isdigit() or "(" in s[:1]:
+                continue
+            word = s.split()[0]
+            if word.isidentifier() and not word.isupper():
+                cols.append(word)
+        out[m.group(1)] = cols
+    return out
+
+
+def test_p3_migration_files_follow_p2_in_order() -> None:
+    names = sorted(p.name for p in MIGRATIONS.glob("*.sql"))
+    assert names[: 1 + len(P2_FILES) + len(P3_FILES)] == ["0001_schemas.sql", *P2_FILES, *P3_FILES]
+
+
+def test_p3_statements_are_idempotent_and_never_alter_or_write() -> None:
+    for name in P3_FILES:
+        body = _body(name)
+        assert not re.search(r"CREATE (SCHEMA|TABLE|EXTENSION)(?! IF NOT EXISTS)", body), name
+        assert not re.search(r"CREATE (UNIQUE )?INDEX(?! IF NOT EXISTS)", body), name
+        starts = {s.strip().split(maxsplit=1)[0].upper() for s in body.split(";") if s.strip()}
+        assert starts <= {"CREATE", "SELECT"}, (name, starts)  # ALTER·GRANT·DROP·INSERT 없음
+        for fn in ("create_hypertable", "add_retention_policy", "add_compression_policy"):
+            for call in re.findall(rf"{fn}\((.*?)\);", body, flags=re.S):
+                assert "if_not_exists => TRUE" in call, (name, call)
+
+
+def test_p3_objects_live_in_prv_schemas_only() -> None:
+    """P3 의 새 표는 모두 로그인 등급(원천 KIS·KRX·운용사) — prv_* 에만, pub_* 권한 문장 없음."""
+    for name in P3_FILES:
+        body = _body(name)
+        objs = re.findall(r"CREATE TABLE IF NOT EXISTS ([\w.]+)", body)
+        objs += re.findall(r"\bON ([\w.]+) \(", body)
+        objs += re.findall(r"(?:create_hypertable|add_retention_policy)\(\s*'([\w.]+)'", body)
+        assert objs, name
+        for obj in objs:
+            schema, _, table = obj.partition(".")
+            assert table and re.fullmatch(r"prv_(board|market|flows|etf)", schema), (name, obj)
+        assert "kbj_public_export" not in body and not re.search(r"\bpublic\.", body), name
+
+
+def test_p3_tables_live_in_the_expected_files() -> None:
+    expect = {
+        "0007_board.sql": {
+            "prv_board.alltime", "prv_board.label", "prv_board.split_check",
+            "prv_board.stock_day", "prv_board.artifact",
+        },
+        "0008_market_flows_p3.sql": {
+            "prv_market.index_intraday", "prv_market.sector_intraday",
+            "prv_market.turnover_rank_intraday", "prv_market.eod_reconcile",
+            "prv_flows.investor_intraday", "prv_flows.investor_revision", "prv_flows.ledger_check",
+        },
+        "0009_etf.sql": {
+            "prv_etf.etf_daily", "prv_etf.quote_intraday", "prv_etf.meta", "prv_etf.split_event",
+            "prv_etf.fund", "prv_etf.holding", "prv_etf.change_log",
+        },
+    }  # fmt: skip
+    for name, tables in expect.items():
+        assert set(_tables(_body(name))) == tables, name
+    assert not set(_all_p3_tables()) & set(_all_p2_tables())  # 앞 번호 표를 다시 만들지 않는다
+
+
+def test_p3_value_tables_carry_source_quality_and_loader() -> None:
+    """절대 규칙 1 — 값 표는 source·quality(+ 쓴 작업 loaded_by). 기록 표는 위 목록뿐."""
+    tables = _all_p3_tables()
+    assert set(tables) >= P3_RECORD_TABLES
+    for table, cols in tables.items():
+        if table in P3_RECORD_TABLES:
+            continue
+        assert {"source", "quality", "loaded_by"} <= set(cols), table
+
+
+def test_p3_quality_and_venue_checks_match_0003() -> None:
+    for name in P3_FILES:
+        body = _body(name)
+        for m in re.finditer(r"quality\s+text NOT NULL CHECK \((quality IN \([^)]*\))\)", body):
+            assert m.group(1) == "quality IN ('ok', 'stale', 'estimated', 'invalid')", name
+        for m in re.finditer(
+            r"venue\s+text NOT NULL DEFAULT '' CHECK \((venue IN \([^)]*\))\)", body
+        ):
+            assert m.group(1) == "venue IN ('', 'KRX', 'NXT', 'TOTAL')", name
+        n_q = len(re.findall(r"\bquality\s+text", body))
+        assert n_q == len(re.findall(r"quality\s+text NOT NULL CHECK \(quality IN", body)), name
+
+
+def test_p3_board_tables_keep_et_columns() -> None:
+    """ET board/engine/db.py 의 alltime·label·split_check 열을 그대로 옮겼다(+ KBJ 열)."""
+    et = _et_sqlite_tables(ET_BOARD_DB)
+    kbj = _all_p3_tables()
+    renamed = {"asof": "trade_date"}  # ET 의 날짜 열 이름 → KBJ 공통 이름
+    for table in ("alltime", "label", "split_check"):
+        want = {renamed.get(c, c) for c in et[table]}
+        assert want <= set(kbj[f"prv_board.{table}"]), (
+            table,
+            want - set(kbj[f"prv_board.{table}"]),
+        )
+    assert {"history_from", "source", "quality"} <= set(kbj["prv_board.alltime"])  # D-P3-11
+
+
+def test_p3_etf_tables_keep_et_columns() -> None:
+    """ET etf_tracker_v9/tracker.py DDL 의 fund·holding·change_log 열.
+
+    fund.mktcap 은 네이버 출처라 뺐다(U4)."""
+    et = _et_sqlite_tables(ET_TRACKER)
+    kbj = _all_p3_tables()
+    assert set(et["fund"]) - {"mktcap"} <= set(kbj["prv_etf.fund"])
+    assert set(et["holding"]) <= set(kbj["prv_etf.holding"])
+    assert set(et["change_log"]) <= set(kbj["prv_etf.change_log"])
+    assert "mktcap" not in kbj["prv_etf.fund"]
+
+
+def test_p3_intraday_tables_have_retention_and_daily_tables_do_not() -> None:
+    body = "\n".join(_body(n) for n in P3_FILES)
+    kept = dict(re.findall(r"add_retention_policy\(\s*'([\w.]+)', INTERVAL '(\d+ days)'", body))
+    assert kept == {
+        "prv_market.index_intraday": "90 days",
+        "prv_market.sector_intraday": "90 days",
+        "prv_market.turnover_rank_intraday": "90 days",
+        "prv_flows.investor_intraday": "90 days",
+        "prv_etf.quote_intraday": "30 days",
+    }
+    found = re.findall(
+        r"create_hypertable\(\s*'([\w.]+)', by_range\('\w+', INTERVAL '([^']+)'", body
+    )
+    hyper = dict(found)
+    assert len(hyper) == len(found)
+    assert {t for t, iv in hyper.items() if iv == "1 day"} == set(kept)
+    assert {t for t, iv in hyper.items() if iv == "365 days"} == {
+        "prv_board.label", "prv_board.stock_day", "prv_market.eod_reconcile",
+        "prv_flows.investor_revision", "prv_etf.etf_daily", "prv_etf.holding",
+    }  # fmt: skip
+
+
+def test_p3_etf_type_check_matches_rows_enum() -> None:
+    from kbj.core.rows import EtfType
+
+    m = re.search(r"etf_type\s+text CHECK \(etf_type IN \(([^)]*)\)\)", _body("0009_etf.sql"))
+    assert m is not None
+    assert set(re.findall(r"'(\w+)'", m.group(1))) == {t.value for t in EtfType}

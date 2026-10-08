@@ -225,12 +225,6 @@ class ProvenanceTest(unittest.TestCase):
     def test_빈_스냅샷은_확정이_아니다(self):
         self.assertEqual(B.close_provenance({}), (False, 0, None))
 
-    def test_잠정이면_배너에_사유를_적는다(self):
-        import inspect
-        src = inspect.getsource(B.run)
-        i = src.index('close_provenance')
-        self.assertIn('missing_notes.append(note)', src[i:i + 1600])
-
     def test_수집_실패_사유가_배너로_간다(self):
         """DB.missing() 은 호출자가 없어서 run_log 가 화면에 못 갔다 (2장 6번)."""
         import inspect

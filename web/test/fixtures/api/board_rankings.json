@@ -1,0 +1,2944 @@
+{
+  "source": "KIS",
+  "as_of": "2026-09-15T15:30:00+09:00",
+  "quality": "estimated",
+  "notes": [
+    "KIS 마감값(잠정) — 다음 영업일 08:40 KRX 확정",
+    "보드 금액(turnover·mktcap·*_eok)은 억원(ET 산출 그대로)"
+  ],
+  "generated_at": "2026-09-15T18:00:00+09:00",
+  "data": {
+    "as_of": "2026-09-15",
+    "source": "kis",
+    "generated_at": "2026-10-08T03:29:02+09:00",
+    "prev_asof": "2026-10-01",
+    "taxonomy": "board48",
+    "universe": 254,
+    "thresholds": {
+      "min_mktcap_eok": 1000.0,
+      "min_turnover_eok": 1.0,
+      "min_sector_members": 5,
+      "excel_scale": "green_up",
+      "top_per_sector": 5,
+      "rows_per_board": 30
+    },
+    "sector_boards": [
+      {
+        "key": "1d",
+        "label": "금일",
+        "ret_label": "금일 상승률",
+        "weighting": "mktcap",
+        "sectors": [
+          {
+            "name": "전자제품",
+            "ret": "+1.96%",
+            "ret_raw": 1.96,
+            "n": 21,
+            "breadth": {
+              "up": 13,
+              "flat": 0,
+              "down": 8,
+              "total": 21,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "901100",
+                "name": "합성종목110",
+                "ret": "+4.76%",
+                "ret_raw": 4.76,
+                "mktcap": "31.60조",
+                "mktcap_raw": 315981.0
+              },
+              {
+                "rank": 2,
+                "code": "902420",
+                "name": "합성종목242",
+                "ret": "+4.68%",
+                "ret_raw": 4.68,
+                "mktcap": "3,094억",
+                "mktcap_raw": 3094.2
+              },
+              {
+                "rank": 3,
+                "code": "900740",
+                "name": "합성종목074",
+                "ret": "+2.54%",
+                "ret_raw": 2.54,
+                "mktcap": "9,005억",
+                "mktcap_raw": 9005.2
+              },
+              {
+                "rank": 4,
+                "code": "900620",
+                "name": "합성종목062",
+                "ret": "+1.80%",
+                "ret_raw": 1.8,
+                "mktcap": "3,440억",
+                "mktcap_raw": 3440.5
+              },
+              {
+                "rank": 5,
+                "code": "902060",
+                "name": "합성종목206",
+                "ret": "+1.43%",
+                "ret_raw": 1.43,
+                "mktcap": "2,692억",
+                "mktcap_raw": 2692.3
+              }
+            ],
+            "rank": 1,
+            "rank_prev": 13,
+            "rank_delta": 12
+          },
+          {
+            "name": "소프트웨어",
+            "ret": "+1.73%",
+            "ret_raw": 1.73,
+            "n": 20,
+            "breadth": {
+              "up": 12,
+              "flat": 0,
+              "down": 8,
+              "total": 20,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "902750",
+                "name": "합성종목275",
+                "ret": "+2.80%",
+                "ret_raw": 2.8,
+                "mktcap": "21.03조",
+                "mktcap_raw": 210284.0
+              },
+              {
+                "rank": 2,
+                "code": "902630",
+                "name": "합성종목263",
+                "ret": "+2.63%",
+                "ret_raw": 2.63,
+                "mktcap": "5,056억",
+                "mktcap_raw": 5055.6
+              },
+              {
+                "rank": 3,
+                "code": "902270",
+                "name": "합성종목227",
+                "ret": "+2.59%",
+                "ret_raw": 2.59,
+                "mktcap": "9,058억",
+                "mktcap_raw": 9057.8
+              },
+              {
+                "rank": 4,
+                "code": "900470",
+                "name": "합성종목047",
+                "ret": "+2.49%",
+                "ret_raw": 2.49,
+                "mktcap": "1.10조",
+                "mktcap_raw": 10986.4
+              },
+              {
+                "rank": 5,
+                "code": "901310",
+                "name": "합성종목131",
+                "ret": "+2.30%",
+                "ret_raw": 2.3,
+                "mktcap": "2,438억",
+                "mktcap_raw": 2438.1
+              }
+            ],
+            "rank": 2,
+            "rank_prev": 4,
+            "rank_delta": 2
+          },
+          {
+            "name": "방산",
+            "ret": "+1.27%",
+            "ret_raw": 1.27,
+            "n": 20,
+            "breadth": {
+              "up": 7,
+              "flat": 0,
+              "down": 13,
+              "total": 20,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "901500",
+                "name": "합성종목150",
+                "ret": "+3.70%",
+                "ret_raw": 3.7,
+                "mktcap": "35.86조",
+                "mktcap_raw": 358611.4
+              },
+              {
+                "rank": 2,
+                "code": "900067",
+                "name": "합성종목0042우B",
+                "ret": "+2.45%",
+                "ret_raw": 2.45,
+                "mktcap": "2,492억",
+                "mktcap_raw": 2491.7
+              },
+              {
+                "rank": 3,
+                "code": "901980",
+                "name": "합성종목198",
+                "ret": "+1.70%",
+                "ret_raw": 1.7,
+                "mktcap": "9,202억",
+                "mktcap_raw": 9202.5
+              },
+              {
+                "rank": 4,
+                "code": "902700",
+                "name": "합성종목270",
+                "ret": "+0.81%",
+                "ret_raw": 0.81,
+                "mktcap": "6.41조",
+                "mktcap_raw": 64100.0
+              },
+              {
+                "rank": 5,
+                "code": "900780",
+                "name": "합성종목078",
+                "ret": "+0.67%",
+                "ret_raw": 0.67,
+                "mktcap": "4,198억",
+                "mktcap_raw": 4197.7
+              }
+            ],
+            "rank": 3,
+            "rank_prev": 12,
+            "rank_delta": 9
+          },
+          {
+            "name": "미분류",
+            "ret": "+1.10%",
+            "ret_raw": 1.1,
+            "n": 3,
+            "breadth": {
+              "up": 2,
+              "flat": 0,
+              "down": 1,
+              "total": 3,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "900220",
+                "name": "합성종목022",
+                "ret": "+1.41%",
+                "ret_raw": 1.41,
+                "mktcap": "1.21조",
+                "mktcap_raw": 12107.9
+              },
+              {
+                "rank": 2,
+                "code": "900200",
+                "name": "합성종목020",
+                "ret": "+1.10%",
+                "ret_raw": 1.1,
+                "mktcap": "9.30조",
+                "mktcap_raw": 93009.7
+              },
+              {
+                "rank": 3,
+                "code": "900230",
+                "name": "합성종목023",
+                "ret": "-0.24%",
+                "ret_raw": -0.24,
+                "mktcap": "2,546억",
+                "mktcap_raw": 2545.5
+              }
+            ],
+            "rank": 4,
+            "rank_prev": 1,
+            "rank_delta": -3
+          },
+          {
+            "name": "자동차부품",
+            "ret": "+1.05%",
+            "ret_raw": 1.05,
+            "n": 21,
+            "breadth": {
+              "up": 15,
+              "flat": 0,
+              "down": 6,
+              "total": 21,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "901720",
+                "name": "합성종목172",
+                "ret": "+5.75%",
+                "ret_raw": 5.75,
+                "mktcap": "5,240억",
+                "mktcap_raw": 5239.9
+              },
+              {
+                "rank": 2,
+                "code": "900640",
+                "name": "합성종목064",
+                "ret": "+3.24%",
+                "ret_raw": 3.24,
+                "mktcap": "5,190억",
+                "mktcap_raw": 5189.5
+              },
+              {
+                "rank": 3,
+                "code": "901000",
+                "name": "합성종목100",
+                "ret": "+2.60%",
+                "ret_raw": 2.6,
+                "mktcap": "21.69조",
+                "mktcap_raw": 216923.0
+              },
+              {
+                "rank": 4,
+                "code": "902200",
+                "name": "합성종목220",
+                "ret": "+2.18%",
+                "ret_raw": 2.18,
+                "mktcap": "40.54조",
+                "mktcap_raw": 405354.4
+              },
+              {
+                "rank": 5,
+                "code": "902560",
+                "name": "합성종목256",
+                "ret": "+1.56%",
+                "ret_raw": 1.56,
+                "mktcap": "9,192억",
+                "mktcap_raw": 9191.8
+              }
+            ],
+            "rank": 5,
+            "rank_prev": 11,
+            "rank_delta": 6
+          },
+          {
+            "name": "제약",
+            "ret": "+0.21%",
+            "ret_raw": 0.21,
+            "n": 21,
+            "breadth": {
+              "up": 11,
+              "flat": 0,
+              "down": 10,
+              "total": 21,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "902970",
+                "name": "합성종목297",
+                "ret": "+3.02%",
+                "ret_raw": 3.02,
+                "mktcap": "8,956억",
+                "mktcap_raw": 8955.8
+              },
+              {
+                "rank": 2,
+                "code": "902610",
+                "name": "합성종목261",
+                "ret": "+2.04%",
+                "ret_raw": 2.04,
+                "mktcap": "9,543억",
+                "mktcap_raw": 9543.4
+              },
+              {
+                "rank": 3,
+                "code": "901650",
+                "name": "합성종목165",
+                "ret": "+1.74%",
+                "ret_raw": 1.74,
+                "mktcap": "8.77조",
+                "mktcap_raw": 87709.3
+              },
+              {
+                "rank": 4,
+                "code": "901170",
+                "name": "합성종목117",
+                "ret": "+1.54%",
+                "ret_raw": 1.54,
+                "mktcap": "5,704억",
+                "mktcap_raw": 5704.5
+              },
+              {
+                "rank": 5,
+                "code": "900810",
+                "name": "합성종목081",
+                "ret": "+1.51%",
+                "ret_raw": 1.51,
+                "mktcap": "8,068억",
+                "mktcap_raw": 8068.1
+              }
+            ],
+            "rank": 6,
+            "rank_prev": 9,
+            "rank_delta": 3
+          },
+          {
+            "name": "2차전지",
+            "ret": "+0.03%",
+            "ret_raw": 0.03,
+            "n": 22,
+            "breadth": {
+              "up": 10,
+              "flat": 0,
+              "down": 12,
+              "total": 22,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "900990",
+                "name": "합성종목099",
+                "ret": "+3.36%",
+                "ret_raw": 3.36,
+                "mktcap": "5,105억",
+                "mktcap_raw": 5104.6
+              },
+              {
+                "rank": 2,
+                "code": "901710",
+                "name": "합성종목171",
+                "ret": "+3.09%",
+                "ret_raw": 3.09,
+                "mktcap": "1.19조",
+                "mktcap_raw": 11941.1
+              },
+              {
+                "rank": 3,
+                "code": "900510",
+                "name": "합성종목051",
+                "ret": "+1.86%",
+                "ret_raw": 1.86,
+                "mktcap": "9,218억",
+                "mktcap_raw": 9217.7
+              },
+              {
+                "rank": 4,
+                "code": "900150",
+                "name": "합성종목015",
+                "ret": "+1.84%",
+                "ret_raw": 1.84,
+                "mktcap": "35.52조",
+                "mktcap_raw": 355177.3
+              },
+              {
+                "rank": 5,
+                "code": "902070",
+                "name": "합성종목207",
+                "ret": "+1.35%",
+                "ret_raw": 1.35,
+                "mktcap": "7,347억",
+                "mktcap_raw": 7347.3
+              }
+            ],
+            "rank": 7,
+            "rank_prev": 7,
+            "rank_delta": 0
+          },
+          {
+            "name": "화학",
+            "ret": "-0.10%",
+            "ret_raw": -0.1,
+            "n": 21,
+            "breadth": {
+              "up": 14,
+              "flat": 0,
+              "down": 7,
+              "total": 21,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "902120",
+                "name": "합성종목212",
+                "ret": "+2.64%",
+                "ret_raw": 2.64,
+                "mktcap": "8,164억",
+                "mktcap_raw": 8164.0
+              },
+              {
+                "rank": 2,
+                "code": "900680",
+                "name": "합성종목068",
+                "ret": "+2.20%",
+                "ret_raw": 2.2,
+                "mktcap": "5,097억",
+                "mktcap_raw": 5096.7
+              },
+              {
+                "rank": 3,
+                "code": "900080",
+                "name": "합성인프라리츠",
+                "ret": "+2.02%",
+                "ret_raw": 2.02,
+                "mktcap": "8,514억",
+                "mktcap_raw": 8513.8
+              },
+              {
+                "rank": 4,
+                "code": "900920",
+                "name": "합성종목092",
+                "ret": "+1.67%",
+                "ret_raw": 1.67,
+                "mktcap": "4,836억",
+                "mktcap_raw": 4835.5
+              },
+              {
+                "rank": 5,
+                "code": "902960",
+                "name": "합성종목296",
+                "ret": "+1.38%",
+                "ret_raw": 1.38,
+                "mktcap": "1.07조",
+                "mktcap_raw": 10669.7
+              }
+            ],
+            "rank": 8,
+            "rank_prev": 5,
+            "rank_delta": -3
+          },
+          {
+            "name": "반도체장비",
+            "ret": "-0.15%",
+            "ret_raw": -0.15,
+            "n": 21,
+            "breadth": {
+              "up": 7,
+              "flat": 0,
+              "down": 14,
+              "total": 21,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "902760",
+                "name": "합성종목276",
+                "ret": "+2.12%",
+                "ret_raw": 2.12,
+                "mktcap": "1.06조",
+                "mktcap_raw": 10608.8
+              },
+              {
+                "rank": 2,
+                "code": "902400",
+                "name": "합성종목240",
+                "ret": "+1.84%",
+                "ret_raw": 1.84,
+                "mktcap": "29.57조",
+                "mktcap_raw": 295718.9
+              },
+              {
+                "rank": 3,
+                "code": "900360",
+                "name": "합성종목036",
+                "ret": "+1.67%",
+                "ret_raw": 1.67,
+                "mktcap": "8,203억",
+                "mktcap_raw": 8202.6
+              },
+              {
+                "rank": 4,
+                "code": "902040",
+                "name": "합성종목204",
+                "ret": "+1.38%",
+                "ret_raw": 1.38,
+                "mktcap": "8,149억",
+                "mktcap_raw": 8149.3
+              },
+              {
+                "rank": 5,
+                "code": "901320",
+                "name": "합성종목132",
+                "ret": "+1.37%",
+                "ret_raw": 1.37,
+                "mktcap": "4,790억",
+                "mktcap_raw": 4790.1
+              }
+            ],
+            "rank": 9,
+            "rank_prev": 10,
+            "rank_delta": 1
+          },
+          {
+            "name": "건설",
+            "ret": "-0.15%",
+            "ret_raw": -0.15,
+            "n": 19,
+            "breadth": {
+              "up": 8,
+              "flat": 0,
+              "down": 11,
+              "total": 19,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "901510",
+                "name": "합성종목151",
+                "ret": "+5.63%",
+                "ret_raw": 5.63,
+                "mktcap": "2,096억",
+                "mktcap_raw": 2095.8
+              },
+              {
+                "rank": 2,
+                "code": "902950",
+                "name": "합성종목295",
+                "ret": "+3.76%",
+                "ret_raw": 3.76,
+                "mktcap": "11.53조",
+                "mktcap_raw": 115268.0
+              },
+              {
+                "rank": 3,
+                "code": "902710",
+                "name": "합성종목271",
+                "ret": "+2.24%",
+                "ret_raw": 2.24,
+                "mktcap": "9,856억",
+                "mktcap_raw": 9856.1
+              },
+              {
+                "rank": 4,
+                "code": "901150",
+                "name": "합성종목115",
+                "ret": "+1.00%",
+                "ret_raw": 1.0,
+                "mktcap": "29.29조",
+                "mktcap_raw": 292905.1
+              },
+              {
+                "rank": 5,
+                "code": "901390",
+                "name": "합성종목139",
+                "ret": "+0.76%",
+                "ret_raw": 0.76,
+                "mktcap": "5,451억",
+                "mktcap_raw": 5450.8
+              }
+            ],
+            "rank": 10,
+            "rank_prev": 6,
+            "rank_delta": -4
+          },
+          {
+            "name": "반도체소재부품",
+            "ret": "-0.23%",
+            "ret_raw": -0.23,
+            "n": 22,
+            "breadth": {
+              "up": 9,
+              "flat": 0,
+              "down": 13,
+              "total": 22,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "900130",
+                "name": "합성종목013",
+                "ret": "+4.30%",
+                "ret_raw": 4.3,
+                "mktcap": "6,037억",
+                "mktcap_raw": 6037.2
+              },
+              {
+                "rank": 2,
+                "code": "901930",
+                "name": "합성종목193",
+                "ret": "+2.93%",
+                "ret_raw": 2.93,
+                "mktcap": "7,852억",
+                "mktcap_raw": 7852.4
+              },
+              {
+                "rank": 3,
+                "code": "900730",
+                "name": "합성종목073",
+                "ret": "+1.77%",
+                "ret_raw": 1.77,
+                "mktcap": "1,459억",
+                "mktcap_raw": 1458.8
+              },
+              {
+                "rank": 4,
+                "code": "900850",
+                "name": "합성종목085",
+                "ret": "+1.69%",
+                "ret_raw": 1.69,
+                "mktcap": "37.80조",
+                "mktcap_raw": 377981.5
+              },
+              {
+                "rank": 5,
+                "code": "902890",
+                "name": "합성종목289",
+                "ret": "+1.29%",
+                "ret_raw": 1.29,
+                "mktcap": "5,983억",
+                "mktcap_raw": 5982.9
+              }
+            ],
+            "rank": 11,
+            "rank_prev": 2,
+            "rank_delta": -9
+          },
+          {
+            "name": "조선",
+            "ret": "-0.24%",
+            "ret_raw": -0.24,
+            "n": 22,
+            "breadth": {
+              "up": 7,
+              "flat": 0,
+              "down": 15,
+              "total": 22,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "902930",
+                "name": "합성종목293",
+                "ret": "+3.49%",
+                "ret_raw": 3.49,
+                "mktcap": "4,148억",
+                "mktcap_raw": 4148.4
+              },
+              {
+                "rank": 2,
+                "code": "902210",
+                "name": "합성종목221",
+                "ret": "+2.14%",
+                "ret_raw": 2.14,
+                "mktcap": "8,273억",
+                "mktcap_raw": 8272.9
+              },
+              {
+                "rank": 3,
+                "code": "901490",
+                "name": "합성종목149",
+                "ret": "+2.09%",
+                "ret_raw": 2.09,
+                "mktcap": "1.01조",
+                "mktcap_raw": 10132.4
+              },
+              {
+                "rank": 4,
+                "code": "900410",
+                "name": "합성종목041",
+                "ret": "+1.21%",
+                "ret_raw": 1.21,
+                "mktcap": "5,469억",
+                "mktcap_raw": 5469.0
+              },
+              {
+                "rank": 5,
+                "code": "902090",
+                "name": "합성종목209",
+                "ret": "+0.71%",
+                "ret_raw": 0.71,
+                "mktcap": "4,682억",
+                "mktcap_raw": 4682.4
+              }
+            ],
+            "rank": 12,
+            "rank_prev": 8,
+            "rank_delta": -4
+          },
+          {
+            "name": "은행",
+            "ret": "-0.48%",
+            "ret_raw": -0.48,
+            "n": 21,
+            "breadth": {
+              "up": 9,
+              "flat": 0,
+              "down": 12,
+              "total": 21,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "901420",
+                "name": "합성종목142",
+                "ret": "+4.65%",
+                "ret_raw": 4.65,
+                "mktcap": "6,490억",
+                "mktcap_raw": 6489.8
+              },
+              {
+                "rank": 2,
+                "code": "902260",
+                "name": "합성종목226",
+                "ret": "+3.38%",
+                "ret_raw": 3.38,
+                "mktcap": "3,069억",
+                "mktcap_raw": 3069.3
+              },
+              {
+                "rank": 3,
+                "code": "900460",
+                "name": "합성종목046",
+                "ret": "+3.37%",
+                "ret_raw": 3.37,
+                "mktcap": "6,696억",
+                "mktcap_raw": 6695.8
+              },
+              {
+                "rank": 4,
+                "code": "900580",
+                "name": "합성종목058",
+                "ret": "+2.49%",
+                "ret_raw": 2.49,
+                "mktcap": "5,144억",
+                "mktcap_raw": 5143.8
+              },
+              {
+                "rank": 5,
+                "code": "901060",
+                "name": "합성종목106",
+                "ret": "+2.20%",
+                "ret_raw": 2.2,
+                "mktcap": "1.15조",
+                "mktcap_raw": 11461.6
+              }
+            ],
+            "rank": 13,
+            "rank_prev": 3,
+            "rank_delta": -10
+          }
+        ],
+        "min_members": 5,
+        "thin_sectors": [],
+        "has_prev_rank": true
+      },
+      {
+        "key": "7d",
+        "label": "7거래일",
+        "ret_label": "7거래일 상승률",
+        "weighting": "mktcap",
+        "sectors": [
+          {
+            "name": "미분류",
+            "ret": "+8.20%",
+            "ret_raw": 8.2,
+            "n": 3,
+            "breadth": {
+              "up": 2,
+              "flat": 0,
+              "down": 1,
+              "total": 3,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "900230",
+                "name": "합성종목023",
+                "ret": "+9.97%",
+                "ret_raw": 9.97,
+                "mktcap": "2,546억",
+                "mktcap_raw": 2545.5
+              },
+              {
+                "rank": 2,
+                "code": "900200",
+                "name": "합성종목020",
+                "ret": "+9.59%",
+                "ret_raw": 9.59,
+                "mktcap": "9.30조",
+                "mktcap_raw": 93009.7
+              },
+              {
+                "rank": 3,
+                "code": "900220",
+                "name": "합성종목022",
+                "ret": "-2.88%",
+                "ret_raw": -2.88,
+                "mktcap": "1.21조",
+                "mktcap_raw": 12107.9
+              }
+            ],
+            "rank": 1,
+            "rank_prev": 1,
+            "rank_delta": 0
+          },
+          {
+            "name": "방산",
+            "ret": "+3.07%",
+            "ret_raw": 3.07,
+            "n": 20,
+            "breadth": {
+              "up": 9,
+              "flat": 0,
+              "down": 11,
+              "total": 20,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "901020",
+                "name": "합성종목102",
+                "ret": "+10.68%",
+                "ret_raw": 10.68,
+                "mktcap": "1.01조",
+                "mktcap_raw": 10148.9
+              },
+              {
+                "rank": 2,
+                "code": "902700",
+                "name": "합성종목270",
+                "ret": "+9.45%",
+                "ret_raw": 9.45,
+                "mktcap": "6.41조",
+                "mktcap_raw": 64100.0
+              },
+              {
+                "rank": 3,
+                "code": "901860",
+                "name": "합성종목186",
+                "ret": "+9.21%",
+                "ret_raw": 9.21,
+                "mktcap": "8,146억",
+                "mktcap_raw": 8145.8
+              },
+              {
+                "rank": 4,
+                "code": "900180",
+                "name": "합성종목018",
+                "ret": "+8.99%",
+                "ret_raw": 8.99,
+                "mktcap": "6,512억",
+                "mktcap_raw": 6511.5
+              },
+              {
+                "rank": 5,
+                "code": "900067",
+                "name": "합성종목0042우B",
+                "ret": "+5.77%",
+                "ret_raw": 5.77,
+                "mktcap": "2,492억",
+                "mktcap_raw": 2491.7
+              }
+            ],
+            "rank": 2,
+            "rank_prev": 2,
+            "rank_delta": 0
+          },
+          {
+            "name": "건설",
+            "ret": "+2.32%",
+            "ret_raw": 2.32,
+            "n": 19,
+            "breadth": {
+              "up": 16,
+              "flat": 0,
+              "down": 3,
+              "total": 19,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "901510",
+                "name": "합성종목151",
+                "ret": "+8.99%",
+                "ret_raw": 8.99,
+                "mktcap": "2,096억",
+                "mktcap_raw": 2095.8
+              },
+              {
+                "rank": 2,
+                "code": "902950",
+                "name": "합성종목295",
+                "ret": "+6.40%",
+                "ret_raw": 6.4,
+                "mktcap": "11.53조",
+                "mktcap_raw": 115268.0
+              },
+              {
+                "rank": 3,
+                "code": "901390",
+                "name": "합성종목139",
+                "ret": "+4.70%",
+                "ret_raw": 4.7,
+                "mktcap": "5,451억",
+                "mktcap_raw": 5450.8
+              },
+              {
+                "rank": 4,
+                "code": "902230",
+                "name": "합성종목223",
+                "ret": "+4.62%",
+                "ret_raw": 4.62,
+                "mktcap": "7,647억",
+                "mktcap_raw": 7647.2
+              },
+              {
+                "rank": 5,
+                "code": "901030",
+                "name": "합성종목103",
+                "ret": "+3.63%",
+                "ret_raw": 3.63,
+                "mktcap": "6,995억",
+                "mktcap_raw": 6994.8
+              }
+            ],
+            "rank": 3,
+            "rank_prev": 7,
+            "rank_delta": 4
+          },
+          {
+            "name": "소프트웨어",
+            "ret": "+1.60%",
+            "ret_raw": 1.6,
+            "n": 20,
+            "breadth": {
+              "up": 13,
+              "flat": 0,
+              "down": 7,
+              "total": 20,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "902270",
+                "name": "합성종목227",
+                "ret": "+9.43%",
+                "ret_raw": 9.43,
+                "mktcap": "9,058억",
+                "mktcap_raw": 9057.8
+              },
+              {
+                "rank": 2,
+                "code": "901310",
+                "name": "합성종목131",
+                "ret": "+7.01%",
+                "ret_raw": 7.01,
+                "mktcap": "2,438억",
+                "mktcap_raw": 2438.1
+              },
+              {
+                "rank": 3,
+                "code": "900710",
+                "name": "합성종목071",
+                "ret": "+6.08%",
+                "ret_raw": 6.08,
+                "mktcap": "5,789억",
+                "mktcap_raw": 5788.6
+              },
+              {
+                "rank": 4,
+                "code": "901790",
+                "name": "합성종목179",
+                "ret": "+4.79%",
+                "ret_raw": 4.79,
+                "mktcap": "6,027억",
+                "mktcap_raw": 6027.1
+              },
+              {
+                "rank": 5,
+                "code": "902750",
+                "name": "합성종목275",
+                "ret": "+4.35%",
+                "ret_raw": 4.35,
+                "mktcap": "21.03조",
+                "mktcap_raw": 210284.0
+              }
+            ],
+            "rank": 4,
+            "rank_prev": 5,
+            "rank_delta": 1
+          },
+          {
+            "name": "은행",
+            "ret": "+1.38%",
+            "ret_raw": 1.38,
+            "n": 21,
+            "breadth": {
+              "up": 15,
+              "flat": 0,
+              "down": 6,
+              "total": 21,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "902260",
+                "name": "합성종목226",
+                "ret": "+18.61%",
+                "ret_raw": 18.61,
+                "mktcap": "3,069억",
+                "mktcap_raw": 3069.3
+              },
+              {
+                "rank": 2,
+                "code": "901780",
+                "name": "합성종목178",
+                "ret": "+10.48%",
+                "ret_raw": 10.48,
+                "mktcap": "2,028억",
+                "mktcap_raw": 2028.1
+              },
+              {
+                "rank": 3,
+                "code": "902860",
+                "name": "합성종목286",
+                "ret": "+6.84%",
+                "ret_raw": 6.84,
+                "mktcap": "2,793억",
+                "mktcap_raw": 2793.1
+              },
+              {
+                "rank": 4,
+                "code": "901660",
+                "name": "합성종목166",
+                "ret": "+5.90%",
+                "ret_raw": 5.9,
+                "mktcap": "1.08조",
+                "mktcap_raw": 10759.0
+              },
+              {
+                "rank": 5,
+                "code": "902020",
+                "name": "합성종목202",
+                "ret": "+4.94%",
+                "ret_raw": 4.94,
+                "mktcap": "8,960억",
+                "mktcap_raw": 8959.7
+              }
+            ],
+            "rank": 5,
+            "rank_prev": 6,
+            "rank_delta": 1
+          },
+          {
+            "name": "조선",
+            "ret": "+0.44%",
+            "ret_raw": 0.44,
+            "n": 22,
+            "breadth": {
+              "up": 11,
+              "flat": 0,
+              "down": 11,
+              "total": 22,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "902930",
+                "name": "합성종목293",
+                "ret": "+5.10%",
+                "ret_raw": 5.1,
+                "mktcap": "4,148억",
+                "mktcap_raw": 4148.4
+              },
+              {
+                "rank": 2,
+                "code": "901490",
+                "name": "합성종목149",
+                "ret": "+4.46%",
+                "ret_raw": 4.46,
+                "mktcap": "1.01조",
+                "mktcap_raw": 10132.4
+              },
+              {
+                "rank": 3,
+                "code": "902090",
+                "name": "합성종목209",
+                "ret": "+4.17%",
+                "ret_raw": 4.17,
+                "mktcap": "4,682억",
+                "mktcap_raw": 4682.4
+              },
+              {
+                "rank": 4,
+                "code": "901970",
+                "name": "합성종목197",
+                "ret": "+2.25%",
+                "ret_raw": 2.25,
+                "mktcap": "6,620억",
+                "mktcap_raw": 6619.7
+              },
+              {
+                "rank": 5,
+                "code": "901010",
+                "name": "합성종목101",
+                "ret": "+1.90%",
+                "ret_raw": 1.9,
+                "mktcap": "7,642억",
+                "mktcap_raw": 7641.6
+              }
+            ],
+            "rank": 6,
+            "rank_prev": 4,
+            "rank_delta": -2
+          },
+          {
+            "name": "반도체소재부품",
+            "ret": "+0.43%",
+            "ret_raw": 0.43,
+            "n": 22,
+            "breadth": {
+              "up": 17,
+              "flat": 0,
+              "down": 5,
+              "total": 22,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "902890",
+                "name": "합성종목289",
+                "ret": "+16.68%",
+                "ret_raw": 16.68,
+                "mktcap": "5,983억",
+                "mktcap_raw": 5982.9
+              },
+              {
+                "rank": 2,
+                "code": "900370",
+                "name": "합성종목037",
+                "ret": "+7.51%",
+                "ret_raw": 7.51,
+                "mktcap": "3,914억",
+                "mktcap_raw": 3914.4
+              },
+              {
+                "rank": 3,
+                "code": "901930",
+                "name": "합성종목193",
+                "ret": "+7.42%",
+                "ret_raw": 7.42,
+                "mktcap": "7,852억",
+                "mktcap_raw": 7852.4
+              },
+              {
+                "rank": 4,
+                "code": "900250",
+                "name": "합성종목025",
+                "ret": "+6.07%",
+                "ret_raw": 6.07,
+                "mktcap": "10.33조",
+                "mktcap_raw": 103301.8
+              },
+              {
+                "rank": 5,
+                "code": "900130",
+                "name": "합성종목013",
+                "ret": "+6.04%",
+                "ret_raw": 6.04,
+                "mktcap": "6,037억",
+                "mktcap_raw": 6037.2
+              }
+            ],
+            "rank": 7,
+            "rank_prev": 8,
+            "rank_delta": 1
+          },
+          {
+            "name": "2차전지",
+            "ret": "+0.22%",
+            "ret_raw": 0.22,
+            "n": 22,
+            "breadth": {
+              "up": 13,
+              "flat": 0,
+              "down": 9,
+              "total": 22,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "900990",
+                "name": "합성종목099",
+                "ret": "+7.84%",
+                "ret_raw": 7.84,
+                "mktcap": "5,105억",
+                "mktcap_raw": 5104.6
+              },
+              {
+                "rank": 2,
+                "code": "902070",
+                "name": "합성종목207",
+                "ret": "+7.06%",
+                "ret_raw": 7.06,
+                "mktcap": "7,347억",
+                "mktcap_raw": 7347.3
+              },
+              {
+                "rank": 3,
+                "code": "902190",
+                "name": "합성종목219",
+                "ret": "+5.65%",
+                "ret_raw": 5.65,
+                "mktcap": "1.21조",
+                "mktcap_raw": 12081.6
+              },
+              {
+                "rank": 4,
+                "code": "902790",
+                "name": "합성종목279",
+                "ret": "+5.53%",
+                "ret_raw": 5.53,
+                "mktcap": "1,383억",
+                "mktcap_raw": 1383.3
+              },
+              {
+                "rank": 5,
+                "code": "901710",
+                "name": "합성종목171",
+                "ret": "+4.49%",
+                "ret_raw": 4.49,
+                "mktcap": "1.19조",
+                "mktcap_raw": 11941.1
+              }
+            ],
+            "rank": 8,
+            "rank_prev": 3,
+            "rank_delta": -5
+          },
+          {
+            "name": "전자제품",
+            "ret": "+0.19%",
+            "ret_raw": 0.19,
+            "n": 21,
+            "breadth": {
+              "up": 13,
+              "flat": 0,
+              "down": 8,
+              "total": 21,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "902060",
+                "name": "합성종목206",
+                "ret": "+10.83%",
+                "ret_raw": 10.83,
+                "mktcap": "2,692억",
+                "mktcap_raw": 2692.3
+              },
+              {
+                "rank": 2,
+                "code": "902420",
+                "name": "합성종목242",
+                "ret": "+8.34%",
+                "ret_raw": 8.34,
+                "mktcap": "3,094억",
+                "mktcap_raw": 3094.2
+              },
+              {
+                "rank": 3,
+                "code": "901340",
+                "name": "합성종목134",
+                "ret": "+5.70%",
+                "ret_raw": 5.7,
+                "mktcap": "4,569억",
+                "mktcap_raw": 4569.0
+              },
+              {
+                "rank": 4,
+                "code": "900260",
+                "name": "합성종목026",
+                "ret": "+5.03%",
+                "ret_raw": 5.03,
+                "mktcap": "4,847억",
+                "mktcap_raw": 4847.2
+              },
+              {
+                "rank": 5,
+                "code": "902780",
+                "name": "합성종목278",
+                "ret": "+3.80%",
+                "ret_raw": 3.8,
+                "mktcap": "6,924억",
+                "mktcap_raw": 6924.1
+              }
+            ],
+            "rank": 9,
+            "rank_prev": 13,
+            "rank_delta": 4
+          },
+          {
+            "name": "자동차부품",
+            "ret": "-0.22%",
+            "ret_raw": -0.22,
+            "n": 21,
+            "breadth": {
+              "up": 13,
+              "flat": 0,
+              "down": 8,
+              "total": 21,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "901720",
+                "name": "합성종목172",
+                "ret": "+10.17%",
+                "ret_raw": 10.17,
+                "mktcap": "5,240억",
+                "mktcap_raw": 5239.9
+              },
+              {
+                "rank": 2,
+                "code": "900520",
+                "name": "합성종목052",
+                "ret": "+8.12%",
+                "ret_raw": 8.12,
+                "mktcap": "2,837억",
+                "mktcap_raw": 2836.8
+              },
+              {
+                "rank": 3,
+                "code": "902560",
+                "name": "합성종목256",
+                "ret": "+5.96%",
+                "ret_raw": 5.96,
+                "mktcap": "9,192억",
+                "mktcap_raw": 9191.8
+              },
+              {
+                "rank": 4,
+                "code": "901840",
+                "name": "합성종목184",
+                "ret": "+5.62%",
+                "ret_raw": 5.62,
+                "mktcap": "1.07조",
+                "mktcap_raw": 10738.1
+              },
+              {
+                "rank": 5,
+                "code": "901000",
+                "name": "합성종목100",
+                "ret": "+4.95%",
+                "ret_raw": 4.95,
+                "mktcap": "21.69조",
+                "mktcap_raw": 216923.0
+              }
+            ],
+            "rank": 10,
+            "rank_prev": 9,
+            "rank_delta": -1
+          },
+          {
+            "name": "반도체장비",
+            "ret": "-0.73%",
+            "ret_raw": -0.73,
+            "n": 21,
+            "breadth": {
+              "up": 8,
+              "flat": 0,
+              "down": 13,
+              "total": 21,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "901320",
+                "name": "합성종목132",
+                "ret": "+8.31%",
+                "ret_raw": 8.31,
+                "mktcap": "4,790억",
+                "mktcap_raw": 4790.1
+              },
+              {
+                "rank": 2,
+                "code": "902280",
+                "name": "합성종목228",
+                "ret": "+7.17%",
+                "ret_raw": 7.17,
+                "mktcap": "3,871억",
+                "mktcap_raw": 3871.4
+              },
+              {
+                "rank": 3,
+                "code": "902640",
+                "name": "합성종목264",
+                "ret": "+4.28%",
+                "ret_raw": 4.28,
+                "mktcap": "1.21조",
+                "mktcap_raw": 12132.4
+              },
+              {
+                "rank": 4,
+                "code": "901080",
+                "name": "합성종목108",
+                "ret": "+3.07%",
+                "ret_raw": 3.07,
+                "mktcap": "6,699억",
+                "mktcap_raw": 6698.7
+              },
+              {
+                "rank": 5,
+                "code": "900600",
+                "name": "합성종목060",
+                "ret": "+1.39%",
+                "ret_raw": 1.39,
+                "mktcap": "4.56조",
+                "mktcap_raw": 45574.2
+              }
+            ],
+            "rank": 11,
+            "rank_prev": 12,
+            "rank_delta": 1
+          },
+          {
+            "name": "화학",
+            "ret": "-0.85%",
+            "ret_raw": -0.85,
+            "n": 21,
+            "breadth": {
+              "up": 10,
+              "flat": 0,
+              "down": 11,
+              "total": 21,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "901760",
+                "name": "합성종목176",
+                "ret": "+11.70%",
+                "ret_raw": 11.7,
+                "mktcap": "1.02조",
+                "mktcap_raw": 10163.9
+              },
+              {
+                "rank": 2,
+                "code": "900080",
+                "name": "합성인프라리츠",
+                "ret": "+7.67%",
+                "ret_raw": 7.67,
+                "mktcap": "8,514억",
+                "mktcap_raw": 8513.8
+              },
+              {
+                "rank": 3,
+                "code": "901640",
+                "name": "합성종목164",
+                "ret": "+5.03%",
+                "ret_raw": 5.03,
+                "mktcap": "1.18조",
+                "mktcap_raw": 11776.7
+              },
+              {
+                "rank": 4,
+                "code": "902120",
+                "name": "합성종목212",
+                "ret": "+3.23%",
+                "ret_raw": 3.23,
+                "mktcap": "8,164억",
+                "mktcap_raw": 8164.0
+              },
+              {
+                "rank": 5,
+                "code": "900800",
+                "name": "합성종목080",
+                "ret": "+2.55%",
+                "ret_raw": 2.55,
+                "mktcap": "22.16조",
+                "mktcap_raw": 221647.2
+              }
+            ],
+            "rank": 12,
+            "rank_prev": 10,
+            "rank_delta": -2
+          },
+          {
+            "name": "제약",
+            "ret": "-1.70%",
+            "ret_raw": -1.7,
+            "n": 21,
+            "breadth": {
+              "up": 13,
+              "flat": 0,
+              "down": 8,
+              "total": 21,
+              "unknown": 0
+            },
+            "top": [
+              {
+                "rank": 1,
+                "code": "900570",
+                "name": "합성종목057",
+                "ret": "+15.66%",
+                "ret_raw": 15.66,
+                "mktcap": "1.17조",
+                "mktcap_raw": 11691.2
+              },
+              {
+                "rank": 2,
+                "code": "901410",
+                "name": "합성종목141",
+                "ret": "+13.82%",
+                "ret_raw": 13.82,
+                "mktcap": "2,855억",
+                "mktcap_raw": 2855.0
+              },
+              {
+                "rank": 3,
+                "code": "900690",
+                "name": "합성종목069",
+                "ret": "+9.38%",
+                "ret_raw": 9.38,
+                "mktcap": "6,504억",
+                "mktcap_raw": 6503.5
+              },
+              {
+                "rank": 4,
+                "code": "902490",
+                "name": "합성종목249",
+                "ret": "+6.16%",
+                "ret_raw": 6.16,
+                "mktcap": "5,183억",
+                "mktcap_raw": 5182.9
+              },
+              {
+                "rank": 5,
+                "code": "902610",
+                "name": "합성종목261",
+                "ret": "+4.14%",
+                "ret_raw": 4.14,
+                "mktcap": "9,543억",
+                "mktcap_raw": 9543.4
+              }
+            ],
+            "rank": 13,
+            "rank_prev": 11,
+            "rank_delta": -2
+          }
+        ],
+        "min_members": 5,
+        "thin_sectors": [],
+        "has_prev_rank": true
+      }
+    ],
+    "stock_boards": [
+      {
+        "key": "ret_1w",
+        "title": "1w 주가수익률 순위",
+        "sort_by": "ret_5d",
+        "columns": [
+          {
+            "key": "mktcap",
+            "label": "시가총액(억)",
+            "kind": "amount"
+          },
+          {
+            "key": "chg_pct",
+            "label": "1d",
+            "kind": "pct"
+          },
+          {
+            "key": "ret_5d",
+            "label": "1w",
+            "kind": "pct"
+          },
+          {
+            "key": "ret_21d",
+            "label": "1m",
+            "kind": "pct"
+          },
+          {
+            "key": "vol_3d_1m",
+            "label": "거래량 3일/1달",
+            "kind": "ratio"
+          }
+        ],
+        "rows": [
+          {
+            "rank": 1,
+            "code": "900570",
+            "name": "합성종목057",
+            "cross": false,
+            "cells": {
+              "mktcap": "1.17조",
+              "chg_pct": "+0.56%",
+              "ret_5d": "+12.91%",
+              "ret_21d": "+15.54%",
+              "vol_3d_1m": "114%"
+            },
+            "cells_raw": {
+              "mktcap": 11691.2,
+              "chg_pct": 0.56,
+              "ret_5d": 12.91,
+              "ret_21d": 15.54,
+              "vol_3d_1m": 113.5
+            }
+          },
+          {
+            "rank": 2,
+            "code": "901720",
+            "name": "합성종목172",
+            "cross": false,
+            "cells": {
+              "mktcap": "5,240억",
+              "chg_pct": "+5.75%",
+              "ret_5d": "+12.81%",
+              "ret_21d": "+1.63%",
+              "vol_3d_1m": "114%"
+            },
+            "cells_raw": {
+              "mktcap": 5239.9,
+              "chg_pct": 5.75,
+              "ret_5d": 12.81,
+              "ret_21d": 1.63,
+              "vol_3d_1m": 114.3
+            }
+          },
+          {
+            "rank": 3,
+            "code": "902260",
+            "name": "합성종목226",
+            "cross": false,
+            "cells": {
+              "mktcap": "3,069억",
+              "chg_pct": "+3.38%",
+              "ret_5d": "+10.97%",
+              "ret_21d": "+17.77%",
+              "vol_3d_1m": "73%"
+            },
+            "cells_raw": {
+              "mktcap": 3069.3,
+              "chg_pct": 3.38,
+              "ret_5d": 10.97,
+              "ret_21d": 17.77,
+              "vol_3d_1m": 73.2
+            }
+          },
+          {
+            "rank": 4,
+            "code": "902890",
+            "name": "합성종목289",
+            "cross": false,
+            "cells": {
+              "mktcap": "5,983억",
+              "chg_pct": "+1.29%",
+              "ret_5d": "+10.33%",
+              "ret_21d": "+25.25%",
+              "vol_3d_1m": "99%"
+            },
+            "cells_raw": {
+              "mktcap": 5982.9,
+              "chg_pct": 1.29,
+              "ret_5d": 10.33,
+              "ret_21d": 25.25,
+              "vol_3d_1m": 98.6
+            }
+          },
+          {
+            "rank": 5,
+            "code": "901410",
+            "name": "합성종목141",
+            "cross": false,
+            "cells": {
+              "mktcap": "2,855억",
+              "chg_pct": "-0.72%",
+              "ret_5d": "+9.50%",
+              "ret_21d": "+23.43%",
+              "vol_3d_1m": "121%"
+            },
+            "cells_raw": {
+              "mktcap": 2855.0,
+              "chg_pct": -0.72,
+              "ret_5d": 9.5,
+              "ret_21d": 23.43,
+              "vol_3d_1m": 121.0
+            }
+          },
+          {
+            "rank": 6,
+            "code": "901510",
+            "name": "합성종목151",
+            "cross": false,
+            "cells": {
+              "mktcap": "2,096억",
+              "chg_pct": "+5.63%",
+              "ret_5d": "+9.06%",
+              "ret_21d": "-1.87%",
+              "vol_3d_1m": "126%"
+            },
+            "cells_raw": {
+              "mktcap": 2095.8,
+              "chg_pct": 5.63,
+              "ret_5d": 9.06,
+              "ret_21d": -1.87,
+              "vol_3d_1m": 126.2
+            }
+          },
+          {
+            "rank": 7,
+            "code": "901760",
+            "name": "합성종목176",
+            "cross": false,
+            "cells": {
+              "mktcap": "1.02조",
+              "chg_pct": "+1.16%",
+              "ret_5d": "+8.60%",
+              "ret_21d": "+13.69%",
+              "vol_3d_1m": "104%"
+            },
+            "cells_raw": {
+              "mktcap": 10163.9,
+              "chg_pct": 1.16,
+              "ret_5d": 8.6,
+              "ret_21d": 13.69,
+              "vol_3d_1m": 104.3
+            }
+          },
+          {
+            "rank": 8,
+            "code": "902790",
+            "name": "합성종목279",
+            "cross": false,
+            "cells": {
+              "mktcap": "1,383억",
+              "chg_pct": "-0.24%",
+              "ret_5d": "+8.38%",
+              "ret_21d": "+5.80%",
+              "vol_3d_1m": "128%"
+            },
+            "cells_raw": {
+              "mktcap": 1383.3,
+              "chg_pct": -0.24,
+              "ret_5d": 8.38,
+              "ret_21d": 5.8,
+              "vol_3d_1m": 128.0
+            }
+          },
+          {
+            "rank": 9,
+            "code": "902190",
+            "name": "합성종목219",
+            "cross": false,
+            "cells": {
+              "mktcap": "1.21조",
+              "chg_pct": "+1.17%",
+              "ret_5d": "+7.75%",
+              "ret_21d": "+17.90%",
+              "vol_3d_1m": "91%"
+            },
+            "cells_raw": {
+              "mktcap": 12081.6,
+              "chg_pct": 1.17,
+              "ret_5d": 7.75,
+              "ret_21d": 17.9,
+              "vol_3d_1m": 91.0
+            }
+          },
+          {
+            "rank": 10,
+            "code": "901490",
+            "name": "합성종목149",
+            "cross": false,
+            "cells": {
+              "mktcap": "1.01조",
+              "chg_pct": "+2.09%",
+              "ret_5d": "+7.33%",
+              "ret_21d": "+1.41%",
+              "vol_3d_1m": "124%"
+            },
+            "cells_raw": {
+              "mktcap": 10132.4,
+              "chg_pct": 2.09,
+              "ret_5d": 7.33,
+              "ret_21d": 1.41,
+              "vol_3d_1m": 124.0
+            }
+          },
+          {
+            "rank": 11,
+            "code": "902970",
+            "name": "합성종목297",
+            "cross": false,
+            "cells": {
+              "mktcap": "8,956억",
+              "chg_pct": "+3.02%",
+              "ret_5d": "+7.16%",
+              "ret_21d": "-3.63%",
+              "vol_3d_1m": "122%"
+            },
+            "cells_raw": {
+              "mktcap": 8955.8,
+              "chg_pct": 3.02,
+              "ret_5d": 7.16,
+              "ret_21d": -3.63,
+              "vol_3d_1m": 121.9
+            }
+          },
+          {
+            "rank": 12,
+            "code": "901980",
+            "name": "합성종목198",
+            "cross": false,
+            "cells": {
+              "mktcap": "9,202억",
+              "chg_pct": "+1.70%",
+              "ret_5d": "+6.96%",
+              "ret_21d": "-3.29%",
+              "vol_3d_1m": "113%"
+            },
+            "cells_raw": {
+              "mktcap": 9202.5,
+              "chg_pct": 1.7,
+              "ret_5d": 6.96,
+              "ret_21d": -3.29,
+              "vol_3d_1m": 112.6
+            }
+          },
+          {
+            "rank": 13,
+            "code": "902060",
+            "name": "합성종목206",
+            "cross": true,
+            "cells": {
+              "mktcap": "2,692억",
+              "chg_pct": "+1.43%",
+              "ret_5d": "+6.94%",
+              "ret_21d": "+13.39%",
+              "vol_3d_1m": "162%"
+            },
+            "cells_raw": {
+              "mktcap": 2692.3,
+              "chg_pct": 1.43,
+              "ret_5d": 6.94,
+              "ret_21d": 13.39,
+              "vol_3d_1m": 162.2
+            }
+          },
+          {
+            "rank": 14,
+            "code": "900200",
+            "name": "합성종목020",
+            "cross": false,
+            "cells": {
+              "mktcap": "9.30조",
+              "chg_pct": "+1.10%",
+              "ret_5d": "+6.80%",
+              "ret_21d": "+4.20%",
+              "vol_3d_1m": "94%"
+            },
+            "cells_raw": {
+              "mktcap": 93009.7,
+              "chg_pct": 1.1,
+              "ret_5d": 6.8,
+              "ret_21d": 4.2,
+              "vol_3d_1m": 93.6
+            }
+          },
+          {
+            "rank": 15,
+            "code": "900067",
+            "name": "합성종목0042우B",
+            "cross": false,
+            "cells": {
+              "mktcap": "2,492억",
+              "chg_pct": "+2.45%",
+              "ret_5d": "+6.79%",
+              "ret_21d": "-2.71%",
+              "vol_3d_1m": "118%"
+            },
+            "cells_raw": {
+              "mktcap": 2491.7,
+              "chg_pct": 2.45,
+              "ret_5d": 6.79,
+              "ret_21d": -2.71,
+              "vol_3d_1m": 117.8
+            }
+          },
+          {
+            "rank": 16,
+            "code": "900180",
+            "name": "합성종목018",
+            "cross": false,
+            "cells": {
+              "mktcap": "6,512억",
+              "chg_pct": "-1.81%",
+              "ret_5d": "+6.58%",
+              "ret_21d": "+7.02%",
+              "vol_3d_1m": "54%"
+            },
+            "cells_raw": {
+              "mktcap": 6511.5,
+              "chg_pct": -1.81,
+              "ret_5d": 6.58,
+              "ret_21d": 7.02,
+              "vol_3d_1m": 54.0
+            }
+          },
+          {
+            "rank": 17,
+            "code": "900460",
+            "name": "합성종목046",
+            "cross": false,
+            "cells": {
+              "mktcap": "6,696억",
+              "chg_pct": "+3.37%",
+              "ret_5d": "+6.38%",
+              "ret_21d": "-1.98%",
+              "vol_3d_1m": "92%"
+            },
+            "cells_raw": {
+              "mktcap": 6695.8,
+              "chg_pct": 3.37,
+              "ret_5d": 6.38,
+              "ret_21d": -1.98,
+              "vol_3d_1m": 92.0
+            }
+          },
+          {
+            "rank": 18,
+            "code": "902270",
+            "name": "합성종목227",
+            "cross": false,
+            "cells": {
+              "mktcap": "9,058억",
+              "chg_pct": "+2.59%",
+              "ret_5d": "+6.28%",
+              "ret_21d": "+9.15%",
+              "vol_3d_1m": "69%"
+            },
+            "cells_raw": {
+              "mktcap": 9057.8,
+              "chg_pct": 2.59,
+              "ret_5d": 6.28,
+              "ret_21d": 9.15,
+              "vol_3d_1m": 69.0
+            }
+          },
+          {
+            "rank": 19,
+            "code": "901030",
+            "name": "합성종목103",
+            "cross": false,
+            "cells": {
+              "mktcap": "6,995억",
+              "chg_pct": "-0.31%",
+              "ret_5d": "+6.14%",
+              "ret_21d": "-0.38%",
+              "vol_3d_1m": "64%"
+            },
+            "cells_raw": {
+              "mktcap": 6994.8,
+              "chg_pct": -0.31,
+              "ret_5d": 6.14,
+              "ret_21d": -0.38,
+              "vol_3d_1m": 63.5
+            }
+          },
+          {
+            "rank": 20,
+            "code": "900800",
+            "name": "합성종목080",
+            "cross": false,
+            "cells": {
+              "mktcap": "22.16조",
+              "chg_pct": "-1.13%",
+              "ret_5d": "+5.88%",
+              "ret_21d": "+2.61%",
+              "vol_3d_1m": "100%"
+            },
+            "cells_raw": {
+              "mktcap": 221647.2,
+              "chg_pct": -1.13,
+              "ret_5d": 5.88,
+              "ret_21d": 2.61,
+              "vol_3d_1m": 99.6
+            }
+          },
+          {
+            "rank": 21,
+            "code": "902280",
+            "name": "합성종목228",
+            "cross": false,
+            "cells": {
+              "mktcap": "3,871억",
+              "chg_pct": "-0.85%",
+              "ret_5d": "+5.83%",
+              "ret_21d": "+3.84%",
+              "vol_3d_1m": "44%"
+            },
+            "cells_raw": {
+              "mktcap": 3871.4,
+              "chg_pct": -0.85,
+              "ret_5d": 5.83,
+              "ret_21d": 3.84,
+              "vol_3d_1m": 44.4
+            }
+          },
+          {
+            "rank": 22,
+            "code": "901020",
+            "name": "합성종목102",
+            "cross": true,
+            "cells": {
+              "mktcap": "1.01조",
+              "chg_pct": "-2.28%",
+              "ret_5d": "+5.82%",
+              "ret_21d": "+11.77%",
+              "vol_3d_1m": "147%"
+            },
+            "cells_raw": {
+              "mktcap": 10148.9,
+              "chg_pct": -2.28,
+              "ret_5d": 5.82,
+              "ret_21d": 11.77,
+              "vol_3d_1m": 147.1
+            }
+          },
+          {
+            "rank": 23,
+            "code": "900510",
+            "name": "합성종목051",
+            "cross": false,
+            "cells": {
+              "mktcap": "9,218억",
+              "chg_pct": "+1.86%",
+              "ret_5d": "+5.61%",
+              "ret_21d": "-4.04%",
+              "vol_3d_1m": "77%"
+            },
+            "cells_raw": {
+              "mktcap": 9217.7,
+              "chg_pct": 1.86,
+              "ret_5d": 5.61,
+              "ret_21d": -4.04,
+              "vol_3d_1m": 77.3
+            }
+          },
+          {
+            "rank": 24,
+            "code": "900730",
+            "name": "합성종목073",
+            "cross": true,
+            "cells": {
+              "mktcap": "1,459억",
+              "chg_pct": "+1.77%",
+              "ret_5d": "+5.56%",
+              "ret_21d": "+2.28%",
+              "vol_3d_1m": "138%"
+            },
+            "cells_raw": {
+              "mktcap": 1458.8,
+              "chg_pct": 1.77,
+              "ret_5d": 5.56,
+              "ret_21d": 2.28,
+              "vol_3d_1m": 137.8
+            }
+          },
+          {
+            "rank": 25,
+            "code": "900690",
+            "name": "합성종목069",
+            "cross": true,
+            "cells": {
+              "mktcap": "6,504억",
+              "chg_pct": "+0.19%",
+              "ret_5d": "+5.50%",
+              "ret_21d": "+7.14%",
+              "vol_3d_1m": "152%"
+            },
+            "cells_raw": {
+              "mktcap": 6503.5,
+              "chg_pct": 0.19,
+              "ret_5d": 5.5,
+              "ret_21d": 7.14,
+              "vol_3d_1m": 151.9
+            }
+          },
+          {
+            "rank": 26,
+            "code": "900990",
+            "name": "합성종목099",
+            "cross": false,
+            "cells": {
+              "mktcap": "5,105억",
+              "chg_pct": "+3.36%",
+              "ret_5d": "+5.50%",
+              "ret_21d": "+10.11%",
+              "vol_3d_1m": "57%"
+            },
+            "cells_raw": {
+              "mktcap": 5104.6,
+              "chg_pct": 3.36,
+              "ret_5d": 5.5,
+              "ret_21d": 10.11,
+              "vol_3d_1m": 57.0
+            }
+          },
+          {
+            "rank": 27,
+            "code": "901210",
+            "name": "합성종목121",
+            "cross": false,
+            "cells": {
+              "mktcap": "6,375억",
+              "chg_pct": "-0.90%",
+              "ret_5d": "+5.47%",
+              "ret_21d": "-6.10%",
+              "vol_3d_1m": "98%"
+            },
+            "cells_raw": {
+              "mktcap": 6374.7,
+              "chg_pct": -0.9,
+              "ret_5d": 5.47,
+              "ret_21d": -6.1,
+              "vol_3d_1m": 98.4
+            }
+          },
+          {
+            "rank": 28,
+            "code": "900320",
+            "name": "합성종목032",
+            "cross": false,
+            "cells": {
+              "mktcap": "1.12조",
+              "chg_pct": "+1.33%",
+              "ret_5d": "+5.39%",
+              "ret_21d": "-0.66%",
+              "vol_3d_1m": "54%"
+            },
+            "cells_raw": {
+              "mktcap": 11212.6,
+              "chg_pct": 1.33,
+              "ret_5d": 5.39,
+              "ret_21d": -0.66,
+              "vol_3d_1m": 54.5
+            }
+          },
+          {
+            "rank": 29,
+            "code": "900080",
+            "name": "합성인프라리츠",
+            "cross": false,
+            "cells": {
+              "mktcap": "8,514억",
+              "chg_pct": "+2.02%",
+              "ret_5d": "+5.31%",
+              "ret_21d": "-3.68%",
+              "vol_3d_1m": "126%"
+            },
+            "cells_raw": {
+              "mktcap": 8513.8,
+              "chg_pct": 2.02,
+              "ret_5d": 5.31,
+              "ret_21d": -3.68,
+              "vol_3d_1m": 125.5
+            }
+          },
+          {
+            "rank": 30,
+            "code": "900710",
+            "name": "합성종목071",
+            "cross": false,
+            "cells": {
+              "mktcap": "5,789억",
+              "chg_pct": "-0.47%",
+              "ret_5d": "+5.31%",
+              "ret_21d": "+1.40%",
+              "vol_3d_1m": "104%"
+            },
+            "cells_raw": {
+              "mktcap": 5788.6,
+              "chg_pct": -0.47,
+              "ret_5d": 5.31,
+              "ret_21d": 1.4,
+              "vol_3d_1m": 104.1
+            }
+          }
+        ]
+      },
+      {
+        "key": "vol_3d_1m",
+        "title": "거래량 3일/1달 순위",
+        "sort_by": "vol_3d_1m",
+        "columns": [
+          {
+            "key": "mktcap",
+            "label": "시가총액(억)",
+            "kind": "amount"
+          },
+          {
+            "key": "chg_pct",
+            "label": "1d",
+            "kind": "pct"
+          },
+          {
+            "key": "ret_5d",
+            "label": "1w",
+            "kind": "pct"
+          },
+          {
+            "key": "ret_10d",
+            "label": "2w",
+            "kind": "pct"
+          },
+          {
+            "key": "vol_3d_1m",
+            "label": "거래량 3일/1달",
+            "kind": "ratio"
+          }
+        ],
+        "rows": [
+          {
+            "rank": 1,
+            "code": "900540",
+            "name": "합성종목054",
+            "cross": false,
+            "cells": {
+              "mktcap": "5,766억",
+              "chg_pct": "-0.80%",
+              "ret_5d": "-1.44%",
+              "ret_10d": "-0.78%",
+              "vol_3d_1m": "177%"
+            },
+            "cells_raw": {
+              "mktcap": 5765.7,
+              "chg_pct": -0.8,
+              "ret_5d": -1.44,
+              "ret_10d": -0.78,
+              "vol_3d_1m": 177.1
+            }
+          },
+          {
+            "rank": 2,
+            "code": "902650",
+            "name": "합성종목265",
+            "cross": false,
+            "cells": {
+              "mktcap": "36.27조",
+              "chg_pct": "-2.39%",
+              "ret_5d": "-4.73%",
+              "ret_10d": "-8.53%",
+              "vol_3d_1m": "174%"
+            },
+            "cells_raw": {
+              "mktcap": 362746.1,
+              "chg_pct": -2.39,
+              "ret_5d": -4.73,
+              "ret_10d": -8.53,
+              "vol_3d_1m": 174.1
+            }
+          },
+          {
+            "rank": 3,
+            "code": "902690",
+            "name": "합성종목269",
+            "cross": false,
+            "cells": {
+              "mktcap": "1.19조",
+              "chg_pct": "+0.14%",
+              "ret_5d": "-4.65%",
+              "ret_10d": "-1.92%",
+              "vol_3d_1m": "171%"
+            },
+            "cells_raw": {
+              "mktcap": 11934.8,
+              "chg_pct": 0.14,
+              "ret_5d": -4.65,
+              "ret_10d": -1.92,
+              "vol_3d_1m": 171.3
+            }
+          },
+          {
+            "rank": 4,
+            "code": "902150",
+            "name": "합성종목215",
+            "cross": false,
+            "cells": {
+              "mktcap": "10.84조",
+              "chg_pct": "+1.84%",
+              "ret_5d": "-3.25%",
+              "ret_10d": "+0.11%",
+              "vol_3d_1m": "171%"
+            },
+            "cells_raw": {
+              "mktcap": 108407.2,
+              "chg_pct": 1.84,
+              "ret_5d": -3.25,
+              "ret_10d": 0.11,
+              "vol_3d_1m": 171.2
+            }
+          },
+          {
+            "rank": 5,
+            "code": "902060",
+            "name": "합성종목206",
+            "cross": true,
+            "cells": {
+              "mktcap": "2,692억",
+              "chg_pct": "+1.43%",
+              "ret_5d": "+6.94%",
+              "ret_10d": "+9.87%",
+              "vol_3d_1m": "162%"
+            },
+            "cells_raw": {
+              "mktcap": 2692.3,
+              "chg_pct": 1.43,
+              "ret_5d": 6.94,
+              "ret_10d": 9.87,
+              "vol_3d_1m": 162.2
+            }
+          },
+          {
+            "rank": 6,
+            "code": "901430",
+            "name": "합성종목143",
+            "cross": false,
+            "cells": {
+              "mktcap": "1.16조",
+              "chg_pct": "-0.09%",
+              "ret_5d": "-0.54%",
+              "ret_10d": "+0.63%",
+              "vol_3d_1m": "161%"
+            },
+            "cells_raw": {
+              "mktcap": 11612.7,
+              "chg_pct": -0.09,
+              "ret_5d": -0.54,
+              "ret_10d": 0.63,
+              "vol_3d_1m": 161.2
+            }
+          },
+          {
+            "rank": 7,
+            "code": "900520",
+            "name": "합성종목052",
+            "cross": false,
+            "cells": {
+              "mktcap": "2,837억",
+              "chg_pct": "+0.09%",
+              "ret_5d": "+4.73%",
+              "ret_10d": "+5.02%",
+              "vol_3d_1m": "161%"
+            },
+            "cells_raw": {
+              "mktcap": 2836.8,
+              "chg_pct": 0.09,
+              "ret_5d": 4.73,
+              "ret_10d": 5.02,
+              "vol_3d_1m": 160.9
+            }
+          },
+          {
+            "rank": 8,
+            "code": "900780",
+            "name": "합성종목078",
+            "cross": false,
+            "cells": {
+              "mktcap": "4,198억",
+              "chg_pct": "+0.67%",
+              "ret_5d": "+1.00%",
+              "ret_10d": "-0.70%",
+              "vol_3d_1m": "159%"
+            },
+            "cells_raw": {
+              "mktcap": 4197.7,
+              "chg_pct": 0.67,
+              "ret_5d": 1.0,
+              "ret_10d": -0.7,
+              "vol_3d_1m": 158.9
+            }
+          },
+          {
+            "rank": 9,
+            "code": "900660",
+            "name": "합성종목066",
+            "cross": false,
+            "cells": {
+              "mktcap": "6,745억",
+              "chg_pct": "-2.77%",
+              "ret_5d": "-6.51%",
+              "ret_10d": "-2.31%",
+              "vol_3d_1m": "154%"
+            },
+            "cells_raw": {
+              "mktcap": 6744.9,
+              "chg_pct": -2.77,
+              "ret_5d": -6.51,
+              "ret_10d": -2.31,
+              "vol_3d_1m": 153.6
+            }
+          },
+          {
+            "rank": 10,
+            "code": "900690",
+            "name": "합성종목069",
+            "cross": true,
+            "cells": {
+              "mktcap": "6,504억",
+              "chg_pct": "+0.19%",
+              "ret_5d": "+5.50%",
+              "ret_10d": "+4.64%",
+              "vol_3d_1m": "152%"
+            },
+            "cells_raw": {
+              "mktcap": 6503.5,
+              "chg_pct": 0.19,
+              "ret_5d": 5.5,
+              "ret_10d": 4.64,
+              "vol_3d_1m": 151.9
+            }
+          },
+          {
+            "rank": 11,
+            "code": "902930",
+            "name": "합성종목293",
+            "cross": false,
+            "cells": {
+              "mktcap": "4,148억",
+              "chg_pct": "+3.49%",
+              "ret_5d": "+2.22%",
+              "ret_10d": "+7.09%",
+              "vol_3d_1m": "151%"
+            },
+            "cells_raw": {
+              "mktcap": 4148.4,
+              "chg_pct": 3.49,
+              "ret_5d": 2.22,
+              "ret_10d": 7.09,
+              "vol_3d_1m": 151.2
+            }
+          },
+          {
+            "rank": 12,
+            "code": "901500",
+            "name": "합성종목150",
+            "cross": false,
+            "cells": {
+              "mktcap": "35.86조",
+              "chg_pct": "+3.70%",
+              "ret_5d": "+2.09%",
+              "ret_10d": "+11.15%",
+              "vol_3d_1m": "150%"
+            },
+            "cells_raw": {
+              "mktcap": 358611.4,
+              "chg_pct": 3.7,
+              "ret_5d": 2.09,
+              "ret_10d": 11.15,
+              "vol_3d_1m": 150.2
+            }
+          },
+          {
+            "rank": 13,
+            "code": "902740",
+            "name": "합성종목274",
+            "cross": false,
+            "cells": {
+              "mktcap": "3,176억",
+              "chg_pct": "+0.69%",
+              "ret_5d": "+0.45%",
+              "ret_10d": "+0.04%",
+              "vol_3d_1m": "150%"
+            },
+            "cells_raw": {
+              "mktcap": 3176.4,
+              "chg_pct": 0.69,
+              "ret_5d": 0.45,
+              "ret_10d": 0.04,
+              "vol_3d_1m": 150.2
+            }
+          },
+          {
+            "rank": 14,
+            "code": "902300",
+            "name": "합성종목230",
+            "cross": false,
+            "cells": {
+              "mktcap": "4.70조",
+              "chg_pct": "-0.94%",
+              "ret_5d": "-1.00%",
+              "ret_10d": "+0.48%",
+              "vol_3d_1m": "149%"
+            },
+            "cells_raw": {
+              "mktcap": 46962.1,
+              "chg_pct": -0.94,
+              "ret_5d": -1.0,
+              "ret_10d": 0.48,
+              "vol_3d_1m": 148.6
+            }
+          },
+          {
+            "rank": 15,
+            "code": "901020",
+            "name": "합성종목102",
+            "cross": true,
+            "cells": {
+              "mktcap": "1.01조",
+              "chg_pct": "-2.28%",
+              "ret_5d": "+5.82%",
+              "ret_10d": "+7.41%",
+              "vol_3d_1m": "147%"
+            },
+            "cells_raw": {
+              "mktcap": 10148.9,
+              "chg_pct": -2.28,
+              "ret_5d": 5.82,
+              "ret_10d": 7.41,
+              "vol_3d_1m": 147.1
+            }
+          },
+          {
+            "rank": 16,
+            "code": "900480",
+            "name": "합성종목048",
+            "cross": false,
+            "cells": {
+              "mktcap": "7,625억",
+              "chg_pct": "-1.95%",
+              "ret_5d": "+0.38%",
+              "ret_10d": "+1.60%",
+              "vol_3d_1m": "147%"
+            },
+            "cells_raw": {
+              "mktcap": 7624.7,
+              "chg_pct": -1.95,
+              "ret_5d": 0.38,
+              "ret_10d": 1.6,
+              "vol_3d_1m": 146.9
+            }
+          },
+          {
+            "rank": 17,
+            "code": "902670",
+            "name": "합성종목267",
+            "cross": false,
+            "cells": {
+              "mktcap": "1,943억",
+              "chg_pct": "-0.09%",
+              "ret_5d": "-1.35%",
+              "ret_10d": "+6.01%",
+              "vol_3d_1m": "146%"
+            },
+            "cells_raw": {
+              "mktcap": 1943.0,
+              "chg_pct": -0.09,
+              "ret_5d": -1.35,
+              "ret_10d": 6.01,
+              "vol_3d_1m": 145.6
+            }
+          },
+          {
+            "rank": 18,
+            "code": "901810",
+            "name": "합성종목181",
+            "cross": false,
+            "cells": {
+              "mktcap": "8,311억",
+              "chg_pct": "+0.08%",
+              "ret_5d": "+1.64%",
+              "ret_10d": "+0.79%",
+              "vol_3d_1m": "145%"
+            },
+            "cells_raw": {
+              "mktcap": 8310.8,
+              "chg_pct": 0.08,
+              "ret_5d": 1.64,
+              "ret_10d": 0.79,
+              "vol_3d_1m": 145.1
+            }
+          },
+          {
+            "rank": 19,
+            "code": "901630",
+            "name": "합성종목163",
+            "cross": false,
+            "cells": {
+              "mktcap": "7,804억",
+              "chg_pct": "+0.25%",
+              "ret_5d": "+4.18%",
+              "ret_10d": "+2.81%",
+              "vol_3d_1m": "145%"
+            },
+            "cells_raw": {
+              "mktcap": 7803.7,
+              "chg_pct": 0.25,
+              "ret_5d": 4.18,
+              "ret_10d": 2.81,
+              "vol_3d_1m": 144.7
+            }
+          },
+          {
+            "rank": 20,
+            "code": "902390",
+            "name": "합성종목239",
+            "cross": false,
+            "cells": {
+              "mktcap": "1.10조",
+              "chg_pct": "-1.07%",
+              "ret_5d": "-0.67%",
+              "ret_10d": "+6.17%",
+              "vol_3d_1m": "144%"
+            },
+            "cells_raw": {
+              "mktcap": 11047.0,
+              "chg_pct": -1.07,
+              "ret_5d": -0.67,
+              "ret_10d": 6.17,
+              "vol_3d_1m": 144.4
+            }
+          },
+          {
+            "rank": 21,
+            "code": "902630",
+            "name": "합성종목263",
+            "cross": false,
+            "cells": {
+              "mktcap": "5,056억",
+              "chg_pct": "+2.63%",
+              "ret_5d": "-1.59%",
+              "ret_10d": "-5.07%",
+              "vol_3d_1m": "144%"
+            },
+            "cells_raw": {
+              "mktcap": 5055.6,
+              "chg_pct": 2.63,
+              "ret_5d": -1.59,
+              "ret_10d": -5.07,
+              "vol_3d_1m": 143.8
+            }
+          },
+          {
+            "rank": 22,
+            "code": "901460",
+            "name": "합성종목146",
+            "cross": false,
+            "cells": {
+              "mktcap": "8,642억",
+              "chg_pct": "+0.47%",
+              "ret_5d": "+0.65%",
+              "ret_10d": "-0.40%",
+              "vol_3d_1m": "143%"
+            },
+            "cells_raw": {
+              "mktcap": 8642.4,
+              "chg_pct": 0.47,
+              "ret_5d": 0.65,
+              "ret_10d": -0.4,
+              "vol_3d_1m": 143.3
+            }
+          },
+          {
+            "rank": 23,
+            "code": "900850",
+            "name": "합성종목085",
+            "cross": false,
+            "cells": {
+              "mktcap": "37.80조",
+              "chg_pct": "+1.69%",
+              "ret_5d": "-3.00%",
+              "ret_10d": "+10.79%",
+              "vol_3d_1m": "143%"
+            },
+            "cells_raw": {
+              "mktcap": 377981.5,
+              "chg_pct": 1.69,
+              "ret_5d": -3.0,
+              "ret_10d": 10.79,
+              "vol_3d_1m": 143.1
+            }
+          },
+          {
+            "rank": 24,
+            "code": "900340",
+            "name": "합성종목034",
+            "cross": false,
+            "cells": {
+              "mktcap": "1.04조",
+              "chg_pct": "-3.01%",
+              "ret_5d": "-3.34%",
+              "ret_10d": "-5.89%",
+              "vol_3d_1m": "143%"
+            },
+            "cells_raw": {
+              "mktcap": 10398.4,
+              "chg_pct": -3.01,
+              "ret_5d": -3.34,
+              "ret_10d": -5.89,
+              "vol_3d_1m": 142.6
+            }
+          },
+          {
+            "rank": 25,
+            "code": "901590",
+            "name": "합성종목159",
+            "cross": false,
+            "cells": {
+              "mktcap": "4,426억",
+              "chg_pct": "-2.38%",
+              "ret_5d": "-2.94%",
+              "ret_10d": "+6.51%",
+              "vol_3d_1m": "143%"
+            },
+            "cells_raw": {
+              "mktcap": 4425.6,
+              "chg_pct": -2.38,
+              "ret_5d": -2.94,
+              "ret_10d": 6.51,
+              "vol_3d_1m": 142.6
+            }
+          },
+          {
+            "rank": 26,
+            "code": "901200",
+            "name": "합성종목120",
+            "cross": false,
+            "cells": {
+              "mktcap": "5.62조",
+              "chg_pct": "-2.10%",
+              "ret_5d": "-15.90%",
+              "ret_10d": "-9.14%",
+              "vol_3d_1m": "142%"
+            },
+            "cells_raw": {
+              "mktcap": 56197.2,
+              "chg_pct": -2.1,
+              "ret_5d": -15.9,
+              "ret_10d": -9.14,
+              "vol_3d_1m": 142.1
+            }
+          },
+          {
+            "rank": 27,
+            "code": "902700",
+            "name": "합성종목270",
+            "cross": false,
+            "cells": {
+              "mktcap": "6.41조",
+              "chg_pct": "+0.81%",
+              "ret_5d": "+4.35%",
+              "ret_10d": "+8.03%",
+              "vol_3d_1m": "140%"
+            },
+            "cells_raw": {
+              "mktcap": 64100.0,
+              "chg_pct": 0.81,
+              "ret_5d": 4.35,
+              "ret_10d": 8.03,
+              "vol_3d_1m": 140.0
+            }
+          },
+          {
+            "rank": 28,
+            "code": "901990",
+            "name": "합성종목199",
+            "cross": false,
+            "cells": {
+              "mktcap": "1.22조",
+              "chg_pct": "-2.08%",
+              "ret_5d": "-4.61%",
+              "ret_10d": "-1.68%",
+              "vol_3d_1m": "138%"
+            },
+            "cells_raw": {
+              "mktcap": 12210.1,
+              "chg_pct": -2.08,
+              "ret_5d": -4.61,
+              "ret_10d": -1.68,
+              "vol_3d_1m": 138.3
+            }
+          },
+          {
+            "rank": 29,
+            "code": "901060",
+            "name": "합성종목106",
+            "cross": false,
+            "cells": {
+              "mktcap": "1.15조",
+              "chg_pct": "+2.20%",
+              "ret_5d": "+4.91%",
+              "ret_10d": "+8.46%",
+              "vol_3d_1m": "138%"
+            },
+            "cells_raw": {
+              "mktcap": 11461.6,
+              "chg_pct": 2.2,
+              "ret_5d": 4.91,
+              "ret_10d": 8.46,
+              "vol_3d_1m": 138.1
+            }
+          },
+          {
+            "rank": 30,
+            "code": "900730",
+            "name": "합성종목073",
+            "cross": true,
+            "cells": {
+              "mktcap": "1,459억",
+              "chg_pct": "+1.77%",
+              "ret_5d": "+5.56%",
+              "ret_10d": "+3.15%",
+              "vol_3d_1m": "138%"
+            },
+            "cells_raw": {
+              "mktcap": 1458.8,
+              "chg_pct": 1.77,
+              "ret_5d": 5.56,
+              "ret_10d": 3.15,
+              "vol_3d_1m": 137.8
+            }
+          }
+        ]
+      }
+    ],
+    "cross_codes": [
+      "900690",
+      "900730",
+      "901020",
+      "902060"
+    ],
+    "market": "KR",
+    "taxonomy_target": "board48",
+    "universe_all": 300,
+    "missing": [
+      "섹터 분류 체계가 섞여 있습니다 — board48 293 / naver_upjong 3. --classify 를 전 종목에 다시 돌리세요",
+      "종가가 잠정치입니다 — KRX 정규장 확정 시세를 못 받아 네이버 16:07 값으로 냈습니다(KRX 정규장 일별 시세 공표 전(합성)). 이 값은 NXT 애프터마켓·시간외 단일가가 끝날 때까지 움직이므로 종가 기준 라벨이 이튿날 바뀔 수 있습니다. 고가 기준은 영향을 받지 않습니다",
+      "1종목은 역사적 신고가를 내지 못했습니다 — 주가에 계단이 있는데 액면분할·병합 공시를 대조하지 못했습니다: 900140(corp_code 없음)",
+      "시가총액 또는 거래대금을 못 받은 종목 3개는 랭킹에서 뺐습니다 — 하한 미달이 아니라 **값을 모르는 것**입니다. 소스 응답을 확인하세요"
+    ],
+    "scope": [
+      "ETF·ETN 7종목 제외 / 이름 판정 7종목 — 신고가 보드는 주식만 봅니다",
+      "섹터 미배정 44종목 — 분류(board48)는 돌았고, 신뢰도가 기준 미만이라 미분류로 남은 종목입니다. `board/knowledge/sector_map.yaml` 에 사유가 있으니 손으로 고치면 됩니다",
+      "유동성 하한(시총 1,000억 · 거래대금 1억)으로 43종목 제외"
+    ],
+    "dropped_thin": 43,
+    "dropped_unknown": 3
+  }
+}

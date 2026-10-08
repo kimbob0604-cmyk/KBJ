@@ -1,0 +1,88 @@
+/*
+ * KBJ 디자인 토큰 — 스킨 5종(docs/p3_design.md §6.3).
+ * 값은 KBJ 미리보기(docs/design/preview_synthetic.html — 직접 만든 것, 사용자 승인)의 :root·[data-skin] 값을 옮겼다.
+ * MD6 의 CSS·JS·로고·이미지는 쓰지 않는다(CLAUDE.md §2).
+ *
+ * 바꾼 값(대비 WCAG AA 4.5:1 — test/tokens.test.ts 가 계산한다):
+ *   white --up #d6332a → #c62a22 (바탕 대비 4.33 → 5.04), white --warn #a86b00 → #8a5700 (3.97 → 5.49)
+ * 새 토큰: --est(잠정 점선 밑줄 — 글자가 아니라 선이라 3:1 기준).
+ * 스킨은 <html data-skin="…">. 기본은 amber.
+ */
+:root {
+  --bg: #120d03;
+  --panel: #1a1306;
+  --line: #3a2a0c;
+  --fg: #ffcf73;
+  --dim: #a8823d;
+  --accent: #ffb000;
+  --up: #ff6b5b;
+  --down: #5fa8ff;
+  --lock: #6b5326;
+  --warn: #ffd84d;
+  --sel: #2a1d07;
+  --est: #8a6a32;
+  --mono: 'IBM Plex Mono', 'Nanum Gothic Coding', ui-monospace, Menlo, monospace;
+  --kr: 'Nanum Gothic Coding', 'IBM Plex Mono', ui-monospace, monospace;
+  color-scheme: dark;
+}
+
+:root[data-skin='phosphor'] {
+  --bg: #020d05;
+  --panel: #06160a;
+  --line: #0f3a1a;
+  --fg: #7dffa0;
+  --dim: #3f9e5c;
+  --accent: #33ff66;
+  --lock: #24502f;
+  --up: #ff7a6b;
+  --down: #6fb4ff;
+  --warn: #e6ff4d;
+  --sel: #0b2a14;
+  --est: #2f7a46;
+}
+
+:root[data-skin='uv'] {
+  --bg: #0c0616;
+  --panel: #140b22;
+  --line: #2d1c4a;
+  --fg: #dcc6ff;
+  --dim: #8a6fbf;
+  --accent: #b388ff;
+  --lock: #3d2a62;
+  --up: #ff7aa0;
+  --down: #7ab8ff;
+  --warn: #ffe16b;
+  --sel: #22143a;
+  --est: #6d58a0;
+}
+
+:root[data-skin='dark'] {
+  --bg: #0e1116;
+  --panel: #151a21;
+  --line: #273040;
+  --fg: #d9e0ea;
+  --dim: #7d8a9c;
+  --accent: #8fb3ff;
+  --lock: #33405a;
+  --up: #ff6b6b;
+  --down: #5aa5ff;
+  --warn: #f4c84a;
+  --sel: #1d2532;
+  --est: #66758c;
+}
+
+:root[data-skin='white'] {
+  --bg: #f4f3ef;
+  --panel: #ffffff;
+  --line: #d9d6cc;
+  --fg: #1d2228;
+  --dim: #6a6f76;
+  --accent: #1f4fd8;
+  --lock: #c9c5b8;
+  --up: #c62a22;
+  --down: #1f62d6;
+  --warn: #8a5700;
+  --sel: #e8eefc;
+  --est: #8d8a80;
+  color-scheme: light;
+}

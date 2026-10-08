@@ -1,0 +1,20 @@
+{
+ "content": [
+  {
+   "displayName": "PLUS 합성반도체",
+   "id": "PL000",
+   "nameCode": "977000"
+  },
+  {
+   "displayName": "PLUS 합성200",
+   "id": "PL001",
+   "nameCode": "977100"
+  },
+  {
+   "displayName": "PLUS 합성미국테크",
+   "id": "PL002",
+   "nameCode": "977200"
+  }
+ ],
+ "last": true
+}

@@ -1,0 +1,86 @@
+{
+  "source": "KRX",
+  "as_of": "2026-09-15T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [],
+  "generated_at": "2026-09-15T18:00:00+09:00",
+  "data": {
+    "period": 5,
+    "start": "2026-09-09",
+    "end": "2026-09-15",
+    "rows": [
+      {
+        "etf_type": "kr_index",
+        "label": "국내 대표지수",
+        "net_inflow": 95185167500,
+        "price_effect": 142885831500,
+        "n_etfs": 2,
+        "n_new": 0,
+        "n_invalid": 0
+      },
+      {
+        "etf_type": "kr_theme",
+        "label": "국내 테마",
+        "net_inflow": 39459633000,
+        "price_effect": 6828889500,
+        "n_etfs": 2,
+        "n_new": 0,
+        "n_invalid": 0
+      },
+      {
+        "etf_type": "overseas",
+        "label": "해외주식",
+        "net_inflow": 50117775000,
+        "price_effect": -41467845000,
+        "n_etfs": 1,
+        "n_new": 0,
+        "n_invalid": 0
+      },
+      {
+        "etf_type": "leveraged_inverse",
+        "label": "레버리지·인버스",
+        "net_inflow": -2293390000,
+        "price_effect": 6408479000,
+        "n_etfs": 2,
+        "n_new": 0,
+        "n_invalid": 0
+      },
+      {
+        "etf_type": "bond_cash",
+        "label": "채권·현금",
+        "net_inflow": -150851418500,
+        "price_effect": -144876532900,
+        "n_etfs": 2,
+        "n_new": 0,
+        "n_invalid": 0
+      },
+      {
+        "etf_type": "commodity",
+        "label": "원자재",
+        "net_inflow": -38878217000,
+        "price_effect": 100468609500,
+        "n_etfs": 1,
+        "n_new": 0,
+        "n_invalid": 0
+      },
+      {
+        "etf_type": "other",
+        "label": "기타",
+        "net_inflow": -10590152000,
+        "price_effect": 60488646500,
+        "n_etfs": 1,
+        "n_new": 0,
+        "n_invalid": 0
+      }
+    ],
+    "check3": {
+      "net_asset_chg": 112885476100,
+      "inflow": -17850602000,
+      "price_effect": 130736078100,
+      "residual": 0,
+      "n_checked": 55,
+      "n_failed": 0,
+      "n_unavailable": 0
+    }
+  }
+}

@@ -1,0 +1,62 @@
+name: Pages (공개 정적 사이트)
+
+# KBJ 공개 정적 사이트 배포(docs/p3_design.md §7.3, D-P3-16, ADR 0011 초안).
+# - 트리거는 workflow_dispatch 만 — 예약(schedule) 실행은 두지 않는다(CI 머리말 규칙). VM 의
+#   public.export 작업이 public-data 브랜치를 올린 뒤 디스패치하거나 사람이 누른다
+# - 비밀(secrets)을 쓰지 않는다. 데이터는 공개 브랜치 public-data(pub_*·코드 계산만, 커밋 1개)에서 온다
+# - 권한: 전체는 contents: read 만. pages: write·id-token: write 는 배포 잡에만
+# - 빌드 순서는 scripts/build_public_site.sh 한 벌(공개 빌드 → 데이터 합치기 → 번들 검사)
+# - [사용자 승인 필요] 레포 설정에서 Pages 소스 = GitHub Actions 로 켜는 것, VM 의 배포 키·디스패치
+#   토큰 발급. 켜기 전에는 배포 잡이 실패한다(조용히 넘어가지 않는다)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: build (SPA 공개 빌드 + public-data)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: public-data 브랜치
+        uses: actions/checkout@v4
+        with:
+          ref: public-data
+          path: public-data
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: 공개 빌드 + 데이터 합치기 + 번들 검사
+        run: bash scripts/build_public_site.sh --data public-data
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist-public
+
+  deploy:
+    name: deploy (GitHub Pages)
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

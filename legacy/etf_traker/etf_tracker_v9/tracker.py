@@ -10,7 +10,6 @@
   python tracker.py --research 조선            특정 테마 심층 조회
   python tracker.py --backfill 2026-07-01 2026-08-03   과거 구간 채우기
   python tracker.py --check                   설정·소스·텔레그램 연결 점검
-  python tracker.py --verify                  데이터 품질 10개 항목 실측 검증
 
 설정: 같은 폴더의 .env 파일을 자동으로 읽는다 (.env.example 참고).
       TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID 만 채우면 된다.
@@ -19,8 +18,12 @@ import argparse, json, os, re, sqlite3, statistics as st, sys, time
 import concurrent.futures as cf
 from collections import defaultdict
 from datetime import date, datetime, timedelta
-import requests
+from kbj.config.markets import load_markets
 from kbj.core.calendar import TradingCalendar
+from kbj.core.quality import Quality
+from kbj.core.rows import HoldingRow
+from kbj.engines.etf import holdings as KH
+from kbj.engines.etf.types import etf_type as _etf_type
 from kbj.services.notifier.client import legacy_send, webhook_status
 from collectors import ADAPTERS
 import themes as TH
@@ -60,12 +63,14 @@ def _envnum(key, default, cast=float):
 
 
 WORKERS   = _envnum('WORKERS', 6, int)       # 동시 요청 수. 운용사 서버 배려해서 6 이하 권장
-QTY_FLOOR = _envnum('QTY_FLOOR', 100, int)   # 이 수량 미만은 1주 단위 반올림 노이즈로 보고 제외
-ACTION_PP = _envnum('ACTION_PP', 2.0)        # CU 재산정 보정 후 이 %p 이상 움직여야 '실제 액션'
+# KBJ P3(묶음 E3): 변동 분석의 기준값은 옛 환경변수(QTY_FLOOR·ACTION_PP) 대신 config/markets.yaml
+# `etf.holdings` 하나에서 읽는다(숫자는 한 곳 — docs/p3_design.md §3.9). 계산은 kbj 엔진.
+_HOLD = load_markets().etf.holdings
+QTY_FLOOR = _HOLD.qty_floor                  # 이 수량 미만은 1주 단위 반올림 노이즈로 보고 제외
+ACTION_PP = _HOLD.action_pp                  # CU 재산정 보정 후 이 %p 이상 움직여야 '실제 액션'
 RETRIES   = _envnum('RETRIES', 3, int)       # 수집 실패 시 재시도 횟수
 EMPTY_LIMIT = _envnum('EMPTY_LIMIT', 3, int) # 국내종목 0개가 이만큼 연속되면 추적 제외
 KEEP_DAYS = _envnum('KEEP_DAYS', 120, int)   # 이보다 오래된 스냅샷은 자동 삭제 (0=보관)
-NAVER_ETF = 'https://finance.naver.com/api/sise/etfItemList.nhn'
 
 DDL = """
 CREATE TABLE IF NOT EXISTS fund(
@@ -97,40 +102,35 @@ def db():
     return c
 
 
-# ────────────────────── 유니버스: 어댑터 + 네이버 종목명 조인 ──────────────────────
-def naver_names():
-    """전체 상장 ETF 1,100여개의 종목코드 → (종목명, 시총, 탭코드). 종목명 마스터 소스."""
-    r = requests.get(NAVER_ETF, timeout=30, headers={
-        'User-Agent': 'Mozilla/5.0', 'Referer': 'https://finance.naver.com/sise/etf.naver'})
-    return {x['itemcode']: (x['itemname'], x.get('marketSum') or 0, x.get('etfTabCode'))
-            for x in r.json()['result']['etfItemList']}
+# ────────────────────── 유니버스: 운용사 전용 어댑터만 ──────────────────────
+# KBJ P3 묶음 S(docs/p3_design.md §1.10·D-P3-12): 네이버 ETF 목록 조인(`naver_names`)과 TOP10 폴백
+# (`collectors.NaverTop10`)을 지웠다(ADR 0001 U4 — 네이버 스크래핑 금지). 이 수집 경로의 정본은 kbj
+# `etf.collect`(kbj.services.collectors.etf_holdings — KRX 메타 이름·유형 규칙)다. legacy 는 운용사
+# 목록의 이름만 쓰고, 추적 대상 판정은 네이버 탭(1=국내지수·2=국내업종/테마) 대신 kbj 유형 규칙
+# (`kbj.engines.etf.types.etf_type` 이 국내 대표지수·국내 테마) + 테마 분류(`classify`)로 한다. 시총은
+# 모른다(0 — 지어내지 않는다). 이름이 없는 목록 행(TIGER 등)은 건너뛴다.
+_TRACK_TYPES = ('kr_index', 'kr_theme')
 
 
 def build_universe(conn, issuers=None):
-    """전용 어댑터를 먼저 채우고, 남은 ETF는 네이버 TOP10 폴백으로 메운다."""
-    nv = naver_names()
-    # 커버드콜·재간접 ETF는 다른 ETF를 담는다. 그건 종목 시그널이 아니므로 걸러내야 한다.
-    conn.executemany('INSERT OR REPLACE INTO etf_ticker VALUES(?,?)',
-                     [(c, v[0]) for c, v in nv.items()])
-    conn.commit()
+    """운용사 전용 어댑터의 목록으로 추적 대상을 채운다(네이버 폴백 없음)."""
 
-    def accept(nm, tab):
+    def accept(nm):
         """추적 대상인지 판정 → (theme, is_active) 또는 None"""
-        if tab not in (1, 2):          # 네이버 탭 1=국내지수, 2=국내업종/테마
+        if str(_etf_type(nm, None)) not in _TRACK_TYPES:
             return None
         th = TH.classify(nm)
         if th is None:                 # 레버리지·인버스·채권 등 파생/구조화
             return None
         return th, (1 if TH.is_active(nm) else 0)
 
-    rows, covered, skipped = [], set(), 0
-    dedicated = [k for k in ADAPTERS if k != 'naver']
-    for key in dedicated:
+    rows, skipped, names = [], 0, []
+    for key in ADAPTERS:
         C = ADAPTERS[key]
         if issuers and key not in issuers:
             continue
         uni, last = None, None
-        for attempt in range(RETRIES):      # 여기서 실패하면 그 운용사가 통째로 폴백으로 밀린다
+        for attempt in range(RETRIES):      # 여기서 실패하면 그 운용사는 이번 실행에서 빠진다
             try:
                 uni = C().universe()
                 break
@@ -139,37 +139,26 @@ def build_universe(conn, issuers=None):
                 if attempt < RETRIES - 1:
                     time.sleep(2.0 * (attempt + 1))
         if uni is None:
-            print(f'  [{C.NAME}] universe 실패({last}) — 네이버 TOP10 폴백으로 대체됨')
+            print(f'  [{C.NAME}] universe 실패({last}) — 이번 실행에서 빠진다')
             continue
         n_ok = 0
         for fund_key, ticker, name in uni:
-            meta = nv.get(ticker or '')
-            nm = (meta[0] if meta else None) or name
+            nm = name
             if not nm:
                 skipped += 1; continue
-            a = accept(nm, meta[2] if meta else None)
+            if ticker:
+                names.append((ticker, nm))
+            a = accept(nm)
             if not a:
                 skipped += 1; continue
             rows.append((f'{key}:{fund_key}', key, fund_key, ticker, nm, a[0], a[1],
-                         float(meta[1] if meta else 0), C.DEPTH, 1, 0))
-            covered.add(ticker); n_ok += 1
+                         0.0, C.DEPTH, 1, 0))
+            n_ok += 1
         print(f'  [{C.NAME}] {n_ok}개 (전체 {len(uni)})')
 
-    # 폴백: 전용 어댑터가 커버하지 못한 국내 ETF 전부
-    if not issuers or 'naver' in issuers:
-        C = ADAPTERS['naver']
-        n_ok = 0
-        for code, (nm, cap, tab) in nv.items():
-            if code in covered:
-                continue
-            a = accept(nm, tab)
-            if not a:
-                continue
-            rows.append((f'naver:{code}', 'naver', code, code, nm, a[0], a[1],
-                         float(cap or 0), C.DEPTH, 1, 0))
-            n_ok += 1
-        print(f'  [{C.NAME}] {n_ok}개 (전용 어댑터 미커버분)')
-
+    # ETF 가 담은 ETF 를 거르는 표(analyze 의 etf_codes) — 운용사 목록의 티커로
+    conn.executemany('INSERT OR REPLACE INTO etf_ticker VALUES(?,?)', names)
+    conn.commit()
     conn.executemany('INSERT OR REPLACE INTO fund VALUES(?,?,?,?,?,?,?,?,?,?,?)', rows)
     conn.commit()
     return len(rows), skipped
@@ -187,6 +176,8 @@ def adapter(key):
 
 def snapshot(conn, asof, only=None, limit=None, quiet=False, drop_empty=False):
     q = 'SELECT fund_id, issuer, fund_key, name FROM fund WHERE track=1'
+    # 지운 네이버 폴백('naver')처럼 어댑터가 없는 옛 행은 받지 않는다(KBJ P3 묶음 S)
+    q += ' AND issuer IN (%s)' % ','.join(f"'{x}'" for x in ADAPTERS)
     if only:
         q += ' AND issuer IN (%s)' % ','.join(f"'{x}'" for x in only)
     q += ' ORDER BY mktcap DESC'
@@ -249,67 +240,44 @@ def snapshot(conn, asof, only=None, limit=None, quiet=False, drop_empty=False):
 
 # ──────────────────────── 변동 산출 (노이즈 제거가 핵심) ────────────────────────
 def fund_pairs(conn, max_gap=14):
-    """펀드별로 '가장 최근 스냅샷 두 개'를 짝지어 돌려준다.
+    """펀드별로 '가장 최근 스냅샷 두 개'를 짝지어 돌려준다 — 계산은 kbj 정본
+    `kbj.engines.etf.holdings.fund_pairs`(P3 묶음 E3). 여기는 sqlite 읽기와 옛 반환 모양
+    `[(fund_id, cur, prev, gap)]`(날짜는 'YYYY-MM-DD' 문자열)만 맞춘다.
 
     운용사마다 공시 PDF 의 기준일이 제각각이라(같은 날 받아도 A사는 8/4, B사는 8/3),
     전체를 하나의 날짜쌍으로 묶어 비교하면 대부분의 펀드가 비교 대상에서 통째로 빠진다.
     실측에서 401개 중 0개만 비교됐다. 그래서 비교는 반드시 펀드 단위로 한다.
     """
     seq = defaultdict(list)
-    for fid, a in conn.execute(
-            'SELECT fund_id, asof FROM holding GROUP BY fund_id, asof ORDER BY fund_id, asof DESC'):
-        seq[fid].append(a)
-    out = []
-    for fid, dates in seq.items():
-        if len(dates) < 2:
-            continue
-        cur, prev = dates[0], dates[1]
-        gap = (date.fromisoformat(cur) - date.fromisoformat(prev)).days
-        if gap > max_gap:      # 공백이 너무 길면 '하루 변동'이 아니라 누적이라 신호가 흐려진다
-            continue
-        out.append((fid, cur, prev, gap))
-    return out
+    for fid, a in conn.execute('SELECT fund_id, asof FROM holding GROUP BY fund_id, asof'):
+        seq[fid].append(date.fromisoformat(a))
+    return [(p.fund_id, p.asof.isoformat(), p.prev_asof.isoformat(), p.gap_days)
+            for p in KH.fund_pairs(seq, max_gap)]
+
+
+def _snap(conn, fid, asof):
+    return {r[0]: HoldingRow(r[0], r[1], r[2], r[3], None, 'ETF_ISSUERS:legacy', Quality.OK)
+            for r in conn.execute(
+                'SELECT code,name,qty,wt FROM holding WHERE fund_id=? AND asof=?', (fid, asof))}
 
 
 def analyze(conn, run_date, max_gap=14):
+    """구성종목 변동 — 계산은 kbj 정본 `kbj.engines.etf.holdings.analyze`(CU 재산정 보정·TOP10·
+    ETF 제외 규칙 그대로). 여기는 sqlite 읽기·쓰기와 옛 행 모양(14칸 튜플)만."""
     out = []
     # ETF가 다른 ETF를 담은 건(커버드콜의 모ETF, 재간접) 종목 시그널이 아니라 제외
     etfs = {r[0] for r in conn.execute('SELECT code FROM etf_ticker')}
     depth = dict(conn.execute('SELECT fund_id, depth FROM fund'))
+    run = date.fromisoformat(run_date)
     for fid, asof, prev_asof, gap in fund_pairs(conn, max_gap):
-        is_top10 = depth.get(fid) == 'top10'
-        cur = {r[0]: r for r in conn.execute(
-            'SELECT code,name,qty,wt FROM holding WHERE fund_id=? AND asof=?', (fid, asof))
-            if r[0] not in etfs}
-        prev = {r[0]: r for r in conn.execute(
-            'SELECT code,name,qty,wt FROM holding WHERE fund_id=? AND asof=?', (fid, prev_asof))
-            if r[0] not in etfs}
-        if not prev or not cur:
-            continue
-        # CU 재산정(설정단위 변경) 보정계수 = 유의미 수량 종목들의 변동률 중앙값
-        # TOP10 소스는 CU 재산정 효과를 추정할 표본이 부족하므로 보정하지 않는다
-        base = [c for c in cur.keys() & prev.keys() if prev[c][2] >= QTY_FLOOR]
-        med = 0.0 if is_top10 else (
-            st.median([(cur[c][2] / prev[c][2] - 1) * 100 for c in base]) if len(base) >= 5 else 0.0)
-
-        for c in cur.keys() - prev.keys():
-            out.append((run_date, fid, c, 'IN10' if is_top10 else 'NEW', cur[c][1],
-                        asof, prev_asof, gap,
-                        None, cur[c][2], None, cur[c][3], None, None))
-        for c in prev.keys() - cur.keys():
-            out.append((run_date, fid, c, 'OUT10' if is_top10 else 'DROP', prev[c][1],
-                        asof, prev_asof, gap,
-                        prev[c][2], None, prev[c][3], None, None, None))
-        for c in cur.keys() & prev.keys():
-            if prev[c][2] < QTY_FLOOR:
-                continue
-            pct = (cur[c][2] / prev[c][2] - 1) * 100
-            adj = pct - med
-            if abs(adj) >= ACTION_PP:
-                out.append((run_date, fid, c, 'ADD' if adj > 0 else 'CUT', cur[c][1],
-                            asof, prev_asof, gap,
-                            prev[c][2], cur[c][2], prev[c][3], cur[c][3],
-                            round(pct, 2), round(adj, 2)))
+        pair = KH.FundPair(fid, date.fromisoformat(asof), date.fromisoformat(prev_asof), gap)
+        dep = 'top10' if depth.get(fid) == 'top10' else 'full'
+        for c in KH.analyze(pair, _snap(conn, fid, asof), _snap(conn, fid, prev_asof),
+                            run_date=run, depth=dep, etf_codes=etfs,
+                            qty_floor=QTY_FLOOR, action_pp=ACTION_PP,
+                            min_base=_HOLD.min_base_for_cu):
+            out.append((run_date, c.fund_id, c.code, c.kind, c.name, asof, prev_asof, gap,
+                        c.prev_qty, c.cur_qty, c.prev_wt, c.cur_wt, c.qty_pct, c.qty_pct_adj))
     conn.executemany(
         'INSERT OR REPLACE INTO change_log VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)', out)
     conn.commit()
@@ -547,7 +515,6 @@ def main():
     p.add_argument('--passive', action='store_true', help='시장대표/팩터 등 패시브 테마도 포함')
     p.add_argument('--no-send', action='store_true')
     p.add_argument('--check', action='store_true', help='설정·소스·텔레그램 연결 점검')
-    p.add_argument('--verify', action='store_true', help='데이터 품질 10개 항목 실측 검증')
     a = p.parse_args()
     conn = db()
     asof = a.date or date.today().isoformat()
@@ -555,9 +522,8 @@ def main():
     if a.check:
         return doctor(conn)
 
-    if a.verify:
-        import subprocess
-        return subprocess.call([sys.executable, os.path.join(HERE, 'verify.py')])
+    # --verify(verify.py — 네이버 시세 대조 10항목)는 KBJ P3 묶음 S 가 지웠다(§1.10). ETF 수급 검산은
+    # kbj `python -m kbj.services.engine.verify`(검산 ③ — 체크리스트 #20)
 
     if a.themes:
         rows = conn.execute('SELECT theme, COUNT(*) n, SUM(is_active) act FROM fund '

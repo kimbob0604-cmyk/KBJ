@@ -5,47 +5,11 @@
 """
 import unittest
 
-from ..engine.build import _turnover
 
 
 def rows(close=10000, volume=1000):
     return [dict(asof='2026-08-28', open=close, high=close, low=close,
                  close=close, volume=volume)]
-
-
-class TurnoverTest(unittest.TestCase):
-
-    def test_소스값이_있으면_그대로_쓴다(self):
-        v, est = _turnover(rows(), 0, 123.4)
-        self.assertEqual(v, 123.4)
-        self.assertFalse(est)
-
-    def test_소스가_없으면_종가x거래량(self):
-        v, est = _turnover(rows(close=10000, volume=1000), 0, None)
-        self.assertAlmostEqual(v, 10000 * 1000 / 1e8)
-        self.assertTrue(est, '추정치는 표시돼야 한다')
-
-    def test_거래량이_있는데_0이면_안_준_것이다(self):
-        """이번 사고의 핵심. 0 을 사실로 받으면 폴백이 안 돈다."""
-        v, est = _turnover(rows(close=10000, volume=1000), 0, 0)
-        self.assertAlmostEqual(v, 0.1)
-        self.assertTrue(est)
-
-    def test_거래량이_0이면_거래대금_0은_사실이다(self):
-        """거래정지 종목까지 추정으로 덮으면 안 된다."""
-        v, est = _turnover(rows(volume=0), 0, 0)
-        self.assertEqual(v, 0)
-        self.assertFalse(est)
-
-    def test_둘_다_없으면_None(self):
-        """모르는 것은 0 이 아니라 None 이다 (CLAUDE.md 2장 1번)."""
-        v, est = _turnover(rows(volume=None), 0, None)
-        self.assertIsNone(v)
-
-    def test_0억으로_찍히면_하한에_걸린다(self):
-        """회귀 방어 — 실제로 화면에 '0억' 이 뜬 그 상태를 재현한다."""
-        v, _ = _turnover(rows(close=53000, volume=250000), 0, 0)
-        self.assertGreater(v, 1.0, '1억 하한을 넘어야 랭킹에 남는다')
 
 
 class NaverUniverseTest(unittest.TestCase):

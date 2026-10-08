@@ -1,0 +1,138 @@
+/* 바탕·글꼴·격자 — 미리보기 구성을 따른다(직접 다시 만든 것). */
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.app {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 13px;
+  min-height: 100%;
+  padding-block: 0 24px;
+  transition:
+    background 0.25s,
+    color 0.25s;
+}
+
+.app *,
+.app *::before,
+.app *::after {
+  box-sizing: border-box;
+}
+
+.wrap {
+  padding-inline: 16px;
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.up {
+  color: var(--up);
+}
+.down {
+  color: var(--down);
+}
+.warn {
+  color: var(--warn);
+}
+.dim {
+  color: var(--dim);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+a:focus-visible,
+tr:focus-visible,
+[tabindex]:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
+
+a {
+  color: var(--accent);
+}
+
+/* 페이지 격자: 12칸, 좁은 화면은 한 줄씩 */
+.grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+.span-3 {
+  grid-column: span 3;
+}
+.span-4 {
+  grid-column: span 4;
+}
+.span-6 {
+  grid-column: span 6;
+}
+.span-8 {
+  grid-column: span 8;
+}
+.span-9 {
+  grid-column: span 9;
+}
+.span-12 {
+  grid-column: span 12;
+}
+@media (max-width: 980px) {
+  .span-3,
+  .span-4,
+  .span-6,
+  .span-8,
+  .span-9 {
+    grid-column: span 12;
+  }
+}
+
+svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+svg text {
+  fill: var(--dim);
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.foot {
+  margin-top: 16px;
+  color: var(--dim);
+  font-size: 11px;
+  font-family: var(--kr);
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app {
+    transition: none;
+  }
+}

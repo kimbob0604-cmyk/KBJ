@@ -29,12 +29,25 @@
 - 창 시작 전 새벽에 끝났어야 할 켜진 작업(03:00 `ops.nightly`·03:05 `filings.corp_code`)은
   기록을 미리 넣는다(`seed_runs`) — 워치독이 창 밖의 일을 '놓친 실행'으로 보지 않게.
 
+P3 확장(docs/p3_design.md §8.3 — 묶음 S): `SimOptions(p3=True)` 면 등록부에서 **켜진 P3
+작업**(`krx.daily`·`market.close_collect`·`flows.intraday`·`market.intraday`·`board.daily`·
+`board.confirm`·`etf.collect`·`public.export`·`market.backfill`)은 시뮬레이션 처리기 대신
+**실제 처리기**가 돈다. 자원: 저장소는 `kbj.store.repos.memory`(재기동을 넘긴다 — DB 처럼),
+KIS 는 scheduler 의 `KisRestClient`(같은 가짜 서버·앱키 리미터·auth 토큰 읽기), KRX 는
+scheduler 의 `KrxClient`(가짜 KRX — 가짜 KIS 종목도 KRX 원장에 둔다, `kis_symbols_on_krx`),
+운용사는 가짜 운용사 9곳(`tests/fakes/etf_issuer_server.py`), 공개 내보내기는 읽기 전용 확인만
+통과하는 가짜 연결과 임시 산출 디렉터리. 가짜 KRX 는 시장당 몇 행뿐이라 커버리지 절대 하한은
+끈다(`Coverage(min_rows={})`). 창 시작 전에 있어야 할 데이터(장중 창의 감시 ETF 일별 등)는
+`SimOptions.prepare` 로 심는다.
+
 키·토큰은 모두 가짜 값이다. 로그인 등급 응답은 합성(U3).
 """
 
 from __future__ import annotations
 
 import json
+import shutil
+import tempfile
 import time
 from collections import Counter
 from collections.abc import Callable, Mapping
@@ -51,6 +64,7 @@ from pydantic import SecretStr
 from redis import Redis
 from redis.exceptions import RedisError
 
+from kbj.config.markets import MarketsConfig, load_markets
 from kbj.config.settings import Settings
 from kbj.core.calendar import (
     DAY_END,
@@ -71,6 +85,8 @@ from kbj.data.catalog import all_datasets
 from kbj.data.datago import DatagoTransport
 from kbj.data.limits import Limits, load_limits
 from kbj.data.private.ecos_restricted import EcosRestrictedClient, require_restricted
+from kbj.data.private.etf_issuers.base import IssuerHttp
+from kbj.data.private.etf_issuers.registry import build as build_issuers
 from kbj.data.private.fsc_index_price.client import FscIndexPriceClient
 from kbj.data.private.fsc_stock_price.client import FscStockPriceClient
 from kbj.data.private.kis.credentials import KisCredentials
@@ -88,6 +104,7 @@ from kbj.data.spec import DataKey
 from kbj.services.auth.service import AuthService, AuthStatus, build_auth_service, next_wait
 from kbj.services.collectors import corp_code, ops_watchdog
 from kbj.services.collectors.corp_code import MemoryCorpCodeStore
+from kbj.services.collectors.krx_daily import Coverage
 from kbj.services.notifier.client import NotifyClient, set_default_client
 from kbj.services.notifier.outbox import Outbox
 from kbj.services.notifier.policy import NotifyConfig, load_notify_config
@@ -103,16 +120,25 @@ from kbj.services.scheduler.claims import (
     make_run_id,
 )
 from kbj.services.scheduler.conditions import AsOfUnavailable, holds, resolve_as_of
-from kbj.services.scheduler.handlers import Handler, JobContext, JobResult
+from kbj.services.scheduler.handlers import Handler, JobContext, JobResult, resolve
 from kbj.services.scheduler.registry import JobSpec, Registry
 from kbj.services.scheduler.runner import JobRunner, inline_submit
 from kbj.services.scheduler.service import SchedulerService, SessionLogRecord
 from kbj.store.redis_keys import SESSION_EVENTS
-from tests.fakes import dart_server, datago_server, ecos_server, kosis_server, krx_server
+from kbj.store.repos import MemoryRepos, memory_repos
+from tests.fakes import (
+    dart_server,
+    datago_server,
+    ecos_server,
+    kis_server,
+    kosis_server,
+    krx_server,
+)
 from tests.fakes.clock import FakeClock
 from tests.fakes.dart_server import FakeDart
 from tests.fakes.datago_server import FakeDatago
 from tests.fakes.ecos_server import FakeEcos
+from tests.fakes.etf_issuer_server import FakeIssuers
 from tests.fakes.kis_server import APP_KEY, APP_SECRET, SYMBOLS, TRS, FakeKisServer, make_client
 from tests.fakes.kosis_server import FakeKosis
 from tests.fakes.krx_server import FakeKrx
@@ -196,6 +222,19 @@ KIS_SPECS: Final[dict[str, KisSpec]] = {
         lambda v, _c, _d: {"FID_COND_MRKT_DIV_CODE": v, "FID_BLNG_CLS_CODE": "3"},
     ),
     "etf_quote_intraday": KisSpec("FHPST02400000", (ETF_CODE,), _stock),
+    # P3(묶음 M 웨이브 1 — docs/p3_design.md §3.3). 실제 처리기는 묶음 C, 시뮬레이션 확장은
+    # 묶음 S(§8.3)
+    "etf_investor_daily": KisSpec("FHKST01010900", (ETF_CODE,), _stock),
+    "index_quote_intraday": KisSpec(  # [추정 TR] 코스피·코스닥·코스피200 — 슬롯당 3건
+        "FHPUP02100000",
+        (*MARKETS, "2001"),
+        lambda _v, c, _d: {"FID_COND_MRKT_DIV_CODE": "U", "FID_INPUT_ISCD": c},
+    ),
+    "sector_quote_intraday": KisSpec(  # [추정 TR] 시장마다 1건 — 슬롯당 2건
+        "FHPUP02140000",
+        MARKETS,
+        lambda _v, c, _d: {"FID_COND_MRKT_DIV_CODE": "U", "FID_INPUT_ISCD": c},
+    ),
     "watch_quotes_intraday": KisSpec("FHKST01010100", WATCH, _stock, Priority.P2),
     # [추정 TR] 설계 R20 — 미실측. 가짜 서버의 TR 표와만 맞춘다
     "consensus_estimate": KisSpec("FHKST663300C0", SYMBOLS, lambda _v, c, _d: {"SHT_CD": c}),
@@ -250,6 +289,67 @@ class _FakeConn:
         return _FakeCursor(self._log)
 
 
+def kis_symbols_on_krx(day: date = date(2026, 1, 2)) -> dict[str, list[dict[str, Any]]]:
+    """가짜 KIS 종목(`SYMBOLS` — 앞 10 코스피·뒤 10 코스닥, `market_symbols`)을 가짜 KRX
+    일별·기본정보에도
+    둔다(P3 — 실제 KRX 는 KIS 가 주는 종목을 모두 덮는다). 이미 KRX 템플릿에 있는 코드는 건너뛴다.
+    값은 KRX 템플릿 첫 행을 틀로(코드·이름·ISIN 만 바꾼다) — 합성."""
+    out: dict[str, list[dict[str, Any]]] = {}
+    for market, stock_ep, base_ep in (
+        ("0001", "/sto/stk_bydd_trd", "/sto/stk_isu_base_info"),
+        ("1001", "/sto/ksq_bydd_trd", "/sto/ksq_isu_base_info"),
+    ):
+        tmpl_stock = krx_server.rows_for(stock_ep, day)
+        tmpl_base = krx_server.rows_for(base_ep, day)
+        have = {str(r["ISU_CD"]) for r in tmpl_stock}
+        for code in kis_server.market_symbols(market):
+            if code in have:
+                continue
+            name = f"합성{code[-3:]}"
+            out.setdefault(stock_ep, []).append({**tmpl_stock[0], "ISU_CD": code, "ISU_NM": name})
+            out.setdefault(base_ep, []).append(
+                {**tmpl_base[0], "ISU_CD": f"KR7{code}001", "ISU_SRT_CD": code, "ISU_NM": name,
+                 "ISU_ABBRV": name}
+            )  # fmt: skip
+    return out
+
+
+class _PublicCursor:
+    """`public.export` 연결 확인(읽기 전용·구성원) SQL 에 ('on', True) 로 답하는 가짜 커서."""
+
+    def __init__(self, log: list[str]) -> None:
+        self._log = log
+
+    def __enter__(self) -> _PublicCursor:
+        return self
+
+    def __exit__(self, *a: object) -> None:
+        return None
+
+    def execute(self, query: Any, params: Any = None) -> None:
+        self._log.append(" ".join(str(query).split()[:4]))
+
+    def fetchone(self) -> tuple[object, object]:
+        return ("on", True)
+
+
+class _PublicConn:
+    """공개 내보내기 역할(`kbj_public_export`) 연결 흉내 — P3 는 표를 읽지 않고 확인만
+    한다(§7.1)."""
+
+    def __init__(self, log: list[str]) -> None:
+        self._log = log
+
+    def __enter__(self) -> _PublicConn:
+        return self
+
+    def __exit__(self, *a: object) -> None:
+        return None
+
+    def cursor(self) -> _PublicCursor:
+        return _PublicCursor(self._log)
+
+
 @dataclass
 class SimOptions:
     start: datetime
@@ -262,6 +362,8 @@ class SimOptions:
     redis_down: tuple[datetime, datetime] | None = None
     restarts: tuple[datetime, ...] = ()
     hooks: tuple[tuple[datetime, Callable[[SimDay], None]], ...] = ()
+    p3: bool = False  # 켜진 P3 작업은 실제 처리기로(위 머리말)
+    prepare: tuple[Callable[[SimDay], None], ...] = ()  # 만든 뒤 run 전에 한 번(데이터 심기)
 
 
 @dataclass
@@ -289,7 +391,7 @@ class SimDay:
         # ── 가짜 서버 ─────────────────────────────────────────────────────────────────
         now = self.clock.now
         self.kis = FakeKisServer(now)
-        self.krx = FakeKrx(now)
+        self.krx = FakeKrx(now, extra=kis_symbols_on_krx() if opts.p3 else None)
         self.dart = FakeDart(now)
         self.datago = FakeDatago(now)
         self.ecos = FakeEcos(now)
@@ -320,6 +422,14 @@ class SimDay:
         self.auth_statuses: list[AuthStatus] = []
         self.restarted_at: list[datetime] = []
         self.ticks = 0
+        # P3: 저장소(DB 처럼 재기동을 넘긴다)·가짜 운용사·공개 산출 디렉터리
+        self.repos: MemoryRepos = memory_repos()
+        self.issuers = FakeIssuers(latest=self.start.astimezone(KST).date())
+        self.public_log: list[str] = []
+        self.public_out = Path(tempfile.mkdtemp(prefix="kbj-sim-public-"))
+        self.p3_owners: frozenset[str] = frozenset(
+            j.owner for j in self.registry.jobs if opts.p3 and j.phase == "P3" and j.enabled
+        )
         if opts.seed_runs:
             self._seed_runs()
         # ── 프로세스 ─────────────────────────────────────────────────────────────────
@@ -336,6 +446,8 @@ class SimDay:
         self._hooks = sorted(opts.hooks, key=lambda h: h[0])
         self._restarts = sorted(opts.restarts)
         self._closed = False
+        for fn in opts.prepare:
+            fn(self)
 
     # ── 조립 ──────────────────────────────────────────────────────────────────────────
     def _redis(self) -> Redis:
@@ -527,6 +639,9 @@ class SimDay:
                 raise AssertionError(
                     f"owner 가 겹친다 — 시뮬레이션 처리기를 나눌 수 없다: {job.owner}"
                 )
+            if job.owner in self.p3_owners:
+                handlers[job.owner] = resolve(job.owner)  # 실제 P3 처리기(import 검증 겸)
+                continue
             handlers[job.owner] = REAL_HANDLERS.get(job.owner) or self._sim_handler(job)
         resources: dict[str, Any] = {
             "registry": self.registry,
@@ -543,6 +658,8 @@ class SimDay:
             "connect": lambda: _FakeConn(self.pg_log),
             "redis": self.sched_redis,
         }
+        if self.opts.p3:
+            resources.update(self._p3_resources())
         return JobRunner(
             self.registry,
             handlers,
@@ -557,6 +674,27 @@ class SimDay:
             settings=self.sched_settings,
             resources=resources,
         )
+
+    def markets(self) -> MarketsConfig:
+        return load_markets(settings=self.sched_settings)
+
+    def _p3_resources(self) -> dict[str, Any]:
+        """실제 P3 처리기의 자원(kbj/services/collectors/_p3.py 머리말·각 처리기 머리말)."""
+        http = IssuerHttp(httpx.Client(transport=self.issuers.transport()), sleep=lambda _s: None)
+        return {
+            "repos": self.repos,
+            "kis": self.sched_kis,
+            "krx": self.sched_krx,
+            "krx_backfill": self.sched_krx,
+            "markets": self.markets(),
+            "krx_coverage": Coverage(min_rows={}),
+            "etf_issuers": build_issuers(
+                http, None, today=lambda: self.clock.now().astimezone(KST).date()
+            ),
+            "parallel": False,
+            "public_connect": lambda: _PublicConn(self.public_log),
+            "public_out_dir": self.public_out,
+        }
 
     def _backup(self, now: datetime) -> Path:
         name = f"sim-backup-{now.astimezone(KST):%Y%m%d}.dump"
@@ -1033,6 +1171,7 @@ class SimDay:
         if self.ws is not None:
             self.ws.stop()
         self.auth_http.close()
+        shutil.rmtree(self.public_out, ignore_errors=True)
 
     # ── 결과 보기(시험 편의) ────────────────────────────────────────────────────────────
     def runs_of(self, job: str) -> list[RunRecord]:

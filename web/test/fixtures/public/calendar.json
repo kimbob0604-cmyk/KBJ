@@ -1,0 +1,15 @@
+{
+  "source": "KBJ 거래 캘린더(코드 계산)",
+  "as_of": "2026-10-07T05:30:00+09:00",
+  "quality": "ok",
+  "notes": ["시험용 예시 — 모양만 맞춘 것(실제 산출물은 public.export)"],
+  "generated_at": "2026-10-07T05:30:02+09:00",
+  "data": {
+    "days": [
+      { "date": "2026-10-07", "trading": true, "late_open": false, "expiry": null, "night_session": true },
+      { "date": "2026-10-08", "trading": true, "late_open": false, "expiry": "weekly", "night_session": true },
+      { "date": "2026-10-09", "trading": false, "late_open": false, "expiry": null, "night_session": false }
+    ],
+    "session": { "open": "09:00", "close": "15:30", "tz": "Asia/Seoul" }
+  }
+}

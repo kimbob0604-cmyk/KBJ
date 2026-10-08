@@ -369,6 +369,15 @@
 | 17 | DART·관세청 10일 잠정치 (P2 묶음 C) | DART `corpCode` 에서 한 종목코드가 두 회사에 걸리는 재사용이 있는지(지금은 최근 `modify_date` 쪽, 같으면 `corp_map()` 전체 실패 — 나오면 그 코드만 실패하도록), 10일 잠정치 swagger 열 설명 문구 형식(`verify_ten_day_columns` 입력), 관세청 합계 행·`priodTitle` 형식, `endBasDt` 미만 해석 |
 | 18 | KRX 응답 세부 (P2 묶음 D) | 401 본문(Unauthorized API Call 대 키 오류) 구분, `stk_bydd_trd` 의 `SECT_TP_NM` 이 소속부인지 업종인지, 영숫자 단축코드(예: `0009K0` 꼴) 여부, 주식·지수·ETP 공표 시각, 지수 필드 이름(`CLSPRC_IDX` 대 `TDD_CLSPRC`), 일 한도 초과 응답 모양(지금은 부르기 전 `krx:calls` 예산으로만 막는다), NXT 포함 여부 |
 | 19 | KIS 인증·구분 (P2 묶음 A, 설계 R4·R20) | 웹소켓 접속키 수명(12시간 가정 — 11시간마다 갱신), 접근토큰과 접속키가 1분 1회 발급 제한을 함께 쓰는지, 토큰 거절 코드 `EGW00121`·`EGW00123`, 거래소 구분 파라미터(`J`·`NX`·`UN` [추정]), 투자의견·추정실적 TR(`FHKST668300C0`·`FHKST663300C0`) |
+| 20 | 실데이터 검산 ①②③ (P3 — `docs/p3_design.md` §8.7, 메인 결정 R2) | `python -m kbj.services.engine.verify --date <D>` 를 실 DB 원장에 돌려 ①(투자자 4구분 합 0)·②(기관 7구분 합 = 기관)·③(ETF 순자산 변화 = 순유입 + 가격효과) 잔차 분포·**검산 불가 수와 사유**(기타법인 미제공·7구분 없음), ETF 분할 감지 목록, ETF 유형 분류표(7유형 수·`other` 수 — metrics §8.1 낱말 검토). 여기에는 **건수·분포만** 적고 값은 적지 않는다. P3 완료는 합성 원장으로 증명했다 — 이 항목은 키 수령 뒤 |
+| 21 | KRX OpenAPI 일별 (P3 — R7·R10·R11) | 제공 시작일(역사적 신고가 깊이 `history_from` — R8), 주식·ETP 공표 시각(지금 08:00 가정), ETF 필드·순자산(`INVSTASST_NETASST_TOTAMT`) 단위(원·백만원 — 검산 ③ 허용오차), 지수 일별에 코드 칸이 없는지(지금은 공백 뺀 지수 이름을 코드로), 커버리지 하한(코스피 700·코스닥 1,200 [확인 필요]), `MKT_TP_NM` 소속 구분 |
+| 22 | KIS FHKST01010900·FHKST01010100 (P3 — R1·R2·R22) | 금액 단위(백만원 가정), 기타법인·기관 7구분 칸 유무(없으면 ①·② 불가 — R2), ETF 코드로 되는지(`KIS:etf_investor_daily`), 시총 `hts_avls` 억원·`acml_tr_pbmn` 원, 상태 칸(`iscd_stat_cls_code` 51/58·`mang_issu_cls_code`·`temp_stop_yn`·`sltr_yn`), 4구분 TR(`FHPTJ04160001` [추정]) |
+| 23 | KIS FHPTJ04400000·FHPST01710000 (P3 — R5) | 가집계 회차·상위 개수·`FID_ETC_CLS_CODE` 1·2, 거래대금 정렬 파라미터·`FID_TRGT_EXLS_CLS_CODE`·상위 개수 — 가짜 서버는 시장당 10행 |
+| 24 | KIS FHPUP02100000·FHPUP02140000 (P3 — R6, [추정 TR]) | TR·경로 존재, 업종 코드(코스피 0001·코스닥 1001·코스피200 2001), 누적 거래대금 단위(백만원 가정), 업종 `output2`·`bstp_cls_code` — 업종 히트맵 코드 목록(`config/markets.yaml market.sector_indices`)·경기민감/방어 칩 코드가 이 결과로 채워진다 |
+| 25 | 거래소 구분 (P3 — R3, #14·#19 이어서) | KIS `J`·`NX`·`UN` 응답이 통합인지·KRX 만인지, KRX OpenAPI 일별의 NXT 포함 여부. 지금은 `kis.venues: [KRX]`·화면 'NXT 미포함' 꼬리표 |
+| 26 | Q1 비교 (P3 — ADR 0001 Q1·0012) | 5거래일 KIS 마감 대 KRX 확정 — `prv_market.eod_reconcile` 집계(종가 차이 0·거래대금 0.5%·시총 0.5% 허용 [확인 필요]), 불일치율 1% 이상이면 경고(`reconcile_mismatch`) |
+| 27 | ETF 운용사 9곳 (P3 — R11) | 운용사별 실응답(목록·PDF 키 이름·HTML 구조·기준일 폴백)과 이용약관, 전용 어댑터가 없는 운용사의 구성종목 대체(KIS `FHKST121600C0` 후보), 빈 응답 연속 상한 3(`EMPTY_LIMIT` [확인 필요]) |
+| 28 | TradingView 위젯 (P3 — R14, 사용자 확인) | 공개판 페이지 1 지수 자리 `mini-symbol-overview` 의 `KRX:KOSPI`·`KRX:KOSDAQ`·`KRX:KOSPI200` 심볼이 그려지는지, 히트맵 위젯의 KRX 지원·이용약관 범위. 확인 전에는 공개판 업종 히트맵을 자물쇠로 둔다(W2). 공개 빌드는 Pages 활성(사용자 승인) 뒤 실제 브라우저로 확인 |
 
 ---
 

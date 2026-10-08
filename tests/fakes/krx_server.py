@@ -11,6 +11,10 @@ KBJ 판. GX 판은 파생 두 엔드포인트만 알고 GX 모듈을 import 해 
 - `fail[엔드포인트] = 상태` 면 그 상태로 거절한다(본문에 받은 인증키를 되풀이 — 가림 시험용).
 - 인증키(`AUTH_KEY` 헤더)가 다르면 401 `Unauthorized Key`. 기록은 `seen`(시각·consumer·경로·basDd),
   `requested()` 는 (엔드포인트, basDd) 차례.
+- `extra[엔드포인트] = [행…]` 이면 템플릿 뒤에 그 행을 붙인다(`BAS_DD` 는 그날로). P3 시뮬레이션
+  (묶음 S)이 가짜 KIS 종목(`tests.fakes.kis_server.SYMBOLS`)을 KRX 확정 원장에도 두려고 쓴다 —
+  실제 KRX 일별은 KIS 가 주는 종목을 모두 덮으므로 두 가짜의 종목 집합이 같아야 보드 확정
+  비율(0.9)이 현실과 같아진다.
 """
 
 from __future__ import annotations
@@ -18,7 +22,7 @@ from __future__ import annotations
 import copy
 import json
 import threading
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime
 from functools import cache
@@ -72,8 +76,16 @@ def _templates() -> dict[str, list[dict[str, Any]]]:
         _load("base_info.json"),
         _load("index_daily.json"),
     )
+    # 코넥스 1종목은 코스닥 첫 행을 틀로 쓰되 **코드·이름을 바꾼다** — 코스닥 코드(998010)를 그대로
+    # 두면 같은 (code, date, source) 원장 행을 두 시장이 덮어쓴다(묶음 S — 메인이 본 충돌).
+    # 997xxx 는 합성 코스피(9900xx)·코스닥(998xxx)·ETF(995xxx)와 겹치지 않는 대역이다.
     konex = [
-        {**r, "ISU_CD": "99" + str(r.get("ISU_CD", "0000"))[-4:], "MKT_NM": "KONEX"}
+        {
+            **r,
+            "ISU_CD": "997" + str(r.get("ISU_CD", "000"))[-3:],
+            "ISU_NM": "가상코넥스",
+            "MKT_NM": "KONEX",
+        }
         for r in _first_day(stock["kosdaq"])[:1]
     ]
     return {
@@ -117,8 +129,12 @@ class FakeKrx:
         *,
         key: str = KEY,
         stale: Literal["empty", "previous"] = "empty",
+        extra: Mapping[str, Sequence[Mapping[str, Any]]] | None = None,
     ) -> None:
         self._now = now
+        self.extra: dict[str, list[dict[str, Any]]] = {
+            ep: [dict(r) for r in rows] for ep, rows in (extra or {}).items()
+        }
         self.key = key
         self.stale = stale
         self.fail: dict[str, int] = {}
@@ -176,6 +192,7 @@ class FakeKrx:
             self._last = key
             day = date(int(key[:4]), int(key[4:6]), int(key[6:8]))
             rows = rows_for(endpoint, day)
+            rows += [{**r, "BAS_DD": f"{day:%Y%m%d}"} for r in self.extra.get(endpoint, ())]
             return reply(200, {"OutBlock_1": rows}, len(rows))
 
     # ── 조회(시험) ───────────────────────────────────────────────────────────────────

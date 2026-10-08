@@ -1,0 +1,22 @@
+{
+ "data": [
+  {
+   "fundCd": "AC000",
+   "fundNm": "ACE 합성반도체",
+   "stockCd": "KR7974000004"
+  },
+  {
+   "fundCd": "AC001",
+   "fundNm": "ACE 합성200",
+   "stockCd": "KR7974100004"
+  },
+  {
+   "fundCd": "AC002",
+   "fundNm": "ACE 합성미국테크",
+   "stockCd": "KR7974200004"
+  }
+ ],
+ "page": {
+  "totalElements": 99
+ }
+}

@@ -95,7 +95,7 @@ crontab -e
 
 ```bash
 python tracker.py --check              # 설정·소스·텔레그램 점검
-python tracker.py --verify             # 데이터 품질 10개 항목 실측 검증
+# (KBJ P3: --verify·verify.py 삭제 — 검산은 python -m kbj.services.engine.verify)
 python tracker.py --themes             # 테마별 ETF 분포
 python tracker.py --run --no-send      # 발송 없이 콘솔로만 확인
 python tracker.py --research 조선       # 특정 테마 심층 조회

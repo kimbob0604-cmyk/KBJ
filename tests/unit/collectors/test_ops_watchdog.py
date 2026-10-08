@@ -43,6 +43,15 @@ def seeded_runs() -> MemoryRunLog:
     runs = MemoryRunLog()
     for job, as_of in (("ops.nightly", "2026-10-06"), ("filings.corp_code", "2026-10-06")):
         runs.record(RunRecord(f"{job}:{as_of}:1", job, as_of, 1, "ok"))
+    # P3(묶음 S 가 켰다 — docs/p3_design.md §0.4): 10:30 전에 끝났어야 할 켜진 cron 작업.
+    # 10-05 대체공휴일이라 전 거래일은 10-02
+    for job, as_of in (
+        ("public.export", "2026-10-06"),
+        ("etf.collect", "2026-10-06"),
+        ("krx.daily", "2026-10-02"),
+        ("board.confirm", "2026-10-02"),
+    ):
+        runs.record(RunRecord(f"{job}:{as_of}:1", job, as_of, 1, "ok"))
     runs.record(
         RunRecord("ops.watchdog:2026-10-06T10:00:1", "ops.watchdog", "2026-10-06T10:00", 1, "ok")
     )
@@ -107,7 +116,8 @@ def test_finds_dead_heartbeat_missed_run_and_overdue_running() -> None:
 def test_holiday_has_no_missed_trading_day_runs() -> None:
     hol = datetime(2026, 10, 5, 12, 0, tzinfo=KST)  # 대체공휴일 — ops.watchdog 은 거래일만
     runs = MemoryRunLog()
-    for job in ("ops.nightly", "filings.corp_code"):
+    # public.export(P3)는 when: always — 휴장일에도 05:30 에 돈다(그 기록은 있어야 한다)
+    for job in ("ops.nightly", "filings.corp_code", "public.export"):
         runs.record(RunRecord(f"{job}:2026-10-05:1", job, "2026-10-05", 1, "ok"))
     notes = Notes()
     problems = wd.find_problems(REG, runs, [], healthy, KR, US, hol)

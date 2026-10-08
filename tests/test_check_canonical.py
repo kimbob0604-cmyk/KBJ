@@ -36,6 +36,7 @@ SAMPLES = {
     "kosis": "https://kosis" + ".kr/openapi/Param/statisticsParameterData.do",
     "kis_ws": "ws://ops" + ".koreainvestment.com:21000",
     "naver": NAVER,
+    "etf_issuers": "https://www.samsung" + "fund.com/api/v1/fund/product/pdf",  # P3 묶음 S
     "krx_scrape": "http://data" + ".krx.co.kr/comm/bldAttendant/getJsonData.cmd",
 }
 
@@ -70,6 +71,25 @@ def test_every_group_matches_its_sample_and_only_its_group() -> None:
     assert cc.GROUPS["kis_oauth"].pattern.search(KIS_APPROVAL_PATH)
     assert cc.GROUPS["kis_rest"].pattern.search("https://openapivts" + ".koreainvestment.com:29443")
     assert cc.GROUPS["krx_scrape"].pattern.search("import py" + "krx")
+
+
+def test_etf_issuer_hosts_all_nine_and_only_inside_the_adapter_package() -> None:
+    """P3 묶음 S — 운용사 9곳 호스트는 kbj.data.private.etf_issuers 안에서만(나머지 kbj 는 실패)."""
+    hosts = [
+        "www.samsung" + "fund.com",
+        "investments.mirae" + "asset.com",
+        "time" + "etf.co.kr",
+        "www.sol" + "etf.com",
+        "papi.ace" + "etf.co.kr",
+        "www.hanaro" + "etf.com",
+        "www.samsung" + "active.co.kr",
+        "www.plus" + "etf.co.kr",
+        "www.rise" + "etf.co.kr",
+    ]
+    g = cc.GROUPS["etf_issuers"]
+    assert all(g.pattern.search(f"https://{h}/x") for h in hosts)
+    assert not g.pattern.search("https://www.samsung.com")  # 비슷한 이름은 아니다
+    assert g.allowed == ("kbj/data/private/etf_issuers/*",) and not g.zero
 
 
 def test_dart_needs_scheme_and_krx_scrape_skips_dbg_host() -> None:

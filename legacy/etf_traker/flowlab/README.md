@@ -38,7 +38,7 @@ python3 -m flowlab history                 # 누적 flows 한 표 + 이벤트 �
 | `flows.py` | **모듈 A** 수급 레이어 |
 | `eventstudy.py` | **모듈 B** 신고가 이벤트 스터디 |
 | `prior.py` | B 결과를 A 에 되먹임 (거래량 구간별 과거 승률 부착) |
-| `krx.py` | 공매도 (KRX 계정 있을 때만 동작) |
+| ~~`krx.py`~~ | (KBJ P3 삭제 — KRX 웹 스크랩 공매도. KRX 자료는 kbj krx.daily) |
 | `backfill.py` | (demo 전용) 데모 DB 복사본에 날짜별 스냅샷을 채우고 **엔진을 날짜마다 호출**해 과거 state 를 만든 뒤 flows 를 누적 |
 | `history.py` | `board/state/*/flows.json` 을 한 표로 모으고 이벤트 스터디와 (종목, 날짜) 조인 |
 | `report.py` | HTML 리포트 + 일간 코멘트용 ~함 체 텍스트 |

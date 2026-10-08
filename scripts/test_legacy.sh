@@ -23,6 +23,9 @@
 # - 프로젝트마다 작업 디렉터리와 PYTHONPATH 를 따로 잡아 한 프로세스에 두 import 루트가 섞이지 않게
 #   한다(§3.4: db·scripts·data·config·tests 이름 충돌). 부모 환경의 PYTHONPATH 는 물려주지 않는다.
 # - 해석기는 루트 .venv 하나(uv sync --all-groups). PYTHON 환경변수로 바꿀 수 있다.
+# - P3(묶음 S): 지운 legacy 파일(flowlab probe_*·krx.py, SD probe_*·ohlcv_5y_collector.py, etf_tracker_v9
+#   verify.py)은 시험이 없던 진단·수집 스크립트라 기준 수가 바뀌지 않는다. board 1,267 → 1,115 는 E1 의
+#   신고가 엔진 승격분(kbj 로 옮김) — 근거는 legacy/etf_traker/board/MIGRATION.md·legacy/etf_traker/MIGRATION.md 'P3'.
 # - 각 부분은 최소 시험 수를 확인한다 — 시험이 조용히 덜 모이면 실패로 본다. P1 기준(gexlab 3,177·
 #   board 1,319·stock_dashboard 12)에서 P2 는 kbj 로 승격한 원본 시험만 뺐고(kbj 쪽에서 같은 단언이
 #   돈다) 프로젝트마다 KBJ 다리 시험 1개를 더했다 — 빠진 수·파일은 legacy/*/MIGRATION.md 'P2' 절.
@@ -149,7 +152,13 @@ run_part() {
         board)
             # P1 1,319 → P2 1,267: 승격·폐지 63개 빼고(etf_traker/board/MIGRATION.md P2) 다리 시험 +1,
             # legacy 에 남은 인박스 코드(drain·merge·cmd_inbox) 시험 test_tg_inbox.py 10개를 고쳐 둠
-            part_unittest board board/tests 1267
+            # P3 1,267 → 1,115(묶음 E1): 신고가 엔진 승격분 153개를 kbj(tests/unit/engines/board)로 옮기고
+            # 다리 시험 test_kbj_engine_shim +1 (etf_traker/board/MIGRATION.md 'P3' 절).
+            # P3 묶음 S(웨이브 3) 확정: board KR 수집(ingest/naver·flows·stockflows·funds·pipeline·datago·kis·krx)
+            # 삭제는 이월 — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import 해서 파일
+            # 단위로 뗄 수 없다(docs/p3_design.md R17). 그 시험(test_stale_px·test_universe·test_close_source 등)은
+            # 아직 살아 있는 legacy 코드를 보므로 그대로 둔다 — 수 변화 없음(1,115)
+            part_unittest board board/tests 1115
             ;;
         kr)
             part_unittest kr monitor/kr 94 -p "test_*.py"
@@ -187,7 +196,8 @@ run_part() {
             ;;
         etf_tracker_v9)
             local log="$LOGDIR/etf_tracker_v9.log" rc
-            # verify.py 는 import 순간 etf.db 를 열고 네이버를 불러 뺀다(etf_traker/MIGRATION.md)
+            # verify.py(네이버 대조)는 P3 묶음 S 가 지웠다. NaverTop10·naver_names 도 지웠고(tracker 는 운용사
+            # 어댑터만), market.py 는 tracker·live_update 가 아직 써서 P5 까지 남는다 — import 13개는 그대로
             run_in "$ET/etf_tracker_v9" "$log" "$PY" -c \
                 "import collectors, dash, market, render, report, themes, tracker, live_update, adapters.ace, adapters.hanaro, adapters.koact, adapters.plus, adapters.rise; print('import ok: 13 modules')"
             rc=$?
@@ -218,6 +228,8 @@ else
         case "$a" in
             all) PARTS+=("${ALL[@]}") ;;
             etf-rest) PARTS+=("${ETF_REST[@]}") ;;
+            # P3 묶음 E3: docs/p3_design.md §9.4 의 `test_legacy.sh etf` = etf_tracker_v9 shim 스모크(웨이브 3 묶음 S 확정)
+            etf) PARTS+=(etf_tracker_v9) ;;
             *) PARTS+=("$a") ;;
         esac
     done

@@ -34,11 +34,11 @@ import time
 
 import yaml
 
-from ..engine.config import ROOT
+from ..engine.config import KNOWLEDGE, ROOT  # noqa: F401 — 사전은 config/knowledge(KBJ P3 E1)
 from ..ingest import creds
 from ..writer import claude as C
 
-MAP_PATH = os.path.join(ROOT, 'knowledge', 'sector_map.yaml')
+MAP_PATH = os.path.join(KNOWLEDGE, 'sector_map.yaml')
 CHUNK = 25              # 한 요청에 넣을 종목 수
 MAX_BATCH_WAIT = 6 * 3600   # 배치 대기 상한(초). 넘기면 취소하고 받은 것만 쓴다
 MIN_CONF = 0.7
@@ -96,7 +96,7 @@ SCHEMA = {
 
 # ─────────────────────────── 사전 ───────────────────────────
 def taxonomy():
-    with open(os.path.join(ROOT, 'knowledge', 'sectors.yaml'), encoding='utf-8') as f:
+    with open(os.path.join(KNOWLEDGE, 'sectors.yaml'), encoding='utf-8') as f:
         return yaml.safe_load(f) or {}
 
 

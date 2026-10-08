@@ -1,0 +1,328 @@
+{
+  "source": "KIS",
+  "as_of": "2026-09-16T10:10:00+09:00",
+  "quality": "estimated",
+  "notes": [
+    "NXT 미포함(KRX 구분만 — D-P3-9)",
+    "지수 2001 자료 없음",
+    "시장 거래대금(장중)은 지수 누적 거래대금 — 확정(종목 합)과 정의가 다를 수 있다",
+    "보드 유니버스 수를 모른다 — 신고가 비율 없음"
+  ],
+  "generated_at": "2026-09-16T10:05:00+09:00",
+  "data": {
+    "date": "2026-09-15",
+    "indices": [
+      {
+        "code": "0001",
+        "name": "코스피",
+        "value": 2650.5,
+        "chg_pct": 0.42,
+        "spark": [
+          16980.3758,
+          16965.8392,
+          16826.3915,
+          16751.6334,
+          16744.6977,
+          16870.9727,
+          16821.0634,
+          17064.0921,
+          17210.2517,
+          17181.7562,
+          17211.0112,
+          17297.1596,
+          17301.6289,
+          16970.6765,
+          16946.9552,
+          16884.3098,
+          20335.1352,
+          20153.2166,
+          20050.7574,
+          2650.5
+        ],
+        "live": true,
+        "source": "KIS",
+        "as_of": "2026-09-16T10:10:00+09:00",
+        "quality": "estimated"
+      },
+      {
+        "code": "1001",
+        "name": "코스닥",
+        "value": 780.2,
+        "chg_pct": -0.31,
+        "spark": [
+          13741.348,
+          13644.7122,
+          13637.9264,
+          13464.5863,
+          13517.5898,
+          13360.3165,
+          13363.6181,
+          13458.7606,
+          13420.399,
+          13447.5868,
+          13307.2041,
+          13349.449,
+          13327.2818,
+          13461.837,
+          13300.3803,
+          13104.7096,
+          13139.5582,
+          13159.2151,
+          13087.6207,
+          780.2
+        ],
+        "live": true,
+        "source": "KIS",
+        "as_of": "2026-09-16T10:10:00+09:00",
+        "quality": "estimated"
+      }
+    ],
+    "turnover": {
+      "today": {
+        "value": 7300000000000,
+        "source": "KIS",
+        "as_of": "2026-09-16T10:10:00+09:00",
+        "quality": "estimated"
+      },
+      "basis": "intraday_index",
+      "avg20": 426188253728,
+      "ratio": 17.128580940798063,
+      "n_prior": 20,
+      "series": [
+        {
+          "date": "2026-08-18",
+          "value": 448486751701,
+          "quality": "ok",
+          "source": "KRX"
+        },
+        {
+          "date": "2026-08-19",
+          "value": 421526925113,
+          "quality": "ok",
+          "source": "KRX"
+        },
+        {
+          "date": "2026-08-21",
+          "value": 437859585401,
+          "quality": "ok",
+          "source": "KRX"
+        },
+        {
+          "date": "2026-08-24",
+          "value": 403929127977,
+          "quality": "ok",
+          "source": "KRX"
+        },
+        {
+          "date": "2026-08-25",
+          "value": 385906985493,
+          "quality": "ok",
+          "source": "KRX"
+        },
+        {
+          "date": "2026-08-26",
+          "value": 452228219448,
+          "quality": "ok",
+          "source": "KRX"
+        },
+        {
+          "date": "2026-08-27",
+          "value": 416592014665,
+          "quality": "ok",
+          "source": "KRX"
+        },
+        {
+          "date": "2026-08-28",
+          "value": 346176135661,
+          "quality": "ok",
+          "source": "KRX"
+        },
+        {
+          "date": "2026-08-31",
+          "value": 446476696158,
+          "quality": "ok",
+          "source": "KRX"
+        },
+        {
+          "date": "2026-09-01",
+          "value": 430113760608,
+          "quality": "ok",
+          "source": "KRX"
+        },
+        {
+          "date": "2026-09-02",
+          "value": 500338175734,
+          "quality": "ok",
+          "source": "KRX"
+        },
+        {
+          "date": "2026-09-03",
+          "value": 431876474264,
+          "quality": "ok",
+          "source": "KRX"
+        },
+        {
+          "date": "2026-09-04",
+          "value": 467893640899,
+          "quality": "ok",
+          "source": "KRX"
+        },
+        {
+          "date": "2026-09-07",
+          "value": 448340862438,
+          "quality": "ok",
+          "source": "KRX"
+        },
+        {
+          "date": "2026-09-08",
+          "value": 352029791928,
+          "quality": "ok",
+          "source": "KRX"
+        },
+        {
+          "date": "2026-09-09",
+          "value": 446089204625,
+          "quality": "ok",
+          "source": "KRX"
+        },
+        {
+          "date": "2026-09-10",
+          "value": 370275215702,
+          "quality": "ok",
+          "source": "KRX"
+        },
+        {
+          "date": "2026-09-11",
+          "value": 462302207709,
+          "quality": "ok",
+          "source": "KRX"
+        },
+        {
+          "date": "2026-09-14",
+          "value": 394252420639,
+          "quality": "ok",
+          "source": "KRX"
+        },
+        {
+          "date": "2026-09-15",
+          "value": 461070878400,
+          "quality": "ok",
+          "source": "KIS"
+        }
+      ],
+      "tags": [
+        "장중(지수 기준)",
+        "NXT 미포함"
+      ]
+    },
+    "breadth": {
+      "date": "2026-09-15",
+      "up": 11,
+      "flat": 1,
+      "down": 23,
+      "unknown": 0,
+      "total": 35,
+      "above_ma20_n": 16,
+      "ma20_base": 34,
+      "above_ma20_pct": 47.05882352941176,
+      "newhigh_n": 22,
+      "newhigh_pct": null,
+      "limit_up": 0,
+      "limit_down": 0,
+      "quality": "estimated",
+      "source": "KIS",
+      "notes": [
+        "보드 유니버스 수를 모른다 — 신고가 비율 없음"
+      ]
+    },
+    "investors": {
+      "date": "2026-09-15",
+      "by_investor": {
+        "foreign": -1143000000,
+        "institution": -58000000,
+        "other_corp": -27000000,
+        "individual": 1228000000
+      },
+      "inst7": {
+        "fin_invest": -84000000,
+        "trust": 147000000,
+        "private_fund": -25000000,
+        "insurance": -80000000,
+        "bank": 348000000,
+        "pension": -207000000,
+        "other_fin": -157000000
+      },
+      "check1_residual": 0,
+      "check2_residual": 0,
+      "by_market": {
+        "KOSDAQ": {
+          "foreign": -540000000,
+          "institution": -112000000,
+          "other_corp": 8000000,
+          "individual": 644000000
+        },
+        "KOSPI": {
+          "foreign": -603000000,
+          "institution": 54000000,
+          "other_corp": -35000000,
+          "individual": 584000000
+        }
+      },
+      "quality": "ok",
+      "source": "KIS",
+      "notes": [],
+      "recent": [
+        {
+          "date": "2026-09-09",
+          "by_investor": {
+            "foreign": -1000000,
+            "institution": 593000000,
+            "other_corp": 25000000,
+            "individual": -617000000
+          },
+          "quality": "ok"
+        },
+        {
+          "date": "2026-09-10",
+          "by_investor": {
+            "foreign": -1815000000,
+            "institution": 1509000000,
+            "other_corp": 95000000,
+            "individual": 211000000
+          },
+          "quality": "ok"
+        },
+        {
+          "date": "2026-09-11",
+          "by_investor": {
+            "foreign": -5000000,
+            "institution": 172000000,
+            "other_corp": 23000000,
+            "individual": -190000000
+          },
+          "quality": "ok"
+        },
+        {
+          "date": "2026-09-14",
+          "by_investor": {
+            "foreign": -1479000000,
+            "institution": 1049000000,
+            "other_corp": -51000000,
+            "individual": 481000000
+          },
+          "quality": "ok"
+        },
+        {
+          "date": "2026-09-15",
+          "by_investor": {
+            "foreign": -1143000000,
+            "institution": -58000000,
+            "other_corp": -27000000,
+            "individual": 1228000000
+          },
+          "quality": "ok"
+        }
+      ]
+    }
+  }
+}

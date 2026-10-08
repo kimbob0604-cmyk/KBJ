@@ -48,8 +48,9 @@ log "=========================================="
 # ── 1. DART 분기 재무 (실패/미수집 종목만 retry) ──
 run_step "DART retry"          "$PYTHON" dart_collector.py retry
 
-# ── 2. 5년 OHLCV 갱신 (KR 82종목) ──
-run_step "OHLCV 5y collector"  "$PYTHON" ohlcv_5y_collector.py all
+# ── 2. 5년 OHLCV 갱신 — KBJ P3 에 삭제(ohlcv_5y_collector.py — KRX 웹 스크랩). 일봉 이력은 kbj
+#    market.backfill(KRX OPEN API — docs/p3_design.md §3.8)이 받는다. 이 맥 cron 자체는 폐지 작업이다
+#    (tests/unit/scheduler/legacy_jobs.txt SD:mac-crontab) ──
 
 # ── 3. data_fetcher.py (네이버 테마 시세) ──
 run_step "data_fetcher (Naver 테마)"  "$PYTHON" data_fetcher.py

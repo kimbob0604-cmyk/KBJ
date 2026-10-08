@@ -1,0 +1,51 @@
+{
+  "source": "KIS",
+  "as_of": "2026-09-16T10:00:00+09:00",
+  "quality": "estimated",
+  "notes": [
+    "장중 iNAV 는 추정치(잠정)"
+  ],
+  "generated_at": "2026-09-16T10:05:00+09:00",
+  "data": {
+    "basis": "inav",
+    "n_checked": 3,
+    "rows": [
+      {
+        "code": "E00002",
+        "name": "합성ETF02",
+        "price": 10120.0,
+        "nav": 10000.0,
+        "premium_pct": 1.2,
+        "threshold": 0.5,
+        "warn": true,
+        "as_of": "2026-09-16T10:00:00+09:00",
+        "quality": "estimated",
+        "source": "KIS"
+      },
+      {
+        "code": "E00001",
+        "name": "합성ETF01",
+        "price": 10110.0,
+        "nav": 10000.0,
+        "premium_pct": 1.1,
+        "threshold": 0.5,
+        "warn": true,
+        "as_of": "2026-09-16T10:00:00+09:00",
+        "quality": "estimated",
+        "source": "KIS"
+      },
+      {
+        "code": "E00000",
+        "name": "합성ETF00",
+        "price": 10100.0,
+        "nav": 10000.0,
+        "premium_pct": 1.0,
+        "threshold": 0.5,
+        "warn": true,
+        "as_of": "2026-09-16T10:00:00+09:00",
+        "quality": "estimated",
+        "source": "KIS"
+      }
+    ]
+  }
+}

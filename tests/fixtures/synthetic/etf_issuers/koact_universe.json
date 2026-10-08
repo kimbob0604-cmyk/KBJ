@@ -1,0 +1,19 @@
+{
+ "etfs": [
+  {
+   "fId": "KO000",
+   "fNm": "KoAct 합성반도체",
+   "stkTicker": "976000"
+  },
+  {
+   "fId": "KO001",
+   "fNm": "KoAct 합성200",
+   "stkTicker": "976100"
+  },
+  {
+   "fId": "KO002",
+   "fNm": "KoAct 합성미국테크",
+   "stkTicker": "976200"
+  }
+ ]
+}

@@ -1,6 +1,6 @@
 # KBJ 비밀·환경변수 이름표
 
-- 작성: 2026-10-06(P1). 고침: 2026-10-07(P2 S0 — `KBJ_SERVICE`·`KBJ_CONFIG_DIR` 추가, KIS 앱키 주입 범위를 ADR 0004 로 / P2 최종 점검 — 서비스별 주입 표, legacy 옛 이름 현황). 근거: `docs/inventory.md` (f) 환경변수 통합 표, `docs/DATA_TIERS.md` §1, `docs/adr/0001-p0-decisions.md` U1, `docs/adr/0004-kis-issuance.md`.
+- 작성: 2026-10-06(P1). 고침: 2026-10-07(P2 S0 — `KBJ_SERVICE`·`KBJ_CONFIG_DIR` 추가, KIS 앱키 주입 범위를 ADR 0004 로 / P2 최종 점검 — 서비스별 주입 표, legacy 옛 이름 현황 / P3 묶음 M — 로그인 웹·공개 내보내기 이름 5개와 설정 4개, `docs/p3_design.md` §5.4·§7). 근거: `docs/inventory.md` (f) 환경변수 통합 표, `docs/DATA_TIERS.md` §1, `docs/adr/0001-p0-decisions.md` U1, `docs/adr/0004-kis-issuance.md`.
 - **이름만 적는다. 값은 어디에도 적지 않는다**(레포·문서·이슈·로그·텔레그램). 값은 로컬 `.env`(git 제외)와 운영 VM 환경에만 둔다.
 - 코드는 `kbj/config/settings.py` 의 `Settings` 하나로만 읽는다(`KBJ_` 접두사, 비밀은 `SecretStr`). 로그·오류 문구에 내보낼 때는 `kbj/core/masking.py` 를 거친다(절대 규칙 5).
 - 빈 값은 '설정 안 함'(기본값)으로 읽는다. 비밀이 아닌 튜닝값(호출 상한·주기·발송 규칙)은 환경변수가 아니라 `config/*.yaml` 로 둔다.
@@ -44,6 +44,15 @@
 | `KBJ_TEST_TIMESCALE_IMAGE` | 통합 시험용 Timescale 이미지 | — | 설정 | tests(integration) |
 | `KBJ_SERVICE` | 이 프로세스의 서비스 이름(`auth`·`scheduler`·`notifier` …, 소문자). compose 가 서비스마다 넣는다. KIS 발급자(`kbj/services/auth/issuer.py`)는 `auth` 일 때만 만들어진다(ADR 0004 런타임 가드) | — | 설정 | kbj.config.settings, services.auth |
 | `KBJ_CONFIG_DIR` | `config/*.yaml`(작업 등록부·호출 상한·발송 규칙·휴장 덮어쓰기) 폴더. 기본 `config` — 상대 경로는 레포 루트 기준, 설치 이미지에서는 절대 경로 | — | 설정 | kbj.config.files |
+| `KBJ_WEB_USER` | 로그인 웹 사용자 이름(1명). 로그·화면에 남기지 않는다. **기본값 없음** — 비면 로그인 503(`login_not_configured`) | 직접 정함 | 운영 | services.api(P3) |
+| `KBJ_WEB_PASSWORD_HASH` | 로그인 비밀번호의 scrypt 해시(`scrypt$n=…$r=…$p=…$<salt>$<dk>`). `python -m kbj.services.api hash-password` 가 stdout 에만 낸다 — 비밀번호 원문은 어디에도 두지 않는다. **기본값 없음** | 직접 생성 | 운영 | services.api(P3) |
+| `KBJ_WEB_SESSION_TTL_H` | 세션 고정 만료(시간, 기본 12) | — | 설정 | services.api |
+| `KBJ_WEB_COOKIE_SECURE` | 쿠키 Secure·`__Host-` 접두사(기본 true — TLS 역방향 프록시 뒤). false 는 `KBJ_API_HOST` 가 루프백일 때만(개발) | — | 설정 | services.api |
+| `KBJ_WEB_DIST_DIR` | 로그인 SPA 빌드 폴더(기본 `web/dist-login`) — api 가 같은 출처로 내보낸다 | — | 설정 | services.api |
+| `KBJ_PUBLIC_EXPORT_DATABASE_URL` | 공개 내보내기 전용 접속 문자열 — `kbj_public_export`(pub_* SELECT 만) 구성원 로그인 역할, `default_transaction_read_only=on`(ADR 0002 §2.2). 앱 DSN(`KBJ_DATABASE_URL`)은 쓰지 않는다 | 운영 배포에서 역할 생성 | 운영 | services.public_export(P3) |
+| `KBJ_PUBLIC_PUSH_ENABLED` | public-data 브랜치 푸시·Pages 디스패치 켜기(기본 false). **[사용자 승인 필요]** | — | 설정 | services.public_export |
+| `KBJ_PUBLIC_DEPLOY_KEY_PATH` | public-data 브랜치에 강제 푸시할 배포 키 **파일 경로**(키는 VM 에만, 레포·이미지에 없음). **[사용자 승인 필요]** — 발급·등록 전엔 비워 둔다 | GitHub 레포 Deploy keys(쓰기) | 운영 | services.public_export |
+| `KBJ_GITHUB_DISPATCH_TOKEN` | `pages.yml` 수동 실행(workflow_dispatch) 토큰 — 이 레포 `actions:write` 만(세분 토큰). **[사용자 승인 필요]** | GitHub fine-grained PAT | 운영 | services.public_export |
 | `KBJ_LIVE_TRADING` | 실전 주문 스위치. **기본 false, 사용자 승인 전엔 바꾸지 않는다**(절대 규칙 6) | — | 설정 | — (주문 코드 없음) |
 
 ## 2. 옛 이름 → 새 이름 (`docs/inventory.md` (f))
@@ -133,4 +142,13 @@ KIS REST 는 **모든 요청 헤더에** `appkey`·`appsecret` 을 요구한다(
 접속 문자열(`KBJ_DATABASE_URL`·`KBJ_REDIS_URL`)은 compose 가 `KBJ_POSTGRES_PASSWORD`·`KBJ_REDIS_PASSWORD` 로 만든다(기본값 없음 — 없으면 compose 가 멈춘다).
 
 토큰 값 자체는 어느 환경변수에도 두지 않는다(Redis 에만 — `KIS_TOKEN_CACHE_PATH` 삭제).
+
+## 5. P3 에 더한 이름 (docs/p3_design.md §5.4·§7, 묶음 M)
+
+- 새 비밀 이름 5개: `KBJ_WEB_USER`·`KBJ_WEB_PASSWORD_HASH`(로그인 웹 — 사용자 1명), `KBJ_PUBLIC_EXPORT_DATABASE_URL`(공개 내보내기 — pub_* 만 읽는 역할), `KBJ_PUBLIC_DEPLOY_KEY_PATH`·`KBJ_GITHUB_DISPATCH_TOKEN`(public-data 푸시·Pages 디스패치). 설정 4개: `KBJ_WEB_SESSION_TTL_H`·`KBJ_WEB_COOKIE_SECURE`·`KBJ_WEB_DIST_DIR`·`KBJ_PUBLIC_PUSH_ENABLED`.
+- **기본 사용자·비밀번호는 없다**(공개 레포). 레포·시험 어디에도 실제 해시를 두지 않는다 — 시험용 해시는 시험 픽스처가 낮은 비용으로 그때 만든다.
+- **켜지 않는 것(사용자 승인 사항)**: GitHub Pages 활성(소스 = Actions), 배포 키 발급·등록, 디스패치 토큰 발급, VM TLS(역방향 프록시). P3 는 이름만 문서화하고 `pages.yml` 은 `workflow_dispatch` 만 둔다. `KBJ_PUBLIC_PUSH_ENABLED` 기본 false.
+- 주입 범위(compose 반영 완료 — 웨이브 3 묶음 S, §5.1): `api` 서비스는 `KBJ_DATABASE_URL`·`KBJ_REDIS_URL`·`KBJ_WEB_USER`·`KBJ_WEB_PASSWORD_HASH`·`KBJ_TELEGRAM_WEBHOOK_SECRET`·`KBJ_PUBLIC_BASE_URL` 만(KIS·KRX 키 없음 — 계약 ⑩). `public.export` 작업은 `KBJ_PUBLIC_EXPORT_DATABASE_URL`(+ 승인 뒤 배포 키 경로·디스패치 토큰). KIS 수집 작업이 켜지는 P3 에 scheduler 에도 `KBJ_KIS_APP_KEY`·`KBJ_KIS_APP_SECRET`·`KBJ_KIS_ENV`·`KBJ_KRX_API_KEY`(ADR 0004 "P3 에 scheduler 에도").
+- compose `api` 는 **호스트 네트워크**(`network_mode: host`, `127.0.0.1:8000` — TLS 역방향 프록시가 실제 접속 IP 를 넘겨 로그인 잠금이 IP 별로 걸리게)라서 DB·Redis 주소가 서비스 이름이 아니라 `127.0.0.1`(compose 의 `*_host` 접속 문자열)이다.
+- `KBJ_WEB_PASSWORD_HASH` 값에는 `$` 가 들어 있다 — `.env` 에 **작은따옴표**로 넣는다(`KBJ_WEB_PASSWORD_HASH='scrypt$…'`). 따옴표가 없으면 compose 의 변수 치환이 `$n`·`$r` 등을 지워 값이 깨지고 로그인이 503 이 된다.
 

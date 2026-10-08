@@ -13,8 +13,8 @@ KIS 토큰 발급은 auth 한 곳, KIS·KRX·DART 호출은 kbj 어댑터, 텔�
 규칙
 - 호스트 그룹(``--list`` 로 본다). 목표 0 그룹(kis_oauth·kis_rest·kis_master·krx_api·dart)은
   허용 위치 밖 어디서든 한 줄이라도 있으면 실패한다. 기준선 그룹(telegram·ecos·datago·
-  kosis·kis_ws·naver·krx_scrape)은 ``kbj/`` 에서는 허용 위치 밖이면 실패, 그 밖(legacy 등)은
-  ``scripts/canonical_baseline.txt`` 와 견준다.
+  kosis·kis_ws·naver·etf_issuers·krx_scrape)은 ``kbj/`` 에서는 허용 위치 밖이면 실패, 그
+  밖(legacy 등)은 ``scripts/canonical_baseline.txt`` 와 견준다.
 - 기준선은 줄어들기만 한다: 기준선에 없는 파일의 위반, 건수 증가, 건수가 줄었는데
   기준선을 안 줄임, 목표 0 그룹·kbj 경로가 기준선에 있음 — 모두 실패.
   ``--update-baseline`` 은 줄이는 방향으로만 다시 쓴다.
@@ -194,6 +194,30 @@ GROUPS: dict[str, Group] = {
             "P3~P5",
         ),
         Group(
+            "etf_issuers",
+            re.compile(
+                r"\b(?:"
+                + "|".join(
+                    (
+                        _dots("samsungfund", "com"),
+                        _dots("investments", "miraeasset", "com"),
+                        _dots("timeetf", "co", "kr"),
+                        _dots("soletf", "com"),
+                        _dots("aceetf", "co", "kr"),
+                        _dots("hanaroetf", "com"),
+                        _dots("samsungactive", "co", "kr"),
+                        _dots("plusetf", "co", "kr"),
+                        _dots("riseetf", "co", "kr"),
+                    )
+                )
+                + ")"
+            ),
+            ("kbj/data/private/etf_issuers/*",),
+            False,
+            "ETF 운용사 9곳 호스트(구성종목 PDF) — kbj.data.private.etf_issuers 로(P3 묶음 E3·S)",
+            "P3~P5",
+        ),
+        Group(
             "krx_scrape",
             re.compile(r"(?<![-\w])" + _dots("data", "krx", "co", "kr") + r"|\bpy" + r"krx\b"),
             (),
@@ -243,6 +267,17 @@ LEGACY_KBJ_ALLOW: tuple[str, ...] = (
     "kbj.services.runtime",
     "kbj.store.spool",
     "kbj.store.db",
+    # P3 묶음 E1(docs/p3_design.md §1.3·D-P3-10): ET board/engine/* 가 kbj 신고가 엔진을
+    # 다시 내보내는 shim 이 되었다(공개 이름만 — 비공개 이름은 kbj 쪽 공개 별칭).
+    # 웨이브 3 묶음 S 확정
+    "kbj.engines.board",
+    # P3 묶음 E3(docs/p3_design.md §1.5·D-P3-12·13): ET etf_tracker_v9 의 themes·tracker(fund_pairs·
+    # analyze)·collectors·adapters/* 가 kbj ETF 엔진·운용사 어댑터를 쓰는 shim, tracker 의 기준값은
+    # config/markets.yaml(옛 환경변수 QTY_FLOOR·ACTION_PP 대체). 웨이브 3 묶음 S 확정 —
+    # tracker 의 추적 대상 판정(네이버 탭 대신 kbj.engines.etf.types.etf_type)도 이 허용으로 쓴다
+    "kbj.engines.etf",
+    "kbj.data.private.etf_issuers",
+    "kbj.config.markets",
 )
 
 ALL_RULES: dict[str, str] = {**{g.name: g.desc for g in GROUPS.values()}, **AST_RULES}

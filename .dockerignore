@@ -24,3 +24,9 @@ scripts
 *.key
 *.pem
 *token*.json
+# 프런트(P3 — 묶음 S): 이미지 1단계가 web/ 소스로 로그인 빌드를 새로 만든다. 로컬 설치·빌드 결과·시험은
+# 넣지 않는다(node_modules 를 그대로 복사하면 lock 밖 파일·설치 스크립트 산출물이 섞인다)
+web/node_modules
+web/dist-public
+web/dist-login
+web/test

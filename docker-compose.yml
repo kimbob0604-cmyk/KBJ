@@ -8,13 +8,27 @@
 #   넣는다. initdb 는 빈 볼륨에서만 돈다 — 0002 부터는 P2 적용기(ops.schema_migrations)로.
 # - 앱 서비스(P2 — 묶음 I)는 profile `app` 이다: `docker compose up -d` 는 지금처럼 db·redis 만,
 #   `docker compose --profile app up -d --build` 는 migrate → auth·scheduler·notifier 까지 띄운다.
-#   이미지는 레포 루트 Dockerfile 하나(런타임 의존성만, 비밀 없음). collectors·ws-gateway·engine·
-#   api 는 그 단계(P3~P7)에서 더한다. 로그인 API·웹훅 HTTP 서버는 P3(메인 결정 D4) — 지금은 포트 없음.
+#   이미지는 레포 루트 Dockerfile 하나(런타임 의존성만, 비밀 없음 — 로그인 SPA 빌드 결과 포함).
+#   ws-gateway 는 P7 에서 더한다. P3 수집·엔진 작업(krx.daily·close_collect·장중·board·etf·public.export)은
+#   별도 컨테이너가 아니라 scheduler 의 작업 등록부가 돌린다.
+# - P3(묶음 S — docs/p3_design.md §1.9·D-P3-3·§5.4): 서비스 `api`(로그인 API·텔레그램 웹훅 수신·로그인 SPA
+#   정적 파일을 같은 출처로 — FastAPI + uvicorn 한 프로세스). **호스트 네트워크**로 띄워 호스트 루프백
+#   127.0.0.1:8000 에만 연다(KBJ_API_HOST 기본값) — TLS 역방향 프록시(VM, 레포 밖 — [사용자 승인 필요])가
+#   127.0.0.1 에서 들어오므로 uvicorn 의 forwarded_allow_ips=127.0.0.1 이 맞고, 로그인 실패 잠금이 실제
+#   클라이언트 IP 로 돈다(브리지 네트워크면 모든 요청이 브리지 게이트웨이 IP 로 보여 잠금이 전체 잠금이 된다 —
+#   묶음 A 가 남긴 [확인 필요]). 그래서 api 의 DB·Redis 주소는 127.0.0.1(db·redis 가 루프백에 연 포트)이다.
+#   api 에는 KIS·KRX 키를 넣지 않는다(외부 출처를 부르지 않는다 — import-linter 계약 ⑩).
+# - KBJ_WEB_PASSWORD_HASH 값에는 `$` 가 들어 있다(scrypt$n=…$r=…$p=…$…). .env 에는 **작은따옴표로** 넣는다
+#   (KBJ_WEB_PASSWORD_HASH='scrypt$…') — 따옴표가 없으면 compose 가 `$n` 등을 변수로 읽어 값이 깨진다.
 # - 비밀은 서비스마다 필요한 것만 넣는다(.env 를 env_file 로 통째로 넣지 않는다 — docs/secrets.md,
-#   ADR 0004). KIS 앱키·시크릿은 KIS 를 부르는 프로세스에만: P2 는 auth(유일한 발급자 —
-#   KBJ_SERVICE=auth). KIS REST 를 부르는 수집 작업이 켜지는 P3 에 scheduler 에도 더한다(메인 결정 D1
-#   안 A — 요청 헤더에 앱키가 필요하다. 발급은 그래도 auth 만: 발급자 런타임 가드·계약 ④·검사).
-#   텔레그램 값은 notifier 에만, DART 키는 scheduler(filings.corp_code)에만.
+#   ADR 0004). KIS 앱키·시크릿은 KIS 를 부르는 프로세스에만: auth(유일한 발급자 — KBJ_SERVICE=auth)와,
+#   KIS REST 를 부르는 수집 작업이 켜진 P3 부터 scheduler(메인 결정 D1 안 A — 요청 헤더에 앱키가 필요하다.
+#   발급은 그래도 auth 만: 발급자 런타임 가드·계약 ④·검사). KRX 키도 scheduler(krx.daily·market.backfill).
+#   텔레그램 봇 토큰은 notifier 에만(api 는 웹훅 검증용 secret_token 만), DART 키는 scheduler 에만.
+#   공개 내보내기(public.export — scheduler)는 앱 DSN 이 아니라 KBJ_PUBLIC_EXPORT_DATABASE_URL(kbj_public_export
+#   구성원 읽기 전용 로그인 역할 — 운영 배포에서 만든다, ADR 0002 §2.2)만 쓴다. 비면 그 작업은 매일 실패로
+#   알린다(앱 DSN 으로 대신하지 않는다). 푸시(KBJ_PUBLIC_PUSH_ENABLED)는 기본 false — 배포 키 경로·디스패치
+#   토큰(KBJ_PUBLIC_DEPLOY_KEY_PATH·KBJ_GITHUB_DISPATCH_TOKEN)은 사용자 승인 뒤에 더한다(지금은 넣지 않는다).
 # - 접속 문자열은 이 파일이 비밀번호로 만든다(컨테이너 안 호스트 이름 db·redis). 비밀번호는 URL 에
 #   그대로 넣을 수 있는 영숫자로(.env.example). 기본값은 없다.
 #
@@ -32,6 +46,9 @@ x-logging: &logging
 x-urls:
   database: &database_url "postgresql://kbj:${KBJ_POSTGRES_PASSWORD:?KBJ_POSTGRES_PASSWORD 를 .env 에 넣는다}@db:5432/kbj"
   redis: &redis_url "redis://:${KBJ_REDIS_PASSWORD:?KBJ_REDIS_PASSWORD 를 .env 에 넣는다}@redis:6379/0"
+  # api(호스트 네트워크)는 db·redis 가 호스트 루프백에 연 포트로 붙는다
+  database_host: &database_url_host "postgresql://kbj:${KBJ_POSTGRES_PASSWORD:?KBJ_POSTGRES_PASSWORD 를 .env 에 넣는다}@127.0.0.1:5432/kbj"
+  redis_host: &redis_url_host "redis://:${KBJ_REDIS_PASSWORD:?KBJ_REDIS_PASSWORD 를 .env 에 넣는다}@127.0.0.1:6379/0"
 
 x-app: &app
   image: kbj-app:local
@@ -71,12 +88,15 @@ services:
       TZ: UTC
       KBJ_REDIS_PASSWORD: ${KBJ_REDIS_PASSWORD:?KBJ_REDIS_PASSWORD 를 .env 에 넣는다}
     # 비밀번호는 컨테이너 환경에서 읽어 컨테이너 안 설정 파일로 넘긴다 — 이 파일에도, redis-server 명령줄
-    # 인자(ps 로 보인다)에도 값이 없다. 이미지 진입점을 거쳐 redis 사용자로 돈다. AOF 로 토큰·상태가 재기동을 넘긴다
+    # 인자(ps 로 보인다)에도 값이 없다. 이미지 진입점을 거쳐 redis 사용자로 돈다. AOF 로 토큰·상태가 재기동을 넘긴다.
+    # 이미지의 umask 가 077 이라 root 가 쓴 파일을 redis 사용자가 못 연다 — 파일 주인을 redis 로(0600 그대로,
+    # P3 묶음 S 가 실제 기동으로 확인한 고침)
     command:
       - sh
       - -c
       - >-
         printf 'requirepass %s\n' "$$KBJ_REDIS_PASSWORD" > /tmp/redis.conf
+        && chown redis:redis /tmp/redis.conf
         && exec docker-entrypoint.sh redis-server /tmp/redis.conf --appendonly yes
     ports:
       - "127.0.0.1:6379:6379"
@@ -125,8 +145,10 @@ services:
       retries: 3
       start_period: 60s
 
-  # 세션 상태 발행 + 작업 등록부 실행기(config/jobs.yaml). P2 에 켜진 작업은 ops.nightly(pg_dump 백업 —
-  # /data/backup, 보존 [확인 필요 R23])·filings.corp_code(DART)·ops.watchdog 셋뿐(설계 §6.9)
+  # 세션 상태 발행 + 작업 등록부 실행기(config/jobs.yaml). 켜진 작업: P2 ops.nightly(pg_dump 백업 —
+  # /data/backup, 보존 [확인 필요 R23])·filings.corp_code(DART)·ops.watchdog, P3 krx.daily·market.backfill·
+  # market.close_collect·flows.intraday·market.intraday·board.daily·board.confirm·etf.collect(운용사 9곳 —
+  # 키 없음)·public.export(/data/public)
   scheduler:
     <<: *app
     command: ["python", "-m", "kbj.services.scheduler", "run"]
@@ -136,6 +158,12 @@ services:
       KBJ_REDIS_URL: *redis_url
       KBJ_DATABASE_URL: *database_url
       KBJ_DART_API_KEY: ${KBJ_DART_API_KEY:-}
+      KBJ_KIS_APP_KEY: ${KBJ_KIS_APP_KEY:-}
+      KBJ_KIS_APP_SECRET: ${KBJ_KIS_APP_SECRET:-}
+      KBJ_KIS_ENV: ${KBJ_KIS_ENV:-real}
+      KBJ_KRX_API_KEY: ${KBJ_KRX_API_KEY:-}
+      KBJ_PUBLIC_EXPORT_DATABASE_URL: ${KBJ_PUBLIC_EXPORT_DATABASE_URL:-}
+      KBJ_PUBLIC_PUSH_ENABLED: ${KBJ_PUBLIC_PUSH_ENABLED:-false}
       KBJ_NOTIFY_ENABLED: ${KBJ_NOTIFY_ENABLED:-false}
       KBJ_DATA_DIR: /data
     volumes:
@@ -182,6 +210,38 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+
+  # 로그인 API(P3 — D-P3-3·4). 호스트 네트워크·루프백 127.0.0.1:8000(위 머리말). KIS·KRX 키 없음
+  api:
+    <<: *app
+    network_mode: host
+    command: ["python", "-m", "kbj.services.api", "serve"]
+    environment:
+      TZ: UTC
+      KBJ_SERVICE: api
+      KBJ_DATABASE_URL: *database_url_host
+      KBJ_REDIS_URL: *redis_url_host
+      KBJ_API_HOST: 127.0.0.1
+      KBJ_API_PORT: "8000"
+      KBJ_WEB_USER: ${KBJ_WEB_USER:-}
+      KBJ_WEB_PASSWORD_HASH: ${KBJ_WEB_PASSWORD_HASH:-}
+      KBJ_TELEGRAM_WEBHOOK_SECRET: ${KBJ_TELEGRAM_WEBHOOK_SECRET:-}
+      KBJ_PUBLIC_BASE_URL: ${KBJ_PUBLIC_BASE_URL:-}
+      KBJ_GIT_COMMIT: ${KBJ_GIT_COMMIT:-}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      # 데이터 없는 /api/health(세션 불필요). 실패 사유를 찍지 않는다 — 종료 코드만
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/api/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 volumes:
   pgdata:

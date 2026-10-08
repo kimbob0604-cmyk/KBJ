@@ -47,29 +47,6 @@ BANNED = (
 class DiagnosticsDoNotReachTheReader(unittest.TestCase):
     """엔진 자기검사는 진단이다. 결손과 한 목록에 담지 않는다."""
 
-    def test_정합성_검사는_진단으로_간다(self):
-        src = inspect.getsource(B)
-        i = src.index('for note in consistency_notes(rows, cfg):')
-        block = src[i:i + 400]
-        self.assertIn('diag_notes.append', block)
-        self.assertNotIn('missing_notes.append', block)
-
-    def test_단위_의심도_진단으로_간다(self):
-        src = inspect.getsource(B)
-        i = src.index('unit_note = unit_sanity(rows)')
-        block = src[i:i + 300]
-        self.assertIn('diag_notes.append', block)
-        self.assertNotIn('missing_notes.append', block)
-
-    def test_진단이_페이로드에_따로_실린다(self):
-        """빼는 것이지 지우는 것이 아니다 — 고치는 사람은 볼 수 있어야 한다."""
-        self.assertIn('diagnostics=diag_notes', inspect.getsource(B))
-
-    def test_배너는_진단을_읽지_않는다(self):
-        src = inspect.getsource(R)
-        self.assertIn("uni.get('notes')", src)
-        self.assertNotIn("uni.get('diagnostics')", src)
-
     def test_정합성_문구_자체는_그대로_둔다(self):
         """진단은 고치는 사람이 읽는다 — 거기서는 구체적일수록 좋다."""
         src = inspect.getsource(B.consistency_notes)
@@ -166,11 +143,6 @@ class DiagnosticsAreVisibleSomewhere(unittest.TestCase):
 
 class NothingIsSwallowed(unittest.TestCase):
     """2장 6번 — 갈라 담되 버리지 않는다."""
-
-    def test_진단은_run_log_에도_남는다(self):
-        src = inspect.getsource(B)
-        i = src.index('for note in consistency_notes(rows, cfg):')
-        self.assertIn('DB.log_step', src[i:i + 400])
 
     def test_섹션_사유는_meta_로_남는다(self):
         self.assertIn('skipped=skipped', inspect.getsource(CP))

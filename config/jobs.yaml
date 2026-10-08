@@ -6,8 +6,15 @@
 #   데이터셋 id 는 카탈로그(kbj/data/catalog.py)의 논리 데이터셋이다. 실행 때는 ops.data_claim 선점(동적 겹).
 # - 시각은 schedule.tz 벽시계(기본 KST — 컨테이너는 UTC, 변환은 코드에서). 트리거는 하나만:
 #   cron · state_enter(세션 상태 진입) · equity(주식 정규장 기준 — 연초·수능일 지연 개장을 따른다) · manual.
-# - P2 에 실제로 도는 작업은 enabled: true 인 셋(ops.nightly·filings.corp_code·ops.watchdog)뿐이다(§6.9).
-#   나머지는 등록만 — 실행기는 '계획됨'(ops.job_run status=skipped, reason=planned)으로 기록만 한다.
+# - P2 에 켠 작업은 셋(ops.nightly·filings.corp_code·ops.watchdog)이다(§6.9).
+#   켜지지 않은 작업은 등록만 — 실행기는 '계획됨'(ops.job_run status=skipped, reason=planned)으로 기록만 한다.
+# - P3(docs/p3_design.md §0.4·§3.2): 웨이브 1(묶음 M)이 P3 작업의 owner·collects·writes 를 확정했고,
+#   처리기가 생긴 뒤 웨이브 3(묶음 S)이 9개를 켰다(켜진 작업은 처리기 import 가 검증된다 — 단계별 켜진
+#   작업 목록은 tests/unit/scheduler/test_registry_validation.py:ENABLED_BY_PHASE). P3 에서 빼는 작업
+#   (brief.closing·flows.report·us.universe·us.eod·market.fsc_daily)은 P5(D-P3-17).
+# - KIS 거래소 구분(venues)은 config/markets.yaml kis.venues 와 같아야 한다(D-P3-9 — 기본 [KRX]).
+#   collects 에 venues 를 적지 않으면 실행기가 카탈로그의 KRX·NXT·TOTAL 키를 모두 잡고, 처리기는 부르지 않은
+#   키를 done 으로 돌려준다(선점 장부 오염). 두 값이 같은지는 등록부 시험이 검사한다.
 # - runner: external = legacy GX 가 돌린다(P7 까지). KBJ 는 실행하지 않고 데이터 키만 등록한다(D-P2-5).
 # - absorbs 의 문자열은 tests/unit/scheduler/legacy_jobs.txt 의 줄 이름이다(inventory (c) — 줄마다
 #   absorbs·retired 에 정확히 한 번). 그 밖의 문자열(코드 위치)은 근거 메모다.
@@ -18,7 +25,7 @@ defaults:
   tz: Asia/Seoul               # 컨테이너 TZ=UTC(docs/secrets.md) — 변환은 코드에서
   retry: {max: 3, backoff_s: [60, 300, 900]}
   deadline_min: 120            # 시작 시각 + 이 시간 안에 끝나지 않으면 실패
-  enabled: false               # P2: kbj 구현이 있는 작업만 true
+  enabled: false               # kbj 처리기가 있고 그 단계에 켠 작업만 true
 
 # ── 상시 프로세스(작업이 아님 — 하트비트로만 감시) ───────────────────────────────────────────
 services:
@@ -75,8 +82,17 @@ jobs:
     writes: [pub_filings.corp_code]
     absorbs: ["SD:dart_corp_map_update", "ET:board/ingest/dart.py:corp_codes", "ET:dart-report .cache/corp*"]
 
-  - name: us.universe
+  - name: public.export
     phase: P3
+    enabled: true               # 웨이브 3(묶음 S) — 처리기 import 검증 통과
+    owner: "kbj.services.public_export:run"
+    schedule: {cron: "30 5 * * *", when: always}
+    retry: {max: 1, backoff_s: [600]}
+    deadline_min: 30
+    note: "D-P3-15·16 — pub_* 와 코드 계산(캘린더·금통위)만 JSON 으로(KBJ_DATA_DIR/public). 수집 없음·표 쓰기 없음. public-data 브랜치 푸시·Pages 디스패치는 KBJ_PUBLIC_PUSH_ENABLED(기본 false — 사용자 승인 필요)"
+
+  - name: us.universe
+    phase: P5                 # D-P3-17 — 간밤 미국 신고가는 P5
     owner: "kbj.services.collectors.us:universe"
     schedule: {cron: "0 4 * * 0", when: always}
     retry: {max: 2, backoff_s: [600]}
@@ -86,7 +102,7 @@ jobs:
     absorbs: ["SD:refresh_us_universe"]
 
   - name: us.eod
-    phase: P3
+    phase: P5                 # D-P3-17
     owner: "kbj.services.collectors.us:eod"
     # 16:10 뉴욕 = 서머타임 끝(11-01) 전 05:10 KST, 뒤 06:10 KST
     schedule: {cron: "10 16 * * 1-5", tz: America/New_York, when: us_trading_day}
@@ -154,15 +170,16 @@ jobs:
     absorbs: ["ET:xdigest.yml:collect"]
 
   - name: etf.collect
-    phase: P5
-    owner: "kbj.services.collectors.etf:run"
+    phase: P3                 # D-P3-12 — P5 에서 당겼다(페이지 10 구성종목 변동)
+    enabled: true               # 웨이브 3(묶음 S) — 처리기 import 검증 통과
+    owner: "kbj.services.collectors.etf_holdings:run"
     schedule: {cron: "0 8 * * 1-5", when: trading_day}
     retry: {max: 3, backoff_s: [900]}
     collects:
       - {source: ETF_ISSUERS, dataset: pdf, as_of: trade_date}
-    writes: [prv_etf.holdings]
-    notify: {kind: etf.report}
+    writes: [prv_etf.fund, prv_etf.holding, prv_etf.change_log, prv_etf.meta]
     absorbs: ["ET:daily.yml"]
+    note: "운용사 9곳 어댑터마다 격리(한 운용사 실패가 다른 운용사를 멈추지 않는다), 끝에 구성종목 변동 분석. ETF 리포트 발송(notify etf.report)은 P5"
 
   - name: kis.master
     phase: P7
@@ -177,6 +194,7 @@ jobs:
 
   - name: krx.daily
     phase: P3
+    enabled: true               # 웨이브 3(묶음 S) — 처리기 import 검증 통과
     owner: "kbj.services.collectors.krx_daily:run"
     schedule: {cron: "5 8 * * 1-5", when: trading_day}
     retry: {every_s: 600, until: "10:00"}     # KRX 는 D+1 08:00 공표(conflict_map E1)
@@ -192,11 +210,25 @@ jobs:
       - {source: KRX, dataset: etp/etf_bydd_trd, as_of: prev_trading_day}
       - {source: KRX, dataset: etp/etn_bydd_trd, as_of: prev_trading_day}
     budget: krx
-    writes: [prv_market.daily_bar, prv_market.universe, prv_etf.etf_daily]
+    writes: [prv_market.daily_bar, prv_market.stock_snapshot, prv_market.universe,
+             prv_market.eod_reconcile, prv_etf.etf_daily, prv_etf.meta, prv_etf.split_event,
+             prv_flows.ledger_check]
     notify: {kind: ops.universe, when: changed}
     absorbs: ["SD:mark_etf_stocks", "SD:kr_universe_daily", "SD:universe_sync_monthly",
               "ET:board@16:10:krx_confirm", "SD:krx_api.*"]
-    note: "ADR 0001 Q1 — 전날 KIS 잠정 종가(market.close_collect)와 대조·정정. 거래대금·ETF 수급 원장(D7)"
+    note: "ADR 0001 Q1·D-P3-8 — 끝 단계에서 전날 KIS 마감값(market.close_collect)을 KRX 확정치와 대조(prv_market.eod_reconcile, 불일치 KIS 행 invalid). 거래대금·ETF 수급 원장(D7). ETF 일별을 받으면 검산 ③ 실패(prv_flows.ledger_check c3)·감지한 분할(prv_etf.split_event detected)도 기록(record_flow_checks — 멱등). 공표 전이면 not_ready, 커버리지 급감이면 실패"
+
+  - name: board.confirm
+    phase: P3
+    enabled: true               # 웨이브 3(묶음 S) — 처리기 import 검증 통과
+    owner: "kbj.services.engine.board:confirm"
+    schedule: {cron: "40 8 * * 1-5", when: trading_day}
+    retry: {max: 2, backoff_s: [600]}
+    as_of: prev_trading_day
+    depends_on: [{job: krx.daily, hard: true}]
+    writes: [prv_board.alltime, prv_board.label, prv_board.split_check, prv_board.stock_day,
+             prv_board.artifact]
+    note: "D-P3-8 — 전 거래일 보드를 KRX 확정 일봉으로 다시 계산해 덮는다(quality ok). 바뀐 라벨 목록은 artifact.payload.confirm·실행 detail"
 
   - name: gex.krx_derivatives
     phase: P7
@@ -300,7 +332,7 @@ jobs:
     note: "매월 15일경 공표 — 15~17일 하루 한 번씩 본다(받으면 선점 done 이라 다음 날은 건너뛴다)"
 
   - name: market.fsc_daily
-    phase: P3
+    phase: P5                 # D-P3-17 — KRX 대조 보조는 P5
     owner: "kbj.services.collectors.fsc_daily:run"
     schedule: {cron: "10 13 * * 1-5", when: trading_day}
     retry: {max: 3, backoff_s: [1800]}
@@ -384,32 +416,50 @@ jobs:
 
   - name: flows.intraday
     phase: P3
-    owner: "kbj.services.collectors.market_intraday:run"
+    enabled: true               # 웨이브 3(묶음 S) — 처리기 import 검증 통과
+    owner: "kbj.services.collectors.market_intraday:flows"
     schedule: {equity: {start: open, end: close, every_min: 10}, when: trading_day}
-    retry: {max: 0}
-    deadline_min: 10
+    retry: {max: 2, backoff_s: [20, 40]}      # D-P3-14 — 슬롯 안에서 재시도(장중 1시간 무결측)
+    deadline_min: 9
     collects:
-      - {source: KIS, dataset: inst_foreign_intraday, as_of: slot10m}
-      - {source: KIS, dataset: turnover_rank_intraday, as_of: slot10m}
+      - {source: KIS, dataset: inst_foreign_intraday, as_of: slot10m, venues: [KRX]}
+      - {source: KIS, dataset: turnover_rank_intraday, as_of: slot10m, venues: [KRX]}
       - {source: KIS, dataset: etf_quote_intraday, as_of: slot10m}
-    writes: [prv_flows.stock_investor_daily, prv_market.stock_snapshot, prv_etf.quote_intraday]
-    note: "D7 — 장중 외국인·기관 가집계·거래대금 순위·ETF 현재가(잠정, quality=estimated). 마감 뒤 확정치로 덮는다(metrics §2)"
+    writes: [prv_flows.investor_intraday, prv_flows.stock_investor_daily,
+             prv_market.turnover_rank_intraday, prv_market.stock_snapshot, prv_etf.quote_intraday]
+    note: "D7 — 장중 외국인·기관 가집계·거래대금 순위·ETF 현재가(잠정, quality=estimated). 슬롯마다 *_intraday 이력 + 일별 원장 오늘 행(kis.prelim). 마감 뒤 확정치로 덮는다(D-P3-7)"
+
+  - name: market.intraday
+    phase: P3
+    enabled: true               # 웨이브 3(묶음 S) — 처리기 import 검증 통과
+    owner: "kbj.services.collectors.market_intraday:market"
+    schedule: {equity: {start: open, end: close, every_min: 10}, when: trading_day}
+    retry: {max: 2, backoff_s: [20, 40]}      # D-P3-14
+    deadline_min: 9
+    collects:
+      - {source: KIS, dataset: index_quote_intraday, as_of: slot10m}
+      - {source: KIS, dataset: sector_quote_intraday, as_of: slot10m}
+    writes: [prv_market.index_intraday, prv_market.sector_intraday]
+    note: "D-P3-14 신규 — 장중 지수 3·업종 2 호출(슬롯당 5건). 페이지 1 지수 타일·업종 히트맵·장중 시장 거래대금(지수 기준, estimated)"
 
   # ── 장 마감 뒤 ──────────────────────────────────────────────────────────────────────────
   - name: market.close_collect
     phase: P3
+    enabled: true               # 웨이브 3(묶음 S) — 처리기 import 검증 통과
     owner: "kbj.services.collectors.market_close:run"
     schedule: {equity: {start: "close+5"}, when: trading_day}   # 평소 15:35, 수능일 16:35
     retry: {max: 5, backoff_s: [300]}
     collects:
-      - {source: KIS, dataset: stock_quote_eod, as_of: trade_date}
-      - {source: KIS, dataset: stock_investor_daily, as_of: trade_date}
-      - {source: KIS, dataset: market_investor_daily, as_of: trade_date}
-      - {source: KIS, dataset: inst_foreign_top, as_of: trade_date}
-    writes: [prv_market.stock_snapshot, prv_flows.stock_investor_daily, prv_flows.market_investor_daily]
+      - {source: KIS, dataset: stock_quote_eod, as_of: trade_date, venues: [KRX]}
+      - {source: KIS, dataset: stock_investor_daily, as_of: trade_date, venues: [KRX]}
+      - {source: KIS, dataset: market_investor_daily, as_of: trade_date, venues: [KRX]}
+      - {source: KIS, dataset: inst_foreign_top, as_of: trade_date, venues: [KRX]}
+      - {source: KIS, dataset: etf_investor_daily, as_of: trade_date, venues: [KRX]}
+    writes: [prv_market.stock_snapshot, prv_market.daily_bar, prv_flows.stock_investor_daily,
+             prv_flows.market_investor_daily, prv_flows.investor_revision]
     absorbs: ["SD:price_sync_close", "SD:flow_batch", "SD:ohlcv_autofill", "SD:price_sync_afterhours",
               "ET:board@16:10:collect", "ET:kr.yml:kis_flows", "ET:flow.yml:collect"]
-    note: "ADR 0001 Q1 결정 전 기본값(KIS 당일 잠정, 다음 날 KRX 대조). 거래소 구분(KRX·NXT·통합)마다 데이터 키"
+    note: "ADR 0001 Q1 결정 전 기본값(KIS 당일 마감, 다음 날 KRX 대조). 장중 잠정 행을 덮어쓰고 차이를 prv_flows.investor_revision 에(D-P3-7). 거래소 구분은 config/markets.yaml kis.venues(기본 KRX — D-P3-9)마다 데이터 키"
 
   - name: gex.day_minutes
     phase: P7
@@ -424,16 +474,18 @@ jobs:
 
   - name: board.daily
     phase: P3
-    owner: "kbj.engines.board:daily"
+    enabled: true               # 웨이브 3(묶음 S) — 처리기 import 검증 통과
+    owner: "kbj.services.engine.board:daily"    # D-P3-5 — 순수 계산은 kbj.engines.board, 실행은 services.engine
     schedule: {cron: "20 16 * * 1-5", when: trading_day}
     retry: {max: 2, backoff_s: [600]}
     depends_on: [{job: market.close_collect, hard: true}]
-    writes: [prv_board.daily_state]
+    writes: [prv_board.alltime, prv_board.label, prv_board.split_check, prv_board.stock_day,
+             prv_board.artifact]
     absorbs: ["SD:prewarm_new_highs", "SD:stage2_auto", "ET:board@16:10:compute"]
-    note: "신고가 계산·랭킹·탐지·LLM 초안(DB 만). 수능일은 close_collect(16:35) 를 기다린다. 표 이름은 P3 [확인 필요]"
+    note: "신고가 계산·랭킹·탐지(DB 만 — LLM 서술은 P8). KIS 마감 스냅으로 잠정 보드(quality estimated), 다음 날 board.confirm 이 KRX 확정으로 덮는다. 수능일은 close_collect(16:35) 를 기다린다"
 
   - name: brief.closing
-    phase: P3
+    phase: P5                 # D-P3-17·메인 결정 R18 — 마감 요약은 P5(아침 브리핑과 같은 묶음)
     owner: "kbj.reports.briefs:closing"
     schedule: {cron: "40 16 * * 1-5", when: trading_day, catch_up_until: "20:30"}
     retry: {max: 0}
@@ -443,7 +495,7 @@ jobs:
     notify: {kind: brief.closing}
     absorbs: ["SD:tg_closing", "SD:tg_closing_summary", "SD:closing_brief_catchup", "SD:agent_pipeline",
               "ET:board@16:10:send", "GX:plan:brief_1550"]
-    note: "U2 하루 1회(16:40, 캐치업 20:30). 본문은 P3"
+    note: "U2 하루 1회(16:40, 캐치업 20:30). 본문은 P5(R18)"
 
   - name: themes.monitor
     phase: P5
@@ -479,7 +531,7 @@ jobs:
     note: "ECOS 타기관 작성 표(한국거래소·서울외국환중개) — 로그인(DATA_TIERS §1)"
 
   - name: flows.report
-    phase: P3
+    phase: P5                 # D-P3-17
     owner: "kbj.reports.flows:daily"
     schedule: {cron: "20 18 * * 1-5", when: trading_day}
     retry: {max: 0}
@@ -488,7 +540,7 @@ jobs:
       - {job: board.daily, hard: false}
     notify: {kind: flows.report}
     absorbs: ["SD:tg_flow_signals", "ET:flow.yml:report"]
-    note: "수집은 P3, 발송은 P5 [제안 — U2 범위 밖]"
+    note: "수급 리포트 발송 — P5(D-P3-17). 수집(market.close_collect)은 P3"
 
   - name: consensus.snapshot
     phase: P4
@@ -528,14 +580,16 @@ jobs:
 
   - name: market.backfill
     phase: P3
+    enabled: true               # 웨이브 3(묶음 S) — 처리기 import 검증 통과
     owner: "kbj.services.collectors.krx_daily:backfill"
     schedule: {manual: true}
     retry: {max: 2, backoff_s: [600]}
     backfill_of: [krx.daily]
     budget: krx
-    writes: [prv_market.daily_bar, prv_market.universe, prv_etf.etf_daily]
+    writes: [prv_market.daily_bar, prv_market.stock_snapshot, prv_market.universe, prv_etf.etf_daily,
+             prv_etf.meta]
     absorbs: ["SD:mac-crontab:ohlcv_5y_collector"]
-    note: "run-once --as-of <과거 날짜> — krx.daily 와 같은 데이터 키(선점 공유). 백필 상한 krx.backfill_cap. ET 네이버 일봉 백필은 KRX 로 다시 받는다(U4)"
+    note: "run-once --as-of <과거 날짜> 또는 backfill --from --to(§3.8) — krx.daily 와 같은 데이터 키(선점 공유). 백필 상한 krx.backfill_cap, 최근 날짜부터 과거로. ET 네이버 일봉 백필은 KRX 로 다시 받는다(U4 — 네이버 출처 옛 최고가는 옮기지 않는다, R8)"
 
 # ── 폐지하는 legacy 정기 작업(§6.8) ──────────────────────────────────────────────────────────
 retired:

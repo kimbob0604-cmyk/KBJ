@@ -273,14 +273,6 @@ class ClearedEvaluationTest(unittest.TestCase):
         self.assertEqual(ev['split_floor'], 0)
         self.assertIn('공시', ev['suspect_note'])
 
-    def test_build_passes_the_cleared_set(self):
-        import inspect
-        from ..engine import build as B
-        src = inspect.getsource(B)
-        self.assertIn('split_cleared=code in cleared', src)
-        self.assertIn('DB.split_cleared(conn)', src)
-
-
 class UnknownSplitCheckTest(unittest.TestCase):
     """공시를 못 물어본 것과 공시가 있는 것을 화면에서 갈라 적는다."""
 

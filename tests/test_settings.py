@@ -138,3 +138,79 @@ def test_secrets_doc_lists_every_setting() -> None:
     text = (ROOT / "docs" / "secrets.md").read_text(encoding="utf-8")
     missing = [n for n in Settings.model_fields if f"KBJ_{n.upper()}" not in text]
     assert missing == []
+
+
+# ── P3 로그인 웹·공개 내보내기(docs/p3_design.md §5.4·§7, D-P3-4) ─────────────────────────────
+
+SYN_HASH = (
+    "scrypt$n=1024$r=8$p=1$" + "c3ludGhldGlj" + "$" + "ZmFrZS1kay0wMTIz"
+)  # 합성 — 실제 해시 아님
+
+
+def test_p3_defaults_have_no_login_and_push_off() -> None:
+    s = load()
+    assert s.web_user is None and s.web_password_hash is None  # 기본 사용자·비밀번호 없음
+    assert s.web_session_ttl_h == 12 and s.web_cookie_secure is True
+    assert s.web_dist_dir == Path("web/dist-login")
+    assert s.public_export_database_url is None
+    assert s.public_push_enabled is False  # [사용자 승인 필요] — 기본 꺼짐
+    assert s.public_deploy_key_path is None and s.github_dispatch_token is None
+
+
+def test_p3_values_are_read_and_secrets_hidden(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("KBJ_WEB_USER", "synthetic-user")
+    monkeypatch.setenv("KBJ_WEB_PASSWORD_HASH", SYN_HASH)
+    monkeypatch.setenv("KBJ_PUBLIC_EXPORT_DATABASE_URL", f"postgresql://x:{FAKE}@h/db")
+    monkeypatch.setenv("KBJ_GITHUB_DISPATCH_TOKEN", FAKE)
+    monkeypatch.setenv("KBJ_WEB_SESSION_TTL_H", "6")
+    monkeypatch.setenv("KBJ_PUBLIC_DEPLOY_KEY_PATH", "/srv/keys/public_data")
+    s = load()
+    assert s.web_user == "synthetic-user" and s.web_session_ttl_h == 6
+    assert s.web_password_hash is not None and s.web_password_hash.get_secret_value() == SYN_HASH
+    assert s.public_deploy_key_path == Path("/srv/keys/public_data")
+    shown = "\n".join([repr(s), s.model_dump_json()])
+    assert SYN_HASH not in shown and FAKE not in shown
+    assert {v.get_secret_value() for v in s.secret_values()} >= {SYN_HASH, FAKE}
+
+
+def test_password_hash_is_not_format_checked_here(monkeypatch: pytest.MonkeyPatch) -> None:
+    """설정은 해시 형식을 검사하지 않는다 — pydantic 검증 오류는 입력값을 문구에 싣기 때문(값 유출).
+    형식이 틀리면 쓰는 곳(services.api.auth)이 값 없이 503 으로 실패시킨다."""
+    monkeypatch.setenv("KBJ_WEB_PASSWORD_HASH", "plain-" + FAKE)
+    s = load()
+    assert s.web_password_hash is not None and FAKE not in repr(s)
+
+
+def test_insecure_cookie_only_on_loopback(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("KBJ_WEB_COOKIE_SECURE", "false")
+    assert load().web_cookie_secure is False  # 기본 api_host 127.0.0.1
+    monkeypatch.setenv("KBJ_API_HOST", "0.0.0.0")  # noqa: S104 — 거부되는지 본다
+    with pytest.raises(ValidationError, match="루프백"):
+        load()
+    monkeypatch.setenv("KBJ_WEB_COOKIE_SECURE", "true")
+    assert load().api_host == "0.0.0.0"  # noqa: S104
+
+
+@pytest.mark.parametrize("value", ["0", "169"])
+def test_session_ttl_bounds(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
+    monkeypatch.setenv("KBJ_WEB_SESSION_TTL_H", value)
+    with pytest.raises(ValidationError):
+        load()
+
+
+def test_validation_errors_do_not_echo_secret_inputs(monkeypatch: pytest.MonkeyPatch) -> None:
+    """모델 검증기 오류는 입력 dict 전체를 문구에 싣는다 — hide_input_in_errors 로 막는다."""
+    monkeypatch.setenv("KBJ_FRED_KEY", FAKE)  # 짧은 이름이 dict 앞에 오면 값 앞부분이 보였다
+    monkeypatch.setenv("KBJ_DATABASE_URL", f"postgresql://x:{FAKE}@h/db")
+    monkeypatch.setenv("KBJ_WEB_COOKIE_SECURE", "false")
+    monkeypatch.setenv("KBJ_API_HOST", "0.0.0.0")  # noqa: S104 — 거부되는지 본다
+    with pytest.raises(ValidationError) as ei:
+        load()
+    text = str(ei.value)
+    assert "루프백" in text and "input_value" not in text
+    assert FAKE[:6] not in text and "postgre" not in text
+    monkeypatch.setenv("KBJ_WEB_SESSION_TTL_H", f"x{FAKE}")
+    monkeypatch.setenv("KBJ_WEB_COOKIE_SECURE", "true")
+    with pytest.raises(ValidationError) as ei:
+        load()
+    assert FAKE[:6] not in str(ei.value)

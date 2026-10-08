@@ -1,0 +1,19 @@
+{
+ "items": [
+  {
+   "ETF_CD6": "973000",
+   "ETF_NAME": "SOL 합성반도체",
+   "FUND_CD": "SO000"
+  },
+  {
+   "ETF_CD6": "973100",
+   "ETF_NAME": "SOL 합성200",
+   "FUND_CD": "SO001"
+  },
+  {
+   "ETF_CD6": "973200",
+   "ETF_NAME": "SOL 합성미국테크",
+   "FUND_CD": "SO002"
+  }
+ ]
+}

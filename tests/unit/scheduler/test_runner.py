@@ -581,7 +581,11 @@ def test_state_enter_and_run_once_backfill() -> None:
 # ── 실제 등록부로 하루 ────────────────────────────────────────────────────────────────────
 
 
-def test_real_registry_one_day_runs_only_p2_jobs() -> None:
+def test_real_registry_one_day_runs_only_enabled_jobs() -> None:
+    """켜진 작업만 처리기를 부른다(P2 셋 + P3 아홉 — docs/p3_design.md §0.4, 묶음 S 가 켰다).
+
+    나머지는 '계획됨'(skipped·planned)으로만 남고 external 은 기록조차 없다. 켜진 작업의 데이터 키만
+    선점 장부에 done 으로 남는다."""
     reg = Registry.load(JOBS)
     ran: list[str] = []
 
@@ -589,20 +593,28 @@ def test_real_registry_one_day_runs_only_p2_jobs() -> None:
         ran.append(ctx.job)
         return JobResult("ok", collected=ctx.keys)
 
+    enabled = {j.name for j in reg.enabled_jobs()}
+    p2 = {"ops.nightly", "filings.corp_code", "ops.watchdog"}
+    assert p2 <= enabled
     handlers = {j.owner: ok for j in reg.enabled_jobs()}
     rig = Rig([], handlers, kst(2026, 10, 6, 0, 0), registry=reg)
     rig.run_until(kst(2026, 10, 7, 0, 0), every=timedelta(minutes=1))
-    assert set(ran) == {"ops.nightly", "filings.corp_code", "ops.watchdog"}
+    # market.backfill 은 수동(발화 없음). 나머지 켜진 작업은 10-06(화, 거래일)에 모두 돈다
+    assert set(ran) == enabled - {"market.backfill"}
     assert ran.count("ops.watchdog") == 26  # 08:00~20:30 30분마다
+    # equity {start: open, end: close, every_min: 10} — 09:00~15:30 양 끝 포함 40 슬롯
+    assert ran.count("flows.intraday") == ran.count("market.intraday") == 40
     statuses = {(r.job, r.status, r.detail.get("reason")) for r in rig.runs.records.values()}
     for job, status, reason in statuses:
-        if job not in {"ops.nightly", "filings.corp_code", "ops.watchdog"}:
+        if job not in enabled:
             assert (status, reason) == ("skipped", "planned"), job
     external = {j.name for j in reg.jobs if j.external}
     assert not any(r.job in external for r in rig.runs.records.values())
     planned = {r.job for r in rig.runs.records.values() if r.detail.get("reason") == "planned"}
-    assert {"krx.daily", "brief.morning", "brief.closing", "market.close_collect"} <= planned
+    assert {"brief.morning", "brief.closing", "flows.report"} <= planned  # P5 로 옮긴 것 포함
     assert "us.eod" in planned  # 10-05(월) 뉴욕장 → 10-06 05:10 KST
-    assert rig.notes.sent == [] and rig.claims.done_keys() == [
-        DataKey("DART", "corpCode", "2026-10-06")
-    ]
+    assert rig.notes.sent == []
+    done = rig.claims.done_keys()
+    assert DataKey("DART", "corpCode", "2026-10-06") in done
+    owners = {c.dataset_id: j.name for j in reg.jobs for c in j.collects}
+    assert {owners[k.dataset_id] for k in done} <= enabled

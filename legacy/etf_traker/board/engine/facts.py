@@ -34,13 +34,8 @@ def gap(v, digits=1):
     return None if v is None else f'{v:.{digits}f}%'
 
 
-def eok(v):
-    """억원. 1조 이상은 조로 접는다. 레퍼런스가 '1.28조' / '3,240억' 둘 다 쓴다."""
-    if v is None:
-        return None
-    if abs(v) >= 10000:
-        return f'{v/10000:,.2f}조'
-    return f'{v:,.0f}억'
+# 억원 표기('1.28조' / '3,240억')는 kbj 랭킹 엔진과 같은 규칙 하나다(KBJ P3 묶음 E1 — 두 벌 금지)
+from kbj.engines.board.rankings import eok  # noqa: E402,F401
 
 
 def mult(v):

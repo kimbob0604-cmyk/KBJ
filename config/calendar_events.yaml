@@ -1,0 +1,14 @@
+# 수기 일정 — 비밀 아님, 공개 등급(한국은행 공표 일정). 공개 내보내기 events.json·상단 띠 '금통위 D-n'(§4.4·§7.2).
+# 해석기는 kbj/config/markets.py:load_calendar_events. 연 1회 갱신(R25) — P5 경제 캘린더가 대체한다.
+# 2026 날짜: 한국은행 통화정책방향 결정회의 공표 일정을 옮겼다. 확인 경로는 2차 출처(언론·은행 안내문 —
+# 2026-10-07 조회) [확인 필요 — 한국은행 홈페이지 '금융통화위원회 > 회의 일정'과 대조].
+version: 1
+events:
+  - {kind: bok_mpc, date: 2026-01-15, title: "금통위 통화정책방향 결정", source: "한국은행 공표 일정"}
+  - {kind: bok_mpc, date: 2026-02-26, title: "금통위 통화정책방향 결정", source: "한국은행 공표 일정"}
+  - {kind: bok_mpc, date: 2026-04-10, title: "금통위 통화정책방향 결정", source: "한국은행 공표 일정"}
+  - {kind: bok_mpc, date: 2026-05-28, title: "금통위 통화정책방향 결정", source: "한국은행 공표 일정"}
+  - {kind: bok_mpc, date: 2026-07-16, title: "금통위 통화정책방향 결정", source: "한국은행 공표 일정"}
+  - {kind: bok_mpc, date: 2026-08-27, title: "금통위 통화정책방향 결정", source: "한국은행 공표 일정"}
+  - {kind: bok_mpc, date: 2026-10-22, title: "금통위 통화정책방향 결정", source: "한국은행 공표 일정"}
+  - {kind: bok_mpc, date: 2026-11-26, title: "금통위 통화정책방향 결정", source: "한국은행 공표 일정"}

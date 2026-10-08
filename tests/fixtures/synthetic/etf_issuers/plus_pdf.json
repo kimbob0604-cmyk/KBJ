@@ -1,0 +1,149 @@
+{
+ "content": [
+  {
+   "amount": 1220,
+   "jmCd": "990070",
+   "jmNm": "합성종목007",
+   "krJmCd": "KR7990070003",
+   "ratio": 2.291,
+   "wkdate": "20261006"
+  },
+  {
+   "amount": 541,
+   "jmCd": "990020",
+   "jmNm": "합성종목002",
+   "krJmCd": "KR7990020003",
+   "ratio": 0.6607,
+   "wkdate": "20261006"
+  },
+  {
+   "amount": 1761,
+   "jmCd": "990040",
+   "jmNm": "합성종목004",
+   "krJmCd": "KR7990040003",
+   "ratio": 2.6131,
+   "wkdate": "20261006"
+  },
+  {
+   "amount": 2916,
+   "jmCd": "990340",
+   "jmNm": "합성종목034",
+   "krJmCd": "KR7990340003",
+   "ratio": 15.8152,
+   "wkdate": "20261006"
+  },
+  {
+   "amount": 1569,
+   "jmCd": "990180",
+   "jmNm": "합성종목018",
+   "krJmCd": "KR7990180003",
+   "ratio": 5.2128,
+   "wkdate": "20261006"
+  },
+  {
+   "amount": 3822,
+   "jmCd": "990210",
+   "jmNm": "합성종목021",
+   "krJmCd": "KR7990210003",
+   "ratio": 14.204,
+   "wkdate": "20261006"
+  },
+  {
+   "amount": 2231,
+   "jmCd": "990090",
+   "jmNm": "합성종목009",
+   "krJmCd": "KR7990090003",
+   "ratio": 4.7754,
+   "wkdate": "20261006"
+  },
+  {
+   "amount": 3265,
+   "jmCd": "990110",
+   "jmNm": "합성종목011",
+   "krJmCd": "KR7990110003",
+   "ratio": 7.8462,
+   "wkdate": "20261006"
+  },
+  {
+   "amount": 1377,
+   "jmCd": "990130",
+   "jmNm": "합성종목013",
+   "krJmCd": "KR7990130003",
+   "ratio": 3.6708,
+   "wkdate": "20261006"
+  },
+  {
+   "amount": 5094,
+   "jmCd": "990250",
+   "jmNm": "합성종목025",
+   "krJmCd": "KR7990250003",
+   "ratio": 21.607,
+   "wkdate": "20261006"
+  },
+  {
+   "amount": 3525,
+   "jmCd": "990160",
+   "jmNm": "합성종목016",
+   "krJmCd": "KR7990160003",
+   "ratio": 10.7856,
+   "wkdate": "20261006"
+  },
+  {
+   "amount": 1000.0,
+   "jmCd": "990360",
+   "jmNm": "합성종목036",
+   "krJmCd": "KR7990360003",
+   "ratio": 5.6862,
+   "wkdate": "20261006"
+  },
+  {
+   "amount": 500.0,
+   "jmCd": "995010",
+   "jmNm": "합성ETF",
+   "krJmCd": "KR7995010003",
+   "ratio": 3.181,
+   "wkdate": "20261006"
+  },
+  {
+   "amount": 300.0,
+   "jmCd": "KR7990011003",
+   "jmNm": "합성종목001우",
+   "krJmCd": "KR7990011003",
+   "ratio": 1.651,
+   "wkdate": "20261006"
+  },
+  {
+   "amount": 10.0,
+   "jmCd": null,
+   "jmNm": "합성애플",
+   "krJmCd": "US0378331005",
+   "ratio": 0.5,
+   "wkdate": "20261006"
+  },
+  {
+   "amount": 0.0,
+   "jmCd": null,
+   "jmNm": "원화예금",
+   "krJmCd": "KRD010010001",
+   "ratio": 0.3,
+   "wkdate": "20261006"
+  },
+  {
+   "amount": 1.0,
+   "jmCd": null,
+   "jmNm": "합성지수선물",
+   "krJmCd": "KR4A01690002",
+   "ratio": 0.2,
+   "wkdate": "20261006"
+  },
+  {
+   "amount": 0.0,
+   "jmCd": null,
+   "jmNm": "합성국고채",
+   "krJmCd": "KR103502GF30",
+   "ratio": 0.1,
+   "wkdate": "20261006"
+  }
+ ],
+ "totalPages": 1
+}

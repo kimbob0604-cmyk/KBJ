@@ -35,7 +35,8 @@ def main(argv=None) -> int:
     f.add_argument("--date", help="YYYYMMDD (기본: 최신 state)")
     f.add_argument("--limit", type=int, help="대상 종목 수 제한")
     f.add_argument("--no-report", action="store_true")
-    f.add_argument("--shorts", action="store_true", help="KRX 공매도 결합 시도")
+    # KBJ P3 묶음 S: `--shorts`(KRX 웹 스크랩 공매도 — krx.py)는 지웠다(docs/p3_design.md §1.10,
+    # 옛 KRX_ID·KRX_PW 관문). KRX 자료는 KRX OPEN API(kbj krx.daily)로만 받는다
 
     s = sub.add_parser("study", help="모듈 B — 신고가 이벤트 스터디")
     s.add_argument("--years", type=int, default=C.STUDY_YEARS)
@@ -69,12 +70,9 @@ def main(argv=None) -> int:
     t0 = time.time()
 
     if a.cmd == "flows":
-        from . import flows, krx
+        from . import flows
         p = flows.run(date=a.date, source=a.source, limit=a.limit,
                       write_report=not a.no_report, log=_log)
-        if a.shorts:
-            note = krx.enrich(p["rows"], p["as_of"], log=_log)
-            _log(f"  공매도 — {note.get('note') or note}")
         agg = p["aggregate"]
         _log(f"완료 {time.time() - t0:.1f}초 · 결합 {agg['n_with_flows']}/{agg['n_rows']}종목 "
              f"· supported {agg['supported_n']}종목")

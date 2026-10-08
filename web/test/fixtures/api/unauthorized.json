@@ -1,0 +1,5 @@
+{
+  "code": "unauthorized",
+  "message": "로그인이 필요하다",
+  "detail": {}
+}

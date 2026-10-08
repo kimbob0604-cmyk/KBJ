@@ -1,0 +1,119 @@
+{
+  "source": "KIS+KIS(잠정)",
+  "as_of": "2026-09-16T10:10:00+09:00",
+  "quality": "estimated",
+  "notes": [
+    "NXT 미포함(KRX 구분만 — D-P3-9)",
+    "장중 잠정 — 15:35 마감 뒤 확정"
+  ],
+  "generated_at": "2026-09-16T10:05:00+09:00",
+  "data": {
+    "slot": "2026-09-16T10:00:00+09:00",
+    "top_foreign": [
+      {
+        "rank": 1,
+        "code": "Q00000",
+        "value": 5000000000,
+        "qty": 1000
+      },
+      {
+        "rank": 2,
+        "code": "Q00001",
+        "value": 4000000000,
+        "qty": 2000
+      },
+      {
+        "rank": 3,
+        "code": "Q00002",
+        "value": 3000000000,
+        "qty": 3000
+      },
+      {
+        "rank": 4,
+        "code": "Q00004",
+        "value": 2000000000,
+        "qty": 4000
+      },
+      {
+        "rank": 5,
+        "code": "Q00005",
+        "value": 1000000000,
+        "qty": 5000
+      }
+    ],
+    "top_inst": [
+      {
+        "rank": 1,
+        "code": "Q00000",
+        "value": 500000000,
+        "qty": 500
+      },
+      {
+        "rank": 2,
+        "code": "Q00001",
+        "value": 400000000,
+        "qty": 500
+      },
+      {
+        "rank": 3,
+        "code": "Q00002",
+        "value": 300000000,
+        "qty": 500
+      },
+      {
+        "rank": 4,
+        "code": "Q00004",
+        "value": 200000000,
+        "qty": 500
+      },
+      {
+        "rank": 5,
+        "code": "Q00005",
+        "value": 100000000,
+        "qty": 500
+      }
+    ],
+    "turnover_rank": [
+      {
+        "market": "KOSPI",
+        "rank": 1,
+        "code": "Q00000",
+        "name": "합성Q00000",
+        "turnover": 50000000000,
+        "chg_pct": 1.2
+      },
+      {
+        "market": "KOSPI",
+        "rank": 2,
+        "code": "Q00001",
+        "name": "합성Q00001",
+        "turnover": 40000000000,
+        "chg_pct": 1.2
+      },
+      {
+        "market": "KOSPI",
+        "rank": 3,
+        "code": "Q00002",
+        "name": "합성Q00002",
+        "turnover": 30000000000,
+        "chg_pct": 1.2
+      },
+      {
+        "market": "KOSPI",
+        "rank": 4,
+        "code": "Q00004",
+        "name": "합성Q00004",
+        "turnover": 20000000000,
+        "chg_pct": 1.2
+      },
+      {
+        "market": "KOSPI",
+        "rank": 5,
+        "code": "Q00005",
+        "name": "합성Q00005",
+        "turnover": 10000000000,
+        "chg_pct": 1.2
+      }
+    ]
+  }
+}

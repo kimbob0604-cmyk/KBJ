@@ -90,3 +90,31 @@ def test_malformed_parts_are_refused(call: object) -> None:
 
 def test_secret_digest_is_sha256_prefix() -> None:
     assert k.secret_digest("abc") == hashlib.sha256(b"abc").hexdigest()[:16]
+
+
+# ── P3 웹 로그인·API 캐시 키(docs/p3_design.md §5.3·§5.4) ─────────────────────────────────────
+
+
+def test_web_keys_take_digests_only() -> None:
+    sid = "synthetic-session-id-0123456789"
+    digest = k.web_digest(sid)
+    assert digest == hashlib.sha256(sid.encode()).hexdigest()[:32]
+    assert k.web_session_key(digest) == f"web:session:{digest}"
+    ip16 = k.web_digest("192.0.2.10", 16)
+    assert k.web_login_fail_key(ip16) == f"web:login_fail:{ip16}"
+    assert (k.WEB_LOGIN_LOCK, k.WEB_LOGIN_FAIL_ALL) == ("web:login_lock", "web:login_fail:all")
+    for bad in (sid, digest[:16], digest.upper(), ""):
+        with pytest.raises(ValueError):
+            k.web_session_key(bad)  # 원문·길이 다름·대문자는 거부 — 키에 원문이 남지 않게
+    with pytest.raises(ValueError):
+        k.web_login_fail_key("192.0.2.10")
+    with pytest.raises(ValueError):
+        k.web_digest("")
+    assert k.WEB_LOGIN_FAIL_ALL != k.web_login_fail_key(ip16)
+
+
+def test_api_data_version_key() -> None:
+    assert k.api_data_version_key("flows") == "api:data_version:flows"
+    for bad in ("Flows", "", "a b", "board:x"):
+        with pytest.raises(ValueError):
+            k.api_data_version_key(bad)
