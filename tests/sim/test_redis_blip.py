@@ -3,7 +3,7 @@
 창 11:30 ~ 12:30 KST(빈 Redis — 11:30 첫 발급). 기대:
 
 - auth 는 발급하지 않는다(받아도 둘 곳이 없다) — warning `token_cache_error`, 추가 발급 0.
-- 그 사이 돈 수집 작업(12:00 공시 피드·장중 수급·관심종목)과 워치독은 실패로 기록되고 쥔
+- 그 사이 돈 수집 작업(12:00 공시 피드·장중 수급·관심종목·P5 F2 1분)과 워치독은 실패로 기록되고 쥔
   키를 놓는다. 재시도 규칙대로 다음 회차(12:01 공시·12:10 장중)가 받는다. 데이터 키 중복 0.
 - 실패 알림은 대기열(Redis)에 못 넣으니 health `job_failed_notify_failed` 로 남는다
   (삼키지 않는다).
@@ -57,6 +57,11 @@ def test_jobs_during_the_blip_fail_and_release_keys(blip: SimDay) -> None:
         # flows.intraday 는 P3 부터 슬롯 안 재시도(20·40초 — D-P3-14)로 같은 슬롯에 회복한다
         ("rules.intraday", "2026-10-06T12:00"),
         ("ops.watchdog", "2026-10-06T12:00"),
+        # P5 F2 매분 작업(flows.market_minute 은 켬 — D-P5-23, program.intraday 는 꺼진 채
+        # 시뮬레이션 처리기로 계획 부하만 — rules.intraday 와 같다): 재시도 한 번·15초라
+        # 12:00:15 재시도도 장애 창 안 → 그 슬롯은 실패, 12:01 회차가 받는다
+        ("flows.market_minute", "2026-10-06T12:00"),
+        ("program.intraday", "2026-10-06T12:00"),
     }
     released = {(r.job, r.key.as_of) for r in blip.claims.rows if r.status == "failed"}
     assert ("rules.intraday", "2026-10-06T12:00") in released
@@ -68,6 +73,8 @@ def test_next_runs_recover_and_no_key_is_collected_twice(blip: SimDay) -> None:
     assert final[("filings.dart_feed", "2026-10-06T12:01")].status == "ok"
     assert final[("flows.intraday", "2026-10-06T12:10")].status == "ok"
     assert final[("ops.watchdog", "2026-10-06T11:30")].status == "ok"
+    assert final[("flows.market_minute", "2026-10-06T12:01")].status == "ok"
+    assert final[("program.intraday", "2026-10-06T12:01")].status == "ok"
     assert max(blip.done_keys().values()) == 1
     assert blip.claims.refused == []
 

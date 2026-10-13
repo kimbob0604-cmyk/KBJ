@@ -59,6 +59,9 @@ class SourceLimits(BaseModel):
     backfill_cap: int | None = Field(default=None, gt=0)
     daily_cap_per_dataset: int | None = Field(default=None, gt=0)
     close_after_throttles: int | None = Field(default=None, gt=0)  # 같은 날 감속 신호 N 회면 닫기
+    # 하루 호출 합 상한 — 실행 중에는 막지 않는다(KIS 일 한도 미공표). 등록부 시험이 작업별 추정
+    # 호출 합과 대조한다(P5 — docs/p5_design.md §3.4 [제안 30,000])
+    daily_soft_cap: int | None = Field(default=None, gt=0)
 
     # ── 텔레그램 ──
     per_chat_rate: float | None = Field(default=None, gt=0)

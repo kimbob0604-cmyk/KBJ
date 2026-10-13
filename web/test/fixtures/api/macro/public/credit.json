@@ -1,0 +1,78 @@
+{
+  "source": "DATAGO+ECOS",
+  "as_of": "2026-11-17T18:00:00+09:00",
+  "quality": "stale",
+  "notes": [],
+  "generated_at": "2026-11-17T16:30:00+09:00",
+  "data": {
+    "chips": [
+      {
+        "key": "credit_spread",
+        "label": "신용스프레드 AA-",
+        "value": {
+          "value": 0.53,
+          "source": "ECOS:817Y002",
+          "as_of": "2026-11-14T06:00:00+09:00",
+          "quality": "stale"
+        },
+        "tier": "public",
+        "phase_pending": null,
+        "tags": [
+          "%p"
+        ],
+        "note": "공표 지연 — 한쪽 시리즈가 늦다(전 공통일 값)",
+        "detail": {
+          "period": "2026-11-13",
+          "aa": 3.11,
+          "ktb3y": 2.58,
+          "change_bp": 2.0000000000000018,
+          "prev_period": "2026-11-12"
+        }
+      },
+      {
+        "key": "credit_balance",
+        "label": "신용잔고",
+        "value": {
+          "value": 17534979.0,
+          "source": "DATAGO:15094809/credit",
+          "as_of": "2026-11-14T18:00:00+09:00",
+          "quality": "stale"
+        },
+        "tier": "public",
+        "phase_pending": null,
+        "tags": [
+          "백만원"
+        ],
+        "note": "공표 지연 — 2026-11-13 값(D+1 13시 개방)",
+        "detail": {
+          "date": "2026-11-13",
+          "unit": "백만원",
+          "change": -28570.0,
+          "prev_date": "2026-11-12"
+        }
+      },
+      {
+        "key": "investor_deposit",
+        "label": "투자자예탁금",
+        "value": {
+          "value": 55341127.0,
+          "source": "DATAGO:15094809/capital",
+          "as_of": "2026-11-17T18:00:00+09:00",
+          "quality": "ok"
+        },
+        "tier": "public",
+        "phase_pending": null,
+        "tags": [
+          "백만원"
+        ],
+        "note": null,
+        "detail": {
+          "date": "2026-11-16",
+          "unit": "백만원",
+          "change": 213319.0,
+          "prev_date": "2026-11-13"
+        }
+      }
+    ]
+  }
+}

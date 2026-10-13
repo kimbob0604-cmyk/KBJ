@@ -12,6 +12,10 @@
   (재수집 멱등).
 - 변동: `put_changes(run_date, rows)` 는 그 실행일 행을 통째로 바꾼다(ET `INSERT OR REPLACE` 보다
   엄격 — 다시 돌린 분석에서 사라진 변동이 남지 않게).
+- P5(docs/p5_design.md §1.1·§4.4 — 페이지 10 보유 탐색·ETF 맵): `holdings_of(펀드 또는 ETF 코드,
+  날짜)` = 그 날짜 이하 마지막 PDF 스냅, `holders_of(종목, 날짜)` = 펀드마다 그 날짜 이하 마지막
+  스냅에 그 종목이 있으면 한 줄(운용사마다 기준일이 다르면 그대로 — 섞지 않는다). ETF 맵 입력은
+  `map_inputs(repo, asof, n)`(메타 + 일별 창 — 새 표 없음).
 """
 
 from __future__ import annotations
@@ -20,6 +24,7 @@ from collections.abc import Collection, Iterable, Sequence
 from datetime import date, datetime
 from typing import Any, Protocol
 
+from kbj.core.p5_rows import EtfHolder
 from kbj.core.quality import Quality
 from kbj.core.rows import (
     Change,
@@ -99,6 +104,44 @@ class EtfRepo(Protocol):
     def changes(self, run_date: date) -> list[Change]: ...
 
     def last_change_run(self, upto: date) -> date | None: ...
+
+    # P5 — 보유 탐색(ETF 묶음이 읽는다)
+    def holdings_of(self, fund_or_etf: str, asof: date) -> list[EtfHolder]:
+        """펀드 id 또는 상장 코드(fund.ticker) → asof 이하 마지막 스냅의 구성종목(비중 내림차순)."""
+        ...
+
+    def holders_of(self, code: str, asof: date) -> list[EtfHolder]:
+        """종목 → 담은 펀드들(펀드마다 asof 이하 마지막 스냅 — 비중 내림차순, 같으면 fund_id 순)."""
+        ...
+
+
+def map_inputs(
+    repo: EtfRepo, asof: date, n: int
+) -> tuple[dict[str, EtfMeta], dict[str, list[EtfDay]]]:
+    """ETF 맵 입력(메타 + asof 이하 최근 n 거래일 일별 창) — 기존 읽기 둘을 묶었을 뿐(새 표
+    없음)."""
+    return repo.meta(), repo.etf_days(asof, n)
+
+
+def holder_row(fund_id: str, fund: Fund | None, asof: date, h: HoldingRow) -> EtfHolder:
+    return EtfHolder(
+        fund_id=fund_id, etf_code=None if fund is None else fund.ticker,
+        etf_name=None if fund is None else fund.name,
+        is_active=False if fund is None else fund.is_active, asof=asof, code=h.code, name=h.name,
+        wt=h.wt, qty=h.qty, val=h.val, source=h.source, quality=h.quality,
+    )  # fmt: skip
+
+
+def holder_order(e: EtfHolder) -> tuple[float, str, str]:
+    return (-(e.wt if e.wt is not None else float("-inf")), e.fund_id, e.code)
+
+
+def resolve_fund(funds: dict[str, Fund], fund_or_etf: str) -> str:
+    """펀드 id 가 있으면 그대로, 아니면 상장 코드(ticker)가 같은 펀드(여럿이면 id 순 첫째)."""
+    if fund_or_etf in funds:
+        return fund_or_etf
+    hits = sorted(f for f, v in funds.items() if v.ticker == fund_or_etf)
+    return hits[0] if hits else fund_or_etf
 
 
 def best_etf_days(rows: Iterable[EtfDay]) -> dict[str, list[EtfDay]]:
@@ -472,3 +515,39 @@ class PgEtfRepo:
                 b"SELECT max(run_date) FROM prv_etf.change_log WHERE run_date <= %s", (upto,)
             ).fetchone()
         return None if r is None else r[0]
+
+    def holdings_of(self, fund_or_etf: str, asof: date) -> list[EtfHolder]:
+        funds = self.funds()
+        fid = resolve_fund(funds, fund_or_etf)
+        with self._connect() as conn:
+            r = conn.execute(
+                b"SELECT max(asof) FROM prv_etf.holding WHERE fund_id = %s AND asof <= %s",
+                (fid, asof),
+            ).fetchone()
+        day = None if r is None else r[0]
+        if day is None:
+            return []
+        rows = self.holdings(fid, day)
+        return sorted(
+            (holder_row(fid, funds.get(fid), day, h) for h in rows.values()), key=holder_order
+        )
+
+    def holders_of(self, code: str, asof: date) -> list[EtfHolder]:
+        funds = self.funds()
+        with self._connect() as conn:
+            rows = conn.execute(
+                b"SELECT h.fund_id, h.asof, h.code, h.name, h.qty, h.wt, h.val, h.source, "
+                b"h.quality FROM prv_etf.holding h JOIN (SELECT fund_id, max(asof) AS asof "
+                b"FROM prv_etf.holding WHERE asof <= %s GROUP BY fund_id) l "
+                b"ON l.fund_id = h.fund_id AND l.asof = h.asof WHERE h.code = %s",
+                (asof, code),
+            ).fetchall()
+        out = [
+            holder_row(
+                r[0], funds.get(r[0]), r[1],
+                HoldingRow(code=r[2], name=r[3], qty=to_float(r[4]), wt=to_float(r[5]),
+                           val=to_float(r[6]), source=r[7], quality=Quality(r[8])),
+            )
+            for r in rows
+        ]  # fmt: skip
+        return sorted(out, key=holder_order)

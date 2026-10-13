@@ -18,9 +18,13 @@ import pytest
 from kbj.core.time import KST
 from kbj.services.public_export.manifest import (
     DART_ONLY_NAMES,
+    DART_SUBDIRS,
+    DIR_CAPS,
+    FILE_CAPS,
     LOGIN_SOURCES,
     MANIFEST_NAME,
     NAME_RE,
+    P5_FLAT_NAMES,
     SUBDIR_JSON_RE,
     SUBDIR_XLSX_RE,
     SUBDIRS,
@@ -350,6 +354,8 @@ def test_js_merge_rules_match_python() -> None:
         "import * as m from './web/scripts/merge-public-data.mjs';\n"
         "console.log(JSON.stringify({sj: m.SUBDIR_JSON_RE.source, sx: m.SUBDIR_XLSX_RE.source,"
         " subdirs: m.SUBDIRS, dart: [...m.DART_ONLY].sort(), name: m.NAME_RE.source,"
+        " dsub: m.DART_SUBDIRS, p5: [...m.P5_FLAT_NAMES].sort(), dcaps: m.DIR_CAPS,"
+        " fcaps: m.FILE_CAPS,"
         " digest: m.dirDigest([['fin/A00002.json', '2'.repeat(64)],"
         " ['fin/A00001.json', '1'.repeat(64)]])}));\n"
     )
@@ -368,6 +374,110 @@ def test_js_merge_rules_match_python() -> None:
     assert js["name"] == "^" + NAME_RE.pattern + "$"
     assert tuple(js["subdirs"]) == SUBDIRS
     assert js["dart"] == sorted(DART_ONLY_NAMES)
+    assert tuple(js["dsub"]) == DART_SUBDIRS
+    assert js["p5"] == sorted(P5_FLAT_NAMES)
+    assert js["dcaps"] == DIR_CAPS
+    assert js["fcaps"] == FILE_CAPS
     assert js["digest"] == dir_digest(
         [("fin/A00001.json", "1" * 64), ("fin/A00002.json", "2" * 64)]
     )
+
+
+# ── P5 공개 파일(docs/p5_design.md §7): macro/·credit.json(테마 themes/ 는 P5 제외) ──
+
+
+@pytest.mark.parametrize(
+    "name", ["macro/tabs.json", "macro/rates.json", "macro/calendar.json", "macro/us_2.json"]
+)
+def test_p5_subdir_names_allowed(name: str) -> None:
+    PublicFile(name=name, source="ECOS", as_of=NOW, quality="ok", data={})
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "macro/Rates.json",
+        "macro/a-b.json",
+        "macro/x/y.json",
+        "macro/../x.json",
+        "macro/.json",
+        "themes/index.json",
+    ],
+)
+def test_p5_bad_subdir_names_refused(name: str) -> None:
+    with pytest.raises(ValueError):
+        PublicFile(name=name, source="ECOS", as_of=NOW, quality="ok", data={})
+
+
+def test_p5_subdirs_and_caps_declared() -> None:
+    assert set(DART_SUBDIRS) < set(SUBDIRS)
+    assert set(SUBDIRS) - set(DART_SUBDIRS) == {"macro"}
+    assert DIR_CAPS == {"macro": 3 * 1024 * 1024}
+    assert FILE_CAPS == {"credit.json": 100 * 1024, "macro/calendar.json": 200 * 1024}
+    assert "credit.json" in P5_FLAT_NAMES and not DART_ONLY_NAMES & P5_FLAT_NAMES
+
+
+@pytest.mark.parametrize("name", ["credit.json", "macro/rates.json", "macro/calendar.json"])
+def test_p5_files_not_dart_only_but_no_watch_prv_or_login(name: str) -> None:
+    ok = _env(source="ECOS", data={"rows": [{"source": "KOSIS"}, {"source": "DATAGO"}]})
+    assert check_payload(name, json.dumps(ok)) == []
+    watch = _env(source="ECOS", data={"rows": [{"watchlist": True}]})
+    assert any("관심종목 흔적" in p for p in check_payload(name, json.dumps(watch)))
+    prv = _env(source="ECOS", notes=["prv_macro.series"])
+    assert any("스키마 이름" in p for p in check_payload(name, json.dumps(prv)))
+    login = _env(source="ECOS", data={"rows": [{"source": "YAHOO"}]})
+    assert any("로그인 등급 출처" in p for p in check_payload(name, json.dumps(login)))
+
+
+def _p5_tree(tmp_path: Path, *, calendar_bytes: int = 10) -> Path:
+    from kbj.services.public_export.export import write_files
+
+    files = [
+        PublicFile(name="credit.json", source="DATAGO", as_of=NOW, quality="ok", data={"a": 1}),
+        PublicFile(name="macro/rates.json", source="ECOS", as_of=NOW, quality="ok", data={}),
+        PublicFile(
+            name="macro/calendar.json",
+            source="KBJ",
+            as_of=NOW,
+            quality="stale",
+            data={"pad": "x" * calendar_bytes},
+        ),
+        PublicFile(name="macro/us.json", source="FRED", as_of=NOW, quality="ok", data={}),
+    ]
+    write_files(files, tmp_path, now=NOW)
+    return tmp_path
+
+
+def test_check_tree_p5_dirs_clean(tmp_path: Path) -> None:
+    d = _p5_tree(tmp_path)
+    assert check_tree(d) == []
+    man = json.loads((d / MANIFEST_NAME).read_text(encoding="utf-8"))
+    assert [(x["name"], x["source"], x["quality"]) for x in man["dirs"]] == [
+        ("macro", "ECOS,FRED,KBJ", "stale"),
+    ]
+    assert [e["name"] for e in man["files"]] == ["credit.json"]
+    assert sorted(listed_paths(d)) == [
+        "credit.json",
+        "macro/calendar.json",
+        "macro/rates.json",
+        "macro/us.json",
+    ]
+
+
+def test_check_tree_p5_caps_and_dir_source(tmp_path: Path) -> None:
+    d = _p5_tree(tmp_path)
+    cal = d / "macro" / "calendar.json"
+    cal.write_text(cal.read_text(encoding="utf-8") + " " * (200 * 1024), encoding="utf-8")
+    assert any("macro/calendar.json: 크기 상한" in p for p in check_tree(d))
+    man = json.loads((d / MANIFEST_NAME).read_text(encoding="utf-8"))
+    man["dirs"][0]["source"] = ""
+    (d / MANIFEST_NAME).write_text(json.dumps(man), encoding="utf-8")
+    assert any("macro/: source 없음" in p for p in check_tree(d))
+
+
+def test_write_files_refuses_p5_over_cap(tmp_path: Path) -> None:
+    from kbj.services.public_export.export import PublicExportError
+
+    with pytest.raises(PublicExportError, match="상한"):
+        _p5_tree(tmp_path, calendar_bytes=200 * 1024)
+    assert not (tmp_path / MANIFEST_NAME).exists()

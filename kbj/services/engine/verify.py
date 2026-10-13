@@ -14,6 +14,11 @@ docs/p3_design.md §0.3·§8.7 체크리스트 #20. 키를 받은 뒤 실 DB 원
   엔진이 아직 없으면 ③ 은 '불가(엔진 없음)'로 적는다. 엔진이 예외를 내면 오류로 적고 종료 코드 2.
 - `--record`: 실패 행을 `prv_flows.ledger_check` 에 쓴다(기본은 읽기만).
 
+`--program`(P5 F2 — docs/p5_design.md §8.8, probe_results §7 #42): 장중 투자자 1분
+(`prv_gex.investor_flow`)의 검산 ①(현물 합 0)·②(기관 = 7세부)·③(마지막 분 대 일별 확정)과 프로그램
+시장 표의 검산 ④(전체 = 차익 + 비차익, 합계 = 위탁 + 자기)를 그날 하루 돌려 **건수만** 낸다(조합 id·
+시장·거래소 이름만 — 값·종목코드 없음). 계산은 순수 엔진 `kbj.engines.flows.{minute,program}`.
+
 종료 코드: 0 = 할 수 있는 검산이 모두 0 차이, 1 = 실패가 있다, 2 = 오류(DB·엔진).
 읽기는 저장소(`kbj.store.repos`)만 쓴다 — 외부 원천을 부르지 않는다.
 """
@@ -29,14 +34,25 @@ from collections.abc import Callable, Sequence
 from datetime import date, datetime
 from typing import IO, Any, Final, Protocol
 
-from kbj.core.rows import EtfDay, LedgerCheck, SplitEvent
+from kbj.config.markets import MarketsConfig, load_markets
+from kbj.core.rows import EtfDay, Investor, LedgerCheck, SplitEvent
 from kbj.core.time import utcnow
 from kbj.engines.flows.checks import CheckFailure, apply_checks, ledger_checks
 from kbj.engines.flows.ledger import build_ledger
+from kbj.engines.flows.minute import SPOT_DAILY_MARKET, minute_report
+from kbj.engines.flows.program import program_report
 from kbj.engines.flows.totals import market_investor_totals
-from kbj.store.repos import EtfRepo, FlowsRepo, MarketRepo
+from kbj.store.repos import EtfRepo, FlowsRepo, MarketRepo, ProgramRepo
 
-__all__ = ["ETF_ENGINE", "VerifyRepos", "main", "residual_bucket", "verify_day"]
+__all__ = [
+    "ETF_ENGINE",
+    "ProgramVerifyRepos",
+    "VerifyRepos",
+    "main",
+    "residual_bucket",
+    "verify_day",
+    "verify_program_day",
+]
 
 ETF_ENGINE: Final = "kbj.engines.etf.flows"
 SERVICE: Final = "engine-verify"
@@ -57,6 +73,16 @@ class VerifyRepos(Protocol):
 
     @property
     def etf(self) -> EtfRepo: ...
+
+
+class ProgramVerifyRepos(Protocol):
+    """`--program` 이 읽는 저장소(P5 F2)."""
+
+    @property
+    def flows(self) -> FlowsRepo: ...
+
+    @property
+    def program(self) -> ProgramRepo: ...
 
 
 def residual_bucket(residual: float) -> str:
@@ -187,6 +213,60 @@ def verify_day(
     return report
 
 
+# ── P5 F2: --program(검산 ①~④ — 건수만) ────────────────────────────────────────────────
+
+
+def _daily_won(repos: ProgramVerifyRepos, day: date) -> dict[str, dict[Investor, int | None]]:
+    """시장 코드 → 그날 일별 확정 순매수 대금(원 — `market_investor_daily`)."""
+    out: dict[str, dict[Investor, int | None]] = {}
+    for code, rows in repos.flows.market_days(day, 1).items():
+        out[code] = {r.investor: r.net_value for r in rows if r.date == day}
+    return out
+
+
+def verify_program_day(
+    repos: ProgramVerifyRepos, day: date, markets: MarketsConfig
+) -> dict[str, Any]:
+    """그날 F2 검산 보고(건수만 — 조합 id·시장·거래소 이름 외의 값·종목코드 없음)."""
+    names = {
+        (p.market, p.sector): p.id
+        for p in markets.flows.minute.pairs
+        if p.market is not None and p.session == "day"
+    }
+    groups: dict[str, list[Any]] = {}
+    for m in repos.flows.investor_minutes(day, None):
+        pid = names.get((m.market_code, m.sector_code), "unknown")
+        groups.setdefault(pid, []).append(m)
+    daily = _daily_won(repos, day)
+    minute: dict[str, Any] = {}
+    for pid in sorted(groups):
+        spot = pid in SPOT_DAILY_MARKET
+        won = daily.get(SPOT_DAILY_MARKET[pid]) if spot else None
+        minute[pid] = minute_report(groups[pid], spot=spot, daily_won=won or None)
+    program: dict[str, Any] = {}
+    for mkt in ("K", "Q"):
+        for venue in markets.kis.venues:
+            days = [r for r in repos.program.market_days(mkt, venue, day, 1) if r.trade_date == day]
+            mins = repos.program.market_minutes(day, mkt, venue)
+            program[f"{mkt}:{venue}"] = {
+                "daily": program_report(days),
+                "intraday": program_report(mins),
+            }
+    return {"date": day.isoformat(), "minute": minute, "program": program}
+
+
+def _program_exit(reports: Sequence[dict[str, Any]]) -> int:
+    for r in reports:
+        for rep in r["minute"].values():
+            for k in ("c1", "c2", "c3"):
+                if rep.get(k, {}).get("failed", 0):
+                    return 1
+        for rep in r["program"].values():
+            if rep["daily"]["failed"] or rep["intraday"]["failed"]:
+                return 1
+    return 0
+
+
 def _exit_code(reports: Sequence[dict[str, Any]]) -> int:
     code = 0
     for r in reports:
@@ -216,18 +296,26 @@ def main(
     now: datetime | None = None,
     out: IO[str] | None = None,
     load: Callable[[str], Any] = importlib.import_module,
+    markets: MarketsConfig | None = None,
 ) -> int:
     ap = argparse.ArgumentParser(prog="python -m kbj.services.engine.verify", description=__doc__)
     ap.add_argument("--date", required=True, type=date.fromisoformat, help="기준 거래일")
     ap.add_argument("--days", type=int, default=1, help="기준일부터 거슬러 볼 거래일 수")
     ap.add_argument("--record", action="store_true", help="실패 행을 prv_flows.ledger_check 에")
     ap.add_argument("--net-asset-unit", type=float, default=1.0, help="순자산 공표 단위(원)")
+    ap.add_argument(
+        "--program",
+        action="store_true",
+        help="P5 F2 — 장중 투자자 1분 검산 ①②③·프로그램 검산 ④ 건수(probe_results #42)",
+    )
     args = ap.parse_args(argv)
     if args.days < 1:
         ap.error("--days 는 1 이상")
     stream = out or sys.stdout
     from kbj.store.db import StoreError
 
+    if args.program:
+        return _main_program(args.date, args.days, repos=repos, markets=markets, out=stream)
     try:
         r = repos if repos is not None else _pg_repos()
         # 기준일은 늘 넣는다(KRX 일봉 전인 KIS 마감일도 검산한다)
@@ -248,6 +336,28 @@ def main(
         return 2
     print(json.dumps({"reports": reports}, ensure_ascii=False, indent=2), file=stream)
     return _exit_code(reports)
+
+
+def _main_program(
+    day: date,
+    n: int,
+    *,
+    repos: Any,
+    markets: MarketsConfig | None,
+    out: IO[str],
+) -> int:
+    from kbj.store.db import StoreError
+
+    cfg = markets or load_markets()
+    try:
+        r: Any = repos if repos is not None else _pg_repos()  # Repos(Pg) — market·flows·program
+        days = sorted({*r.market.trading_days(day, n), day})
+        reports = [verify_program_day(r, d, cfg) for d in days]
+    except StoreError as e:  # 문구는 접속 정보를 가린 것(kbj.store.db)
+        print(json.dumps({"error": "store", "message": str(e)}, ensure_ascii=False), file=out)
+        return 2
+    print(json.dumps({"program_reports": reports}, ensure_ascii=False, indent=2), file=out)
+    return _program_exit(reports)
 
 
 if __name__ == "__main__":

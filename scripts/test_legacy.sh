@@ -11,13 +11,14 @@
 #   gexlab-integration   legacy/gexlab           pytest -m "integration and not network"(50 — 49개는 Docker
 #                                                필요, 없으면 건너뜀)
 #   board                legacy/etf_traker       unittest discover -s board/tests
-#   kr | flow            legacy/etf_traker       unittest discover -s monitor/<kr|flow>
+#   kr                   legacy/etf_traker       unittest discover -s monitor/kr
+#                        (flow 는 P5 에 kbj/reports/flows 로 승격하고 디렉터리를 지웠다)
 #   flowlab              legacy/etf_traker       python -m flowlab selftest
 #   dart-report          legacy/etf_traker/dart-report   tests_smoke.py + tests_bridge.py(P4 shim 다리)
-#   etf_tracker_v9       legacy/etf_traker/etf_tracker_v9  모듈 13개 import 스모크
+#   etf_tracker_v9       legacy/etf_traker/etf_tracker_v9  모듈 8개 import 스모크(P5: 13 → 8)
 #   stock_dashboard      legacy/stock_dashboard  pytest 래퍼(검사 스크립트 10개 + 목록 대조 + 합성 재현
 #                                                + KBJ 다리 시험 1 — P2, 13)
-# 묶음: etf-rest = kr flow flowlab dart-report etf_tracker_v9,  all = 전부
+# 묶음: etf-rest = kr flowlab dart-report etf_tracker_v9,  all = 전부
 #
 # 원칙
 # - 프로젝트마다 작업 디렉터리와 PYTHONPATH 를 따로 잡아 한 프로세스에 두 import 루트가 섞이지 않게
@@ -26,6 +27,9 @@
 # - P3(묶음 S): 지운 legacy 파일(flowlab probe_*·krx.py, SD probe_*·ohlcv_5y_collector.py, etf_tracker_v9
 #   verify.py)은 시험이 없던 진단·수집 스크립트라 기준 수가 바뀌지 않는다. board 1,267 → 1,115 는 E1 의
 #   신고가 엔진 승격분(kbj 로 옮김) — 근거는 legacy/etf_traker/board/MIGRATION.md·legacy/etf_traker/MIGRATION.md 'P3'.
+# - P5(WRAP — docs/p5_design.md §1.9): monitor/flow 디렉터리를 지웠다(시험 104 승격 → kbj/reports/flows·
+#   25 폐지 → 대체 정본 시험, legacy/etf_traker/MIGRATION.md 'P5'), etf_tracker_v9 import 스모크 13 → 8,
+#   board 1,115 → 1,039(US 승격), kr 94 그대로(테마 사전 통합은 사용자 별도 — P5 제외), SD 13 그대로.
 # - 각 부분은 최소 시험 수를 확인한다 — 시험이 조용히 덜 모이면 실패로 본다. P1 기준(gexlab 3,177·
 #   board 1,319·stock_dashboard 12)에서 P2 는 kbj 로 승격한 원본 시험만 뺐고(kbj 쪽에서 같은 단언이
 #   돈다) 프로젝트마다 KBJ 다리 시험 1개를 더했다 — 빠진 수·파일은 legacy/*/MIGRATION.md 'P2' 절.
@@ -50,8 +54,8 @@ ET="$ROOT/legacy/etf_traker"
 GX="$ROOT/legacy/gexlab"
 SD="$ROOT/legacy/stock_dashboard"
 
-ALL=(gexlab gexlab-integration board kr flow flowlab dart-report etf_tracker_v9 stock_dashboard)
-ETF_REST=(kr flow flowlab dart-report etf_tracker_v9)
+ALL=(gexlab gexlab-integration board kr flowlab dart-report etf_tracker_v9 stock_dashboard)
+ETF_REST=(kr flowlab dart-report etf_tracker_v9)
 
 LOGDIR="$(mktemp -d)"
 trap 'rm -rf "$LOGDIR"' EXIT
@@ -158,13 +162,13 @@ run_part() {
             # 삭제는 이월 — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import 해서 파일
             # 단위로 뗄 수 없다(docs/p3_design.md R17). 그 시험(test_stale_px·test_universe·test_close_source 등)은
             # 아직 살아 있는 legacy 코드를 보므로 그대로 둔다 — 수 변화 없음(1,115)
-            part_unittest board board/tests 1115
+            # P5 묶음 US 1,115 → 1,039: 미국장 원본 시험 test_us_{sources,engine,brief,sectors,pipeline} 77
+            # (Yahoo 3 포함 — FND 가 test_yahoo 로)을 kbj 로 옮기고 다리 시험 test_kbj_us_shim +1.
+            # test_us_search 3 은 남김(btsearch 는 국장 백테스트 엔진과 함께 P8 — 설계 추정 1,036 과 차이 3)
+            part_unittest board board/tests 1039
             ;;
         kr)
             part_unittest kr monitor/kr 94 -p "test_*.py"
-            ;;
-        flow)
-            part_unittest flow monitor/flow 129 -p "test_*.py"
             ;;
         flowlab)
             local log="$LOGDIR/flowlab.log" rc
@@ -209,13 +213,14 @@ run_part() {
             ;;
         etf_tracker_v9)
             local log="$LOGDIR/etf_tracker_v9.log" rc
-            # verify.py(네이버 대조)는 P3 묶음 S 가 지웠다. NaverTop10·naver_names 도 지웠고(tracker 는 운용사
-            # 어댑터만), market.py 는 tracker·live_update 가 아직 써서 P5 까지 남는다 — import 13개는 그대로
+            # verify.py(네이버 대조)는 P3 묶음 S 가 지웠다. P5 WRAP: tracker·report·render·dash·live_update·
+            # run.sh 를 지웠다(ETF 리포트 = kbj etf.report, 수집 = kbj etf.collect, 화면 = 페이지 10).
+            # market.py 는 monitor/kr etf.py 가 아직 import 해서 남는다(테마 사전 작업 — 사용자 별도) — 13 → 8
             run_in "$ET/etf_tracker_v9" "$log" "$PY" -c \
-                "import collectors, dash, market, render, report, themes, tracker, live_update, adapters.ace, adapters.hanaro, adapters.koact, adapters.plus, adapters.rise; print('import ok: 13 modules')"
+                "import collectors, market, themes, adapters.ace, adapters.hanaro, adapters.koact, adapters.plus, adapters.rise; print('import ok: 8 modules')"
             rc=$?
             if [[ $rc -eq 0 ]] && grep -q '^import ok' "$log"; then
-                record etf_tracker_v9 "OK" "모듈 13개 import (rc=$rc)"
+                record etf_tracker_v9 "OK" "모듈 8개 import (rc=$rc)"
             else
                 record etf_tracker_v9 "FAIL" "import 실패 (rc=$rc)"
             fi

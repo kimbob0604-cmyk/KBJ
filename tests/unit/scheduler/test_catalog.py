@@ -31,8 +31,17 @@ def test_tier_matches_store_schema() -> None:
 def test_planned_sources_are_marked_and_private_by_default() -> None:
     for spec in catalog.PLANNED:
         assert "[어댑터 없음" in spec.notes
-    tiers = {s.id: s.tier for s in catalog.PLANNED}
-    assert tiers["YAHOO:macro"] is Tier.PRIVATE and tiers["FRED:gov_series"] is Tier.PUBLIC
+    # P5 에 PLANNED 가 모두 어댑터로 옮겼다 — 등급은 그대로(DATA_TIERS §1)
+    tiers = {i: s.tier for i, s in catalog.all_datasets().items()}
+    # YAHOO 는 P5 FND 가 어댑터(kbj/data/private/yahoo)로 옮겼다 — 등급은 그대로 로그인
+    assert catalog.get("YAHOO:macro").tier is Tier.PRIVATE
+    assert tiers["TREASURY:yield_curve"] is Tier.PUBLIC  # 사용자 결정 Q8
+    assert tiers["NYFED:rates"] is Tier.PUBLIC  # 사용자 결정 Q8
+    assert tiers["FF:calendar"] is Tier.PRIVATE  # 예상치 — 로그인(Q3)
+    assert tiers["NASDAQ:daily"] is Tier.PRIVATE
+    assert tiers["FRED:gov_series"] is Tier.PUBLIC
+    assert tiers["FRED:restricted_series"] is Tier.PRIVATE  # 저작권 시리즈(D-P5-6)
+    assert tiers["FRED:release_dates"] is Tier.PUBLIC
 
 
 def test_get_and_unknown() -> None:

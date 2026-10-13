@@ -191,6 +191,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/board/us": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Us */
+        get: operations["us_api_board_us_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/flows/screen": {
         parameters: {
             query?: never;
@@ -259,6 +276,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/flows/market-minute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Market Minute Route */
+        get: operations["market_minute_route_api_flows_market_minute_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/etf/flows": {
         parameters: {
             query?: never;
@@ -319,6 +353,74 @@ export interface paths {
         };
         /** Holding Changes */
         get: operations["holding_changes_api_etf_holdings_changes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/etf/map": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Etf Map Route */
+        get: operations["etf_map_route_api_etf_map_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/etf/fund/{code}/holdings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fund Holdings */
+        get: operations["fund_holdings_api_etf_fund__code__holdings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/etf/holders/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Holders */
+        get: operations["holders_api_etf_holders__code__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/etf/active-consensus": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Active Consensus Route */
+        get: operations["active_consensus_route_api_etf_active_consensus_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -667,6 +769,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/macro/tabs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tabs */
+        get: operations["tabs_api_macro_tabs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/macro/series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Series */
+        get: operations["series_api_macro_series_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/macro/series/{series_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Series One */
+        get: operations["series_one_api_macro_series__series_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/macro/calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Calendar */
+        get: operations["calendar_api_macro_calendar_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/program/daily": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Daily */
+        get: operations["daily_api_program_daily_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/program/top": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Top */
+        get: operations["top_api_program_top_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/telegram/webhook": {
         parameters: {
             query?: never;
@@ -688,6 +892,20 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ActiveConsensus */
+        ActiveConsensus: {
+            /** Days */
+            days: number;
+            /** Min Funds */
+            min_funds: number;
+            /**
+             * Asof
+             * Format: date
+             */
+            asof: string;
+            /** Rows */
+            rows: components["schemas"]["ConsensusStock"][];
+        };
         /** BandView */
         BandView: {
             /**
@@ -916,6 +1134,37 @@ export interface components {
             /** Notes */
             notes: string[];
         };
+        /** CalendarRow */
+        CalendarRow: {
+            /** Event Id */
+            event_id: string;
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Time Kst */
+            time_kst: string | null;
+            /** Kind */
+            kind: string;
+            /** Title */
+            title: string;
+            /** Country */
+            country: string;
+            /** Importance */
+            importance: number;
+            /** Source */
+            source: string;
+            quality: components["schemas"]["Quality"];
+            /** Actual */
+            actual: number | null;
+            /** Actual Series */
+            actual_series: string | null;
+            /** Unit */
+            unit: string | null;
+            /** Forecast */
+            forecast?: number | null;
+        };
         /** ChangeRow */
         ChangeRow: {
             /** Fund Id */
@@ -1107,6 +1356,19 @@ export interface components {
             /** Lost */
             lost: string[];
         };
+        /** ConsensusStock */
+        ConsensusStock: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string | null;
+            /** Funds */
+            funds: string[];
+            /** Kinds */
+            kinds: ("NEW" | "IN10" | "ADD")[];
+            /** N Funds */
+            n_funds: number;
+        };
         /** CsrfResponse */
         CsrfResponse: {
             /** Csrf Token */
@@ -1267,6 +1529,40 @@ export interface components {
             days: number;
             /** Rows */
             rows: components["schemas"]["ScheduleView"][];
+        };
+        /** EconCalendar */
+        EconCalendar: {
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
+            /** Rows */
+            rows: components["schemas"]["CalendarRow"][];
+        };
+        /** Envelope[ActiveConsensus] */
+        Envelope_ActiveConsensus_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["ActiveConsensus"];
         };
         /** Envelope[BoardEvents] */
         Envelope_BoardEvents_: {
@@ -1439,6 +1735,25 @@ export interface components {
             generated_at: string;
             data: components["schemas"]["Earnings"];
         };
+        /** Envelope[EconCalendar] */
+        Envelope_EconCalendar_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["EconCalendar"];
+        };
         /** Envelope[EtfFlows] */
         Envelope_EtfFlows_: {
             /** Source */
@@ -1458,6 +1773,25 @@ export interface components {
             generated_at: string;
             data: components["schemas"]["EtfFlows"];
         };
+        /** Envelope[EtfHolders] */
+        Envelope_EtfHolders_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["EtfHolders"];
+        };
         /** Envelope[EtfHoldingChanges] */
         Envelope_EtfHoldingChanges_: {
             /** Source */
@@ -1476,6 +1810,44 @@ export interface components {
              */
             generated_at: string;
             data: components["schemas"]["EtfHoldingChanges"];
+        };
+        /** Envelope[EtfHoldings] */
+        Envelope_EtfHoldings_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["EtfHoldings"];
+        };
+        /** Envelope[EtfMap] */
+        Envelope_EtfMap_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["EtfMap"];
         };
         /** Envelope[EtfPremium] */
         Envelope_EtfPremium_: {
@@ -1629,6 +2001,82 @@ export interface components {
             generated_at: string;
             data: components["schemas"]["InvestorTotals"];
         };
+        /** Envelope[MacroSeriesSet] */
+        Envelope_MacroSeriesSet_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["MacroSeriesSet"];
+        };
+        /** Envelope[MacroSeries] */
+        Envelope_MacroSeries_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["MacroSeries"];
+        };
+        /** Envelope[MacroTabs] */
+        Envelope_MacroTabs_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["MacroTabs"];
+        };
+        /** Envelope[MarketMinute] */
+        Envelope_MarketMinute_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["MarketMinute"];
+        };
         /** Envelope[MarketSummary] */
         Envelope_MarketSummary_: {
             /** Source */
@@ -1704,6 +2152,44 @@ export interface components {
              */
             generated_at: string;
             data: components["schemas"]["PriceChart"];
+        };
+        /** Envelope[ProgramDaily] */
+        Envelope_ProgramDaily_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["ProgramDaily"];
+        };
+        /** Envelope[ProgramTop] */
+        Envelope_ProgramTop_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["ProgramTop"];
         };
         /** Envelope[ReportView] */
         Envelope_ReportView_: {
@@ -1876,6 +2362,25 @@ export interface components {
             generated_at: string;
             data: components["schemas"]["StockSearch"];
         };
+        /** Envelope[UsBoard] */
+        Envelope_UsBoard_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["UsBoard"];
+        };
         /** Envelope[Valuation] */
         Envelope_Valuation_: {
             /** Source */
@@ -1992,6 +2497,37 @@ export interface components {
             /** New Listings */
             new_listings: components["schemas"]["NewListing"][];
         };
+        /** EtfHolderView */
+        EtfHolderView: {
+            /** Fund Id */
+            fund_id: string;
+            /** Etf Code */
+            etf_code: string | null;
+            /** Etf Name */
+            etf_name: string | null;
+            /** Is Active */
+            is_active: boolean;
+            /**
+             * Asof
+             * Format: date
+             */
+            asof: string;
+            /** Wt */
+            wt: number | null;
+            /** Qty */
+            qty: number | null;
+            /** Val */
+            val: number | null;
+        };
+        /** EtfHolders */
+        EtfHolders: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string | null;
+            /** Rows */
+            rows: components["schemas"]["EtfHolderView"][];
+        };
         /** EtfHoldingChanges */
         EtfHoldingChanges: {
             /**
@@ -2001,6 +2537,86 @@ export interface components {
             run_date: string;
             /** Rows */
             rows: components["schemas"]["ChangeRow"][];
+        };
+        /** EtfHoldingView */
+        EtfHoldingView: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string | null;
+            /** Wt */
+            wt: number | null;
+            /** Qty */
+            qty: number | null;
+            /** Val */
+            val: number | null;
+            /** Change */
+            change: ("NEW" | "DROP" | "IN10" | "OUT10" | "ADD" | "CUT") | null;
+        };
+        /** EtfHoldings */
+        EtfHoldings: {
+            /** Fund Id */
+            fund_id: string;
+            /** Etf Code */
+            etf_code: string | null;
+            /** Etf Name */
+            etf_name: string | null;
+            /**
+             * Asof
+             * Format: date
+             */
+            asof: string;
+            /** Rows */
+            rows: components["schemas"]["EtfHoldingView"][];
+        };
+        /** EtfMap */
+        EtfMap: {
+            /**
+             * Period
+             * @enum {string}
+             */
+            period: "1D" | "1W" | "1M" | "3M";
+            /**
+             * Group
+             * @enum {string}
+             */
+            group: "type" | "theme";
+            /** Lev */
+            lev: boolean;
+            /**
+             * Asof
+             * Format: date
+             */
+            asof: string;
+            /** Groups */
+            groups: components["schemas"]["EtfMapGroup"][];
+        };
+        /** EtfMapCellView */
+        EtfMapCellView: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string | null;
+            etf_type: components["schemas"]["EtfType"] | null;
+            /** Theme */
+            theme: string | null;
+            /** Net Asset */
+            net_asset: number | null;
+            /** Ret Pct */
+            ret_pct: number | null;
+            /** Leveraged */
+            leveraged: boolean;
+            /** New Listing */
+            new_listing: boolean;
+        };
+        /** EtfMapGroup */
+        EtfMapGroup: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Cells */
+            cells: components["schemas"]["EtfMapCellView"][];
         };
         /** EtfPremium */
         EtfPremium: {
@@ -2442,6 +3058,103 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** MacroPoint */
+        MacroPoint: {
+            /** Period */
+            period: string;
+            /** Value */
+            value: number | null;
+            /** Released At */
+            released_at: string | null;
+        };
+        /** MacroSeries */
+        MacroSeries: {
+            /** Series Id */
+            series_id: string;
+            /** Title */
+            title: string;
+            /** Unit */
+            unit: string;
+            /**
+             * Freq
+             * @enum {string}
+             */
+            freq: "D" | "W" | "M" | "Q" | "A";
+            /**
+             * Tier
+             * @enum {string}
+             */
+            tier: "public" | "private";
+            /** Source */
+            source: string;
+            /** As Of */
+            as_of: string | null;
+            quality: components["schemas"]["Quality"] | null;
+            latest: components["schemas"]["MacroPoint"] | null;
+            /** Change */
+            change: number | null;
+            /** Change Pct */
+            change_pct: number | null;
+            /** Points */
+            points: components["schemas"]["MacroPoint"][];
+            /**
+             * Derived
+             * @default false
+             */
+            derived: boolean;
+            /** Na Reason */
+            na_reason?: string | null;
+        };
+        /** MacroSeriesInfo */
+        MacroSeriesInfo: {
+            /** Series Id */
+            series_id: string;
+            /** Title */
+            title: string;
+            /** Unit */
+            unit: string;
+            /**
+             * Freq
+             * @enum {string}
+             */
+            freq: "D" | "W" | "M" | "Q" | "A";
+            /**
+             * Tier
+             * @enum {string}
+             */
+            tier: "public" | "private";
+            /** Source */
+            source: string;
+            /** Dataset */
+            dataset: string;
+            /** Ready */
+            ready: boolean;
+            /** Probe */
+            probe: string | null;
+        };
+        /** MacroSeriesSet */
+        MacroSeriesSet: {
+            /** Tab */
+            tab: string;
+            /** Series */
+            series: components["schemas"]["MacroSeries"][];
+        };
+        /** MacroTab */
+        MacroTab: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Public */
+            public: boolean;
+            /** Series */
+            series: components["schemas"]["MacroSeriesInfo"][];
+        };
+        /** MacroTabs */
+        MacroTabs: {
+            /** Tabs */
+            tabs: components["schemas"]["MacroTab"][];
+        };
         /** MajorHolderView */
         MajorHolderView: {
             /** Rcept No */
@@ -2469,6 +3182,37 @@ export interface components {
             /** Link */
             link: string;
         };
+        /** MarketMinute */
+        MarketMinute: {
+            /** Market */
+            market: string;
+            /** Venue */
+            venue: string;
+            /** Venue Locked */
+            venue_locked: boolean;
+            /**
+             * Trade Date
+             * Format: date
+             */
+            trade_date: string;
+            /** Axis */
+            axis: string[];
+            /** Lines */
+            lines: components["schemas"]["MinuteLine"][];
+            /** Cards */
+            cards: components["schemas"]["MinuteCard"][];
+            /** Collected At */
+            collected_at: string | null;
+            /** Refresh S */
+            refresh_s: number;
+            /** Provisional */
+            provisional: boolean;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "not_confirmed" | "before_open" | "holiday";
+        };
         /** MarketSummary */
         MarketSummary: {
             /** Date */
@@ -2485,6 +3229,27 @@ export interface components {
             user: string;
             /** Csrf Token */
             csrf_token: string;
+        };
+        /** MinuteCard */
+        MinuteCard: {
+            /** Investor */
+            investor: string;
+            /** Label */
+            label: string;
+            /** Net Value */
+            net_value: number | null;
+            quality: components["schemas"]["Quality"] | null;
+        };
+        /** MinuteLine */
+        MinuteLine: {
+            /** Investor */
+            investor: string;
+            /** Label */
+            label: string;
+            /** Default On */
+            default_on: boolean;
+            /** Values */
+            values: (number | null)[];
         };
         /** MultipleCell */
         MultipleCell: {
@@ -2874,6 +3639,96 @@ export interface components {
             events: components["schemas"]["ChartEvent"][];
             /** Last Trade */
             last_trade: string | null;
+        };
+        /** ProgramDaily */
+        ProgramDaily: {
+            /**
+             * Market
+             * @enum {string}
+             */
+            market: "K" | "Q";
+            /**
+             * Venue
+             * @enum {string}
+             */
+            venue: "KRX" | "NXT" | "TOTAL";
+            /** Days */
+            days: number;
+            /** Rows */
+            rows: components["schemas"]["ProgramDayBar"][];
+        };
+        /**
+         * ProgramDayBar
+         * @description 하루 막대 — 막대 = 전체(whol) 합계(smtn) 순매수, 막대 위 상세 = 차익·비차익 × 위탁·자기.
+         */
+        ProgramDayBar: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Net */
+            net: number | null;
+            /** Arbt Net */
+            arbt_net: number | null;
+            /** Nabt Net */
+            nabt_net: number | null;
+            /** Entm Net */
+            entm_net: number | null;
+            /** Onsl Net */
+            onsl_net: number | null;
+            /** Index Close */
+            index_close: number | null;
+            quality: components["schemas"]["Quality"];
+        };
+        /** ProgramTop */
+        ProgramTop: {
+            /**
+             * Market
+             * @enum {string}
+             */
+            market: "K" | "Q";
+            /**
+             * Venue
+             * @enum {string}
+             */
+            venue: "KRX" | "NXT" | "TOTAL";
+            /**
+             * Side
+             * @enum {string}
+             */
+            side: "buy" | "sell";
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "intraday" | "close";
+            /** Scope Label */
+            scope_label: string;
+            /** Slot */
+            slot: string | null;
+            /** Rows */
+            rows: components["schemas"]["ProgramTopRow"][];
+        };
+        /** ProgramTopRow */
+        ProgramTopRow: {
+            /** Rank */
+            rank: number;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string | null;
+            /** Price */
+            price: number | null;
+            /** Chg Pct */
+            chg_pct: number | null;
+            /** Net Value */
+            net_value: number | null;
+            /** Buy Value */
+            buy_value: number | null;
+            /** Sell Value */
+            sell_value: number | null;
+            quality: components["schemas"]["Quality"];
         };
         /**
          * Quality
@@ -3492,6 +4347,57 @@ export interface components {
             n_new: number;
             /** N Invalid */
             n_invalid: number;
+        };
+        /** UsBoard */
+        UsBoard: {
+            /**
+             * Us Trade Date
+             * Format: date
+             */
+            us_trade_date: string;
+            /**
+             * Basis
+             * @enum {string}
+             */
+            basis: "close" | "high";
+            /** Summary Lines */
+            summary_lines: string[];
+            /** Newhigh */
+            newhigh: components["schemas"]["UsBoardRow"][];
+            /** Sectors */
+            sectors: components["schemas"]["UsSectorRow"][];
+            /** Mega Movers */
+            mega_movers: components["schemas"]["UsBoardRow"][];
+            /** Pending */
+            pending: number;
+        };
+        /** UsBoardRow */
+        UsBoardRow: {
+            /** Symbol */
+            symbol: string;
+            /** Name */
+            name: string | null;
+            /** Sector */
+            sector: string | null;
+            /** Close */
+            close: number | null;
+            /** Chg Pct */
+            chg_pct: number | null;
+            /** Market Cap */
+            market_cap: number | null;
+            /** Label */
+            label: string | null;
+        };
+        /** UsSectorRow */
+        UsSectorRow: {
+            /** Sector */
+            sector: string;
+            /** N */
+            n: number;
+            /** Newhigh */
+            newhigh: number;
+            /** Ret Pct */
+            ret_pct: number | null;
         };
         /**
          * Valuation
@@ -4187,6 +5093,64 @@ export interface operations {
             };
         };
     };
+    us_api_board_us_get: {
+        parameters: {
+            query?: {
+                basis?: "close" | "high";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_UsBoard_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     screen_api_flows_screen_get: {
         parameters: {
             query: {
@@ -4426,6 +5390,65 @@ export interface operations {
             };
         };
     };
+    market_minute_route_api_flows_market_minute_get: {
+        parameters: {
+            query?: {
+                market?: string;
+                venue?: "KRX" | "NXT" | "TOTAL";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_MarketMinute_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     flows_api_etf_flows_get: {
         parameters: {
             query?: {
@@ -4623,6 +5646,240 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_EtfHoldingChanges_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    etf_map_route_api_etf_map_get: {
+        parameters: {
+            query?: {
+                period?: "1D" | "1W" | "1M" | "3M";
+                group?: "type" | "theme";
+                lev?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_EtfMap_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    fund_holdings_api_etf_fund__code__holdings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_EtfHoldings_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    holders_api_etf_holders__code__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_EtfHolders_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    active_consensus_route_api_etf_active_consensus_get: {
+        parameters: {
+            query?: {
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_ActiveConsensus_"];
                 };
             };
             /** @description 세션 없음·만료 */
@@ -5804,6 +7061,360 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_Watchlist_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    tabs_api_macro_tabs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_MacroTabs_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    series_api_macro_series_get: {
+        parameters: {
+            query: {
+                tab: string;
+                from?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_MacroSeriesSet_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    series_one_api_macro_series__series_id__get: {
+        parameters: {
+            query?: {
+                from?: string | null;
+                to?: string | null;
+            };
+            header?: never;
+            path: {
+                series_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_MacroSeries_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    calendar_api_macro_calendar_get: {
+        parameters: {
+            query?: {
+                from?: string | null;
+                to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_EconCalendar_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    daily_api_program_daily_get: {
+        parameters: {
+            query?: {
+                market?: "K" | "Q";
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_ProgramDaily_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    top_api_program_top_get: {
+        parameters: {
+            query?: {
+                market?: "K" | "Q";
+                side?: "buy" | "sell";
+                scope?: "intraday" | "close";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_ProgramTop_"];
                 };
             };
             /** @description 세션 없음·만료 */

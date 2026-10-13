@@ -1,6 +1,10 @@
 // scripts/merge-public-data.mjs 의 형(시험에서 import 하려고).
 export const NAME_RE: RegExp;
 export const SUBDIRS: string[];
+export const DART_SUBDIRS: string[];
+export const P5_FLAT_NAMES: Set<string>;
+export const DIR_CAPS: Record<string, number>;
+export const FILE_CAPS: Record<string, number>;
 export const SUBDIR_JSON_RE: RegExp;
 export const SUBDIR_XLSX_RE: RegExp;
 export const DART_ONLY: Set<string>;

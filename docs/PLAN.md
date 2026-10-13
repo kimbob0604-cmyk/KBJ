@@ -232,10 +232,19 @@ kbj/
   - 운영 절차: KRX 일별 백필(`market.backfill`)로 시세가 과거로 늘어나면 재무 지문이 그것을 잡지 못한다 — 백필 뒤 `python -m kbj.services.engine.valuation rebuild --as-of <전 거래일>` 한 번(재무 백필·정정은 지문이 알아서 다시 계산). 관심종목은 사용자가 VM 에 `python -m kbj.services.watchlist import --from sd-json <파일>`(레포에 넣지 않음)
   - 남은 것: ① 결함 S-R1 수정(K·V·A — 위) ② 운영 스케줄러 자원 `detail_universe`(관심종목 ∪ 컨센서스 유니버스 ∪ 공개 데모 — 없으면 상세 층 재무는 공개 데모만, ADR 0014 S 메모) ③ 결정 필요: YoY 분류 역전(metrics §14 ⚠), 정정 보고서 PIT 접수일(ADR 0016 §5-4), 시나리오 주당 값 기준(metrics §15 ⚠), 계약 ⑧ 을 좁혀 공개 잠정실적 파일에 YoY 분류(ADR 0013 S 메모), 공개 `fin/*.json` 의 상세 층 흔적(ADR 0014 S 메모), 공개 데모 목록(U-P4-6) ④ Docker 통합 시험·GitHub CI 녹색(푸시 뒤) ⑤ 실측 체크리스트 `docs/probe_results.md` §7 #28~#37(키 수령 뒤 — DART 는 공개 등급이라 실응답 fixture 커밋 가능, KIS 는 합성만)
 
-**P5 — 매크로·테마·ETF (4~6일)**
+**P5 — 매크로·테마·ETF (4~6일)** — 완료(2026-10-13, 테마 사전 통합 제외)
 - monitor/bok(페이지 6), 분류 사전 통합(테마·체인, 페이지 9), ETF(페이지 10), 아침 브리핑 하나로 통합
 - **묶음 F2 — 장중 투자자 수급·프로그램매매(페이지 1, 2026-10-13 사용자 요청):** 시장별 투자자 1분 누적 순매수(코스피·코스닥·K200 선물·콜·풋)·일별 프로그램 순매수 60거래일·프로그램 순매수/순매도 상위 20. 지시·검증 근거·넣는 자리는 `docs/p5_flow_program_prompt.md` 를 P5 설계에 그대로 넣는다(KIS 만 — 네이버 금지, 로그인 빌드 전용, 실측 전 작업 꺼 둠, `prv_gex.investor_flow` 쓰기 주인 하나 — P7 과 겹치지 않게)
-- **완료 기준:** 테마 사전에서 한 종목의 테마 충돌이 0이다. 브리핑 발송은 하루 1회다. F2 는 합성 데이터로 위젯이 그려지고, 하루 운영 시뮬레이션에서 정규장 1분 수집 빈 분 0·검산 ①~④ 0 차이, 순위 화면이 범위를 표시한다(`docs/p5_flow_program_prompt.md` §5).
+- **제외(2026-10-13 사용자 결정 Q1):** 테마·밸류체인 사전 통합(페이지 9)과 완료 기준 '테마 충돌 0' 은 사용자가 따로 진행 — P5 에서 제외. 구루 X 다이제스트는 P5·P8 모두에서 뺐다(Q4)
+- **완료 기준:** ~~테마 사전에서 한 종목의 테마 충돌이 0이다~~(제외). 브리핑 발송은 하루 1회다. F2 는 합성 데이터로 위젯이 그려지고, 하루 운영 시뮬레이션에서 정규장 1분 수집 빈 분 0·검산 ①~④ 0 차이, 순위 화면이 범위를 표시한다(`docs/p5_flow_program_prompt.md` §5).
+- **결과(2026-10-13, 웨이브 3 WRAP — 설계 `docs/p5_design.md`, ADR 0019·0021~0024 채택):**
+  - 작업 등록부: P5 작업 켬 — `etf.report`(08:20, 브리핑과 따로 — Q5)·`brief.morning`·`brief.closing`·`flows.report`·`us.universe`·`us.eod`(간밤 미국 수집 — Q6)·`flows.market_minute`. 실측 전이라 꺼 둔 채(노트에 막는 실측 번호): `macro.*` 6(#43~#46·#49)·`market_stats.kofia`·`market.fsc_daily`(#48)·`program.*`(#40·#41). `guru.research` 삭제(Q4), `themes.dictionary` 삭제·`themes.monitor` 꺼짐(Q1). ForexFactory 예측치 어댑터 켬(로그인 등급, 칸 [확인 필요] — Q3), BOK xlsx 는 파싱하지 않음(Q2)
+  - 마이그레이션: 테마 표(`0015_themes`)를 지우고 뒤 번호를 당겨 P5 표는 `0014`~`0017`. 페이지 9 는 P3 자리표시 그대로
+  - 시험: 빠른 공통(`-m "not sim and not integration and not legacy"`) **4,835 통과**·2 건너뜀·29 xfail, `tests/acceptance` 통과. 새 시뮬레이션 `test_one_day_p5`(8)·`test_brief_once`(5)·`test_intraday_minute`(3) 통과 — 정규장 391분 × K2I 3조합 빈 분 0, 프로그램 검산 ①~④ 합성 원장 0 차이, 순위 표 범위 꼬리표, 브리핑 하루 1회(재기동·캐치업·legacy shim 이중 접수·휴장 두 경우). 예외 하나: `macro.morning`·`_prv` 06:20 은 FRED 일별 미공표로 `not_ready`(공표 시각 [확인 필요 #45])
+  - 검사: ruff·ruff format·pyright 0, import-linter **15 kept, 0 broken**(계약 ⑭ 공개 매크로 원천·⑯ 리포트 경계 신설, ⑮ 번호는 비워 둠), `check_canonical` 실패 0(파일 733), 공개 안전 검사 발견 0, 등록부 검증·openapi 신선도·공개 사이트 dry-run 통과
+  - 프런트: eslint·tsc·vitest **446 통과**(34 파일 — `test/acceptance/p5_pages` 포함)·공개/로그인 빌드·번들 검사(공개 JS gzip **61,021 B**(예산 61,440 — 로그인 본문을 공개 번들에서 빼는 방식을 페이지 2·4·10 과 P5 패널에 넓혔다)·로그인 77,322 B)·openapi → TS 타입 신선도
+  - legacy 정리: `monitor/flow` 삭제, `etf_tracker_v9` tracker·report·render·dash·live_update·run.sh 삭제(`market.py` 는 monitor/kr 이 import — 남김), SD `server.py` 아침 브리핑·간밤 예측·미국 요약 발송·수급 신호·글로벌 매크로·ETF 맵 함수 삭제(16,032 → 15,539줄 — `api_macro`·미국 동기화·테마/밸류체인은 남김). 기준선 naver 67 → **65**, krx_scrape 62 → **57**
+  - 남은 것: ① 실측 체크리스트 `docs/probe_results.md` #39~#49(키 수령 뒤 꺼진 작업 켜기) ② 테마·밸류체인 사전 통합(사용자 별도) ③ Docker 통합·legacy 전체·sim 전체(메인 병렬 스크립트)·CI 녹색
 
 **P6 — 수출입·종목 매핑 (6~8일)** — docs/reference/plan_kr_v0.2.md 의 P5·P6
 - **완료 기준:** 수출 속보일 당일 자동으로 반영된다. 관심 종목 50개의 매핑과 겹쳐 보기 차트가 나온다.

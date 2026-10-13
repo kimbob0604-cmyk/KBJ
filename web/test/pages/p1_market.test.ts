@@ -1,6 +1,7 @@
 // 페이지 1 시장 — A 의 합성 응답 픽스처로 위젯 렌더·기간 토글·품질 표시·검산 줄·공개판 자물쇠(§6.8 pages/*.test).
 import { describe, expect, it, vi } from 'vitest';
 import page, { PENDING_TILES, REFRESH_MS } from '../../src/pages/p1_market';
+import { MINUTE_REFRESH_MS } from '../../src/pages/p1/flows_minute';
 import { json } from '../helpers';
 import {
   apiHarness,
@@ -15,8 +16,16 @@ import {
   text,
 } from './support';
 
+// P5 묶음 F2 패널(장중 투자자 수급·프로그램매매)이 부르는 응답 — 합성 p5_world 픽스처(test/fixtures/api/program/)
+const F2_FX = import.meta.glob<unknown>('../fixtures/api/program/*.json', { eager: true, import: 'default' });
+const F2 = {
+  'flows_market-minute': F2_FX['../fixtures/api/program/minute_k200_fut.json'] as object,
+  program_daily: F2_FX['../fixtures/api/program/daily_K.json'] as object,
+  program_top: F2_FX['../fixtures/api/program/top_K_buy_intraday.json'] as object,
+};
+
 async function mountLogin(over: Parameters<typeof apiHarness>[0] = {}) {
-  const hz = apiHarness(over);
+  const hz = apiHarness({ ...F2, ...over });
   const { ctx, root, every } = pageCtx(1, 'login', hz.source);
   await page.mount(ctx);
   return { hz, root, every };
@@ -25,7 +34,14 @@ async function mountLogin(over: Parameters<typeof apiHarness>[0] = {}) {
 describe('페이지 1 시장 — 로그인', () => {
   it('요약·업종·투자자를 한 번씩 부르고 위젯을 그린다', async () => {
     const { hz, root } = await mountLogin();
-    expect(hz.paths().sort()).toEqual(['flows/investors', 'market/sectors?period=1', 'market/summary']);
+    expect(hz.paths().sort()).toEqual([
+      'flows/investors',
+      'flows/market-minute?market=k200_fut',
+      'market/sectors?period=1',
+      'market/summary',
+      'program/daily?days=60&market=K',
+      'program/top?market=K&scope=intraday&side=buy',
+    ]);
 
     const idx = panelByTitle(root, '지수');
     const tiles = idx.querySelectorAll('.tile');
@@ -138,7 +154,7 @@ describe('페이지 1 시장 — 로그인', () => {
 
   it('10분 슬롯 + 여유로 새로 고침을 건다', async () => {
     const { hz, every } = await mountLogin();
-    expect(every.map((e) => e.ms)).toEqual([REFRESH_MS]);
+    expect(every.map((e) => e.ms)).toEqual([REFRESH_MS, MINUTE_REFRESH_MS]); // P3 10분 슬롯 + F2 60초
     const before = hz.calls.length;
     every[0]?.fn();
     await flush();
@@ -170,7 +186,7 @@ describe('페이지 1 시장 — 공개', () => {
       'mini-symbol-overview',
       'mini-symbol-overview',
     ]);
-    expect(root.querySelectorAll('.panel.locked')).toHaveLength(4);
+    expect(root.querySelectorAll('.panel.locked')).toHaveLength(4 + 3); // + F2 투자자 수급·프로그램 2
     expect(text(panelByTitle(root, '시장 거래대금'))).toContain('LOGIN');
     expect(text(panelByTitle(root, '신용잔고 · 예탁금 · 펀드 자금'))).toContain('준비 중');
   });

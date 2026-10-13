@@ -65,6 +65,14 @@ DOMAIN_JOBS: Final[Mapping[str, tuple[str, ...]]] = {
     "filings": ("filings.corp_code", "filings.company_profile", "filings.dart_feed",
                 "filings.derive", "fin.quarterly", "earnings.alerts", "earnings.backfill",
                 "krx.daily", "market.close_collect"),
+    # P5(docs/p5_design.md §5 — 웨이브 1 FND). 장중 1분·미국 보드는 자기 작업만 보는 영역으로 나눴다
+    # (1분마다 바뀌는 수집이 P3 수급 캐시를 매분 비우지 않게)
+    "macro": ("macro.morning", "macro.morning_prv", "macro.monthly", "macro.monthly_prv",
+              "macro.evening", "macro.evening_prv", "market_stats.kofia"),
+    "program": ("program.intraday", "program.stock_scan", "program.daily", "program.stock_sweep",
+                "program.backfill"),
+    "flows_minute": ("flows.market_minute", "market.close_collect"),
+    "board_us": ("us.universe", "us.eod"),
 }  # fmt: skip
 
 

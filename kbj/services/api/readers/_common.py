@@ -33,7 +33,12 @@ from kbj.store.repos import (
     FinRepo,
     FlowsRepo,
     JournalRepo,
+    MacroPrivateRepo,
+    MacroPublicRepo,
     MarketRepo,
+    MarketStatsRepo,
+    ProgramRepo,
+    UsRepo,
 )
 
 __all__ = [
@@ -87,6 +92,23 @@ class ApiRepos(Protocol):
 
     @property
     def journal(self) -> JournalRepo: ...
+
+    # P5(docs/p5_design.md §1.1·§5 — 웨이브 1 FND 가 `Repos`·`MemoryRepos` 에 더한 것).
+    # 공개(macro·market_stats)·로그인(macro_prv·us·program) — API 는 로그인이라 둘 다 읽는다
+    @property
+    def macro(self) -> MacroPublicRepo: ...
+
+    @property
+    def macro_prv(self) -> MacroPrivateRepo: ...
+
+    @property
+    def market_stats(self) -> MarketStatsRepo: ...
+
+    @property
+    def us(self) -> UsRepo: ...
+
+    @property
+    def program(self) -> ProgramRepo: ...
 
 
 class NoData(Exception):

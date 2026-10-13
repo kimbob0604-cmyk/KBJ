@@ -39,23 +39,26 @@ def notify_on() -> SimDay:
 
 def test_send_count_equals_briefs_plus_daily_reports(notify_on: SimDay) -> None:
     sent = notify_on.notify_log.rows
-    # P3(묶음 M): etf.collect 의 ETF 리포트 발송(etf.report)은 P5 로 — 등록부에서 notify 를 뺐다
+    # P3(묶음 M): etf.collect 의 ETF 리포트 발송(etf.report)은 P5 로 — 등록부에서 notify 를 뺐다.
+    # P5(묶음 FND): 새 작업 etf.report(08:20 — 브리핑 아님, D-P5-13 ④)가 등록돼 계획 실행에서 한 통
     assert Counter((r.kind, r.status) for r in sent) == {
         ("brief.morning", "sent"): 1,
+        ("etf.report", "sent"): 1,
         ("brief.closing", "sent"): 1,
         ("flows.report", "sent"): 1,
     }
     ok = notify_on.tg.sent("sendMessage")
-    assert len(ok) == 3
+    assert len(ok) == 4
     assert {str(c.data.get("chat_id")) for c in ok} == {TG_CHAT}
     times = [c.at.astimezone(KST).strftime("%H:%M") for c in ok]
-    assert times == ["08:10", "16:00", "16:00"]  # 마감 요약·수급 리포트 모두 16:00(ADR 0018)
+    # 마감 요약·수급 리포트 모두 16:00(ADR 0018), ETF 리포트는 아침 08:20
+    assert times == ["08:10", "08:20", "16:00", "16:00"]
 
 
 def test_429_is_retried_and_sent_once(notify_on: SimDay) -> None:
     attempts = notify_on.tg.sent("sendMessage", ok_only=False)
     assert [c.status for c in attempts][:2] == [429, 200]  # 첫 발송(08:10 아침 브리핑 — P3 부터)
-    assert len(attempts) == 4  # 성공 3 + 거절 1
+    assert len(attempts) == 5  # 성공 4(P5 etf.report 08:20 포함) + 거절 1
     first, retry = attempts[0], attempts[1]
     assert (retry.at - first.at).total_seconds() >= 2  # retry_after 를 지켰다
     assert first.data.get("text") == retry.data.get("text")

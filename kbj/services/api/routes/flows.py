@@ -12,6 +12,7 @@ from kbj.services.api.models.common import Envelope
 from kbj.services.api.models.flows import (
     IntradayFlows,
     InvestorTotals,
+    MarketMinute,
     ScreenResponse,
     StockFlowDetail,
 )
@@ -21,6 +22,7 @@ from kbj.services.api.readers.flows import (
     flows_screen,
     flows_stock,
 )
+from kbj.services.api.readers.flows_minute import market_minute
 from kbj.services.api.routes._common import PeriodQ, data_router
 
 router = data_router("flows")
@@ -91,4 +93,23 @@ def intraday(request: Request) -> Response:
     st = get_state(request)
     return cached_json(
         request, domain="flows", ttl_s=TTL_LIVE_S, build=lambda: flows_intraday(st.read)
+    )
+
+
+# ── P5 F2(docs/p5_design.md §5, F2 §3.5) — 리더 본문은 F2 묶음(readers/flows_minute.py) ──────────
+MINUTE_TAB_PATTERN = r"^[a-z][a-z0-9_]{0,31}$"
+
+
+@router.get("/market-minute", response_model=Envelope[MarketMinute])
+def market_minute_route(
+    request: Request,
+    market: Annotated[str, Query(pattern=MINUTE_TAB_PATTERN)] = "k200_fut",
+    venue: Annotated[Literal["KRX", "NXT", "TOTAL"], Query()] = "KRX",
+) -> Response:
+    st = get_state(request)
+    return cached_json(
+        request,
+        domain="flows_minute",
+        ttl_s=TTL_LIVE_S,
+        build=lambda: market_minute(st.read, market=market, venue=venue),
     )

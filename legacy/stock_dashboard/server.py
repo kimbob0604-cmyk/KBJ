@@ -4524,8 +4524,8 @@ def _handle_telegram_command(text: str) -> None:
             _tg_reply("⏳ 시황 생성 중…")
             send_market_summary_telegram(header="🌙 장마감 확정 시황 (요청)")
         elif cmd in ("시그널", "수급시그널", "signals"):
-            _tg_reply("⏳ 수급 시그널 분석 중…")
-            alert_flow_signals()
+            # KBJ P5: 수급 시그널 알림은 kbj flows.report(16:00)가 대체 — alert_flow_signals 삭제
+            _tg_reply("수급 리포트는 KBJ flows.report(평일 16:00)로 옮겼다")
         elif cmd in ("수급", "flow"):
             if not arg:
                 _tg_reply("사용법: /수급 삼성전자")
@@ -4586,41 +4586,7 @@ def _load_server_watchlist() -> list:
 # KBJ P4 삭제: alert_revision_signals — kbj consensus.snapshot·kbj.engines.consensus.revision·/api/stock/{code}/consensus(KIS — ADR 0015)
 
 
-def alert_morning_briefing():
-    try:
-        today_kst = now_kst().strftime("%Y-%m-%d")
-        lines = [f"📊 <b>오늘의 시황 브리핑</b> ({today_kst})", ""]
-
-        # 매크로: USD/KRW, WTI, VIX
-        macro = _read_fresh_json(BASE_DIR / "cache" / "macro_data.json", 24 * 60) or {}
-        for it in macro.get("items") or []:
-            if it["name"] in ("USD/KRW", "WTI 원유", "VIX", "미국 10년물"):
-                arrow = "🔴" if it["change_pct"] >= 0 else "🟢"
-                sign  = "+" if it["change_pct"] >= 0 else ""
-                lines.append(f"{arrow} {it['name']}: {it['value']} ({sign}{it['change_pct']}%)")
-        lines.append("")
-
-        # 오늘 경제 일정 (high impact)
-        import glob as _glob
-        econ_files = sorted(_glob.glob(str(BASE_DIR / "cache" / "economic_calendar_*.json")), reverse=True)
-        high_events = []
-        if econ_files:
-            try:
-                econ = json.loads(open(econ_files[0], encoding="utf-8").read())
-                for e in econ.get("events") or []:
-                    if e.get("date") == today_kst and e.get("impact") == "high":
-                        high_events.append(e)
-            except Exception:
-                pass
-        if high_events:
-            lines.append("📅 <b>오늘 주요 일정</b>")
-            for e in high_events[:5]:
-                lines.append(f"  🔴 {e.get('time') or '—'} {e.get('country_kr','')} {e.get('event_kr') or e.get('event') or ''}")
-        else:
-            lines.append("📅 오늘 high impact 지표 없음")
-        send_telegram("\n".join(lines))
-    except Exception as exc:
-        log.warning("alert_morning_briefing: %s", exc)
+# KBJ P5 삭제: alert_morning_briefing
 
 
 # ── 알림 2: 종목 발굴 Stage 2 신규 진입 ──
@@ -4832,119 +4798,10 @@ def alert_new_reports():
 
 
 # ── 알림 6: 새벽 5:30 익일 시장 예측 (미국 옵션 + 야간선물 + 매크로) ──
-def alert_overnight_prediction():
-    """
-    새벽 5:30 (미국장 마감 직후) 종합 예측 브리핑.
-    SPY/QQQ 옵션 시그널 + 코스피200 야간선물 + 매크로 + 오늘 주요 일정.
-    """
-    try:
-        lines = [f"🔮 <b>익일 시장 예측 브리핑</b>",
-                 f"{now_kst().strftime('%Y-%m-%d %H:%M')} KST", ""]
-
-        # SPY/QQQ 옵션 시그널 (캐시 우선, 없으면 재계산)
-        for sym in ("SPY", "QQQ"):
-            try:
-                cache_file = BASE_DIR / "cache" / f"options_signal_{sym}.json"
-                data = _read_fresh_json(cache_file, 180)   # 3h 허용
-                if not data:
-                    data = _compute_options_signal(sym)
-                if not data or "error" in data:
-                    continue
-                flag = "🇺🇸"
-                o = data.get("overall") or {}
-                p = data.get("pcr") or {}
-                m = data.get("max_pain") or {}
-                g = data.get("gex") or {}
-                lines.append(f"{flag} <b>{sym}</b> ${data.get('spot_price')} · {o.get('emoji','🟡')} {o.get('direction','중립')}")
-                lines.append(f"  PCR {p.get('volume','—')} · MaxPain ${m.get('strike','—')} ({m.get('diff_pct',0):+.1f}%) · GEX {g.get('regime','—')}")
-                cw = g.get("call_wall") or {}
-                pw = g.get("put_wall") or {}
-                if cw.get("strike") or pw.get("strike"):
-                    lines.append(f"  저항 ${cw.get('strike','—')} / 지지 ${pw.get('strike','—')}")
-            except Exception as exc:
-                log.debug("overnight SPY/QQQ %s: %s", sym, exc)
-        lines.append("")
-
-        # 코스피200 야간선물
-        try:
-            nf = _read_fresh_json(BASE_DIR / "cache" / "night_futures.json", 180)
-            if not nf:
-                nf = _fetch_night_futures()
-            if nf and nf.get("night_close"):
-                sign = "+" if (nf.get("change_pct") or 0) >= 0 else ""
-                lines.append(f"🇰🇷 <b>코스피200 (^KS200)</b>")
-                lines.append(f"  종가 {nf['night_close']} ({sign}{nf.get('change_pct','—')}%)")
-                if nf.get("signal"):
-                    lines.append(f"  {nf['signal']}")
-                lines.append("")
-        except Exception as exc:
-            log.debug("overnight kr futures: %s", exc)
-
-        # 매크로 핵심 4개
-        try:
-            macro = _read_fresh_json(BASE_DIR / "cache" / "macro_data.json", 6 * 60)
-            if macro and macro.get("items"):
-                lines.append("📊 <b>주요 지표</b>")
-                for it in macro["items"]:
-                    if it["name"] in ("USD/KRW", "WTI 원유", "VIX", "미국 10년물", "BTC"):
-                        sign = "+" if it["change_pct"] >= 0 else ""
-                        lines.append(f"  {it['name']}: {it['value']} ({sign}{it['change_pct']}%)")
-                lines.append("")
-        except Exception as exc:
-            log.debug("overnight macro: %s", exc)
-
-        # 오늘 high impact 경제 일정
-        try:
-            today_kst = now_kst().strftime("%Y-%m-%d")
-            import glob as _glob
-            econ_files = sorted(
-                _glob.glob(str(BASE_DIR / "cache" / "economic_calendar_*.json")),
-                reverse=True,
-            )
-            if econ_files:
-                econ = json.loads(open(econ_files[0], encoding="utf-8").read())
-                today_evs = [
-                    e for e in (econ.get("events") or [])
-                    if e.get("date") == today_kst and e.get("impact") == "high"
-                ]
-                if today_evs:
-                    lines.append("📅 <b>오늘 주요 일정</b>")
-                    for e in today_evs[:5]:
-                        lines.append(
-                            f"  🔴 {e.get('time') or '—'} "
-                            f"{e.get('country_kr','')} "
-                            f"{e.get('event_kr') or e.get('event','')}"
-                        )
-        except Exception as exc:
-            log.debug("overnight calendar: %s", exc)
-
-        send_telegram("\n".join(lines))
-    except Exception as exc:
-        log.warning("alert_overnight_prediction: %s", exc)
+# KBJ P5 삭제: alert_overnight_prediction
 
 
-def _refresh_briefing_data():
-    """새벽 5:00 — 브리핑 30분 전 옵션/야간선물/매크로 캐시 강제 갱신."""
-    for sym in ("SPY", "QQQ"):
-        f = BASE_DIR / "cache" / f"options_signal_{sym}.json"
-        try:
-            if f.exists():
-                f.unlink()
-        except Exception:
-            pass
-        try:
-            _call_api_internal(f"/api/options_signal?symbol={sym}")
-        except Exception as exc:
-            log.debug("briefing refresh %s: %s", sym, exc)
-    try:
-        _call_api_internal("/api/night_futures")
-    except Exception:
-        pass
-    try:
-        _call_api_internal("/api/macro")
-    except Exception:
-        pass
-    log.info("[새벽 브리핑] 데이터 갱신 완료")
+# KBJ P5 삭제: _refresh_briefing_data
 
 
 def refresh_us_options_signal():
@@ -5095,119 +4952,10 @@ _ETF_THEMES = {
 }
 
 
-def _scrape_etf_price(code: str) -> dict | None:
-    """
-    네이버 금융 종목 페이지에서 ETF 시세 + 등락률 추출.
-    HTML 구조:
-      .no_today .blind        → 현재가
-      .no_exday em (2개)      → [전일대비 금액, 등락률 숫자(%제외)]
-      .no_exday .ico.plus/minus 또는 .no_up/.no_down → 부호
-    """
-    try:
-        import requests as _rq
-        from bs4 import BeautifulSoup
-        r = _rq.get(
-            "https://finance.naver.com/item/main.naver",
-            params={"code": code},
-            headers={"User-Agent": "Mozilla/5.0"}, timeout=8,
-        )
-        r.encoding = "euc-kr"
-        soup = BeautifulSoup(r.text, "html.parser")
-
-        price = None
-        pt = soup.select_one(".no_today .blind")
-        if pt:
-            try:
-                price = int(pt.get_text(strip=True).replace(",", ""))
-            except Exception:
-                pass
-
-        change_pct = None
-        no_exday = soup.select_one(".no_exday")
-        if no_exday:
-            ems = no_exday.select("em")
-            if len(ems) >= 2:
-                # 마지막 em = 등락률, 그 안 .blind = 숫자
-                rate_em = ems[-1]
-                rate_blind = rate_em.select_one(".blind")
-                if rate_blind:
-                    try:
-                        change_pct = float(rate_blind.get_text(strip=True).replace(",", ""))
-                    except ValueError:
-                        pass
-            # 부호 판정: .ico.minus / .ico.plus / no_down / no_up
-            if change_pct is not None:
-                html = str(no_exday)
-                if "ico minus" in html or "no_down" in html:
-                    change_pct = -abs(change_pct)
-                elif "ico plus" in html or "no_up" in html:
-                    change_pct = abs(change_pct)
-        return {"code": code, "price": price, "change_pct": change_pct}
-    except Exception as exc:
-        log.debug("etf scrape %s fail: %s", code, exc)
-        return None
+# KBJ P5 삭제: _scrape_etf_price
 
 
-@app.route("/api/etf_map")
-def api_etf_map():
-    """국내 주요 ETF 히트맵 — 테마별 가중평균 등락률. 30분 캐시."""
-    today = now_kst().strftime("%Y%m%d")
-    cache_file = BASE_DIR / "cache" / f"etf_map_{today}.json"
-    cached = _read_fresh_json(cache_file, 30)
-    if cached:
-        return jsonify(cached)
-
-    # 고유 ETF 코드 집합
-    unique_codes = {}
-    for theme, etfs in _ETF_THEMES.items():
-        for code, name in etfs:
-            unique_codes[code] = name
-
-    # 시세 스크랩
-    price_map: dict[str, dict] = {}
-    for code, name in unique_codes.items():
-        p = _scrape_etf_price(code)
-        if p:
-            p["name"] = name
-            price_map[code] = p
-        time.sleep(0.12)
-
-    # 테마 조립
-    themes = []
-    for theme_name, etfs in _ETF_THEMES.items():
-        stocks = []
-        for code, name in etfs:
-            info = price_map.get(code) or {"code": code, "name": name, "price": None, "change_pct": None}
-            stocks.append({
-                "code":       code,
-                "name":       name,
-                "price":      info.get("price"),
-                "change_pct": info.get("change_pct") or 0,
-                "volume_mn":  0,   # 거래대금 크롤링은 생략 (트리맵 가중은 동일 가중 fallback)
-            })
-        # 단순 평균 등락률
-        vals = [s["change_pct"] for s in stocks if s.get("change_pct") is not None]
-        avg = round(sum(vals) / len(vals), 2) if vals else 0
-        themes.append({
-            "name":             theme_name,
-            "weighted_avg_pct": avg,
-            "stock_count":      len(stocks),
-            "stocks":           stocks,
-        })
-    # 가중평균 절댓값 기준 정렬
-    themes.sort(key=lambda t: abs(t.get("weighted_avg_pct") or 0), reverse=True)
-
-    result = {
-        "updated_at": now_kst().strftime("%Y-%m-%d %H:%M:%S"),
-        "theme_count": len(themes),
-        "themes": themes,
-    }
-    try:
-        cache_file.parent.mkdir(exist_ok=True)
-        cache_file.write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
-    except Exception:
-        pass
-    return jsonify(result)
+# KBJ P5 삭제: api_etf_map
 
 
 # ─────────────────────────────────────────────────────────────────────────
@@ -5549,9 +5297,7 @@ def _startup():
 
         # Phase 23: 텔레그램 알림 스케줄 (토큰 있을 때만)
         if os.getenv("TELEGRAM_BOT_TOKEN") and os.getenv("TELEGRAM_CHAT_ID"):
-            _scheduler.add_job(alert_morning_briefing, "cron",
-                               day_of_week="mon-fri", hour=8, minute=30,
-                               id="tg_morning")
+            # KBJ P5 삭제: 등록 alert_morning_briefing
             # KBJ P4 삭제: tg_revision_signals(alert_revision_signals) — kbj consensus.snapshot 의 alert.revision(16:00, ADR 0018)
             _scheduler.add_job(alert_watchlist_price, "cron",
                                day_of_week="mon-fri", hour="9-14", minute="0,30",
@@ -5589,9 +5335,7 @@ def _startup():
                                misfire_grace_time=1800)
             # 수급 심화 시그널 (19:30 — 저녁 확정 수급 분석 후)
             # 쌍끌이 매수/매도 · 외국인 연속 순매수/순매도 · 수급 반전 포착.
-            _scheduler.add_job(alert_flow_signals, "cron",
-                               day_of_week="mon-fri", hour=19, minute=30,
-                               id="tg_flow_signals", max_instances=1)
+            # KBJ P5 삭제: 등록 alert_flow_signals
             # 신고가 캐시 프리워밍 (15:48 — 가격 sync 15:35 후) — 첫 진입 행 방지
             _scheduler.add_job(_prewarm_new_highs, "cron",
                                day_of_week="mon-fri", hour=15, minute=48,
@@ -5615,17 +5359,11 @@ def _startup():
                                id="closing_brief_catchup", max_instances=1,
                                misfire_grace_time=1800)
             # 미국 장마감 시황 (KST 06:10 — 미국 월~금 마감 = KST 화~토)
-            _scheduler.add_job(send_us_market_summary_telegram, "cron",
-                               day_of_week="tue-sat", hour=6, minute=10,
-                               id="tg_us_market_summary", max_instances=1)
+            # KBJ P5 삭제: 등록 send_us_market_summary_telegram
             # Phase 24 Step 3: 새벽 5:00 브리핑 데이터 갱신
-            _scheduler.add_job(_refresh_briefing_data, "cron",
-                               day_of_week="tue-sat", hour=5, minute=0,
-                               id="tg_briefing_refresh", max_instances=1)
+            # KBJ P5 삭제: 등록 _refresh_briefing_data
             # Phase 24 Step 3: 새벽 5:30 익일 예측 브리핑 (화~토, 월요일 제외)
-            _scheduler.add_job(alert_overnight_prediction, "cron",
-                               day_of_week="tue-sat", hour=5, minute=30,
-                               id="tg_overnight")
+            # KBJ P5 삭제: 등록 alert_overnight_prediction
             # Phase 24 Step 3: 밤 22:00 미국장 시작 전 옵션 캐시 무효화
             _scheduler.add_job(refresh_us_options_signal, "cron",
                                day_of_week="mon-fri", hour=22, minute=0,
@@ -11869,33 +11607,7 @@ def _ensure_us_data_for_summary() -> None:
             log.warning("[US summary] DB readiness 체크 실패: %s", exc)
 
 
-def send_us_market_summary_telegram():
-    """미국 장마감 시황 텔레그램 발송 (KST 06:10 cron)."""
-    try:
-        _ensure_us_data_for_summary()
-    except Exception:
-        log.exception("ensure_us_data fail")
-    try:
-        data = build_us_market_summary()
-    except Exception:
-        log.exception("send_us_market_summary build")
-        return
-    lines = [f"🇺🇸 <b>{now_kst().strftime('%m/%d')} 미국 장마감 시황</b>", ""]
-    for sec in data.get("sections", []):
-        lines.append(f"<b>{sec['title']}</b>")
-        for it in sec.get("items", []):
-            lines.append(it)
-        for sub in sec.get("subsections", []):
-            lines.append("")
-            lines.append(sub["subtitle"])
-            for it in sub.get("items", []):
-                lines.append(it)
-        lines.append("")
-    lines.append(f"⏰ {now_kst().strftime('%H:%M')} KST")
-    msg = "\n".join(lines)
-    if len(msg) > 4000:
-        msg = msg[:3990] + "\n…(생략)"
-    send_telegram(msg)
+# KBJ P5 삭제: send_us_market_summary_telegram
 
 
 def send_market_summary_telegram(header: str | None = None):
@@ -12511,61 +12223,7 @@ def _analyze_flow_signals(min_eok: float = 50.0, streak_min: int = 3) -> dict:
             "reversal": reversal}
 
 
-def alert_flow_signals():
-    """수급 심화 시그널 텔레그램 발송 (평일 19:30 — 저녁 확정 수급 분석)."""
-    sig = _analyze_flow_signals()
-    if not sig.get("date"):
-        log.info("[수급시그널] 데이터 없음 — 스킵")
-        return
-    date_lbl = sig["date"][5:].replace("-", "/")
-    lines = [f"💰 <b>{date_lbl} 수급 시그널</b>", ""]
-
-    def _fline(c, with_streak=False):
-        sgn_f = "+" if c["foreign"] >= 0 else ""
-        sgn_i = "+" if c["inst"] >= 0 else ""
-        base = (f"  {c['name']} 외 {sgn_f}{c['foreign']:,.0f}억 · "
-                f"기 {sgn_i}{c['inst']:,.0f}억")
-        if with_streak and c.get("fstreak_buy", 0) >= 3:
-            base += f" ({c['fstreak_buy']}일 연속)"
-        elif with_streak and c.get("fstreak_sell", 0) >= 3:
-            base += f" ({c['fstreak_sell']}일 연속)"
-        return base
-
-    any_section = False
-    if sig["dual_buy"]:
-        any_section = True
-        lines.append("🤝 <b>쌍끌이 순매수</b> (외국인+기관)")
-        lines += [_fline(c) for c in sig["dual_buy"]]
-        lines.append("")
-    if sig["dual_sell"]:
-        any_section = True
-        lines.append("💥 <b>쌍끌이 순매도</b> (외국인+기관)")
-        lines += [_fline(c) for c in sig["dual_sell"]]
-        lines.append("")
-    if sig["streak_buy"]:
-        any_section = True
-        lines.append("🔼 <b>외국인 연속 순매수</b>")
-        lines += [_fline(c, with_streak=True) for c in sig["streak_buy"]]
-        lines.append("")
-    if sig["streak_sell"]:
-        any_section = True
-        lines.append("🔽 <b>외국인 연속 순매도</b>")
-        lines += [_fline(c, with_streak=True) for c in sig["streak_sell"]]
-        lines.append("")
-    if sig["reversal"]:
-        any_section = True
-        lines.append("🔁 <b>수급 반전</b> (외국인 순매도→순매수 전환)")
-        lines += [_fline(c) for c in sig["reversal"]]
-        lines.append("")
-
-    if not any_section:
-        log.info("[수급시그널] 포착된 시그널 없음 — 스킵")
-        return
-    lines.append(f"⏰ {now_kst().strftime('%H:%M')} KST")
-    msg = "\n".join(lines)
-    if len(msg) > 4000:
-        msg = msg[:3990] + "\n…(생략)"
-    send_telegram(msg)
+# KBJ P5 삭제: alert_flow_signals
 
 
 @app.route("/api/flow/signals")
@@ -13123,158 +12781,7 @@ def api_valuechain():
 
 
 # ── 🌍 글로벌 매크로 대시보드 ──────────────
-@app.route("/api/global_macro")
-def api_global_macro():
-    """기존 macro_data.json + data.json + cache 통합. 30분 캐시."""
-    cache_file = BASE_DIR / "cache" / "global_macro.json"
-    try:
-        if cache_file.exists():
-            age_min = (now_kst().timestamp() - cache_file.stat().st_mtime) / 60
-            if age_min < 30:
-                return Response(cache_file.read_text(encoding="utf-8"),
-                                content_type="application/json; charset=utf-8")
-    except Exception:
-        pass
-
-    macro: dict = {}
-    try:
-        md = json.loads((BASE_DIR / "cache" / "macro_data.json").read_text(encoding="utf-8"))
-        for it in md.get("items", []):
-            macro[it.get("name")] = {
-                "value":      it.get("value"),
-                "change_pct": it.get("change_pct"),
-                "change":     it.get("change"),
-            }
-    except Exception:
-        pass
-
-    dj: dict = {}
-    try:
-        if DATA_JSON.exists():
-            dj = json.loads(DATA_JSON.read_text(encoding="utf-8"))
-    except Exception:
-        pass
-    mo = (dj.get("market_overview") or {})
-
-    sections: dict = {}
-
-    # 1) 글로벌 주요 지수 (data.json + macro)
-    idx_items = []
-    for label, src in (
-        ("🇰🇷 KOSPI",   dj.get("kospi")),
-        ("🇰🇷 KOSDAQ",  dj.get("kosdaq")),
-        ("🇺🇸 S&P 500", mo.get("sp500")),
-        ("🇺🇸 NASDAQ",  mo.get("nasdaq")),
-        ("🇺🇸 DOW",     mo.get("dow")),
-    ):
-        if isinstance(src, dict) and src.get("value") is not None:
-            idx_items.append({"name": label, "value": src["value"],
-                              "change_pct": src.get("change_pct")})
-    sections["indices"] = {"title": "글로벌 주요 지수", "items": idx_items}
-
-    # 2) 채권/금리 (장단기 금리차 자동 계산)
-    bond_items = []
-    for k, label in (("미국 10년물", "🇺🇸 10년물"),
-                     ("US 2Y", "🇺🇸 2년물"),
-                     ("US 10Y", "🇺🇸 10년물 (US 10Y)")):
-        if k in macro and macro[k].get("value") is not None:
-            bond_items.append({"name": label, "value": macro[k]["value"],
-                               "change_pct": macro[k].get("change_pct"),
-                               "unit": "%"})
-    us10 = macro.get("미국 10년물", {}).get("value") or macro.get("US 10Y", {}).get("value")
-    us2  = macro.get("US 2Y", {}).get("value")
-    if us10 is not None and us2 is not None:
-        sp = round(us10 - us2, 3)
-        bond_items.append({
-            "name": "📐 장단기 금리차 (10Y-2Y)",
-            "value": sp, "unit": "%p",
-            "signal": "역전 (경기침체 경고)" if sp < 0 else "정상",
-            "is_inverted": sp < 0,
-        })
-    sections["bonds"] = {"title": "채권 & 금리", "items": bond_items}
-
-    # 3) 통화/환율
-    cur_items = []
-    for k, label in (("DXY", "💵 달러인덱스"),
-                     ("USD/KRW", "🇰🇷 원/달러"),
-                     ("USD/JPY", "🇯🇵 엔/달러"),
-                     ("USD/CNY", "🇨🇳 위안/달러"),
-                     ("EUR/USD", "🇪🇺 유로/달러")):
-        if k in macro and macro[k].get("value") is not None:
-            cur_items.append({"name": label, "value": macro[k]["value"],
-                              "change_pct": macro[k].get("change_pct")})
-    sections["currencies"] = {"title": "통화 & 환율", "items": cur_items}
-
-    # 4) 원자재
-    com_items = []
-    for k, label in (("WTI 원유", "🛢️ WTI 원유"),
-                     ("브렌트유", "🛢️ 브렌트유"),
-                     ("금",       "🥇 금"),
-                     ("은",       "🥈 은"),
-                     ("구리",     "🔶 구리"),
-                     ("천연가스", "⛽ 천연가스")):
-        if k in macro and macro[k].get("value") is not None:
-            com_items.append({"name": label, "value": macro[k]["value"],
-                              "change_pct": macro[k].get("change_pct")})
-    sections["commodities"] = {"title": "원자재", "items": com_items}
-
-    # 5) 변동성/심리
-    sent_items = []
-    if "VIX" in macro and macro["VIX"].get("value") is not None:
-        v = macro["VIX"]["value"]
-        regime = ("안정" if v < 15 else "보통" if v < 20
-                  else "경계" if v < 25 else "공포" if v < 35 else "패닉")
-        sent_items.append({"name": "😰 VIX", "value": v,
-                           "change_pct": macro["VIX"].get("change_pct"),
-                           "signal": regime})
-    try:
-        fg = json.loads((BASE_DIR / "cache" / "fear_greed.json").read_text(encoding="utf-8"))
-        if fg.get("score") is not None:
-            sent_items.append({"name": "🎭 공포탐욕", "value": fg["score"],
-                               "signal": fg.get("rating_kr") or fg.get("rating", "")})
-    except Exception:
-        pass
-    for sym in ("SPY", "QQQ"):
-        try:
-            opt = json.loads((BASE_DIR / "cache" / f"options_signal_{sym}.json")
-                             .read_text(encoding="utf-8"))
-            pcr = (opt.get("pcr") or {}).get("volume")
-            ovr = opt.get("overall") or {}
-            if pcr is not None:
-                sent_items.append({"name": f"📊 {sym} PCR", "value": pcr,
-                                   "signal": f"{ovr.get('emoji','')} {ovr.get('direction','')}"})
-        except Exception:
-            pass
-    try:
-        nf = json.loads((BASE_DIR / "cache" / "night_futures.json").read_text(encoding="utf-8"))
-        if nf.get("night_close"):
-            sent_items.append({"name": "🌙 코스피200 야간선물",
-                               "value": nf["night_close"],
-                               "change_pct": nf.get("change_pct"),
-                               "signal": nf.get("signal", "")})
-    except Exception:
-        pass
-    sections["sentiment"] = {"title": "변동성 & 심리", "items": sent_items}
-
-    # 6) 디지털 자산
-    crypto_items = []
-    for k, label in (("BTC", "₿ 비트코인"), ("ETH", "Ξ 이더리움")):
-        if k in macro and macro[k].get("value") is not None:
-            crypto_items.append({"name": label, "value": macro[k]["value"],
-                                 "change_pct": macro[k].get("change_pct")})
-    sections["crypto"] = {"title": "디지털 자산", "items": crypto_items}
-
-    result = {
-        "updated_at": now_kst().strftime("%Y-%m-%d %H:%M:%S"),
-        "sections": sections,
-    }
-    try:
-        cache_file.parent.mkdir(exist_ok=True)
-        cache_file.write_text(json.dumps(result, ensure_ascii=False, indent=2),
-                              encoding="utf-8")
-    except Exception:
-        pass
-    return jsonify(result)
+# KBJ P5 삭제: api_global_macro
 
 
 # ── CNN 공포탐욕지수 (Fear & Greed) ──────────────

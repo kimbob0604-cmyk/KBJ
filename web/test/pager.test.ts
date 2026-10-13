@@ -1,7 +1,7 @@
 // 탭·해시·←/→·미니맵, 13페이지 등록 (§6.8 pager.test) + P4 종목 해시 #/p/8/<코드> (p4_design §1.2·§6.5)
 import { describe, expect, it, vi } from 'vitest';
 import { mountApp } from '../src/app/app';
-import { pageLoaders, PAGES, P3_PAGES, P4_PAGES } from '../src/app/pages';
+import { pageLoaders, PAGES, P3_PAGES, P4_PAGES, P5_PAGES } from '../src/app/pages';
 import { formatHash, HASH_RE, isMostlyVisible, parseHash, parseRoute } from '../src/app/pager';
 import { createRoute, route as appRoute } from '../src/app/route';
 import type { DataSource } from '../src/data/source';
@@ -24,11 +24,22 @@ describe('페이지 등록부', () => {
     expect(PAGES.map((p) => p.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
     expect(P3_PAGES).toEqual([1, 2, 4, 10]);
     expect(P4_PAGES).toEqual([5, 8]);
-    // DATA_TIERS §2: 7 은 공개 표시, 1·5·8 은 공개·로그인 섞임(D-P4-15), 나머지는 로그인
+    // 9 는 단계 표기만 P5 — 테마 사전 통합은 사용자가 따로 진행(2026-10-13 Q1), P3 자리표시 그대로
+    expect(P5_PAGES).toEqual([6]);
+    // DATA_TIERS §2: 7 은 공개 표시, 1·5·6·8 은 공개·로그인 섞임(D-P4-15·p5_design §6), 나머지는 로그인
     expect(PAGES.filter((p) => p.tier === 'public').map((p) => p.n)).toEqual([7]);
-    expect(PAGES.filter((p) => p.tier === 'mixed').map((p) => p.n)).toEqual([1, 5, 8]);
+    expect(PAGES.filter((p) => p.tier === 'mixed').map((p) => p.n)).toEqual([1, 5, 6, 8]);
     // 섞인 페이지는 페이지 자물쇠가 없다(패널마다 정한다)
-    expect(PAGES.find((p) => p.n === 8)?.lock).toBeUndefined();
+    for (const p of PAGES.filter((x) => x.tier === 'mixed')) expect(p.lock, `페이지 ${p.n}`).toBeUndefined();
+  });
+
+  it('P5 페이지 문구: 6 은 공개·로그인 몫을 함께, 9 는 자리표시 그대로, 10 은 P5 패널 예고', () => {
+    const plan = (n: number) => PAGES.find((p) => p.n === n)?.plan ?? '';
+    expect(plan(6)).toContain('(공개)');
+    expect(plan(6)).toContain('(로그인)');
+    expect(PAGES.find((p) => p.n === 9)).toMatchObject({ phase: 'P5', tier: 'login', lock: 'quote_based' });
+    expect(plan(9)).toBe('테마·체인 모니터, 밸류체인 맵, 테마 강도');
+    expect(plan(10)).toContain('ETF 맵');
   });
 
   it("화면 문구에 'TAM' 을 쓰지 않는다 — 시나리오 적정가(D-P4-12)", () => {
@@ -44,14 +55,15 @@ describe('페이지 등록부', () => {
       '../pages/p10_etf.ts': noop,
       '../pages/p5_filings.ts': noop,
       '../pages/p8_stock.ts': noop,
+      '../pages/p6_macro.ts': noop,
       '../pages/placeholder.ts': noop,
     });
-    expect([...m.keys()].sort((a, b) => a - b)).toEqual([1, 5, 8, 10]);
+    expect([...m.keys()].sort((a, b) => a - b)).toEqual([1, 5, 6, 8, 10]);
   });
 
-  it('빌드 glob 이 페이지 5·8 진입 파일도 찾는다(p{1,2,4,5,8,10}_*.ts)', async () => {
+  it('빌드 glob 이 페이지 5·8·6 진입 파일도 찾는다(p{1,2,4,5,6,8,10}_*.ts — 9 는 자리표시)', async () => {
     const src = (await import('../src/app/pages.ts?raw')).default;
-    expect(src).toContain("'../pages/p{1,2,4,5,8,10}_*.ts'");
+    expect(src).toContain("'../pages/p{1,2,4,5,6,8,10}_*.ts'");
   });
 
   it('해시 해석', () => {

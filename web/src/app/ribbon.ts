@@ -1,8 +1,11 @@
 // 상단 띠(docs/p3_design.md §4.4·§6.4·§6.5) — 칩 = 이름·값·꼬리표(잠정·마감·준비 중·자물쇠).
 //
 // - 로그인 빌드: `market/ribbon`(API) 한 번에 칩 전부. 1분마다 새로 고침(탭이 숨으면 멈춤 — ctx.every).
-// - 공개 빌드: 공개 파일 `calendar`·`events` 로 세션·금통위 D-n 만 화면에서 계산한다. 로그인 등급 칩은 자물쇠,
-//   P3 에 원천이 없는 칩은 '준비 중(Pn)'. 공개 빌드는 로그인 API 키를 묻지 않는다(묻더라도 static.ts 가 요청 없이 막는다).
+// - 공개 빌드: 공개 파일 `calendar`·`events` 로 세션·금통위 D-n 을 화면에서 계산하고, P5 신용 칩(신용스프레드 AA-·
+//   신용잔고)은 공개 파일 `credit`(공개 내보내기 credit.json — API 칩과 같은 모양)에서 읽는다. 로그인 등급 칩은 자물쇠,
+//   원천이 아직 없는 칩은 '준비 중(Pn)'. 공개 빌드는 로그인 API 키를 묻지 않는다(묻더라도 static.ts 가 요청 없이 막는다).
+// - P5(MAC — D-P5-20): 신용스프레드·신용잔고(공개)·한국 대 글로벌(로그인)은 단계 표시를 지웠다 — 값이 없으면 서버가
+//   '준비 중' 칩(phase_pending)을 그대로 보낸다(수집 꺼짐·실측 전 #43·#48).
 // - 칩 순서·이름·단계는 엔진 `kbj/engines/market/ribbon.py` 의 CHIP_ORDER·PENDING 과 같다.
 // - 값이 없는 칩은 0 이 아니라 '—'(사유는 title). 금액은 원 단위 → 화면에서만 억·조.
 import type { components } from '../api/types.gen';
@@ -21,12 +24,12 @@ export const RIBBON_REFRESH_MS = 60_000;
 /** 공개 띠: 세션 카운트다운만 다시 계산(파일은 다시 받지 않는다) */
 export const PUBLIC_TICK_MS = 30_000;
 
-/** 칩 자리(엔진 CHIP_ORDER 와 같은 순서). phase 가 있으면 P3 에 원천이 없다. */
+/** 칩 자리(엔진 CHIP_ORDER 와 같은 순서). phase 가 있으면 아직 원천이 없다(P6·P7). */
 export const CHIP_SLOTS: readonly { key: string; label: string; tier: 'public' | 'login'; phase?: string }[] = [
   { key: 'session', label: '세션', tier: 'public' },
   { key: 'bok_mpc', label: '금통위', tier: 'public' },
-  { key: 'credit_spread', label: '신용스프레드 AA-', tier: 'public', phase: 'P5' },
-  { key: 'credit_balance', label: '신용잔고', tier: 'public', phase: 'P5' },
+  { key: 'credit_spread', label: '신용스프레드 AA-', tier: 'public' },
+  { key: 'credit_balance', label: '신용잔고', tier: 'public' },
   { key: 'export_flash', label: '수출 속보', tier: 'public', phase: 'P6' },
   { key: 'market_turnover', label: '시장 거래대금', tier: 'login' },
   { key: 'foreign_spot', label: '외국인 현물', tier: 'login' },
@@ -34,7 +37,7 @@ export const CHIP_SLOTS: readonly { key: string; label: string; tier: 'public' |
   { key: 'newhigh_count', label: '신고가 수', tier: 'login' },
   { key: 'semi_skew', label: '반도체 쏠림', tier: 'login' },
   { key: 'cyc_def', label: '경기민감 대 방어', tier: 'login' },
-  { key: 'kr_vs_global', label: '한국 대 글로벌', tier: 'login', phase: 'P5' },
+  { key: 'kr_vs_global', label: '한국 대 글로벌', tier: 'login' },
   { key: 'gex_flip', label: 'GEX Flip 거리', tier: 'login', phase: 'P7' },
 ];
 
@@ -163,6 +166,14 @@ export function nextMpc(now: Date, ev: EventsData): string | null {
 
 // ── 칩 만들기 ───────────────────────────────────────────────
 
+/** 금투협 통계 단위 → 원 배수(모르는 단위는 원 단위로 바꾸지 않고 수만 보인다) */
+const UNIT_WON: Record<string, number> = { 원: 1, 천원: 1e3, 백만원: 1e6, 억원: 1e8 };
+
+/** 공개 파일 credit.json(공개 내보내기) — API 칩과 같은 모양의 칩 목록 */
+interface CreditData {
+  chips?: ApiChip[];
+}
+
 function stateOf(q: Quality, closed: boolean): ChipState {
   if (q === 'estimated') return 'estimated';
   return closed ? 'closed' : 'live';
@@ -225,9 +236,29 @@ export function chipOptions(c: ApiChip, now: Date): ChipOptions {
     }
     case 'semi_skew':
     case 'cyc_def':
+    case 'kr_vs_global':
       text = n === null ? DASH : `${num(n, 2, true)}%p`;
       cls = signClass(n);
       break;
+    case 'credit_spread': {
+      const bp = detailNum(c, 'change_bp');
+      text = n === null ? DASH : bp === null ? `${num(n, 2)}%p` : `${num(n, 2)}%p · ${num(bp, 0, true)}bp`;
+      break;
+    }
+    case 'credit_balance':
+    case 'investor_deposit': {
+      // 단위는 출처 공표 그대로(원·백만원 — 실측 #48) → 화면에서만 조·억
+      const scale = UNIT_WON[detailStr(c, 'unit') ?? '원'];
+      const ch = detailNum(c, 'change');
+      text =
+        n === null || scale === undefined
+          ? num(n)
+          : ch === null
+            ? joEok(n * scale)
+            : `${joEok(n * scale)} · ${eok(ch * scale, 0, true)}`;
+      cls = ch === null ? undefined : signClass(ch);
+      break;
+    }
     default:
       text = n === null ? String(v.value) : num(n, 2);
   }
@@ -279,16 +310,28 @@ async function mountLogin(el: HTMLElement, ctx: AppContext): Promise<void> {
 }
 
 async function mountPublic(el: HTMLElement, ctx: AppContext): Promise<void> {
-  const [cal, ev] = await Promise.allSettled([
+  const [cal, ev, credit] = await Promise.allSettled([
     ctx.source.get<CalendarData>('calendar'),
     ctx.source.get<EventsData>('events'),
+    ctx.source.get<CreditData>('credit'),
   ]);
+  const creditChip = (key: string): ApiChip | undefined =>
+    credit.status === 'fulfilled' && Array.isArray(credit.value.data.chips)
+      ? credit.value.data.chips.find((c) => c.key === key && c.tier === 'public')
+      : undefined;
   const draw = (): void => {
     const now = ctx.now();
     const opts: ChipOptions[] = CHIP_SLOTS.map((s) => {
       const base: ChipOptions = { key: s.key, label: s.label, tier: s.tier };
       if (s.phase) return { ...base, state: 'pending', phase: s.phase };
       if (s.tier === 'login') return { ...base, state: 'locked' };
+      if (s.key === 'credit_spread' || s.key === 'credit_balance') {
+        const c = creditChip(s.key);
+        if (c) return chipOptions(c, now);
+        // 파일이 없거나(수집 전 — 404) 칩이 없다: 0 이 아니라 '—' + 사유
+        const why = credit.status === 'rejected' ? errorText(credit.reason) : '아직 없음';
+        return { ...base, value: DASH, cls: 'dim', title: `${why} — market_stats.kofia·macro.evening(확인 전 #43·#48)` };
+      }
       if (s.key === 'session') {
         if (cal.status === 'rejected') return { ...base, value: errorText(cal.reason), cls: 'warn' };
         const st = Array.isArray(cal.value.data.days) ? sessionAt(now, cal.value.data) : null;

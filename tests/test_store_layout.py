@@ -1,4 +1,4 @@
-"""DB 스키마 마이그레이션 0001~0013 과 docker-compose.yml 의 구조 검사(정적 — DB·데몬 없이).
+"""DB 스키마 마이그레이션 0001~0017 과 docker-compose.yml 의 구조 검사(정적 — DB·데몬 없이).
 
 ADR 0002: 공개 등급은 pub_*, 로그인 등급은 prv_*, 운영은 ops. kbj_public_export 는 pub_* 에만
 USAGE·SELECT. compose 는 비밀번호 기본값이 없고 포트는 127.0.0.1 에만 연다.
@@ -404,7 +404,17 @@ def test_market_investor_intraday_is_a_view_over_gx_investor_flow() -> None:
 
 P3_FILES = ("0007_board.sql", "0008_market_flows_p3.sql", "0009_etf.sql")
 ET_BOARD_DB = ROOT / "legacy" / "etf_traker" / "board" / "engine" / "db.py"
-ET_TRACKER = ROOT / "legacy" / "etf_traker" / "etf_tracker_v9" / "tracker.py"
+# ET etf_tracker_v9/tracker.py 의 sqlite DDL 열(P5 WRAP 이 tracker.py 를 지우기 전에
+# 원본에서 그대로 옮겼다 —
+# `_et_sqlite_tables` 가 원본에서 읽던 값과 같다. ETF 리포트는 kbj etf.report 가 대체)
+ET_TRACKER_TABLES: dict[str, list[str]] = {
+    "fund": ["fund_id", "issuer", "fund_key", "ticker", "name", "theme", "is_active", "mktcap",
+             "depth", "track", "empty_streak"],
+    "holding": ["fund_id", "asof", "code", "name", "qty", "wt", "val", "asof"],
+    "change_log": ["run_date", "fund_id", "code", "kind", "name", "asof", "prev_asof", "gap_days",
+                   "prev_qty", "cur_qty", "prev_wt", "cur_wt", "qty_pct", "qty_pct_adj", "fund_id",
+                   "code"],
+}  # fmt: skip
 # 값이 아니라 대조·차이·검산 결과를 담는 기록 표 — 출처는 열 이름(kis_value·final_source …)이 말한다
 P3_RECORD_TABLES = {
     "prv_market.eod_reconcile",
@@ -534,7 +544,7 @@ def test_p3_etf_tables_keep_et_columns() -> None:
     """ET etf_tracker_v9/tracker.py DDL 의 fund·holding·change_log 열.
 
     fund.mktcap 은 네이버 출처라 뺐다(U4)."""
-    et = _et_sqlite_tables(ET_TRACKER)
+    et = ET_TRACKER_TABLES
     kbj = _all_p3_tables()
     assert set(et["fund"]) - {"mktcap"} <= set(kbj["prv_etf.fund"])
     assert set(et["holding"]) <= set(kbj["prv_etf.holding"])
@@ -748,3 +758,235 @@ def test_p4_enum_checks_match_rows() -> None:
     signals = re.search(r"signal IN \(([^)]*)\)", body)
     assert signals is not None
     assert set(re.findall(r"'(\w+)'", signals.group(1))) == set(fr.REVISION_SIGNALS)
+
+
+# ── P5 마이그레이션 0014~0017 (docs/p5_design.md §3.3, D-P5-3 — 테마 표는 P5 에서 뺐다) ──
+
+P5_FILES = (
+    "0014_macro.sql",
+    "0015_us_board.sql",
+    "0016_market_stats.sql",
+    "0017_program.sql",
+)
+P5_EXPECT = {
+    "0014_macro.sql": {
+        "pub_macro.series_meta", "pub_macro.series", "pub_macro.calendar",
+        "prv_macro.series_meta", "prv_macro.series", "prv_macro.calendar",
+    },
+    "0015_us_board.sql": {"prv_market.us_universe"},
+    "0016_market_stats.sql": {
+        "pub_market_stats.credit_balance", "pub_market_stats.market_capital",
+        "pub_market_stats.fund_nav", "pub_market_stats.cma",
+    },
+    "0017_program.sql": {
+        "prv_flows.program_market_daily", "prv_flows.program_market_intraday",
+        "prv_flows.program_investor_daily", "prv_flows.program_stock_intraday",
+        "prv_flows.program_stock_daily",
+    },
+}  # fmt: skip
+# 공개 표에 들어오면 안 되는 로그인 출처 이름(DATA_TIERS §1 — 시세·운용사·비공식 피드)
+LOGIN_SOURCES = re.compile(r"\b(KIS|KRX|yahoo|nasdaq|stooq|ff|forexfactory|naver)\b", re.I)
+
+
+def _no_do_blocks(body: str) -> str:
+    """DO $$ … $$; 블록을 뺀 본문(블록 안의 ';' 로 문장을 잘못 나누지 않게)."""
+    return re.sub(r"DO \$\$.*?\$\$;", "", body, flags=re.S)
+
+
+def _all_p5_tables() -> dict[str, list[str]]:
+    found: dict[str, list[str]] = {}
+    for name in P5_FILES:
+        found.update(_tables(_body(name)))
+    return found
+
+
+def _p5_pub_tables() -> dict[str, list[str]]:
+    return {t: c for t, c in _all_p5_tables().items() if t.startswith("pub_")}
+
+
+def test_p5_migration_files_follow_p4_in_order() -> None:
+    names = sorted(p.name for p in MIGRATIONS.glob("*.sql"))
+    n = 1 + len(P2_FILES) + len(P3_FILES) + len(P4_FILES)
+    assert names[: n + len(P5_FILES)] == [
+        "0001_schemas.sql", *P2_FILES, *P3_FILES, *P4_FILES, *P5_FILES,
+    ]  # fmt: skip
+
+
+def test_p5_statements_are_idempotent_and_alter_only_in_guarded_blocks() -> None:
+    for name in P5_FILES:
+        body = _body(name)
+        assert not re.search(r"CREATE (SCHEMA|TABLE|EXTENSION)(?! IF NOT EXISTS)", body), name
+        assert not re.search(r"CREATE (UNIQUE )?INDEX(?! IF NOT EXISTS)", body), name
+        plain = _no_do_blocks(body)
+        starts = {s.strip().split(maxsplit=1)[0].upper() for s in plain.split(";") if s.strip()}
+        assert starts <= {"CREATE", "SELECT", "GRANT", "COMMENT"}, (name, starts)  # ALTER·DROP 없음
+        for call in re.findall(r"create_hypertable\((.*?)\);", body, flags=re.S):
+            assert "if_not_exists => TRUE" in call, (name, call)
+        for call in re.findall(r"add_retention_policy\((.*?)\);", body, flags=re.S):
+            assert "if_not_exists => TRUE" in call, (name, call)
+        if name != "0015_us_board.sql":
+            assert "DO $$" not in body, name
+    # 0015 의 DO 블록은 새 제약이 있으면 아무것도 하지 않는다(두 번 적용해도 같다) — 이름에 기대지
+    # 않고 정의('universe_meta' 를 담은 CHECK)로 옛 제약을 찾는다(0007 의 자동 이름 [확인 필요])
+    us = _body("0015_us_board.sql")
+    assert us.count("DO $$") == 1
+    assert "conname = 'artifact_name_p5_check'" in us and "IF NOT EXISTS" in us
+    assert "pg_get_constraintdef(oid) LIKE '%universe_meta%'" in us
+    assert "'us_summary', 'us_brief'" in us and "market = 'US'" in us
+    assert not re.search(r"ALTER TABLE (?!prv_board\.artifact )", us)
+
+
+def test_p5_tables_live_in_the_expected_files_and_tiers() -> None:
+    for name, tables in P5_EXPECT.items():
+        assert set(_tables(_body(name))) == tables, name
+    earlier = set(_all_p2_tables()) | set(_all_p3_tables()) | set(_all_p4_tables())
+    assert not set(_all_p5_tables()) & earlier  # 앞 번호 표를 다시 만들지 않는다
+    for name in ("0015_us_board.sql", "0017_program.sql"):  # 로그인 — prv_* 에만
+        body = _body(name)
+        assert "kbj_public_export" not in body and not re.search(r"\bpub_", body), name
+    for name in P5_FILES:
+        assert not re.search(r"\bpublic\.", _body(name)), name
+    # 0017 은 GX 표에 손대지 않는다 — 쓰기 주인·단위를 COMMENT 로만(D-P5-3·21)
+    prog = _body("0017_program.sql")
+    assert re.search(r"COMMENT ON TABLE prv_gex\.investor_flow IS", prog)
+    assert "flows.market_minute" in prog and "백만원" in prog
+    assert not re.search(r"(ALTER|CREATE) TABLE (IF NOT EXISTS )?prv_gex\.", prog)
+
+
+def test_p5_pub_tables_hold_public_sources_only() -> None:
+    """pub_* 표: 로그인 출처 이름·시세 값 열이 없다. 공개 매크로·캘린더의 source CHECK 는 공개 목록,
+    예상치(forecast)는 prv_macro.calendar 에만(D-P5-8)."""
+    pub = _p5_pub_tables()
+    assert pub
+    for table, cols in pub.items():
+        assert not LOGIN_ONLY_COLS & set(cols), (table, LOGIN_ONLY_COLS & set(cols))
+        assert "forecast" not in cols, table
+        assert {"source"} <= set(cols), table
+    for name in ("0014_macro.sql", "0016_market_stats.sql"):
+        pub_part = "\n".join(
+            m.group(0)
+            for m in re.finditer(
+                r"CREATE TABLE IF NOT EXISTS pub_\w+\.\w+ \(.*?\n\);", _body(name), re.S
+            )
+        )
+        assert not LOGIN_SOURCES.search(pub_part), name
+    macro = _body("0014_macro.sql")
+    pub_cal = "CHECK (source IN ('bok', 'fomc', 'fred', 'kosis', 'ecos', 'manual'))"
+    assert macro.count(pub_cal) == 1
+    assert (
+        macro.count("CHECK (source IN ('ECOS', 'KOSIS', 'FRED', 'TREASURY', 'NYFED'))") == 2
+    )  # pub series_meta·series
+    assert "CHECK (tier = 'public')" in macro and "CHECK (tier = 'private')" in macro
+    assert "dataset <> 'FRED:restricted_series'" in macro  # 저작권 시리즈는 공개 메타에 못 들어온다
+    cols = _all_p5_tables()
+    assert "forecast" in cols["prv_macro.calendar"]
+    assert _body("0016_market_stats.sql").count("CHECK (source = 'DATAGO')") == 4
+
+
+def test_p5_values_are_null_not_zero() -> None:
+    """값 칸은 NULL 허용(0 으로 채우지 않는다) — 값이 없으면 quality 가 ok 일 수 없다
+    (절대 규칙 2)."""
+    for table in (
+        "pub_macro.series",
+        "prv_macro.series",
+        *sorted(P5_EXPECT["0016_market_stats.sql"]),
+    ):
+        name = "0014_macro.sql" if "macro" in table else "0016_market_stats.sql"
+        m = re.search(
+            rf"CREATE TABLE IF NOT EXISTS {re.escape(table)} \((.*?)\n\);", _body(name), re.S
+        )
+        assert m is not None, table
+        assert re.search(r"^\s*value\s+numeric,$", m.group(1), re.M), (
+            table
+        )  # NOT NULL·DEFAULT 0 없음
+        assert "CHECK (value IS NOT NULL OR quality <> 'ok')" in m.group(1), table
+    assert "DEFAULT 0" not in "\n".join(_body(n) for n in P5_FILES)
+
+
+def test_p5_pub_tables_are_granted_select_only() -> None:
+    for name in ("0014_macro.sql", "0016_market_stats.sql"):
+        body = _body(name)
+        stmts = [s.strip() for s in body.split(";")]
+        grants = [s for s in stmts if re.search(r"\bkbj_public_export\b", s)]
+        for g in grants:
+            assert re.fullmatch(r"GRANT SELECT ON pub_[a-z_]+\.[a-z_]+ TO kbj_public_export", g), g
+        granted = {re.search(r"ON ([\w.]+) TO", g).group(1) for g in grants}  # type: ignore[union-attr]
+        assert granted == {t for t in _tables(body) if t.startswith("pub_")}, name
+
+
+def test_p5_value_tables_carry_source_quality_and_loader() -> None:
+    for table, cols in _all_p5_tables().items():
+        if table.endswith("series_meta"):
+            assert {"source", "loaded_by", "updated_at"} <= set(cols), table
+            continue
+        assert {"source", "quality", "loaded_by"} <= set(cols), table
+        assert {"received_at", "computed_at"} & set(cols), table
+
+
+def test_p5_keys_hypertables_and_retention_match_the_design() -> None:
+    body = "\n".join(_body(n) for n in P5_FILES)
+
+    def pk(table: str) -> str:
+        m = re.search(rf"CREATE TABLE IF NOT EXISTS {re.escape(table)} \((.*?)\n\);", body, re.S)
+        assert m is not None, table
+        inline = re.search(r"^\s*(\w+)\s+\w+ PRIMARY KEY", m.group(1), re.M)
+        if inline:
+            return inline.group(1)
+        found = re.search(r"PRIMARY KEY \(([^)]*)\)", m.group(1))
+        assert found is not None, table
+        return found.group(1)
+
+    assert pk("pub_macro.series") == "series_id, period"
+    assert pk("prv_macro.series") == "series_id, period"
+    assert pk("pub_macro.calendar") == "event_id"
+    assert pk("prv_market.us_universe") == "symbol, as_of"
+    for t in P5_EXPECT["0016_market_stats.sql"]:
+        assert pk(t) == "stat_date, item", t
+    assert pk("prv_flows.program_market_daily") == "trade_date, market, venue, kind, side"
+    assert pk("prv_flows.program_market_intraday") == "ts, market, venue, kind, side"
+    assert pk("prv_flows.program_investor_daily") == "trade_date, market, venue, investor, kind"
+    assert pk("prv_flows.program_stock_intraday") == "ts, code, venue"
+    assert pk("prv_flows.program_stock_daily") == "trade_date, code, venue"
+    hyper = re.findall(
+        r"create_hypertable\(\s*'([\w.]+)', by_range\('(\w+)', INTERVAL '([^']+)'", body
+    )
+    assert hyper == [
+        ("prv_flows.program_market_intraday", "ts", "1 day"),
+        ("prv_flows.program_stock_intraday", "ts", "1 day"),
+        ("prv_flows.program_stock_daily", "trade_date", "365 days"),
+    ]
+    retention = re.findall(r"add_retention_policy\(\s*'([\w.]+)', INTERVAL '([^']+)'", body)
+    assert retention == [
+        ("prv_flows.program_market_intraday", "90 days"),
+        ("prv_flows.program_stock_intraday", "90 days"),
+    ]
+    for kind_col in ("kind", "side"):
+        found = set(
+            re.findall(rf"\b{kind_col}\s+text NOT NULL CHECK \({kind_col} IN \(([^)]*)\)\)", body)
+        )
+        assert len(found) == 1, kind_col  # 다섯 표가 같은 목록
+
+
+def test_p5_enum_checks_match_rows() -> None:
+    """DB CHECK 의 값 목록 = kbj.core.p5_rows 의 열거(같은 말을 쓴다)."""
+    from kbj.core import p5_rows as p5
+
+    body = "\n".join(_body(n) for n in P5_FILES)
+
+    def values(col: str) -> set[str]:
+        found = re.findall(rf"\b{col}\s+text NOT NULL CHECK \({col} IN \(([^)]*)\)\)", body)
+        assert found, col
+        return {v for f in found for v in re.findall(r"'([\w]+)'", f)}
+
+    assert values("kind") == set(p5.PROGRAM_KINDS)
+    assert values("side") == set(p5.PROGRAM_SIDES)
+    assert values("scope") == set(p5.PROGRAM_SCOPES)
+    assert values("market") == set(p5.PROGRAM_MARKETS)
+    assert values("freq") == set(p5.MACRO_FREQS)
+    m = re.search(r"source\s+text NOT NULL CHECK \(source IN \('bok'([^)]*)\)\)", body)
+    assert m is not None
+    assert {"bok", *re.findall(r"'(\w+)'", m.group(1))} == set(p5.PUBLIC_CALENDAR_SOURCES)
+    m = re.search(r"CHECK \(source IN \('ECOS'([^)]*)\)\)", body)
+    assert m is not None
+    assert {"ECOS", *re.findall(r"'(\w+)'", m.group(1))} == set(p5.PUBLIC_MACRO_SOURCES)
+    assert "'us_summary', 'us_brief'" in body and set(p5.US_ARTIFACTS) == {"us_summary", "us_brief"}

@@ -154,3 +154,21 @@ board 는 `board/MIGRATION.md` 'P2' 절. 그 밖:
 기준선(`scripts/canonical_baseline.txt`): naver 176 → 88, krx_scrape 81 → 69, datago 2 → 1(전체 레포 기준 — SD 분은
 `legacy/stock_dashboard/MIGRATION.md` 'P3'). 시험 수(`scripts/test_legacy.sh`): board 1,115(E1 승격분만 줄었다)·kr 94·
 flow 129·flowlab 44/44·dart-report·etf_tracker_v9 import 13 — 모두 그대로.
+
+## P5. 수급 리포트·ETF 리포트·간밤 미국 대체 — WRAP(웨이브 3, 2026-10-13)
+
+근거: `docs/p5_design.md` §1.9·D-P5-24. 기준은 P3·P4 와 같다 — **P5 kbj 작업이 그 기능을 대체했고 남은 legacy
+명령·검사 스크립트가 import 하지 않는 것만** 파일 단위로 지운다(`grep -rn` 으로 모듈 수준·늦은 import 를 확인하고
+`scripts/test_legacy.sh <부분>` 으로 확인).
+
+| 처리 | 파일 | 대체 | 시험 |
+|---|---|---|---|
+| **삭제(디렉터리)** | `monitor/flow/`(`run`·`analyze`·`narrative`·`returns`·`chart`·`capture`·`krx`·`kissrc`·`telegram`·`tests/`) | kbj `flows.report`(`kbj/reports/flows` — 16:00, ADR 0018·0022). 원천은 KRX 스크랩·board ingest 대신 kbj 원장(`prv_flows.stock_investor_daily`·`prv_market.daily_bar`·`prv_board.artifact`) | **승격 104**(`test_analyze` 17·`test_narrative` 16·`test_returns` 17·`test_run` 54 → `tests/unit/reports/flows/` — 같은 단언, import 경로·d60→d120(ADR 0017)·`SystemExit`→`FlowReportError`·발송 주입만), **폐지 25**(`test_kis` 14 → `tests/unit/kis/test_parse_investors.py`·`tests/unit/collectors/test_market_close.py`, `test_krx` 11 → 같은 두 파일 — KIS·KRX 원천 파서는 kbj 정본이 본다). 합성 골든 `golden.json`·`make_synthetic.py` 는 `tests/fixtures/synthetic/flows_report/` 로 복사했다. `test_legacy.sh` 의 `flow` 부분 삭제(129 → 0) |
+| **삭제** | `etf_tracker_v9/{tracker,report,render,dash,live_update}.py`·`run.sh` | kbj `etf.collect`(수집 — P3)·`etf.report`(텔레그램 08:20 — `kbj/reports/etf.py`, ADR 0024)·페이지 10(대시보드) | 원본 시험 없음(import 스모크뿐) — 스모크 **13 → 8 모듈**(`collectors, market, themes, adapters.{ace,hanaro,koact,plus,rise}`). tracker DDL 열 대조 시험(`tests/test_store_layout.py::test_p3_etf_tables_keep_et_columns`)은 원본 열을 시험 안 상수로 옮겨 그대로 돈다 |
+| 이월 | `etf_tracker_v9/market.py`(네이버 ETF 목록·시세) | KRX `etp/etf_bydd_trd` | `monitor/kr/etf.py` 가 아직 import — 테마·밸류체인 사전 통합(페이지 9)은 사용자가 따로 진행(2026-10-13 결정 Q1)해 P5 에서 제외. 그 작업이 monitor/kr 을 대체할 때 지운다 |
+| 그대로 | `monitor/kr/` | — | 94 그대로(THM 묶음을 P5 에서 뺐다 — engine shim·`test_kbj_bridge` 없음) |
+| 그대로 | `xdigest`(구루 X 다이제스트) | — | 사용자 결정 Q4 — P5·P8 에 옮기지 않는다(원본 ETF-Traker 는 건드리지 않는다). 등록부 absorbs 는 retired 로 |
+
+기준선(`scripts/canonical_baseline.txt`): krx_scrape −5(`monitor/flow/krx.py`), naver −1(`render.py`) — SD 분은
+`legacy/stock_dashboard/MIGRATION.md` 'P5'. 시험 수(`scripts/test_legacy.sh`): board 1,039(US — `board/MIGRATION.md`
+'P5')·kr 94·flowlab 44/44·dart-report·etf_tracker_v9 import 8.

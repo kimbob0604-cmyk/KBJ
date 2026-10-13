@@ -245,3 +245,19 @@ kbj 엔진(shim 대상)의 축이 `d60·w52(252봉)·hist` → `d120(120 시장 
 시험은 지우거나 건너뛰지 않고 d60 단정을 d120 으로 옮겼다(`test_artifact`·`test_basis`·`test_consistency`·
 `test_live_board`·`test_note`·`test_seeds`·`test_stockflows`·`test_telegram`·`test_triggers`·`test_triggers_web`
 — `LabelKindSyncTest` 는 '빠진 라벨 = d60, 옛 rank 로 남은 행 = d120'). 시험 수는 그대로 **1,115**.
+
+## P5. 간밤 미국 신고가 승격 — 묶음 US·WRAP(2026-10-13)
+
+근거: `docs/p5_design.md` §1.6·§1.9·D-P5-18·ADR 0023. `board/us/{sources,engine,sectors,brief,build}` 는 kbj
+(`kbj/data/private/{nasdaq,stooq,yahoo}`·`kbj/engines/us`·`kbj/services/collectors/us`)를 다시 내보내는 shim 이 됐다
+(`run.py cmd_us_*` 가 계속 import — 다리 시험 `tests/test_kbj_us_shim.py` +1). `knowledge/us_*.yaml`·`config/us.yaml` 은
+`git mv` → 레포 `config/knowledge/us/`·`config/us.yaml`(`run.py US_CFG` 한 줄).
+
+| 원본 시험 | 처리 | 수 |
+|---|---|---|
+| `test_us_sources`·`test_us_engine`·`test_us_brief`·`test_us_sectors`·`test_us_pipeline` | kbj 로 승격(`tests/unit/data/private/test_us_sources.py`·`tests/unit/engines/us/`·`tests/unit/collectors/test_us.py` — 같은 단언, import 경로만. `test_us_pipeline` 의 sqlite·state·정적 HTML 단언은 저장소 왕복·us_summary/us_brief 산출로 같은 뜻을 본다) — 파일 삭제 | 77 + Yahoo 파싱 3(FND — `tests/unit/data/private/test_yahoo.py`) |
+| `test_us_search` | legacy 에 남김 — `us/btsearch.py` 가 국장 백테스트 엔진(P8)에 기대 '본문 그대로' 승격 불가 | 3 |
+| 다리 | `tests/test_kbj_us_shim.py` | +1 |
+
+board 시험 **1,115 → 1,039**(`scripts/test_legacy.sh board`). 정적 사이트·sqlite(`us/{render,db,demo}`)는 shim 뒤에
+그대로 — 화면은 페이지 2 '간밤 미국 신고가', 발송은 `brief.morning` ①.

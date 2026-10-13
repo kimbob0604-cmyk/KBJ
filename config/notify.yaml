@@ -32,11 +32,12 @@ kinds:
   flows.report:
     topic: market
     dedup: daily
+    parse_mode: Markdown   # ET monitor/flow 본문 그대로(BRF — run.py 가 호출마다 넘기던 값을 정책으로)
     note: "작업 flows.report 16:00(ADR 0018 — 평소 16:00~16:05). 16:00 수급은 KIS 마감 수집 값(잠정일 수 있음)이거나 전 거래일 값 — 본문에 실제 기준일을 적는다. 흡수 #11·#39·#40"
   etf.report:
     topic: market
     dedup: daily
-    note: "작업 etf.collect 08:00. 흡수 #34"
+    note: "작업 etf.report 08:20(P5 — D-P5-13 ④, 굳은 의존 etf.collect 08:00). 브리핑이 아니라 별도 1회(U2 의 브리핑 1회에 세지 않는다 — §10 Q5). 흡수 #34"
 
   # ── 신고가·ET 보드 (전환 기간: ET 가 kind 를 넘긴다 — 마감 요약에 합치는 것은 P3) ──────────
   board.rankings:
@@ -67,7 +68,7 @@ kinds:
   board.us:
     topic: market
     dedup: body
-    note: "ET run.cmd_us_send #29 → P5 에 brief.morning ①"
+    note: "ET run.cmd_us_send #29 → P5 brief.morning ① 로 대체(us.eod 가 쓴 us_brief 산출을 읽는다). legacy 송신 정리는 WRAP"
   board.manual:
     topic: ops
     dedup: body

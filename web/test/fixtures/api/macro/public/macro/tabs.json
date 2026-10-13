@@ -1,0 +1,482 @@
+{
+  "source": "ECOS+FRED+KOSIS",
+  "as_of": "2026-11-17T06:00:00+09:00",
+  "quality": "ok",
+  "notes": [],
+  "generated_at": "2026-11-17T16:30:00+09:00",
+  "data": {
+    "tabs": [
+      {
+        "id": "rates",
+        "title": "금리·통화",
+        "public": true,
+        "series": [
+          {
+            "series_id": "ECOS:722Y001:base",
+            "title": "한국은행 기준금리",
+            "unit": "%",
+            "freq": "D",
+            "tier": "public",
+            "source": "ECOS:722Y001",
+            "dataset": "ECOS:722Y001",
+            "ready": false,
+            "probe": "#43"
+          },
+          {
+            "series_id": "ECOS:817Y002:ktb3y",
+            "title": "국고채 3년",
+            "unit": "%",
+            "freq": "D",
+            "tier": "public",
+            "source": "ECOS:817Y002",
+            "dataset": "ECOS:817Y002",
+            "ready": false,
+            "probe": "#43"
+          },
+          {
+            "series_id": "ECOS:817Y002:ktb10y",
+            "title": "국고채 10년",
+            "unit": "%",
+            "freq": "D",
+            "tier": "public",
+            "source": "ECOS:817Y002",
+            "dataset": "ECOS:817Y002",
+            "ready": false,
+            "probe": "#43"
+          },
+          {
+            "series_id": "ECOS:817Y002:corp_aa3y",
+            "title": "회사채 3년 AA-",
+            "unit": "%",
+            "freq": "D",
+            "tier": "public",
+            "source": "ECOS:817Y002",
+            "dataset": "ECOS:817Y002",
+            "ready": false,
+            "probe": "#43"
+          },
+          {
+            "series_id": "ECOS:817Y002:corp_bbb3y",
+            "title": "회사채 3년 BBB-",
+            "unit": "%",
+            "freq": "D",
+            "tier": "public",
+            "source": "ECOS:817Y002",
+            "dataset": "ECOS:817Y002",
+            "ready": false,
+            "probe": "#43"
+          },
+          {
+            "series_id": "ECOS:721Y001:cd91",
+            "title": "CD 91일(월평균)",
+            "unit": "%",
+            "freq": "M",
+            "tier": "public",
+            "source": "ECOS:721Y001",
+            "dataset": "ECOS:721Y001",
+            "ready": false,
+            "probe": "#43"
+          },
+          {
+            "series_id": "ECOS:161Y005:m2",
+            "title": "M2 평잔(계절조정)",
+            "unit": "십억원",
+            "freq": "M",
+            "tier": "public",
+            "source": "ECOS:161Y005",
+            "dataset": "ECOS:161Y005",
+            "ready": false,
+            "probe": "#43"
+          },
+          {
+            "series_id": "DERIVED:credit_aa",
+            "title": "신용스프레드 AA-",
+            "unit": "%p",
+            "freq": "D",
+            "tier": "public",
+            "source": "ECOS:817Y002",
+            "dataset": "DERIVED",
+            "ready": false,
+            "probe": "#43"
+          },
+          {
+            "series_id": "DERIVED:credit_bbb",
+            "title": "신용스프레드 BBB-",
+            "unit": "%p",
+            "freq": "D",
+            "tier": "public",
+            "source": "ECOS:817Y002",
+            "dataset": "DERIVED",
+            "ready": false,
+            "probe": "#43"
+          },
+          {
+            "series_id": "DERIVED:real_base_rate",
+            "title": "실질 기준금리",
+            "unit": "%p",
+            "freq": "M",
+            "tier": "public",
+            "source": "ECOS:722Y001+KOSIS",
+            "dataset": "DERIVED",
+            "ready": false,
+            "probe": "#43"
+          }
+        ]
+      },
+      {
+        "id": "prices",
+        "title": "물가",
+        "public": true,
+        "series": [
+          {
+            "series_id": "ECOS:404Y014:ppi",
+            "title": "생산자물가지수",
+            "unit": "2020=100",
+            "freq": "M",
+            "tier": "public",
+            "source": "ECOS:404Y014",
+            "dataset": "ECOS:404Y014",
+            "ready": false,
+            "probe": "#43"
+          },
+          {
+            "series_id": "ECOS:402Y014:export_px",
+            "title": "수출물가지수",
+            "unit": "2020=100",
+            "freq": "M",
+            "tier": "public",
+            "source": "ECOS:402Y014",
+            "dataset": "ECOS:402Y014",
+            "ready": false,
+            "probe": "#43"
+          },
+          {
+            "series_id": "ECOS:401Y015:import_px",
+            "title": "수입물가지수",
+            "unit": "2020=100",
+            "freq": "M",
+            "tier": "public",
+            "source": "ECOS:401Y015",
+            "dataset": "ECOS:401Y015",
+            "ready": false,
+            "probe": "#43"
+          },
+          {
+            "series_id": "KOSIS:DT_1J22003:cpi",
+            "title": "소비자물가지수",
+            "unit": "2020=100",
+            "freq": "M",
+            "tier": "public",
+            "source": "KOSIS",
+            "dataset": "KOSIS:DT_1J22003",
+            "ready": false,
+            "probe": "#44"
+          },
+          {
+            "series_id": "DERIVED:cpi_yoy",
+            "title": "소비자물가 전년동월비",
+            "unit": "%",
+            "freq": "M",
+            "tier": "public",
+            "source": "KOSIS",
+            "dataset": "DERIVED",
+            "ready": false,
+            "probe": "#44"
+          }
+        ]
+      },
+      {
+        "id": "growth",
+        "title": "성장·경기",
+        "public": true,
+        "series": [
+          {
+            "series_id": "ECOS:200Y102:gdp",
+            "title": "실질 GDP 성장률(전기비)",
+            "unit": "%",
+            "freq": "Q",
+            "tier": "public",
+            "source": "ECOS:200Y102",
+            "dataset": "ECOS:200Y102",
+            "ready": false,
+            "probe": "#43"
+          },
+          {
+            "series_id": "ECOS:513Y001:esi",
+            "title": "경제심리지수",
+            "unit": "pt",
+            "freq": "M",
+            "tier": "public",
+            "source": "ECOS:513Y001",
+            "dataset": "ECOS:513Y001",
+            "ready": false,
+            "probe": "#43"
+          },
+          {
+            "series_id": "KOSIS:DT_1C8015:leading",
+            "title": "선행지수 순환변동치",
+            "unit": "pt",
+            "freq": "M",
+            "tier": "public",
+            "source": "KOSIS",
+            "dataset": "KOSIS:DT_1C8015",
+            "ready": false,
+            "probe": "#44"
+          },
+          {
+            "series_id": "KOSIS:DT_1C8015:coincident",
+            "title": "동행지수 순환변동치",
+            "unit": "pt",
+            "freq": "M",
+            "tier": "public",
+            "source": "KOSIS",
+            "dataset": "KOSIS:DT_1C8015",
+            "ready": false,
+            "probe": "#44"
+          },
+          {
+            "series_id": "KOSIS:DT_1JH20201:ip",
+            "title": "전산업생산지수",
+            "unit": "2020=100",
+            "freq": "M",
+            "tier": "public",
+            "source": "KOSIS",
+            "dataset": "KOSIS:DT_1JH20201",
+            "ready": false,
+            "probe": "#44"
+          }
+        ]
+      },
+      {
+        "id": "labor",
+        "title": "고용·가계",
+        "public": true,
+        "series": [
+          {
+            "series_id": "KOSIS:DT_1DA7001S:unemp",
+            "title": "실업률(계절조정)",
+            "unit": "%",
+            "freq": "M",
+            "tier": "public",
+            "source": "KOSIS",
+            "dataset": "KOSIS:DT_1DA7001S",
+            "ready": false,
+            "probe": "#44"
+          },
+          {
+            "series_id": "KOSIS:DT_1DA7001S:emp_rate",
+            "title": "고용률(계절조정)",
+            "unit": "%",
+            "freq": "M",
+            "tier": "public",
+            "source": "KOSIS",
+            "dataset": "KOSIS:DT_1DA7001S",
+            "ready": false,
+            "probe": "#44"
+          }
+        ]
+      },
+      {
+        "id": "external",
+        "title": "대외·환율",
+        "public": true,
+        "series": [
+          {
+            "series_id": "ECOS:301Y013:current",
+            "title": "경상수지",
+            "unit": "백만달러",
+            "freq": "M",
+            "tier": "public",
+            "source": "ECOS:301Y013",
+            "dataset": "ECOS:301Y013",
+            "ready": false,
+            "probe": "#43"
+          },
+          {
+            "series_id": "ECOS:731Y003:usdkrw",
+            "title": "원/달러 환율(매매기준율)",
+            "unit": "원",
+            "freq": "D",
+            "tier": "public",
+            "source": "ECOS:731Y003",
+            "dataset": "ECOS:731Y003",
+            "ready": false,
+            "probe": "#43"
+          }
+        ]
+      },
+      {
+        "id": "us",
+        "title": "미국",
+        "public": true,
+        "series": [
+          {
+            "series_id": "FRED:DGS10",
+            "title": "미 국채 10년",
+            "unit": "%",
+            "freq": "D",
+            "tier": "public",
+            "source": "FRED",
+            "dataset": "FRED:gov_series",
+            "ready": true,
+            "probe": "#45"
+          },
+          {
+            "series_id": "FRED:DGS2",
+            "title": "미 국채 2년",
+            "unit": "%",
+            "freq": "D",
+            "tier": "public",
+            "source": "FRED",
+            "dataset": "FRED:gov_series",
+            "ready": true,
+            "probe": "#45"
+          },
+          {
+            "series_id": "FRED:DGS3MO",
+            "title": "미 국채 3개월",
+            "unit": "%",
+            "freq": "D",
+            "tier": "public",
+            "source": "FRED",
+            "dataset": "FRED:gov_series",
+            "ready": true,
+            "probe": "#45"
+          },
+          {
+            "series_id": "FRED:T10Y2Y",
+            "title": "미 10년-2년",
+            "unit": "%p",
+            "freq": "D",
+            "tier": "public",
+            "source": "FRED",
+            "dataset": "FRED:gov_series",
+            "ready": true,
+            "probe": "#45"
+          },
+          {
+            "series_id": "FRED:DFF",
+            "title": "연방기금 실효금리",
+            "unit": "%",
+            "freq": "D",
+            "tier": "public",
+            "source": "FRED",
+            "dataset": "FRED:gov_series",
+            "ready": true,
+            "probe": "#45"
+          },
+          {
+            "series_id": "FRED:CPIAUCSL",
+            "title": "미 CPI",
+            "unit": "1982-84=100",
+            "freq": "M",
+            "tier": "public",
+            "source": "FRED",
+            "dataset": "FRED:gov_series",
+            "ready": true,
+            "probe": "#45"
+          },
+          {
+            "series_id": "FRED:PCEPILFE",
+            "title": "미 근원 PCE 물가",
+            "unit": "2017=100",
+            "freq": "M",
+            "tier": "public",
+            "source": "FRED",
+            "dataset": "FRED:gov_series",
+            "ready": true,
+            "probe": "#45"
+          },
+          {
+            "series_id": "FRED:UNRATE",
+            "title": "미 실업률",
+            "unit": "%",
+            "freq": "M",
+            "tier": "public",
+            "source": "FRED",
+            "dataset": "FRED:gov_series",
+            "ready": true,
+            "probe": "#45"
+          },
+          {
+            "series_id": "FRED:PAYEMS",
+            "title": "미 비농업 고용",
+            "unit": "천명",
+            "freq": "M",
+            "tier": "public",
+            "source": "FRED",
+            "dataset": "FRED:gov_series",
+            "ready": true,
+            "probe": "#45"
+          },
+          {
+            "series_id": "FRED:GDPC1",
+            "title": "미 실질 GDP",
+            "unit": "십억달러(2017)",
+            "freq": "Q",
+            "tier": "public",
+            "source": "FRED",
+            "dataset": "FRED:gov_series",
+            "ready": true,
+            "probe": "#45"
+          },
+          {
+            "series_id": "TREASURY:10y",
+            "title": "재무부 수익률곡선 10년",
+            "unit": "%",
+            "freq": "D",
+            "tier": "public",
+            "source": "TREASURY",
+            "dataset": "TREASURY:yield_curve",
+            "ready": false,
+            "probe": "#45"
+          },
+          {
+            "series_id": "NYFED:SOFR",
+            "title": "SOFR",
+            "unit": "%",
+            "freq": "D",
+            "tier": "public",
+            "source": "NYFED",
+            "dataset": "NYFED:rates",
+            "ready": false,
+            "probe": "#45"
+          },
+          {
+            "series_id": "NYFED:EFFR",
+            "title": "EFFR",
+            "unit": "%",
+            "freq": "D",
+            "tier": "public",
+            "source": "NYFED",
+            "dataset": "NYFED:rates",
+            "ready": false,
+            "probe": "#45"
+          },
+          {
+            "series_id": "DERIVED:us_10y_2y",
+            "title": "미 장단기 금리차(10Y-2Y)",
+            "unit": "%p",
+            "freq": "D",
+            "tier": "public",
+            "source": "FRED",
+            "dataset": "DERIVED",
+            "ready": true,
+            "probe": "#45"
+          },
+          {
+            "series_id": "DERIVED:us_10y_3m",
+            "title": "미 장단기 금리차(10Y-3M)",
+            "unit": "%p",
+            "freq": "D",
+            "tier": "public",
+            "source": "FRED",
+            "dataset": "DERIVED",
+            "ready": true,
+            "probe": "#45"
+          }
+        ]
+      }
+    ]
+  }
+}

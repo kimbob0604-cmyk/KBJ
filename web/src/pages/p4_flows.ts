@@ -119,7 +119,8 @@ export function excludedText(d: Screen): string {
 /** 빈 결과 안내 — 하한·관리종목 제외로 빠진 수를 알려 무엇을 풀면 되는지 보인다(0 건을 조용히 그리지 않는다) */
 export function emptyText(d: Screen): string {
   const x = d.n_excluded;
-  if (x.below_min) return `조건에 맞는 종목 없음 — 일평균 거래대금 하한 미달 ${num(x.below_min)}종목, 하한을 낮춰 보세요`;
+  if (x.below_min)
+    return `조건에 맞는 종목 없음 — 일평균 거래대금 하한 미달 ${num(x.below_min)}종목, 하한을 낮춰 보세요`;
   if (x.flagged) return `조건에 맞는 종목 없음 — 관리·정지 제외 ${num(x.flagged)}종목('관리·정지 포함'으로 볼 수 있다)`;
   return '조건에 맞는 종목 없음';
 }
@@ -345,7 +346,22 @@ async function mount(ctx: PageContext): Promise<void> {
   const pDet = panel(tier, { title: '종목 상세', tier: 'login', span: 12, lock, src: '표에서 종목을 고르세요' });
   const pIntra = panel(tier, { title: '장중 잠정', tier: 'login', span: 12, lock });
   root.append(pScr.el, pInv.el, pDet.el, pIntra.el);
-  if (pScr.locked) return; // 공개판: 자물쇠만, 요청 없음
+  if (pScr.locked || !LOGIN_FLOWS) return; // 공개판: 자물쇠만, 요청 없음(공개 빌드는 아래 본문을 번들에서 뺀다)
+  await LOGIN_FLOWS(ctx, { pScr, pInv, pDet, pIntra });
+}
+
+// 로그인 본문 — 공개 빌드에서는 번들에서 뺀다(p8_stock LOGIN_VALUE 와 같은 방식, 공개 JS gzip 예산 60 KB — P5 WRAP).
+// 공개 등급은 위에서 자물쇠로 돌아가므로 실행 동작은 같다.
+interface FlowPanels {
+  pScr: Panel;
+  pInv: Panel;
+  pDet: Panel;
+  pIntra: Panel;
+}
+const LOGIN_FLOWS = import.meta.env.MODE === 'public' ? null : mountLogin;
+
+async function mountLogin(ctx: PageContext, { pScr, pInv, pDet, pIntra }: FlowPanels): Promise<void> {
+  const { root } = ctx;
 
   pInv.setDef(
     '기관 = 금융투자+투신+사모+보험+은행+연기금+기타금융. 세부 합은 기관 합계와 같아야 한다(검산 ②). 4구분 합은 0(검산 ①).',

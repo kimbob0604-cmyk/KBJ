@@ -84,7 +84,7 @@ def _calendar(settings: Settings) -> TradingCalendar:
 
 def _build(settings: Settings, *, inline: bool = False) -> tuple[Any, Any, Any, Callable[[], None]]:
     """(서비스, 실행기, redis, 닫기) — 운영 진입점 전용(실제 Redis·DB)."""
-    from kbj.services.notifier.client import notify
+    from kbj.services.notifier.client import notify, notify_media
     from kbj.services.scheduler.claims import PgClaimStore, PgRunLog
     from kbj.services.scheduler.runner import JobRunner, inline_submit, thread_submit
     from kbj.services.scheduler.service import PgSessionLogStore, SchedulerService
@@ -122,6 +122,9 @@ def _build(settings: Settings, *, inline: bool = False) -> tuple[Any, Any, Any, 
             "redis": redis,
             "connect": connect_fn,
             "notify": notify,
+            # P5(BRF): 수급 리포트 차트 사진 — kbj.reports 는 notifier.client 를
+            # import 하지 않는다(계약 ⑤)
+            "notify_media": notify_media,
             "registry": registry,
             "runs": runs,
             "kr": kr,

@@ -297,6 +297,13 @@ LEGACY_KBJ_ALLOW: tuple[str, ...] = (
     # 가 확인), run.py 는 매핑 기본 경로만 config/dart_report/mapping.yaml. 웨이브 3 묶음 S 확정
     "kbj.engines.financials",
     "kbj.reports.dart_excel",
+    # P5 묶음 US(docs/p5_design.md §1.6·§1.9): ET board/us/{engine,sectors,brief,build} 가 kbj 미국
+    # 엔진을 다시 내보내는 shim, us/sources 는 kbj Nasdaq·Stooq·Yahoo 클라이언트로 잇는 얇은 함수
+    # (비공개 이름 `_num`·`_is_fund` 는 kbj 공개 `num`·`is_fund` 의 별칭). 웨이브 3 WRAP 확정
+    "kbj.engines.us",
+    "kbj.data.private.nasdaq",
+    "kbj.data.private.stooq",
+    "kbj.data.private.yahoo",
 )
 
 ALL_RULES: dict[str, str] = {**{g.name: g.desc for g in GROUPS.values()}, **AST_RULES}

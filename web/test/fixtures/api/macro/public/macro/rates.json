@@ -1,0 +1,1389 @@
+{
+  "source": "ECOS",
+  "as_of": "2026-11-17T06:00:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "국고채 10년: 확인 전(#43)",
+    "회사채 3년 BBB-: 확인 전(#43)",
+    "CD 91일(월평균): 확인 전(#43)",
+    "M2 평잔(계절조정): 확인 전(#43)",
+    "신용스프레드 BBB-: 아직 없음 — macro.morning·monthly·evening",
+    "실질 기준금리: 공개판 미제공 — 로그인 화면에서 계산(공개 내보내기는 엔진을 쓰지 않는다)"
+  ],
+  "generated_at": "2026-11-17T16:30:00+09:00",
+  "data": {
+    "tab": "rates",
+    "series": [
+      {
+        "series_id": "ECOS:722Y001:base",
+        "title": "한국은행 기준금리",
+        "unit": "%",
+        "freq": "D",
+        "tier": "public",
+        "source": "ECOS:722Y001",
+        "as_of": "2026-11-17T06:00:00+09:00",
+        "quality": "ok",
+        "latest": {
+          "period": "2026-11-16",
+          "value": 2.65,
+          "released_at": "2026-11-17T06:00:00+09:00"
+        },
+        "change": -0.010000000000000231,
+        "change_pct": -0.375939849624074,
+        "points": [
+          {
+            "period": "2026-08-19",
+            "value": 2.5,
+            "released_at": "2026-08-20T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-20",
+            "value": 2.5,
+            "released_at": "2026-08-21T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-21",
+            "value": 2.49,
+            "released_at": "2026-08-22T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-24",
+            "value": 2.5,
+            "released_at": "2026-08-25T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-25",
+            "value": 2.49,
+            "released_at": "2026-08-26T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-26",
+            "value": 2.48,
+            "released_at": "2026-08-27T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-27",
+            "value": 2.47,
+            "released_at": "2026-08-28T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-28",
+            "value": 2.47,
+            "released_at": "2026-08-29T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-31",
+            "value": 2.46,
+            "released_at": "2026-09-01T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-01",
+            "value": 2.46,
+            "released_at": "2026-09-02T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-02",
+            "value": 2.46,
+            "released_at": "2026-09-03T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-03",
+            "value": 2.47,
+            "released_at": "2026-09-04T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-04",
+            "value": 2.47,
+            "released_at": "2026-09-05T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-07",
+            "value": 2.49,
+            "released_at": "2026-09-08T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-08",
+            "value": 2.5,
+            "released_at": "2026-09-09T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-09",
+            "value": 2.5,
+            "released_at": "2026-09-10T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-10",
+            "value": 2.49,
+            "released_at": "2026-09-11T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-11",
+            "value": 2.49,
+            "released_at": "2026-09-12T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-14",
+            "value": 2.49,
+            "released_at": "2026-09-15T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-15",
+            "value": 2.48,
+            "released_at": "2026-09-16T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-16",
+            "value": 2.49,
+            "released_at": "2026-09-17T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-17",
+            "value": 2.5,
+            "released_at": "2026-09-18T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-18",
+            "value": 2.5,
+            "released_at": "2026-09-19T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-21",
+            "value": 2.51,
+            "released_at": "2026-09-22T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-22",
+            "value": 2.51,
+            "released_at": "2026-09-23T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-23",
+            "value": 2.52,
+            "released_at": "2026-09-24T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-28",
+            "value": 2.52,
+            "released_at": "2026-09-29T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-29",
+            "value": 2.52,
+            "released_at": "2026-09-30T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-30",
+            "value": 2.52,
+            "released_at": "2026-10-01T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-01",
+            "value": 2.54,
+            "released_at": "2026-10-02T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-02",
+            "value": 2.55,
+            "released_at": "2026-10-03T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-06",
+            "value": 2.54,
+            "released_at": "2026-10-07T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-07",
+            "value": 2.55,
+            "released_at": "2026-10-08T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-08",
+            "value": 2.55,
+            "released_at": "2026-10-09T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-12",
+            "value": 2.56,
+            "released_at": "2026-10-13T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-13",
+            "value": 2.57,
+            "released_at": "2026-10-14T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-14",
+            "value": 2.59,
+            "released_at": "2026-10-15T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-15",
+            "value": 2.59,
+            "released_at": "2026-10-16T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-16",
+            "value": 2.6,
+            "released_at": "2026-10-17T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-19",
+            "value": 2.6,
+            "released_at": "2026-10-20T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-20",
+            "value": 2.61,
+            "released_at": "2026-10-21T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-21",
+            "value": 2.62,
+            "released_at": "2026-10-22T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-22",
+            "value": 2.62,
+            "released_at": "2026-10-23T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-23",
+            "value": 2.61,
+            "released_at": "2026-10-24T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-26",
+            "value": 2.61,
+            "released_at": "2026-10-27T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-27",
+            "value": 2.62,
+            "released_at": "2026-10-28T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-28",
+            "value": 2.62,
+            "released_at": "2026-10-29T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-29",
+            "value": 2.62,
+            "released_at": "2026-10-30T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-30",
+            "value": 2.61,
+            "released_at": "2026-10-31T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-02",
+            "value": 2.62,
+            "released_at": "2026-11-03T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-03",
+            "value": 2.61,
+            "released_at": "2026-11-04T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-04",
+            "value": 2.63,
+            "released_at": "2026-11-05T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-05",
+            "value": 2.66,
+            "released_at": "2026-11-06T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-06",
+            "value": 2.66,
+            "released_at": "2026-11-07T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-09",
+            "value": 2.67,
+            "released_at": "2026-11-10T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-10",
+            "value": 2.67,
+            "released_at": "2026-11-11T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-11",
+            "value": 2.66,
+            "released_at": "2026-11-12T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-12",
+            "value": 2.66,
+            "released_at": "2026-11-13T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-13",
+            "value": 2.66,
+            "released_at": "2026-11-14T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-16",
+            "value": 2.65,
+            "released_at": "2026-11-17T06:00:00+09:00"
+          }
+        ],
+        "derived": false,
+        "na_reason": null
+      },
+      {
+        "series_id": "ECOS:817Y002:ktb3y",
+        "title": "국고채 3년",
+        "unit": "%",
+        "freq": "D",
+        "tier": "public",
+        "source": "ECOS:817Y002",
+        "as_of": "2026-11-17T06:00:00+09:00",
+        "quality": "ok",
+        "latest": {
+          "period": "2026-11-16",
+          "value": 2.55,
+          "released_at": "2026-11-17T06:00:00+09:00"
+        },
+        "change": -0.03000000000000025,
+        "change_pct": -1.1627906976744318,
+        "points": [
+          {
+            "period": "2026-08-19",
+            "value": 2.58,
+            "released_at": "2026-08-20T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-20",
+            "value": 2.59,
+            "released_at": "2026-08-21T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-21",
+            "value": 2.58,
+            "released_at": "2026-08-22T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-24",
+            "value": 2.59,
+            "released_at": "2026-08-25T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-25",
+            "value": 2.59,
+            "released_at": "2026-08-26T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-26",
+            "value": 2.61,
+            "released_at": "2026-08-27T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-27",
+            "value": 2.6,
+            "released_at": "2026-08-28T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-28",
+            "value": 2.6,
+            "released_at": "2026-08-29T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-31",
+            "value": 2.6,
+            "released_at": "2026-09-01T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-01",
+            "value": 2.61,
+            "released_at": "2026-09-02T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-02",
+            "value": 2.6,
+            "released_at": "2026-09-03T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-03",
+            "value": 2.59,
+            "released_at": "2026-09-04T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-04",
+            "value": 2.59,
+            "released_at": "2026-09-05T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-07",
+            "value": 2.58,
+            "released_at": "2026-09-08T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-08",
+            "value": 2.6,
+            "released_at": "2026-09-09T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-09",
+            "value": 2.6,
+            "released_at": "2026-09-10T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-10",
+            "value": 2.6,
+            "released_at": "2026-09-11T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-11",
+            "value": 2.6,
+            "released_at": "2026-09-12T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-14",
+            "value": 2.61,
+            "released_at": "2026-09-15T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-15",
+            "value": 2.63,
+            "released_at": "2026-09-16T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-16",
+            "value": 2.64,
+            "released_at": "2026-09-17T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-17",
+            "value": 2.63,
+            "released_at": "2026-09-18T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-18",
+            "value": 2.62,
+            "released_at": "2026-09-19T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-21",
+            "value": 2.61,
+            "released_at": "2026-09-22T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-22",
+            "value": 2.62,
+            "released_at": "2026-09-23T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-23",
+            "value": 2.62,
+            "released_at": "2026-09-24T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-28",
+            "value": 2.62,
+            "released_at": "2026-09-29T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-29",
+            "value": 2.62,
+            "released_at": "2026-09-30T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-30",
+            "value": 2.61,
+            "released_at": "2026-10-01T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-01",
+            "value": 2.61,
+            "released_at": "2026-10-02T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-02",
+            "value": 2.62,
+            "released_at": "2026-10-03T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-06",
+            "value": 2.62,
+            "released_at": "2026-10-07T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-07",
+            "value": 2.61,
+            "released_at": "2026-10-08T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-08",
+            "value": 2.63,
+            "released_at": "2026-10-09T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-12",
+            "value": 2.61,
+            "released_at": "2026-10-13T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-13",
+            "value": 2.6,
+            "released_at": "2026-10-14T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-14",
+            "value": 2.6,
+            "released_at": "2026-10-15T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-15",
+            "value": 2.59,
+            "released_at": "2026-10-16T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-16",
+            "value": 2.61,
+            "released_at": "2026-10-17T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-19",
+            "value": 2.61,
+            "released_at": "2026-10-20T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-20",
+            "value": 2.62,
+            "released_at": "2026-10-21T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-21",
+            "value": 2.62,
+            "released_at": "2026-10-22T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-22",
+            "value": 2.62,
+            "released_at": "2026-10-23T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-23",
+            "value": 2.63,
+            "released_at": "2026-10-24T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-26",
+            "value": 2.62,
+            "released_at": "2026-10-27T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-27",
+            "value": 2.63,
+            "released_at": "2026-10-28T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-28",
+            "value": 2.62,
+            "released_at": "2026-10-29T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-29",
+            "value": 2.62,
+            "released_at": "2026-10-30T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-30",
+            "value": 2.59,
+            "released_at": "2026-10-31T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-02",
+            "value": 2.58,
+            "released_at": "2026-11-03T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-03",
+            "value": 2.58,
+            "released_at": "2026-11-04T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-04",
+            "value": 2.6,
+            "released_at": "2026-11-05T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-05",
+            "value": 2.6,
+            "released_at": "2026-11-06T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-06",
+            "value": 2.6,
+            "released_at": "2026-11-07T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-09",
+            "value": 2.62,
+            "released_at": "2026-11-10T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-10",
+            "value": 2.61,
+            "released_at": "2026-11-11T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-11",
+            "value": 2.6,
+            "released_at": "2026-11-12T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-12",
+            "value": 2.58,
+            "released_at": "2026-11-13T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-13",
+            "value": 2.58,
+            "released_at": "2026-11-14T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-16",
+            "value": 2.55,
+            "released_at": "2026-11-17T06:00:00+09:00"
+          }
+        ],
+        "derived": false,
+        "na_reason": null
+      },
+      {
+        "series_id": "ECOS:817Y002:ktb10y",
+        "title": "국고채 10년",
+        "unit": "%",
+        "freq": "D",
+        "tier": "public",
+        "source": "ECOS:817Y002",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "확인 전(#43)"
+      },
+      {
+        "series_id": "ECOS:817Y002:corp_aa3y",
+        "title": "회사채 3년 AA-",
+        "unit": "%",
+        "freq": "D",
+        "tier": "public",
+        "source": "ECOS:817Y002",
+        "as_of": "2026-11-14T06:00:00+09:00",
+        "quality": "ok",
+        "latest": {
+          "period": "2026-11-13",
+          "value": 3.11,
+          "released_at": "2026-11-14T06:00:00+09:00"
+        },
+        "change": 0.020000000000000018,
+        "change_pct": 0.6472491909385036,
+        "points": [
+          {
+            "period": "2026-08-19",
+            "value": 3.19,
+            "released_at": "2026-08-20T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-20",
+            "value": 3.19,
+            "released_at": "2026-08-21T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-21",
+            "value": 3.19,
+            "released_at": "2026-08-22T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-24",
+            "value": 3.18,
+            "released_at": "2026-08-25T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-25",
+            "value": 3.17,
+            "released_at": "2026-08-26T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-26",
+            "value": 3.17,
+            "released_at": "2026-08-27T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-27",
+            "value": 3.17,
+            "released_at": "2026-08-28T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-28",
+            "value": 3.18,
+            "released_at": "2026-08-29T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-31",
+            "value": 3.17,
+            "released_at": "2026-09-01T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-01",
+            "value": 3.16,
+            "released_at": "2026-09-02T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-02",
+            "value": 3.16,
+            "released_at": "2026-09-03T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-03",
+            "value": 3.16,
+            "released_at": "2026-09-04T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-04",
+            "value": 3.14,
+            "released_at": "2026-09-05T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-07",
+            "value": 3.14,
+            "released_at": "2026-09-08T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-08",
+            "value": 3.14,
+            "released_at": "2026-09-09T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-09",
+            "value": 3.13,
+            "released_at": "2026-09-10T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-10",
+            "value": 3.14,
+            "released_at": "2026-09-11T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-11",
+            "value": 3.13,
+            "released_at": "2026-09-12T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-14",
+            "value": 3.15,
+            "released_at": "2026-09-15T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-15",
+            "value": 3.16,
+            "released_at": "2026-09-16T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-16",
+            "value": 3.17,
+            "released_at": "2026-09-17T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-17",
+            "value": 3.18,
+            "released_at": "2026-09-18T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-18",
+            "value": 3.18,
+            "released_at": "2026-09-19T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-21",
+            "value": 3.15,
+            "released_at": "2026-09-22T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-22",
+            "value": 3.13,
+            "released_at": "2026-09-23T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-23",
+            "value": 3.14,
+            "released_at": "2026-09-24T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-28",
+            "value": 3.16,
+            "released_at": "2026-09-29T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-29",
+            "value": 3.16,
+            "released_at": "2026-09-30T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-30",
+            "value": 3.15,
+            "released_at": "2026-10-01T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-01",
+            "value": 3.13,
+            "released_at": "2026-10-02T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-02",
+            "value": 3.13,
+            "released_at": "2026-10-03T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-06",
+            "value": 3.14,
+            "released_at": "2026-10-07T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-07",
+            "value": 3.16,
+            "released_at": "2026-10-08T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-08",
+            "value": 3.17,
+            "released_at": "2026-10-09T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-12",
+            "value": 3.17,
+            "released_at": "2026-10-13T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-13",
+            "value": 3.16,
+            "released_at": "2026-10-14T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-14",
+            "value": 3.16,
+            "released_at": "2026-10-15T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-15",
+            "value": 3.16,
+            "released_at": "2026-10-16T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-16",
+            "value": 3.14,
+            "released_at": "2026-10-17T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-19",
+            "value": 3.16,
+            "released_at": "2026-10-20T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-20",
+            "value": 3.16,
+            "released_at": "2026-10-21T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-21",
+            "value": 3.15,
+            "released_at": "2026-10-22T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-22",
+            "value": 3.14,
+            "released_at": "2026-10-23T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-23",
+            "value": 3.16,
+            "released_at": "2026-10-24T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-26",
+            "value": 3.14,
+            "released_at": "2026-10-27T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-27",
+            "value": 3.15,
+            "released_at": "2026-10-28T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-28",
+            "value": 3.15,
+            "released_at": "2026-10-29T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-29",
+            "value": 3.15,
+            "released_at": "2026-10-30T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-30",
+            "value": 3.13,
+            "released_at": "2026-10-31T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-02",
+            "value": 3.13,
+            "released_at": "2026-11-03T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-03",
+            "value": 3.11,
+            "released_at": "2026-11-04T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-04",
+            "value": 3.1,
+            "released_at": "2026-11-05T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-05",
+            "value": 3.09,
+            "released_at": "2026-11-06T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-06",
+            "value": 3.09,
+            "released_at": "2026-11-07T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-09",
+            "value": 3.1,
+            "released_at": "2026-11-10T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-10",
+            "value": 3.09,
+            "released_at": "2026-11-11T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-11",
+            "value": 3.1,
+            "released_at": "2026-11-12T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-12",
+            "value": 3.09,
+            "released_at": "2026-11-13T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-13",
+            "value": 3.11,
+            "released_at": "2026-11-14T06:00:00+09:00"
+          }
+        ],
+        "derived": false,
+        "na_reason": null
+      },
+      {
+        "series_id": "ECOS:817Y002:corp_bbb3y",
+        "title": "회사채 3년 BBB-",
+        "unit": "%",
+        "freq": "D",
+        "tier": "public",
+        "source": "ECOS:817Y002",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "확인 전(#43)"
+      },
+      {
+        "series_id": "ECOS:721Y001:cd91",
+        "title": "CD 91일(월평균)",
+        "unit": "%",
+        "freq": "M",
+        "tier": "public",
+        "source": "ECOS:721Y001",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "확인 전(#43)"
+      },
+      {
+        "series_id": "ECOS:161Y005:m2",
+        "title": "M2 평잔(계절조정)",
+        "unit": "십억원",
+        "freq": "M",
+        "tier": "public",
+        "source": "ECOS:161Y005",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "확인 전(#43)"
+      },
+      {
+        "series_id": "DERIVED:credit_aa",
+        "title": "신용스프레드 AA-",
+        "unit": "%p",
+        "freq": "D",
+        "tier": "public",
+        "source": "ECOS:817Y002",
+        "as_of": "2026-11-14T06:00:00+09:00",
+        "quality": "ok",
+        "latest": {
+          "period": "2026-11-13",
+          "value": 0.53,
+          "released_at": null
+        },
+        "change": 0.020000000000000018,
+        "change_pct": 3.9215686274509887,
+        "points": [
+          {
+            "period": "2026-08-19",
+            "value": 0.61,
+            "released_at": null
+          },
+          {
+            "period": "2026-08-20",
+            "value": 0.6,
+            "released_at": null
+          },
+          {
+            "period": "2026-08-21",
+            "value": 0.61,
+            "released_at": null
+          },
+          {
+            "period": "2026-08-24",
+            "value": 0.59,
+            "released_at": null
+          },
+          {
+            "period": "2026-08-25",
+            "value": 0.58,
+            "released_at": null
+          },
+          {
+            "period": "2026-08-26",
+            "value": 0.56,
+            "released_at": null
+          },
+          {
+            "period": "2026-08-27",
+            "value": 0.57,
+            "released_at": null
+          },
+          {
+            "period": "2026-08-28",
+            "value": 0.58,
+            "released_at": null
+          },
+          {
+            "period": "2026-08-31",
+            "value": 0.57,
+            "released_at": null
+          },
+          {
+            "period": "2026-09-01",
+            "value": 0.55,
+            "released_at": null
+          },
+          {
+            "period": "2026-09-02",
+            "value": 0.56,
+            "released_at": null
+          },
+          {
+            "period": "2026-09-03",
+            "value": 0.57,
+            "released_at": null
+          },
+          {
+            "period": "2026-09-04",
+            "value": 0.55,
+            "released_at": null
+          },
+          {
+            "period": "2026-09-07",
+            "value": 0.56,
+            "released_at": null
+          },
+          {
+            "period": "2026-09-08",
+            "value": 0.54,
+            "released_at": null
+          },
+          {
+            "period": "2026-09-09",
+            "value": 0.53,
+            "released_at": null
+          },
+          {
+            "period": "2026-09-10",
+            "value": 0.54,
+            "released_at": null
+          },
+          {
+            "period": "2026-09-11",
+            "value": 0.53,
+            "released_at": null
+          },
+          {
+            "period": "2026-09-14",
+            "value": 0.54,
+            "released_at": null
+          },
+          {
+            "period": "2026-09-15",
+            "value": 0.53,
+            "released_at": null
+          },
+          {
+            "period": "2026-09-16",
+            "value": 0.53,
+            "released_at": null
+          },
+          {
+            "period": "2026-09-17",
+            "value": 0.55,
+            "released_at": null
+          },
+          {
+            "period": "2026-09-18",
+            "value": 0.56,
+            "released_at": null
+          },
+          {
+            "period": "2026-09-21",
+            "value": 0.54,
+            "released_at": null
+          },
+          {
+            "period": "2026-09-22",
+            "value": 0.51,
+            "released_at": null
+          },
+          {
+            "period": "2026-09-23",
+            "value": 0.52,
+            "released_at": null
+          },
+          {
+            "period": "2026-09-28",
+            "value": 0.54,
+            "released_at": null
+          },
+          {
+            "period": "2026-09-29",
+            "value": 0.54,
+            "released_at": null
+          },
+          {
+            "period": "2026-09-30",
+            "value": 0.54,
+            "released_at": null
+          },
+          {
+            "period": "2026-10-01",
+            "value": 0.52,
+            "released_at": null
+          },
+          {
+            "period": "2026-10-02",
+            "value": 0.51,
+            "released_at": null
+          },
+          {
+            "period": "2026-10-06",
+            "value": 0.52,
+            "released_at": null
+          },
+          {
+            "period": "2026-10-07",
+            "value": 0.55,
+            "released_at": null
+          },
+          {
+            "period": "2026-10-08",
+            "value": 0.54,
+            "released_at": null
+          },
+          {
+            "period": "2026-10-12",
+            "value": 0.56,
+            "released_at": null
+          },
+          {
+            "period": "2026-10-13",
+            "value": 0.56,
+            "released_at": null
+          },
+          {
+            "period": "2026-10-14",
+            "value": 0.56,
+            "released_at": null
+          },
+          {
+            "period": "2026-10-15",
+            "value": 0.57,
+            "released_at": null
+          },
+          {
+            "period": "2026-10-16",
+            "value": 0.53,
+            "released_at": null
+          },
+          {
+            "period": "2026-10-19",
+            "value": 0.55,
+            "released_at": null
+          },
+          {
+            "period": "2026-10-20",
+            "value": 0.54,
+            "released_at": null
+          },
+          {
+            "period": "2026-10-21",
+            "value": 0.53,
+            "released_at": null
+          },
+          {
+            "period": "2026-10-22",
+            "value": 0.52,
+            "released_at": null
+          },
+          {
+            "period": "2026-10-23",
+            "value": 0.53,
+            "released_at": null
+          },
+          {
+            "period": "2026-10-26",
+            "value": 0.52,
+            "released_at": null
+          },
+          {
+            "period": "2026-10-27",
+            "value": 0.52,
+            "released_at": null
+          },
+          {
+            "period": "2026-10-28",
+            "value": 0.53,
+            "released_at": null
+          },
+          {
+            "period": "2026-10-29",
+            "value": 0.53,
+            "released_at": null
+          },
+          {
+            "period": "2026-10-30",
+            "value": 0.54,
+            "released_at": null
+          },
+          {
+            "period": "2026-11-02",
+            "value": 0.55,
+            "released_at": null
+          },
+          {
+            "period": "2026-11-03",
+            "value": 0.53,
+            "released_at": null
+          },
+          {
+            "period": "2026-11-04",
+            "value": 0.5,
+            "released_at": null
+          },
+          {
+            "period": "2026-11-05",
+            "value": 0.49,
+            "released_at": null
+          },
+          {
+            "period": "2026-11-06",
+            "value": 0.49,
+            "released_at": null
+          },
+          {
+            "period": "2026-11-09",
+            "value": 0.48,
+            "released_at": null
+          },
+          {
+            "period": "2026-11-10",
+            "value": 0.48,
+            "released_at": null
+          },
+          {
+            "period": "2026-11-11",
+            "value": 0.5,
+            "released_at": null
+          },
+          {
+            "period": "2026-11-12",
+            "value": 0.51,
+            "released_at": null
+          },
+          {
+            "period": "2026-11-13",
+            "value": 0.53,
+            "released_at": null
+          }
+        ],
+        "derived": true,
+        "na_reason": null
+      },
+      {
+        "series_id": "DERIVED:credit_bbb",
+        "title": "신용스프레드 BBB-",
+        "unit": "%p",
+        "freq": "D",
+        "tier": "public",
+        "source": "ECOS:817Y002",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": true,
+        "na_reason": "아직 없음 — macro.morning·monthly·evening"
+      },
+      {
+        "series_id": "DERIVED:real_base_rate",
+        "title": "실질 기준금리",
+        "unit": "%p",
+        "freq": "M",
+        "tier": "public",
+        "source": "ECOS:722Y001+KOSIS",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": true,
+        "na_reason": "공개판 미제공 — 로그인 화면에서 계산(공개 내보내기는 엔진을 쓰지 않는다)"
+      }
+    ]
+  }
+}

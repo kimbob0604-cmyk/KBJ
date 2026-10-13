@@ -63,6 +63,14 @@ def seeded_runs() -> MemoryRunLog:
         ("filings.derive", "2026-10-06T10:10"),
     ):
         runs.record(RunRecord(f"{job}:{as_of}:1", job, as_of, 1, "ok"))
+    # P5(웨이브 3 WRAP 이 켰다 — docs/p5_design.md D-P5-23): 10:30 전에 끝났어야 할 켜진 작업.
+    # us.eod 는 뉴욕 날 기준(10-05 월 16:10 ET = 10-06 05:10 KST)
+    for job, as_of in (
+        ("us.eod", "2026-10-05"),
+        ("brief.morning", "2026-10-06"),  # 08:10
+        ("etf.report", "2026-10-06"),  # 08:20
+    ):
+        runs.record(RunRecord(f"{job}:{as_of}:1", job, as_of, 1, "ok"))
     runs.record(
         RunRecord("ops.watchdog:2026-10-06T10:00:1", "ops.watchdog", "2026-10-06T10:00", 1, "ok")
     )

@@ -43,7 +43,7 @@ afterEach(() => {
 });
 
 describe('페이지 5 — 로그인', () => {
-  it('기본 쿼리(오늘·7일·14일)로 다섯 패널을 부르고 그린다 — 경제 캘린더·뉴스는 준비 중(P5)', async () => {
+  it('기본 쿼리(오늘·7일·14일)로 다섯 패널 + 경제 캘린더(P5 MAC)를 부르고 그린다', async () => {
     const { hz, root } = await mountLogin();
     expect(hz.paths().sort()).toEqual(
       [
@@ -52,10 +52,11 @@ describe('페이지 5 — 로그인', () => {
         'filings/insiders?days=7',
         'filings/overhang?days=7',
         'filings/schedule?days=14',
+        'macro/calendar',
       ].sort(),
     );
     for (const t of PANELS) expect(panelByTitle(root, t).querySelector('.msg.err')).toBeNull();
-    expect(panelByTitle(root, '경제 캘린더 · 뉴스').classList.contains('is-pending')).toBe(true);
+    expect(panelByTitle(root, '경제 캘린더').classList.contains('is-pending')).toBe(false);
     const feed = panelByTitle(root, '공시 피드');
     expect(feed.querySelectorAll('tbody tr')).toHaveLength(40);
     expect(text(feed.querySelector('.count'))).toBe('40건');
@@ -169,7 +170,7 @@ describe('페이지 5 — 로그인', () => {
 });
 
 describe('페이지 5 — 공개판', () => {
-  it('로그인 API 0회 — 공개 파일 다섯, 새로 고침 없음, 관심종목 토글 없음', async () => {
+  it('로그인 API 0회 — 공개 파일 다섯 + 매크로 캘린더, 새로 고침 없음, 관심종목 토글 없음', async () => {
     const { hz, root, every } = await mountPublic();
     expect(hz.paths().sort()).toEqual(
       [
@@ -177,6 +178,7 @@ describe('페이지 5 — 공개판', () => {
         './data/earnings_schedule.json',
         './data/filings_feed.json',
         './data/insider_recent.json',
+        './data/macro/calendar.json',
         './data/overhang_recent.json',
       ].sort(),
     );

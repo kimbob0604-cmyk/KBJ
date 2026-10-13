@@ -1,4 +1,4 @@
-"""마이그레이션 0001~0013 을 실제 TimescaleDB 에 적용(Docker).
+"""마이그레이션 0001~0017 을 실제 TimescaleDB 에 적용(Docker).
 
 근거: docs/p2_design.md §8.2·§8.8, docs/p3_design.md §3.4.
 
@@ -10,6 +10,11 @@
   로그인·개인 표(prv_fin·prv_market.share_class·prv_journal.watchlist)는 못 읽는다. 공개 표 source
   는
   DART 만, 엑셀 2 MiB 상한, 조정 공시 연결 실패는 invalid + 사유. 밸류 일별은 hypertable(365일)
+- P5(0014~0017, docs/p5_design.md §3.3 — 테마 표는 사용자 별도 진행으로 뺐다): 공개 표
+  (pub_macro·pub_market_stats)는 내보내기 역할이 읽고 로그인 표(prv_macro·prv_market.us_universe·
+  prv_flows.program_*)는 못 읽는다. 값 없는 행은 ok 불가, 공개 캘린더는 공개 출처만, 보드 산출
+  이름에 us_summary·us_brief(US 만).
+  프로그램 장중 표는 청크 1일 + 보존 90일
 - 권한: kbj_public_export 는 pub_* 만 읽고, prv_*(P3 새 표 포함)·ops 는 못 읽고, 아무것도
   쓰지 못한다
 - 제약: data_claim 부분 유일(claimed·done 하나), notify_message → notify_log 외래키(커밋 때 검사),
@@ -49,7 +54,11 @@ P2 = [
     "0011_fin.sql",
     "0012_fin_prv.sql",
     "0013_journal_watchlist.sql",
-]  # 이름은 P2 시험 그대로 — 0001~0013 전부(P3 는 0007~0009, P4 는 0010~0013 을 더했다)
+    "0014_macro.sql",
+    "0015_us_board.sql",
+    "0016_market_stats.sql",
+    "0017_program.sql",
+]  # 이름은 P2 시험 그대로 — 0001~0017 전부(P3 0007~0009, P4 0010~0013, P5 0014~0017 을 더했다)
 GX_DAILY = {
     "prv_gex.raw_messages", "prv_gex.fut_ticks", "prv_gex.opt_ticks", "prv_gex.chain_snapshots",
     "prv_gex.fut_board", "prv_gex.investor_flow", "prv_gex.series_expiries",
@@ -65,6 +74,8 @@ YEARLY = {
     "prv_flows.investor_revision", "prv_etf.etf_daily", "prv_etf.holding",
     # P4(0012)
     "prv_fin.valuation_daily",
+    # P5(0017)
+    "prv_flows.program_stock_daily",
 }  # fmt: skip
 # P3 장중 이력 — 청크 1일 + 보존(docs/p3_design.md §3.4, R21 [제안])
 P3_INTRADAY = {
@@ -73,6 +84,11 @@ P3_INTRADAY = {
     "prv_market.turnover_rank_intraday": "90 days",
     "prv_flows.investor_intraday": "90 days",
     "prv_etf.quote_intraday": "30 days",
+}
+# P5 장중 프로그램 — 청크 1일 + 보존 90일 [제안](docs/p5_design.md §3.3 — 0008 장중 표와 같다)
+P5_INTRADAY = {
+    "prv_flows.program_market_intraday": "90 days",
+    "prv_flows.program_stock_intraday": "90 days",
 }
 P3_TABLES = {
     "prv_board.alltime", "prv_board.label", "prv_board.split_check", "prv_board.stock_day",
@@ -140,14 +156,15 @@ def test_hypertables_and_chunk_intervals(dsn: str) -> None:
         "JOIN timescaledb_information.dimensions d USING (hypertable_schema, hypertable_name)",
     )
     got = {name: (col, iv) for name, col, iv in ht}
-    assert set(got) == GX_DAILY | YEARLY | set(P3_INTRADAY)
+    assert set(got) == GX_DAILY | YEARLY | set(P3_INTRADAY) | set(P5_INTRADAY)
     assert {t: iv for t, (_, iv) in got.items() if t in YEARLY} == dict.fromkeys(
         YEARLY, timedelta(days=365)
     )
-    assert {iv for t, (_, iv) in got.items() if t in GX_DAILY | set(P3_INTRADAY)} == {
-        timedelta(days=1)
-    }
+    assert {
+        iv for t, (_, iv) in got.items() if t in GX_DAILY | set(P3_INTRADAY) | set(P5_INTRADAY)
+    } == {timedelta(days=1)}
     assert {got[t][0] for t in P3_INTRADAY} == {"ts"}
+    assert {got[t][0] for t in P5_INTRADAY} == {"ts"}
     assert got["prv_etf.holding"][0] == "asof"
     assert got["prv_board.label"][0] == "trade_date"
     assert got["prv_market.daily_bar"][0] == "trade_date"
@@ -182,7 +199,8 @@ def test_p3_retention_policies(dsn: str) -> None:
         "SELECT hypertable_schema || '.' || hypertable_name, config->>'drop_after' "
         "FROM timescaledb_information.jobs WHERE proc_name = 'policy_retention'",
     )
-    assert dict(rows) == P3_INTRADAY  # 보존 정책은 P3 장중 이력 표에만(원본 녹화는 P7 — 0006 주석)
+    # 보존 정책은 P3·P5 장중 이력 표에만(원본 녹화는 P7 — 0006 주석)
+    assert dict(rows) == P3_INTRADAY | P5_INTRADAY
 
 
 def test_p3_tables_exist(dsn: str) -> None:
@@ -435,3 +453,101 @@ BAD_P4_ROWS = (
 def test_p4_constraints(dsn: str, stmt: str) -> None:
     with pytest.raises(psycopg.errors.CheckViolation), psycopg.connect(dsn) as c:
         c.execute(stmt.encode())
+
+
+# ── P5(0014~0017 — docs/p5_design.md §3.3) ──
+
+P5_PUB = {
+    "pub_macro.series_meta", "pub_macro.series", "pub_macro.calendar",
+    "pub_market_stats.credit_balance", "pub_market_stats.market_capital",
+    "pub_market_stats.fund_nav", "pub_market_stats.cma",
+}  # fmt: skip
+P5_PRV = {
+    "prv_macro.series_meta", "prv_macro.series", "prv_macro.calendar",
+    "prv_market.us_universe", "prv_flows.program_market_daily",
+    "prv_flows.program_market_intraday", "prv_flows.program_investor_daily",
+    "prv_flows.program_stock_intraday", "prv_flows.program_stock_daily",
+}  # fmt: skip
+
+
+def test_p5_tables_exist(dsn: str) -> None:
+    rows = _rows(
+        dsn,
+        "SELECT table_schema || '.' || table_name FROM information_schema.tables "
+        "WHERE table_schema IN ('pub_macro', 'pub_market_stats', 'prv_macro') "
+        "OR table_name IN ('us_universe') OR table_name LIKE 'program\\_%'",
+    )
+    assert {r[0] for r in rows} == P5_PUB | P5_PRV
+
+
+def test_export_role_reads_p5_pub_tables_but_not_prv(dsn: str) -> None:
+    for table in sorted(P5_PUB):
+        _as_export(dsn, f"SELECT count(*) FROM {table}")  # noqa: S608 — 상수 표 이름
+    for table in sorted(P5_PRV):
+        with pytest.raises(psycopg.errors.InsufficientPrivilege):
+            _as_export(dsn, f"SELECT 1 FROM {table} LIMIT 1")  # noqa: S608
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        _as_export(dsn, "DELETE FROM pub_macro.series")
+
+
+BAD_P5_ROWS = (
+    # 값이 없는 행은 ok 일 수 없다(0 으로 채우지 않는다)
+    "INSERT INTO pub_macro.series (series_id, period, value, unit, source, as_of, quality, "
+    "received_at, loaded_by) VALUES ('FRED:DGS10', '2026-11-13', NULL, '%', 'FRED', now(), 'ok', "
+    "now(), 't')",
+    # 공개 시리즈 표에 로그인 출처를 쓰지 않는다
+    "INSERT INTO pub_macro.series (series_id, period, value, unit, source, as_of, quality, "
+    "received_at, loaded_by) VALUES ('YAHOO:CL=F', '2026-11-13', 1, 'USD', 'YAHOO', now(), 'ok', "
+    "now(), 't')",
+    # 공개 메타에 저작권 시리즈 데이터셋·로그인 tier 를 쓰지 않는다
+    "INSERT INTO pub_macro.series_meta (series_id, tab, title, unit, freq, tier, source, dataset, "
+    "updated_at, loaded_by) VALUES ('FRED:SP500', 'us', 'S&P', 'pt', 'D', 'public', 'FRED', "
+    "'FRED:restricted_series', now(), 't')",
+    "INSERT INTO pub_macro.series_meta (series_id, tab, title, unit, freq, tier, source, dataset, "
+    "updated_at, loaded_by) VALUES ('FRED:DGS2', 'us', '2Y', '%', 'D', 'private', 'FRED', "
+    "'FRED:gov_series', now(), 't')",
+    # 공개 캘린더는 공개 출처만(ForexFactory 는 로그인 — D-P5-8)
+    "INSERT INTO pub_macro.calendar (event_id, kind, event_date, title, country, importance, "
+    "source, quality, received_at, loaded_by) VALUES ('US:release:2026-11-13:cpi', 'release', "
+    "'2026-11-13', 'CPI', 'US', 1, 'ff', 'ok', now(), 't')",
+    # 금투협 통계 source 는 DATAGO 만
+    "INSERT INTO pub_market_stats.credit_balance (stat_date, item, value, unit, source, as_of, "
+    "quality, received_at, loaded_by) VALUES ('2026-11-13', 'credit_total', 1, '원', 'KIS', "
+    "now(), 'ok', now(), 't')",
+    # us_* 산출은 미국 행만
+    "INSERT INTO prv_board.artifact (market, trade_date, name, payload, engine_version, "
+    "input_digest, as_of, source, quality, generated_at, loaded_by) VALUES ('KR', '2026-11-13', "
+    "'us_brief', '{}', 'v', 'd', now(), 's', 'ok', now(), 't')",
+    "INSERT INTO prv_board.artifact (market, trade_date, name, payload, engine_version, "
+    "input_digest, as_of, source, quality, generated_at, loaded_by) VALUES ('US', '2026-11-13', "
+    "'us_other', '{}', 'v', 'd', now(), 's', 'ok', now(), 't')",
+    # 프로그램 kind·side 는 KIS 칸 이름만
+    "INSERT INTO prv_flows.program_market_daily (trade_date, market, venue, kind, side, source, "
+    "quality, received_at, loaded_by) VALUES ('2026-11-13', 'K', 'KRX', 'total', 'smtn', 'kis', "
+    "'ok', now(), 't')",
+)
+
+
+@pytest.mark.parametrize("stmt", BAD_P5_ROWS)
+def test_p5_constraints(dsn: str, stmt: str) -> None:
+    with pytest.raises(psycopg.errors.CheckViolation), psycopg.connect(dsn) as c:
+        c.execute(stmt.encode())
+
+
+def test_p5_us_artifact_names_and_gx_comment(dsn: str) -> None:
+    with psycopg.connect(dsn) as c:
+        c.execute(
+            b"INSERT INTO prv_board.artifact (market, trade_date, name, payload, engine_version, "
+            b"input_digest, as_of, source, quality, generated_at, loaded_by) VALUES ('US', "
+            b"'2026-11-13', 'us_brief', '{}', 'v', 'd', now(), 's', 'ok', now(), 't'), ('KR', "
+            b"'2026-11-13', 'newhigh', '{}', 'v', 'd', now(), 's', 'ok', now(), 't')"
+        )
+        c.rollback()
+    names = _rows(
+        dsn,
+        "SELECT conname FROM pg_constraint WHERE conrelid = 'prv_board.artifact'::regclass "
+        "AND contype = 'c' AND pg_get_constraintdef(oid) LIKE '%universe_meta%'",
+    )
+    assert names == [("artifact_name_p5_check",)]  # 0007 의 옛 이름 제약은 지워졌다
+    note = _one(dsn, "SELECT obj_description('prv_gex.investor_flow'::regclass, 'pg_class')")
+    assert "flows.market_minute" in note and "백만원" in note

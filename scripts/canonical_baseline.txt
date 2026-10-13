@@ -20,12 +20,17 @@
 #   종목토론실, P3 대체 라우트·장중 브로드캐스터 — 18,889 → 16,032 줄). naver 88 → 67, krx_scrape 68 → 62. 새 그룹
 #   fnguide(목표 0). server.py 에 남은 네이버·KRX 스크랩 호출은 아직 남은 SD 마감 시황·워치독(검사 스크립트가
 #   본다)·피어 유니버스·뉴스·옵션이 부른다 — 지우면 그 코드가 깨져(R14) 그 기능을 대체하는 단계(P5·P7)에서.
+# - 2026-10-13 P5 WRAP(docs/p5_design.md §1.9·D-P5-24): ET monitor/flow 디렉터리(kbj flows.report 가 대체 —
+#   krx.py 5), etf_tracker_v9 tracker·report·render·dash·live_update(kbj etf.report·etf.collect·페이지 10 — render 1),
+#   SD server.py 아침 계열·US 요약 발송·수급 시그널·글로벌 매크로·ETF 맵 라우트(kbj brief.morning·flows.report·
+#   페이지 6·10 — 네이버 ETF 시세 1)를 지웠다. naver 67 → 65, krx_scrape 62 → 57. 새 그룹 없음. etf_tracker_v9
+#   market.py 는 monitor/kr(테마 — 사용자 별도 진행)이 import 해서, SD 테마·밸류체인 라우트·theme_crawler 는 테마
+#   사전 통합을 사용자가 따로 진행해(2026-10-13 Q1) 남긴다.
 datago | legacy/etf_traker/board/ingest/datago.py | 1 | P4~P8(P3 S 이월) — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import — 그 기능 대체 때 삭제
 kis_ws | legacy/gexlab/config/kis_ws.yaml | 4 | P7 — ws-gateway 승격 때 kbj/services/ws_gateway 로(메인 결정 D2, 접속키는 auth 만 발급)
 krx_scrape | legacy/etf_traker/board/ingest/flows.py | 2 | P4~P8(P3 S 이월) — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import — 그 기능 대체 때 삭제
 krx_scrape | legacy/etf_traker/board/ingest/pipeline.py | 1 | P4~P8(P3 S 이월) — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import — 그 기능 대체 때 삭제
 krx_scrape | legacy/etf_traker/flowlab/naver.py | 1 | P8(P3 S 이월) — flowlab flows·verify·selftest 가 import — 이벤트 스터디 대체 때 삭제
-krx_scrape | legacy/etf_traker/monitor/flow/krx.py | 5 | P5(P3 S 이월) — monitor/flow run.py(flows.report)가 import — 수급 리포트 대체 때 삭제
 krx_scrape | legacy/stock_dashboard/data_fetcher.py | 12 | P5(P4 S 이월 — D-P4-19·R14) — 남은 SD 마감 시황·워치독·피어·뉴스·옵션(server.py)과 SD 검사 스크립트가 쓴다. 그 기능 대체 때
 krx_scrape | legacy/stock_dashboard/data_freshness.py | 1 | P5(P4 S 이월 — D-P4-19·R14) — 남은 SD 마감 시황·워치독·피어·뉴스·옵션(server.py)과 SD 검사 스크립트가 쓴다. 그 기능 대체 때
 krx_scrape | legacy/stock_dashboard/krx_api.py | 1 | P5(P4 S 이월 — D-P4-19·R14) — 남은 SD 마감 시황·워치독·피어·뉴스·옵션(server.py)과 SD 검사 스크립트가 쓴다. 그 기능 대체 때
@@ -43,7 +48,6 @@ naver | legacy/etf_traker/board/ingest/triggers.py | 2 | P4·P5 — 공시 트�
 naver | legacy/etf_traker/board/web/app.js | 1 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
 naver | legacy/etf_traker/board/web/render.py | 1 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
 naver | legacy/etf_traker/etf_tracker_v9/market.py | 3 | P5(P3 S 이월) — tracker·live_update(ETF 리포트)가 import — 리포트를 kbj etf_daily 로 바꿀 때 삭제
-naver | legacy/etf_traker/etf_tracker_v9/render.py | 1 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
 naver | legacy/etf_traker/flowlab/config.py | 3 | P8(P3 S 이월) — flowlab flows·verify·selftest 가 import — 이벤트 스터디 대체 때 삭제
 naver | legacy/etf_traker/flowlab/naver.py | 4 | P8(P3 S 이월) — flowlab flows·verify·selftest 가 import — 이벤트 스터디 대체 때 삭제
 naver | legacy/etf_traker/flowlab/tests.py | 1 | P8(P3 S 이월) — flowlab flows·verify·selftest 가 import — 이벤트 스터디 대체 때 삭제
@@ -51,6 +55,6 @@ naver | legacy/stock_dashboard/agents/pipeline.py | 1 | P3~P5 — U4: SD 기능�
 naver | legacy/stock_dashboard/data_fetcher.py | 1 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
 naver | legacy/stock_dashboard/ohlcv_autofill.py | 2 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
 naver | legacy/stock_dashboard/scripts/validate_valuechain_external.py | 1 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
-naver | legacy/stock_dashboard/server.py | 15 | P5(P4 S 이월 — R14) — 마감 시황·워치독(검사 스크립트가 본다)·피어 유니버스·뉴스·ETF 시세가 쓴다. U4: 기능별로 KRX·KIS 로 교체
+naver | legacy/stock_dashboard/server.py | 14 | P5(P4 S 이월 — R14) — 마감 시황·워치독(검사 스크립트가 본다)·피어 유니버스·뉴스·ETF 시세가 쓴다. U4: 기능별로 KRX·KIS 로 교체
 naver | legacy/stock_dashboard/theme_crawler.py | 3 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
 naver | legacy/stock_dashboard/valuechain.py | 1 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)

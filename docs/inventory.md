@@ -180,10 +180,9 @@ U2에 따라 아침 브리핑과 마감 요약은 하루 1회씩이다. 모든 �
 | 미국 마감+10분(05:10 / 11월부터 06:10) | 화~토 | `us.eod`(미국 일봉·신고가 엔진) | SD 05:50 `us_market_daily`, ET us-board 07:00 수집부 |
 | 06:20 | 평일 | `macro.morning`(ECOS·FRED·재무부·뉴욕연은·FF·Yahoo) | ET bok 06:40·09:30 수집, SD 05:00 `tg_briefing_refresh`, SD 4시간 `global_data_refresh` 매크로부 |
 | 06:10~08:00 | 거래일 | GX 야간 분봉·무결측(그대로) | — |
-| 07:30 | 화~토 | `guru.research`(LLM) | ET xdigest 07:45·08:15·10:23 dispatch |
 | 08:00 | 거래일 | `etf.collect` + **ETF 리포트**(ETF는 브리핑이 아니라 별도 1회 push) | ET `daily.yml` 08:00·16:00 |
 | 08:05~10:00 | 거래일 | `krx.daily`(전일 주식·지수·ETF·선물·옵션 일별, D+1 08:00 공표) | GX `KrxDaily`, ET board KRX 확정치 덮기, SD `krx_api`, ET kr 공공데이터 일봉 |
-| **08:10** | 거래일 또는 간밤 미국 거래일(화~토) | **아침 브리핑(1회)** — ① 간밤 미국: 지수·섹터·Mag7(SD 06:10) + 신고가·등락 온도 ①~⑧ 요약(ET us-board 07:00) ② 금리·달러·원자재(ET bok 06:40 '미국채'·'달러·원자재' + SD 08:30 USD/KRW·WTI·VIX·美10년 → 한 표, 중복 제거) ③ 한국 매크로(ET bok 'ECOS') ④ 야간선물·GEX: 야간 마감 레벨·Flip·기대변동폭(SD 05:30 야간선물 + GX 계획 06:05·08:30) ⑤ 오늘·이번 주 일정과 발표 결과(ET bok '발표 결과'·'이번 주' + SD 08:30 Finnhub 고영향 일정) ⑥ 구루 한 줄(ET guru — 준비 안 됐으면 '미준비'로 적고 생략) ⑦ 데이터 품질 줄(결측·stale). SD 08:45 AI 추천 push 는 폐지하고 화면(추천)으로만 | SD 05:30·06:10·08:30·08:45, ET 06:40·07:00(메시지)·07:45, GX 계획 06:05·08:30 |
+| **08:10** | 거래일 또는 간밤 미국 거래일(화~토) | **아침 브리핑(1회)** — ① 간밤 미국: 지수·섹터·Mag7(SD 06:10) + 신고가·등락 온도 ①~⑧ 요약(ET us-board 07:00) ② 금리·달러·원자재(ET bok 06:40 '미국채'·'달러·원자재' + SD 08:30 USD/KRW·WTI·VIX·美10년 → 한 표, 중복 제거) ③ 한국 매크로(ET bok 'ECOS') ④ 야간선물·GEX: 야간 마감 레벨·Flip·기대변동폭(SD 05:30 야간선물 + GX 계획 06:05·08:30) ⑤ 오늘·이번 주 일정과 발표 결과(ET bok '발표 결과'·'이번 주' + SD 08:30 Finnhub 고영향 일정) ⑦ 데이터 품질 줄(⑥ 구루 줄은 사용자 결정 2026-10-13 Q4 로 뺐다)(결측·stale). SD 08:45 AI 추천 push 는 폐지하고 화면(추천)으로만 | SD 05:30·06:10·08:30·08:45, ET 06:40·07:00(메시지)·07:45, GX 계획 06:05·08:30 |
 | 09:00~15:30 10분 | 거래일 | `rules.intraday`(규칙 알림·관심종목·트레일링) | SD `tg_custom_alerts`·`tg_watchlist`·`tg_trailing`·`price_sync_intraday`·`stage2_realtime_kr` |
 | 15:35~16:00 | 거래일 | `market.close_collect`(당일 종가·수급 — 출처는 `conflict_map.md` Q1 결정 대기) | SD 15:35·15:40 수급·16:10 일봉, ET board 16:10 수집부, ET kr 15:30 KIS 수급 |
 | 16:00~17:50 | 거래일 | GX 주간 분봉·무결측(그대로) | — |
@@ -230,7 +229,7 @@ U2에 따라 아침 브리핑과 마감 요약은 하루 1회씩이다. 모든 �
 | 27 | ET:`run.py:_send_note`:1000 → `report/note.py` | ↑22 | 사람이 쓴 일일 노트 | 수동 | 같음 | Markdown | 이름 미해결 시 전부 보류 | 신고가 | 유지(수동) |
 | 28 | ET:`cmd_send('backtest'/'screen'/'search')`:930~961 | ↑22 | 백테스트·탐색 요약 | 수동 | 같음 | Markdown | — | 운영 | 유지(수동, P8) |
 | 29 | ET:`run.py:cmd_us_send`:1864 → `us/brief.telegram_chunks` + `send_document(docs/us/index.html)` | ↑22 | 미국장 브리프 ①~⑧ + HTML | 화~토 07:00 | 같음 | HTML | 기준일 3일 초과 생략 | 시장 | 아침 브리핑 ①에 흡수, HTML은 웹 |
-| 30 | ET:`guru/pipeline.send`:143(발송 :153) | ↑22 | 구루 브리핑 | 화~토 07:45·08:15·10:23 | `XDIGEST_CHAT_ID`(없으면 기본) | 평문 | `docs/api/guru-sent.json` | 시장 | 아침 브리핑 ⑥ |
+| 30 | ET:`guru/pipeline.send`:143(발송 :153) | ↑22 | 구루 브리핑 | 화~토 07:45·08:15·10:23 | `XDIGEST_CHAT_ID`(없으면 기본) | 평문 | `docs/api/guru-sent.json` | 시장 | 옮기지 않는다(Q4) |
 | 31 | ET:`xdigest/send.send_parts`:159(발송 :168) ← `run`:208, `run.py:cmd_xdigest_preview`:1305 | ↑22 | 구 X 다이제스트 | 수동 | `XDIGEST_CHAT_ID` | 평문 | `docs/api/xdigest-sent.json` | — | [제안] 폐기 |
 | 32 | ET:`tools/dashboard_brief_preview.main` | ↑22 | SD 시황 미리보기(SD 코드 exec) | 수동 | 같음 | HTML | — | — | 폐기(원격 코드 실행·KIS 발급) |
 | 33 | ET:`ingest/tg_inbox.drain`:436 (`_call`:131, `webhook_url`:153) | **getUpdates**·getWebhookInfo | 수신: 공유된 X 링크 → `state/inbox.json` | daily 앞, **기본 꺼짐**(`settings.yaml triggers.inbox_enabled: false`) | `TRIGGER_INBOX_CHAT_IDS` | — | `.inbox_offset.json` | (인박스 저장) | notifier 웹훅 → 인박스로 분배(U1) |
@@ -432,8 +431,8 @@ U2에 따라 아침 브리핑과 마감 요약은 하루 1회씩이다. 모든 �
 | 관심종목 | SD `app.js` | 커스텀 | 로그인 | — |
 | 실시간 가격 푸시 | SD socket.io `price_update` | 커스텀 / 8 | 로그인 | 네이버 → KIS REST [추정] |
 | 텔레그램 push·봇 | §d | 텔레그램 | 로그인 | U1·U2 |
-| 구루 브리핑(글로벌 투자자 발언) | ET `guru/` | **추가 제안**(아침 브리핑 ⑥ + 5 뉴스 칸) | 로그인[애매: DATA_TIERS 미기재, 공개 후보는 출처 링크만] | — |
-| X(블루스카이) 다이제스트 | ET `xdigest/` | — | — | [제안] 폐기 |
+| 구루 브리핑(글로벌 투자자 발언) | ET `guru/` | — | — | 옮기지 않는다(사용자 결정 2026-10-13 Q4 — P5·P8 모두 아님) |
+| X(블루스카이) 다이제스트 | ET `xdigest/` | — | — | 폐기(사용자 결정 2026-10-13 Q4) |
 | Claude 아티팩트 조각 | ET `web/artifact.py` | — | — | 폐기(KBJ 웹) |
 | 데모 모드 | ET `--demo`·`--us-demo`(합성), GX golden | P9 데모 | 공개(합성만) | — |
 | 분석 일지 마크다운 export | SD `export_to_markdown` | 12 | 로그인 | — |

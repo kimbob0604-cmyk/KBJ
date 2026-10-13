@@ -13,6 +13,7 @@ from kbj.services.api.models.auth import CsrfResponse, MeResponse
 from kbj.services.api.models.common import Envelope, ErrorBody, NoDataBody
 from tests.unit.api.make_web_fixtures import AUTH, FIXTURES, OUT, render
 from tests.unit.api.test_routes_common import DATA_ROUTES
+from tests.unit.api.web_fixtures_p5 import DOMAINS as P5_DOMAINS
 
 
 def _base(path: str) -> str:
@@ -152,3 +153,45 @@ def test_p4_fixtures_are_fresh() -> None:
 
     for rel, text in render_p4().items():
         _same(_load(rel), json.loads(text), rel)
+
+
+# ── P5(docs/p5_design.md §1.1 — 도메인별 모듈, 도메인 폴더만) ──────────────────────────
+
+
+@pytest.mark.parametrize("domain", P5_DOMAINS)
+def test_p5_fixtures_are_fresh(domain: str) -> None:
+    """`web/test/fixtures/api/<도메인>/**` 가 그 도메인 모듈의 출력과 같다(파일 집합·바이트). 다르면
+    `uv run python -m tests.unit.api.make_web_fixtures --only <도메인>` 로 다시 만든다."""
+    from tests.unit.api.make_web_fixtures import p5_files_on_disk, render_p5
+
+    want = render_p5(domain)
+    assert set(want) == p5_files_on_disk(domain), f"{domain}: 픽스처 파일 목록이 낡았다"
+    for rel, text in want.items():
+        assert rel.startswith(f"{domain}/")
+        assert (OUT / rel).read_text(encoding="utf-8") == text, f"{rel} 이 낡았다"
+        json.loads(text)
+
+
+def test_p5_domains_and_modules() -> None:
+    import importlib
+
+    from tests.unit.api.make_web_fixtures import render_p5
+
+    assert P5_DOMAINS == ("macro", "etf", "us", "program")
+    for d in P5_DOMAINS:
+        mod = importlib.import_module(f"tests.unit.api.web_fixtures_p5.{d}")
+        assert mod.DOMAIN == d
+    with pytest.raises(ValueError, match="모르는 P5 도메인"):
+        render_p5("nope")
+    # P5 도메인 폴더는 P3 평평한 파일·P4 하위 폴더와 겹치지 않는다
+    assert not set(P5_DOMAINS) & {"stock", "filings", "watchlist"}
+
+
+def test_p5_render_refuses_paths_outside_domain(monkeypatch: pytest.MonkeyPatch) -> None:
+    from tests.unit.api import make_web_fixtures as mk
+    from tests.unit.api.web_fixtures_p5 import macro
+
+    for bad in ("../x.json", "/abs.json", "a/../../b.json", "x.txt"):
+        monkeypatch.setattr(macro, "render", lambda bad=bad: {bad: "{}"})
+        with pytest.raises(ValueError, match="경로 형식"):
+            mk.render_p5("macro")

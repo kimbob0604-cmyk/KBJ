@@ -1,0 +1,466 @@
+{
+  "source": "KOSIS",
+  "as_of": "2026-10-05T08:00:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "생산자물가지수: 확인 전(#43)",
+    "수출물가지수: 확인 전(#43)",
+    "수입물가지수: 확인 전(#43)"
+  ],
+  "generated_at": "2026-11-17T07:30:00Z",
+  "data": {
+    "tab": "prices",
+    "series": [
+      {
+        "series_id": "ECOS:404Y014:ppi",
+        "title": "생산자물가지수",
+        "unit": "2020=100",
+        "freq": "M",
+        "tier": "public",
+        "source": "ECOS:404Y014",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "확인 전(#43)"
+      },
+      {
+        "series_id": "ECOS:402Y014:export_px",
+        "title": "수출물가지수",
+        "unit": "2020=100",
+        "freq": "M",
+        "tier": "public",
+        "source": "ECOS:402Y014",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "확인 전(#43)"
+      },
+      {
+        "series_id": "ECOS:401Y015:import_px",
+        "title": "수입물가지수",
+        "unit": "2020=100",
+        "freq": "M",
+        "tier": "public",
+        "source": "ECOS:401Y015",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "확인 전(#43)"
+      },
+      {
+        "series_id": "KOSIS:DT_1J22003:cpi",
+        "title": "소비자물가지수",
+        "unit": "2020=100",
+        "freq": "M",
+        "tier": "public",
+        "source": "KOSIS",
+        "as_of": "2026-10-05T08:00:00+09:00",
+        "quality": "ok",
+        "latest": {
+          "period": "2026-09",
+          "value": 124.44,
+          "released_at": "2026-10-05T08:00:00+09:00"
+        },
+        "change": 0.5,
+        "change_pct": 0.4034210101662161,
+        "points": [
+          {
+            "period": "2023-10",
+            "value": 116.19,
+            "released_at": "2023-11-05T08:00:00+09:00"
+          },
+          {
+            "period": "2023-11",
+            "value": 116.51,
+            "released_at": "2023-12-05T08:00:00+09:00"
+          },
+          {
+            "period": "2023-12",
+            "value": 117.18,
+            "released_at": "2024-01-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-01",
+            "value": 117.2,
+            "released_at": "2024-02-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-02",
+            "value": 117.5,
+            "released_at": "2024-03-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-03",
+            "value": 117.6,
+            "released_at": "2024-04-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-04",
+            "value": 117.9,
+            "released_at": "2024-05-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-05",
+            "value": 117.98,
+            "released_at": "2024-06-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-06",
+            "value": 118.22,
+            "released_at": "2024-07-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-07",
+            "value": 118.37,
+            "released_at": "2024-08-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-08",
+            "value": 118.47,
+            "released_at": "2024-09-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-09",
+            "value": 118.79,
+            "released_at": "2024-10-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-10",
+            "value": 119.03,
+            "released_at": "2024-11-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-11",
+            "value": 119.37,
+            "released_at": "2024-12-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-12",
+            "value": 119.25,
+            "released_at": "2025-01-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-01",
+            "value": 119.87,
+            "released_at": "2025-02-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-02",
+            "value": 120.57,
+            "released_at": "2025-03-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-03",
+            "value": 120.84,
+            "released_at": "2025-04-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-04",
+            "value": 121.38,
+            "released_at": "2025-05-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-05",
+            "value": 121.23,
+            "released_at": "2025-06-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-06",
+            "value": 121.5,
+            "released_at": "2025-07-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-07",
+            "value": 121.5,
+            "released_at": "2025-08-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-08",
+            "value": 121.55,
+            "released_at": "2025-09-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-09",
+            "value": 121.68,
+            "released_at": "2025-10-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-10",
+            "value": 121.63,
+            "released_at": "2025-11-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-11",
+            "value": 121.77,
+            "released_at": "2025-12-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-12",
+            "value": 121.88,
+            "released_at": "2026-01-05T08:00:00+09:00"
+          },
+          {
+            "period": "2026-01",
+            "value": 122.34,
+            "released_at": "2026-02-05T08:00:00+09:00"
+          },
+          {
+            "period": "2026-02",
+            "value": 122.44,
+            "released_at": "2026-03-05T08:00:00+09:00"
+          },
+          {
+            "period": "2026-03",
+            "value": 122.71,
+            "released_at": "2026-04-05T08:00:00+09:00"
+          },
+          {
+            "period": "2026-04",
+            "value": 122.9,
+            "released_at": "2026-05-05T08:00:00+09:00"
+          },
+          {
+            "period": "2026-05",
+            "value": 122.84,
+            "released_at": "2026-06-05T08:00:00+09:00"
+          },
+          {
+            "period": "2026-06",
+            "value": 123.12,
+            "released_at": "2026-07-05T08:00:00+09:00"
+          },
+          {
+            "period": "2026-07",
+            "value": 123.63,
+            "released_at": "2026-08-05T08:00:00+09:00"
+          },
+          {
+            "period": "2026-08",
+            "value": 123.94,
+            "released_at": "2026-09-05T08:00:00+09:00"
+          },
+          {
+            "period": "2026-09",
+            "value": 124.44,
+            "released_at": "2026-10-05T08:00:00+09:00"
+          }
+        ],
+        "derived": false,
+        "na_reason": null
+      },
+      {
+        "series_id": "DERIVED:cpi_yoy",
+        "title": "소비자물가 전년동월비",
+        "unit": "%",
+        "freq": "M",
+        "tier": "public",
+        "source": "KOSIS",
+        "as_of": "2026-10-05T08:00:00+09:00",
+        "quality": "ok",
+        "latest": {
+          "period": "2026-09",
+          "value": 2.268244575936884,
+          "released_at": null
+        },
+        "change": 0.3019755508443245,
+        "change_pct": 15.35779422808683,
+        "points": [
+          {
+            "period": "2023-10",
+            "value": null,
+            "released_at": null
+          },
+          {
+            "period": "2023-11",
+            "value": null,
+            "released_at": null
+          },
+          {
+            "period": "2023-12",
+            "value": null,
+            "released_at": null
+          },
+          {
+            "period": "2024-01",
+            "value": null,
+            "released_at": null
+          },
+          {
+            "period": "2024-02",
+            "value": null,
+            "released_at": null
+          },
+          {
+            "period": "2024-03",
+            "value": null,
+            "released_at": null
+          },
+          {
+            "period": "2024-04",
+            "value": null,
+            "released_at": null
+          },
+          {
+            "period": "2024-05",
+            "value": null,
+            "released_at": null
+          },
+          {
+            "period": "2024-06",
+            "value": null,
+            "released_at": null
+          },
+          {
+            "period": "2024-07",
+            "value": null,
+            "released_at": null
+          },
+          {
+            "period": "2024-08",
+            "value": null,
+            "released_at": null
+          },
+          {
+            "period": "2024-09",
+            "value": null,
+            "released_at": null
+          },
+          {
+            "period": "2024-10",
+            "value": 2.4442723125914556,
+            "released_at": null
+          },
+          {
+            "period": "2024-11",
+            "value": 2.4547249163161977,
+            "released_at": null
+          },
+          {
+            "period": "2024-12",
+            "value": 1.766513056835639,
+            "released_at": null
+          },
+          {
+            "period": "2025-01",
+            "value": 2.278156996587022,
+            "released_at": null
+          },
+          {
+            "period": "2025-02",
+            "value": 2.6127659574468165,
+            "released_at": null
+          },
+          {
+            "period": "2025-03",
+            "value": 2.7551020408163263,
+            "released_at": null
+          },
+          {
+            "period": "2025-04",
+            "value": 2.9516539440203493,
+            "released_at": null
+          },
+          {
+            "period": "2025-05",
+            "value": 2.7547041871503586,
+            "released_at": null
+          },
+          {
+            "period": "2025-06",
+            "value": 2.774488242260187,
+            "released_at": null
+          },
+          {
+            "period": "2025-07",
+            "value": 2.6442510771310213,
+            "released_at": null
+          },
+          {
+            "period": "2025-08",
+            "value": 2.599814298978642,
+            "released_at": null
+          },
+          {
+            "period": "2025-09",
+            "value": 2.432864719252459,
+            "released_at": null
+          },
+          {
+            "period": "2025-10",
+            "value": 2.1843232798454126,
+            "released_at": null
+          },
+          {
+            "period": "2025-11",
+            "value": 2.010555415933646,
+            "released_at": null
+          },
+          {
+            "period": "2025-12",
+            "value": 2.205450733752623,
+            "released_at": null
+          },
+          {
+            "period": "2026-01",
+            "value": 2.060565612747145,
+            "released_at": null
+          },
+          {
+            "period": "2026-02",
+            "value": 1.5509662436758775,
+            "released_at": null
+          },
+          {
+            "period": "2026-03",
+            "value": 1.54750082754056,
+            "released_at": null
+          },
+          {
+            "period": "2026-04",
+            "value": 1.2522656121272124,
+            "released_at": null
+          },
+          {
+            "period": "2026-05",
+            "value": 1.3280541120184841,
+            "released_at": null
+          },
+          {
+            "period": "2026-06",
+            "value": 1.333333333333342,
+            "released_at": null
+          },
+          {
+            "period": "2026-07",
+            "value": 1.7530864197530915,
+            "released_at": null
+          },
+          {
+            "period": "2026-08",
+            "value": 1.9662690250925596,
+            "released_at": null
+          },
+          {
+            "period": "2026-09",
+            "value": 2.268244575936884,
+            "released_at": null
+          }
+        ],
+        "derived": true,
+        "na_reason": null
+      }
+    ]
+  }
+}

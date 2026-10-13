@@ -23,7 +23,9 @@ def as_repos(m: MemoryRepos) -> Repos:
     # pyright 가 메모리 구현이 Protocol(FilingsRepo 등)을 만족하는지 여기서 확인한다
     return Repos(
         market=m.market, flows=m.flows, board=m.board, etf=m.etf, filings=m.filings, fin=m.fin,
-        consensus=m.consensus, journal=m.journal,
+        consensus=m.consensus, journal=m.journal, macro=m.macro, macro_prv=m.macro_prv,
+        market_stats=m.market_stats, us=m.us,
+        program=m.program,
     )  # fmt: skip
 
 
@@ -35,7 +37,12 @@ def test_memory_p4_repos_follow_the_rules(case: Callable[[Repos], None]) -> None
 def test_public_bundle_shares_the_same_tables() -> None:
     m = memory_repos()
     pub = m.public()
-    as_public: PublicRepos = PublicRepos(filings=pub.filings, fin=pub.fin)  # Protocol 확인
+    as_public: PublicRepos = PublicRepos(  # Protocol 확인
+        filings=pub.filings,
+        fin=pub.fin,
+        macro=pub.macro,
+        market_stats=pub.market_stats,
+    )
     as_public.filings.upsert_disclosures([disc(1)], loaded_by=JOB, now=NOW)
     assert m.filings.seen([rc(1)]) == {rc(1)}  # 공개 작업이 쓴 것을 API(로그인)가 본다
     assert as_repos(m).public().filings is m.filings

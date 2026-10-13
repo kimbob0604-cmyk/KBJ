@@ -21,6 +21,7 @@ export const P4_NOW = new Date('2026-11-16T12:30:00Z');
 
 const API = import.meta.glob<unknown>('../fixtures/api/{stock,filings,watchlist}/**/*.json', { eager: true, import: 'default' });
 const PUB = import.meta.glob<unknown>('../fixtures/public/**/*.json', { eager: true, import: 'default' });
+const MACRO = import.meta.glob<unknown>('../fixtures/api/macro/calendar.json', { eager: true, import: 'default' });
 
 /** 섹션 → HTTP 상태(+ report_xlsx) */
 export type StatusIndex = Record<string, Record<string, number>>;
@@ -78,6 +79,11 @@ export function apiPath(url: string): string {
 /** 로그인 응답 — P4 경로는 P4 픽스처(상태 표 그대로), 그 밖은 P3 픽스처 */
 export function p4Response(url: string): Response {
   const path = apiPath(url);
+  // P5 MAC: 페이지 5 경제 캘린더 패널(macro/calendar) — MAC 합성 픽스처
+  if (path === 'macro/calendar') return json(structuredClone(MACRO['../fixtures/api/macro/calendar.json']));
+  // P5 ETF(WRAP 고리): 페이지 8 '개요' 탭 '담은 ETF'(etf/holders/<코드>) — P4 합성 20종목 세계에는 ETF 구성 자료가
+  // 없다 → 서버가 내는 404 no_data 그대로(값은 ETF 묶음 픽스처 etf/holders_*.json 이 p8_etf_holders 시험에서 본다)
+  if (/^etf\/holders\/[0-9A-Z]{6}$/.test(path)) return json({ code: 'no_data', message: '아직 없음 — etf.collect 08:00' }, 404);
   if (path === 'stock/search') return json(apiFixture('stock/search'));
   if (path === 'watchlist') return json(apiFixture('watchlist/main'));
   let m = /^filings\/([a-z_]+)$/.exec(path);

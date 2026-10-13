@@ -1,0 +1,35 @@
+{
+  "source": "ETF_ISSUERS",
+  "as_of": "2026-11-16T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "운용사 공시 PDF 기준일은 운용사마다 다르다 — 섞지 않고 펀드마다 그대로"
+  ],
+  "generated_at": "2026-11-17T16:30:00+09:00",
+  "data": {
+    "code": "997190",
+    "name": "합성로봇",
+    "rows": [
+      {
+        "fund_id": "synthetic:997570",
+        "etf_code": "997570",
+        "etf_name": "합성 액티브B",
+        "is_active": true,
+        "asof": "2026-11-16",
+        "wt": 20.0,
+        "qty": 1000.0,
+        "val": 1000000.0
+      },
+      {
+        "fund_id": "synthetic:997560",
+        "etf_code": "997560",
+        "etf_name": "합성 액티브A",
+        "is_active": true,
+        "asof": "2026-11-16",
+        "wt": 16.6667,
+        "qty": 1000.0,
+        "val": 1000000.0
+      }
+    ]
+  }
+}

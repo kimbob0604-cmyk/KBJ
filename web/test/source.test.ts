@@ -168,6 +168,25 @@ describe('P4 공개 하위 폴더(fin/<코드>·reports/<코드>) — p4_design 
     expect(PUBLIC_SUBDIR.test('fin/Q00001')).toBe(true);
   });
 
+  it('P5 하위 폴더(macro/<이름>)와 credit — p5_design §7(테마 themes/ 는 P5 제외)', () => {
+    for (const ok of ['macro/tabs', 'macro/rates', 'macro/calendar', 'macro/us_2', 'credit']) {
+      expect(isPublicKey(ok), ok).toBe(true);
+    }
+    for (const bad of ['macro/Rates', 'macro/x/y', 'macro/a-b', 'themes/index', 'macro/../manifest', 'MACRO/tabs', 'macro/tabs.json']) {
+      expect(isPublicKey(bad), bad).toBe(false);
+    }
+  });
+
+  it('P5 하위 폴더 파일도 봉투 그대로 — 봉투가 아니면 manifest 로 보충하지 않는다', async () => {
+    const env = envelope({ tabs: [] }, { source: 'ECOS', as_of: '2026-11-13T05:30:00+09:00' });
+    const { fetch, calls } = fakeFetch(() => json(env));
+    const got = await createStaticSource({ fetch }).get<{ tabs: unknown[] }>('macro/tabs');
+    expect(got.source).toBe('ECOS');
+    expect(calls[0]?.url).toBe('./data/macro/tabs.json');
+    const bare = fakeFetch(() => json({ tabs: [] }));
+    await expect(createStaticSource({ fetch: bare.fetch }).get('macro/rates')).rejects.toThrow('원천·시각·품질 표시 없음');
+  });
+
   it('하위 폴더 파일은 ./data/<폴더>/<코드>.json 을 읽고, 봉투 그대로', async () => {
     const { fetch, calls } = fakeFetch(() => json(finEnv));
     const src = createStaticSource({ fetch });

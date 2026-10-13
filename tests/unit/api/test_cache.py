@@ -30,8 +30,12 @@ def test_data_version_cached_in_redis() -> None:
 
 
 def test_domains_cover_routes() -> None:
-    # P4(묶음 A): 종목 상세 `stock`·공시 패널 `filings`. 관심종목은 CLI 가 직접 써 버전 캐시 없음
-    assert set(DOMAIN_JOBS) == {"market", "board", "flows", "etf", "stock", "filings"}
+    # P4(묶음 A): 종목 상세 `stock`·공시 패널 `filings`. 관심종목은 CLI 가 직접 써 버전 캐시 없음.
+    # P5(묶음 FND): 매크로·프로그램·장중 투자자 1분·미국 보드
+    assert set(DOMAIN_JOBS) == {
+        "market", "board", "flows", "etf", "stock", "filings",
+        "macro", "program", "flows_minute", "board_us",
+    }  # fmt: skip
 
 
 def test_p4_domain_jobs_exist_in_registry() -> None:
@@ -42,7 +46,7 @@ def test_p4_domain_jobs_exist_in_registry() -> None:
 
     doc = yaml.safe_load((REPO_ROOT / "config" / "jobs.yaml").read_text(encoding="utf-8"))
     names = {j["name"] for j in doc["jobs"]}
-    for domain in ("stock", "filings"):
+    for domain in ("stock", "filings", "macro", "program", "flows_minute", "board_us"):
         assert set(DOMAIN_JOBS[domain]) <= names, domain
 
 

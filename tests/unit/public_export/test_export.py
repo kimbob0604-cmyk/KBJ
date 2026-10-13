@@ -31,6 +31,7 @@ from kbj.services.public_export.manifest import (
     LOGIN_SOURCES,
     MANIFEST_NAME,
     BlobFile,
+    BuildOut,
     PublicFile,
     check_tree,
     dir_digest,
@@ -560,3 +561,76 @@ def test_web_fixtures_are_fresh(tmp_path: Path) -> None:
             assert got == new, "manifest_p4.json 이 낡았다"
         else:
             assert path.read_bytes() == body, f"{rel} 이 낡았다"
+
+
+# ── P5 — macro/·credit.json 고리(docs/p5_design.md §1.1·§7 — 본문은 MAC, 테마는 사용자 별도) ──
+
+
+def test_p5_empty_hook_adds_no_files(tmp_path: Path, cal: TradingCalendar) -> None:
+    """FND 의 빈 고리: P5 파일 0·이유 0 — P4 출력이 그대로다."""
+    (tmp_path / "macro").mkdir()
+    (tmp_path / "macro" / "old.json").write_text("{}", encoding="utf-8")  # 옛 파일은 지운다
+    m = _p4(tmp_path, cal)
+    assert [d.name for d in m.dirs] == ["fin", "reports"]
+    assert "credit.json" not in m.names and m.skipped == ()
+    assert not (tmp_path / "macro").exists()
+    assert not hasattr(ex, "build_themes")  # 테마 사전 내보내기는 P5 에서 뺐다(사용자 결정 Q1)
+    assert check_tree(tmp_path) == []
+
+
+def _fake_p5(monkeypatch: pytest.MonkeyPatch, *, pad: int = 0) -> None:
+    def macro(read: object, *, now: datetime) -> BuildOut:
+        assert callable(read)
+        return BuildOut(
+            files=(
+                PublicFile(name="macro/tabs.json", source="ECOS", as_of=now, quality="ok", data={}),
+                PublicFile(
+                    name="macro/calendar.json",
+                    source="KBJ",
+                    as_of=now,
+                    quality="ok",
+                    data={"pad": "x" * pad},
+                ),
+            ),
+            skipped=("macro/us.json: 시리즈 없음",),
+        )
+
+    def credit(read: object, *, now: datetime) -> BuildOut:
+        f = PublicFile(name="credit.json", source="DATAGO", as_of=now, quality="stale", data={})
+        return BuildOut(files=(f,))
+
+    monkeypatch.setattr(ex, "build_macro", macro)
+    monkeypatch.setattr(ex, "build_credit", credit)
+
+
+def test_p5_hook_writes_builder_files_safely(
+    tmp_path: Path, cal: TradingCalendar, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _fake_p5(monkeypatch)
+    m = _p4(tmp_path, cal)
+    assert [d.name for d in m.dirs] == ["fin", "reports", "macro"]
+    assert "credit.json" in m.names and m.skipped == ("macro/us.json: 시리즈 없음",)
+    assert check_tree(tmp_path) == []
+    for rel, body in _tree(tmp_path).items():
+        if rel.endswith(".xlsx"):
+            continue
+        text = body.decode("utf-8")
+        assert forbidden_hits(text) == [] and LOGIN_SOURCES.search(text) is None, rel
+        assert "prv_" not in text, rel
+
+
+def test_p5_hook_without_db_makes_nothing(
+    tmp_path: Path, cal: TradingCalendar, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _fake_p5(monkeypatch)
+    m = ex.export_all(None, tmp_path, now=NOW, cal=cal)
+    assert "credit.json" not in m.names and m.dirs == ()
+
+
+def test_p5_over_cap_fails_without_truncating(
+    tmp_path: Path, cal: TradingCalendar, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _fake_p5(monkeypatch, pad=200 * 1024)
+    with pytest.raises(ex.PublicExportError, match="상한"):
+        _p4(tmp_path, cal)
+    assert not (tmp_path / MANIFEST_NAME).exists()

@@ -1,0 +1,81 @@
+# p5_world(시드 20261113)의 손계산 기대값 — tests/unit/fixtures/test_p5_world.py 가 생성기 출력과 맞춘다.
+# 합성 데이터의 기대값이다(실측 아님). 생성기를 고치면 이 파일도 같은 커밋에서 고친다(FND 담당 — 다른 묶음은 요청).
+_source: "SYNTHETIC — tests/fixtures/synthetic/p5_world.py(고정 시드 생성기)가 만든 합성 데이터의 기대값. 실측 아님"
+seed: 20261113
+clock: "2026-11-17T16:30:00+09:00"
+
+stocks:
+  n: 24
+  first: "997010"
+  last: "997240"
+
+krx:
+  n_days: 295
+  first_day: "2025-09-01"
+  last_day: "2026-11-16"
+
+# metrics §16 — 매크로 파생(마지막 3 영업일, %p). null = 한쪽 없음(계산하지 않는다)
+macro:
+  n_public: 7
+  n_private: 3
+  missing:  # 결측('.') — value null, quality invalid
+    - {series: "FRED:DGS2", period: "2026-11-12"}
+  lagged:   # 공표 지연 — 마지막 날 값이 아직 없다
+    - {series: "ECOS:817Y002:corp_aa3y", last_period: "2026-11-13"}
+  derived:
+    "DERIVED:us_10y_2y": {"2026-11-12": null, "2026-11-13": 0.48, "2026-11-16": 0.43}
+    "DERIVED:credit_aa": {"2026-11-11": 0.50, "2026-11-12": 0.51, "2026-11-13": 0.53}
+
+calendar:
+  n: 7
+  n_public: 6
+  private_kinds: [payrolls]   # 예상치(forecast)가 있어 공개 표에 갈 수 없다
+
+# metrics §19 — ETF
+etf:
+  n: 8
+  holding_dates: ["2026-11-13", "2026-11-16"]
+  consensus: ["997190"]          # 액티브 A·B 가 같은 날 NEW
+  single_new: ["997230"]         # 액티브 A 만 NEW — 동시 편입에서 제외
+  new_listing: ["997580"]
+  leveraged: ["997540", "997550"]
+
+# metrics §23 — 간밤 미국 신고가(US_DAY 2026-11-16)
+us:
+  us_day: "2026-11-16"
+  n_universe: 12
+  new_highs: [SY01, SY02, SY03]
+  held: [SY12]                  # 이력 < 252 + 10 — 보류(수를 적는다)
+  funds: [SY11]                 # 유니버스 밖
+  indices: ["^SYN1", "^SYN2"]
+
+# 금투협 통계(0016 — 공개)
+kofia:
+  rows: 198
+  last:
+    credit_balance: "2026-11-13"   # 하루 늦게 공표
+    market_capital: "2026-11-16"
+    fund_nav: "2026-11-16"
+    cma: "2026-11-16"
+
+# metrics §21·§22 — F2(합성 원장: 검산 ①~④ 차이 0)
+f2:
+  today: "2026-11-17"
+  pairs: [kospi, kosdaq, k200_fut, k200_call, k200_put]
+  minutes: 391
+  investors: 12
+  minute_rows: 23460
+  checks: {c1: 0, c2: 0, c3: 0, c4: 0}
+  program:
+    daily_rows: 1080              # 60일 × 시장 2 × (kind 3 × side 3)
+    intraday_rows: 7038           # 391분 × 시장 2 × 9
+    investor_rows: 72             # 시장 2 × 12구분 × kind 3
+    scan_codes: ["997010", "997020", "997060", "997070", "997080", "997090", "997140", "997160", "997220", "997230", "997240"]
+    scan_slots: 38
+    sweep_rows: 24
+    top5: ["997060", "997130", "997160", "997050", "997070"]
+
+# metrics §20 — 브리핑 재료
+brief:
+  "2026-11-16": {late: [], missing: []}
+  "2026-11-17": {late: [macro], missing: [etf_report]}

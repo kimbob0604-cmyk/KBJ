@@ -1,5 +1,5 @@
 // 페이지 10 ETF 수급(docs/p3_design.md §4.3·§6.5, metrics §4) — 자금 흐름(6정렬·유형·기간)·유형별 순유입 + 검산 ③·
-// 괴리율 경고·구성종목 변동.
+// 괴리율 경고·구성종목 변동. P5(docs/p5_design.md §6): ETF 맵·보유 탐색·액티브 동시 편입은 ./p10/ 모듈(mountP5).
 //
 // - 로그인 등급 전부(공개판은 자물쇠, 요청 없음).
 // - 순유입(설정−환매)과 투자자별 장내 순매수는 합치지 않고 따로 보인다(LP 상대 — metrics §4).
@@ -16,6 +16,36 @@ import { type Option, seg, select } from '../ui/seg';
 import { centerLevel } from '../ui/svg';
 import { type Column, table } from '../ui/table';
 import { fill, filters, nameCell, REFRESH_MS } from './p1_market';
+import { mountP5, type P5Panels, TITLES as P5_TITLES } from './p10/index';
+
+// 공개 빌드에서는 P5 로그인 모듈(ETF 맵·보유 탐색·동시 편입)을 번들에서 빼고 같은 제목의 자물쇠 패널만 그린다
+// (p8_stock LOGIN_VALUE 와 같은 방식 — 공개 등급은 요청 없음, 공개 JS gzip 예산 60 KB. WRAP)
+const LOGIN_P5 = import.meta.env.MODE === 'public' ? null : mountP5;
+
+function lockedP5(ctx: PageContext): P5Panels {
+  const { tier, root } = ctx;
+  const map = panel(tier, {
+    title: P5_TITLES.map,
+    tier: 'login',
+    span: 12,
+    lock: 'etf',
+  });
+  const hold = panel(tier, {
+    title: P5_TITLES.hold,
+    tier: 'login',
+    span: 6,
+    lock: 'etf_issuers',
+  });
+  const cons = panel(tier, {
+    title: P5_TITLES.cons,
+    tier: 'login',
+    span: 6,
+    lock: 'etf_issuers',
+  });
+  root.append(map.el, hold.el, cons.el);
+  const done = Promise.resolve();
+  return { map, hold, cons, refresh: () => done, ready: done };
+}
 
 type S = components['schemas'];
 type Flows = S['EtfFlows'];
@@ -66,7 +96,12 @@ const STATUS_TAG: Record<FlowRow['status'], string | null> = {
 };
 
 function eokCol(key: string, label: string, get: (r: FlowRow) => number | null): Column<FlowRow> {
-  return { key, label, cell: (r) => eokNum(get(r), 0, true), cls: (r) => signClass(get(r)) };
+  return {
+    key,
+    label,
+    cell: (r) => eokNum(get(r), 0, true),
+    cls: (r) => signClass(get(r)),
+  };
 }
 
 export function flowColumns(): Column<FlowRow>[] {
@@ -96,7 +131,12 @@ export function flowColumns(): Column<FlowRow>[] {
       cls: (r) => signClass(r.net_inflow),
     },
     eokCol('price', '가격효과(억)', (r) => r.price_effect),
-    { key: 'ret', label: '수익률', cell: (r) => pct(r.ret_pct), cls: (r) => signClass(r.ret_pct) },
+    {
+      key: 'ret',
+      label: '수익률',
+      cell: (r) => pct(r.ret_pct),
+      cls: (r) => signClass(r.ret_pct),
+    },
     { key: 'turnover', label: '거래대금(억)', cell: (r) => eokNum(r.turnover) },
     eokCol('indiv', '개인(억)', (r) => r.indiv),
     eokCol('foreign', '외국인(억)', (r) => r.foreign),
@@ -111,12 +151,17 @@ export function flowColumns(): Column<FlowRow>[] {
 export function check3Line(c: S['Check3']): HTMLElement {
   const label = '검산 ③ 순자산 변화 − (순유입 + 가격효과)';
   if (c.residual === null) {
-    return checkLine(label, null, { reason: c.net_asset_chg === null ? '보고 순자산 없음' : '입력 부족' });
+    return checkLine(label, null, {
+      reason: c.net_asset_chg === null ? '보고 순자산 없음' : '입력 부족',
+    });
   }
   const bad = c.n_failed > 0;
   return h(
     'div',
-    { class: bad ? 'check fail' : 'check', data: { check: bad ? 'fail' : 'ok' } },
+    {
+      class: bad ? 'check fail' : 'check',
+      data: { check: bad ? 'fail' : 'ok' },
+    },
     `${label} 차이 `,
     h('b', null, num(c.residual, 0, true)),
     '원',
@@ -153,7 +198,13 @@ export function drawPremium(p: Panel, env: Envelope<S['EtfPremium']>): number {
     table<S['PremiumRow']>({
       caption: `${d.basis === 'inav' ? '장중 iNAV(잠정)' : '마감 NAV'} 기준 · 검사 ${num(d.n_checked)}개`,
       columns: [
-        { key: 'name', label: 'ETF', align: 'l', cls: () => 'nm', cell: (r) => nameCell(r.name, r.code) },
+        {
+          key: 'name',
+          label: 'ETF',
+          align: 'l',
+          cls: () => 'nm',
+          cell: (r) => nameCell(r.name, r.code),
+        },
         { key: 'price', label: '시장가', cell: (r) => num(r.price) },
         { key: 'nav', label: navLabel, cell: (r) => num(r.nav, 2) },
         {
@@ -162,7 +213,11 @@ export function drawPremium(p: Panel, env: Envelope<S['EtfPremium']>): number {
           cell: (r) => qValue(pct(r.premium_pct), r.quality, r.as_of),
           cls: (r) => (r.warn ? 'warn' : undefined),
         },
-        { key: 'th', label: '경고 기준', cell: (r) => `±${num(r.threshold, 2)}%` },
+        {
+          key: 'th',
+          label: '경고 기준',
+          cell: (r) => `±${num(r.threshold, 2)}%`,
+        },
       ],
       rows: sorted,
       pageSize: 20,
@@ -203,7 +258,12 @@ export function drawChanges(p: Panel, env: Envelope<S['EtfHoldingChanges']>): nu
     table<S['ChangeRow']>({
       caption: `${shortDate(env.data.run_date)} 실행 · 펀드마다 최근 두 스냅 비교`,
       columns: [
-        { key: 'date', label: '기준일', align: 'l', cell: (r) => `${shortDate(r.prev_asof)}→${shortDate(r.asof)}` },
+        {
+          key: 'date',
+          label: '기준일',
+          align: 'l',
+          cell: (r) => `${shortDate(r.prev_asof)}→${shortDate(r.asof)}`,
+        },
         {
           key: 'fund',
           label: 'ETF',
@@ -225,7 +285,13 @@ export function drawChanges(p: Panel, env: Envelope<S['EtfHoldingChanges']>): nu
           cell: (r) => r.kind_label,
           cls: (r) => (r.kind === 'NEW' || r.kind === 'ADD' || r.kind === 'IN10' ? 'up' : 'down'),
         },
-        { key: 'stock', label: '종목', align: 'l', cls: () => 'nm', cell: (r) => nameCell(r.name, r.code) },
+        {
+          key: 'stock',
+          label: '종목',
+          align: 'l',
+          cls: () => 'nm',
+          cell: (r) => nameCell(r.name, r.code),
+        },
         { key: 'chg', label: '내용', align: 'l', cell: changeText },
       ],
       rows,
@@ -240,12 +306,50 @@ export function drawChanges(p: Panel, env: Envelope<S['EtfHoldingChanges']>): nu
 
 async function mount(ctx: PageContext): Promise<void> {
   const { tier, root } = ctx;
-  const pFlow = panel(tier, { title: 'ETF 자금 흐름', tier: 'login', span: 8, lock: 'etf' });
-  const pType = panel(tier, { title: '유형별 순유입', tier: 'login', span: 4, lock: 'etf' });
-  const pPrem = panel(tier, { title: '괴리율 경고', tier: 'login', span: 6, lock: 'etf' });
-  const pHold = panel(tier, { title: '구성종목 변동', tier: 'login', span: 6, lock: 'etf_issuers' });
+  const pFlow = panel(tier, {
+    title: 'ETF 자금 흐름',
+    tier: 'login',
+    span: 8,
+    lock: 'etf',
+  });
+  const pType = panel(tier, {
+    title: '유형별 순유입',
+    tier: 'login',
+    span: 4,
+    lock: 'etf',
+  });
+  const pPrem = panel(tier, {
+    title: '괴리율 경고',
+    tier: 'login',
+    span: 6,
+    lock: 'etf',
+  });
+  const pHold = panel(tier, {
+    title: '구성종목 변동',
+    tier: 'login',
+    span: 6,
+    lock: 'etf_issuers',
+  });
   root.append(pFlow.el, pType.el, pPrem.el, pHold.el);
-  if (pFlow.locked) return; // 공개판: 자물쇠만, 요청 없음
+  // P5 패널(ETF 맵·보유 탐색·액티브 동시 편입 — docs/p5_design.md §6). 공개판은 자물쇠만
+  const p5 = LOGIN_P5 ? LOGIN_P5(ctx) : lockedP5(ctx);
+  if (pFlow.locked || !LOGIN_ETF_P3) return; // 공개판: 자물쇠만, 요청 없음(공개 빌드는 아래 본문을 번들에서 뺀다)
+  await LOGIN_ETF_P3(ctx, { pFlow, pType, pPrem, pHold, p5 });
+}
+
+// 로그인 본문 — 공개 빌드에서는 번들에서 뺀다(p8_stock LOGIN_VALUE 와 같은 방식, 공개 JS gzip 예산 60 KB — P5 WRAP).
+// 공개 등급은 위에서 자물쇠로 돌아가므로 실행 동작은 같다.
+interface EtfPanels {
+  pFlow: Panel;
+  pType: Panel;
+  pPrem: Panel;
+  pHold: Panel;
+  p5: P5Panels;
+}
+const LOGIN_ETF_P3 = import.meta.env.MODE === 'public' ? null : mountLogin;
+
+async function mountLogin(ctx: PageContext, { pFlow, pType, pPrem, pHold, p5 }: EtfPanels): Promise<void> {
+  const { root } = ctx;
 
   pFlow.setDef(
     '순유입(설정−환매) = Σ(상장좌수 변화 × 그날 NAV). 가격 변동으로 늘어난 순자산은 넣지 않는다(가격효과로 따로). 투자자별 순매수는 장내 매매(대부분 LP 상대)라 순유입과 다를 수 있어 따로 보인다.',
@@ -274,7 +378,14 @@ async function mount(ctx: PageContext): Promise<void> {
         const d = env.data;
         const { rows, invalid } = visibleRows(d.rows);
         count.textContent = `${num(d.n_total)}개 · ${shortDate(d.start)} ~ ${shortDate(d.end)}`;
-        pFlow.body.append(table({ columns: flowColumns(), rows, rowKey: (r) => r.code, empty: '해당 ETF 없음' }).el);
+        pFlow.body.append(
+          table({
+            columns: flowColumns(),
+            rows,
+            rowKey: (r) => r.code,
+            empty: '해당 ETF 없음',
+          }).el,
+        );
         if (d.new_listings.length) {
           pFlow.body.append(
             h(
@@ -354,7 +465,10 @@ async function mount(ctx: PageContext): Promise<void> {
       label: '유형',
       options: [
         { value: 'all', label: '전체' },
-        ...(Object.keys(TYPE_LABEL) as EtfType[]).map((t) => ({ value: t, label: TYPE_LABEL[t] })),
+        ...(Object.keys(TYPE_LABEL) as EtfType[]).map((t) => ({
+          value: t,
+          label: TYPE_LABEL[t],
+        })),
       ],
       value: q.type,
       onChange: (v) => {
@@ -408,7 +522,7 @@ async function mount(ctx: PageContext): Promise<void> {
   );
   drawIssuerSelect();
 
-  await Promise.all([loadFlows(), loadTypes(), loadPremium(), loadChanges()]);
+  await Promise.all([loadFlows(), loadTypes(), loadPremium(), loadChanges(), p5.ready]);
   // 첫 불러오기 중에 앱이 내려갔으면(격자가 문서에서 빠짐) 주기 작업을 걸지 않는다
   if (root.isConnected) {
     ctx.every(REFRESH_MS, () => {
@@ -416,6 +530,7 @@ async function mount(ctx: PageContext): Promise<void> {
       void loadTypes();
       void loadPremium();
       void loadChanges();
+      void p5.refresh();
     });
   }
 }

@@ -2,9 +2,10 @@
 //
 // - 이름 허용 형식: 소문자·숫자·밑줄. 슬래시가 든 키(로그인 API 경로)는 **요청하지 않고** LockedError —
 //   공개 사이트는 로그인 API 주소조차 모른다(DATA_TIERS §3). 이 파일에는 API 경로 문자열이 없다.
-// - 예외는 P4 하위 폴더 **두 개뿐**: `fin/<코드>`(상장사 DART 재무)·`reports/<코드>`(dart-report 데모 종목),
-//   코드는 `^[0-9A-Z]{6}$`. 이 파일들은 manifest 항목이 아니라 **파일 자체가 봉투**(source·as_of·quality)여야 한다
-//   (내보내기 X 묶음과의 약속) — 봉투가 아니면 manifest 로 보충하지 않고 DataError.
+// - 예외는 하위 폴더 세 개: P4 `fin/<코드>`(상장사 DART 재무)·`reports/<코드>`(dart-report 데모 종목, 코드는
+//   `^[0-9A-Z]{6}$`), P5 `macro/<이름>`(공개 매크로 탭·캘린더, 이름은 소문자·숫자·밑줄 —
+//   docs/p5_design.md §7). 이 파일들은 manifest 항목이 아니라 **파일 자체가 봉투**(source·as_of·quality)여야 한다
+//   (공개 내보내기와의 약속) — 봉투가 아니면 manifest 로 보충하지 않고 DataError. P5 신용 칩 `credit` 은 평평한 이름.
 // - 파일이 봉투(source·as_of·quality·data)면 그대로, 아니면 manifest.json 의 같은 이름 항목으로 원천·시각·품질을
 //   붙인다. 둘 다 없으면 DataError — 원천 없는 숫자를 그리지 않는다(절대 규칙 1).
 // - 내려받기(href): `reports/<코드>.xlsx` 만 주소를 만든다(요청하지 않음). 그 밖은 null.
@@ -22,8 +23,8 @@ import {
 
 export const PUBLIC_NAME = /^[a-z0-9_]+$/;
 
-/** P4 하위 폴더 키 — 파일 자체가 봉투인 공개 파일(종목마다 하나) */
-export const PUBLIC_SUBDIR = /^(?:fin|reports)\/[0-9A-Z]{6}$/;
+/** 하위 폴더 키 — 파일 자체가 봉투인 공개 파일(P4 종목마다 하나, P5 매크로 탭·테마마다 하나) */
+export const PUBLIC_SUBDIR = /^(?:(?:fin|reports)\/[0-9A-Z]{6}|(?:macro)\/[a-z0-9_]+)$/;
 
 /** 공개 내려받기 파일 — dart-report 엑셀(데모 종목만 있다) */
 export const PUBLIC_DOWNLOAD = /^reports\/[0-9A-Z]{6}\.xlsx$/;

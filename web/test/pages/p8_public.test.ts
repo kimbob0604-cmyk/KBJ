@@ -44,7 +44,8 @@ describe('페이지 8 — 공개판', () => {
       new Set(['./data/corp_index.json', './data/fin/Q00001.json', './data/earnings_prelim.json', './data/reports/Q00001.json']),
     );
     const locked = [...root.querySelectorAll('section.panel.locked')].map((p) => text(p.querySelector('h3 > span')));
-    expect(locked.sort()).toEqual(['밸류에이션 밴드', '수급 20일', '시나리오 적정가', '컨센서스'].sort());
+    // P5(WRAP 고리): 개요 탭 '담은 ETF'(운용사 PDF — 로그인)도 자물쇠
+    expect(locked.sort()).toEqual(['밸류에이션 밴드', '수급 20일', '시나리오 적정가', '컨센서스', '담은 ETF'].sort());
     expect(text(panelByTitle(root, '컨센서스'))).toContain('컨센서스 — 제3자 유료·재배포 금지');
     // 머리: DART 이름·시장·결산월, 시세·신고가는 자물쇠, 시세 자리는 TradingView(KRX 심볼)
     const head = text(panelByTitle(root, '종목'));

@@ -782,6 +782,83 @@
         }
       }
     },
+    "/api/board/us": {
+      "get": {
+        "tags": [
+          "board"
+        ],
+        "summary": "Us",
+        "operationId": "us_api_board_us_get",
+        "parameters": [
+          {
+            "name": "basis",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "close",
+                "high"
+              ],
+              "type": "string",
+              "default": "close",
+              "title": "Basis"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_UsBoard_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/flows/screen": {
       "get": {
         "tags": [
@@ -1189,6 +1266,95 @@
         }
       }
     },
+    "/api/flows/market-minute": {
+      "get": {
+        "tags": [
+          "flows"
+        ],
+        "summary": "Market Minute Route",
+        "operationId": "market_minute_route_api_flows_market_minute_get",
+        "parameters": [
+          {
+            "name": "market",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]{0,31}$",
+              "default": "k200_fut",
+              "title": "Market"
+            }
+          },
+          {
+            "name": "venue",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "KRX",
+                "NXT",
+                "TOTAL"
+              ],
+              "type": "string",
+              "default": "KRX",
+              "title": "Venue"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_MarketMinute_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/etf/flows": {
       "get": {
         "tags": [
@@ -1536,6 +1702,330 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Envelope_EtfHoldingChanges_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/etf/map": {
+      "get": {
+        "tags": [
+          "etf"
+        ],
+        "summary": "Etf Map Route",
+        "operationId": "etf_map_route_api_etf_map_get",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "1D",
+                "1W",
+                "1M",
+                "3M"
+              ],
+              "type": "string",
+              "default": "1M",
+              "title": "Period"
+            }
+          },
+          {
+            "name": "group",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "type",
+                "theme"
+              ],
+              "type": "string",
+              "default": "type",
+              "title": "Group"
+            }
+          },
+          {
+            "name": "lev",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Lev"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_EtfMap_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/etf/fund/{code}/holdings": {
+      "get": {
+        "tags": [
+          "etf"
+        ],
+        "summary": "Fund Holdings",
+        "operationId": "fund_holdings_api_etf_fund__code__holdings_get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-Za-z_.-]{1,32}$",
+              "title": "Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_EtfHoldings_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/etf/holders/{code}": {
+      "get": {
+        "tags": [
+          "etf"
+        ],
+        "summary": "Holders",
+        "operationId": "holders_api_etf_holders__code__get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-Z]{6}$",
+              "title": "Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_EtfHolders_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/etf/active-consensus": {
+      "get": {
+        "tags": [
+          "etf"
+        ],
+        "summary": "Active Consensus Route",
+        "operationId": "active_consensus_route_api_etf_active_consensus_get",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 20,
+              "minimum": 1,
+              "default": 1,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ActiveConsensus_"
                 }
               }
             }
@@ -3316,6 +3806,555 @@
         }
       }
     },
+    "/api/macro/tabs": {
+      "get": {
+        "tags": [
+          "macro"
+        ],
+        "summary": "Tabs",
+        "operationId": "tabs_api_macro_tabs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_MacroTabs_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/macro/series": {
+      "get": {
+        "tags": [
+          "macro"
+        ],
+        "summary": "Series",
+        "operationId": "series_api_macro_series_get",
+        "parameters": [
+          {
+            "name": "tab",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]{0,31}$",
+              "title": "Tab"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_MacroSeriesSet_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/macro/series/{series_id}": {
+      "get": {
+        "tags": [
+          "macro"
+        ],
+        "summary": "Series One",
+        "operationId": "series_one_api_macro_series__series_id__get",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:^=-]{0,63}$",
+              "title": "Series Id"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_MacroSeries_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/macro/calendar": {
+      "get": {
+        "tags": [
+          "macro"
+        ],
+        "summary": "Calendar",
+        "operationId": "calendar_api_macro_calendar_get",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_EconCalendar_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/program/daily": {
+      "get": {
+        "tags": [
+          "program"
+        ],
+        "summary": "Daily",
+        "operationId": "daily_api_program_daily_get",
+        "parameters": [
+          {
+            "name": "market",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "K",
+                "Q"
+              ],
+              "type": "string",
+              "default": "K",
+              "title": "Market"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 60,
+              "minimum": 1,
+              "default": 60,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ProgramDaily_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/program/top": {
+      "get": {
+        "tags": [
+          "program"
+        ],
+        "summary": "Top",
+        "operationId": "top_api_program_top_get",
+        "parameters": [
+          {
+            "name": "market",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "K",
+                "Q"
+              ],
+              "type": "string",
+              "default": "K",
+              "title": "Market"
+            }
+          },
+          {
+            "name": "side",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "buy",
+                "sell"
+              ],
+              "type": "string",
+              "default": "buy",
+              "title": "Side"
+            }
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "intraday",
+                "close"
+              ],
+              "type": "string",
+              "default": "intraday",
+              "title": "Scope"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ProgramTop_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/telegram/webhook": {
       "post": {
         "tags": [
@@ -3368,6 +4407,39 @@
   },
   "components": {
     "schemas": {
+      "ActiveConsensus": {
+        "properties": {
+          "days": {
+            "type": "integer",
+            "title": "Days"
+          },
+          "min_funds": {
+            "type": "integer",
+            "title": "Min Funds"
+          },
+          "asof": {
+            "type": "string",
+            "format": "date",
+            "title": "Asof"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ConsensusStock"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "days",
+          "min_funds",
+          "asof",
+          "rows"
+        ],
+        "title": "ActiveConsensus"
+      },
       "BandView": {
         "properties": {
           "metric": {
@@ -4146,6 +5218,114 @@
         ],
         "title": "Breadth"
       },
+      "CalendarRow": {
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "title": "Event Id"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "time_kst": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Kst"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "country": {
+            "type": "string",
+            "title": "Country"
+          },
+          "importance": {
+            "type": "integer",
+            "title": "Importance"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "actual": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual"
+          },
+          "actual_series": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Series"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "forecast": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forecast"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "event_id",
+          "date",
+          "time_kst",
+          "kind",
+          "title",
+          "country",
+          "importance",
+          "source",
+          "quality",
+          "actual",
+          "actual_series",
+          "unit"
+        ],
+        "title": "CalendarRow"
+      },
       "ChangeRow": {
         "properties": {
           "fund_id": {
@@ -4798,6 +5978,58 @@
         "title": "Consensus",
         "description": "컨센서스(§4.7). 우선주는 보통주 것(`code` = 쓴 보통주 코드). `label` = \"KIS 추정\"(시장\n컨센서스인지 [확인 필요 #29] — 확인 전에는 컨센서스라 부르지 않는다). `lost` = KIS 교체로 잃은\n것 (D-P4-10 — 화면 '출처 없음 — KIS 교체로 잃음' 줄)."
       },
+      "ConsensusStock": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "funds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Funds"
+          },
+          "kinds": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "NEW",
+                "IN10",
+                "ADD"
+              ]
+            },
+            "type": "array",
+            "title": "Kinds"
+          },
+          "n_funds": {
+            "type": "integer",
+            "title": "N Funds"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "funds",
+          "kinds",
+          "n_funds"
+        ],
+        "title": "ConsensusStock"
+      },
       "CsrfResponse": {
         "properties": {
           "csrf_token": {
@@ -5271,6 +6503,78 @@
         "title": "EarningsSchedule",
         "description": "페이지 5 실적 일정(오늘부터 days 일)."
       },
+      "EconCalendar": {
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date",
+            "title": "Start"
+          },
+          "end": {
+            "type": "string",
+            "format": "date",
+            "title": "End"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "start",
+          "end",
+          "rows"
+        ],
+        "title": "EconCalendar"
+      },
+      "Envelope_ActiveConsensus_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ActiveConsensus"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[ActiveConsensus]"
+      },
       "Envelope_BoardEvents_": {
         "properties": {
           "source": {
@@ -5658,6 +6962,49 @@
         ],
         "title": "Envelope[Earnings]"
       },
+      "Envelope_EconCalendar_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/EconCalendar"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[EconCalendar]"
+      },
       "Envelope_EtfFlows_": {
         "properties": {
           "source": {
@@ -5701,6 +7048,49 @@
         ],
         "title": "Envelope[EtfFlows]"
       },
+      "Envelope_EtfHolders_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/EtfHolders"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[EtfHolders]"
+      },
       "Envelope_EtfHoldingChanges_": {
         "properties": {
           "source": {
@@ -5743,6 +7133,92 @@
           "data"
         ],
         "title": "Envelope[EtfHoldingChanges]"
+      },
+      "Envelope_EtfHoldings_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/EtfHoldings"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[EtfHoldings]"
+      },
+      "Envelope_EtfMap_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/EtfMap"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[EtfMap]"
       },
       "Envelope_EtfPremium_": {
         "properties": {
@@ -6088,6 +7564,178 @@
         ],
         "title": "Envelope[InvestorTotals]"
       },
+      "Envelope_MacroSeriesSet_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/MacroSeriesSet"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[MacroSeriesSet]"
+      },
+      "Envelope_MacroSeries_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/MacroSeries"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[MacroSeries]"
+      },
+      "Envelope_MacroTabs_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/MacroTabs"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[MacroTabs]"
+      },
+      "Envelope_MarketMinute_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/MarketMinute"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[MarketMinute]"
+      },
       "Envelope_MarketSummary_": {
         "properties": {
           "source": {
@@ -6259,6 +7907,92 @@
           "data"
         ],
         "title": "Envelope[PriceChart]"
+      },
+      "Envelope_ProgramDaily_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ProgramDaily"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[ProgramDaily]"
+      },
+      "Envelope_ProgramTop_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ProgramTop"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[ProgramTop]"
       },
       "Envelope_ReportView_": {
         "properties": {
@@ -6647,6 +8381,49 @@
         ],
         "title": "Envelope[StockSearch]"
       },
+      "Envelope_UsBoard_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/UsBoard"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[UsBoard]"
+      },
       "Envelope_Valuation_": {
         "properties": {
           "source": {
@@ -7023,6 +8800,125 @@
         ],
         "title": "EtfFlows"
       },
+      "EtfHolderView": {
+        "properties": {
+          "fund_id": {
+            "type": "string",
+            "title": "Fund Id"
+          },
+          "etf_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Etf Code"
+          },
+          "etf_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Etf Name"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "asof": {
+            "type": "string",
+            "format": "date",
+            "title": "Asof"
+          },
+          "wt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wt"
+          },
+          "qty": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Qty"
+          },
+          "val": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Val"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "fund_id",
+          "etf_code",
+          "etf_name",
+          "is_active",
+          "asof",
+          "wt",
+          "qty",
+          "val"
+        ],
+        "title": "EtfHolderView"
+      },
+      "EtfHolders": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/EtfHolderView"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "rows"
+        ],
+        "title": "EtfHolders"
+      },
       "EtfHoldingChanges": {
         "properties": {
           "run_date": {
@@ -7045,6 +8941,298 @@
           "rows"
         ],
         "title": "EtfHoldingChanges"
+      },
+      "EtfHoldingView": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "wt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wt"
+          },
+          "qty": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Qty"
+          },
+          "val": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Val"
+          },
+          "change": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "NEW",
+                  "DROP",
+                  "IN10",
+                  "OUT10",
+                  "ADD",
+                  "CUT"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "wt",
+          "qty",
+          "val",
+          "change"
+        ],
+        "title": "EtfHoldingView"
+      },
+      "EtfHoldings": {
+        "properties": {
+          "fund_id": {
+            "type": "string",
+            "title": "Fund Id"
+          },
+          "etf_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Etf Code"
+          },
+          "etf_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Etf Name"
+          },
+          "asof": {
+            "type": "string",
+            "format": "date",
+            "title": "Asof"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/EtfHoldingView"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "fund_id",
+          "etf_code",
+          "etf_name",
+          "asof",
+          "rows"
+        ],
+        "title": "EtfHoldings"
+      },
+      "EtfMap": {
+        "properties": {
+          "period": {
+            "type": "string",
+            "enum": [
+              "1D",
+              "1W",
+              "1M",
+              "3M"
+            ],
+            "title": "Period"
+          },
+          "group": {
+            "type": "string",
+            "enum": [
+              "type",
+              "theme"
+            ],
+            "title": "Group"
+          },
+          "lev": {
+            "type": "boolean",
+            "title": "Lev"
+          },
+          "asof": {
+            "type": "string",
+            "format": "date",
+            "title": "Asof"
+          },
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/EtfMapGroup"
+            },
+            "type": "array",
+            "title": "Groups"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "period",
+          "group",
+          "lev",
+          "asof",
+          "groups"
+        ],
+        "title": "EtfMap"
+      },
+      "EtfMapCellView": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "etf_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EtfType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "theme": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Theme"
+          },
+          "net_asset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Asset"
+          },
+          "ret_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ret Pct"
+          },
+          "leveraged": {
+            "type": "boolean",
+            "title": "Leveraged"
+          },
+          "new_listing": {
+            "type": "boolean",
+            "title": "New Listing"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "etf_type",
+          "theme",
+          "net_asset",
+          "ret_pct",
+          "leveraged",
+          "new_listing"
+        ],
+        "title": "EtfMapCellView"
+      },
+      "EtfMapGroup": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "cells": {
+            "items": {
+              "$ref": "#/components/schemas/EtfMapCellView"
+            },
+            "type": "array",
+            "title": "Cells"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "cells"
+        ],
+        "title": "EtfMapGroup"
       },
       "EtfPremium": {
         "properties": {
@@ -8604,6 +10792,321 @@
         "title": "LoginBody",
         "description": "POST /api/auth/login 본문. 값은 검증 오류 문구에 싣지 않는다(app 의 422 처리기)."
       },
+      "MacroPoint": {
+        "properties": {
+          "period": {
+            "type": "string",
+            "title": "Period"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "released_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Released At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "period",
+          "value",
+          "released_at"
+        ],
+        "title": "MacroPoint"
+      },
+      "MacroSeries": {
+        "properties": {
+          "series_id": {
+            "type": "string",
+            "title": "Series Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit"
+          },
+          "freq": {
+            "type": "string",
+            "enum": [
+              "D",
+              "W",
+              "M",
+              "Q",
+              "A"
+            ],
+            "title": "Freq"
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ],
+            "title": "Tier"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MacroPoint"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "change": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change"
+          },
+          "change_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Pct"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/MacroPoint"
+            },
+            "type": "array",
+            "title": "Points"
+          },
+          "derived": {
+            "type": "boolean",
+            "title": "Derived",
+            "default": false
+          },
+          "na_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Na Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "series_id",
+          "title",
+          "unit",
+          "freq",
+          "tier",
+          "source",
+          "as_of",
+          "quality",
+          "latest",
+          "change",
+          "change_pct",
+          "points"
+        ],
+        "title": "MacroSeries"
+      },
+      "MacroSeriesInfo": {
+        "properties": {
+          "series_id": {
+            "type": "string",
+            "title": "Series Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit"
+          },
+          "freq": {
+            "type": "string",
+            "enum": [
+              "D",
+              "W",
+              "M",
+              "Q",
+              "A"
+            ],
+            "title": "Freq"
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ],
+            "title": "Tier"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "dataset": {
+            "type": "string",
+            "title": "Dataset"
+          },
+          "ready": {
+            "type": "boolean",
+            "title": "Ready"
+          },
+          "probe": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Probe"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "series_id",
+          "title",
+          "unit",
+          "freq",
+          "tier",
+          "source",
+          "dataset",
+          "ready",
+          "probe"
+        ],
+        "title": "MacroSeriesInfo"
+      },
+      "MacroSeriesSet": {
+        "properties": {
+          "tab": {
+            "type": "string",
+            "title": "Tab"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/MacroSeries"
+            },
+            "type": "array",
+            "title": "Series"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tab",
+          "series"
+        ],
+        "title": "MacroSeriesSet"
+      },
+      "MacroTab": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "public": {
+            "type": "boolean",
+            "title": "Public"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/MacroSeriesInfo"
+            },
+            "type": "array",
+            "title": "Series"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "public",
+          "series"
+        ],
+        "title": "MacroTab"
+      },
+      "MacroTabs": {
+        "properties": {
+          "tabs": {
+            "items": {
+              "$ref": "#/components/schemas/MacroTab"
+            },
+            "type": "array",
+            "title": "Tabs"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tabs"
+        ],
+        "title": "MacroTabs"
+      },
       "MajorHolderView": {
         "properties": {
           "rcept_no": {
@@ -8710,6 +11213,94 @@
         ],
         "title": "MajorHolderView"
       },
+      "MarketMinute": {
+        "properties": {
+          "market": {
+            "type": "string",
+            "title": "Market"
+          },
+          "venue": {
+            "type": "string",
+            "title": "Venue"
+          },
+          "venue_locked": {
+            "type": "boolean",
+            "title": "Venue Locked"
+          },
+          "trade_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Trade Date"
+          },
+          "axis": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Axis"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/MinuteLine"
+            },
+            "type": "array",
+            "title": "Lines"
+          },
+          "cards": {
+            "items": {
+              "$ref": "#/components/schemas/MinuteCard"
+            },
+            "type": "array",
+            "title": "Cards"
+          },
+          "collected_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collected At"
+          },
+          "refresh_s": {
+            "type": "integer",
+            "title": "Refresh S"
+          },
+          "provisional": {
+            "type": "boolean",
+            "title": "Provisional"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "not_confirmed",
+              "before_open",
+              "holiday"
+            ],
+            "title": "Status"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "market",
+          "venue",
+          "venue_locked",
+          "trade_date",
+          "axis",
+          "lines",
+          "cards",
+          "collected_at",
+          "refresh_s",
+          "provisional",
+          "status"
+        ],
+        "title": "MarketMinute"
+      },
       "MarketSummary": {
         "properties": {
           "date": {
@@ -8791,6 +11382,87 @@
           "csrf_token"
         ],
         "title": "MeResponse"
+      },
+      "MinuteCard": {
+        "properties": {
+          "investor": {
+            "type": "string",
+            "title": "Investor"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "net_value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Value"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "investor",
+          "label",
+          "net_value",
+          "quality"
+        ],
+        "title": "MinuteCard"
+      },
+      "MinuteLine": {
+        "properties": {
+          "investor": {
+            "type": "string",
+            "title": "Investor"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "default_on": {
+            "type": "boolean",
+            "title": "Default On"
+          },
+          "values": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Values"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "investor",
+          "label",
+          "default_on",
+          "values"
+        ],
+        "title": "MinuteLine"
       },
       "MultipleCell": {
         "properties": {
@@ -10106,6 +12778,307 @@
         ],
         "title": "PriceChart",
         "description": "KRX 일별(비수정 — `adjusted=false`). 거래가 없는 날(정지 — 거래량 0)은 봉에서 뺀다.\n\n`sma` 는 봉과 같은 길이(키 '20'·'60'·'120' — D-P4-21, 앞쪽 창을 못 채운 칸은 null)."
+      },
+      "ProgramDaily": {
+        "properties": {
+          "market": {
+            "type": "string",
+            "enum": [
+              "K",
+              "Q"
+            ],
+            "title": "Market"
+          },
+          "venue": {
+            "type": "string",
+            "enum": [
+              "KRX",
+              "NXT",
+              "TOTAL"
+            ],
+            "title": "Venue"
+          },
+          "days": {
+            "type": "integer",
+            "title": "Days"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ProgramDayBar"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "market",
+          "venue",
+          "days",
+          "rows"
+        ],
+        "title": "ProgramDaily"
+      },
+      "ProgramDayBar": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "net": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net"
+          },
+          "arbt_net": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Arbt Net"
+          },
+          "nabt_net": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nabt Net"
+          },
+          "entm_net": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entm Net"
+          },
+          "onsl_net": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Onsl Net"
+          },
+          "index_close": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Index Close"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "net",
+          "arbt_net",
+          "nabt_net",
+          "entm_net",
+          "onsl_net",
+          "index_close",
+          "quality"
+        ],
+        "title": "ProgramDayBar",
+        "description": "하루 막대 — 막대 = 전체(whol) 합계(smtn) 순매수, 막대 위 상세 = 차익·비차익 × 위탁·자기."
+      },
+      "ProgramTop": {
+        "properties": {
+          "market": {
+            "type": "string",
+            "enum": [
+              "K",
+              "Q"
+            ],
+            "title": "Market"
+          },
+          "venue": {
+            "type": "string",
+            "enum": [
+              "KRX",
+              "NXT",
+              "TOTAL"
+            ],
+            "title": "Venue"
+          },
+          "side": {
+            "type": "string",
+            "enum": [
+              "buy",
+              "sell"
+            ],
+            "title": "Side"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "intraday",
+              "close"
+            ],
+            "title": "Scope"
+          },
+          "scope_label": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Scope Label"
+          },
+          "slot": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slot"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ProgramTopRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "market",
+          "venue",
+          "side",
+          "scope",
+          "scope_label",
+          "slot",
+          "rows"
+        ],
+        "title": "ProgramTop"
+      },
+      "ProgramTopRow": {
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "title": "Rank"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "chg_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chg Pct"
+          },
+          "net_value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Value"
+          },
+          "buy_value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Buy Value"
+          },
+          "sell_value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sell Value"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rank",
+          "code",
+          "name",
+          "price",
+          "chg_pct",
+          "net_value",
+          "buy_value",
+          "sell_value",
+          "quality"
+        ],
+        "title": "ProgramTopRow"
       },
       "Quality": {
         "type": "string",
@@ -12391,6 +15364,189 @@
           "n_invalid"
         ],
         "title": "TypeRollup"
+      },
+      "UsBoard": {
+        "properties": {
+          "us_trade_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Us Trade Date"
+          },
+          "basis": {
+            "type": "string",
+            "enum": [
+              "close",
+              "high"
+            ],
+            "title": "Basis"
+          },
+          "summary_lines": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Summary Lines"
+          },
+          "newhigh": {
+            "items": {
+              "$ref": "#/components/schemas/UsBoardRow"
+            },
+            "type": "array",
+            "title": "Newhigh"
+          },
+          "sectors": {
+            "items": {
+              "$ref": "#/components/schemas/UsSectorRow"
+            },
+            "type": "array",
+            "title": "Sectors"
+          },
+          "mega_movers": {
+            "items": {
+              "$ref": "#/components/schemas/UsBoardRow"
+            },
+            "type": "array",
+            "title": "Mega Movers"
+          },
+          "pending": {
+            "type": "integer",
+            "title": "Pending"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "us_trade_date",
+          "basis",
+          "summary_lines",
+          "newhigh",
+          "sectors",
+          "mega_movers",
+          "pending"
+        ],
+        "title": "UsBoard"
+      },
+      "UsBoardRow": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "sector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sector"
+          },
+          "close": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close"
+          },
+          "chg_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chg Pct"
+          },
+          "market_cap": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Cap"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "symbol",
+          "name",
+          "sector",
+          "close",
+          "chg_pct",
+          "market_cap",
+          "label"
+        ],
+        "title": "UsBoardRow"
+      },
+      "UsSectorRow": {
+        "properties": {
+          "sector": {
+            "type": "string",
+            "title": "Sector"
+          },
+          "n": {
+            "type": "integer",
+            "title": "N"
+          },
+          "newhigh": {
+            "type": "integer",
+            "title": "Newhigh"
+          },
+          "ret_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ret Pct"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "sector",
+          "n",
+          "newhigh",
+          "ret_pct"
+        ],
+        "title": "UsSectorRow"
       },
       "Valuation": {
         "properties": {

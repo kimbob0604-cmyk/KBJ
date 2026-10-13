@@ -628,6 +628,36 @@ class MemReader:
     def t(self, name: str) -> list[Row]:
         return table_rows(self.world.repos, name)
 
+    # ── P5 MAC(macro/·credit.json) — 같은 뜻의 메모리 읽기는 web_fixtures_p5.macro 한 곳 ──────
+    def _mac(self, name: str, p: dict[str, Any]) -> list[Row]:
+        from tests.unit.api.web_fixtures_p5.macro import memory_pub_reader
+
+        return memory_pub_reader(self.world.repos)(Query(name, "SELECT 1"), p)
+
+    def q_macro_meta(self, p: dict[str, Any]) -> list[Row]:
+        return self._mac("macro_meta", p)
+
+    def q_macro_series(self, p: dict[str, Any]) -> list[Row]:
+        return self._mac("macro_series", p)
+
+    def q_macro_spread(self, p: dict[str, Any]) -> list[Row]:
+        return self._mac("macro_spread", p)
+
+    def q_macro_yoy(self, p: dict[str, Any]) -> list[Row]:
+        return self._mac("macro_yoy", p)
+
+    def q_macro_calendar(self, p: dict[str, Any]) -> list[Row]:
+        return self._mac("macro_calendar", p)
+
+    def q_credit_series(self, p: dict[str, Any]) -> list[Row]:
+        return self._mac("credit_series", p)
+
+    def q_credit_balance(self, p: dict[str, Any]) -> list[Row]:
+        return self._mac("credit_balance", p)
+
+    def q_credit_capital(self, p: dict[str, Any]) -> list[Row]:
+        return self._mac("credit_capital", p)
+
     # ── corp_index ─────────────────────────────────────────────────────────────────────
     def q_corps(self, p: dict[str, Any]) -> list[Row]:
         prof = {r["corp_code"]: r for r in self.t("corp_profile")}

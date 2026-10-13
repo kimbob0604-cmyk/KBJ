@@ -1,0 +1,105 @@
+{
+  "source": "BOK+ECOS+FF+FOMC+FRED+MANUAL",
+  "as_of": "2026-11-17T07:30:00Z",
+  "quality": "ok",
+  "notes": [
+    "예상치(ForexFactory)는 로그인 등급"
+  ],
+  "generated_at": "2026-11-17T07:30:00Z",
+  "data": {
+    "start": "2026-11-10",
+    "end": "2026-12-17",
+    "rows": [
+      {
+        "event_id": "US:cpi:2026-11-13:fred",
+        "date": "2026-11-13",
+        "time_kst": "22:30",
+        "kind": "cpi",
+        "title": "미 소비자물가(10월)",
+        "country": "US",
+        "importance": 3,
+        "source": "fred",
+        "quality": "ok",
+        "actual": null,
+        "actual_series": null,
+        "unit": null,
+        "forecast": null
+      },
+      {
+        "event_id": "KR:bok_rate:2026-11-27:bok",
+        "date": "2026-11-27",
+        "time_kst": "10:00",
+        "kind": "bok_rate",
+        "title": "금융통화위원회 기준금리 결정",
+        "country": "KR",
+        "importance": 3,
+        "source": "bok",
+        "quality": "ok",
+        "actual": null,
+        "actual_series": null,
+        "unit": null,
+        "forecast": null
+      },
+      {
+        "event_id": "KR:export:2026-12-01:manual",
+        "date": "2026-12-01",
+        "time_kst": "09:00",
+        "kind": "export",
+        "title": "수출입동향(11월)",
+        "country": "KR",
+        "importance": 2,
+        "source": "manual",
+        "quality": "ok",
+        "actual": null,
+        "actual_series": null,
+        "unit": null,
+        "forecast": null
+      },
+      {
+        "event_id": "KR:gdp:2026-12-03:ecos",
+        "date": "2026-12-03",
+        "time_kst": "08:00",
+        "kind": "gdp",
+        "title": "국민소득(3분기 잠정)",
+        "country": "KR",
+        "importance": 2,
+        "source": "ecos",
+        "quality": "ok",
+        "actual": null,
+        "actual_series": null,
+        "unit": null,
+        "forecast": null
+      },
+      {
+        "event_id": "US:payrolls:2026-12-04:ff",
+        "date": "2026-12-04",
+        "time_kst": "22:30",
+        "kind": "payrolls",
+        "title": "미 비농업 고용(11월)",
+        "country": "US",
+        "importance": 3,
+        "source": "ff",
+        "quality": "ok",
+        "actual": null,
+        "actual_series": null,
+        "unit": "천명",
+        "forecast": 150.0
+      },
+      {
+        "event_id": "US:fomc:2026-12-10:fomc",
+        "date": "2026-12-10",
+        "time_kst": "04:00",
+        "kind": "fomc",
+        "title": "FOMC 정책금리 결정",
+        "country": "US",
+        "importance": 3,
+        "source": "fomc",
+        "quality": "ok",
+        "actual": null,
+        "actual_series": null,
+        "unit": null,
+        "forecast": null
+      }
+    ]
+  }
+}

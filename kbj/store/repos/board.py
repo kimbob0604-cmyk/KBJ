@@ -9,6 +9,9 @@ label 읽기)를 Postgres 로 옮겼다. 엔진 산출(`kbj.engines.board.build.
   트랜잭션 — 같은 as_of 재실행 멱등, board.confirm 이 KIS 잠정 보드를 KRX 확정으로 바꿀 때 사라진
   라벨도 지워진다).
 - `split_cleared` 는 verdict 가 'none' 인 것만(모르는 것과 아닌 것은 다르다 — ET 그대로).
+- P5(docs/p5_design.md §1.1, D-P5-18): 미국 보드 산출(market='US' — us_summary·us_brief, 0015 가
+  이름 제약을 넓혔다)은 `put_us_artifacts`·`us_artifact`·`us_last_day`. 국장 읽기·쓰기(market='KR')
+  는 그대로다. 아침 브리핑 ① 은 us_brief 를 읽기만 한다.
 """
 
 from __future__ import annotations
@@ -19,6 +22,7 @@ from typing import Any, Protocol
 
 from psycopg.types.json import Jsonb
 
+from kbj.core.p5_rows import UsArtifact
 from kbj.core.quality import Quality
 from kbj.core.rows import AllTime, BoardArtifact, BoardDayRecord, Label, SplitCheck, StockDay
 from kbj.store.repos._common import (
@@ -64,6 +68,27 @@ class BoardRepo(Protocol):
         ...
 
     def put_split_check(self, rows: Sequence[SplitCheck], *, now: datetime) -> int: ...
+
+    # P5 — 미국 보드 산출(market='US')
+    def put_us_artifacts(self, rows: Sequence[UsArtifact], *, loaded_by: str) -> int:
+        """(미국 거래일, 이름)마다 덮어쓴다(재실행 멱등). 쓴 행 수."""
+        ...
+
+    def us_artifact(self, asof: date, name: str) -> UsArtifact | None: ...
+
+    def us_last_day(self, upto: date) -> date | None:
+        """upto 이하 미국 산출이 있는 가장 최근 미국 거래일."""
+        ...
+
+
+US_MARKET = "US"
+
+
+def _us_artifact(r: Sequence[Any]) -> UsArtifact:
+    return UsArtifact(
+        trade_date=r[0], name=r[1], payload=dict(r[2]), engine_version=r[3], input_digest=r[4],
+        as_of=r[5], generated_at=r[6], source=r[7], quality=Quality(r[8]),
+    )  # fmt: skip
 
 
 # ── Postgres ───────────────────────────────────────────────────────────────────────────
@@ -283,3 +308,43 @@ class PgBoardRepo:
                 [(MARKET, c.code, c.jump_date, c.verdict, c.note, c.source, now) for c in rows],
             )
         return len(rows)
+
+    def put_us_artifacts(self, rows: Sequence[UsArtifact], *, loaded_by: str) -> int:
+        require_loaded_by(loaded_by)
+        if not rows:
+            return 0
+        with self._connect() as conn, conn.cursor() as cur:
+            cur.executemany(
+                b"INSERT INTO prv_board.artifact (market, trade_date, name, payload, "
+                b"engine_version, input_digest, as_of, source, quality, generated_at, loaded_by) "
+                b"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+                b"ON CONFLICT (market, trade_date, name) DO UPDATE SET payload = EXCLUDED.payload, "
+                b"engine_version = EXCLUDED.engine_version, input_digest = EXCLUDED.input_digest, "
+                b"as_of = EXCLUDED.as_of, source = EXCLUDED.source, quality = EXCLUDED.quality, "
+                b"generated_at = EXCLUDED.generated_at, loaded_by = EXCLUDED.loaded_by",
+                [
+                    (US_MARKET, a.trade_date, a.name, Jsonb(dict(a.payload)), a.engine_version,
+                     a.input_digest, a.as_of, a.source, a.quality.value, a.generated_at, loaded_by)
+                    for a in rows
+                ],
+            )  # fmt: skip
+        return len(rows)
+
+    def us_artifact(self, asof: date, name: str) -> UsArtifact | None:
+        with self._connect() as conn:
+            r = conn.execute(
+                b"SELECT trade_date, name, payload, engine_version, input_digest, as_of, "
+                b"generated_at, source, quality FROM prv_board.artifact "
+                b"WHERE market = %s AND trade_date = %s AND name = %s",
+                (US_MARKET, asof, name),
+            ).fetchone()
+        return None if r is None else _us_artifact(r)
+
+    def us_last_day(self, upto: date) -> date | None:
+        with self._connect() as conn:
+            r = conn.execute(
+                b"SELECT max(trade_date) FROM prv_board.artifact "
+                b"WHERE market = %s AND trade_date <= %s",
+                (US_MARKET, upto),
+            ).fetchone()
+        return None if r is None else r[0]

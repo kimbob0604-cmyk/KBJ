@@ -1,0 +1,45 @@
+# 아침 브리핑·마감 요약 구성 — 비밀 아님. 정의 docs/metrics.md §20, 설계 docs/p5_design.md §4.5(D-P5-14·15).
+# 해석기는 kbj/config/briefs.py 하나(모르는 키는 오류). 문구는 BRF 묶음이 고친다(§1.10 공유 파일 표).
+# LLM 을 쓰지 않는다(절대 규칙 3) — 문장은 템플릿, 수치는 저장소 값 그대로(반올림은 렌더에서만).
+version: 1
+
+# 섹션 순서·제목. status: include(싣는다) · omitted(단계 밖 — 싣지 않고 품질 줄에도 적지 않는다).
+# (YAML 의 on 은 참값이라 include 라 쓴다) source_job = 재료를 만드는 작업(무른 의존 시한까지 없으면 '미준비 — <작업>(<예정 시각>)').
+morning:
+  send_at: "08:10"
+  sections:
+    - {key: us, title: 간밤 미국, status: include, source_job: us.eod, due: "06:10"}
+    - {key: rates_fx_commodities, title: 금리·달러·원자재, status: include, source_job: macro.morning, due: "06:20"}
+    - {key: kr_macro, title: 한국 매크로(새 공표), status: include, source_job: macro.monthly, due: "09:10", empty: skip}
+    - {key: night_futures_gex, title: 야간선물·GEX, status: omitted, phase: P7}
+    - {key: calendar, title: 오늘·이번 주 일정, status: include, source_job: macro.morning, due: "06:20", empty: none_line}
+    - {key: quality, title: 데이터 품질, status: include}
+closing:
+  send_at: "16:00"
+  sections:
+    - {key: market, title: 지수·환율·시장 수급, status: include, source_job: market.close_collect, due: "15:35"}
+    - {key: sectors, title: 업종 상위·하위·특징주, status: include, source_job: market.close_collect, due: "15:35"}
+    - {key: newhigh, title: 신고가(120일·52주·역사적), status: include, source_job: board.daily, due: "16:00"}
+    - {key: flows, title: 수급 동향, status: include, source_job: market.close_collect, due: "15:35"}
+    - {key: filings, title: 주요 공시, status: include, source_job: filings.dart_feed, due: "16:00", empty: none_line, none_text: "오늘 중요 공시 없음"}
+    - {key: gex_signals, title: GEX·시그널·초안·추천, status: omitted, phase: P7}
+    - {key: quality, title: 데이터 품질, status: include}
+
+# 아침 ② 표 시리즈(config/macro.yaml series[].brief: true 와 같아야 한다 — 시험). 美10년은 DGS10 하나(중복 제거).
+table_series: ["FRED:DGS10", "FRED:DGS2", "ECOS:722Y001:base", "ECOS:817Y002:ktb3y", "YAHOO:KRW=X", "YAHOO:CL=F", "YAHOO:GC=F", "YAHOO:^VIX"]
+
+# 빈 섹션 규칙(SD SKIP_TITLES 승계 — 제목 없이 빼고 경고 로그). empty: skip(섹션 생략) · none_line('없음' 한 줄 —
+# 섹션의 none_text 가 있으면 그 문구, 없으면 texts.none_line).
+skip_titles: [한국 매크로(새 공표)]
+
+texts:
+  not_ready: "미준비 — {job}({due})"
+  none_line: "일정 없음"
+  quality_ok: "자료 이상 없음"
+  stale_basis: "기준일 {as_of}"     # 재료 as_of 가 기대 기준일과 다르면 그 줄에 실제 기준일(ADR 0018 §2-5)
+
+# 간밤 미국 지수(Yahoo 심볼 → 표시 이름) [제안 — 심볼은 실측 #46 으로 확인, config/us.yaml indexes 와 같다 — 시험]
+us_indexes:
+  - {symbol: "^GSPC", name: "S&P 500"}
+  - {symbol: "^IXIC", name: "NASDAQ"}
+  - {symbol: "^DJI", name: "다우"}

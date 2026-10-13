@@ -1,0 +1,96 @@
+{
+  "source": "KIS",
+  "as_of": "2026-11-17T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "NXT 미포함(KRX 구분만 — D-P3-9)"
+  ],
+  "generated_at": "2026-11-17T18:40:00+09:00",
+  "data": {
+    "market": "K",
+    "venue": "KRX",
+    "side": "buy",
+    "scope": "close",
+    "scope_label": "전 종목(마감 확정)",
+    "slot": null,
+    "rows": [
+      {
+        "rank": 1,
+        "code": "997130",
+        "name": "합성바이오B",
+        "price": 61060.0,
+        "chg_pct": 0.5,
+        "net_value": 15993024937,
+        "buy_value": 32986049874,
+        "sell_value": 16993024937,
+        "quality": "ok"
+      },
+      {
+        "rank": 2,
+        "code": "997160",
+        "name": "합성원료",
+        "price": 148480.0,
+        "chg_pct": 0.5,
+        "net_value": 11101294030,
+        "buy_value": 23202588060,
+        "sell_value": 12101294030,
+        "quality": "ok"
+      },
+      {
+        "rank": 3,
+        "code": "997050",
+        "name": "합성검사",
+        "price": 59820.0,
+        "chg_pct": 0.5,
+        "net_value": 8629823705,
+        "buy_value": 18259647410,
+        "sell_value": 9629823705,
+        "quality": "ok"
+      },
+      {
+        "rank": 4,
+        "code": "997070",
+        "name": "합성설계",
+        "price": 84440.0,
+        "chg_pct": 0.5,
+        "net_value": 8133567839,
+        "buy_value": 17267135678,
+        "sell_value": 9133567839,
+        "quality": "ok"
+      },
+      {
+        "rank": 5,
+        "code": "997220",
+        "name": "합성은행",
+        "price": 118880.0,
+        "chg_pct": 0.5,
+        "net_value": 4895489353,
+        "buy_value": 10790978706,
+        "sell_value": 5895489353,
+        "quality": "ok"
+      },
+      {
+        "rank": 6,
+        "code": "997080",
+        "name": "합성주기기",
+        "price": 94970.0,
+        "chg_pct": 0.5,
+        "net_value": 3969134478,
+        "buy_value": 8938268956,
+        "sell_value": 4969134478,
+        "quality": "ok"
+      },
+      {
+        "rank": 7,
+        "code": "997020",
+        "name": "합성부품",
+        "price": 123960.0,
+        "chg_pct": 0.5,
+        "net_value": 3168008010,
+        "buy_value": 7336016020,
+        "sell_value": 4168008010,
+        "quality": "ok"
+      }
+    ]
+  }
+}

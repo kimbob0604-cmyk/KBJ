@@ -4,6 +4,8 @@
 // - 공개: 지수 자리는 TradingView 위젯(DATA_TIERS §2 — 시세는 TradingView 로만), 나머지는 자물쇠(요청 없음).
 // - 아직 원천이 없는 것: K200 야간선물·VKOSPI(P7), 원/달러(P5), 신용잔고·예탁금·펀드 자금(P5 — 공개 등급).
 // - 금액은 원 단위 → 화면에서만 억·조. 값이 없으면 '—'(0 으로 그리지 않는다). 검산 불가는 사유와 함께.
+// - P5 묶음 F2(이 파일은 F2 만 고친다 — 패널 고리): 장중 투자자 수급(1분 선·카드 7 — ./p1/flows_minute.ts)·
+//   프로그램매매(일별 60거래일·상위 20 — ./p1/program.ts). 로그인 전용(KIS — 공개판은 자물쇠), 60초 갱신.
 import type { components } from '../api/types.gen';
 import type { PageContext, PageModule } from '../app/types';
 import { DataError, type Envelope, type Quality, worstQuality } from '../data/source';
@@ -14,6 +16,13 @@ import { checkLine, qValue, visibleRows } from '../ui/quality';
 import { seg } from '../ui/seg';
 import { barChart, heatColor, level, sparkline } from '../ui/svg';
 import { table } from '../ui/table';
+import { MINUTE_REFRESH_MS, MINUTE_TITLE, mountMinute } from './p1/flows_minute';
+import { DAILY_TITLE, mountProgram, TOP_TITLE } from './p1/program';
+
+// 공개 빌드에서는 P5 로그인 모듈을 번들에서 뺀다(p8_stock LOGIN_VALUE 와 같은 방식 — 공개 등급은 이 줄에 오기 전에
+// 자물쇠로 돌아가므로 실행 동작은 같고, 공개 JS gzip 예산 scripts/check-bundle.mjs 60 KB 를 지킨다. WRAP)
+const LOGIN_F2 = import.meta.env.MODE === 'public' ? null : { mountMinute, mountProgram };
+const NOOP = (): Promise<void> => Promise.resolve();
 
 type S = components['schemas'];
 type Summary = S['MarketSummary'];
@@ -327,7 +336,11 @@ async function mount(ctx: PageContext): Promise<void> {
     pending: 'P5',
     pendingNote: '금융위 금투협 종합통계(공개 등급) — market_stats.kofia',
   });
-  root.append(pIdx.el, pTurn.el, pHeat.el, pBreadth.el, pInv.el, pCredit.el);
+  // P5 F2 — 장중 투자자 수급·프로그램매매(KIS — 로그인 전용)
+  const pMin = panel(tier, { title: MINUTE_TITLE, tier: 'login', span: 12, lock: 'kis' });
+  const pPgmDaily = panel(tier, { title: DAILY_TITLE, tier: 'login', span: 6, lock: 'kis' });
+  const pPgmTop = panel(tier, { title: TOP_TITLE, tier: 'login', span: 6, lock: 'kis' });
+  root.append(pIdx.el, pTurn.el, pHeat.el, pBreadth.el, pInv.el, pCredit.el, pMin.el, pPgmDaily.el, pPgmTop.el);
 
   pTurn.setDef(
     '코스피+코스닥 주식(ETF·ETN·리츠 제외) 거래대금. 막대 = 일별, 점선 = 20일 평균. 장중 값은 지수 누적 기준(잠정).',
@@ -398,13 +411,21 @@ async function mount(ctx: PageContext): Promise<void> {
       'market.close_collect 15:35',
     );
 
-  await Promise.all([loadSummary(), loadSectors(), loadInvestors()]);
+  const loadMinute = LOGIN_F2 ? LOGIN_F2.mountMinute(ctx, pMin) : NOOP;
+  const loadProgram = LOGIN_F2 ? LOGIN_F2.mountProgram(ctx, pPgmDaily, pPgmTop) : NOOP;
+
+  await Promise.all([loadSummary(), loadSectors(), loadInvestors(), loadMinute(), loadProgram()]);
   // 첫 불러오기 중에 앱이 내려갔으면(격자가 문서에서 빠짐) 주기 작업을 걸지 않는다
   if (root.isConnected) {
     ctx.every(REFRESH_MS, () => {
       void loadSummary();
       void loadSectors();
       void loadInvestors();
+    });
+    // F2 — 60초 폴링(웹소켓 아님, F2 §3.6)
+    ctx.every(MINUTE_REFRESH_MS, () => {
+      void loadMinute();
+      void loadProgram();
     });
   }
 }

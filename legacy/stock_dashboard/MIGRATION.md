@@ -206,3 +206,27 @@ shim(`kbj.services.notifier.client.legacy_send`)으로, 휴장·장중은 KBJ �
 `dart_collector`(브리지 `dart:` 의 마지막 사용처)를 지웠으므로 그 단언 대신 지운 모듈 7개가 다시 생기지 않는지 본다.
 기준선(`scripts/canonical_baseline.txt`): naver 88 → 67, krx_scrape 68 → 62. kbj 쪽 `tests/unit/notifier/test_client_shim.py`
 의 shim 대상에서 `earnings_telegram_sender.send_telegram_message` 를 뺐다(파일 삭제 — 알림은 `earnings.alerts`).
+
+## P5. 아침 브리핑·수급 시그널·글로벌 매크로·ETF 맵 대체 — WRAP(웨이브 3, 2026-10-13)
+
+근거: `docs/p5_design.md` §1.9·D-P5-24·R14. P4 와 같은 기준 — kbj 가 대체했고, 남는 코드가 지울 이름을 부르지
+않으며(`ruff --select F821` 0 유지), 검사 스크립트 10개가 떼어 쓰지 않는 함수만 지웠다. 지운 자리에는
+`# KBJ P5 삭제: <이름>` 한 줄을 남겼다(`server.py` 16,032 → 15,539줄).
+
+| 지운 것 | 대체 |
+|---|---|
+| `alert_morning_briefing`·`alert_overnight_prediction`·`send_us_market_summary_telegram`·`_refresh_briefing_data` + `_startup` 의 등록 넷 | kbj `brief.morning`(08:10·캐치업 09:00 — 하루 1회, D-P5-14·17)·`us.eod` |
+| `alert_flow_signals` + 등록 1(텔레그램 명령 '시그널'은 안내 한 줄로) | kbj `flows.report`(16:00 — ADR 0018) |
+| `api_global_macro`(`/api/global_macro`) | 페이지 6 매크로(`/api/macro/*` — MAC) |
+| `api_etf_map`·`_scrape_etf_price`(네이버 ETF 시세) | 페이지 10 ETF 맵(`/api/etf/map` — ETF) |
+
+**남긴 것(R14·이월)**: 검사 스크립트가 떼어 쓰는 마감 시황(`send_market_summary_telegram`·
+`send_closing_market_summary`·`closing_brief_catchup`·마감 섹션)·선물 줄(P7)·워치독·신고가·`_build_data_json` 계열.
+`api_macro`·`_MACRO_TICKERS` 는 남은 `_refresh_global_data_periodic`(`/api/refresh_all`·부팅 갱신)이 내부 호출해서,
+미국 일봉 동기화(`_daily_us_market_build`·`sync_us_market_to_db_from_cache`·`refresh_us_universe_if_stale`)는 남은
+US 요약 빌드·`/api/us/*` 가 써서 이월. **테마·밸류체인**(`/api/themes`·`generate_themes_mapping`·`/api/valuechain*`)과
+`theme_crawler.py`·`scripts/{fix_valuechain_*,validate_valuechain_*}.py`·`valuechain.py` 는 테마 사전 통합을 사용자가
+따로 진행해(2026-10-13 결정 Q1) 이번에 건드리지 않았다.
+
+검사 래퍼 **13 그대로**(`scripts/test_legacy.sh stock_dashboard`). 기준선: naver 67 → 65(server.py −1·ET render −1),
+krx_scrape 62 → 57(ET monitor/flow −5).

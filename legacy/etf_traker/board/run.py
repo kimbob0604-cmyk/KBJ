@@ -1760,7 +1760,7 @@ def cmd_demo():
 # ─────────────────────────── 미국장 ───────────────────────────
 # 국장과 파일·DB·state 를 나눈다. 정의(신고가 판정)만 공유한다 — docs/US.md.
 US_DB = os.environ.get('US_DB', os.path.join(ROOT, 'us_board.db'))
-US_CFG = os.path.join(ROOT, 'config', 'us.yaml')
+US_CFG = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(ROOT))), 'config', 'us.yaml')  # KBJ P5 — 레포 루트로 git mv
 US_OUT = os.environ.get('US_OUT', os.path.join(SITE, 'us', 'index.html'))
 
 

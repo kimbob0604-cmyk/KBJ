@@ -3,9 +3,28 @@
 import axe from 'axe-core';
 import { describe, expect, it, vi } from 'vitest';
 import { mountApp } from '../../src/app/app';
-import { P3_PAGES, P4_PAGES, pageLoaders } from '../../src/app/pages';
+import { P3_PAGES, P4_PAGES, P5_PAGES, pageLoaders } from '../../src/app/pages';
 import { appRoot, fixedClock } from '../helpers';
 import { apiHarness, publicHarness } from './support';
+
+// P5 페이지 10 패널(ETF 맵·동시 편입)이 부르는 응답 — 합성 p5_world 픽스처(test/fixtures/api/etf/ — ETF 묶음)
+const P5_ETF_FX = import.meta.glob<unknown>('../fixtures/api/etf/*.json', { eager: true, import: 'default' });
+const P5_ETF = {
+  etf_map: P5_ETF_FX['../fixtures/api/etf/map_type_1m.json'] as object,
+  'etf_active-consensus': P5_ETF_FX['../fixtures/api/etf/active_consensus.json'] as object,
+};
+
+// P5 묶음 F2 — 페이지 1 장중 투자자 수급·프로그램매매 패널이 부르는 응답(test/fixtures/api/program/ — 합성 p5_world)
+const P5_F2_FX = import.meta.glob<unknown>('../fixtures/api/program/*.json', { eager: true, import: 'default' });
+const P5_F2 = {
+  'flows_market-minute': P5_F2_FX['../fixtures/api/program/minute_k200_fut.json'] as object,
+  program_daily: P5_F2_FX['../fixtures/api/program/daily_K.json'] as object,
+  program_top: P5_F2_FX['../fixtures/api/program/top_K_buy_intraday.json'] as object,
+};
+
+// P5 묶음 US — 페이지 2 '간밤 미국 신고가' 패널이 부르는 응답(test/fixtures/api/us/ — 합성 p5_world, WRAP 이 붙였다)
+const P5_US_FX = import.meta.glob<unknown>('../fixtures/api/us/*.json', { eager: true, import: 'default' });
+const P5_US = { board_us: P5_US_FX['../fixtures/api/us/board_high.json'] as object };
 
 async function serious(root: Element): Promise<string[]> {
   const res = await axe.run(root, { resultTypes: ['violations'], rules: { 'color-contrast': { enabled: false } } });
@@ -15,13 +34,14 @@ async function serious(root: Element): Promise<string[]> {
 }
 
 describe('셸 + W2 모듈', () => {
-  it('빌드가 페이지 1·2·4·10(P3)과 5·8(P4) 모듈을 모두 찾는다', () => {
-    expect([...pageLoaders().keys()].sort((a, b) => a - b)).toEqual([...P3_PAGES, ...P4_PAGES].sort((a, b) => a - b));
+  it('빌드가 페이지 1·2·4·10(P3)·5·8(P4)·6·9(P5 — 자리표시부터) 모듈을 모두 찾는다', () => {
+    const want = [...P3_PAGES, ...P4_PAGES, ...P5_PAGES].sort((a, b) => a - b);
+    expect([...pageLoaders().keys()].sort((a, b) => a - b)).toEqual(want);
   });
 
   it('로그인: 띠·네 페이지가 오류 없이 붙고 axe 심각 위반 0', async () => {
     const err = vi.spyOn(console, 'error');
-    const hz = apiHarness();
+    const hz = apiHarness({ ...P5_ETF, ...P5_F2, ...P5_US });
     const root = appRoot();
     const app = mountApp(root, {
       tier: 'login',
@@ -61,7 +81,7 @@ describe('셸 + W2 모듈', () => {
     expect(hz.paths().every((u) => u.startsWith('./data/'))).toBe(true);
     expect(hz.paths().some((u) => u.includes('api'))).toBe(false);
     expect(root.querySelectorAll('#page-2 .panel.locked, #page-4 .panel.locked, #page-10 .panel.locked').length).toBe(
-      7 + 4 + 4,
+      7 + 4 + 4 + 3, // + P5 페이지 10(ETF 맵·보유 탐색·액티브 동시 편입)
     );
     expect(tv).toHaveBeenCalled();
     expect(root.querySelectorAll('.ribbon .chip.locked').length).toBeGreaterThan(0);

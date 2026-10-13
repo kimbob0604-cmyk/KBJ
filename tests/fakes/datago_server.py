@@ -83,8 +83,13 @@ def _day(params: dict[str, str]) -> str | None:
 
 
 def _with_day(items: list[dict[str, Any]], day: str | None) -> list[dict[str, Any]]:
+    """요청한 날로 다시 적은 합성 행. 날을 주면 **한 기준일 몫**(합성 파일의 첫 기준일 행들)만
+    준다 — 실제 API 처럼 하루에 (표, 항목) 한 벌(P5 WRAP: 여러 날 행을 한 날로 겹쳐 주면 같은 날
+    같은 항목이 여러 번 나와 금투협 수집이 거부했다)."""
     out = copy.deepcopy(items)
     if day:
+        first = out[0].get("basDt") if out else None
+        out = [r for r in out if r.get("basDt") == first] if first is not None else out
         for r in out:
             r["basDt"] = day
     return out

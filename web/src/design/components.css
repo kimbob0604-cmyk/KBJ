@@ -768,3 +768,61 @@ svg text.warn {
 .stackbar .def {
   padding: 4px 0 0;
 }
+
+/* P5 공용 부품(ui/line·bars·treemap — docs/p5_design.md §1.1). 폭은 svg 100%(base.css) — 모바일 가로 넘침 없음 */
+.linechart,
+.barschart,
+.treemap {
+  min-width: 0;
+  max-width: 100%;
+}
+.linechart svg text.end {
+  font-size: 10px;
+}
+.linechart .legend button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.linechart .legend button[aria-pressed='false'] {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+.linechart .legend button:focus-visible,
+.barschart rect:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}
+.barschart rect {
+  cursor: pointer;
+}
+.barschart rect.on {
+  stroke: var(--fg);
+  stroke-width: 1;
+}
+.bars-detail {
+  min-height: 1.4em;
+  margin: 4px 0 0;
+  font-family: var(--kr);
+  font-size: 11px;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+.treemap svg text {
+  font-size: 11px;
+  pointer-events: none;
+}
+.treemap rect {
+  stroke: var(--bg);
+  stroke-width: 1;
+}
+.barschart .def,
+.treemap .def {
+  padding: 4px 0 0;
+}

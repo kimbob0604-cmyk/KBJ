@@ -1,0 +1,104 @@
+{
+  "source": "nasdaq",
+  "as_of": "2026-11-17T16:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "미국 거래일 2026-11-16(뉴욕) 마감 — 아침 브리핑 ① 과 같은 산출",
+    "빠진 데이터: 이력이 짧아 52주 판정 보류 1종목 (상장 후 267거래일을 못 채웠거나 소스가 과거를 안 준다)"
+  ],
+  "generated_at": "2026-11-17T16:30:00+09:00",
+  "data": {
+    "us_trade_date": "2026-11-16",
+    "basis": "high",
+    "summary_lines": [
+      "신고가 8종목 (전일 +6) · 52주 신고가 3 vs 신저가 0",
+      "상승 9 / 하락 2 → 상승 비율 82% · 중앙값 +7.9%",
+      "±5% 급등 7 / 급락 2 · $100B+ 0개 중 상승 0",
+      "↳ 강세(상승 우위) · 신고가 증가 · 강세 소프트웨어·인터넷 +7.9%"
+    ],
+    "newhigh": [
+      {
+        "symbol": "SY02",
+        "name": "Synthetic Two",
+        "sector": "소프트웨어·인터넷",
+        "close": 245.18,
+        "chg_pct": 3.93,
+        "market_cap": 27100000000.0,
+        "label": "52주"
+      },
+      {
+        "symbol": "SY03",
+        "name": "Synthetic Three",
+        "sector": "소프트웨어·인터넷",
+        "close": 103.44,
+        "chg_pct": 3.49,
+        "market_cap": 36661000000.0,
+        "label": "52주"
+      },
+      {
+        "symbol": "SY01",
+        "name": "Synthetic One",
+        "sector": "소프트웨어·인터넷",
+        "close": 219.35,
+        "chg_pct": 28.56,
+        "market_cap": 44674000000.0,
+        "label": "52주"
+      },
+      {
+        "symbol": "SY12",
+        "name": "Synthetic Newco",
+        "sector": "소프트웨어·인터넷",
+        "close": 228.57,
+        "chg_pct": 7.0,
+        "market_cap": 44717000000.0,
+        "label": "신고가"
+      },
+      {
+        "symbol": "SY10",
+        "name": "Synthetic Ten",
+        "sector": "소프트웨어·인터넷",
+        "close": 211.09,
+        "chg_pct": 36.84,
+        "market_cap": 48137000000.0,
+        "label": "신고가"
+      },
+      {
+        "symbol": "SY04",
+        "name": "Synthetic Four",
+        "sector": "소프트웨어·인터넷",
+        "close": 156.99,
+        "chg_pct": 27.98,
+        "market_cap": 12667000000.0,
+        "label": "신고가"
+      },
+      {
+        "symbol": "SY06",
+        "name": "Synthetic Six",
+        "sector": "소프트웨어·인터넷",
+        "close": 124.6,
+        "chg_pct": 8.06,
+        "market_cap": 16978000000.0,
+        "label": "신고가"
+      },
+      {
+        "symbol": "SY07",
+        "name": "Synthetic Seven",
+        "sector": "소프트웨어·인터넷",
+        "close": 129.56,
+        "chg_pct": 30.74,
+        "market_cap": 16333000000.0,
+        "label": "신고가"
+      }
+    ],
+    "sectors": [
+      {
+        "sector": "소프트웨어·인터넷",
+        "n": 11,
+        "newhigh": 8,
+        "ret_pct": 7.86
+      }
+    ],
+    "mega_movers": [],
+    "pending": 1
+  }
+}

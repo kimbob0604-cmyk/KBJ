@@ -3,13 +3,18 @@ import { describe, expect, it } from 'vitest';
 import { BUDGET_GZIP, checkBudget, LOGIN_FORBIDDEN, PUBLIC_FORBIDDEN, scanText } from '../scripts/check-bundle.mjs';
 import {
   DART_ONLY,
+  DART_SUBDIRS,
+  DIR_CAPS,
   dirDigest,
+  FILE_CAPS,
   loginSourcePaths,
   manifestDirs,
   nonDartSourcePaths,
   planMerge,
+  P5_FLAT_NAMES,
   sha256,
   SUBDIR_JSON_RE,
+  SUBDIRS,
   SUBDIR_XLSX_RE,
   watchTracePaths,
 } from '../scripts/merge-public-data.mjs';
@@ -258,5 +263,77 @@ describe('merge-public-data: P4 하위 폴더(fin·reports)·DART 전용 파일'
     for (const key of ['reports/Q00001.xlsx', 'fin/Q00001.xlsx', 'reports/q00001.xlsx']) {
       expect(SUBDIR_XLSX_RE.test(key), key).toBe(PUBLIC_DOWNLOAD.test(key));
     }
+  });
+});
+
+describe('merge-public-data: P5 하위 폴더(macro)·credit.json — p5_design §7(테마 themes/ 는 P5 제외)', () => {
+  const AS_OF = '2026-11-13T05:30:00+09:00';
+  const env = (source: string, data: unknown) =>
+    JSON.stringify({ source, as_of: AS_OF, quality: 'ok', notes: [], generated_at: AS_OF, data });
+  const base: Record<string, string> = {
+    'credit.json': env('DATAGO', { rows: [] }),
+    'macro/tabs.json': env('ECOS', { tabs: [] }),
+    'macro/calendar.json': env('KBJ', { events: [] }),
+    'macro/us.json': env('FRED', { rows: [] }),
+  };
+  const dirEntry = (name: string, files: Record<string, string>, source: string) => {
+    const paths = Object.keys(files).filter((p) => p.startsWith(`${name}/`));
+    return {
+      name,
+      count: paths.length,
+      bytes: paths.reduce((n, p) => n + new TextEncoder().encode(files[p]).length, 0),
+      digest: dirDigest(paths.map((p) => [p, sha256(files[p]!)] as [string, string])),
+      source,
+      as_of: AS_OF,
+      quality: 'ok',
+    };
+  };
+  const manifestOf = (files: Record<string, string>, macroSource = 'ECOS,FRED,KBJ') => ({
+    files: [{ name: 'credit.json', source: 'DATAGO', as_of: AS_OF, quality: 'ok' }],
+    dirs: [dirEntry('macro', files, macroSource)],
+  });
+
+  it('규칙: P5 폴더는 SUBDIRS 에 있고 DART 전용이 아니다, 크기 상한은 파이썬과 같은 숫자', () => {
+    expect(SUBDIRS).toEqual(['fin', 'reports', 'macro']);
+    expect(DART_SUBDIRS).toEqual(['fin', 'reports']);
+    expect([...P5_FLAT_NAMES]).toEqual(['credit.json']);
+    expect(DIR_CAPS).toEqual({ macro: 3 * 1024 * 1024 });
+    expect(FILE_CAPS).toEqual({ 'credit.json': 100 * 1024, 'macro/calendar.json': 200 * 1024 });
+    for (const key of ['macro/tabs', 'themes/index', 'macro/Rates', 'macro/a-b', 'macro/x/y', 'credit']) {
+      expect(SUBDIR_JSON_RE.test(`${key}.json`), key).toBe(PUBLIC_SUBDIR.test(key));
+    }
+  });
+
+  it('공개 출처 여럿을 받아들인다(폴더 source = 원천들을 쉼표로)', () => {
+    const r = planMerge(manifestOf(base), base);
+    expect(r.errors).toEqual([]);
+    expect(r.copy).toEqual(['credit.json', 'macro/calendar.json', 'macro/tabs.json', 'macro/us.json', 'manifest.json']);
+  });
+
+  it('관심종목 흔적·prv_·로그인 출처는 P5 파일에서도 실패', () => {
+    const cases: [string, string, string][] = [
+      ['macro/tabs.json', env('ECOS', { watchlist: [] }), '관심종목 흔적 키($.data.watchlist)'],
+      ['macro/us.json', env('FRED', { note: 'prv_macro.series' }), "로그인 등급 스키마 이름('prv_' 규칙)"],
+      ['macro/tabs.json', env('ECOS', { rows: [{ source: 'YAHOO' }] }), '로그인 등급 출처 이름'],
+      ['credit.json', env('DATAGO', { is_watch: true }), '관심종목 흔적 키($.data.is_watch)'],
+    ];
+    for (const [path, text, msg] of cases) {
+      const files = { ...base, [path]: text };
+      const r = planMerge(manifestOf(files), files);
+      expect(r.copy, msg).toEqual([]);
+      expect(r.errors.join(), msg).toContain(msg);
+    }
+    expect(planMerge(manifestOf(base, ''), base).errors.join()).toContain('macro/: source 없음');
+    expect(planMerge(manifestOf(base, 'ECOS,KRX'), base).errors.join()).toContain('macro/: 로그인 등급 출처 이름');
+  });
+
+  it('크기 상한을 넘으면 자르지 않고 실패', () => {
+    const big = { ...base, 'credit.json': env('DATAGO', { pad: 'x'.repeat(100 * 1024) }) };
+    expect(planMerge(manifestOf(big), big).errors.join()).toContain('credit.json: 크기 상한을 넘는다');
+    const cal = { ...base, 'macro/calendar.json': env('KBJ', { pad: 'x'.repeat(200 * 1024) }) };
+    expect(planMerge(manifestOf(cal), cal).errors.join()).toContain('macro/calendar.json: 크기 상한을 넘는다');
+    const pad = 'x'.repeat(1024 * 1024);
+    const many = { ...base, 'macro/a.json': env('ECOS', { pad }), 'macro/b.json': env('ECOS', { pad }), 'macro/c.json': env('ECOS', { pad }) };
+    expect(planMerge(manifestOf(many), many).errors.join()).toContain('macro/: 합계 크기 상한을 넘는다');
   });
 });

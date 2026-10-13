@@ -12,6 +12,9 @@ docs/p3_design.md §7, docs/p4_design.md §1.9·§7, DATA_TIERS §3, ADR 0002 §
   않는다.
 - `fin/` 합계 크기가 `config/fin.yaml public_export.fin_max_total_mb` 를 넘으면 **실패**(조용히
   자르지 않는다 — 절대 규칙 4, D-P4-17). 넘으면 [결정 필요]: 분기 수 줄이기 또는 상위 N.
+- P5(docs/p5_design.md §7): `macro/`·`credit.json`(`_p5_files` — 본문은 MAC). 테마 사전 `themes/` 는
+  사용자가 따로 진행해 P5 에서 뺐다.
+  크기 상한은 `manifest.DIR_CAPS`·`FILE_CAPS` — 넘으면 같은 식으로 실패.
 - 그 밖에 쓰는 것: 거래 캘린더(코드 계산)·`config/calendar_events.yaml`(공개 설정)·`config/fin.yaml`
   (중요도 등급·크기 상한)·`config/reports.yaml`(공개 데모 종목).
 - 이 패키지는 로그인 등급 코드(`kbj.data.private`·`kbj.engines`·`kbj.services.{api,collectors,
@@ -43,10 +46,15 @@ from kbj.core.masking import mask_text
 from kbj.services.public_export.calendar_json import build_calendar
 from kbj.services.public_export.corp_index import NAME as CORP_INDEX_NAME
 from kbj.services.public_export.corp_index import build_corp_index, load_corps
+from kbj.services.public_export.credit_json import build_credit
 from kbj.services.public_export.events_json import build_events
 from kbj.services.public_export.filings_json import build_filings
 from kbj.services.public_export.fin_json import FIN_DIR, build_fin
+from kbj.services.public_export.macro_json import build_macro
 from kbj.services.public_export.manifest import (
+    DART_SUBDIRS,
+    DIR_CAPS,
+    FILE_CAPS,
     MANIFEST_NAME,
     NAME_RE,
     SUBDIR_JSON_RE,
@@ -98,11 +106,12 @@ _CHECK_SQL: Final = (
 
 ConnectFn = Callable[[], "psycopg.Connection[Any]"]
 NO_DB_SKIP: Final = (
-    "P4 공시·재무 파일(공시 목록 다섯·corp_index·fin/·reports/): DB 없이 만들어 넣지 않았다"
+    "P4 공시·재무 파일(공시 목록 다섯·corp_index·fin/·reports/)·P5 매크로 파일(macro/·credit.json):"
+    " DB 없이 만들어 넣지 않았다"
 )
 NOT_PG_SKIP: Final = (
-    "P4 공시·재무 파일: 공개 연결이 psycopg 연결이 아니라(시험 흉내 — 확인만) 표를 읽지 않았다"
-    " — 읽기는 자원 public_reader 로 주입"
+    "P4 공시·재무·P5 매크로 파일: 공개 연결이 psycopg 연결이 아니라(시험 흉내 — 확인만)"
+    " 표를 읽지 않았다 — 읽기는 자원 public_reader 로 주입"
 )
 _MB: Final = 1024 * 1024
 
@@ -175,6 +184,7 @@ def _dir_entries(
     sizes: dict[str, int] = defaultdict(int)
     stamps: dict[str, list[datetime]] = defaultdict(list)
     quals: dict[str, list[str]] = defaultdict(list)
+    sources: dict[str, set[str]] = defaultdict(set)
     for f, text in rendered:
         sub = f.subdir
         if sub is None:
@@ -184,6 +194,7 @@ def _dir_entries(
         sizes[sub] += len(body)
         stamps[sub].append(f.as_of)
         quals[sub].append(f.quality)
+        sources[sub].add(f.source)
     for b in blobs:
         hashes[b.subdir].append((b.name, sha256_bytes(b.body)))
         sizes[b.subdir] += len(b.body)
@@ -199,7 +210,8 @@ def _dir_entries(
                 count=len(hashes[sub]),
                 bytes=sizes[sub],
                 digest=dir_digest(hashes[sub]),
-                source="DART",
+                # P4 폴더는 DART 하나, P5 폴더(macro)는 파일 원천들을 쉼표로 이은 것
+                source="DART" if sub in DART_SUBDIRS else ",".join(sorted(sources[sub])),
                 as_of=iso_kst(max(stamps[sub])),
                 quality=worst_quality(quals[sub]),
             )
@@ -269,6 +281,13 @@ def write_files(
     problems += _blob_problems(blobs, rendered)
     if problems:
         raise PublicExportError("공개 산출물 검사 실패: " + "; ".join(problems[:5]))
+    for f, text in rendered:
+        cap = FILE_CAPS.get(f.name)
+        if cap is not None and len(text.encode("utf-8")) > cap:
+            raise PublicExportError(
+                f"{f.name}: {len(text.encode('utf-8'))} B 가 상한 {cap} B 를 넘는다 — "
+                "조용히 자르지 않는다"
+            )
     dirs = _dir_entries(rendered, blobs)
     for d in dirs:
         cap = (caps or {}).get(d.name)
@@ -324,6 +343,19 @@ def _p4_files(
     return files, list(fin.blobs), skipped
 
 
+def _p5_files(read: Reader, *, now: datetime) -> tuple[list[PublicFile], list[str]]:
+    """P5 공개 파일(macro/·credit.json — pub_macro·pub_market_stats 만).
+
+    본문은 MAC(`macro_json`·`credit_json`). 공개 표가 비면 파일 0·이유 0(docs/p5_design.md §7)."""
+    files: list[PublicFile] = []
+    skipped: list[str] = []
+    for build in (build_macro, build_credit):
+        out = build(read, now=now)
+        files += out.files
+        skipped += out.skipped
+    return files, skipped
+
+
 def export_all(
     conn_pub: psycopg.Connection[Any] | None,
     out_dir: Path,
@@ -364,7 +396,11 @@ def export_all(
         files += p4
         skipped += why
         caps[FIN_DIR] = int(fcfg.public_export.fin_max_total_mb * _MB)
-    # P5~: credit.json·spread.json·exports.json … (pub_market_stats·pub_macro·pub_trade)
+        # P5: macro/·credit.json (pub_macro·pub_market_stats). P6~: pub_trade …
+        p5, why5 = _p5_files(reader, now=now)
+        files += p5
+        skipped += why5
+    caps.update(DIR_CAPS)
     return write_files(files, out_dir, now=now, blobs=blobs, caps=caps, skipped=skipped)
 
 

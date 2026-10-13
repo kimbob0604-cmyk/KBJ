@@ -63,7 +63,9 @@ from kbj.services.api.routes import (
     filings,
     flows,
     health,
+    macro,
     market,
+    program,
     stock,
     watchlist,
     webhook,
@@ -223,7 +225,12 @@ def create_app(
             resp.headers.setdefault("Cache-Control", "no-store")
         return resp
 
-    for r in (health, auth, market, board, flows, etf, stock, filings, watchlist, webhook):
+    routers = (
+        health, auth, market, board, flows, etf, stock, filings, watchlist,
+        macro, program,  # P5(docs/p5_design.md §5 — 웨이브 1 FND)
+        webhook,
+    )  # fmt: skip
+    for r in routers:
         app.include_router(r.router)
 
     if static_dir is not False:

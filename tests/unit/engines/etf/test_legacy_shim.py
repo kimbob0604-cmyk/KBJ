@@ -1,8 +1,13 @@
-"""legacy ET `etf_tracker_v9` shim 다리 시험 — tracker·themes·collectors 가 kbj 정본을 쓴다.
+"""legacy ET `etf_tracker_v9` shim 다리 시험 — themes·collectors·adapters 가 kbj 정본을 쓴다.
+
+P5(ADR 0024, `legacy/etf_traker/MIGRATION.md` 'P5'): `tracker.py`(와 report·render·dash·
+live_update)는 kbj `etf.collect`·`etf.report`(`kbj/reports/etf.py`)가 대체해 지웠다. tracker 가
+감싸던 계산(펀드 짝·CU 보정 뒤 ±2%p·ETF 제외·수량 하한)은 정본 `kbj.engines.etf.holdings` 의
+`tests/unit/engines/etf/test_holdings.py` 가 지킨다 — 여기는 남은 shim 만 본다.
 
 legacy 폴더는 import 루트가 따로라(collectors·themes 같은 일반 이름) 하위 프로세스에서 그 폴더를
-작업 디렉터리로 돌린다(scripts/test_legacy.sh 와 같은 방식). 네트워크는 쓰지 않는다 — tracker 의
-sqlite 는 메모리, 어댑터는 가짜 전송.
+작업 디렉터리로 돌린다(scripts/test_legacy.sh 와 같은 방식). 네트워크는 쓰지 않는다 — 어댑터는
+가짜 전송.
 """
 
 from __future__ import annotations
@@ -15,20 +20,20 @@ from pathlib import Path
 
 import pytest
 
-# legacy tracker 가 import 시점에 requests(legacy 의존성 그룹)를 부른다.
-# dev 만 설치한 CI test (kbj) 잡에서는 빼고, 모든 그룹을 설치하는
-# legacy (etf-rest) 잡에서 `pytest -m legacy` 로 돌린다(건너뛰지 않는다).
+# legacy 폴더를 하위 프로세스로 도는 다리 시험(P5 전에는 tracker 가 import 시점에 requests —
+# legacy 의존성 그룹 — 를 불렀다). dev 만 설치한 CI test (kbj) 잡에서는 빼고, 모든 그룹을
+# 설치하는 legacy (etf-rest) 잡에서 `pytest -m legacy` 로 돌린다(건너뛰지 않는다).
 pytestmark = pytest.mark.legacy
 
 ROOT = Path(__file__).resolve().parents[4]
 ET = ROOT / "legacy" / "etf_traker" / "etf_tracker_v9"
 
 SCRIPT = r"""
-import json, sqlite3, sys
+import json, sys
 from datetime import date
 import httpx
 sys.path.insert(0, sys.argv[1])
-import collectors, themes, tracker
+import collectors, themes
 from kbj.data.private.etf_issuers.base import IssuerHttp
 from tests.fakes.etf_issuer_server import FakeIssuers, funds_of
 
@@ -36,7 +41,6 @@ out = {}
 out["classify"] = [themes.classify("KODEX 반도체"), themes.classify("KODEX 레버리지")]
 out["issuer"] = themes.issuer_of("UNICORN 무엇")
 out["adapters"] = sorted(collectors.ADAPTERS)
-out["qty_floor"] = tracker.QTY_FLOOR
 
 # 옛 인터페이스(문자열 날짜·dict 행)로 kbj 어댑터를 부른다 — 가짜 운용사 전송
 w = FakeIssuers(latest=date(2026, 10, 6))
@@ -50,27 +54,11 @@ out["row"] = sorted(rows.items())[0]
 import adapters.rise as R
 out["rise"] = [R.Rise.KEY, R.Rise.DEPTH, R.Rise.HISTORY]
 
-# tracker.analyze(sqlite) == 옛 규칙(CU 보정 뒤 ±2%p, ETF 제외)
-c = sqlite3.connect(":memory:")
-c.executescript(tracker.DDL)
-c.execute("INSERT INTO fund(fund_id, depth) VALUES('f1', 'full')")
-c.execute("INSERT INTO etf_ticker VALUES('995010', 'x')")
-codes = [f"10{i:03d}0" for i in range(8)]
-for d, mult in (("2026-10-06", 1.0), ("2026-10-07", 1.1)):
-    for code in codes:
-        q = 1000 * mult
-        if d == "2026-10-07" and code == codes[0]:
-            q = 1150
-        c.execute("INSERT INTO holding VALUES('f1', ?, ?, ?, ?, 1.0, 0)", (d, code, code, q))
-    c.execute("INSERT INTO holding VALUES('f1', ?, '995010', 'etf', 500, 1.0, 0)", (d,))
-c.execute("INSERT INTO holding VALUES('f1', '2026-10-07', '200010', 'new', 50, 1.0, 0)")
-out["pairs"] = tracker.fund_pairs(c)
-out["changes"] = [(r[3], r[2], r[12], r[13]) for r in tracker.analyze(c, "2026-10-08")]
 print(json.dumps(out, ensure_ascii=False))
 """
 
 
-def test_legacy_tracker_uses_kbj() -> None:
+def test_legacy_shims_use_kbj() -> None:
     env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}
     env.update(PYTHONDONTWRITEBYTECODE="1", PYTHONPATH=str(ROOT))
     p = subprocess.run(  # noqa: S603 — 고정 인자, 이 레포의 해석기
@@ -85,10 +73,7 @@ def test_legacy_tracker_uses_kbj() -> None:
     assert out["adapters"] == sorted(
         ["kodex", "tiger", "timefolio", "sol", "ace", "hanaro", "koact", "plus", "rise"]
     )
-    assert out["qty_floor"] == 100
     assert out["uni"][1] == "970000" and out["real"] == "2026-10-06"
     code, row = out["row"]
     assert code.startswith("99") and set(row) == {"name", "qty", "wt", "val"}
     assert out["rise"] == ["rise", "full", True]
-    assert out["pairs"] == [["f1", "2026-10-07", "2026-10-06", 1]]
-    assert out["changes"] == [["NEW", "200010", None, None], ["ADD", "100000", 15.0, 5.0]]

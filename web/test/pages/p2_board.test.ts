@@ -16,8 +16,12 @@ import {
   text,
 } from './support';
 
+// P5 묶음 US — 간밤 미국 패널은 P5 픽스처(test/fixtures/api/us — 합성 p5_world)를 쓴다(자세한 시험은 p2_us.test.ts)
+const US = import.meta.glob<unknown>('../fixtures/api/us/*.json', { eager: true, import: 'default' });
+const usClose = (): object => structuredClone(US['../fixtures/api/us/board_close.json']) as object;
+
 async function mountLogin(over: Parameters<typeof apiHarness>[0] = {}) {
-  const hz = apiHarness(over);
+  const hz = apiHarness({ board_us: usClose(), ...over });
   const { ctx, root, every } = pageCtx(2, 'login', hz.source);
   await page.mount(ctx);
   return { hz, root, every };
@@ -33,9 +37,15 @@ interface NewhighFx {
 }
 
 describe('페이지 2 신고가 — 로그인', () => {
-  it('네 응답을 부르고 위젯을 그린다', async () => {
+  it('다섯 응답을 부르고 위젯을 그린다', async () => {
     const { hz, root } = await mountLogin();
-    expect(hz.paths().sort()).toEqual(['board/events', 'board/newhigh?basis=close', 'board/rankings', 'board/sectors']);
+    expect(hz.paths().sort()).toEqual([
+      'board/events',
+      'board/newhigh?basis=close',
+      'board/rankings',
+      'board/sectors',
+      'board/us?basis=close',
+    ]);
 
     const nh = panelByTitle(root, '신고가 종목');
     expect(nh.querySelectorAll('tbody tr')).toHaveLength(27);
@@ -80,7 +90,7 @@ describe('페이지 2 신고가 — 로그인', () => {
     expect(text(rank.querySelector('caption'))).toBe('거래량 3일/1달 순위');
     expect(text(rank.querySelector('tbody tr'))).toContain('177%');
 
-    expect(text(panelByTitle(root, '간밤 미국 신고가'))).toContain('P5');
+    expect(text(panelByTitle(root, '간밤 미국 신고가'))).toContain('미국 11/16(월) 마감');
     expect(root.querySelectorAll('.msg.err')).toHaveLength(0);
   });
 
@@ -232,6 +242,6 @@ describe('페이지 2 신고가 — 공개', () => {
     expect(hz.calls).toHaveLength(0);
     expect(root.querySelectorAll('.panel.locked')).toHaveLength(7);
     expect(root.querySelectorAll('table')).toHaveLength(0);
-    expect(text(panelByTitle(root, '간밤 미국 신고가').querySelector('h3 .src'))).toBe('준비 중(P5) · 로그인');
+    expect(panelByTitle(root, '간밤 미국 신고가').classList.contains('locked')).toBe(true);
   });
 });

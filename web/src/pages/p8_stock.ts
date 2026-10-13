@@ -29,6 +29,7 @@ import {
   unpack,
 } from './p8/common';
 import { mount as mountConsensus } from './p8/consensus';
+import { mount as mountEtfHolders, TITLE as ETF_HOLDERS_TITLE } from './p8/etf_holders';
 import { mount as mountFilings } from './p8/filings';
 import { mount as mountFinancials } from './p8/financials';
 import { KIND_TAG, loadHeader, loadPublicHeader } from './p8/header';
@@ -61,6 +62,17 @@ type TabMount = (t: TabCtx, el: HTMLElement) => Promise<void>;
 const LOGIN_VALUE: readonly TabMount[] | null =
   import.meta.env.MODE === 'public' ? null : [mountConsensus, mountValuation, mountScenario];
 
+/**
+ * '개요' 탭의 '담은 ETF'(P5 ETF 묶음 — p8/etf_holders.ts, 로그인). 공개 빌드에서는 번들에서 빼고 같은 제목의 자물쇠
+ * 패널만 그린다(LOGIN_VALUE 와 같은 방식 — 공개 등급은 요청 없음). 고리는 WRAP(docs/p5_design.md §1.8 4).
+ */
+const LOGIN_ETF: readonly TabMount[] | null = import.meta.env.MODE === 'public' ? null : [mountEtfHolders];
+
+function lockedEtf(t: TabCtx, el: HTMLElement): Promise<void> {
+  tabGrid(el, mkPanel(t, { title: ETF_HOLDERS_TITLE, tier: 'login', span: 12, lock: 'etf_issuers' }));
+  return Promise.resolve();
+}
+
 /** 공개 등급의 '컨센·밸류' 탭 — 로그인 패널과 같은 제목·자물쇠 사유(ui/lock.ts), 요청 없음 */
 const LOCKED_VALUE: readonly (readonly [string, string])[] = [
   ['컨센서스', 'consensus'],
@@ -80,7 +92,7 @@ function lockedValue(t: TabCtx, el: HTMLElement): Promise<void> {
 function tabModules(id: TabId, t: TabCtx): readonly TabMount[] {
   switch (id) {
     case 'overview':
-      return [mountOverview];
+      return [mountOverview, ...(t.tier === 'login' && LOGIN_ETF ? LOGIN_ETF : [lockedEtf])];
     case 'fin':
       return [mountFinancials];
     case 'report':

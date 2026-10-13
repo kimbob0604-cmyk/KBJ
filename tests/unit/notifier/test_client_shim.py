@@ -277,8 +277,9 @@ SHIM_TARGETS = (
     # 보낸다(docs/p4_design.md §1.12)
     ("legacy/etf_traker/board/report/telegram.py", "send"),
     ("legacy/etf_traker/board/report/telegram.py", "send_document"),
-    ("legacy/etf_traker/etf_tracker_v9/tracker.py", "send_telegram"),
-    ("legacy/etf_traker/monitor/flow/telegram.py", "send_photos"),
+    # ET etf_tracker_v9/tracker.py(send_telegram)·monitor/flow/telegram.py(send_photos)는 P5 WRAP 이
+    # 지웠다 — ETF 리포트는 kbj etf.report, 수급 리포트는 kbj flows.report 가 notifier 로 보낸다
+    # (legacy/etf_traker/MIGRATION.md 'P5')
 )
 SHIM_NAMES = {"legacy_send", "legacy_send_document", "legacy_send_media"}
 

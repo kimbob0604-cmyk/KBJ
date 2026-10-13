@@ -1,0 +1,1124 @@
+{
+  "source": "ECOS:901Y056+FRED+YAHOO",
+  "as_of": "2026-11-17T06:00:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "코스피(한국거래소): 확인 전(#43)",
+    "원/달러 종가(서울외국환중개): 확인 전(#43)",
+    "소비자물가(901Y009 — 공개 판정 전): 확인 전(#43)",
+    "USD/JPY: 아직 없음 — macro.morning_prv·monthly_prv",
+    "EUR/USD: 아직 없음 — macro.morning_prv·monthly_prv",
+    "USD/CNY: 아직 없음 — macro.morning_prv·monthly_prv",
+    "WTI 원유: 아직 없음 — macro.morning_prv·monthly_prv",
+    "금: 아직 없음 — macro.morning_prv·monthly_prv",
+    "은: 아직 없음 — macro.morning_prv·monthly_prv",
+    "구리: 아직 없음 — macro.morning_prv·monthly_prv",
+    "천연가스: 아직 없음 — macro.morning_prv·monthly_prv",
+    "미국 10년물(Yahoo — 공개판은 FRED DGS10): 아직 없음 — macro.morning_prv·monthly_prv"
+  ],
+  "generated_at": "2026-11-17T07:30:00Z",
+  "data": {
+    "tab": "market",
+    "series": [
+      {
+        "series_id": "ECOS:802Y001:kospi",
+        "title": "코스피(한국거래소)",
+        "unit": "pt",
+        "freq": "D",
+        "tier": "private",
+        "source": "ECOS:802Y001",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "확인 전(#43)"
+      },
+      {
+        "series_id": "ECOS:731Y001:usdkrw_close",
+        "title": "원/달러 종가(서울외국환중개)",
+        "unit": "원",
+        "freq": "D",
+        "tier": "private",
+        "source": "ECOS:731Y001",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "확인 전(#43)"
+      },
+      {
+        "series_id": "ECOS:901Y056:deposit",
+        "title": "투자자예탁금(금투협)",
+        "unit": "십억원",
+        "freq": "M",
+        "tier": "private",
+        "source": "ECOS:901Y056",
+        "as_of": "2026-10-05T08:00:00+09:00",
+        "quality": "ok",
+        "latest": {
+          "period": "2026-09",
+          "value": 58171.82,
+          "released_at": "2026-10-05T08:00:00+09:00"
+        },
+        "change": 69.34999999999854,
+        "change_pct": 0.11935809269381092,
+        "points": [
+          {
+            "period": "2023-10",
+            "value": 55074.6,
+            "released_at": "2023-11-05T08:00:00+09:00"
+          },
+          {
+            "period": "2023-11",
+            "value": 55269.24,
+            "released_at": "2023-12-05T08:00:00+09:00"
+          },
+          {
+            "period": "2023-12",
+            "value": 55513.98,
+            "released_at": "2024-01-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-01",
+            "value": 55476.31,
+            "released_at": "2024-02-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-02",
+            "value": 55592.99,
+            "released_at": "2024-03-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-03",
+            "value": 55551.13,
+            "released_at": "2024-04-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-04",
+            "value": 55655.76,
+            "released_at": "2024-05-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-05",
+            "value": 55732.45,
+            "released_at": "2024-06-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-06",
+            "value": 55844.4,
+            "released_at": "2024-07-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-07",
+            "value": 55896.78,
+            "released_at": "2024-08-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-08",
+            "value": 55884.43,
+            "released_at": "2024-09-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-09",
+            "value": 56021.38,
+            "released_at": "2024-10-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-10",
+            "value": 56063.36,
+            "released_at": "2024-11-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-11",
+            "value": 56066.94,
+            "released_at": "2024-12-05T08:00:00+09:00"
+          },
+          {
+            "period": "2024-12",
+            "value": 56158.88,
+            "released_at": "2025-01-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-01",
+            "value": 56424.28,
+            "released_at": "2025-02-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-02",
+            "value": 56479.88,
+            "released_at": "2025-03-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-03",
+            "value": 56486.08,
+            "released_at": "2025-04-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-04",
+            "value": 56613.53,
+            "released_at": "2025-05-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-05",
+            "value": 56702.05,
+            "released_at": "2025-06-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-06",
+            "value": 56740.76,
+            "released_at": "2025-07-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-07",
+            "value": 56870.07,
+            "released_at": "2025-08-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-08",
+            "value": 57070.87,
+            "released_at": "2025-09-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-09",
+            "value": 57098.63,
+            "released_at": "2025-10-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-10",
+            "value": 57391.96,
+            "released_at": "2025-11-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-11",
+            "value": 57487.5,
+            "released_at": "2025-12-05T08:00:00+09:00"
+          },
+          {
+            "period": "2025-12",
+            "value": 57589.14,
+            "released_at": "2026-01-05T08:00:00+09:00"
+          },
+          {
+            "period": "2026-01",
+            "value": 57726.56,
+            "released_at": "2026-02-05T08:00:00+09:00"
+          },
+          {
+            "period": "2026-02",
+            "value": 57960.84,
+            "released_at": "2026-03-05T08:00:00+09:00"
+          },
+          {
+            "period": "2026-03",
+            "value": 58100.68,
+            "released_at": "2026-04-05T08:00:00+09:00"
+          },
+          {
+            "period": "2026-04",
+            "value": 58083.51,
+            "released_at": "2026-05-05T08:00:00+09:00"
+          },
+          {
+            "period": "2026-05",
+            "value": 58009.52,
+            "released_at": "2026-06-05T08:00:00+09:00"
+          },
+          {
+            "period": "2026-06",
+            "value": 57898.83,
+            "released_at": "2026-07-05T08:00:00+09:00"
+          },
+          {
+            "period": "2026-07",
+            "value": 57930.52,
+            "released_at": "2026-08-05T08:00:00+09:00"
+          },
+          {
+            "period": "2026-08",
+            "value": 58102.47,
+            "released_at": "2026-09-05T08:00:00+09:00"
+          },
+          {
+            "period": "2026-09",
+            "value": 58171.82,
+            "released_at": "2026-10-05T08:00:00+09:00"
+          }
+        ],
+        "derived": false,
+        "na_reason": null
+      },
+      {
+        "series_id": "ECOS:901Y009:cpi",
+        "title": "소비자물가(901Y009 — 공개 판정 전)",
+        "unit": "2020=100",
+        "freq": "M",
+        "tier": "private",
+        "source": "ECOS:901Y009",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "확인 전(#43)"
+      },
+      {
+        "series_id": "YAHOO:KRW=X",
+        "title": "USD/KRW",
+        "unit": "원",
+        "freq": "D",
+        "tier": "private",
+        "source": "YAHOO",
+        "as_of": "2026-11-17T06:00:00+09:00",
+        "quality": "ok",
+        "latest": {
+          "period": "2026-11-16",
+          "value": 1357.56,
+          "released_at": "2026-11-17T06:00:00+09:00"
+        },
+        "change": -0.13000000000010914,
+        "change_pct": -0.009575087096469481,
+        "points": [
+          {
+            "period": "2026-08-24",
+            "value": 1385.03,
+            "released_at": "2026-08-25T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-25",
+            "value": 1382.76,
+            "released_at": "2026-08-26T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-26",
+            "value": 1392.58,
+            "released_at": "2026-08-27T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-27",
+            "value": 1395.87,
+            "released_at": "2026-08-28T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-28",
+            "value": 1399.82,
+            "released_at": "2026-08-29T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-31",
+            "value": 1390.4,
+            "released_at": "2026-09-01T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-01",
+            "value": 1391.62,
+            "released_at": "2026-09-02T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-02",
+            "value": 1397.9,
+            "released_at": "2026-09-03T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-03",
+            "value": 1400.83,
+            "released_at": "2026-09-04T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-04",
+            "value": 1397.21,
+            "released_at": "2026-09-05T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-08",
+            "value": 1398.42,
+            "released_at": "2026-09-09T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-09",
+            "value": 1401.59,
+            "released_at": "2026-09-10T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-10",
+            "value": 1405.55,
+            "released_at": "2026-09-11T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-11",
+            "value": 1403.37,
+            "released_at": "2026-09-12T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-14",
+            "value": 1412.66,
+            "released_at": "2026-09-15T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-15",
+            "value": 1408.89,
+            "released_at": "2026-09-16T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-16",
+            "value": 1413.05,
+            "released_at": "2026-09-17T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-17",
+            "value": 1415.46,
+            "released_at": "2026-09-18T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-18",
+            "value": 1418.07,
+            "released_at": "2026-09-19T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-21",
+            "value": 1416.62,
+            "released_at": "2026-09-22T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-22",
+            "value": 1416.29,
+            "released_at": "2026-09-23T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-23",
+            "value": 1414.13,
+            "released_at": "2026-09-24T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-24",
+            "value": 1416.39,
+            "released_at": "2026-09-25T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-25",
+            "value": 1415.5,
+            "released_at": "2026-09-26T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-28",
+            "value": 1412.52,
+            "released_at": "2026-09-29T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-29",
+            "value": 1418.59,
+            "released_at": "2026-09-30T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-30",
+            "value": 1422.07,
+            "released_at": "2026-10-01T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-01",
+            "value": 1413.38,
+            "released_at": "2026-10-02T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-02",
+            "value": 1407.84,
+            "released_at": "2026-10-03T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-05",
+            "value": 1400.8,
+            "released_at": "2026-10-06T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-06",
+            "value": 1396.12,
+            "released_at": "2026-10-07T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-07",
+            "value": 1391.3,
+            "released_at": "2026-10-08T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-08",
+            "value": 1386.28,
+            "released_at": "2026-10-09T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-09",
+            "value": 1387.86,
+            "released_at": "2026-10-10T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-12",
+            "value": 1388.51,
+            "released_at": "2026-10-13T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-13",
+            "value": 1377.96,
+            "released_at": "2026-10-14T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-14",
+            "value": 1378.11,
+            "released_at": "2026-10-15T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-15",
+            "value": 1380.94,
+            "released_at": "2026-10-16T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-16",
+            "value": 1374.49,
+            "released_at": "2026-10-17T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-19",
+            "value": 1372.27,
+            "released_at": "2026-10-20T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-20",
+            "value": 1370.92,
+            "released_at": "2026-10-21T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-21",
+            "value": 1376.63,
+            "released_at": "2026-10-22T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-22",
+            "value": 1372.32,
+            "released_at": "2026-10-23T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-23",
+            "value": 1374.04,
+            "released_at": "2026-10-24T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-26",
+            "value": 1370.07,
+            "released_at": "2026-10-27T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-27",
+            "value": 1364.65,
+            "released_at": "2026-10-28T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-28",
+            "value": 1365.92,
+            "released_at": "2026-10-29T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-29",
+            "value": 1358.66,
+            "released_at": "2026-10-30T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-30",
+            "value": 1360.82,
+            "released_at": "2026-10-31T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-02",
+            "value": 1365.6,
+            "released_at": "2026-11-03T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-03",
+            "value": 1366.8,
+            "released_at": "2026-11-04T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-04",
+            "value": 1374.71,
+            "released_at": "2026-11-05T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-05",
+            "value": 1361.2,
+            "released_at": "2026-11-06T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-06",
+            "value": 1356.89,
+            "released_at": "2026-11-07T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-09",
+            "value": 1359.03,
+            "released_at": "2026-11-10T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-10",
+            "value": 1364.57,
+            "released_at": "2026-11-11T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-11",
+            "value": 1359.78,
+            "released_at": "2026-11-12T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-12",
+            "value": 1355.22,
+            "released_at": "2026-11-13T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-13",
+            "value": 1357.69,
+            "released_at": "2026-11-14T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-16",
+            "value": 1357.56,
+            "released_at": "2026-11-17T06:00:00+09:00"
+          }
+        ],
+        "derived": false,
+        "na_reason": null
+      },
+      {
+        "series_id": "YAHOO:JPY=X",
+        "title": "USD/JPY",
+        "unit": "엔",
+        "freq": "D",
+        "tier": "private",
+        "source": "YAHOO",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "아직 없음 — macro.morning_prv·monthly_prv"
+      },
+      {
+        "series_id": "YAHOO:EURUSD=X",
+        "title": "EUR/USD",
+        "unit": "달러",
+        "freq": "D",
+        "tier": "private",
+        "source": "YAHOO",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "아직 없음 — macro.morning_prv·monthly_prv"
+      },
+      {
+        "series_id": "YAHOO:CNY=X",
+        "title": "USD/CNY",
+        "unit": "위안",
+        "freq": "D",
+        "tier": "private",
+        "source": "YAHOO",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "아직 없음 — macro.morning_prv·monthly_prv"
+      },
+      {
+        "series_id": "YAHOO:CL=F",
+        "title": "WTI 원유",
+        "unit": "$/bbl",
+        "freq": "D",
+        "tier": "private",
+        "source": "YAHOO",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "아직 없음 — macro.morning_prv·monthly_prv"
+      },
+      {
+        "series_id": "YAHOO:GC=F",
+        "title": "금",
+        "unit": "$/oz",
+        "freq": "D",
+        "tier": "private",
+        "source": "YAHOO",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "아직 없음 — macro.morning_prv·monthly_prv"
+      },
+      {
+        "series_id": "YAHOO:SI=F",
+        "title": "은",
+        "unit": "$/oz",
+        "freq": "D",
+        "tier": "private",
+        "source": "YAHOO",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "아직 없음 — macro.morning_prv·monthly_prv"
+      },
+      {
+        "series_id": "YAHOO:HG=F",
+        "title": "구리",
+        "unit": "$/lb",
+        "freq": "D",
+        "tier": "private",
+        "source": "YAHOO",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "아직 없음 — macro.morning_prv·monthly_prv"
+      },
+      {
+        "series_id": "YAHOO:NG=F",
+        "title": "천연가스",
+        "unit": "$",
+        "freq": "D",
+        "tier": "private",
+        "source": "YAHOO",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "아직 없음 — macro.morning_prv·monthly_prv"
+      },
+      {
+        "series_id": "YAHOO:^TNX",
+        "title": "미국 10년물(Yahoo — 공개판은 FRED DGS10)",
+        "unit": "%",
+        "freq": "D",
+        "tier": "private",
+        "source": "YAHOO",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "아직 없음 — macro.morning_prv·monthly_prv"
+      },
+      {
+        "series_id": "YAHOO:^VIX",
+        "title": "VIX",
+        "unit": "pt",
+        "freq": "D",
+        "tier": "private",
+        "source": "YAHOO",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "아직 없음 — macro.morning_prv·monthly_prv"
+      },
+      {
+        "series_id": "YAHOO:BTC-USD",
+        "title": "BTC",
+        "unit": "$",
+        "freq": "D",
+        "tier": "private",
+        "source": "YAHOO",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "아직 없음 — macro.morning_prv·monthly_prv"
+      },
+      {
+        "series_id": "FRED:SP500",
+        "title": "S&P 500(FRED)",
+        "unit": "pt",
+        "freq": "D",
+        "tier": "private",
+        "source": "FRED",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "아직 없음 — macro.morning_prv·monthly_prv"
+      },
+      {
+        "series_id": "FRED:VIXCLS",
+        "title": "VIX(FRED)",
+        "unit": "pt",
+        "freq": "D",
+        "tier": "private",
+        "source": "FRED",
+        "as_of": "2026-11-17T06:00:00+09:00",
+        "quality": "ok",
+        "latest": {
+          "period": "2026-11-16",
+          "value": 16.59,
+          "released_at": "2026-11-17T06:00:00+09:00"
+        },
+        "change": -0.010000000000001563,
+        "change_pct": -0.0602409638554291,
+        "points": [
+          {
+            "period": "2026-08-24",
+            "value": 17.08,
+            "released_at": "2026-08-25T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-25",
+            "value": 17.08,
+            "released_at": "2026-08-26T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-26",
+            "value": 17.13,
+            "released_at": "2026-08-27T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-27",
+            "value": 17.13,
+            "released_at": "2026-08-28T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-28",
+            "value": 17.07,
+            "released_at": "2026-08-29T06:00:00+09:00"
+          },
+          {
+            "period": "2026-08-31",
+            "value": 17.05,
+            "released_at": "2026-09-01T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-01",
+            "value": 16.97,
+            "released_at": "2026-09-02T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-02",
+            "value": 16.94,
+            "released_at": "2026-09-03T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-03",
+            "value": 16.89,
+            "released_at": "2026-09-04T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-04",
+            "value": 16.77,
+            "released_at": "2026-09-05T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-08",
+            "value": 16.83,
+            "released_at": "2026-09-09T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-09",
+            "value": 16.91,
+            "released_at": "2026-09-10T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-10",
+            "value": 17.02,
+            "released_at": "2026-09-11T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-11",
+            "value": 17.01,
+            "released_at": "2026-09-12T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-14",
+            "value": 17.09,
+            "released_at": "2026-09-15T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-15",
+            "value": 17.11,
+            "released_at": "2026-09-16T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-16",
+            "value": 17.12,
+            "released_at": "2026-09-17T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-17",
+            "value": 16.99,
+            "released_at": "2026-09-18T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-18",
+            "value": 17.07,
+            "released_at": "2026-09-19T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-21",
+            "value": 17.15,
+            "released_at": "2026-09-22T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-22",
+            "value": 17.13,
+            "released_at": "2026-09-23T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-23",
+            "value": 17.14,
+            "released_at": "2026-09-24T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-24",
+            "value": 17.08,
+            "released_at": "2026-09-25T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-25",
+            "value": 17.21,
+            "released_at": "2026-09-26T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-28",
+            "value": 17.24,
+            "released_at": "2026-09-29T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-29",
+            "value": 17.3,
+            "released_at": "2026-09-30T06:00:00+09:00"
+          },
+          {
+            "period": "2026-09-30",
+            "value": 17.35,
+            "released_at": "2026-10-01T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-01",
+            "value": 17.42,
+            "released_at": "2026-10-02T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-02",
+            "value": 17.4,
+            "released_at": "2026-10-03T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-05",
+            "value": 17.36,
+            "released_at": "2026-10-06T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-06",
+            "value": 17.33,
+            "released_at": "2026-10-07T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-07",
+            "value": 17.33,
+            "released_at": "2026-10-08T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-08",
+            "value": 17.37,
+            "released_at": "2026-10-09T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-09",
+            "value": 17.3,
+            "released_at": "2026-10-10T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-12",
+            "value": 17.31,
+            "released_at": "2026-10-13T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-13",
+            "value": 17.26,
+            "released_at": "2026-10-14T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-14",
+            "value": 17.28,
+            "released_at": "2026-10-15T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-15",
+            "value": 17.35,
+            "released_at": "2026-10-16T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-16",
+            "value": 17.35,
+            "released_at": "2026-10-17T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-19",
+            "value": 17.32,
+            "released_at": "2026-10-20T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-20",
+            "value": 17.3,
+            "released_at": "2026-10-21T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-21",
+            "value": 17.28,
+            "released_at": "2026-10-22T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-22",
+            "value": 17.24,
+            "released_at": "2026-10-23T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-23",
+            "value": 17.19,
+            "released_at": "2026-10-24T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-26",
+            "value": 17.11,
+            "released_at": "2026-10-27T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-27",
+            "value": 16.99,
+            "released_at": "2026-10-28T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-28",
+            "value": 17.02,
+            "released_at": "2026-10-29T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-29",
+            "value": 17.05,
+            "released_at": "2026-10-30T06:00:00+09:00"
+          },
+          {
+            "period": "2026-10-30",
+            "value": 17.2,
+            "released_at": "2026-10-31T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-02",
+            "value": 17.1,
+            "released_at": "2026-11-03T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-03",
+            "value": 17.0,
+            "released_at": "2026-11-04T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-04",
+            "value": 16.97,
+            "released_at": "2026-11-05T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-05",
+            "value": 16.88,
+            "released_at": "2026-11-06T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-06",
+            "value": 16.86,
+            "released_at": "2026-11-07T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-09",
+            "value": 16.86,
+            "released_at": "2026-11-10T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-10",
+            "value": 16.86,
+            "released_at": "2026-11-11T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-11",
+            "value": 16.68,
+            "released_at": "2026-11-12T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-12",
+            "value": 16.62,
+            "released_at": "2026-11-13T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-13",
+            "value": 16.6,
+            "released_at": "2026-11-14T06:00:00+09:00"
+          },
+          {
+            "period": "2026-11-16",
+            "value": 16.59,
+            "released_at": "2026-11-17T06:00:00+09:00"
+          }
+        ],
+        "derived": false,
+        "na_reason": null
+      },
+      {
+        "series_id": "FRED:BAMLH0A0HYM2",
+        "title": "미 하이일드 스프레드(ICE BofA)",
+        "unit": "%p",
+        "freq": "D",
+        "tier": "private",
+        "source": "FRED",
+        "as_of": null,
+        "quality": null,
+        "latest": null,
+        "change": null,
+        "change_pct": null,
+        "points": [],
+        "derived": false,
+        "na_reason": "아직 없음 — macro.morning_prv·monthly_prv"
+      }
+    ]
+  }
+}

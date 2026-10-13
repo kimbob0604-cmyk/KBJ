@@ -1,0 +1,115 @@
+{
+  "source": "KRX",
+  "as_of": "2026-11-16T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "신규 상장(이력이 기간보다 짧음)은 수익률 없이 회색"
+  ],
+  "generated_at": "2026-11-17T16:30:00+09:00",
+  "data": {
+    "period": "3M",
+    "group": "type",
+    "lev": true,
+    "asof": "2026-11-16",
+    "groups": [
+      {
+        "key": "kr_theme",
+        "label": "국내 테마",
+        "cells": [
+          {
+            "code": "997570",
+            "name": "합성 액티브B",
+            "etf_type": "kr_theme",
+            "theme": "반도체",
+            "net_asset": 157295190012,
+            "ret_pct": 16.585,
+            "leveraged": false,
+            "new_listing": false
+          },
+          {
+            "code": "997530",
+            "name": "합성 원전",
+            "etf_type": "kr_theme",
+            "theme": "원전",
+            "net_asset": 156748869093,
+            "ret_pct": 14.2872,
+            "leveraged": false,
+            "new_listing": false
+          },
+          {
+            "code": "997580",
+            "name": "합성 신규상장",
+            "etf_type": "kr_theme",
+            "theme": "바이오",
+            "net_asset": 138218220090,
+            "ret_pct": null,
+            "leveraged": false,
+            "new_listing": true
+          },
+          {
+            "code": "997560",
+            "name": "합성 액티브A",
+            "etf_type": "kr_theme",
+            "theme": "반도체",
+            "net_asset": 113096121713,
+            "ret_pct": 21.4989,
+            "leveraged": false,
+            "new_listing": false
+          },
+          {
+            "code": "997520",
+            "name": "합성 반도체",
+            "etf_type": "kr_theme",
+            "theme": "반도체",
+            "net_asset": 101110098425,
+            "ret_pct": 3.7946,
+            "leveraged": false,
+            "new_listing": false
+          }
+        ]
+      },
+      {
+        "key": "leveraged_inverse",
+        "label": "레버리지·인버스",
+        "cells": [
+          {
+            "code": "997550",
+            "name": "합성 인버스",
+            "etf_type": "leveraged_inverse",
+            "theme": null,
+            "net_asset": 68359219017,
+            "ret_pct": 8.1732,
+            "leveraged": true,
+            "new_listing": false
+          },
+          {
+            "code": "997540",
+            "name": "합성 레버리지",
+            "etf_type": "leveraged_inverse",
+            "theme": null,
+            "net_asset": 48221922227,
+            "ret_pct": 3.3557,
+            "leveraged": true,
+            "new_listing": false
+          }
+        ]
+      },
+      {
+        "key": "kr_index",
+        "label": "국내 대표지수",
+        "cells": [
+          {
+            "code": "997510",
+            "name": "합성 코스피200",
+            "etf_type": "kr_index",
+            "theme": "시장대표",
+            "net_asset": 132924708873,
+            "ret_pct": -4.9647,
+            "leveraged": false,
+            "new_listing": false
+          }
+        ]
+      }
+    ]
+  }
+}

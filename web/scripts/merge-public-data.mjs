@@ -14,6 +14,9 @@
 //   data.xlsx_sha256 과 같아야 한다.
 // - DART 전용 파일(P4 공시 목록·corp_index·하위 폴더 전부): 모든 source 가 정확히 'DART', 관심종목 흔적(이름에 watch 가 든
 //   키·'prv_' 글자) 0(§7 — 공개 파일에 관심종목 표식을 넣지 않는다).
+// - P5 공개 파일(docs/p5_design.md §7): 하위 폴더 macro/<이름>.json(소문자 이름, 파일 자체가 봉투)과
+//   평평한 credit.json. 원천이 공개 출처 여럿이라 DART 전용이 아니고(폴더 source 는 원천들을 쉼표로 이은 것), 관심종목 흔적·'prv_'
+//   글자는 여기서도 0. 크기 상한 DIR_CAPS(폴더 합계)·FILE_CAPS(파일 하나) — 넘으면 실패(자르지 않는다).
 // - manifest 에 없는 파일·폴더는 복사하지 않고 목록만 알린다.
 // 규칙은 파이썬 kbj/services/public_export/manifest.py 와 같게 둔다(tests/unit/public_export/test_manifest.py 가 대조).
 import { createHash } from 'node:crypto';
@@ -22,8 +25,10 @@ import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 export const NAME_RE = /^[a-z0-9_]+\.json$/;
-export const SUBDIRS = ['fin', 'reports'];
-export const SUBDIR_JSON_RE = /^(fin|reports)\/[0-9A-Z]{6}\.json$/;
+export const SUBDIRS = ['fin', 'reports', 'macro'];
+/** P4 하위 폴더 — 원천이 DART 하나(manifest.py DART_SUBDIRS) */
+export const DART_SUBDIRS = ['fin', 'reports'];
+export const SUBDIR_JSON_RE = /^(?:(fin|reports)\/[0-9A-Z]{6}|(macro)\/[a-z0-9_]+)\.json$/;
 export const SUBDIR_XLSX_RE = /^reports\/[0-9A-Z]{6}\.xlsx$/;
 /** P4 공시·재무 목록 파일 — 원천이 DART 하나(manifest.py DART_ONLY_NAMES 와 같은 목록) */
 export const DART_ONLY = new Set([
@@ -34,6 +39,12 @@ export const DART_ONLY = new Set([
   'earnings_schedule.json',
   'corp_index.json',
 ]);
+/** P5 평평한 공개 파일 — 관심종목 흔적·로그인 스키마 이름 검사를 받는다(manifest.py P5_FLAT_NAMES) */
+export const P5_FLAT_NAMES = new Set(['credit.json']);
+const KB = 1024;
+/** P5 크기 상한(바이트, p5_design §7 [제안]) — manifest.py DIR_CAPS·FILE_CAPS 와 같다 */
+export const DIR_CAPS = { macro: 3 * KB * KB };
+export const FILE_CAPS = { 'credit.json': 100 * KB, 'macro/calendar.json': 200 * KB };
 export const QUALITIES = ['ok', 'stale', 'estimated', 'invalid'];
 const AWARE_ISO = /^\d{4}-\d{2}-\d{2}T[\d:.]+(Z|[+-]\d{2}:?\d{2})$/;
 /** 로그인 등급 출처 이름(DATA_TIERS §1) — source 문자열에 단어로 나오면 안 된다 */
@@ -154,15 +165,26 @@ function fileName(name) {
   return name.endsWith('.json') ? name : `${name}.json`;
 }
 
-/** DART 전용 파일 검사(원천 DART 하나·관심종목 흔적·로그인 스키마 이름). */
-function dartOnlyProblems(name, text, parsed) {
+/** 관심종목 흔적·로그인 스키마 이름 검사(DART 전용 파일·하위 폴더 전부·P5 평평한 파일). */
+function traceProblems(name, text, parsed) {
   const out = [];
-  const nd = nonDartSourcePaths(parsed);
-  if (nd.length) out.push(`${name}: source 가 DART 가 아님(${nd.slice(0, 3).join(', ')})`);
   const w = watchTracePaths(parsed);
   if (w.length) out.push(`${name}: 관심종목 흔적 키(${w.slice(0, 3).join(', ')})`);
   if (text.includes('prv_')) out.push(`${name}: 로그인 등급 스키마 이름('prv_' 규칙)`);
   return out;
+}
+
+/** DART 전용 파일 검사(원천 DART 하나 + 관심종목 흔적·로그인 스키마 이름). */
+function dartOnlyProblems(name, text, parsed) {
+  const out = [];
+  const nd = nonDartSourcePaths(parsed);
+  if (nd.length) out.push(`${name}: source 가 DART 가 아님(${nd.slice(0, 3).join(', ')})`);
+  return [...out, ...traceProblems(name, text, parsed)];
+}
+
+function sizeProblem(name, bytes) {
+  const cap = FILE_CAPS[name];
+  return cap !== undefined && bytes > cap ? [`${name}: 크기 상한을 넘는다`] : [];
 }
 
 /** 하위 폴더 JSON 한 파일(봉투) 검사 — 문제 목록과 (reports 면) 짝 엑셀 해시. */
@@ -182,7 +204,8 @@ function checkSubdirJson(p, data) {
   if (!('data' in env)) errors.push(`${p}: data 없음`);
   const bad = loginSourcePaths(env);
   if (bad.length) errors.push(`${p}: source 에 로그인 등급 출처 이름(${bad.slice(0, 3).join(', ')})`);
-  errors.push(...dartOnlyProblems(p, text, env));
+  const dartDir = DART_SUBDIRS.includes(p.split('/')[0]);
+  errors.push(...(dartDir ? dartOnlyProblems(p, text, env) : traceProblems(p, text, env)));
   const claim = env.data && typeof env.data === 'object' ? env.data.xlsx_sha256 : undefined;
   return { errors, claim: typeof claim === 'string' ? claim : null };
 }
@@ -206,6 +229,7 @@ function planDir(entry, files) {
     const body = bytesOf(files[p]);
     bytes += body.length;
     hashes.push([p, sha256(body)]);
+    errors.push(...sizeProblem(p, body.length));
     if (p.endsWith('.xlsx')) continue;
     const r = checkSubdirJson(p, files[p]);
     errors.push(...r.errors);
@@ -222,7 +246,11 @@ function planDir(entry, files) {
   if (entry.count !== ok.length) errors.push(`${name}/: manifest 개수와 다름`);
   if (entry.bytes !== bytes) errors.push(`${name}/: manifest 합계 크기와 다름`);
   if (entry.digest !== dirDigest(hashes)) errors.push(`${name}/: manifest 요약 해시와 다름`);
-  if (entry.source !== 'DART') errors.push(`${name}/: source 가 DART 가 아님`);
+  if (DIR_CAPS[name] !== undefined && bytes > DIR_CAPS[name]) errors.push(`${name}/: 합계 크기 상한을 넘는다`);
+  if (DART_SUBDIRS.includes(name)) {
+    if (entry.source !== 'DART') errors.push(`${name}/: source 가 DART 가 아님`);
+  } else if (typeof entry.source !== 'string' || !entry.source) errors.push(`${name}/: source 없음`);
+  else if (LOGIN_SOURCES.test(entry.source)) errors.push(`${name}/: 로그인 등급 출처 이름이 source 에 있음`);
   if (typeof entry.as_of !== 'string' || !AWARE_ISO.test(entry.as_of)) errors.push(`${name}/: as_of 없음·시간대 없음`);
   if (!QUALITIES.includes(entry.quality)) errors.push(`${name}/: quality 없음·모르는 값`);
   return { copy: ok, errors };
@@ -269,6 +297,8 @@ export function planMerge(manifest, files) {
     const bad = loginSourcePaths(parsed);
     if (bad.length) errors.push(`${name}: source 에 로그인 등급 출처 이름(${bad.slice(0, 3).join(', ')})`);
     if (DART_ONLY.has(name)) errors.push(...dartOnlyProblems(name, text, parsed));
+    else if (P5_FLAT_NAMES.has(name)) errors.push(...traceProblems(name, text, parsed));
+    errors.push(...sizeProblem(name, bytesOf(files[name]).length));
     copy.push(name);
   }
   const seen = new Set();
@@ -288,7 +318,7 @@ export function planMerge(manifest, files) {
 }
 
 /**
- * 데이터 디렉터리 → { 경로: 글자(.json)·바이트(그 밖) } — 평평한 *.json + 하위 폴더(fin·reports)의 파일.
+ * 데이터 디렉터리 → { 경로: 글자(.json)·바이트(그 밖) } — 평평한 *.json + 하위 폴더(SUBDIRS)의 파일.
  * @param {string} srcAbs
  */
 export function readDataDir(srcAbs) {

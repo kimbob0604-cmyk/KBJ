@@ -12,6 +12,7 @@ from dataclasses import dataclass, field, replace
 from datetime import date, datetime
 from typing import Any
 
+from kbj.core.p5_rows import EtfHolder, InvestorMinute, UsArtifact
 from kbj.core.quality import Quality
 from kbj.core.rows import (
     AllTime,
@@ -43,16 +44,27 @@ from kbj.core.rows import (
 )
 from kbj.store.repos._common import require_aware, require_loaded_by, window_start
 from kbj.store.repos.consensus import MemoryConsensusRepo
-from kbj.store.repos.etf import best_etf_days, check_changes, check_holdings
+from kbj.store.repos.etf import (
+    best_etf_days,
+    check_changes,
+    check_holdings,
+    holder_order,
+    holder_row,
+    resolve_fund,
+)
 from kbj.store.repos.filings import MemoryFilingsRepo
 from kbj.store.repos.fin import MemoryFinRepo
 from kbj.store.repos.flows import (
     RevisionReport,
     StoredInvestorDay,
     best_investor_days,
+    check_minutes,
+    minute_order,
     plan_investor_upsert,
 )
 from kbj.store.repos.journal import MemoryJournalRepo
+from kbj.store.repos.macro import MemoryMacroPublicRepo
+from kbj.store.repos.macro_prv import MemoryMacroPrivateRepo
 from kbj.store.repos.market import (
     Asset,
     best_universe,
@@ -60,7 +72,10 @@ from kbj.store.repos.market import (
     snap_extra,
     snap_rank,
 )
+from kbj.store.repos.market_stats import MemoryMarketStatsRepo
+from kbj.store.repos.program import MemoryProgramRepo
 from kbj.store.repos.public import MemoryPublicRepos
+from kbj.store.repos.us import MemoryUsRepo
 
 
 @dataclass
@@ -299,6 +314,31 @@ class MemoryFlowsRepo:
         self.intraday_rows: dict[tuple[str, datetime, str, str], Stored[IntradayInvestor]] = {}
         self.revision_rows: dict[tuple[str, date, str, str], Revision] = {}
         self.check_rows: dict[tuple[str, date, str, str], LedgerCheck] = {}
+        # P5(F2) prv_gex.investor_flow — (ts, 시장, 업종, 투자자) → 행
+        self.minute_rows: dict[tuple[datetime, str, str, str], InvestorMinute] = {}
+
+    def put_investor_minutes(self, rows: Sequence[InvestorMinute], *, loaded_by: str) -> int:
+        check_minutes(rows, loaded_by)
+        for r in rows:
+            self.minute_rows[(r.ts, r.market_code, r.sector_code, r.investor)] = r
+        return len(rows)
+
+    def investor_minutes(
+        self,
+        trade_date: date,
+        pairs: Collection[tuple[str, str]] | None = None,
+        *,
+        session: str = "day",
+    ) -> list[InvestorMinute]:
+        wanted = None if pairs is None else set(pairs)
+        got = [
+            r
+            for r in self.minute_rows.values()
+            if r.trade_date == trade_date
+            and r.session == session
+            and (wanted is None or (r.market_code, r.sector_code) in wanted)
+        ]
+        return sorted(got, key=minute_order)
 
     @staticmethod
     def _key(r: InvestorDay) -> tuple[str, date, str, str, str]:
@@ -424,6 +464,21 @@ class MemoryBoardRepo:
         self.stock_day_rows: dict[tuple[str, date], StockDay] = {}
         self.artifact_rows: dict[tuple[date, str], BoardArtifact] = {}
         self.split_rows: dict[str, SplitCheck] = {}
+        # P5 — 미국 보드 산출(market='US') (미국 거래일, 이름) → 행
+        self.us_artifact_rows: dict[tuple[date, str], UsArtifact] = {}
+
+    def put_us_artifacts(self, rows: Sequence[UsArtifact], *, loaded_by: str) -> int:
+        require_loaded_by(loaded_by)
+        for a in rows:
+            self.us_artifact_rows[(a.trade_date, a.name)] = a
+        return len(rows)
+
+    def us_artifact(self, asof: date, name: str) -> UsArtifact | None:
+        return self.us_artifact_rows.get((asof, name))
+
+    def us_last_day(self, upto: date) -> date | None:
+        days = [d for d, _ in self.us_artifact_rows if d <= upto]
+        return max(days) if days else None
 
     def alltime(self, codes: Collection[str] | None = None) -> dict[str, AllTime]:
         wanted = None if codes is None else set(codes)
@@ -623,6 +678,28 @@ class MemoryEtfRepo:
         days = [d for d in self.change_rows if d <= upto]
         return max(days) if days else None
 
+    def holdings_of(self, fund_or_etf: str, asof: date) -> list[EtfHolder]:
+        fid = resolve_fund(self.fund_rows, fund_or_etf)
+        days = [d for f, d in self.holding_rows if f == fid and d <= asof]
+        if not days:
+            return []
+        day = max(days)
+        fund = self.fund_rows.get(fid)
+        rows = self.holding_rows[(fid, day)].values()
+        return sorted((holder_row(fid, fund, day, h) for h in rows), key=holder_order)
+
+    def holders_of(self, code: str, asof: date) -> list[EtfHolder]:
+        latest: dict[str, date] = {}
+        for f, d in self.holding_rows:
+            if d <= asof and (f not in latest or d > latest[f]):
+                latest[f] = d
+        out = [
+            holder_row(f, self.fund_rows.get(f), d, self.holding_rows[(f, d)][code])
+            for f, d in latest.items()
+            if code in self.holding_rows[(f, d)]
+        ]
+        return sorted(out, key=holder_order)
+
 
 @dataclass
 class MemoryRepos:
@@ -638,11 +715,21 @@ class MemoryRepos:
     fin: MemoryFinRepo = field(default_factory=MemoryFinRepo)
     consensus: MemoryConsensusRepo = field(default_factory=MemoryConsensusRepo)
     journal: MemoryJournalRepo = field(default_factory=MemoryJournalRepo)
+    # P5(묶음 FND — docs/p5_design.md §1.1). 공개(macro·market_stats)·로그인(macro_prv·us·
+    # program)을 모듈로 나눴다(계약 ⑭)
+    macro: MemoryMacroPublicRepo = field(default_factory=MemoryMacroPublicRepo)
+    macro_prv: MemoryMacroPrivateRepo = field(default_factory=MemoryMacroPrivateRepo)
+    market_stats: MemoryMarketStatsRepo = field(default_factory=MemoryMarketStatsRepo)
+    us: MemoryUsRepo = field(default_factory=MemoryUsRepo)
+    program: MemoryProgramRepo = field(default_factory=MemoryProgramRepo)
 
     def public(self) -> MemoryPublicRepos:
-        """같은 filings·fin 객체를 공개 작업 묶음으로(공개·로그인 처리기가 같은 메모리 표를
-        본다)."""
-        return MemoryPublicRepos(filings=self.filings, fin=self.fin)
+        """같은 공개 저장소 객체(filings·fin·macro·market_stats)를 공개 작업 묶음으로
+        (공개·로그인 처리기가 같은 메모리 표를 본다)."""
+        return MemoryPublicRepos(
+            filings=self.filings, fin=self.fin, macro=self.macro,
+            market_stats=self.market_stats,
+        )  # fmt: skip
 
 
 def memory_repos() -> MemoryRepos:

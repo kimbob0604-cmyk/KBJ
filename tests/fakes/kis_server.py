@@ -23,6 +23,12 @@ GEX 체인·분봉 세부(전광판 행사가·야간 시각 표기)는 P7 승�
   `consensus_rows`·`opinion_rows`)를 주면 세계 종목은 그 값을 TR 출력으로 바꿔 싣고(커버 없는 종목은
   빈 출력), 세계 밖 종목(시뮬레이션의 `SYMBOLS`)은 고정 시드 합성 값을 준다(`estimate_body`·
   `opinion_body` — tests/unit/fakes/test_kis_server_p4.py).
+- **P5 F2(장중 투자자 1분·프로그램매매)**: FHPTJ04030000·FHPPG04600001·FHPPG04600101·HHPPG046600C1·
+  FHPPG04650101·FHPPG04650201(경로·칸 이름은 파서 표
+  `kbj.data.private.kis.{investors_minute,program}`
+  — 전부 [확인 필요 #39~#41]). 값은 고정 시드 + **그날 09:00 부터 지난 분 수**(`f2_output`) — 1분
+  수집이 부를 때마다 누적이 늘어난다. 검산 ①②④ 가 정확히 맞고, 09:00 전은 값이 모두 0(장전),
+  15:30 뒤는 마지막 누적 그대로(tests/unit/fakes/test_kis_server_p5.py).
 - **오류 주입** `inject(msg_cd, count=1, *, start=None, until=None, tr_id=None, consumers=None)`:
   `EGW00201`(초당 한도)·`EGW00123`(토큰 거절)·`EGW00133`(발급 1분 1회 — POST)·`HTTP500`. 시각은 가짜
   시계 기준, consumers 를 주면 그 프로세스의 요청만.
@@ -36,6 +42,7 @@ GEX 체인·분봉 세부(전광판 행사가·야간 시각 표기)는 P7 승�
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import io
 import json
@@ -53,6 +60,7 @@ from pydantic import SecretStr
 from redis import Redis
 
 from kbj.core.fin_rows import ConsensusRow, OpinionRow
+from kbj.core.p5_rows import MINUTE_INVESTORS
 from kbj.data.private.kis.consensus import (
     AMOUNT_UNIT_KRW,
     COLUMNS,
@@ -70,7 +78,14 @@ from kbj.data.private.kis.consensus import (
 )
 from kbj.data.private.kis.credentials import KisCredentials
 from kbj.data.private.kis.datasets import CONSENSUS_TRS
+from kbj.data.private.kis.investors_minute import TR_MARKET_MINUTE
+from kbj.data.private.kis.investors_minute import field_names as minute_field_names
 from kbj.data.private.kis.master import FO_MASTER_FILE
+from kbj.data.private.kis.program import INVESTOR_CODES as PROGRAM_INVESTOR_CODES
+from kbj.data.private.kis.program import PROGRAM_TRS
+from kbj.data.private.kis.program import investor_field as program_investor_field
+from kbj.data.private.kis.program import market_field as program_market_field
+from kbj.data.private.kis.program import stock_field as program_stock_field
 from kbj.data.private.kis.rest import MINUTE_PATH, MINUTE_TR, KisRestClient
 from kbj.data.private.kis.token import reader
 from kbj.data.ratelimit import Clock, RedisRateLimiter
@@ -105,8 +120,12 @@ TRS: Final[dict[str, str]] = {
     # 경로는 kbj.data.private.kis.parse.PATHS 와 같아야 한다(tests/unit/fakes 가 본다)
     "FHPUP02100000": "/uapi/domestic-stock/v1/quotations/inquire-index-price",
     "FHPUP02140000": "/uapi/domestic-stock/v1/quotations/inquire-index-category-price",
+    # P5 F2 프로그램매매(묶음 F2 — 경로는 파서 표 kbj.data.private.kis.program.PROGRAM_TRS)
+    **{spec.tr_id: spec.path for spec in PROGRAM_TRS.values()},
 }
 
+# 본문 없는 오류 주입(ERRORS 밖) — HTTP500·HTTP429(P5 F2)·TIMEOUT(P5 F2 — httpx.ReadTimeout)
+INJECT_PLAIN: Final = frozenset({"HTTP500", "HTTP429", "TIMEOUT"})
 OK_MSG: Final = {"rt_cd": "0", "msg_cd": "MCA00000", "msg1": "정상처리 되었습니다."}
 ERRORS: Final[dict[str, tuple[int, dict[str, str]]]] = {
     "EGW00201": (
@@ -526,6 +545,228 @@ def synthetic_output(
     return {**OK_MSG, "output": rows}
 
 
+# ── P5 F2 — 장중 투자자 1분·프로그램매매 TR(묶음 F2 — 이 절만 F2 가 고친다) ───────────────────────
+# TR id·경로·칸 이름은 파서 모듈(`kbj.data.private.kis.{investors_minute,program}`)의 표를 import
+# 한다
+# (문자열을 다시 쓰지 않는다 — 칸·단위는 그 표와 같이 [확인 필요 #39~#41]). 값은 (TR, 파라미터,
+# 날짜)
+# 고정 시드 + **그날 09:00 부터 지난 분 수**로 정해진다 — 1분 수집이 부를 때마다 누적이 늘어난다
+# (분 이력이 아니라 '오늘 누적 한 줄' TR 흉내). 검산 ①(현물 합 0 — 모든 조합에 같이 심는다)·②(기관 =
+# 7세부 합)·④(전체 = 차익 + 비차익, 합계 = 위탁 + 자기)가 정확히 맞게 만든다. 09:00 전(장전)은 값이
+# 모두 0(파서가 공표 전으로 본다), 15:30 뒤는 마지막 누적 그대로.
+F2_OPEN_MIN: Final = 9 * 60
+F2_SESSION_MIN: Final = 391  # 09:00~15:30
+F2_TR_IDS: Final = frozenset(
+    {TR_MARKET_MINUTE.tr_id, *(spec.tr_id for spec in PROGRAM_TRS.values())}
+)
+_ORGN7: Final = ("scrt", "ivtr", "pe_fund", "bank", "insu", "mrbn", "fund")
+
+
+def f2_minute_index(hhmm: str) -> int:
+    """HHMM → 그날 누적에 든 분 수(09:00 = 1분째, 장전 0, 15:30 뒤 391)."""
+    if not hhmm:
+        return F2_SESSION_MIN
+    k = int(hhmm[:2]) * 60 + int(hhmm[2:4]) - F2_OPEN_MIN + 1
+    return max(0, min(F2_SESSION_MIN, k))
+
+
+def _investor_increments(seed: int, i: int) -> dict[str, tuple[int, int, int, int]]:
+    """i 번째 분의 증가분(매도 대금·매수 대금(백만원)·매도·매수 수량) — 검산 ①② 가 맞게."""
+    inc: dict[str, tuple[int, int, int, int]] = {}
+    for j, inv in enumerate((*_ORGN7, "frgn", "etc_corp", "etc_orgt")):
+        s = _seed(seed, i, j)
+        sv, bv = _num(s, 0, 400), _num(s >> 9, 0, 400)
+        inc[inv] = (sv, bv, sv * 10, bv * 10)
+    inc["orgn"] = tuple(sum(inc[x][k] for x in _ORGN7) for k in range(4))  # type: ignore[assignment]
+    rest = ("frgn", "orgn", "etc_corp", "etc_orgt")
+    net = sum(inc[x][1] - inc[x][0] for x in rest)
+    qty = sum(inc[x][3] - inc[x][2] for x in rest)
+    ps = _num(_seed(seed, i, "prsn"), 200, 800) + max(0, net)
+    inc["prsn"] = (ps, ps - net, ps * 10, ps * 10 - qty)
+    return inc
+
+
+@functools.lru_cache(maxsize=64)
+def _investor_cum_table(seed: int) -> tuple[dict[str, tuple[int, int, int, int]], ...]:
+    """k = 0..391 분 누적표(한 조합·하루) — 매분 부를 때 다시 더하지 않게 한 번만 만든다."""
+    cum = {inv: (0, 0, 0, 0) for inv in MINUTE_INVESTORS}
+    out = [dict(cum)]
+    for i in range(F2_SESSION_MIN):
+        for inv, inc in _investor_increments(seed, i).items():
+            c = cum[inv]
+            cum[inv] = (c[0] + inc[0], c[1] + inc[1], c[2] + inc[2], c[3] + inc[3])
+        out.append(dict(cum))
+    return tuple(out)
+
+
+def investor_minute_row(params: dict[str, str], day: str, k: int) -> dict[str, Any]:
+    """FHPTJ04030000 한 줄 — k 분까지의 누적(백만원·계약). k = 0 이면 모두 '0'."""
+    seed = _seed(
+        "F2-minute", params.get("FID_INPUT_ISCD", ""), params.get("FID_INPUT_ISCD_2", ""), day
+    )
+    cum = _investor_cum_table(seed)[k]
+    row: dict[str, Any] = {}
+    for inv in MINUTE_INVESTORS:
+        sv, bv, sq, bq = cum[inv]
+        names = minute_field_names(inv)
+        net_qty_name = names["net_qty"][1 if inv in ("pe_fund", "etc_orgt", "etc_corp") else 0]
+        row[names["sell_value"][0]] = str(sv)
+        row[names["buy_value"][0]] = str(bv)
+        row[names["net_value"][0]] = str(bv - sv)
+        row[names["sell_qty"][0]] = str(sq)
+        row[names["buy_qty"][0]] = str(bq)
+        row[net_qty_name] = str(bq - sq)
+    return row
+
+
+def _program_group(
+    seed: int, k: int, scale: int
+) -> dict[tuple[str, str], tuple[int, int, int, int]]:
+    """(kind, side) → (매도 수량, 매수 수량, 매도 대금, 매수 대금) — 검산 ④ 가 맞게.
+    k = 0 이면 0."""
+    base: dict[tuple[str, str], tuple[int, int, int, int]] = {}
+    for kind in ("arbt", "nabt"):
+        for side in ("entm", "onsl"):
+            s = _seed(seed, kind, side)
+            sv = _num(s, 0, scale) * k
+            bv = _num(s >> 11, 0, scale) * k
+            base[(kind, side)] = (sv // 10, bv // 10, sv, bv)
+    for kind in ("arbt", "nabt"):
+        e, o = base[(kind, "entm")], base[(kind, "onsl")]
+        base[(kind, "smtn")] = tuple(a + b for a, b in zip(e, o, strict=True))  # type: ignore[assignment]
+    for side in ("entm", "onsl", "smtn"):
+        a, n = base[("arbt", side)], base[("nabt", side)]
+        base[("whol", side)] = tuple(x + y for x, y in zip(a, n, strict=True))  # type: ignore[assignment]
+    return base
+
+
+def _program_fields(g: dict[tuple[str, str], tuple[int, int, int, int]]) -> dict[str, str]:
+    out: dict[str, str] = {}
+    for (kind, side), (sq, bq, sv, bv) in g.items():
+        out[program_market_field(kind, side, "sell_qty")[0]] = str(sq)
+        out[program_market_field(kind, side, "buy_qty")[0]] = str(bq)
+        out[program_market_field(kind, side, "net_qty")[0]] = str(bq - sq)
+        out[program_market_field(kind, side, "sell_value")[0]] = str(sv)
+        out[program_market_field(kind, side, "buy_value")[0]] = str(bv)
+        out[program_market_field(kind, side, "net_value")[0]] = str(bv - sv)
+    return out
+
+
+def _weekdays_back(end: str, start: str) -> list[str]:
+    d = datetime.strptime(end, "%Y%m%d").replace(tzinfo=KST)
+    lo = datetime.strptime(start, "%Y%m%d").replace(tzinfo=KST)
+    out: list[str] = []
+    while d >= lo:
+        if d.weekday() < 5:
+            out.append(d.strftime("%Y%m%d"))
+        d -= timedelta(days=1)
+    return out
+
+
+def _hhmmss(k: int) -> str:
+    t = F2_OPEN_MIN + max(k, 1) - 1
+    return f"{t // 60:02d}{t % 60:02d}00"
+
+
+def _stock_fields(seed: int, k: int, price: int) -> dict[str, str]:
+    sq = _num(seed, 0, 3_000) * k
+    bq = _num(seed >> 13, 0, 3_000) * k
+    return {
+        program_stock_field("sell_qty")[0]: str(sq),
+        program_stock_field("buy_qty")[0]: str(bq),
+        program_stock_field("net_qty")[0]: str(bq - sq),
+        program_stock_field("sell_value")[0]: str(sq * price),
+        program_stock_field("buy_value")[0]: str(bq * price),
+        program_stock_field("net_value")[0]: str((bq - sq) * price),
+    }
+
+
+INVESTOR_TODAY_CODES: Final = tuple(
+    PROGRAM_INVESTOR_CODES
+)  # 합성 응답에 싣는 구분 코드(파서 표 순서)
+
+
+def f2_output(tr_id: str, params: dict[str, str], day: str, hhmm: str = "") -> dict[str, Any]:
+    """F2 TR 의 합성 응답(정상). hhmm = 지금 KST 분(장중 누적의 기준 — 비면 마감 뒤)."""
+    k = f2_minute_index(hhmm)
+    if tr_id == TR_MARKET_MINUTE.tr_id:
+        return {**OK_MSG, "output": [investor_minute_row(params, day, k)]}
+    market = params.get("FID_MRKT_CLS_CODE", "") or params.get("MRKT_DIV_CLS_CODE", "")
+    venue = params.get("FID_COND_MRKT_DIV_CODE", "") or params.get("EXCH_DIV_CLS_CODE", "")
+    if tr_id == PROGRAM_TRS["program_market_daily"].tr_id:
+        start = params.get("FID_INPUT_DATE_1", day)
+        end = params.get("FID_INPUT_DATE_2", day)
+        rows = []
+        for d in _weekdays_back(end, start):
+            seed = _seed("F2-pgm-day", market, venue, d)
+            rows.append(
+                {
+                    "stck_bsop_date": d,
+                    "bstp_nmix_prpr": f"{2_000 + _num(seed, 0, 80_000) / 100:.2f}",
+                    **_program_fields(_program_group(seed, F2_SESSION_MIN, 900)),
+                }
+            )
+        return {**OK_MSG, "output": rows}
+    if tr_id == PROGRAM_TRS["program_market_intraday"].tr_id:
+        seed = _seed("F2-pgm-min", market, venue, day)
+        rows = [
+            {"bsop_hour": _hhmmss(j), **_program_fields(_program_group(seed, j, 900))}
+            for j in range(k, max(k - 3, 0), -1)
+        ] or [{"bsop_hour": _hhmmss(0), **_program_fields(_program_group(seed, 0, 900))}]
+        return {**OK_MSG, "output": rows}
+    if tr_id == PROGRAM_TRS["program_investor_today"].tr_id:
+        rows = []
+        for code in INVESTOR_TODAY_CODES:
+            seed = _seed("F2-pgm-inv", market, venue, day, code)
+            parts: dict[str, tuple[int, int]] = {}
+            for kind in ("arbt", "nabt"):
+                s = _seed(seed, kind)
+                parts[kind] = (_num(s, 0, 900) * k, _num(s >> 7, 0, 900) * k)
+            parts["whol"] = (
+                parts["arbt"][0] + parts["nabt"][0],
+                parts["arbt"][1] + parts["nabt"][1],
+            )
+            row: dict[str, Any] = {"invr_cls_code": code}
+            for kind, (sv, bv) in parts.items():
+                row[program_investor_field(kind, "sell_qty")[0]] = str(sv // 10)
+                row[program_investor_field(kind, "buy_qty")[0]] = str(bv // 10)
+                row[program_investor_field(kind, "net_qty")[0]] = str(bv // 10 - sv // 10)
+                row[program_investor_field(kind, "sell_value")[0]] = str(sv)
+                row[program_investor_field(kind, "buy_value")[0]] = str(bv)
+                row[program_investor_field(kind, "net_value")[0]] = str(bv - sv)
+            rows.append(row)
+        return {**OK_MSG, "output": rows}
+    code = params.get("FID_INPUT_ISCD", "")
+    if tr_id == PROGRAM_TRS["program_stock_intraday"].tr_id:
+        seed = _seed("F2-pgm-stock", code, venue, day)
+        price = _num(seed >> 21, 5_000, 300_000)
+        chg = f"{(_num(seed >> 29, 0, 600) - 300) / 100:.2f}"
+        rows = [
+            {"bsop_hour": _hhmmss(j), "stck_prpr": str(price), "prdy_ctrt": chg,
+             **_stock_fields(seed, j, price)}
+            for j in range(k, max(k - 3, 0), -1)
+        ]  # fmt: skip
+        if not rows:  # 장전 — 누적 0
+            rows = [{"bsop_hour": _hhmmss(0), "stck_prpr": str(price), "prdy_ctrt": "0.00",
+                     **_stock_fields(seed, 0, price)}]  # fmt: skip
+        return {**OK_MSG, "output": rows}
+    if tr_id == PROGRAM_TRS["program_stock_daily"].tr_id:
+        end = params.get("FID_INPUT_DATE_1", day)
+        rows = []
+        for d in _days_back(end, 5):
+            if datetime.strptime(d, "%Y%m%d").replace(tzinfo=KST).weekday() >= 5:
+                continue
+            seed = _seed("F2-pgm-stock-day", code, venue, d)
+            price = _num(seed >> 21, 5_000, 300_000)
+            rows.append(
+                {"stck_bsop_date": d, "stck_clpr": str(price),
+                 "prdy_ctrt": f"{(_num(seed >> 29, 0, 600) - 300) / 100:.2f}",
+                 **_stock_fields(seed, F2_SESSION_MIN, price)}
+            )  # fmt: skip
+        return {**OK_MSG, "output": rows}
+    raise ValueError(f"F2 TR 이 아니다: {tr_id}")
+
+
 def master_zip() -> bytes:
     """합성 마스터 줄로 만든 배포 zip(안에 `.mst` 한 개, cp949)."""
     lines = json.loads((FIX / "master_lines.json").read_text(encoding="utf-8"))["lines"]
@@ -587,8 +828,9 @@ class FakeKisServer:
         tr_id: str | None = None,
         consumers: Iterable[str] | None = None,
     ) -> None:
-        """다음 해당 요청 count 번에 오류를 준다(`EGW00201`·`EGW00123`·`EGW00133`·`HTTP500`)."""
-        if code not in ERRORS and code != "HTTP500":
+        """다음 해당 요청 count 번에 오류를 준다(`EGW00201`·`EGW00123`·`EGW00133`·`HTTP500`·
+        `HTTP429`·`TIMEOUT` — 뒤 둘은 P5 F2: 본문 없는 429·`httpx.ReadTimeout`)."""
+        if code not in ERRORS and code not in INJECT_PLAIN:
             raise ValueError(f"모르는 오류 주입: {code}")
         who = frozenset(consumers) if consumers is not None else None
         with self._lock:
@@ -705,6 +947,12 @@ class FakeKisServer:
         if rule == "HTTP500":
             self._record(consumer, req, tr_id, bearer, 500, "HTTP500")
             return httpx.Response(500, text="Internal Server Error")
+        if rule == "HTTP429":  # P5 F2 — 게이트웨이 한도(본문 없음)
+            self._record(consumer, req, tr_id, bearer, 429, "HTTP429")
+            return httpx.Response(429, text="Too Many Requests")
+        if rule == "TIMEOUT":  # P5 F2 — 응답 없음(호출 쪽 시간 초과)
+            self._record(consumer, req, tr_id, bearer, 0, "TIMEOUT")
+            raise httpx.ReadTimeout("가짜 KIS 응답 시간 초과", request=req)
         if rule is not None:
             status, err = ERRORS[rule]
             return reply(status, err, rule)
@@ -716,6 +964,8 @@ class FakeKisServer:
         # 장중 TR 은 10분 슬롯마다 값이 바뀐다
         slot = f"{local:%H}{local.minute - local.minute % 10:02d}"
         params = {k: v for k, v in req.url.params.items()}
+        if tr_id in F2_TR_IDS:  # P5 F2 — 1분마다 누적이 늘어난다(지금 분 기준)
+            return reply(200, f2_output(tr_id, params, day, f"{local:%H%M}"))
         if tr_id in CONSENSUS_TR_IDS:
             return reply(200, consensus_output(tr_id, params, day, self.consensus))
         return reply(200, synthetic_output(tr_id, params, day, slot))

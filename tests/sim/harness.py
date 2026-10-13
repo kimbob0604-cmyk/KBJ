@@ -53,6 +53,16 @@ P4 확장(docs/p4_design.md §8.5 — 묶음 S): `SimOptions(p4=True)` 면 가�
 처리기는 `test_one_day_p3`)라 시세는 씨앗 값을 읽는다. 공개 내보내기의 P4 표 읽기는 자원
 `public_reader` (메모리 읽기 — `tests/unit/public_export/pub_rows.MemReader`)로 준다.
 
+P5 확장(docs/p5_design.md §1.8-3·§8.4 — 웨이브 3 WRAP): `SimOptions(p5=True)` 면 합성 P5
+세계(`tests/fixtures/synthetic/p5_world.py`)를 창 앞 저장소에 싣고(매크로·금투협·ETF 구성·
+미국 유니버스·일봉), 등록부에서 **켜진 P5 작업**(+ `enable` 로 이 사본에서만 켠 꺼진 P5
+작업 — `macro.*`·`program.*`·`market.fsc_daily`·`market_stats.kofia`)과 `public.export` 는
+실제 처리기가 돈다. P5 새 출처는 가짜 서버(FRED·미 재무부·뉴욕연은·ForexFactory·Yahoo·
+Nasdaq·Stooq — `tests/fakes/*_server.py`)에 물린 실제 어댑터로 부른다(리미터는 StubLimiter —
+KIS 버킷은 따로 그대로 센다). F2 KIS TR 은 가짜 KIS 가 합성으로 답한다. P3·P4 작업은
+시뮬레이션 처리기(P3 실제 처리기는 test_one_day_p3, P4 는 test_one_day_p4). p5 가 아닌 창의
+시뮬레이션 처리기 경로에서 P5 새 출처는 여전히 부른 것만 기록한다(`OFFLINE_SOURCES`).
+
 키·토큰은 모두 가짜 값이다. 로그인 등급 응답은 합성(U3).
 """
 
@@ -79,6 +89,7 @@ from redis import Redis
 from redis.exceptions import RedisError
 
 from kbj.config.fin import load_fin
+from kbj.config.macro import load_macro
 from kbj.config.markets import MarketsConfig, load_markets
 from kbj.config.settings import Settings
 from kbj.core.calendar import (
@@ -94,6 +105,7 @@ from kbj.core.calendar import (
     night_session_opens,
     us_calendar,
 )
+from kbj.core.fin_rows import WatchItem
 from kbj.data import legacy_bridge
 from kbj.data.budget import DailyBudget, krx_budget
 from kbj.data.catalog import all_datasets
@@ -102,6 +114,8 @@ from kbj.data.limits import Limits, load_limits
 from kbj.data.private.ecos_restricted import EcosRestrictedClient, require_restricted
 from kbj.data.private.etf_issuers.base import IssuerHttp
 from kbj.data.private.etf_issuers.registry import build as build_issuers
+from kbj.data.private.forexfactory import FfClient
+from kbj.data.private.fred_restricted import FredRestrictedClient
 from kbj.data.private.fsc_index_price.client import FscIndexPriceClient
 from kbj.data.private.fsc_stock_price.client import FscStockPriceClient
 from kbj.data.private.kis.consensus import (
@@ -111,18 +125,28 @@ from kbj.data.private.kis.consensus import (
     params_opinion,
 )
 from kbj.data.private.kis.credentials import KisCredentials
+from kbj.data.private.kis.investors_minute import TR_MARKET_MINUTE, params_market_minute
 from kbj.data.private.kis.master import download_fo_master, parse_master_zip
+from kbj.data.private.kis.program import INVESTOR_MARKET as PROGRAM_INVESTOR_MARKET
+from kbj.data.private.kis.program import PROGRAM_TRS
 from kbj.data.private.kis.rest import MINUTE_PATH, MINUTE_TR, KisRestClient, minute_chart_params
 from kbj.data.private.kis.token import reader
 from kbj.data.private.krx.client import KrxClient
+from kbj.data.private.nasdaq.client import NasdaqClient
+from kbj.data.private.stooq.client import StooqClient
+from kbj.data.private.yahoo.client import YahooClient
 from kbj.data.public.customs.client import DATASET_IDS as CUSTOMS_DATASETS
 from kbj.data.public.dart.client import DartClient
 from kbj.data.public.ecos.client import RESTRICTED_TABLES, EcosClient
+from kbj.data.public.fred.client import FredClient
 from kbj.data.public.fsc_kofia_stats.client import KofiaStatsClient
 from kbj.data.public.kosis.client import KosisClient
 from kbj.data.public.kosis.datasets import ORG_ID as KOSIS_ORG
+from kbj.data.public.nyfed.client import NyfedClient
+from kbj.data.public.treasury.client import TreasuryClient
 from kbj.data.ratelimit import Priority, RedisRateLimiter
 from kbj.data.spec import DataKey
+from kbj.engines.us.config import load_us
 from kbj.services.auth.service import AuthService, AuthStatus, build_auth_service, next_wait
 from kbj.services.collectors import corp_code, ops_watchdog
 from kbj.services.collectors import fin as fin_job
@@ -163,16 +187,30 @@ from tests.fakes.dart_server import FakeDart
 from tests.fakes.datago_server import FakeDatago
 from tests.fakes.ecos_server import FakeEcos
 from tests.fakes.etf_issuer_server import FakeIssuers
+from tests.fakes.ff_server import FakeFf
+from tests.fakes.fred_server import FAKE_KEY as FRED_KEY
+from tests.fakes.fred_server import FakeFred
 from tests.fakes.kis_server import APP_KEY, APP_SECRET, SYMBOLS, TRS, FakeKisServer, make_client
 from tests.fakes.kosis_server import FakeKosis
 from tests.fakes.krx_server import FakeKrx
+from tests.fakes.nasdaq_server import FakeNasdaq, FakeStooq, StubLimiter
+from tests.fakes.nyfed_server import FakeNyfed
 from tests.fakes.telegram_server import FakeTelegram
+from tests.fakes.treasury_server import FakeTreasury
 from tests.fakes.ws_server import FakeKisWsServer, subscribe_once
+from tests.fakes.yahoo_server import FakeYahoo
 from tests.fixtures.synthetic.p4_world import P4World, build_world
+from tests.fixtures.synthetic.p5_world import US_DAY as P5_US_DAY
+from tests.fixtures.synthetic.p5_world import P5World
+from tests.fixtures.synthetic.p5_world import build_world as build_p5_world
 from tests.golden.dart_report.golden import NoLimit
 from tests.unit.api.api_world_p4 import config_for_tests
+from tests.unit.api.web_fixtures_p5.etf import load_etf as load_etf_world
+from tests.unit.api.web_fixtures_p5.macro import load_macro as load_macro_world
+from tests.unit.collectors.p3_fakes import seed_universe
 from tests.unit.engines.filings.filings_world import load as load_filings
 from tests.unit.public_export.pub_rows import MemReader, PubWorld
+from tests.unit.reports.briefs.brief_world import board_record
 
 KST: Final = ZoneInfo("Asia/Seoul")
 ROOT: Final = Path(__file__).resolve().parents[2]
@@ -194,9 +232,12 @@ REAL_HANDLERS: Final[dict[str, Handler]] = {
     "kbj.services.collectors.corp_code:run": corp_code.run,
     "kbj.services.collectors.ops_watchdog:run": ops_watchdog.run,
 }
-# 어댑터가 아직 없는 출처(카탈로그 PLANNED) — 부른 것만 기록한다
+# 시뮬레이션 처리기 경로에서 부른 것만 기록하는 출처. P5 새 출처(NASDAQ·YAHOO·FRED·
+# TREASURY·NYFED·FF)는 p5 창에서 실제 처리기 + 가짜 서버로 부른다(위 머리말). ANTHROPIC(구루 X
+# 다이제스트)은 사용자 결정(2026-10-13 Q4)으로 뺐다. ETF_ISSUERS 는 P3 실제 처리기가 가짜
+# 운용사로 부른다(p3 창)
 OFFLINE_SOURCES: Final = frozenset(
-    {"NASDAQ", "YAHOO", "FRED", "TREASURY", "NYFED", "FF", "ANTHROPIC", "ETF_ISSUERS"}
+    {"NASDAQ", "YAHOO", "FRED", "TREASURY", "NYFED", "FF", "ETF_ISSUERS"}
 )
 
 # KIS 거래소 구분 파라미터 [실측 필요 — kbj/data/private/kis/datasets.py 머리말: J·NX·UN 추정]
@@ -277,6 +318,49 @@ KIS_SPECS: Final[dict[str, KisSpec]] = {
     # 시뮬레이션은 가짜 처리기로 돌린다(docs/p4_design.md §0.4 끝)
     "consensus_estimate": KisSpec(TR_ESTIMATE.tr_id, SYMBOLS, lambda _v, c, _d: params_estimate(c)),
     "invest_opinion": KisSpec(TR_OPINION.tr_id, SYMBOLS, lambda _v, c, d: _opinion_params(c, d)),
+    # P5 F2(묶음 F2 — TR·입력 칸은 파서 모듈 kbj.data.private.kis.{investors_minute,program}, 전부
+    # [확인 필요 #39~#41]). 1분 투자자 조합은 설정의 켠 것(실측 전 K2I 셋 — 현물 코드는 #39 뒤)
+    "market_investor_intraday": KisSpec(
+        TR_MARKET_MINUTE.tr_id,
+        tuple(f"{m}:{s}" for m, s in load_markets().flows.minute.enabled_pairs()),
+        lambda _v, t, _d: params_market_minute(*t.split(":")),
+        Priority.P2,
+    ),
+    "program_market_intraday": KisSpec(
+        PROGRAM_TRS["program_market_intraday"].tr_id,
+        ("K", "Q"),
+        lambda v, m, _d: {
+            "FID_COND_MRKT_DIV_CODE": v,
+            "FID_MRKT_CLS_CODE": m,
+            "FID_SCTN_CLS_CODE": "",
+            "FID_INPUT_ISCD": "",
+            "FID_COND_MRKT_DIV_CODE1": "",
+            "FID_INPUT_HOUR_1": "",
+        },
+        Priority.P2,
+    ),
+    "program_market_daily": KisSpec(
+        PROGRAM_TRS["program_market_daily"].tr_id,
+        ("K", "Q"),
+        lambda v, m, d: {
+            "FID_COND_MRKT_DIV_CODE": v,
+            "FID_MRKT_CLS_CODE": m,
+            "FID_INPUT_DATE_1": d,
+            "FID_INPUT_DATE_2": d,
+        },
+    ),
+    "program_investor_today": KisSpec(
+        PROGRAM_TRS["program_investor_today"].tr_id,
+        ("K", "Q"),
+        lambda v, m, _d: {"EXCH_DIV_CLS_CODE": v, "MRKT_DIV_CLS_CODE": PROGRAM_INVESTOR_MARKET[m]},
+    ),
+    "program_stock_intraday": KisSpec(PROGRAM_TRS["program_stock_intraday"].tr_id, SYMBOLS, _stock),
+    "program_stock_daily": KisSpec(  # event 키 — 실행기가 미리 잡지 않는다(처리기가 직접 선점)
+        PROGRAM_TRS["program_stock_daily"].tr_id,
+        SYMBOLS,
+        lambda v, c, d: {"FID_COND_MRKT_DIV_CODE": v, "FID_INPUT_ISCD": c, "FID_INPUT_DATE_1": d},
+        Priority.P4,
+    ),
 }
 
 
@@ -405,6 +489,10 @@ class SimOptions:
     prepare: tuple[Callable[[SimDay], None], ...] = ()  # 만든 뒤 run 전에 한 번(데이터 심기)
     p4: bool = False  # 합성 20종목 세계 + 켜진 P4 작업은 실제 처리기로(위 머리말)
     enable: tuple[str, ...] = ()  # 이 시뮬레이션의 등록부 사본에서만 켤 작업(운영 등록부는 그대로)
+    p5: bool = False  # 합성 P5 세계 + 켜진 P5 작업은 실제 처리기로(위 머리말)
+    drop_minutes: frozenset[str] = (
+        frozenset()
+    )  # P5 F2 실패 변형 — 이 분(HH:MM)의 1분 수집은 가짜 KIS 오류
 
 
 def load_registry(enable: tuple[str, ...] = ()) -> Registry:
@@ -497,6 +585,16 @@ class SimDay:
         self.p4_seed_runs: list[JobResult] = []
         if opts.p4:
             self._p4_seed()
+        # P5: 켜진 P5 작업(+ enable) + 공개 내보내기(macro/·credit.json 을 쓴다)는 실제 처리기
+        self.p5w: P5World | None = build_p5_world() if opts.p5 else None
+        self.p5_owners: frozenset[str] = frozenset(
+            j.owner
+            for j in self.registry.jobs
+            if opts.p5 and j.enabled and (j.phase == "P5" or j.name == "public.export")
+        )
+        self._p5_fakes()
+        if opts.p5:
+            self._p5_seed()
         if opts.seed_runs:
             self._seed_runs()
         # ── 프로세스 ─────────────────────────────────────────────────────────────────
@@ -706,8 +804,12 @@ class SimDay:
                 raise AssertionError(
                     f"owner 가 겹친다 — 시뮬레이션 처리기를 나눌 수 없다: {job.owner}"
                 )
-            if job.owner in self.p3_owners or job.owner in self.p4_owners:
-                handlers[job.owner] = resolve(job.owner)  # 실제 P3·P4 처리기(import 검증 겸)
+            if (
+                job.owner in self.p3_owners
+                or job.owner in self.p4_owners
+                or (job.owner in self.p5_owners)
+            ):
+                handlers[job.owner] = resolve(job.owner)  # 실제 P3·P4·P5 처리기(import 검증 겸)
                 continue
             handlers[job.owner] = REAL_HANDLERS.get(job.owner) or self._sim_handler(job)
         resources: dict[str, Any] = {
@@ -716,6 +818,7 @@ class SimDay:
             "kr": self.kr,
             "us": self.us,
             "notify": self.notify_client.notify,
+            "notify_media": self.notify_client.notify_media,  # P5 수급 리포트 차트(BRF)
             "running": lambda: [r for r in self.runs.records.values() if r.status == "running"],
             "heartbeat_age": lambda svc, now: heartbeat_age(self.sched_redis, svc, now),
             "corp_code_store": self.corp_store,
@@ -732,6 +835,8 @@ class SimDay:
             resources.update(self._p3_resources())
         if self.opts.p4:
             resources.update(self._p4_resources())
+        if self.opts.p5:
+            resources.update(self._p5_resources())
         return JobRunner(
             self.registry,
             handlers,
@@ -838,6 +943,113 @@ class SimDay:
             "public_connect": lambda: _PublicConn(self.public_log),
             "public_out_dir": self.public_out,
             "public_reader": MemReader(PubWorld(repos=pub, corp_code_rows=corp_rows)),
+        }
+
+    # ── P5(docs/p5_design.md §8.4) ─────────────────────────────────────────────────────
+    def _p5_fakes(self) -> None:
+        """P5 새 출처의 가짜 서버(같은 가짜 시계). Nasdaq 은 합성 P5 세계의 미국 일봉을 서빙한다."""
+        now = self.clock.now
+        self.fred = FakeFred(now)
+        self.treasury = FakeTreasury(now)
+        self.nyfed = FakeNyfed(now)
+        self.ff = FakeFf(now)
+        self.yahoo = FakeYahoo(now)
+        self.nasdaq = FakeNasdaq()
+        self.stooq = FakeStooq()
+        w = self.p5w
+        if w is None:
+            return
+        for u in w.us_universe:
+            bars = [
+                {"asof": b.date.isoformat(), "open": b.open, "high": b.high, "low": b.low,
+                 "close": b.close, "volume": float(b.volume or 0)}
+                for b in w.us_bars(u.symbol)
+            ]  # fmt: skip
+            self.nasdaq.add_series(u.symbol, bars=bars)
+
+    def _p5_seed(self) -> None:
+        """창 앞 이력(매크로·금투협·캘린더, ETF 구성·변동, 미국 유니버스·일봉)을 저장소에 넣는다."""
+        w = self.p5w
+        assert w is not None
+        load_macro_world(self.repos, w)
+        load_etf_world(self.repos, w)
+        eve = self.start - timedelta(hours=1)
+        self.repos.us.put_universe(
+            P5_US_DAY, list(w.us_universe), loaded_by="sim.seed", received_at=eve
+        )
+        day = self.start.astimezone(KST).date()
+        prior = [
+            b
+            for u in w.us_universe
+            for b in w.us_bars(u.symbol)
+            if b.date < day - timedelta(days=1)
+        ]
+        self.repos.us.upsert_daily(prior, loaded_by="sim.seed", received_at=eve)
+        # KRX 일봉(합성 24종목) — 수급 리포트 차트·수익률 입력
+        self.repos.market.upsert_daily_bars(
+            [b for st in w.stocks for b in w.bars(st.code)], loaded_by="sim.seed", received_at=eve
+        )
+        # 프로그램 훑기·마감 훑기 대상(P3 krx.daily·flows.intraday 는 시뮬레이션 처리기라
+        # 저장소에 쓰지 않는다): 가짜 KIS 종목 유니버스 + 관심종목 둘
+        seed_universe(self.repos, day, SYMBOLS)
+        self.repos.journal.replace_watchlist(
+            "main", [WatchItem("main", c, None, None, i) for i, c in enumerate(SYMBOLS[:2])],
+            loaded_by="sim.seed", now=eve,
+        )  # fmt: skip
+        # 그날 보드 산출(board.daily 는 시뮬레이션 처리기 — 16:03 산출을 미리 둔다: 마감 요약 ③·
+        # 수급 리포트 대상). 합성 — tests/unit/reports/briefs/brief_world.board_record
+        self.repos.board.put_day(board_record(day), loaded_by="sim.seed", now=eve)
+
+    def _p5_resources(self) -> dict[str, Any]:
+        """실제 P5 처리기의 자원(각 처리기 머리말 — 운영은 설정·연결로 만든다)."""
+        cfg = load_macro(settings=self.sched_settings)
+        gov = [x.item for x in cfg.series if x.dataset == "FRED:gov_series" and x.item]
+        restricted = [
+            x.item for x in cfg.series if x.dataset == "FRED:restricted_series" and x.item
+        ]
+        key = SecretStr(FRED_KEY)
+        lim = StubLimiter()
+        pub = self.repos.public()
+        return {
+            "repos": self.repos,
+            "public_repos": pub,
+            "kis": self.sched_kis,
+            "markets": self.markets(),
+            "macro_config": cfg,
+            "us_config": load_us(),
+            "fred": FredClient(
+                key,
+                limiter=lim,
+                gov_series=gov,
+                transport=self.fred.transport(),
+                base_url="https://f",
+            ),
+            "fred_restricted": FredRestrictedClient(
+                key,
+                limiter=lim,
+                restricted=restricted,
+                transport=self.fred.transport(),
+                base_url="https://f",
+            ),
+            "treasury": TreasuryClient(
+                lim, transport=self.treasury.transport(), base_url="https://t"
+            ),
+            "nyfed": NyfedClient(lim, transport=self.nyfed.transport(), base_url="https://n"),
+            "ff": FfClient(lim, transport=self.ff.transport(), base_url="https://ff"),
+            "yahoo": YahooClient(
+                lim, transport=self.yahoo.transport("scheduler"), base_url="https://y"
+            ),
+            "nasdaq": NasdaqClient(lim, transport=self.nasdaq.transport()),
+            "stooq": StooqClient(lim, transport=self.stooq.transport()),
+            "ecos": self.sched_ecos,
+            "ecos_restricted": self.sched_ecos_restricted,
+            "kosis": self.sched_kosis,
+            "kofia": KofiaStatsClient(self.sched_datago),
+            "fsc_stock": FscStockPriceClient(self.sched_datago),
+            "fsc_index": FscIndexPriceClient(self.sched_datago),
+            "public_connect": lambda: _PublicConn(self.public_log),
+            "public_out_dir": self.public_out,
+            "public_reader": MemReader(PubWorld(repos=pub, corp_code_rows=[])),
         }
 
     def _backup(self, now: datetime) -> Path:
@@ -1135,7 +1347,12 @@ class SimDay:
         self._gx_krx_due[as_of] = now + timedelta(minutes=10)
 
     def _gx_poll(self, now: datetime) -> None:
-        """GX poller 흉내 — 세션 중 10분마다 한 번(실제는 초 단위 — 리미터 P1·P2)."""
+        """GX poller 흉내 — 세션 중 10분마다 한 번(실제는 초 단위 — 리미터 P1).
+
+        P5(docs/p5_design.md R16·D-P5-21 ①): 장중 투자자 1분(KIS:market_investor_intraday)은
+        등록부에서
+        flows.market_minute 이 유일하게 수집한다(ADR 0019) — poller 흉내는 이 키를 더 잡지
+        않는다."""
         minute = now.astimezone(KST).strftime("%Y-%m-%dT%H:%M")
         if minute in self._gx_poll_done:
             return
@@ -1146,12 +1363,6 @@ class SimDay:
                 "FHPIF05030100",
                 Priority.P1,
                 {"FID_COND_MRKT_DIV_CODE": "O", "FID_INPUT_ISCD": "", "FID_MTRT_CNT": "202610"},
-            ),
-            (
-                "market_investor_intraday",
-                "FHPTJ04030000",
-                Priority.P2,
-                {"FID_INPUT_ISCD": "999", "FID_INPUT_ISCD_2": "S001"},
             ),
         ):
             key = self.catalog[f"KIS:{dataset}"].key(minute)

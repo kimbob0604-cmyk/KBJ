@@ -21,8 +21,9 @@ RUN npm run build:login
 # ── 2단계: 앱(python) ──
 FROM python:3.12-slim-trixie
 
+# fonts-nanum: flows.report 차트(matplotlib)의 한글 글꼴(docs/p5_design.md D-P5-16)
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends postgresql-client tzdata \
+    && apt-get install -y --no-install-recommends postgresql-client tzdata fonts-nanum \
     && rm -rf /var/lib/apt/lists/*
 
 # uv_build>=0.8.17,<0.9 (pyproject build-system) 를 쓰는 uv

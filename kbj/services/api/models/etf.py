@@ -13,11 +13,20 @@ from kbj.core.rows import EtfType
 from kbj.services.api.models.common import ApiModel
 
 __all__ = [
+    "ActiveConsensus",
     "ChangeRow",
     "Check3",
+    "ConsensusStock",
     "EtfFlowRow",
     "EtfFlows",
+    "EtfHolderView",
+    "EtfHolders",
     "EtfHoldingChanges",
+    "EtfHoldingView",
+    "EtfHoldings",
+    "EtfMap",
+    "EtfMapCellView",
+    "EtfMapGroup",
     "EtfPremium",
     "EtfTypes",
     "NewListing",
@@ -139,3 +148,81 @@ class ChangeRow(ApiModel):
 class EtfHoldingChanges(ApiModel):
     run_date: date
     rows: list[ChangeRow]
+
+
+# ── P5(docs/p5_design.md §5 — 페이지 10 남은 것: ETF 맵·보유 탐색·액티브 동시 편입) ───────────────
+# 모양은 웨이브 1(FND)이 고정, 본문은 ETF 묶음(P5 모델 본문은 ETF 가 고친다 — §1.10).
+
+
+class EtfMapCellView(ApiModel):
+    code: str
+    name: str | None
+    etf_type: EtfType | None
+    theme: str | None
+    net_asset: int | None  # 원(마지막 확정일)
+    ret_pct: float | None  # 기간 수익률(분할 보정)
+    leveraged: bool
+    new_listing: bool  # 기간보다 짧은 이력 — 회색 + 꼬리표
+
+
+class EtfMapGroup(ApiModel):
+    key: str
+    label: str
+    cells: list[EtfMapCellView]
+
+
+class EtfMap(ApiModel):
+    period: Literal["1D", "1W", "1M", "3M"]
+    group: Literal["type", "theme"]
+    lev: bool  # 레버리지·인버스 포함 여부
+    asof: date
+    groups: list[EtfMapGroup]
+
+
+class EtfHoldingView(ApiModel):
+    code: str
+    name: str | None
+    wt: float | None  # 비중 %
+    qty: float | None
+    val: float | None  # 평가금액(원)
+    change: Literal["NEW", "DROP", "IN10", "OUT10", "ADD", "CUT"] | None
+
+
+class EtfHoldings(ApiModel):
+    fund_id: str
+    etf_code: str | None
+    etf_name: str | None
+    asof: date  # 운용사 PDF 기준일(운용사마다 다르면 그대로)
+    rows: list[EtfHoldingView]
+
+
+class EtfHolderView(ApiModel):
+    fund_id: str
+    etf_code: str | None
+    etf_name: str | None
+    is_active: bool
+    asof: date
+    wt: float | None
+    qty: float | None
+    val: float | None
+
+
+class EtfHolders(ApiModel):
+    code: str
+    name: str | None
+    rows: list[EtfHolderView]
+
+
+class ConsensusStock(ApiModel):
+    code: str
+    name: str | None
+    funds: list[str]  # 같이 담은·늘린 액티브 펀드
+    kinds: list[Literal["NEW", "IN10", "ADD"]]
+    n_funds: int
+
+
+class ActiveConsensus(ApiModel):
+    days: int
+    min_funds: int
+    asof: date
+    rows: list[ConsensusStock]

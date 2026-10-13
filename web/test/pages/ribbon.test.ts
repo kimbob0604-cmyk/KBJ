@@ -1,5 +1,6 @@
 // 상단 띠 — 로그인: API 칩(값 형식·잠정·마감·준비 중·값 없음 사유)·1분 새로 고침·오류 격리.
-// 공개: calendar·events 공개 파일로 세션·금통위 D-n 계산, 로그인 칩은 자물쇠, 로그인 API 를 부르지 않는다.
+// 공개: calendar·events 공개 파일로 세션·금통위 D-n 계산, 신용 칩은 공개 파일 credit(P5 MAC), 로그인 칩은 자물쇠,
+// 로그인 API 를 부르지 않는다.
 import { describe, expect, it } from 'vitest';
 import type { AppContext } from '../../src/app/types';
 import ribbon, {
@@ -17,6 +18,7 @@ import type { DataSource, Tier } from '../../src/data/source';
 import { fixedClock, json } from '../helpers';
 import fixtureRibbon from '../fixtures/api/market_ribbon.json';
 import publicCalendar from './fixtures/public_calendar.json';
+import { MAC_NOW, macLoginHarness, macPublicHarness } from '../fixtures/api/macro/harness';
 import { apiHarness, flush, publicHarness, text } from './support';
 
 const SEP16_1010 = new Date('2026-09-16T01:10:00Z'); // KST 09-16(수) 10:10
@@ -142,12 +144,12 @@ function apiFixture(): unknown {
 }
 
 describe('상단 띠 — 공개', () => {
-  it('공개 파일 둘만 읽고(로그인 API 0), 로그인 칩은 자물쇠', async () => {
+  it('공개 파일 셋만 읽고(로그인 API 0), 로그인 칩은 자물쇠, 신용 칩 파일이 없으면 — + 사유', async () => {
     const hz = publicHarness();
     const now = new Date('2026-10-07T01:23:45Z'); // KST 10-07(수) 10:23:45
     const { ctx, el, every } = ctxOf('public', hz.source, now);
     await ribbon.mount(el, ctx);
-    expect(hz.paths().sort()).toEqual(['./data/calendar.json', './data/events.json']);
+    expect(hz.paths().sort()).toEqual(['./data/calendar.json', './data/credit.json', './data/events.json']);
     expect(hz.paths().some((p) => p.includes('api'))).toBe(false);
 
     expect(text(chipByKey(el, 'session').querySelector('.v'))).toBe('정규장 · 마감까지 5:06');
@@ -167,14 +169,17 @@ describe('상단 띠 — 공개', () => {
       'kr_vs_global',
       'gex_flip',
     ]);
-    expect(el.querySelectorAll('.chip.pending')).toHaveLength(3);
+    expect(el.querySelectorAll('.chip.pending')).toHaveLength(1); // 수출 속보(P6)만 — 신용 칩은 P5 에 들어왔다
     for (const c of el.querySelectorAll('.chip.locked')) expect(text(c.querySelector('.v'))).toBe('로그인 필요');
+    const spread = chipByKey(el, 'credit_spread');
+    expect(text(spread.querySelector('.v'))).toBe('—');
+    expect(spread.title).toContain('아직 없음');
 
     // 카운트다운은 파일을 다시 받지 않고 다시 계산
     expect(every.map((e) => e.ms)).toEqual([PUBLIC_TICK_MS]);
     every[0]?.fn();
     await flush();
-    expect(hz.calls).toHaveLength(2);
+    expect(hz.calls).toHaveLength(3);
   });
 
   it('캘린더를 못 받으면 세션 칩만 오류, 금통위는 계속', async () => {
@@ -231,5 +236,55 @@ describe('세션 계산(엔진 session_chip 과 같은 규칙)', () => {
       }),
     ).toBe('2026-11-26');
     expect(nextMpc(now, { events: [] })).toBeNull();
+  });
+});
+
+describe('상단 띠 — P5 신용·한국 대 글로벌 칩(MAC)', () => {
+  it('로그인: 신용스프레드(지연 — 기준 시각)·신용잔고(조·억), 값 없는 한국 대 글로벌은 준비 중', async () => {
+    const hz = macLoginHarness();
+    const { ctx, el } = ctxOf('login', hz.source, MAC_NOW);
+    await ribbon.mount(el, ctx);
+    const sp = chipByKey(el, 'credit_spread');
+    expect(text(sp.querySelector('.v'))).toMatch(/^0\.53%p · \+2bp \(기준 \d{2}:\d{2}\)$/);
+    expect(sp.querySelector('.v')?.classList.contains('warn')).toBe(true);
+    expect(sp.title).toContain('공표 지연');
+    const bal = chipByKey(el, 'credit_balance');
+    expect(text(bal.querySelector('.v'))).toMatch(/조/); // 백만원 → 원 → 조·억(화면에서만)
+    expect(chipByKey(el, 'kr_vs_global').classList.contains('pending')).toBe(true);
+  });
+
+  it('공개: credit.json 의 공개 칩만 — 값·지연 표시가 로그인과 같은 형식', async () => {
+    const hz = macPublicHarness({
+      calendar: () => json(structuredClone(publicCalendar)),
+      events: () => json({ source: 'config', as_of: '2026-11-17T00:00:00+09:00', quality: 'estimated', notes: [], generated_at: '2026-11-17T00:00:00+09:00', data: { events: [] } }),
+    });
+    const { ctx, el } = ctxOf('public', hz.source, MAC_NOW);
+    await ribbon.mount(el, ctx);
+    expect(hz.paths().every((p) => p.startsWith('./data/'))).toBe(true);
+    expect(text(chipByKey(el, 'credit_spread').querySelector('.v'))).toMatch(/^0\.53%p · \+2bp/);
+    expect(text(chipByKey(el, 'credit_balance').querySelector('.v'))).toMatch(/조/);
+    expect(chipByKey(el, 'kr_vs_global').classList.contains('locked')).toBe(true);
+  });
+
+  it('한국 대 글로벌 값 형식(%p·부호색)', () => {
+    const o = chipOptions(
+      {
+        key: 'kr_vs_global',
+        label: '한국 대 글로벌',
+        value: { value: -0.734, source: 'krx+yahoo', as_of: '2026-11-16T15:30:00+09:00', quality: 'ok' },
+        tier: 'login',
+        phase_pending: null,
+        tags: ['%p'],
+        note: null,
+      },
+      MAC_NOW,
+    );
+    expect(o.value).toBe('-0.73%p');
+    expect(o.cls).toBe('down');
+  });
+
+  it('칩 자리: P5 칩은 단계 표시가 없다(값이 없으면 서버가 준비 중을 보낸다)', () => {
+    const phased = CHIP_SLOTS.filter((s) => s.phase).map((s) => s.key);
+    expect(phased).toEqual(['export_flash', 'gex_flip']);
   });
 });

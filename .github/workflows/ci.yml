@@ -15,6 +15,10 @@ name: CI
 # - P4 묶음 S(docs/p4_design.md §8.7): 잡 정의는 그대로 — 새 시험(골든 tests/golden/dart_report·수용
 #   tests/acceptance·sim test_one_day_p4·web test/pages·test/acceptance)은 기존 잡이 자동으로 모은다.
 #   lint 의 import-linter 는 계약 ①~⑬, canonical 목표 0 그룹에 fnguide(FnGuide·WiseReport 스크랩 금지)
+# - P5 WRAP(docs/p5_design.md §8.7): test(kbj)·sim 에 한글 폰트(flows.report 차트 — matplotlib), legacy
+#   매트릭스의 etf-rest 에서 monitor/flow 를 뺐다(kbj/reports/flows 로 승격·삭제). import-linter 는 계약
+#   ①~⑭·⑯(⑮ 분류 사전은 테마 사전 작업 몫 — 사용자 별도 진행). 새 시험(sim test_one_day_p5·test_brief_once·
+#   test_intraday_minute, web test/acceptance/p5_pages)은 기존 잡이 모은다
 
 on:
   push:
@@ -65,6 +69,8 @@ jobs:
           enable-cache: true
       - name: 의존성(dev)
         run: uv sync --frozen
+      - name: 한글 폰트 (P5 flows.report 차트 — kbj/reports/flows, 원본 ETF-Traker flow.yml 과 같음)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq fonts-nanum && fc-cache -f
       - name: pytest (sim·통합·legacy 의존 제외 — 아래 sim·kbj-integration·legacy 잡)
         run: uv run pytest -m "not sim and not integration and not legacy"
       - name: openapi 신선도(web/src/api/openapi.json — 묶음 A)
@@ -130,6 +136,8 @@ jobs:
           enable-cache: true
       - name: 의존성(dev)
         run: uv sync --frozen
+      - name: 한글 폰트 (P5 하루 운영의 flows.report 차트)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq fonts-nanum && fc-cache -f
       - name: pytest tests/sim (장중 하루 판 slow 는 제외 — 수동 `-m slow`)
         run: uv run pytest tests/sim -m "sim and not slow" -rx
 
@@ -141,7 +149,8 @@ jobs:
       fail-fast: false
       matrix:
         # gexlab: 단위·속성·골든(통합 49개는 아래 gexlab-integration 잡)
-        # board: unittest(기준 수는 scripts/test_legacy.sh) / etf-rest: monitor/kr 94·monitor/flow 129·flowlab 44·dart-report·etf_tracker_v9
+        # board: unittest(기준 수는 scripts/test_legacy.sh) / etf-rest: monitor/kr 94·flowlab 44·dart-report·etf_tracker_v9
+        # (monitor/flow 는 P5 에 kbj/reports/flows 로 승격하고 지웠다 — legacy/etf_traker/MIGRATION.md 'P5')
         # stock_dashboard: 검사 스크립트 10개 pytest 래퍼
         part: [gexlab, board, etf-rest, stock_dashboard]
     steps:
@@ -151,9 +160,6 @@ jobs:
           enable-cache: true
       - name: 의존성(dev + legacy)
         run: uv sync --frozen --all-groups
-      - name: 한글 폰트 (monitor/flow 차트 시험 — 원본 ETF-Traker flow.yml 과 같음)
-        if: matrix.part == 'etf-rest'
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq fonts-nanum && fc-cache -f
       - name: scripts/test_legacy.sh ${{ matrix.part }}
         run: uv run bash scripts/test_legacy.sh ${{ matrix.part }}
       - name: kbj 다리 시험 중 legacy 의존성이 필요한 것(pytest -m legacy)

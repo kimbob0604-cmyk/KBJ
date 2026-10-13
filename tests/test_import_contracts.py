@@ -3,7 +3,7 @@
 1. kbj/ 의 모든 import 는 kbj 자신·표준 라이브러리·선언한 런타임 의존성뿐이다. legacy 의 최상위 이름
    (`core`·`db`·`board`·`server` …)은 legacy 폴더가 sys.path 에 올라와야만 import 되는데, 이 시험은
    이름 목록을 따로 들지 않고 '허용된 것만'을 본다 — legacy 를 어떤 이름으로든 끌어오면 실패한다.
-2. 열세 계약 각각에 위반을 하나씩 심은 사본에서 lint-imports 가 기대한 계약만 깨졌다고
+2. 열다섯 계약 각각에 위반을 하나씩 심은 사본에서 lint-imports 가 기대한 계약만 깨졌다고
    하는지 본다(계약이 빈말이 아님). ④~⑦ 은 P2 묶음 I 가 더했다(docs/p2_design.md §9.6):
    ④ KIS 발급 auth 밖 import 금지, ⑤ 텔레그램 HTTP 는 notifier 안에서만(간접 포함 — shim·outbox 의
    Attachment 두 줄만 예외), ⑥ 어댑터는 서비스를 모른다, ⑦ 저장소는 어댑터·서비스를 모른다.
@@ -12,7 +12,10 @@
    어댑터·수집기를 모른다. ⑪~⑬ 은 P4 묶음 S 가 더했다(docs/p4_design.md §2): ⑪ 리포트는 로그인
    원천·컨센서스·밸류 엔진·API 를 모른다, ⑫ 공개 엔진(공시·재무)은 로그인 엔진(컨센서스·밸류)을
    모른다, ⑬ 공개 작업(dart_feed·dart_company·fin·engine.filings)은 로그인 원천·엔진·
-   저장소를 모른다.
+   저장소를 모른다. ⑭·⑯ 은 P5 웨이브 3(WRAP)이 더했다(docs/p5_design.md D-P5-25): ⑭ 공개 매크로·
+   통계 작업(collectors.macro·kofia)과 공개 원천(fred·treasury·nyfed)은 로그인 원천·저장소를 모른다,
+   ⑯ 브리핑·리포트(reports.briefs·flows·etf)는 어댑터·수집기·API 를 모른다(발송 시각 외부 호출 0).
+   ⑮(분류 사전)는 테마 사전 통합을 사용자가 따로 진행해(2026-10-13 Q1) 번호만 비워 둔다.
    위반 하나가 두 계약에 함께 걸리면(예: 엔진이 auth 를 import — ④·⑨) 둘 다 기대값에 적는다.
 """
 
@@ -36,6 +39,7 @@ RUNTIME_IMPORTS = {
     "defusedxml",
     "exchange_calendars",
     "fastapi",  # P3 로그인 API(docs/p3_design.md §1.1·D-P3-3)
+    "matplotlib",  # P5 flows.report 차트(docs/p5_design.md D-P5-16 — legacy 그룹에서 런타임으로)
     "starlette",  # fastapi 가 끌어온다(정적 파일·미들웨어)
     "uvicorn",
     "httpx",
@@ -134,6 +138,15 @@ def test_kbj_imports_only_kbj_stdlib_and_declared_deps() -> None:
         ("kbj/services/collectors/fin.py", "import kbj.services.collectors._p3\n", "⑬"),
         ("kbj/services/collectors/dart_feed.py", "import kbj.engines.valuation\n", "⑬"),
         ("kbj/services/collectors/dart_company.py", "import kbj.store.repos.journal\n", "⑬"),
+        # ⑭ — 공개 매크로·통계 작업·공개 원천이 로그인 원천·저장소를 끌어오면 실패
+        ("kbj/services/collectors/kofia.py", "import kbj.store.repos.macro_prv\n", "⑭"),
+        ("kbj/services/collectors/macro.py", "import kbj.services.collectors._p3\n", "⑭"),
+        ("kbj/data/public/fred/_leak.py", "import kbj.data.private.yahoo\n", "①⑭"),
+        # ⑯ — 브리핑·리포트가 어댑터·수집기·API 를 알면 실패(API 는 ⑪ 에도 걸린다)
+        ("kbj/reports/flows/_leak.py", "import kbj.data.http\n", "⑯"),
+        ("kbj/reports/briefs/_leak.py", "import kbj.data.public.fred\n", "⑯"),
+        ("kbj/reports/_etf_leak.py", "import kbj.services.api\n", "⑪"),
+        ("kbj/reports/briefs/_api.py", "import kbj.services.api\n", "⑪⑯"),
     ],
 )
 def test_contract_catches_violation(
@@ -168,13 +181,14 @@ def test_contract_catches_violation(
     assert all(c in section for c in want), broken.stdout
 
 
-def test_thirteen_contracts_are_declared() -> None:
-    """P3 묶음 S — 계약 ⑧~⑩, P4 묶음 S — ⑪~⑬ 이 실제로 들어 있다(이름 첫 글자 기호로)."""
+def test_fifteen_contracts_are_declared() -> None:
+    """P3 묶음 S — 계약 ⑧~⑩, P4 묶음 S — ⑪~⑬, P5 WRAP — ⑭·⑯ 이 실제로 들어 있다(이름 첫 글자
+    기호로). ⑮ 는 테마 사전 작업 몫으로 비어 있다."""
     text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     names = [
         line.split("=", 1)[1].strip().strip('"')
         for line in text.splitlines()
         if line.startswith("name = ")
-        and line.split("=", 1)[1].strip().strip('"')[:1] in "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬"
+        and line.split("=", 1)[1].strip().strip('"')[:1] in "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯"
     ]
-    assert [n[0] for n in names] == list("①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬")
+    assert [n[0] for n in names] == list("①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑯")

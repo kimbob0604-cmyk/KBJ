@@ -18,6 +18,9 @@ __all__ = [
     "IntradayFlows",
     "IntradayRow",
     "InvestorTotals",
+    "MarketMinute",
+    "MinuteCard",
+    "MinuteLine",
     "RankItem",
     "ScreenResponse",
     "ScreenRow",
@@ -130,3 +133,36 @@ class IntradayFlows(ApiModel):
     top_foreign: list[IntradayRow]
     top_inst: list[IntradayRow]
     turnover_rank: list[RankItem]
+
+
+# ── P5 F2(docs/p5_design.md §5, F2 §0-1 — `/api/flows/market-minute`) ────────────────────────────
+# 모양은 웨이브 1(FND)이 고정, 본문은 F2 묶음. 원천 대금은 백만원(prv_gex.investor_flow) — API 가
+# 원으로.
+
+
+class MinuteCard(ApiModel):
+    investor: str  # frgn·prsn·orgn·scrt·ivtr·fund·etc_corp(metrics §21 7카드)
+    label: str
+    net_value: int | None  # 원 — 오늘 누적 순매수(마지막 분)
+    quality: Quality | None
+
+
+class MinuteLine(ApiModel):
+    investor: str
+    label: str
+    default_on: bool  # 기본 켬(개인·외국인·기관)
+    values: list[int | None]  # 분 축과 같은 길이 — 빈 분은 None(잇지 않는다, 보간 금지)
+
+
+class MarketMinute(ApiModel):
+    market: str  # 탭 id(config/markets.yaml flows.minute.pairs[].tab)
+    venue: str  # 분 선은 KIS 기본값 하나 — 'KRX' 표시(F2 §1.3)
+    venue_locked: bool
+    trade_date: date
+    axis: list[str]  # 'HH:MM' — 수집 범위 그대로
+    lines: list[MinuteLine]
+    cards: list[MinuteCard]
+    collected_at: AwareDatetime | None  # 마지막 수집 시각(머리 꼬리표 '수집 HH:MM')
+    refresh_s: int  # 60초 갱신
+    provisional: bool  # 장중 잠정
+    status: Literal["ok", "not_confirmed", "before_open", "holiday"]

@@ -72,7 +72,8 @@ describe('셸 + P4 페이지', () => {
     expect(hz.paths().some((u) => u.includes('api'))).toBe(false);
     expect(hz.paths()).toContain('./data/fin/Q00001.json');
     expect(hz.paths()).toContain('./data/filings_feed.json');
-    expect(root.querySelectorAll('#page-8 .panel.locked').length).toBe(1); // 개요 탭의 수급(컨센·밸류 탭은 아직 안 열림)
+    // 개요 탭의 수급 + 담은 ETF(P5 — WRAP 고리, 운용사 PDF 로그인). 컨센·밸류 탭은 아직 안 열림
+    expect(root.querySelectorAll('#page-8 .panel.locked').length).toBe(2);
     expect(tv).toHaveBeenCalled();
     expect(root.querySelectorAll('#page-5 .msg.err, #page-8 .msg.err')).toHaveLength(0);
     expect(await seriousA11y(document.body)).toEqual([]);

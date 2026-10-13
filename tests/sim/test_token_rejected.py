@@ -6,7 +6,8 @@
    auth 가 다음 step(14:00:30)에 **한 번** 다시 발급한다(warning `token_rejected`). 그
    회차(14:00 장중 작업)는 실패로 기록된다(재시도 0 — 거절한 토큰을 그 리더는 다시 쓰지
    않는다).
-2. 14:05~14:11 scheduler·legacy 의 조회가 계속 거절된다(새 토큰 발급 10분 안) → auth 는
+2. 14:05~14:11 scheduler(P5 매분 F2 작업이 14:05:00 에 먼저)·legacy 의 조회가 계속
+   거절된다(새 토큰 발급 10분 안) → auth 는
    **다시 발급하지 않고** critical `token_rejected_after_issue` 한 번. 두 프로세스가 거듭
    신고해도 추가 발급 0. 그 뒤 scheduler 리더는 그 토큰을 쓰지 않으므로 장중 회차가
    실패한다 — 사람이 볼 critical 이 남는다.
@@ -90,8 +91,11 @@ def test_rejection_storm_after_issue_is_closed_without_reissue(rejected: SimDay)
     storm = [c for c in rejected.kis.gets() if c.msg_cd == "EGW00123"]
     assert [(c.consumer, c.bearer) for c in storm] == [
         ("scheduler", first.value),  # 14:00 한 번
-        ("legacy", second.value),  # 14:05:10
-        ("scheduler", second.value),  # 14:10
+        # P5: 장중 투자자 1분(flows.market_minute — 켬, ADR 0019·D-P5-21)은 scheduler 가 매분
+        # 부른다 → 폭주 첫 거절은 14:05:00 scheduler. 그 뒤 scheduler 리더는 이 토큰을 다시 쓰지
+        # 않으므로(14:10 장중 회차는 TokenUnavailable) 남은 거절은 legacy 뿐
+        ("scheduler", second.value),  # 14:05:00
+        ("legacy", second.value),  # 14:05:10 훅
     ]
     assert [s for _, s, _ in rejected.legacy_results] == [503]  # 브리지는 503 봉투(토큰 없음)
 

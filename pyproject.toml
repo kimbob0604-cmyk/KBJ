@@ -23,6 +23,9 @@ dependencies = [
     "exchange-calendars>=4.13.2",
     "fastapi>=0.115",
     "httpx>=0.28",
+    # P5 flows.report 차트 4장(ET monitor/flow chart.py 승격 — docs/p5_design.md D-P5-16). legacy
+    # 그룹에서 런타임으로 옮겼다(같은 하한). 한글 폰트는 이미지·CI 의 fonts-nanum
+    "matplotlib>=3.8",
     "openpyxl>=3.1",
     "psycopg[binary]>=3.3.6",
     "pydantic>=2.13",
@@ -66,7 +69,7 @@ legacy = [
     # etf_traker (board·monitor·flowlab·dart-report·etf_tracker_v9)
     "anthropic>=0.40.0",
     "openpyxl>=3.1",
-    "matplotlib>=3.8",
+    # matplotlib 은 P5 부터 런타임 의존성(위 dependencies — D-P5-16)
     "fonttools>=4.40",
     "playwright>=1.40",
     # stock_dashboard (requirements.txt). 누락분이던 aiohttp·tenacity(dart_collector.py)는 P4 묶음 S 가 그 모듈과 함께
@@ -310,4 +313,56 @@ forbidden_modules = [
     "kbj.engines.valuation",
     "kbj.store.repos.consensus",
     "kbj.store.repos.journal",
+]
+
+# P5(docs/p5_design.md D-P5-25 — 웨이브 3 WRAP). 공개 매크로·통계 작업과 공개 원천은 로그인 원천·로그인
+# 저장소·P3 로그인 수집 바탕(_p3)을 모른다. 공개 원천 → 로그인 원천은 ① 이 이미 막는다(여기서 한 번 더).
+# SQL 의 스키마가 pub_ 뿐인지는 tests/unit/test_public_writers.py 가 따로 본다
+[[tool.importlinter.contracts]]
+name = "⑭ 공개 매크로·통계 작업(collectors.macro·kofia)과 공개 원천(fred·treasury·nyfed)은 로그인 원천·저장소를 import 하지 않는다"
+type = "forbidden"
+source_modules = [
+    "kbj.services.collectors.macro",
+    "kbj.services.collectors.kofia",
+    "kbj.data.public.fred",
+    "kbj.data.public.treasury",
+    "kbj.data.public.nyfed",
+]
+forbidden_modules = [
+    "kbj.data.private",
+    "kbj.services.collectors.macro_prv",
+    "kbj.services.collectors._p3",
+    "kbj.store.repos.macro_prv",
+    "kbj.store.repos.us",
+    "kbj.store.repos.program",
+    "kbj.store.repos.consensus",
+    "kbj.store.repos.journal",
+    "kbj.store.repos.market",
+    "kbj.store.repos.flows",
+    "kbj.store.repos.board",
+    "kbj.store.repos.etf",
+    "kbj.store.repos.memory",
+]
+
+# ⑮(분류 사전은 시세·로그인 저장소 금지 — 설계 D-P5-25)는 테마·밸류체인 사전 통합을 사용자가 따로
+# 진행해(2026-10-13 결정 Q1) 그 작업이 더한다 — 번호만 비워 둔다.
+
+# 브리핑·리포트는 저장된 산출만 읽는다 — 발송 시각 외부 호출 0(ADR 0018·0022). 어댑터·수집기·API 금지
+[[tool.importlinter.contracts]]
+name = "⑯ 브리핑·리포트(kbj.reports.briefs·flows·etf)는 어댑터(kbj.data 의 원천·HTTP·카탈로그)·수집기·API 를 import 하지 않는다"
+type = "forbidden"
+source_modules = [
+    "kbj.reports.briefs",
+    "kbj.reports.flows",
+    "kbj.reports.etf",
+]
+# kbj.data.spec(데이터 키 자료형 — 실행기 JobContext 가 쓴다)은 I/O 가 없어 허용, 어댑터 패키지는 금지
+forbidden_modules = [
+    "kbj.data.public",
+    "kbj.data.private",
+    "kbj.data.http",
+    "kbj.data.catalog",
+    "kbj.data.legacy_bridge",
+    "kbj.services.collectors",
+    "kbj.services.api",
 ]

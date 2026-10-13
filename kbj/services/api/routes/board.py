@@ -10,12 +10,14 @@ from fastapi import Query, Request, Response
 from kbj.services.api.deps import TTL_DEFAULT_S, cached_json, get_state
 from kbj.services.api.models.board import BoardEvents, BoardNewhigh, BoardRankings, BoardSectors
 from kbj.services.api.models.common import Envelope
+from kbj.services.api.models.us import UsBoard
 from kbj.services.api.readers.board import (
     board_events,
     board_newhigh,
     board_rankings,
     board_sectors,
 )
+from kbj.services.api.readers.board_us import us_board
 from kbj.services.api.routes._common import data_router
 
 router = data_router("board")
@@ -65,4 +67,17 @@ def rankings(request: Request, day: DateQ = None) -> Response:
         domain="board",
         ttl_s=TTL_DEFAULT_S,
         build=lambda: board_rankings(st.read, day=day),
+    )
+
+
+# ── P5(docs/p5_design.md §5 — 간밤 미국, 리더 본문은 US 묶음 `readers/board_us.py`)
+# ─────────────────
+@router.get("/us", response_model=Envelope[UsBoard])
+def us(request: Request, basis: Annotated[Literal["close", "high"], Query()] = "close") -> Response:
+    st = get_state(request)
+    return cached_json(
+        request,
+        domain="board_us",
+        ttl_s=TTL_DEFAULT_S,
+        build=lambda: us_board(st.read, basis=basis),
     )

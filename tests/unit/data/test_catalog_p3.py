@@ -43,7 +43,17 @@ def test_p3_stores_are_created_by_migrations() -> None:
         assert catalog.get(ds).store in TABLES, ds
 
 
-def test_planned_now_only_lists_p5_sources() -> None:
-    assert {s.source for s in catalog.PLANNED} == {
-        "NASDAQ", "YAHOO", "FRED", "TREASURY", "NYFED", "FF", "ANTHROPIC",
-    }  # fmt: skip
+def test_planned_is_empty_after_p5() -> None:
+    # P5: YAHOO(FND)·FRED·TREASURY·NYFED·FF(MAC)·NASDAQ(US)가 어댑터로 옮겼다(WRAP 등록).
+    # ANTHROPIC:guru(ET xdigest)는 사용자 결정(2026-10-13 Q4)으로 완전히 뺐다.
+    assert catalog.PLANNED == ()
+    ids = set(catalog.all_datasets())
+    assert {"YAHOO:us_index_daily", "YAHOO:macro"} <= ids
+    assert {
+        "FRED:gov_series", "FRED:release_dates", "FRED:restricted_series",
+        "TREASURY:yield_curve", "NYFED:rates", "FF:calendar",
+        "NASDAQ:screener", "NASDAQ:daily",
+    } <= ids  # fmt: skip
+    assert not any(i.startswith("ANTHROPIC:") for i in ids)
+    for i in ids:
+        assert "[어댑터 없음" not in catalog.get(i).notes, i

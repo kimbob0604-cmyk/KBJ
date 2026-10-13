@@ -694,8 +694,8 @@ def test_state_enter_and_run_once_backfill() -> None:
 
 
 def test_real_registry_one_day_runs_only_enabled_jobs() -> None:
-    """켜진 작업만 처리기를 부른다(P2 셋 + P3 아홉 + P4 아홉 — docs/p3_design.md §0.4·p4 §0.4,
-    묶음 S 가 켰다).
+    """켜진 작업만 처리기를 부른다(P2 셋 + P3 아홉 + P4 아홉 + P5 일곱 — docs/p3_design.md §0.4·p4
+    §0.4·p5 D-P5-23, 웨이브 3 묶음이 켰다).
 
     나머지는 '계획됨'(skipped·planned)으로만 남고 external 은 기록조차 없다. 켜진 작업의 데이터 키만
     선점 장부에 done 으로 남는다."""
@@ -713,8 +713,10 @@ def test_real_registry_one_day_runs_only_enabled_jobs() -> None:
     rig = Rig([], handlers, kst(2026, 10, 6, 0, 0), registry=reg)
     rig.run_until(kst(2026, 10, 7, 0, 0), every=timedelta(minutes=1))
     # market.backfill·fin.backfill 은 수동(발화 없음), filings.company_profile 은 토요일 04:00.
-    # 나머지 켜진 작업은 10-06(화, 거래일)에 모두 돈다
-    assert set(ran) == enabled - {"market.backfill", "fin.backfill", "filings.company_profile"}
+    # us.universe 는 일요일 04:00(P5). 나머지 켜진 작업은 10-06(화, 거래일)에 모두 돈다
+    assert set(ran) == enabled - {
+        "market.backfill", "fin.backfill", "filings.company_profile", "us.universe",
+    }  # fmt: skip
     # P4 분 단위 작업(as_of: minute — 실행 as_of 하나에 한 번): 발화마다 한 번씩
     assert ran.count("filings.dart_feed") == 13 * 60  # 07:00~19:59 매분
     assert ran.count("earnings.alerts") == 14 * 12  # 07:00~20:55 5분마다
@@ -730,8 +732,11 @@ def test_real_registry_one_day_runs_only_enabled_jobs() -> None:
     external = {j.name for j in reg.jobs if j.external}
     assert not any(r.job in external for r in rig.runs.records.values())
     planned = {r.job for r in rig.runs.records.values() if r.detail.get("reason") == "planned"}
-    assert {"brief.morning", "brief.closing", "flows.report"} <= planned  # P5 로 옮긴 것 포함
-    assert "us.eod" in planned  # 10-05(월) 뉴욕장 → 10-06 05:10 KST
+    # P5 에서 꺼진 채 남은 것(실측 전 — D-P5-23)은 계획됨으로만
+    assert {"macro.morning", "market.fsc_daily", "program.daily", "program.stock_sweep"} <= planned
+    # P5 웨이브 3 이 켠 것은 돈다 — us.eod 는 10-05(월) 뉴욕장 → 10-06 KST
+    assert {"brief.morning", "brief.closing", "flows.report", "us.eod"} <= set(ran)
+    assert ran.count("flows.market_minute") == 401  # 09:00~15:40 매분
     assert rig.notes.sent == []
     done = rig.claims.done_keys()
     assert DataKey("DART", "corpCode", "2026-10-06") in done

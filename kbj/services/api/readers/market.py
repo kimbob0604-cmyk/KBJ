@@ -4,12 +4,15 @@
 - 확정 값은 원장(krx > kis)에서, 장중 값은 KIS 지수 슬롯(estimated — '장중(지수 기준)', R23).
 - 업종 지수 코드(`market.sector_indices`)·경기민감/방어 코드가 비어 있으면 [실측 필요] 사유와 함께
   '준비 중'(404 no_data / 칩 note) — 지어내지 않는다.
+- 상단 띠 P5 칩 셋(MAC — D-P5-20): 신용스프레드 AA-·신용잔고(공개)·한국 대 글로벌(로그인)은
+  `kbj.engines.macro.ribbon` 이 값을 내면 P3 의 '준비 중' 칩을 갈아 끼운다(`_p5_chips`). 입력이
+  없으면(수집 꺼짐·실측 전 #43·#48) '준비 중' 칩을 그대로 둔다.
 """
 
 from __future__ import annotations
 
 from collections.abc import Sequence
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any, Final
 
 from kbj.core.quality import Quality, Sourced
@@ -17,7 +20,16 @@ from kbj.core.rows import IndexBar, IndexQuote
 from kbj.core.time import KST
 from kbj.engines.flows.ledger import Ledger, close_as_of, source_label
 from kbj.engines.flows.totals import market_investor_totals
+from kbj.engines.macro.ribbon import (
+    CREDIT_AA,
+    CREDIT_KTB,
+    US_INDEX,
+    credit_balance_chip,
+    credit_spread_chip,
+    kr_vs_global_chip,
+)
 from kbj.engines.market.breadth import market_breadth
+from kbj.engines.market.ribbon import Chip as EngineChip
 from kbj.engines.market.ribbon import (
     RibbonInputs,
     SkewResult,
@@ -60,6 +72,8 @@ from kbj.services.api.readers.flows import market_totals
 __all__ = ["market_ribbon", "market_sectors", "market_summary"]
 
 SUMMARY_WINDOW: Final = 21  # 20일선·20일 평균 + 오늘
+P5_LOOKBACK_DAYS: Final = 21  # 띠 P5 칩 입력 창(달력일 — 공표 지연 몇 날을 덮는다)
+KOFIA_OPEN: Final = (13, 30)  # 금투협 통계 D+1 13시 개방 + 수집 13:30(market_stats.kofia)
 SPARK_N: Final = 20
 KOSPI: Final = "0001"
 
@@ -309,6 +323,33 @@ def _chip_value(v: Sourced[Any] | None) -> ChipValue | None:
     return ChipValue(value=v.value, source=v.source, as_of=v.as_of, quality=v.quality)
 
 
+def _p5_chips(ctx: ReadContext, now: datetime) -> dict[str, EngineChip]:
+    """P5 칩 셋(MAC) — 값이 나온 칩만. 없는 칩은 P3 '준비 중' 그대로(부르는 쪽)."""
+    today = now.date()
+    since = (today - timedelta(days=P5_LOOKBACK_DAYS)).isoformat()
+    out: dict[str, EngineChip] = {}
+    rows = ctx.repos.macro.series([CREDIT_AA, CREDIT_KTB], since)
+    spread = credit_spread_chip(rows.get(CREDIT_AA, []), rows.get(CREDIT_KTB, []))
+    if spread is not None:
+        out[spread.key] = spread
+    prev = ctx.cal.prev_trading_day(today)
+    expected = prev if (now.hour, now.minute) >= KOFIA_OPEN else ctx.cal.prev_trading_day(prev)
+    bal = credit_balance_chip(
+        ctx.repos.market_stats.series(
+            "credit_balance", start=today - timedelta(days=P5_LOOKBACK_DAYS)
+        ),
+        expected=expected,
+    )
+    if bal is not None:
+        out[bal.key] = bal
+    kospi = ctx.repos.market.index_series([KOSPI], today, 5).get(KOSPI, [])
+    us = ctx.repos.us.daily(list(US_INDEX), today, 5)
+    kvg = kr_vs_global_chip(kospi, us)
+    if kvg is not None:
+        out[kvg.key] = kvg
+    return out
+
+
 def market_ribbon(ctx: ReadContext) -> Envelope[Ribbon]:
     now = ctx.now_kst()
     today = now.date()
@@ -380,6 +421,8 @@ def market_ribbon(ctx: ReadContext) -> Envelope[Ribbon]:
         now,
         ctx.cal,
     )
+    p5 = _p5_chips(ctx, now)
+    chips = [p5.get(c.key, c) for c in chips]
     out = [
         Chip(
             key=c.key,

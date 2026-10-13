@@ -16,6 +16,11 @@ import { seg, select } from '../ui/seg';
 import { heatColor, level } from '../ui/svg';
 import { type Column, table } from '../ui/table';
 import { failed, fill, filters, nameCell, REFRESH_MS } from './p1_market';
+import { mountUs, US_TITLE } from './p2/us';
+
+// 공개 빌드에서는 P5 로그인 모듈을 번들에서 뺀다(p8_stock LOGIN_VALUE 와 같은 방식 — 공개 등급은 이 줄에 오기 전에
+// 자물쇠로 돌아가므로 실행 동작은 같고, 공개 JS gzip 예산 scripts/check-bundle.mjs 60 KB 를 지킨다. WRAP)
+const LOGIN_US = import.meta.env.MODE === 'public' ? null : mountUs;
 
 type S = components['schemas'];
 type Newhigh = S['BoardNewhigh'];
@@ -49,7 +54,11 @@ export interface BasisView {
   gap?: Record<string, number | null> | null;
 }
 
-const DEFAULT_LABELS: Record<string, string> = { hist: '역사적', w52: '52주', d120: '120일' };
+const DEFAULT_LABELS: Record<string, string> = {
+  hist: '역사적',
+  w52: '52주',
+  d120: '120일',
+};
 
 export const EVENT_LABEL: Record<string, string> = {
   material_giveback: '재료 반납',
@@ -86,7 +95,12 @@ type MinTurn = '0' | '50' | '100' | '300';
  */
 export function basisView(r: BoardRow, basis?: Basis): BasisView {
   const b = basis ? r[`${basis}_basis`] : null;
-  return isObj(b) ? { label: str(b.label), gap: isObj(b.gap) ? (b.gap as BasisView['gap']) : null } : r;
+  return isObj(b)
+    ? {
+        label: str(b.label),
+        gap: isObj(b.gap) ? (b.gap as BasisView['gap']) : null,
+      }
+    : r;
 }
 
 /** 돌파폭(%) = 기준 최고가 대비 넘어선 폭 = −갭(엔진 갭은 이미 넘겼으면 음수). 모르면 null */
@@ -104,7 +118,13 @@ export function achievedColumns(d: Newhigh): Column<BoardRow>[] {
   const statusOk = (d.basis ?? 'close') === basis;
   const labelOf = (r: BoardRow): string | null => basisView(r, basis).label ?? null;
   return [
-    { key: 'name', label: '종목', align: 'l', cell: (r) => nameCell(r.name, r.code), cls: () => 'nm' },
+    {
+      key: 'name',
+      label: '종목',
+      align: 'l',
+      cell: (r) => nameCell(r.name, r.code),
+      cls: () => 'nm',
+    },
     { key: 'market', label: '시장', align: 'l', cell: (r) => r.market ?? null },
     {
       key: 'label',
@@ -122,12 +142,23 @@ export function achievedColumns(d: Newhigh): Column<BoardRow>[] {
       cell: (r) =>
         h(
           'span',
-          statusOk ? null : { attrs: { title: `신규·이어감은 ${d.basis === 'high' ? '고가' : '종가'} 기준으로만 센다` } },
+          statusOk
+            ? null
+            : {
+                attrs: {
+                  title: `신규·이어감은 ${d.basis === 'high' ? '고가' : '종가'} 기준으로만 센다`,
+                },
+              },
           (statusOk ? r.status : null) ?? DASH,
           r.suspect ? h('span', { class: 'tag warn' }, '분할 의심') : null,
         ),
     },
-    { key: 'chg', label: '등락', cell: (r) => pct(r.chg_pct), cls: (r) => signClass(r.chg_pct) },
+    {
+      key: 'chg',
+      label: '등락',
+      cell: (r) => pct(r.chg_pct),
+      cls: (r) => signClass(r.chg_pct),
+    },
     { key: 'gap', label: '돌파폭', cell: (r) => pct(breakout(r, basis)) },
     { key: 'turnover', label: '거래대금(억)', cell: (r) => num(r.turnover) },
     { key: 'vol', label: '거래량 배수', cell: (r) => times(r.vol_mult) },
@@ -149,7 +180,13 @@ export function achievedColumns(d: Newhigh): Column<BoardRow>[] {
 export function proximityColumns(d: Newhigh): Column<BoardRow>[] {
   const labels = d.labels ?? DEFAULT_LABELS;
   return [
-    { key: 'name', label: '종목', align: 'l', cell: (r) => nameCell(r.name, r.code), cls: () => 'nm' },
+    {
+      key: 'name',
+      label: '종목',
+      align: 'l',
+      cell: (r) => nameCell(r.name, r.code),
+      cls: () => 'nm',
+    },
     {
       key: 'kind',
       label: '기준',
@@ -266,7 +303,10 @@ export function drawHeat(
       ),
       h(
         'div',
-        { class: 'heat', attrs: { role: 'list', 'aria-label': `${name} 종목 등락률` } },
+        {
+          class: 'heat',
+          attrs: { role: 'list', 'aria-label': `${name} 종목 등락률` },
+        },
         cells.map((c) => {
           const nh = str(c.newhigh);
           return h(
@@ -351,7 +391,12 @@ export function boardsOf(d: S['BoardRankings']): Board[] {
     });
   }
   for (const b of (d.stock_boards ?? []).filter(isObj)) {
-    out.push({ key: `t:${str(b.key) ?? ''}`, label: str(b.title) ?? str(b.key) ?? '', kind: 'stock', raw: b });
+    out.push({
+      key: `t:${str(b.key) ?? ''}`,
+      label: str(b.title) ?? str(b.key) ?? '',
+      kind: 'stock',
+      raw: b,
+    });
   }
   return out;
 }
@@ -364,7 +409,12 @@ export function rankingTable(b: Board): HTMLElement {
       columns: [
         { key: 'rank', label: '순위', cell: (r) => num(n(r.rank)) },
         { key: 'name', label: '섹터', align: 'l', cell: (r) => str(r.name) },
-        { key: 'ret', label: '상승률', cell: (r) => pct(n(r.ret_raw)), cls: (r) => signClass(n(r.ret_raw)) },
+        {
+          key: 'ret',
+          label: '상승률',
+          cell: (r) => pct(n(r.ret_raw)),
+          cls: (r) => signClass(n(r.ret_raw)),
+        },
         { key: 'n', label: '종목 수', cell: (r) => num(n(r.n)) },
         {
           key: 'delta',
@@ -421,26 +471,67 @@ export function rankingTable(b: Board): HTMLElement {
 async function mount(ctx: PageContext): Promise<void> {
   const { tier, root } = ctx;
   const lock = 'board';
-  const pNh = panel(tier, { title: '신고가 종목', tier: 'login', span: 8, lock });
-  const pNear = panel(tier, { title: '신고가 근접', tier: 'login', span: 4, lock });
-  const pSec = panel(tier, { title: '섹터 집계', tier: 'login', span: 4, lock });
-  const pHeat = panel(tier, { title: '테마 히트맵', tier: 'login', span: 8, lock });
-  const pEv = panel(tier, { title: '탐지 이벤트', tier: 'login', span: 6, lock });
-  const pRank = panel(tier, { title: '랭킹', tier: 'login', span: 6, lock });
-  const pUs = panel(tier, {
-    title: '간밤 미국 신고가',
+  const pNh = panel(tier, {
+    title: '신고가 종목',
     tier: 'login',
-    span: 12,
+    span: 8,
     lock,
-    pending: 'P5',
-    pendingNote: 'us.universe·us.eod',
   });
+  const pNear = panel(tier, {
+    title: '신고가 근접',
+    tier: 'login',
+    span: 4,
+    lock,
+  });
+  const pSec = panel(tier, {
+    title: '섹터 집계',
+    tier: 'login',
+    span: 4,
+    lock,
+  });
+  const pHeat = panel(tier, {
+    title: '테마 히트맵',
+    tier: 'login',
+    span: 8,
+    lock,
+  });
+  const pEv = panel(tier, {
+    title: '탐지 이벤트',
+    tier: 'login',
+    span: 6,
+    lock,
+  });
+  const pRank = panel(tier, { title: '랭킹', tier: 'login', span: 6, lock });
+  // P5 묶음 US — 간밤 미국 신고가(본문은 ./p2/us.ts)
+  const pUs = panel(tier, { title: US_TITLE, tier: 'login', span: 12, lock });
   root.append(pNh.el, pNear.el, pSec.el, pHeat.el, pEv.el, pRank.el, pUs.el);
-  if (pNh.locked) return; // 공개판: 자물쇠만, 요청 없음
+  if (pNh.locked || !LOGIN_BOARD) return; // 공개판: 자물쇠만, 요청 없음(공개 빌드는 아래 본문을 번들에서 뺀다)
+  await LOGIN_BOARD(ctx, { pNh, pNear, pSec, pHeat, pEv, pRank, pUs });
+}
+
+// 로그인 본문 — 공개 빌드에서는 번들에서 뺀다(p8_stock LOGIN_VALUE 와 같은 방식, 공개 JS gzip 예산 60 KB — P5 WRAP).
+// 공개 등급은 위에서 자물쇠로 돌아가므로 실행 동작은 같다.
+interface BoardPanels {
+  pNh: Panel;
+  pNear: Panel;
+  pSec: Panel;
+  pHeat: Panel;
+  pEv: Panel;
+  pRank: Panel;
+  pUs: Panel;
+}
+const LOGIN_BOARD = import.meta.env.MODE === 'public' ? null : mountLogin;
+
+async function mountLogin(ctx: PageContext, { pNh, pNear, pSec, pHeat, pEv, pRank, pUs }: BoardPanels): Promise<void> {
+  const { root } = ctx;
 
   pNear.setDef('남은 폭 = (기준 최고가 − 현재가) ÷ 기준 최고가. 5일 변화가 음수면 좁혀지는 중.');
   const hint = 'board.daily 16:00~16:05';
-  const q = { basis: 'close' as Basis, kind: 'all' as Kind, min: '0' as MinTurn };
+  const q = {
+    basis: 'close' as Basis,
+    kind: 'all' as Kind,
+    min: '0' as MinTurn,
+  };
   let labels: Record<string, string> = DEFAULT_LABELS;
   const names = new Map<string, string>();
   const themeNames = new Map<string, string>();
@@ -474,7 +565,12 @@ async function mount(ctx: PageContext): Promise<void> {
         pNh.setDef(newhighDef(d));
         pNear.clearBody();
         pNear.body.append(
-          table({ columns: proximityColumns(d), rows: near, pageSize: 20, empty: '근접 종목 없음' }).el,
+          table({
+            columns: proximityColumns(d),
+            rows: near,
+            pageSize: 20,
+            empty: '근접 종목 없음',
+          }).el,
         );
         pNear.setSource(env);
         return 0;
@@ -580,7 +676,12 @@ async function mount(ctx: PageContext): Promise<void> {
         pEv.body.append(
           table<Ev>({
             columns: [
-              { key: 'type', label: '유형', align: 'l', cell: (e) => EVENT_LABEL[e.type] ?? e.type },
+              {
+                key: 'type',
+                label: '유형',
+                align: 'l',
+                cell: (e) => EVENT_LABEL[e.type] ?? e.type,
+              },
               {
                 key: 'who',
                 label: '종목·테마',
@@ -593,7 +694,12 @@ async function mount(ctx: PageContext): Promise<void> {
                 },
               },
               { key: 'sev', label: '강도', cell: (e) => num(e.severity, 2) },
-              { key: 'ev', label: '근거', align: 'l', cell: (e) => evidenceText(e, labels) },
+              {
+                key: 'ev',
+                label: '근거',
+                align: 'l',
+                cell: (e) => evidenceText(e, labels),
+              },
             ],
             rows: evs,
             pageSize: 20,
@@ -642,9 +748,11 @@ async function mount(ctx: PageContext): Promise<void> {
       hint,
     );
 
+  const loadUs = LOGIN_US ? LOGIN_US(ctx, pUs) : (): Promise<void> => Promise.resolve();
+
   // 탐지는 종목·테마 이름을 쓰려고 보드·섹터 뒤에
   const all = async (): Promise<void> => {
-    await Promise.all([loadNewhigh(), loadSectors(), loadRankings()]);
+    await Promise.all([loadNewhigh(), loadSectors(), loadRankings(), loadUs()]);
     await loadEvents();
   };
   await all();

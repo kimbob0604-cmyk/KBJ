@@ -16,8 +16,15 @@ import {
   text,
 } from './support';
 
+// P5 패널(맵·동시 편입)이 같은 페이지에서 부르는 응답 — 합성 p5_world 픽스처(test/fixtures/api/etf/)
+const P5 = import.meta.glob<unknown>('../fixtures/api/etf/*.json', { eager: true, import: 'default' });
+const P5_DEFAULTS = {
+  etf_map: structuredClone(P5['../fixtures/api/etf/map_type_1m.json']) as object,
+  'etf_active-consensus': structuredClone(P5['../fixtures/api/etf/active_consensus.json']) as object,
+};
+
 async function mountLogin(over: Parameters<typeof apiHarness>[0] = {}) {
-  const hz = apiHarness(over);
+  const hz = apiHarness({ ...P5_DEFAULTS, ...over });
   const { ctx, root, every } = pageCtx(10, 'login', hz.source);
   await page.mount(ctx);
   return { hz, root, every };
@@ -29,8 +36,10 @@ describe('페이지 10 ETF — 로그인', () => {
   it('네 응답을 부르고 그린다', async () => {
     const { hz, root } = await mountLogin();
     expect(hz.paths().sort()).toEqual([
+      'etf/active-consensus?days=1', // P5 패널(맵·동시 편입 — test/pages/p10_etf_p5.test.ts 가 본다)
       'etf/flows?mode=in&period=5',
       'etf/holdings/changes',
+      'etf/map?group=type&period=1M',
       'etf/premium?basis=nav',
       'etf/types?period=5',
     ]);
@@ -219,7 +228,7 @@ describe('페이지 10 ETF — 공개', () => {
     const { ctx, root } = pageCtx(10, 'public', hz.source);
     await page.mount(ctx);
     expect(hz.calls).toHaveLength(0);
-    expect(root.querySelectorAll('.panel.locked')).toHaveLength(4);
+    expect(root.querySelectorAll('.panel.locked')).toHaveLength(7); // P3 4 + P5 3(맵·보유 탐색·동시 편입)
     expect(text(panelByTitle(root, '구성종목 변동'))).toContain('운용사 구성종목');
   });
 });

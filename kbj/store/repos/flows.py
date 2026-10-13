@@ -2,7 +2,9 @@
 (docs/p3_design.md §1.1·§3.5, D-P3-7, docs/metrics.md §2).
 
 표: 0003 `prv_flows.stock_investor_daily`·`market_investor_daily`, 0008 `investor_intraday`·
-`investor_revision`·`ledger_check`.
+`investor_revision`·`ledger_check`, P5(F2) 0006 `prv_gex.investor_flow`(장중 시장별 투자자 1분 —
+`put_investor_minutes`·`investor_minutes`). investor_flow 의 쓰기 함수는 **F2 작업
+`flows.market_minute` 만** 부른다(ADR 0019 — 쓰기 주인 하나). 대금은 백만원(GX 단위 — metrics §21).
 
 잠정 → 확정 규칙(D-P3-7, `plan_investor_upsert` — Pg·메모리가 같은 함수를 쓴다)
 - 키 = (종목, 날짜, 투자자, 거래소). 같은 키의 원천이 여럿이면 원장 우선순위(krx > kis(ok) >
@@ -19,10 +21,11 @@ from __future__ import annotations
 from collections.abc import Collection, Iterable, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Any, Protocol
+from typing import Any, Final, Protocol
 
 from psycopg.types.json import Jsonb
 
+from kbj.core.p5_rows import MINUTE_INVESTORS, InvestorMinute
 from kbj.core.quality import Quality
 from kbj.core.rows import (
     IntradayInvestor,
@@ -42,6 +45,7 @@ from kbj.store.repos._common import (
     to_float,
     to_int,
 )
+from kbj.store.repos._table import Table, select, upsert
 
 FlowKey = tuple[str, date, Investor, str]  # (code, date, investor, venue)
 
@@ -207,6 +211,42 @@ class FlowsRepo(Protocol):
         ...
 
     def checks(self, day: date, domain: str | None = None) -> list[LedgerCheck]: ...
+
+    # P5(F2 — docs/p5_design.md §1.1·§4.7): 장중 시장별 투자자 1분(prv_gex.investor_flow)
+    def put_investor_minutes(self, rows: Sequence[InvestorMinute], *, loaded_by: str) -> int:
+        """같은 (ts, 시장, 업종, 투자자)는 덮어쓴다(같은 분 재실행 멱등). 쓴 행 수.
+
+        표에 loaded_by 열이 없다(GX 표) — 인자는 쓰는 작업 확인용(F2 작업만 부른다)."""
+        ...
+
+    def investor_minutes(
+        self,
+        trade_date: date,
+        pairs: Collection[tuple[str, str]] | None = None,
+        *,
+        session: str = "day",
+    ) -> list[InvestorMinute]:
+        """그날 (시장 코드, 업종 코드) 조합의 1분 행 — (시장, 업종, ts, 투자자) 순. pairs=None 은
+        전부.
+        빈 분은 행이 없다(보간 금지)."""
+        ...
+
+
+INVESTOR_FLOW: Final = Table(
+    "prv_gex.investor_flow", InvestorMinute, key=("ts", "market_code", "sector_code", "investor"),
+    extra=(), skip=frozenset({"source"}),
+)  # fmt: skip
+
+
+def check_minutes(rows: Sequence[InvestorMinute], loaded_by: str) -> None:
+    require_loaded_by(loaded_by)
+    keys = [(r.ts, r.market_code, r.sector_code, r.investor) for r in rows]
+    if len(set(keys)) != len(keys):
+        raise ValueError("같은 (ts, 시장, 업종, 투자자)가 두 번 있다")
+
+
+def minute_order(r: InvestorMinute) -> tuple[str, str, float, int]:
+    return (r.market_code, r.sector_code, r.ts.timestamp(), MINUTE_INVESTORS.index(r.investor))
 
 
 # ── Postgres ───────────────────────────────────────────────────────────────────────────
@@ -477,3 +517,25 @@ class PgFlowsRepo:
             )
             for r in rows
         ]  # fmt: skip
+
+    def put_investor_minutes(self, rows: Sequence[InvestorMinute], *, loaded_by: str) -> int:
+        check_minutes(rows, loaded_by)
+        with self._connect() as conn:
+            return upsert(conn, INVESTOR_FLOW, rows, {})
+
+    def investor_minutes(
+        self,
+        trade_date: date,
+        pairs: Collection[tuple[str, str]] | None = None,
+        *,
+        session: str = "day",
+    ) -> list[InvestorMinute]:
+        with self._connect() as conn:
+            got = select(
+                conn, INVESTOR_FLOW, "trade_date = %s AND session = %s", (trade_date, session)
+            )
+        wanted = None if pairs is None else set(pairs)
+        return sorted(
+            (r for r in got if wanted is None or (r.market_code, r.sector_code) in wanted),
+            key=minute_order,
+        )

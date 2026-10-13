@@ -308,14 +308,100 @@ DATASETS: Final[tuple[DatasetSpec, ...]] = (
     ),
     _kis(
         "market_investor_intraday",
-        published="세션 중 연속(GX poller 주기)",
+        published="호출 시점의 오늘 누적 한 줄(분 이력 아님 — 1분마다 불러 쌓는다, F2 §1.1)",
         as_of="minute",
         store="prv_gex.investor_flow",
         notes=(
-            "FHPTJ04030000 시장별 투자자 시간대별"
-            "(/uapi/domestic-stock/v1/quotations/inquire-investor-time-by-market) — GX poller(P7). "
-            "prv_flows.market_investor_intraday 는 이 표의 뷰(설계 §8.2 0006)"
+            "FHPTJ04030000 시장별 투자자매매동향(시세성)"
+            "(/uapi/domestic-stock/v1/quotations/inquire-investor-time-by-market) — 입력 "
+            "FID_INPUT_ISCD(시장)·FID_INPUT_ISCD_2(업종). 쓰기 주인은 P5 flows.market_minute 하나"
+            "(ADR 0019 — 등록부에서 gex.poller 의 collects 를 옮겼다, D-P5-21 ①). 투자자 12구분 × "
+            "매도·매수·순매수 × 수량·대금(백만원 — GX 단위). 거래소 구분 입력 없음(KIS 기본 — "
+            "KRX 로 표시). 현물 코드 쌍·주식선물 코드·장전 값·통합 여부·etc_orgt 가 기관 합계에 "
+            "드는지 [확인 필요 #39] — 실측 전에는 GX 가 검증한 K2I F001·OC01·OP01 만 켠다"
+            "(config/markets.yaml flows.minute.pairs). prv_flows.market_investor_intraday 는 이 "
+            "표의 뷰(0006). 파서 kbj/data/private/kis/investors_minute.py(TR_MARKET_MINUTE·칸 표 — "
+            "순매수 수량 칸 pe_fund·etc_orgt·etc_corp 는 _ntby_vol, 나머지 _ntby_qty: GX 실측). "
+            "행 ts = 슬롯 분, 슬롯 + 45초 넘어 받으면 estimated, 값이 모두 0 이면 공표 전(장전 — "
+            "#39)"
         ),
+    ),
+    # ── P5 F2 프로그램매매(docs/p5_flow_program_prompt.md §1.4 — 칸 이름은 KIS 공식 예제 기준,
+    # 단위·반영 시각 [실측 필요 #40·#41]). TR·입력 칸·응답 칸 이름·단위 상수는 파서
+    # kbj/data/private/kis/program.py 한 곳(PROGRAM_TRS·market_field·stock_field·INVESTOR_CODES·
+    # MARKET_VALUE_UNIT_KRW 백만원 가정·STOCK_VALUE_UNIT_KRW 원 가정 — 전부 [확인 필요]). 가짜 KIS·
+    # 시뮬레이션·시험은 그 표를 import 한다. 금액은 원으로 바꿔 저장.
+    _kis(
+        "program_market_daily",
+        published="장 마감 뒤 당일 확정 [확인 필요 #40: 반영 시각]",
+        as_of="trade_date",
+        store="prv_flows.program_market_daily",
+        notes=(
+            "FHPPG04600001 프로그램매매 종합현황(일별)"
+            "(/uapi/domestic-stock/v1/quotations/comp-program-trade-daily) — 입력 "
+            "FID_COND_MRKT_DIV_CODE(J·NX·UN)·FID_MRKT_CLS_CODE(K 코스피·Q 코스닥)·시작·끝 날짜. "
+            "응답 차익 arbt_*·비차익 nabt_*·전체 whol_* × 위탁 entm·자기 onsl·합계 smtn × "
+            "매도·매수2·"
+            "순매수 × 수량·대금. 대금 단위·날짜 구간 상한(60일 백필 호출 수) [확인 필요 #40]. "
+            "작업 program.daily(close+20)·program.backfill(지난 날 — 일별 TR 을 날마다 1회)"
+        ),
+        venues=_SPLIT,
+    ),
+    _kis(
+        "program_market_intraday",
+        published="장중 연속 [확인 필요 #40: 반영 주기]",
+        as_of="minute",
+        store="prv_flows.program_market_intraday",
+        notes=(
+            "FHPPG04600101 프로그램매매 종합현황(시간)"
+            "(/uapi/domestic-stock/v1/quotations/comp-program-trade-today) — 입력 거래소·시장·구간·"
+            "시각. 구간·시각 입력의 뜻·응답 칸·단위 [확인 필요 #40]. 작업 program.intraday(매분)"
+        ),
+        venues=_SPLIT,
+    ),
+    _kis(
+        "program_investor_today",
+        published="장중·마감 뒤 당일 누적 [확인 필요 #40]",
+        as_of="trade_date",
+        store="prv_flows.program_investor_daily",
+        notes=(
+            "HHPPG046600C1 투자자별 프로그램매매(당일)"
+            "(/uapi/domestic-stock/v1/quotations/investor-program-trade-today) — 입력 시장 1 "
+            "코스피·"
+            "4 코스닥. 투자자 구분 코드(INVESTOR_CODES)·차익/비차익 나눔·단위 [확인 필요 #40]. "
+            "**당일 TR** — 백필(지난 날)은 부르지 않고 0행(지난 날 값을 지어내지 않는다). "
+            "작업 program.daily"
+        ),
+        venues=_SPLIT,
+    ),
+    _kis(
+        "program_stock_intraday",
+        published="장중 체결 연속 [확인 필요 #41: 반영 주기]",
+        as_of="slot10m",
+        store="prv_flows.program_stock_intraday",
+        notes=(
+            "FHPPG04650101 종목별 프로그램매매추이(체결)"
+            "(/uapi/domestic-stock/v1/quotations/program-trade-by-stock) — 입력 거래소·종목코드. "
+            "프로그램 순매수 '상위' 순위 TR 은 KIS 에 없다 → 거래대금 상위 "
+            "N(KIS:turnover_rank_intraday)"
+            " + 관심종목 범위를 10분마다 훑는다(F2 §1.4 — 화면은 범위 꼬리표 필수). N 기본값 "
+            "config/markets.yaml program.scan_top_n [확인 필요 #41]. 작업 program.stock_scan"
+        ),
+        venues=_SPLIT,
+    ),
+    _kis(
+        "program_stock_daily",
+        published="장 마감 뒤 당일 확정 [확인 필요 #41: 반영 시각]",
+        as_of="event",
+        store="prv_flows.program_stock_daily",
+        notes=(
+            "FHPPG04650201 종목별 프로그램매매추이(일별)"
+            "(/uapi/domestic-stock/v1/quotations/program-trade-by-stock-daily) — 입력 거래소·"
+            "종목코드·날짜. 마감 뒤 전 종목 1회 훑기(코스피+코스닥 약 2,700회 — 4/s 로 약 11~12분, "
+            "[확인 필요 #41]). 데이터 키 <종목>:<거래일>(event — 처리기가 claims 로 직접 선점, "
+            "끊기면 이어서 — D-P4-25 ②). 작업 program.stock_sweep(18:10)"
+        ),
+        venues=_SPLIT,
     ),
     _kis(
         "ws_ticks",

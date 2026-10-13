@@ -1,0 +1,63 @@
+{
+  "source": "KIS",
+  "as_of": "2026-11-17T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "NXT 미포함(KRX 구분만 — D-P3-9)"
+  ],
+  "generated_at": "2026-11-17T18:40:00+09:00",
+  "data": {
+    "market": "Q",
+    "venue": "KRX",
+    "side": "sell",
+    "scope": "close",
+    "scope_label": "전 종목(마감 확정)",
+    "slot": null,
+    "rows": [
+      {
+        "rank": 1,
+        "code": "997120",
+        "name": "합성바이오A",
+        "price": 7140.0,
+        "chg_pct": 0.5,
+        "net_value": -13398964671,
+        "buy_value": 1000000000,
+        "sell_value": 14398964671,
+        "quality": "ok"
+      },
+      {
+        "rank": 2,
+        "code": "997210",
+        "name": "합성자동차",
+        "price": 34000.0,
+        "chg_pct": 0.5,
+        "net_value": -9600310213,
+        "buy_value": 1000000000,
+        "sell_value": 10600310213,
+        "quality": "ok"
+      },
+      {
+        "rank": 3,
+        "code": "997180",
+        "name": "합성브랜드",
+        "price": 32460.0,
+        "chg_pct": 0.5,
+        "net_value": -8371116152,
+        "buy_value": 1000000000,
+        "sell_value": 9371116152,
+        "quality": "ok"
+      },
+      {
+        "rank": 4,
+        "code": "997150",
+        "name": "합성바이오D",
+        "price": 67500.0,
+        "chg_pct": 0.5,
+        "net_value": -4877015561,
+        "buy_value": 1000000000,
+        "sell_value": 5877015561,
+        "quality": "ok"
+      }
+    ]
+  }
+}

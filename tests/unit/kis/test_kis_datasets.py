@@ -165,3 +165,39 @@ def test_invest_opinion_is_collected_by_consensus_snapshot_only() -> None:
         ("KIS:invest_opinion", "trade_date"): "consensus.snapshot",
     }
     assert not reg.by_name("consensus.snapshot").enabled  # 실측 #29 전까지 꺼짐
+
+
+# ── P5 F2 프로그램매매 데이터셋(docs/p5_design.md §1.1·§1.7, F2 프롬프트 §1.4) ──
+F2_PROGRAM = {
+    # 데이터셋: (TR id, as_of, 저장 표, 실측 번호)
+    "program_market_daily": (
+        "FHPPG04600001", "trade_date", "prv_flows.program_market_daily", "#40",
+    ),
+    "program_market_intraday": (
+        "FHPPG04600101", "minute", "prv_flows.program_market_intraday", "#40",
+    ),
+    "program_investor_today": (
+        "HHPPG046600C1", "trade_date", "prv_flows.program_investor_daily", "#40",
+    ),
+    "program_stock_intraday": (
+        "FHPPG04650101", "slot10m", "prv_flows.program_stock_intraday", "#41",
+    ),
+    "program_stock_daily": ("FHPPG04650201", "event", "prv_flows.program_stock_daily", "#41"),
+}  # fmt: skip
+
+
+def test_p5_f2_program_datasets_follow_the_tr_table() -> None:
+    from kbj.data.private.kis.datasets import DATASETS
+    from kbj.data.spec import Tier, Venue
+
+    by_name = {d.dataset: d for d in DATASETS}
+    for name, (tr, as_of, store, probe) in F2_PROGRAM.items():
+        d = by_name[name]
+        assert d.tier is Tier.PRIVATE and d.limiter == "kis" and d.budget is None, name
+        assert tr in d.notes and d.as_of_kind == as_of and d.store == store, name
+        assert f"[확인 필요 {probe}" in d.notes, name  # 실측 전 — 칸·단위는 확인 필요
+        # 프로그램 TR 은 FID_COND_MRKT_DIV_CODE(J·NX·UN)를 받는다 — 거래소마다 데이터 키
+        assert d.venues == (Venue.KRX, Venue.NXT, Venue.TOTAL), name
+    minute = by_name["market_investor_intraday"]
+    assert minute.store == "prv_gex.investor_flow" and minute.venues == ()  # 거래소 입력 없는 TR
+    assert "flows.market_minute" in minute.notes and "#39" in minute.notes

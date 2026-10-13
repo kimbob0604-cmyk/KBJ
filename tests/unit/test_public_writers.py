@@ -1,5 +1,5 @@
-"""정적 시험 — 공개 작업(공시·재무 수집·파생)이 쓰는 SQL 의 스키마는 `pub_` 뿐이다
-(docs/p4_design.md §2·§8.6).
+"""정적 시험 — 공개 작업(공시·재무 수집·파생, P5 매크로·금투협 통계)이 쓰는 SQL 의 스키마는
+`pub_` 뿐이다(docs/p4_design.md §2·§8.6, docs/p5_design.md §1.8-6 — 분류 사전 작업은 P5 제외).
 
 import-linter 계약 ⑬ 은 공개 작업이 로그인 원천·엔진·저장소 **모듈**을 끌어오지 않게 막는다. 이
 시험은 표 쪽 겹이다: 공개 작업 모듈과 그 모듈이 (정적으로, 간접 포함) 끌어오는 저장소
@@ -39,6 +39,11 @@ PUBLIC_JOBS = (
     "kbj.services.collectors.fin",
     "kbj.services.engine.filings",
 )
+# P5 공개 작업(docs/p5_design.md D-P5-25 — 계약 ⑭ 의 작업 소스, WRAP): 공개 매크로·금투협 통계
+P5_PUBLIC_JOBS = (
+    "kbj.services.collectors.macro",
+    "kbj.services.collectors.kofia",
+)
 REPORT_JOB = "kbj.reports.dart_excel.job"
 REPORT_LOGIN_READS = frozenset({"kbj.store.repos.journal"})  # 관심종목 읽기(대상 고르기)만
 # 운영 기반(데이터 표 쓰기가 아님): 선점 장부(ops.data_claim)·DB 접속과 건강 사건(ops.health_events)
@@ -69,17 +74,27 @@ def test_contract_13_sources_match_pyproject() -> None:
         assert f'"{job}"' in contract.split("forbidden_modules", 1)[0], job
 
 
-@pytest.mark.parametrize("job", PUBLIC_JOBS)
+def test_contract_14_sources_match_pyproject() -> None:
+    text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    _, _, contract = text.partition('name = "⑭')
+    for job in P5_PUBLIC_JOBS:
+        assert f'"{job}"' in contract.split("forbidden_modules", 1)[0], job
+
+
+@pytest.mark.parametrize("job", PUBLIC_JOBS + P5_PUBLIC_JOBS)
 def test_public_job_sql_is_pub_only(job: str) -> None:
     mods = _checked(job)
     # 공개 저장소 묶음을 실제로 지나간다(빈 검사가 아님)
-    assert "kbj.store.repos.public" in mods or "kbj.store.repos.filings" in mods, mods
+    assert {
+        "kbj.store.repos.public", "kbj.store.repos.filings", "kbj.store.repos.macro",
+        "kbj.store.repos.market_stats",
+    } & set(mods), mods  # fmt: skip
     assert not {"kbj.store.repos.consensus", "kbj.store.repos.journal"} & set(mods), mods
     bad = {m: v for m in mods if (v := violations(_path(m).read_text(encoding="utf-8")))}
     assert bad == {}
 
 
-@pytest.mark.parametrize("job", PUBLIC_JOBS)
+@pytest.mark.parametrize("job", PUBLIC_JOBS + P5_PUBLIC_JOBS)
 def test_public_job_reaches_no_other_sql_module(job: str) -> None:
     """kbj.store 밖에서 SQL 을 쓰는 모듈(선점 장부 빼고)을 끌어오지 않는다."""
     up = _graph().find_upstream_modules(job)
@@ -106,6 +121,11 @@ def test_report_job_writes_pub_only_and_reads_watchlist_only() -> None:
             "kbj.store.repos.fin",
             "kbj.store.repos._table",
             "kbj.store.repos._common",
+            # P5 공개 저장소(PublicRepos — pub_macro·pub_market_stats, 아래 SQL 검사가
+            # pub_ 만인지 본다). _macro 는 공개·로그인 공용 바탕(스키마는 하위 클래스 속성)
+            "kbj.store.repos.macro",
+            "kbj.store.repos._macro",
+            "kbj.store.repos.market_stats",
         }
     )
     assert login == set()

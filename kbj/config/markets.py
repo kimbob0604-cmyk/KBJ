@@ -14,7 +14,7 @@ import re
 from datetime import date
 from typing import Any, Final, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from kbj.config.files import ConfigFileError, load_yaml_mapping
 from kbj.config.settings import Settings
@@ -114,6 +114,83 @@ class RibbonCfg(_Model):
         return v
 
 
+_PAIR_CODE = re.compile(r"[0-9A-Z]{3,4}")
+_IDENT = re.compile(r"[a-z][a-z0-9_]*")
+
+
+class MinutePair(_Model):
+    """장중 투자자 1분 조합 하나(P5 F2 — docs/p5_design.md §3.4, D-P5-21).
+
+    코드를 모르는 조합(현물 — [확인 필요 #39])은 market·sector 를 비우고 꺼 둔다(지어내지
+    않는다)."""
+
+    id: str
+    market: str | None
+    sector: str | None
+    session: Literal["day", "night"]
+    tab: str
+    label: str = Field(min_length=1)
+    enabled: bool
+    note: str = ""
+
+    @field_validator("id", "tab")
+    @classmethod
+    def _ident(cls, v: str) -> str:
+        if not _IDENT.fullmatch(v):
+            raise ValueError(f"소문자 식별자여야 한다: {v!r}")
+        return v
+
+    @field_validator("market", "sector")
+    @classmethod
+    def _code(cls, v: str | None) -> str | None:
+        if v is not None and not _PAIR_CODE.fullmatch(v):
+            raise ValueError(f"KIS 시장·업종 코드 형식(대문자·숫자 3~4자): {v!r}")
+        return v
+
+    @model_validator(mode="after")
+    def _known_codes_when_on(self) -> MinutePair:
+        if (self.market is None) != (self.sector is None):
+            raise ValueError(f"{self.id}: market·sector 는 함께 비우거나 함께 준다")
+        if self.enabled and self.market is None:
+            raise ValueError(f"{self.id}: 코드를 모르는 조합은 켤 수 없다(실측 #39 뒤)")
+        return self
+
+
+class MinuteCfg(_Model):
+    pairs: tuple[MinutePair, ...] = Field(min_length=1)
+
+    @field_validator("pairs")
+    @classmethod
+    def _unique(cls, v: tuple[MinutePair, ...]) -> tuple[MinutePair, ...]:
+        ids = [p.id for p in v]
+        keys = [(p.market, p.sector, p.session) for p in v if p.market is not None]
+        if len(set(ids)) != len(ids) or len(set(keys)) != len(keys):
+            raise ValueError("flows.minute.pairs 의 id 또는 (시장, 업종, 세션)이 겹친다")
+        return v
+
+    def enabled_pairs(self, session: str = "day") -> tuple[tuple[str, str], ...]:
+        """켠 (시장 코드, 업종 코드) — 수집·API 가 이것만 쓴다."""
+        return tuple(
+            (p.market, p.sector)
+            for p in self.pairs
+            if p.enabled and p.session == session and p.market is not None and p.sector is not None
+        )
+
+
+class FlowsCfg(_Model):
+    minute: MinuteCfg
+
+
+class ProgramCfg(_Model):
+    """프로그램매매(P5 F2 — F2 §1.4·§3.4, metrics §22)."""
+
+    scan_top_n: int = Field(ge=1, le=200)  # [확인 필요 #41]
+    scan_watch_max: int = Field(ge=0, le=100)
+    sweep_markets: tuple[Literal["K", "Q"], ...] = Field(min_length=1)
+    daily_days: int = Field(ge=1, le=250)
+    top_n: int = Field(ge=1, le=100)
+
+
 class MarketsConfig(_Model):
     version: Literal[1]
     kis: KisCfg
@@ -122,6 +199,9 @@ class MarketsConfig(_Model):
     reconcile: ReconcileCfg
     market: MarketCfg
     ribbon: RibbonCfg
+    # P5(묶음 FND — docs/p5_design.md §3.6)
+    flows: FlowsCfg
+    program: ProgramCfg
 
 
 class CalendarEvent(_Model):

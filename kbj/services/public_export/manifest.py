@@ -18,6 +18,12 @@
 - **DART 전용 파일**(P4 공시·재무 — `DART_ONLY_NAMES`·하위 폴더 전부): 모든 깊이의 `source` 가
   정확히 `DART` 여야 하고(p4_design §7 '내용 검사'), 관심종목 흔적(이름에 `watch` 가 든 키·로그인
   스키마 이름 `prv_`)이 0 이어야 한다(관심종목은 개인 데이터 — 공개 파일에 표식·목록을 넣지 않는다).
+- **P5 공개 파일(docs/p5_design.md §7)**: 하위 폴더 `macro/<이름>.json`(공개 매크로 시리즈·캘린더 —
+  MAC)와 평평한 `credit.json`(신용 칩 — MAC). 원천은 공개 출처
+  (ECOS·KOSIS·FRED·TREASURY·NYFED·DATAGO …)라 DART 전용이 아니고, 폴더 항목의 `source` 는 폴더
+  안 파일 원천들을 쉼표로 이은 것이다. 로그인 출처 이름·관심종목 흔적·`prv_` 글자는 여기서도
+  0(하위 폴더 전부와 `P5_FLAT_NAMES`). 크기 상한은 `DIR_CAPS`(폴더 합계)·`FILE_CAPS`(파일
+  하나) — 넘으면 실패(자르지 않는다). 숫자는 [제안](설계 §7) — `merge-public-data.mjs` 와 같게 둔다.
 - 문제 목록에는 값이 아니라 파일 이름·JSON 경로·규칙만 담는다.
 """
 
@@ -37,9 +43,13 @@ from kbj.core.time import KST
 
 __all__ = [
     "DART_ONLY_NAMES",
+    "DART_SUBDIRS",
+    "DIR_CAPS",
+    "FILE_CAPS",
     "LOGIN_SOURCES",
     "MANIFEST_NAME",
     "NAME_RE",
+    "P5_FLAT_NAMES",
     "PUBLIC_FORBIDDEN",
     "QUALITIES",
     "SCHEMA_VERSION",
@@ -47,6 +57,7 @@ __all__ = [
     "SUBDIR_JSON_RE",
     "SUBDIR_XLSX_RE",
     "BlobFile",
+    "BuildOut",
     "DirEntry",
     "FileEntry",
     "Manifest",
@@ -71,10 +82,11 @@ __all__ = [
 SCHEMA_VERSION: Final = 1
 MANIFEST_NAME: Final = "manifest.json"
 NAME_RE: Final = re.compile(r"[a-z0-9_]+\.json")
-# P4 하위 폴더 — web/src/data/static.ts PUBLIC_SUBDIR·PUBLIC_DOWNLOAD, merge-public-data.mjs 와 같은
-# 규칙
-SUBDIRS: Final[tuple[str, ...]] = ("fin", "reports")
-SUBDIR_JSON_RE: Final = re.compile(r"(fin|reports)/[0-9A-Z]{6}\.json")
+# 하위 폴더 — web/src/data/static.ts PUBLIC_SUBDIR·PUBLIC_DOWNLOAD, merge-public-data.mjs 와 같은
+# 규칙. P4 fin·reports(종목코드 이름 — DART 전용), P5 macro(소문자 이름 — 공개 출처 여럿)
+SUBDIRS: Final[tuple[str, ...]] = ("fin", "reports", "macro")
+DART_SUBDIRS: Final[tuple[str, ...]] = ("fin", "reports")
+SUBDIR_JSON_RE: Final = re.compile(r"(?:(fin|reports)/[0-9A-Z]{6}|(macro)/[a-z0-9_]+)\.json")
 SUBDIR_XLSX_RE: Final = re.compile(r"reports/[0-9A-Z]{6}\.xlsx")
 # P4 공시·재무 목록 파일 — 원천이 DART 하나(§7). merge-public-data.mjs DART_ONLY 와 같은 목록
 DART_ONLY_NAMES: Final = frozenset({
@@ -85,6 +97,14 @@ DART_ONLY_NAMES: Final = frozenset({
     "earnings_schedule.json",
     "corp_index.json",
 })  # fmt: skip
+# P5 평평한 공개 파일 — 관심종목 흔적·로그인 스키마 이름 검사를 받는다(DART 전용은 아니다)
+P5_FLAT_NAMES: Final = frozenset({"credit.json"})
+_KB: Final = 1024
+# P5 크기 상한(바이트, docs/p5_design.md §7 [제안]) — 폴더 합계·파일 하나. merge-public-data.mjs 와
+# 같다.
+# fin/ 상한은 config/fin.yaml(public_export.fin_max_total_mb)에서 따로 온다.
+DIR_CAPS: Final[dict[str, int]] = {"macro": 3 * _KB * _KB}
+FILE_CAPS: Final[dict[str, int]] = {"credit.json": 100 * _KB, "macro/calendar.json": 200 * _KB}
 Quality = Literal["ok", "stale", "estimated", "invalid"]
 QUALITIES: Final[tuple[Quality, ...]] = ("ok", "stale", "estimated", "invalid")
 _Q_RANK: Final[dict[str, int]] = {"ok": 0, "stale": 1, "estimated": 2, "invalid": 3}
@@ -123,8 +143,13 @@ def _public_name(name: str) -> bool:
 
 
 def dart_only(name: str) -> bool:
-    """원천이 DART 하나여야 하는 파일인가(P4 목록 파일·하위 폴더 전부)."""
-    return name in DART_ONLY_NAMES or "/" in name
+    """원천이 DART 하나여야 하는 파일인가(P4 목록 파일·P4 하위 폴더 fin·reports)."""
+    return name in DART_ONLY_NAMES or ("/" in name and name.split("/", 1)[0] in DART_SUBDIRS)
+
+
+def _trace_checked(name: str) -> bool:
+    """관심종목 흔적·로그인 스키마 이름(`prv_`)을 보는 파일인가(DART 전용·하위 폴더·P5)."""
+    return dart_only(name) or "/" in name or name in P5_FLAT_NAMES
 
 
 @dataclass(frozen=True)
@@ -174,6 +199,15 @@ class PublicFile:
                 json.dumps(env, ensure_ascii=False, separators=(",", ":"), allow_nan=False) + "\n"
             )
         return json.dumps(env, ensure_ascii=False, indent=1, allow_nan=False) + "\n"
+
+
+@dataclass(frozen=True)
+class BuildOut:
+    """공개 파일 묶음 하나(P5 macro·credit)를 만든 결과 — 만든 파일과 만들지 않은 이유(값
+    없이). 빈 결과 = 파일 0(빈 파일·가짜 값을 만들지 않는다)."""
+
+    files: tuple[PublicFile, ...] = ()
+    skipped: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -355,6 +389,7 @@ def check_payload(name: str, text: str) -> list[str]:
         return problems
     if dart_only(name):
         problems += [f"{name}: source 가 DART 가 아님({p})" for p in non_dart_source_paths(raw)]
+    if _trace_checked(name):
         problems += [f"{name}: 관심종목 흔적 키({p})" for p in watch_trace_paths(raw)]
         if _LOGIN_SCHEMA_TEXT in text:
             problems.append(f"{name}: 로그인 등급 스키마 이름('{_LOGIN_SCHEMA_TEXT}' 규칙)")
@@ -443,6 +478,8 @@ def _check_dir(directory: Path, entry: Mapping[str, Any]) -> list[str]:
         total += len(body)
         sha_of[rel] = sha256_bytes(body)
         hashes.append((rel, sha_of[rel]))
+        if rel in FILE_CAPS and len(body) > FILE_CAPS[rel]:
+            problems.append(f"{rel}: 크기 상한을 넘는다")
         if rel.endswith(".xlsx"):
             continue
         try:
@@ -469,8 +506,13 @@ def _check_dir(directory: Path, entry: Mapping[str, Any]) -> list[str]:
         problems.append(f"{sub}/: manifest 합계 크기와 다름")
     if entry.get("digest") != dir_digest(hashes):
         problems.append(f"{sub}/: manifest 요약 해시와 다름")
-    if entry.get("source") != _DART:
+    if sub in DIR_CAPS and total > DIR_CAPS[sub]:
+        problems.append(f"{sub}/: 합계 크기 상한을 넘는다")
+    src = entry.get("source")
+    if sub in DART_SUBDIRS and src != _DART:
         problems.append(f"{sub}/: source 가 DART 가 아님")
+    elif not isinstance(src, str) or not src:
+        problems.append(f"{sub}/: source 없음")
     as_of = entry.get("as_of")
     if not isinstance(as_of, str) or not _AWARE_ISO.fullmatch(as_of):
         problems.append(f"{sub}/: as_of 없음·시간대 없음")
@@ -512,6 +554,8 @@ def check_tree(directory: Path) -> list[str]:
             continue
         if e.get("sha256") != sha256_text(text):
             problems.append(f"{name}: sha256 불일치")
+        if name in FILE_CAPS and len(text.encode("utf-8")) > FILE_CAPS[name]:
+            problems.append(f"{name}: 크기 상한을 넘는다")
         problems += check_payload(name, text)
         try:
             env: object = json.loads(text)

@@ -1,0 +1,214 @@
+{
+  "source": "KBJ:calendar+config:calendar_events(한국은행 공표 일정)+ECOS:817Y002+DATAGO:15094809/credit+KIS",
+  "as_of": "2026-11-17T16:30:00+09:00",
+  "quality": "estimated",
+  "notes": [],
+  "generated_at": "2026-11-17T07:30:00Z",
+  "data": {
+    "chips": [
+      {
+        "key": "session",
+        "label": "세션",
+        "value": {
+          "value": "장 마감",
+          "source": "KBJ:calendar",
+          "as_of": "2026-11-17T16:30:00+09:00",
+          "quality": "ok"
+        },
+        "tier": "public",
+        "phase_pending": null,
+        "tags": [],
+        "note": null,
+        "detail": {
+          "until": "2026-11-17T18:00:00+09:00",
+          "remaining_s": 5400,
+          "night_opens_today": true
+        }
+      },
+      {
+        "key": "bok_mpc",
+        "label": "금통위 D-9",
+        "value": {
+          "value": 9,
+          "source": "config:calendar_events(한국은행 공표 일정)",
+          "as_of": "2026-11-17T16:30:00+09:00",
+          "quality": "ok"
+        },
+        "tier": "public",
+        "phase_pending": null,
+        "tags": [],
+        "note": null,
+        "detail": {
+          "date": "2026-11-26"
+        }
+      },
+      {
+        "key": "credit_spread",
+        "label": "신용스프레드 AA-",
+        "value": {
+          "value": 0.53,
+          "source": "ECOS:817Y002",
+          "as_of": "2026-11-14T06:00:00+09:00",
+          "quality": "stale"
+        },
+        "tier": "public",
+        "phase_pending": null,
+        "tags": [
+          "%p"
+        ],
+        "note": "공표 지연 — 한쪽 시리즈가 늦다(전 공통일 값)",
+        "detail": {
+          "period": "2026-11-13",
+          "aa": 3.11,
+          "ktb3y": 2.58,
+          "change_bp": 2.0000000000000018,
+          "prev_period": "2026-11-12"
+        }
+      },
+      {
+        "key": "credit_balance",
+        "label": "신용잔고",
+        "value": {
+          "value": 17534979.0,
+          "source": "DATAGO:15094809/credit",
+          "as_of": "2026-11-14T18:00:00+09:00",
+          "quality": "stale"
+        },
+        "tier": "public",
+        "phase_pending": null,
+        "tags": [
+          "백만원"
+        ],
+        "note": "공표 지연 — 2026-11-13 값(D+1 13시 개방)",
+        "detail": {
+          "date": "2026-11-13",
+          "unit": "백만원",
+          "change": -28570.0,
+          "prev_date": "2026-11-12"
+        }
+      },
+      {
+        "key": "export_flash",
+        "label": "수출 속보",
+        "value": null,
+        "tier": "public",
+        "phase_pending": "P6",
+        "tags": [],
+        "note": null,
+        "detail": {}
+      },
+      {
+        "key": "market_turnover",
+        "label": "시장 거래대금",
+        "value": {
+          "value": 461070878400,
+          "source": "KIS",
+          "as_of": "2026-09-15T15:30:00+09:00",
+          "quality": "ok"
+        },
+        "tier": "login",
+        "phase_pending": null,
+        "tags": [
+          "마감",
+          "NXT 미포함"
+        ],
+        "note": null,
+        "detail": {
+          "ratio_avg20": 1.0839885742859705,
+          "n_prior": 20
+        }
+      },
+      {
+        "key": "foreign_spot",
+        "label": "외국인 현물",
+        "value": {
+          "value": -1143000000,
+          "source": "KIS",
+          "as_of": "2026-09-15T15:30:00+09:00",
+          "quality": "ok"
+        },
+        "tier": "login",
+        "phase_pending": null,
+        "tags": [
+          "마감"
+        ],
+        "note": null,
+        "detail": {}
+      },
+      {
+        "key": "inst_spot",
+        "label": "기관 현물",
+        "value": {
+          "value": -58000000,
+          "source": "KIS",
+          "as_of": "2026-09-15T15:30:00+09:00",
+          "quality": "ok"
+        },
+        "tier": "login",
+        "phase_pending": null,
+        "tags": [
+          "마감"
+        ],
+        "note": null,
+        "detail": {}
+      },
+      {
+        "key": "newhigh_count",
+        "label": "신고가 수",
+        "value": {
+          "value": 22,
+          "source": "KIS",
+          "as_of": "2026-09-15T15:30:00+09:00",
+          "quality": "estimated"
+        },
+        "tier": "login",
+        "phase_pending": null,
+        "tags": [],
+        "note": null,
+        "detail": {
+          "universe": null
+        }
+      },
+      {
+        "key": "semi_skew",
+        "label": "반도체 쏠림",
+        "value": null,
+        "tier": "login",
+        "phase_pending": null,
+        "tags": [],
+        "note": "005930 값 없음",
+        "detail": {}
+      },
+      {
+        "key": "cyc_def",
+        "label": "경기민감 대 방어",
+        "value": null,
+        "tier": "login",
+        "phase_pending": null,
+        "tags": [],
+        "note": "업종 지수 코드 미정 — ribbon.cyclical·defensive [확인 필요]",
+        "detail": {}
+      },
+      {
+        "key": "kr_vs_global",
+        "label": "한국 대 글로벌",
+        "value": null,
+        "tier": "login",
+        "phase_pending": "P5",
+        "tags": [],
+        "note": null,
+        "detail": {}
+      },
+      {
+        "key": "gex_flip",
+        "label": "GEX Flip 거리",
+        "value": null,
+        "tier": "login",
+        "phase_pending": "P7",
+        "tags": [],
+        "note": null,
+        "detail": {}
+      }
+    ]
+  }
+}

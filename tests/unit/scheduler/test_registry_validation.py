@@ -5,12 +5,17 @@
 9 예산 · 10 단계별 켜진 작업 목록(P2 셋 + P3 아홉 + P4 아홉 — docs/p3_design.md §0.4·p4 §0.4) ·
 11 장 마감 뒤 발송은 16:00 과 무른 의존 wait_min(ADR 0018) · 12 P4 작업 행(docs/p4_design.md
 §0.4·D-P4-25 — 웨이브 1 묶음 M 이 확정, 웨이브 3 묶음 S 가 `ENABLED_BY_PHASE["P4"]` 아홉을 켰다 —
-consensus.snapshot 은 꺼짐).
+consensus.snapshot 은 꺼짐) · 13 P5 작업 행(docs/p5_design.md §0.4 — 웨이브 1 묶음 FND 가 확정,
+전부 꺼짐 —
+켜기는 WRAP): owner·collects·writes·as_of, F2 다섯 작업의 KIS 하루 호출 ≤ kis.daily_soft_cap, 16:00
+발송
+셋 유지, 휴장일 미실행, gex.poller 에 장중 투자자 1분 없음(ADR 0019).
 """
 
 from __future__ import annotations
 
 import copy
+import re
 from collections.abc import Callable
 from datetime import time
 from pathlib import Path
@@ -65,8 +70,21 @@ P4_ENABLED = {
     "fin.valuation_band",
     "reports.dart_excel",
 }
-# 단계별 켜진 작업(웨이브 3 묶음 S 가 P3·P4 를 켰다). 새 단계가 작업을 켜면 이 표에 한 줄 더한다.
-ENABLED_BY_PHASE = {"P2": P2_ENABLED, "P3": P3_ENABLED, "P4": P4_ENABLED}
+# P5(docs/p5_design.md D-P5-23 — 웨이브 3 WRAP). 처리기가 있고 외부 호출이 없거나 응답 칸이
+# 실측·legacy 운영으로 확인된 작업만. 테마(themes.*)는 사전 통합을 사용자가 따로 진행해
+# P5 에서 뺐다(2026-10-13 Q1). 꺼진 채: macro.* 6(#43~#46·#49)·market_stats.kofia·
+# market.fsc_daily(#48)·program.* 다섯과 backfill(#40·#41)
+P5_ENABLED = {
+    "etf.report",
+    "brief.morning",
+    "brief.closing",
+    "flows.report",
+    "us.universe",  # 사용자 결정 Q6 — ET us-board 운영 파서
+    "us.eod",
+    "flows.market_minute",  # K2I 3조합만(GX 2026-09-28 실측)
+}
+# 단계별 켜진 작업(웨이브 3 묶음이 P3·P4·P5 를 켰다). 새 단계가 작업을 켜면 이 표에 한 줄 더한다.
+ENABLED_BY_PHASE = {"P2": P2_ENABLED, "P3": P3_ENABLED, "P4": P4_ENABLED, "P5": P5_ENABLED}
 
 
 def raw() -> dict[str, Any]:
@@ -373,8 +391,9 @@ def test_store_must_be_in_writes_and_enabled_tables_must_exist() -> None:
 
 
 def test_enabled_owner_must_import_and_external_must_be_off() -> None:  # §6.6-6
-    errs = mutated(lambda d: job(d, "us.eod").update(enabled=True))
-    assert any("us.eod" in e and "처리기를 부를 수 없다" in e for e in errs)
+    # P5 묶음 US: us.eod 처리기가 생겨 예시를 아직 처리기가 없는 작업으로 바꿨다
+    errs = mutated(lambda d: job(d, "trade.customs_tenday").update(enabled=True))
+    assert any("trade.customs_tenday" in e and "처리기를 부를 수 없다" in e for e in errs)
     errs = mutated(lambda d: job(d, "kis.master").update(enabled=True))
     assert any("kis.master" in e and "enabled: false" in e for e in errs)
     errs = mutated(lambda d: job(d, "kis.master").update(owner="kbj.x:y"))
@@ -455,7 +474,10 @@ def test_p3_jobs_are_registered_and_on_after_wave_3() -> None:
         assert p3[name].owner == owner, name
         assert p3[name].enabled, name
     assert {j.name for j in REG.jobs if j.phase == "P5"} >= MOVED_TO_P5
-    assert not any(j.enabled for j in REG.jobs if j.name in MOVED_TO_P5)
+    # P5 웨이브 3(WRAP)이 처리기를 붙여 켠 것 — market.fsc_daily 는 #48 전까지 꺼짐
+    assert {j.name for j in REG.jobs if j.name in MOVED_TO_P5 and j.enabled} == (
+        MOVED_TO_P5 & P5_ENABLED
+    )
 
 
 def test_kis_venues_match_markets_config() -> None:
@@ -697,3 +719,181 @@ def test_p4_event_keys_are_not_preclaimed_by_the_runner() -> None:
         "fnlttSinglAcntAll", "fnlttMultiAcnt", "stockTotqySttus",
     }  # fmt: skip
     assert {k.as_of for k in seen[-1].keys} == {"2026-11-16T09:31"}
+
+
+# ── P5(docs/p5_design.md §0.4 — 웨이브 1 묶음 FND 가 모양을 확정, 켜기는 웨이브 3 WRAP)
+# ────────────
+
+P5_JOBS = {
+    "us.universe": "kbj.services.collectors.us:universe",
+    "us.eod": "kbj.services.collectors.us:eod",
+    "macro.morning": "kbj.services.collectors.macro:morning",
+    "macro.morning_prv": "kbj.services.collectors.macro_prv:morning",
+    "macro.monthly": "kbj.services.collectors.macro:monthly",
+    "macro.monthly_prv": "kbj.services.collectors.macro_prv:monthly",
+    "macro.evening": "kbj.services.collectors.macro:evening",
+    "macro.evening_prv": "kbj.services.collectors.macro_prv:evening",
+    "themes.monitor": "kbj.services.engine.themes:monitor",
+    "etf.report": "kbj.reports.etf:report",
+    "brief.morning": "kbj.reports.briefs:morning",
+    "brief.closing": "kbj.reports.briefs:closing",
+    "flows.report": "kbj.reports.flows:daily",
+    "market.fsc_daily": "kbj.services.collectors.fsc_daily:run",
+    "market_stats.kofia": "kbj.services.collectors.kofia:run",
+    "flows.market_minute": "kbj.services.collectors.flows_minute:run",
+    "program.intraday": "kbj.services.collectors.program:intraday",
+    "program.stock_scan": "kbj.services.collectors.program:scan",
+    "program.daily": "kbj.services.collectors.program:daily",
+    "program.stock_sweep": "kbj.services.collectors.program:sweep",
+    "program.backfill": "kbj.services.collectors.program:backfill",
+}
+F2_JOBS = (
+    "flows.market_minute", "program.intraday", "program.stock_scan", "program.daily",
+    "program.stock_sweep",
+)  # fmt: skip
+# P3·P4 의 KIS 하루 호출 [추정 — docs/p5_design.md §3.4: 장중 약 2,300 + 마감 약 5,700 + 컨센서스
+# 약 640]
+KIS_P3_P4_DAILY = 8_640
+# 전 종목 훑기 대상 수 [추정 — 코스피+코스닥 약 2,700, 실측 #41]
+SWEEP_UNIVERSE = 2_700
+
+
+def test_p5_jobs_are_registered_with_design_owners_and_wave3_enables() -> None:
+    p5 = {j.name: j for j in REG.jobs if j.phase == "P5"}
+    assert set(p5) == set(P5_JOBS)
+    for name, owner in P5_JOBS.items():
+        assert p5[name].owner == owner, name
+    # 켜기는 웨이브 3(WRAP — ENABLED_BY_PHASE["P5"], D-P5-23)
+    assert {n for n, j in p5.items() if j.enabled} == P5_ENABLED
+    # 꺼진 채 남는 작업은 노트에 막는 실측 번호(#39~#49)를 적는다 — 테마 강도는 사용자 별도 진행
+    for name, j in p5.items():
+        if not j.enabled and name != "themes.monitor":
+            assert j.note and re.search(r"#(39|4\d)", j.note), name
+    assert "사용자가 따로" in (p5["themes.monitor"].note or "")
+    # 계약 ⑨ — 엔진은 순수(저장소 금지): 처리기는 kbj.services·kbj.reports 에(D-P5-7)
+    assert all(not o.startswith("kbj.engines.") for o in P5_JOBS.values())
+    # 공개·로그인 매크로 수집은 모듈이 다르다(계약 ⑭ — D-P5-7)
+    pub = {P5_JOBS[n].split(":")[0] for n in ("macro.morning", "macro.monthly", "macro.evening")}
+    prv = {P5_JOBS[n].split(":")[0] for n in P5_JOBS if n.startswith("macro.") and "_prv" in n}
+    assert pub == {"kbj.services.collectors.macro"} and prv == {"kbj.services.collectors.macro_prv"}
+    # 구루 X 다이제스트(ET xdigest)는 사용자 결정(2026-10-13 Q4)으로 완전히 뺐다 — P5·P8 모두 아님
+    assert "guru.research" not in {j.name for j in REG.jobs}
+    assert not [j.name for j in REG.jobs if any(c.source == "ANTHROPIC" for c in j.collects)]
+
+
+def test_p5_collects_and_writes_follow_the_design() -> None:
+    coll = {
+        j.name: {(c.dataset_id, c.as_of) for c in j.collects} for j in [*REG.jobs, *REG.services]
+    }
+    writes = {j.name: set(j.writes) for j in REG.jobs}
+    assert ("FRED:release_dates", "run_date") in coll["macro.morning"]
+    assert "pub_macro.calendar" in writes["macro.morning"]
+    assert ("FRED:restricted_series", "us_trade_date") in coll["macro.morning_prv"]
+    assert not {w for n in ("macro.morning", "macro.monthly", "macro.evening")
+                for w in writes[n] if not w.startswith("pub_")}  # fmt: skip
+    assert not {w for n in ("macro.morning_prv", "macro.monthly_prv", "macro.evening_prv")
+                for w in writes[n] if not w.startswith("prv_")}  # fmt: skip
+    assert writes["us.eod"] == {"prv_market.daily_bar", "prv_board.artifact"}  # D-P5-18
+    assert writes["themes.monitor"] == {"prv_themes.strength"}
+    # 장중 투자자 1분은 flows.market_minute 하나만(ADR 0019 — gex.poller 에서 옮겼다, D-P5-21 ①)
+    assert ("KIS:market_investor_intraday", "minute") in coll["flows.market_minute"]
+    assert ("KIS:market_investor_intraday", "minute") not in coll["gex.poller"]
+    assert REG.owners_of()["KIS:market_investor_intraday"] == ["flows.market_minute"]
+    assert writes["flows.market_minute"] == {"prv_gex.investor_flow"}
+    assert coll["program.daily"] == {
+        ("KIS:program_market_daily", "trade_date"), ("KIS:program_investor_today", "trade_date"),
+    }  # fmt: skip
+    assert coll["program.stock_sweep"] == {("KIS:program_stock_daily", "event")}
+    assert REG.by_name("program.stock_sweep").run_as_of() == "trade_date"  # event 뿐이라 명시
+
+
+def test_p5_schedules_follow_the_design() -> None:
+    def sched(name: str) -> Any:
+        return REG.by_name(name).schedule
+
+    for name in ("flows.market_minute", "program.intraday"):
+        e = sched(name).equity
+        assert (e.start, e.end, e.every_min) == ("open", "close+10", 1), name  # 15:40 까지
+        assert REG.by_name(name).as_of == "minute" and sched(name).fires_per_day() == 401
+    scan = sched("program.stock_scan").equity
+    assert (scan.start, scan.end, scan.every_min) == ("open+5", "close-5", 10)  # 5분 엇갈림
+    assert sched("program.daily").equity.start == "close+20"
+    assert sched("program.stock_sweep").cron == "10 18 * * 1-5"
+    sweep_deps = [(d.job, d.hard) for d in REG.by_name("program.stock_sweep").depends_on]
+    assert sweep_deps == [("market.close_collect", True)]
+    backfill = REG.by_name("program.backfill")
+    assert backfill.schedule.manual and backfill.backfill_of == ("program.daily",)
+    assert sched("themes.monitor").cron == "50 16 * * 1-5"
+    etf = REG.by_name("etf.report")
+    assert etf.schedule.cron == "20 8 * * 1-5" and etf.notify is not None
+    assert etf.notify.kind == "etf.report" and POLICIES["etf.report"] == "daily"
+    assert [(d.job, d.hard, d.wait_min) for d in etf.depends_on] == [
+        ("etf.collect", True, None), ("krx.daily", False, 20),
+    ]  # fmt: skip
+    # 브리핑은 그대로(ADR 0018 — 시각·의존·캐치업), etf·themes 를 무른 의존에 더하지 않는다
+    morning = {d.job for d in REG.by_name("brief.morning").depends_on}
+    assert not morning & {"etf.collect", "etf.report", "themes.monitor", "guru.research"}
+
+
+def test_p5_sends_keep_the_1600_rule_and_one_brief_each() -> None:  # ADR 0018, U2
+    for kind in ("brief.morning", "brief.closing", "flows.report", "etf.report"):
+        senders = [j.name for j in REG.jobs if j.notify is not None and j.notify.kind == kind]
+        assert len(senders) == 1, kind
+    # 16:00 발송 셋(+ 컨센서스 알림)은 그대로 16:00, 새 발송 etf.report 는 아침 — 15:30 뒤 새 발화
+    # 없음
+    assert REG.by_name("etf.report").schedule.first_time() == time(8, 20)
+    for name in ("brief.closing", "flows.report", "consensus.snapshot"):
+        assert REG.by_name(name).schedule.cron == "0 16 * * 1-5", name
+    # 18:10 전 종목 훑기는 16:00 발송 묶음(16:00~16:05 + 보드 wait 20)과 겹치지 않는다
+    sweep = REG.by_name("program.stock_sweep").schedule.first_time()
+    assert (
+        sweep is not None
+        and sweep >= time(16, 30)
+        and REG.by_name("program.stock_sweep").notify is None
+    )
+    for name in F2_JOBS:
+        assert REG.by_name(name).notify is None, name  # 텔레그램 없음(F2 §3.7)
+
+
+def test_p5_jobs_never_run_on_holidays() -> None:
+    for name in (*F2_JOBS, "etf.report", "themes.monitor", "brief.closing", "flows.report"):
+        assert REG.by_name(name).schedule.when == "trading_day", name
+
+
+def _kis_daily_estimate() -> dict[str, int]:
+    """F2 다섯 작업의 하루 KIS 호출 추정(docs/p5_design.md §3.4 — 설정값에서 계산)."""
+    markets = load_markets()
+    venues = len(markets.kis.venues)
+    prog = markets.program
+    fires = {n: REG.by_name(n).schedule.fires_per_day() for n in F2_JOBS}
+    return {
+        "flows.market_minute": len(markets.flows.minute.enabled_pairs())
+        * fires["flows.market_minute"],
+        "program.intraday": 2 * venues * fires["program.intraday"],
+        "program.stock_scan": (prog.scan_top_n + prog.scan_watch_max)
+        * venues
+        * fires["program.stock_scan"],
+        "program.daily": 2 * 2 * venues * fires["program.daily"],
+        "program.stock_sweep": SWEEP_UNIVERSE * venues * fires["program.stock_sweep"],
+    }
+
+
+def test_p5_kis_daily_calls_fit_the_soft_cap() -> None:  # §3.4
+    est = _kis_daily_estimate()
+    assert est["flows.market_minute"] == 3 * 401  # K2I 3조합(현물은 #39 뒤)
+    assert est["program.intraday"] == 2 * 401
+    assert est["program.daily"] == 4
+    total = sum(est.values()) + KIS_P3_P4_DAILY
+    cap = load_limits().source("kis").daily_soft_cap
+    assert cap is not None and total <= cap, (total, cap)
+    # 현물 2조합을 켜고(#39 뒤) 거래소를 둘로 늘려도(#25) 상한 안인지 — 예산이 막는 기준을 본다
+    worst = total + 2 * 401 + est["program.intraday"] + est["program.stock_scan"] + SWEEP_UNIVERSE
+    assert worst <= cap * 1.2, worst  # 넘으면 limits.yaml daily_soft_cap 을 다시 정한다 [제안]
+
+
+def test_p5_kis_venues_match_markets_config() -> None:
+    venues = tuple(load_markets().kis.venues)
+    for name in F2_JOBS:
+        for c in REG.by_name(name).collects:
+            if CATALOG[c.dataset_id].venues:
+                assert tuple(v.value for v in c.venues) == venues, (name, c.dataset_id)
