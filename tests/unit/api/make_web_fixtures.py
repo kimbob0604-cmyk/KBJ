@@ -21,6 +21,9 @@ P5(docs/p5_design.md §1.1): 도메인마다 모듈 하나(`tests/unit/api/web_f
 `render()`)가 `web/test/fixtures/api/<도메인>/**` 만 쓴다(`render_p5`). `--only <도메인>` 은 그
 도메인
 폴더만 다시 쓰고(P3·P4 는 건드리지 않는다), 인자가 없으면 전부 다시 쓴다.
+
+P6(docs/p6_design.md §1.1): 같은 방식 — `tests/unit/api/web_fixtures_p6/<도메인>.py`(flash·explore·
+map)가 `web/test/fixtures/api/trade_<도메인>/**` 만 쓴다(`render_p6`). `--only flash|explore|map`.
 """
 
 from __future__ import annotations
@@ -36,6 +39,8 @@ from kbj.services.api.readers.board import BOARD_DAILY_ETA
 from tests.unit.api.api_world import ROOT, World, build_world
 from tests.unit.api.api_world_p4 import P4ApiWorld, expect, shared
 from tests.unit.api.web_fixtures_p5 import DOMAINS as P5_DOMAINS
+from tests.unit.api.web_fixtures_p6 import DOMAINS as P6_DOMAINS
+from tests.unit.api.web_fixtures_p6 import folder as p6_folder
 
 OUT: Final = ROOT / "web" / "test" / "fixtures" / "api"
 
@@ -189,6 +194,39 @@ def p5_files_on_disk(only: str | None = None) -> set[str]:
     }
 
 
+def _p6_domains(only: str | None) -> tuple[str, ...]:
+    if only is None:
+        return P6_DOMAINS
+    if only not in P6_DOMAINS:
+        raise ValueError(f"모르는 P6 도메인: {only!r} (있는 것: {', '.join(P6_DOMAINS)})")
+    return (only,)
+
+
+def render_p6(only: str | None = None) -> dict[str, str]:
+    """P6 픽스처 — `trade_<도메인>/<상대 경로>` → JSON 글자(경로는 도메인 폴더 안만)."""
+    out: dict[str, str] = {}
+    for d in _p6_domains(only):
+        mod = importlib.import_module(f"tests.unit.api.web_fixtures_p6.{d}")
+        if getattr(mod, "DOMAIN", None) != d:
+            raise ValueError(f"web_fixtures_p6/{d}.py 의 DOMAIN 이 {d!r} 가 아니다")
+        files: dict[str, str] = mod.render()
+        for rel, text in files.items():
+            parts = rel.split("/")
+            if rel.startswith("/") or ".." in parts or not rel.endswith(".json"):
+                raise ValueError(f"{d}: 픽스처 경로 형식({rel!r}) — 도메인 폴더 안의 .json 만")
+            out[f"{p6_folder(d)}/{rel}"] = text
+    return out
+
+
+def p6_files_on_disk(only: str | None = None) -> set[str]:
+    return {
+        p.relative_to(OUT).as_posix()
+        for d in _p6_domains(only)
+        if (OUT / p6_folder(d)).is_dir()
+        for p in (OUT / p6_folder(d)).rglob("*.json")
+    }
+
+
 def _write(files: dict[str, str], stale: set[str]) -> None:
     for rel in stale - set(files):
         (OUT / rel).unlink()
@@ -200,21 +238,30 @@ def _write(files: dict[str, str], stale: set[str]) -> None:
 
 def main(argv: Sequence[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="make_web_fixtures", description="프런트 시험 픽스처 만들기")
-    ap.add_argument("--only", choices=P5_DOMAINS, help="이 P5 도메인 폴더만 다시 쓴다")
+    ap.add_argument(
+        "--only", choices=(*P5_DOMAINS, *P6_DOMAINS), help="이 P5·P6 도메인 폴더만 다시 쓴다"
+    )
     args = ap.parse_args(argv)
     OUT.mkdir(parents=True, exist_ok=True)
     only: str | None = args.only
+    if only in P6_DOMAINS:
+        p6 = render_p6(only)
+        _write(p6, p6_files_on_disk(only))
+        print(f"P6 {only} {len(p6)}개 → {OUT.relative_to(Path(ROOT))}/{p6_folder(only)}")
+        return 0
     p5 = render_p5(only)
     _write(p5, p5_files_on_disk(only))
     if only is not None:
         print(f"P5 {only} {len(p5)}개 → {OUT.relative_to(Path(ROOT))}/{only}")
         return 0
+    p6 = render_p6()
+    _write(p6, p6_files_on_disk())
     for name, text in render().items():
         (OUT / name).write_text(text, encoding="utf-8")
     p4 = render_p4()
     _write(p4, p4_files_on_disk())
     print(
-        f"{len(FIXTURES) + len(AUTH)}개 + P4 {len(p4)}개 + P5 {len(p5)}개 → "
+        f"{len(FIXTURES) + len(AUTH)}개 + P4 {len(p4)}개 + P5 {len(p5)}개 + P6 {len(p6)}개 → "
         f"{OUT.relative_to(Path(ROOT))}"
     )
     return 0

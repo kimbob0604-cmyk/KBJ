@@ -71,6 +71,9 @@ def seeded_runs() -> MemoryRunLog:
         ("etf.report", "2026-10-06"),  # 08:20
     ):
         runs.record(RunRecord(f"{job}:{as_of}:1", job, as_of, 1, "ok"))
+    # P6(웨이브 3 WRAP 이 켰다 — docs/p6_design.md D-P6-20): 매핑표 07:35. trade.derive 는
+    # 14~20일만, trade.stock_index 는 21:00 이라 10:30 기준 끝났어야 할 실행이 없다
+    runs.record(RunRecord("trade.map_load:2026-10-06:1", "trade.map_load", "2026-10-06", 1, "ok"))
     runs.record(
         RunRecord("ops.watchdog:2026-10-06T10:00:1", "ops.watchdog", "2026-10-06T10:00", 1, "ok")
     )
@@ -136,7 +139,8 @@ def test_holiday_has_no_missed_trading_day_runs() -> None:
     hol = datetime(2026, 10, 5, 12, 0, tzinfo=KST)  # 대체공휴일 — ops.watchdog 은 거래일만
     runs = MemoryRunLog()
     # public.export(P3)는 when: always — 휴장일에도 05:30 에 돈다(그 기록은 있어야 한다)
-    for job in ("ops.nightly", "filings.corp_code", "public.export"):
+    # P6 trade.map_load(07:35)도 when: always
+    for job in ("ops.nightly", "filings.corp_code", "public.export", "trade.map_load"):
         runs.record(RunRecord(f"{job}:2026-10-05:1", job, "2026-10-05", 1, "ok"))
     # P4 공시·재무 작업도 when: always — DART 는 거래소 휴장일에도 접수한다 [확인 필요 #28]
     for job, hhmm in (

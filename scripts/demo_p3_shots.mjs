@@ -18,6 +18,7 @@ const PAGES = [
   { n: 4, name: 'p4_flows', title: '수급·스크리닝' },
   { n: 5, name: 'p5_filings', title: '일정·공시' },
   { n: 8, name: 'p8_stock', title: '종목 상세' },
+  { n: 7, name: 'p7_trade', title: '수출입' },
   { n: 10, name: 'p10_etf', title: 'ETF 수급' },
 ];
 
@@ -130,6 +131,25 @@ try {
     if (stats.docWidth > stats.vw + 1) problems.push(`페이지 ${p.n}: 문서가 가로로 넘친다(${stats.docWidth}px > ${stats.vw}px)`);
     if (stats.errors.length) problems.push(`페이지 ${p.n} 패널 오류: ${stats.errors.join(' | ')}`);
     summary.push({ page: p.n, title: p.title, file, ...stats });
+    if (p.n === 7) {
+      // 페이지 7 수출입 — 탭 6개를 차례로 열어 탭마다 스크린샷·패널 오류·가로 넘침을 본다(첫 탭은 위에서 찍었다)
+      const tabNames = await page.locator('#page-7 [role="tab"]').allTextContents();
+      for (const [i, name] of tabNames.entries()) {
+        if (i === 0) continue;
+        await page.locator('#page-7 [role="tab"]').nth(i).click();
+        await page.waitForTimeout(1500);
+        const file = join(outDir, `p7_tab${i}.png`);
+        await page.screenshot({ path: file }); // 보이는 화면만 — 세로 전체 캡처는 가로 페이저를 1쪽으로 되돌린다
+        const st = await page.evaluate(() => ({
+          errors: [...document.querySelectorAll('#page-7 .msg.err')].map((e) => e.textContent?.trim() ?? ''),
+          docWidth: document.documentElement.scrollWidth,
+          vw: window.innerWidth,
+        }));
+        if (st.docWidth > st.vw + 1) problems.push(`페이지 7 ${name} 탭: 문서가 가로로 넘친다(${st.docWidth}px > ${st.vw}px)`);
+        if (st.errors.length) problems.push(`페이지 7 ${name} 탭 패널 오류: ${st.errors.join(' | ')}`);
+        console.log(`페이지 7 ${name} 탭: 오류 ${st.errors.length} → ${file}`);
+      }
+    }
     if (p.n === 4) {
       // 기본 필터(일평균 300억·5일·보통주) 그대로 첫 종목의 상세까지 연다 — 기본 화면이 비면 문제
       const row = page.locator('#page-4 .panel tbody tr[aria-selected], #page-4 .panel tbody tr.row').first();

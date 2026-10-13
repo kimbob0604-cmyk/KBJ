@@ -6,13 +6,15 @@
 //   원천이 아직 없는 칩은 '준비 중(Pn)'. 공개 빌드는 로그인 API 키를 묻지 않는다(묻더라도 static.ts 가 요청 없이 막는다).
 // - P5(MAC — D-P5-20): 신용스프레드·신용잔고(공개)·한국 대 글로벌(로그인)은 단계 표시를 지웠다 — 값이 없으면 서버가
 //   '준비 중' 칩(phase_pending)을 그대로 보낸다(수집 꺼짐·실측 전 #43·#48).
+// - P6(FLASH — metrics §25): '수출 속보' 칩 = 관세청 10일 잠정치 수출 품목 전체 최신 구간의 발표 당시 YoY(`1~20일 +12.3%`,
+//   잠정). 로그인은 API 칩, 공개는 공개 파일 `trade/ribbon`(공개 내보내기 trade/ribbon.json — 같은 칩 모양). 값이 없으면 '—'.
 // - 칩 순서·이름·단계는 엔진 `kbj/engines/market/ribbon.py` 의 CHIP_ORDER·PENDING 과 같다.
 // - 값이 없는 칩은 0 이 아니라 '—'(사유는 title). 금액은 원 단위 → 화면에서만 억·조.
 import type { components } from '../api/types.gen';
 import type { Envelope, Quality } from '../data/source';
 import { chip, type ChipOptions, type ChipState } from '../ui/chip';
 import { replace } from '../ui/dom';
-import { DASH, eok, joEok, kstParts, kstStamp, kstTime, num, shortDate, signClass, times, toDate } from '../ui/fmt';
+import { DASH, eok, joEok, kstParts, kstStamp, kstTime, num, pct, shortDate, signClass, times, toDate } from '../ui/fmt';
 import { errorText } from '../ui/panel';
 import type { AppContext, RibbonModule } from './types';
 
@@ -30,7 +32,7 @@ export const CHIP_SLOTS: readonly { key: string; label: string; tier: 'public' |
   { key: 'bok_mpc', label: '금통위', tier: 'public' },
   { key: 'credit_spread', label: '신용스프레드 AA-', tier: 'public' },
   { key: 'credit_balance', label: '신용잔고', tier: 'public' },
-  { key: 'export_flash', label: '수출 속보', tier: 'public', phase: 'P6' },
+  { key: 'export_flash', label: '수출 속보', tier: 'public' },
   { key: 'market_turnover', label: '시장 거래대금', tier: 'login' },
   { key: 'foreign_spot', label: '외국인 현물', tier: 'login' },
   { key: 'inst_spot', label: '기관 현물', tier: 'login' },
@@ -245,6 +247,14 @@ export function chipOptions(c: ApiChip, now: Date): ChipOptions {
       text = n === null ? DASH : bp === null ? `${num(n, 2)}%p` : `${num(n, 2)}%p · ${num(bp, 0, true)}bp`;
       break;
     }
+    case 'export_flash': {
+      // 값 = 비율(0.123 = +12.3%), 기준 구간은 detail.span_label('1~20일')
+      const span = detailStr(c, 'span_label');
+      const p = n === null ? DASH : pct(n * 100, 1, true);
+      text = span ? `${span} ${p}` : p;
+      cls = signClass(n);
+      break;
+    }
     case 'credit_balance':
     case 'investor_deposit': {
       // 단위는 출처 공표 그대로(원·백만원 — 실측 #48) → 화면에서만 조·억
@@ -310,15 +320,17 @@ async function mountLogin(el: HTMLElement, ctx: AppContext): Promise<void> {
 }
 
 async function mountPublic(el: HTMLElement, ctx: AppContext): Promise<void> {
-  const [cal, ev, credit] = await Promise.allSettled([
+  const [cal, ev, credit, trade] = await Promise.allSettled([
     ctx.source.get<CalendarData>('calendar'),
     ctx.source.get<EventsData>('events'),
     ctx.source.get<CreditData>('credit'),
+    ctx.source.get<CreditData>('trade/ribbon'),
   ]);
-  const creditChip = (key: string): ApiChip | undefined =>
-    credit.status === 'fulfilled' && Array.isArray(credit.value.data.chips)
-      ? credit.value.data.chips.find((c) => c.key === key && c.tier === 'public')
+  const fileChip = (file: typeof credit, key: string): ApiChip | undefined =>
+    file.status === 'fulfilled' && Array.isArray(file.value.data.chips)
+      ? file.value.data.chips.find((c) => c.key === key && c.tier === 'public')
       : undefined;
+  const creditChip = (key: string): ApiChip | undefined => fileChip(credit, key);
   const draw = (): void => {
     const now = ctx.now();
     const opts: ChipOptions[] = CHIP_SLOTS.map((s) => {
@@ -331,6 +343,12 @@ async function mountPublic(el: HTMLElement, ctx: AppContext): Promise<void> {
         // 파일이 없거나(수집 전 — 404) 칩이 없다: 0 이 아니라 '—' + 사유
         const why = credit.status === 'rejected' ? errorText(credit.reason) : '아직 없음';
         return { ...base, value: DASH, cls: 'dim', title: `${why} — market_stats.kofia·macro.evening(확인 전 #43·#48)` };
+      }
+      if (s.key === 'export_flash') {
+        const c = fileChip(trade, s.key);
+        if (c) return chipOptions(c, now);
+        const why = trade.status === 'rejected' ? errorText(trade.reason) : '아직 없음';
+        return { ...base, value: DASH, cls: 'dim', title: `${why} — trade.customs_tenday(확인 전 #6·#17·#55)` };
       }
       if (s.key === 'session') {
         if (cal.status === 'rejected') return { ...base, value: errorText(cal.reason), cls: 'warn' };

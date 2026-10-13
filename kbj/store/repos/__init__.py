@@ -18,6 +18,8 @@
   `etf` 에 보유 탐색, `board` 에 미국 산출(market='US').
 - P5 2차 묶음 IDX(docs/p5_index_rebalance_prompt.md §3-3): 로그인 `index_review`(0018 prv_index.* —
   구성종목·리뷰 일정·편입/편출 예측·패시브 규모).
+- P6 묶음 FND(docs/p6_design.md §1.1): 공개 `trade`(0019 pub_trade.* — 관세청 10일·월간·HS
+  차원·급등·104품목·종목↔HS 매핑·종목 수출 지수).
 
 - 행 모양은 `kbj.core.rows`(엔진과 공유). 이 패키지는 `kbj.core`·psycopg 만 쓴다(계약 ⑦).
 - Postgres 구현은 연결 공장(`ConnFactory`)을 받아 부를 때마다 짧게 연다. 서비스는
@@ -46,6 +48,7 @@ from kbj.store.repos.market_stats import MarketStatsRepo, PgMarketStatsRepo
 from kbj.store.repos.memory import MemoryRepos, memory_repos
 from kbj.store.repos.program import PgProgramRepo, ProgramRepo
 from kbj.store.repos.public import PublicRepos
+from kbj.store.repos.trade import PgTradeRepo, TradeRepo
 from kbj.store.repos.us import PgUsRepo, UsRepo
 
 __all__ = [
@@ -68,6 +71,7 @@ __all__ = [
     "PublicRepos",
     "Repos",
     "RevisionReport",
+    "TradeRepo",
     "UsRepo",
     "memory_repos",
     "pg_repos",
@@ -94,6 +98,8 @@ class Repos:
     program: ProgramRepo
     # P5 2차 묶음 IDX(0018 — 로그인)
     index_review: IndexReviewRepo
+    # P6 묶음 FND(0019 — 공개)
+    trade: TradeRepo
 
     def public(self) -> PublicRepos:
         """같은 공개 저장소(filings·fin·macro·market_stats)를 공개 작업 묶음으로."""
@@ -119,4 +125,5 @@ def pg_repos(conn_factory: ConnFactory) -> Repos:
         us=PgUsRepo(conn_factory),
         program=PgProgramRepo(conn_factory),
         index_review=PgIndexReviewRepo(conn_factory),
+        trade=PgTradeRepo(conn_factory),
     )

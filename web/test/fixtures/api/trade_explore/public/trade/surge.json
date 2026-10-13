@@ -1,0 +1,100 @@
+{
+  "source": "관세청(공공데이터포털)",
+  "as_of": "2026-12-11T11:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "금액은 미화 달러(원화 환산 없음 — 환율 미조정)"
+  ],
+  "generated_at": "2026-12-11T11:30:00+09:00",
+  "data": {
+    "ym": "2026-10",
+    "level": null,
+    "min_usd": 10000000,
+    "rows": [
+      {
+        "level": "hs4",
+        "key": "2701",
+        "name": "가상품목 2701",
+        "flow": "exp",
+        "rule": "plunge",
+        "yoy": -0.5,
+        "yoy_3m": -0.5,
+        "usd": 30000000,
+        "rank": 1,
+        "quality": "ok"
+      },
+      {
+        "level": "hs4",
+        "key": "8502",
+        "name": "가상품목 8502",
+        "flow": "exp",
+        "rule": "surge",
+        "yoy": 1.0,
+        "yoy_3m": 1.0,
+        "usd": 120000000,
+        "rank": 1,
+        "quality": "ok"
+      },
+      {
+        "level": "hs4",
+        "key": "8502",
+        "name": "가상품목 8502",
+        "flow": "imp",
+        "rule": "surge",
+        "yoy": 1.0,
+        "yoy_3m": 1.0,
+        "usd": 16000000,
+        "rank": 1,
+        "quality": "ok"
+      },
+      {
+        "level": "hs6",
+        "key": "270110",
+        "name": "가상품목 270110",
+        "flow": "exp",
+        "rule": "plunge",
+        "yoy": -0.5,
+        "yoy_3m": -0.5,
+        "usd": 15000000,
+        "rank": 1,
+        "quality": "ok"
+      },
+      {
+        "level": "hs6",
+        "key": "270120",
+        "name": "가상품목 270120",
+        "flow": "exp",
+        "rule": "plunge",
+        "yoy": -0.5,
+        "yoy_3m": -0.5,
+        "usd": 15000000,
+        "rank": 2,
+        "quality": "ok"
+      },
+      {
+        "level": "hs6",
+        "key": "850210",
+        "name": "가상품목 850210",
+        "flow": "exp",
+        "rule": "surge",
+        "yoy": 1.0,
+        "yoy_3m": 1.0,
+        "usd": 60000000,
+        "rank": 1,
+        "quality": "ok"
+      },
+      {
+        "level": "hs6",
+        "key": "850220",
+        "name": "가상품목 850220",
+        "flow": "exp",
+        "rule": "surge",
+        "yoy": 1.0,
+        "yoy_3m": 1.0,
+        "usd": 60000000,
+        "rank": 2,
+        "quality": "ok"
+      }
+    ]
+  }
+}

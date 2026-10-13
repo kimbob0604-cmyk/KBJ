@@ -48,6 +48,7 @@ DOMAIN_JOBS: Final[Mapping[str, tuple[str, ...]]] = {
         "flows.intraday",
         "board.daily",
         "board.confirm",
+        "trade.customs_tenday",  # P6 — 상단 띠 '수출 속보' 칩(docs/p6_design.md §5)
     ),
     "board": ("board.daily", "board.confirm", "market.close_collect", "krx.daily"),
     "flows": ("krx.daily", "market.backfill", "market.close_collect", "flows.intraday",
@@ -76,6 +77,9 @@ DOMAIN_JOBS: Final[Mapping[str, tuple[str, ...]]] = {
     # P5 2차 묶음 IDX — 지수 정기변경 예측(구성종목·컷오프는 CLI 가 직접 쓴다 — 다음 예측
     # 실행 때 바뀐다)
     "index_review": ("index.calendar", "index.predict"),
+    # P6(docs/p6_design.md §5 — 웨이브 1 FND) — 수출입 속보·탐색·매핑(관세청 수집·파생·매핑·지수)
+    "trade": ("trade.customs_tenday", "trade.customs_monthly", "trade.derive", "trade.map_load",
+              "trade.stock_index"),
 }  # fmt: skip
 
 

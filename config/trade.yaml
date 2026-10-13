@@ -1,0 +1,58 @@
+# 수출입(관세청)·종목↔HS 매핑 — 비밀 아님. 숫자·목록은 이 한 곳(docs/p6_design.md §3.5, D-P6-6·7·9·14).
+# 해석기 kbj/config/trade.py(모르는 키는 오류). 시험 tests/unit/config/test_trade_config.py.
+#
+# - [제안] 이 붙은 숫자는 설계 기본값이다 — 실데이터(#55~#57) 뒤 고친다. 지어낸 확정값이 아니다.
+# - 10일 폴링 창(tenday.poll)은 등록부 trade.customs_tenday 의 cron·month_days 와 같아야 한다(등록부 시험).
+version: 1
+
+tenday:
+  lookback_months: 2            # 폴링마다 이번 달·지난달 구간을 다시 본다(정정 반영 — 발표 당시/최신)
+  poll:                         # D-P6-6 — 공표일(1·11·21)과 그 뒤 이틀, 09:00~17:40 20분마다 [실측 필요 #55]
+    month_days: [1, 2, 3, 11, 12, 13, 21, 22, 23]
+    start: "09:00"
+    end: "17:40"
+    every_min: 20
+
+monthly:
+  items_mode: by_chapter        # 15101609 를 HS2 장별로(응답 잘림 대비 — R6, 실측 #1)
+  countries: all                # 15100475 국가 전부(약 269 — 실측 #57)
+  sido: all                     # 15134343 시도 전부 × 매핑 HS6
+  sigungu_hs6_from: trade_map   # 시군구는 매핑표의 HS6 만(probe_results F3)
+
+backfill:
+  years: 5
+  stop_at_ratio: 0.9            # 데이터셋 하루 한도(limits.yaml datago 9,500)의 90% 에서 멈추고 다음 날 이어 받는다
+
+surge:                          # metrics §26 [제안]
+  min_usd: 10000000             # 수준 문턱 — 월 1천만 달러
+  surge_yoy: 0.5
+  surge_yoy_3m: 0.3
+  plunge_yoy: -0.3
+  plunge_yoy_3m: -0.2
+  levels: [hs2, hs4, hs6, country]
+  top: 50
+
+public_export:                  # §7 [제안 — 실측 #57 뒤 확정]
+  months: 24                    # 품목·장별 파일
+  country_months: 60            # 국가 총괄
+  dir_cap_mb: 20                # trade/ 폴더 합계
+  file_cap_kb: 1024
+  flash_cap_kb: 200
+  region_cap_kb: 200
+  stock_cap_kb: 100
+
+overlay:                        # metrics §28
+  min_quarters: 8
+  lags: [0, 1, 2]
+  rank_months: 3
+
+items104:                       # D-P6-9 — 사용자 결정 2026-10-13: 자체 고정 HS4 목록(trade_items.yaml)
+  mode: fixed
+  n: 104
+  top_n_months: 12              # mode top_n 일 때 직전 12개월 수출 상위 HS4
+
+price_volume:
+  weight_unfit: ["89"]          # 선박(HS 89장) — 중량 기준 부적합 꼬리표 [확인 필요: 목록]
+
+map:
+  local_file: null              # VM local 매핑(관심종목 전용 — D-P6-14). 사용자가 VM 에서 경로를 준다

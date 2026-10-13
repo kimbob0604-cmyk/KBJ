@@ -140,13 +140,18 @@ def test_kbj_imports_only_kbj_stdlib_and_declared_deps() -> None:
         ("kbj/services/collectors/dart_company.py", "import kbj.store.repos.journal\n", "⑬"),
         # ⑭ — 공개 매크로·통계 작업·공개 원천이 로그인 원천·저장소를 끌어오면 실패
         ("kbj/services/collectors/kofia.py", "import kbj.store.repos.macro_prv\n", "⑭"),
-        ("kbj/services/collectors/macro.py", "import kbj.services.collectors._p3\n", "⑭"),
+        # ⑰ 에도 걸린다 — engine.trade_map 이 collectors.macro 를 쓴다
+        ("kbj/services/collectors/macro.py", "import kbj.services.collectors._p3\n", "⑭⑰"),
         ("kbj/data/public/fred/_leak.py", "import kbj.data.private.yahoo\n", "①⑭"),
         # ⑯ — 브리핑·리포트가 어댑터·수집기·API 를 알면 실패(API 는 ⑪ 에도 걸린다)
         ("kbj/reports/flows/_leak.py", "import kbj.data.http\n", "⑯"),
         ("kbj/reports/briefs/_leak.py", "import kbj.data.public.fred\n", "⑯"),
         ("kbj/reports/_etf_leak.py", "import kbj.services.api\n", "⑪"),
         ("kbj/reports/briefs/_api.py", "import kbj.services.api\n", "⑪⑯"),
+        # ⑰ — 수출입 작업·공개 내보내기가 로그인 저장소·관심종목 CLI 를 끌어오면 실패
+        ("kbj/services/engine/trade_map.py", "import kbj.store.repos.journal\n", "⑰"),
+        ("kbj/services/collectors/customs.py", "import kbj.services.engine.verify_trade\n", "⑰"),
+        ("kbj/services/public_export/trade_stock_json.py", "import kbj.store.repos.market\n", "⑧⑰"),
     ],
 )
 def test_contract_catches_violation(
@@ -182,13 +187,13 @@ def test_contract_catches_violation(
 
 
 def test_fifteen_contracts_are_declared() -> None:
-    """P3 묶음 S — 계약 ⑧~⑩, P4 묶음 S — ⑪~⑬, P5 WRAP — ⑭·⑯ 이 실제로 들어 있다(이름 첫 글자
-    기호로). ⑮ 는 테마 사전 작업 몫으로 비어 있다."""
+    """P3 묶음 S — 계약 ⑧~⑩, P4 묶음 S — ⑪~⑬, P5 WRAP — ⑭·⑯, P6 WRAP — ⑰ 이 실제로 들어 있다(이름
+    첫 글자 기호로). ⑮ 는 테마 사전 작업 몫으로 비어 있다."""
     text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     names = [
         line.split("=", 1)[1].strip().strip('"')
         for line in text.splitlines()
         if line.startswith("name = ")
-        and line.split("=", 1)[1].strip().strip('"')[:1] in "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯"
+        and line.split("=", 1)[1].strip().strip('"')[:1] in "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰"
     ]
-    assert [n[0] for n in names] == list("①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑯")
+    assert [n[0] for n in names] == list("①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑯⑰")

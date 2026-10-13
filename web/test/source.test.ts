@@ -179,6 +179,21 @@ describe('P4 공개 하위 폴더(fin/<코드>·reports/<코드>) — p4_design 
     }
   });
 
+  it('P6 하위 폴더(trade/<이름>·trade/(hs|country|region|stock)/<코드>) — p6_design §7', () => {
+    for (const ok of [
+      'trade/flash', 'trade/hs2', 'trade/hs/85', 'trade/hs/8542', 'trade/country/US',
+      'trade/region/854232', 'trade/stock/000660', 'trade/items104',
+    ]) {
+      expect(isPublicKey(ok), ok).toBe(true);
+    }
+    for (const bad of [
+      'trade/Flash', 'trade/hs/8', 'trade/hs/85/x', 'trade/x/85', 'trade/stock/00066!',
+      'trade/../manifest', 'trade/flash.json', 'trade/stock/00066012345',
+    ]) {
+      expect(isPublicKey(bad), bad).toBe(false);
+    }
+  });
+
   it('P5 하위 폴더 파일도 봉투 그대로 — 봉투가 아니면 manifest 로 보충하지 않는다', async () => {
     const env = envelope({ tabs: [] }, { source: 'ECOS', as_of: '2026-11-13T05:30:00+09:00' });
     const { fetch, calls } = fakeFetch(() => json(env));

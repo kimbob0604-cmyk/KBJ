@@ -350,11 +350,11 @@
 
 | # | 출처 | 확인할 것 |
 |---|---|---|
-| 1 | 관세청 공통 | 응답 행 상한·잘림(페이징 파라미터 없음), 오류 시 XML 형식, `apis.data.go.kr` 연결 끊김 빈도 |
+| 1 | 관세청 공통 | 응답 행 상한·잘림(페이징 파라미터 없음), 오류 시 XML 형식, `apis.data.go.kr` 연결 끊김 빈도. [확인 필요] 공표 전 달·빈 결과에 `resultCode 03`(NODATA)을 주는지(수집기는 03 을 빈 목록 = `not_ready` 로 읽는다), HS 77장(결번)이 응답에 오는지 |
 | 2 | 15100475 | `hsSgn` 생략 시 전 품목 반환 여부와 자릿수, 2·4·6자리 입력 시 의미, 1년 한도, `year` 형식, 국가 합계 = 15101612 |
 | 3 | 15101609 | 기간 한도, `hsSgn` 생략·자릿수별 응답, `hsCode` 앞자리 0 손실, 월 합계 = 관세청 확정 발표(오차 0) |
 | 4 | 15101612 | `cntyCd` 생략 시 전 국가, 기간 한도, 총계 행 |
-| 5 | 15134343 | 기간 한도, 시도 합계 행 유무, 개편 전후 `sggNm`, HS6 외 자릿수, 출항일 기준 파라미터 |
+| 5 | 15134343 | 기간 한도, 시도 합계 행 유무, 개편 전후 `sggNm`, HS6 외 자릿수, 출항일 기준 파라미터. [확인 필요] 2026-07 개편 뒤 시군구 이름이 그대로인지·`sidoCd` 체계(F4 — `knowledge/trade_regions.yaml` 통합 ID) |
 | 6 | 10일 잠정치 4종 | 11·21·1일 반영 시각, 잠정 → 확정 덮어쓰기, `priodDt` 말일 표기, 15157909의 10년 한도, 열 구성 변경 감지 |
 | 7 | 15094809 | `getSecuritiesMarketTotalCapitalInfo` 대소문자, 펀드순자산 필수 파라미터, `endBasDt` 미만 의미, 반영 시각(D+1 13시?), 단위 원, ECOS 901Y056과 월말 대조 |
 | 8 | 15094808(로그인) | 옛 V1 경로 존속, V2 응답 필드 차이(`srtnCd` 외 `shrtnCd` 후보), **금융위 지수시세 포털 ID(15094807 로 가정)·V2 경로 존재 여부**(P2 묶음 D) |
@@ -404,6 +404,11 @@
 | 52 | KRX 지수 산출 방법론(KOSPI200·KOSDAQ150·KRX300) (P5 2차 IDX) | 산업군 분류 코드·업종별 누적 시총 비중 규칙·거래대금 순위 기준·순위 완충(90/110%)·신규 상장 특례·심사기간 일평균 시총 여부·관리종목 제외 범위. 지수용 유동주식수가 KRX OpenAPI 에 있는지(칸 이름·단위) — 없으면 DART 추정 유지 [실측 필요] |
 | 53 | 패시브 추종 자금 (P5 2차 IDX — 사용자 입력) | MSCI Korea(EM·ACWI 내 한국 비중 포함) 추종 자금, KOSPI200·KOSDAQ150 비ETF 추종 자금(연기금 패시브 등) — 단위 원. `aum_won`·`non_etf_aum_won` 또는 `prv_index.passive_aum` user 행. ETF 기초지수 이름 패턴(`etf_index_patterns`)이 P3 `base_index` 실제 표기와 맞는지 |
 | 54 | 지수 구성종목 목록 형식 (P5 2차 IDX — 로그인 VM) | 사용자가 올리는 목록 파일의 열(code·name·fif — fif 가 소수/퍼센트 중 무엇인지)·인코딩. `load-constituents` 입력과 맞춘다. 목록은 레포에 넣지 않는다 |
+| 55 | 관세청 10일 잠정치 공표·반영 (P6 — `trade.customs_tenday` 폴링 창) | 1·11·21일이 주말·공휴일일 때 공표일(당일·다음 영업일), API 반영 시각 분포(보도 시각 대비 지연 — 분), 같은 구간 재공표 여부. 막는 작업: `trade.customs_tenday`(사흘 창 20분 폴링 → 확정 뒤 창 축소, `config/trade.yaml tenday.poll`) |
+| 56 | 종목↔HS 매핑표 실데이터 검증 (P6 — VM, `verify_trade`) | `python -m kbj.services.engine.verify_trade --watchlist main --json` 건수만: 매핑된 관심종목 수·상장사 목록에 없는 종목코드 수·`pub_trade.hs_dim` 에 없는 HS 접두 수·겹쳐 보기 상태별(ok·no_revenue·short_overlap·no_trade) 수 — 값·종목명은 적지 않는다. 상장사 목록 표는 `pub_filings.corp_code`(`filings.corp_index` — MAP 확인으로 정정). [확인 필요] 첫 판 61종목의 대표 HS·가중치(`reviewed: false`)와 근거 DART 접수번호(비워 둠 — 지어내지 않는다) |
+| 57 | 관세청 월간 크기 (P6 — `trade.customs_monthly`·공개 `trade/`) | 품목(15101609)·품목×국가(15100475)·시군구(15134343) 응답 행 수(달마다)·저장 행 증가(행/월), 공개 `trade/` 폴더 크기(MB)·가장 큰 파일(KB). 확정할 것: `config/trade.yaml public_export`(개월 수·상한)·`manifest.DIR_CAPS["trade"]`·`PREFIX_CAPS`. [확인 필요] ① 15100475 국가 목록을 코드표 전체(약 269)로 할지, 같은 달 15101612 응답에 나온 국가로 할지(지금 구현 — 같은 달 15101612 국가) ② 공개 품목 파일을 장마다 SELECT 할 때 행 수·메모리 ③ `trade/flash.json` 10년 공개 여부(지금 6개월 — 200 KB 상한, 종류별 파일로 쪼갤지) ④ 104품목 자체 목록(`knowledge/trade_items.yaml`)과 실데이터 '최근 12개월 상위 HS4' 대조 ⑤ `price_volume.weight_unfit`(89장 말고 더 있는지) |
+
+P6 관세청 수집(`trade.customs_tenday`·`trade.customs_monthly`)을 막는 번호: #1~#6·#17·#55·#57 — 등록부 노트에 적었고(`config/jobs.yaml`), P6 WRAP(2026-10-13)은 외부 호출이 없는 `trade.map_load`·`trade.derive`·`trade.stock_index` 만 켰다. 관세청 두 작업은 키 수령·위 실측 뒤 켠다(값은 적지 않고 칸·단위·코드·반영 시각만). 상태: #55~#57 미실측.
 
 ---
 

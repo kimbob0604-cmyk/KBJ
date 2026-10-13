@@ -1,4 +1,4 @@
-"""DB 스키마 마이그레이션 0001~0017 과 docker-compose.yml 의 구조 검사(정적 — DB·데몬 없이).
+"""DB 스키마 마이그레이션 0001~0019 와 docker-compose.yml 의 구조 검사(정적 — DB·데몬 없이).
 
 ADR 0002: 공개 등급은 pub_*, 로그인 등급은 prv_*, 운영은 ops. kbj_public_export 는 pub_* 에만
 USAGE·SELECT. compose 는 비밀번호 기본값이 없고 포트는 127.0.0.1 에만 연다.
@@ -990,3 +990,106 @@ def test_p5_enum_checks_match_rows() -> None:
     assert m is not None
     assert {"ECOS", *re.findall(r"'(\w+)'", m.group(1))} == set(p5.PUBLIC_MACRO_SOURCES)
     assert "'us_summary', 'us_brief'" in body and set(p5.US_ARTIFACTS) == {"us_summary", "us_brief"}
+
+
+# ── P6 마이그레이션 0019(docs/p6_design.md §3.3, D-P6-3 — 공개 pub_trade) ──
+
+P6_FILE = "0019_trade.sql"
+P6_TABLES = {
+    "pub_trade.ten_day", "pub_trade.ten_day_columns", "pub_trade.item_monthly",
+    "pub_trade.country_monthly", "pub_trade.item_country_monthly", "pub_trade.sigungu_monthly",
+    "pub_trade.hs_dim", "pub_trade.surge", "pub_trade.item_group_monthly",
+    "pub_trade.stock_map", "pub_trade.stock_export",
+}  # fmt: skip
+
+
+def test_p6_migration_is_0019_after_idx() -> None:
+    names = sorted(p.name for p in MIGRATIONS.glob("*.sql"))
+    assert "0018_index.sql" in names
+    assert names[names.index("0018_index.sql") + 1] == P6_FILE
+
+
+def test_p6_statements_are_idempotent_and_only_create_or_grant() -> None:
+    body = _body(P6_FILE)
+    assert not re.search(r"CREATE (SCHEMA|TABLE|EXTENSION)(?! IF NOT EXISTS)", body)
+    assert not re.search(r"CREATE (UNIQUE )?INDEX(?! IF NOT EXISTS)", body)
+    starts = {s.strip().split(maxsplit=1)[0].upper() for s in body.split(";") if s.strip()}
+    assert starts <= {"CREATE", "GRANT"}, starts  # ALTER·DROP·DO 없음
+    assert "create_hypertable" not in body  # 월 단위 — #57 뒤 다시 본다
+    assert not re.search(r"\bprv_|\bpublic\.", body)  # 공개 스키마에만
+
+
+def test_p6_tables_match_rows_and_carry_source_quality() -> None:
+    from kbj.core import trade_rows as tr
+
+    tables = _tables(_body(P6_FILE))
+    assert set(tables) == P6_TABLES == set(tr.TRADE_TABLES)
+    earlier = (
+        set(_all_p2_tables()) | set(_all_p3_tables()) | set(_all_p4_tables())
+        | set(_all_p5_tables())
+    )  # fmt: skip
+    assert not set(tables) & earlier
+    for table, cols in tables.items():
+        assert not LOGIN_ONLY_COLS & set(cols), (table, LOGIN_ONLY_COLS & set(cols))
+        assert "loaded_by" in cols, table
+        if table != "pub_trade.ten_day_columns":
+            assert {"source", "as_of", "quality"} <= set(cols), table
+            assert {"received_at", "computed_at"} & set(cols), table
+    # 시세·관심종목 흔적 칸 없음(공개 — D-P6-4·14)
+    assert "close" not in tables["pub_trade.stock_export"]
+    assert not {"is_watch", "watchlist"} & set(tables["pub_trade.stock_map"])
+
+
+def test_p6_keys_and_grants_match_the_design() -> None:
+    body = _body(P6_FILE)
+
+    def pk(table: str) -> str:
+        m = re.search(rf"CREATE TABLE IF NOT EXISTS {re.escape(table)} \((.*?)\n\);", body, re.S)
+        assert m is not None, table
+        inline = re.search(r"^\s*(\w+)\s+\w+ PRIMARY KEY", m.group(1), re.M)
+        if inline:
+            return inline.group(1)
+        found = re.search(r"PRIMARY KEY \(([^)]*)\)", m.group(1))
+        assert found is not None, table
+        return found.group(1)
+
+    assert pk("pub_trade.ten_day") == "kind, ym, seg, col_no"
+    assert pk("pub_trade.ten_day_columns") == "kind, col_no, valid_from"
+    assert pk("pub_trade.item_monthly") == "ym, hs"
+    assert pk("pub_trade.country_monthly") == "ym, country"
+    assert pk("pub_trade.item_country_monthly") == "ym, country, hs"
+    assert pk("pub_trade.sigungu_monthly") == "ym, sido_cd, sgg_nm, hs6"
+    assert pk("pub_trade.hs_dim") == "hs"
+    assert pk("pub_trade.surge") == "ym, level, key, flow"
+    assert pk("pub_trade.item_group_monthly") == "ym, group_id"
+    assert pk("pub_trade.stock_map") == "code, hs, flow, region_id"
+    assert pk("pub_trade.stock_export") == "code, period"
+    stmts = [s.strip() for s in body.split(";")]
+    grants = [s for s in stmts if "kbj_public_export" in s]
+    for g in grants:
+        assert re.fullmatch(r"GRANT SELECT ON pub_trade\.[a-z_]+ TO kbj_public_export", g), g
+    granted = {re.search(r"ON ([\w.]+) TO", g).group(1) for g in grants}  # type: ignore[union-attr]
+    assert granted == P6_TABLES
+
+
+def test_p6_enum_checks_match_rows_and_values_are_null_not_zero() -> None:
+    from kbj.core import trade_rows as tr
+
+    body = _body(P6_FILE)
+
+    def values(col: str) -> set[str]:
+        found = re.findall(rf"\b{col}\s+text NOT NULL CHECK \({col} IN \(([^)]*)\)\)", body)
+        assert found, col
+        return {v for f in found for v in re.findall(r"'([\w]+)'", f)}
+
+    assert values("kind") == set(tr.TEN_DAY_KINDS)
+    assert values("flow") == set(tr.FLOWS)
+    assert values("level") == set(tr.SURGE_LEVELS)
+    assert values("rule") == set(tr.SURGE_RULES)
+    assert values("origin") == set(tr.MAP_ORIGINS)
+    assert values("status") == set(tr.STOCK_EXPORT_STATUSES)
+    assert values("mode") == set(tr.ITEM_GROUP_MODES)
+    assert "DEFAULT 0" not in body
+    # 금액 칸은 NULL 허용(NOT NULL 없음)
+    assert not re.search(r"\b(usd|exp_usd|imp_usd|export_usd)\s+numeric\(20, 0\) NOT NULL", body)
+    assert body.count("OR quality <> 'ok')") >= 7

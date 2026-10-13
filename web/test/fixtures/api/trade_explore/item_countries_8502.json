@@ -1,0 +1,97 @@
+{
+  "source": "관세청(공공데이터포털)",
+  "as_of": "2026-12-11T11:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "금액은 미화 달러(원화 환산 없음 — 환율 미조정)",
+    "접두 값 = 그 HS 행, 없으면 바로 아래 HS 의 합(상위·하위를 함께 더하지 않는다)"
+  ],
+  "generated_at": "2026-12-11T11:30:00+09:00",
+  "data": {
+    "hs": "8502",
+    "ym": "2026-10",
+    "flow": "exp",
+    "rows": [
+      {
+        "country": "MY",
+        "country_name": "가상국-MY",
+        "usd": 18770860,
+        "yoy": 1.0,
+        "share": 0.17525935328545533,
+        "quality": "ok"
+      },
+      {
+        "country": "VN",
+        "country_name": "가상국-VN",
+        "usd": 18603384,
+        "yoy": 1.0,
+        "share": 0.1736956670478064,
+        "quality": "ok"
+      },
+      {
+        "country": "HK",
+        "country_name": "가상국-HK",
+        "usd": 14635611,
+        "yoy": 1.0000001366529991,
+        "share": 0.13664945126635095,
+        "quality": "ok"
+      },
+      {
+        "country": "JP",
+        "country_name": "가상국-JP",
+        "usd": 11902519,
+        "yoy": 1.0000001680316721,
+        "share": 0.11113117792194095,
+        "quality": "ok"
+      },
+      {
+        "country": "US",
+        "country_name": "가상국-US",
+        "usd": 8331843,
+        "yoy": 1.000000240042958,
+        "share": 0.0777925686865678,
+        "quality": "ok"
+      },
+      {
+        "country": "CN",
+        "country_name": "가상국-CN",
+        "usd": 8223930,
+        "yoy": 1.0,
+        "share": 0.07678500895882526,
+        "quality": "ok"
+      },
+      {
+        "country": "IN",
+        "country_name": "가상국-IN",
+        "usd": 7904863,
+        "yoy": 1.0000002530088445,
+        "share": 0.07380595120256207,
+        "quality": "ok"
+      },
+      {
+        "country": "MX",
+        "country_name": "가상국-MX",
+        "usd": 7202869,
+        "yoy": 1.0000002776671737,
+        "share": 0.06725158904492679,
+        "quality": "ok"
+      },
+      {
+        "country": "SG",
+        "country_name": "가상국-SG",
+        "usd": 6207508,
+        "yoy": 1.0,
+        "share": 0.057958124326444836,
+        "quality": "ok"
+      },
+      {
+        "country": "TW",
+        "country_name": "가상국-TW",
+        "usd": 5319941,
+        "yoy": 1.0000003759440896,
+        "share": 0.04967110825911964,
+        "quality": "ok"
+      }
+    ]
+  }
+}

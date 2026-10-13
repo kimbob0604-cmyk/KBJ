@@ -411,9 +411,12 @@ def test_p5_bad_subdir_names_refused(name: str) -> None:
 
 def test_p5_subdirs_and_caps_declared() -> None:
     assert set(DART_SUBDIRS) < set(SUBDIRS)
-    assert set(SUBDIRS) - set(DART_SUBDIRS) == {"macro"}
-    assert DIR_CAPS == {"macro": 3 * 1024 * 1024}
-    assert FILE_CAPS == {"credit.json": 100 * 1024, "macro/calendar.json": 200 * 1024}
+    assert set(SUBDIRS) - set(DART_SUBDIRS) == {"macro", "trade"}  # trade 는 P6(아래)
+    assert DIR_CAPS["macro"] == 3 * 1024 * 1024
+    assert {k: v for k, v in FILE_CAPS.items() if not k.startswith("trade/")} == {
+        "credit.json": 100 * 1024,
+        "macro/calendar.json": 200 * 1024,
+    }
     assert "credit.json" in P5_FLAT_NAMES and not DART_ONLY_NAMES & P5_FLAT_NAMES
 
 
@@ -481,3 +484,102 @@ def test_write_files_refuses_p5_over_cap(tmp_path: Path) -> None:
     with pytest.raises(PublicExportError, match="상한"):
         _p5_tree(tmp_path, calendar_bytes=200 * 1024)
     assert not (tmp_path / MANIFEST_NAME).exists()
+
+
+# ── P6 공개 파일(docs/p6_design.md §7): trade/ (평평한 + 코드 파일 한 단계 더) ──
+
+
+@pytest.mark.parametrize(
+    ("name", "ok"),
+    [
+        ("trade/flash.json", True),
+        ("trade/hs2.json", True),
+        ("trade/hs/85.json", True),
+        ("trade/hs/8542.json", True),
+        ("trade/country/US.json", True),
+        ("trade/region/854232.json", True),
+        ("trade/stock/000660.json", True),
+        ("trade/hs/8.json", False),
+        ("trade/Flash.json", False),
+        ("trade/x/85.json", False),
+        ("trade/hs/85/x.json", False),
+        ("trade/stock/00066!.json", False),
+    ],
+)
+def test_p6_trade_names(name: str, ok: bool) -> None:
+    assert bool(SUBDIR_JSON_RE.fullmatch(name)) is ok
+
+
+def test_p6_caps_match_trade_yaml() -> None:
+    from kbj.config.trade import load_trade
+    from kbj.services.public_export.manifest import PREFIX_CAPS, file_cap
+
+    pe = load_trade().public_export
+    kb = 1024
+    assert "trade" in SUBDIRS and "trade" not in DART_SUBDIRS
+    assert DIR_CAPS["trade"] == pe.dir_cap_mb * kb * kb
+    assert FILE_CAPS["trade/flash.json"] == pe.flash_cap_kb * kb
+    assert FILE_CAPS["trade/ribbon.json"] == 4 * kb  # 띠 칩(FLASH — WRAP 이 상한을 더했다)
+    for n in ("hs2", "countries", "surge", "items104", "stocks"):
+        assert FILE_CAPS[f"trade/{n}.json"] == pe.file_cap_kb * kb, n
+    assert PREFIX_CAPS["trade/region/"] == pe.region_cap_kb * kb
+    assert PREFIX_CAPS["trade/stock/"] == pe.stock_cap_kb * kb
+    assert PREFIX_CAPS["trade/hs/"] == PREFIX_CAPS["trade/country/"] == pe.file_cap_kb * kb
+    assert file_cap("trade/stock/000660.json") == pe.stock_cap_kb * kb
+    assert file_cap("trade/unknown.json") is None and file_cap("credit.json") == 100 * kb
+
+
+def test_p6_trade_payload_rules() -> None:
+    from kbj.services.public_export.manifest import trade_problems
+
+    ok = _env(
+        source="DATAGO,DART", data={"lines": [{"origin": "public"}], "fx_note": "환율 미조정"}
+    )
+    assert check_payload("trade/stock/000660.json", json.dumps(ok)) == []
+    local = _env(source="DATAGO", data={"rows": [{"code": "000660", "origin": "local"}]})
+    assert any("origin local" in p for p in check_payload("trade/stocks.json", json.dumps(local)))
+    price = _env(source="DATAGO", data={"monthly": [{"period": "2026-09", "close": 1}]})
+    assert any("시세 칸" in p for p in check_payload("trade/stock/000660.json", json.dumps(price)))
+    assert trade_problems("trade/flash.json", {"data": {"close": 1}}) == []  # 시세 칸은 stock 만
+    assert trade_problems("macro/us.json", {"origin": "local"}) == []
+    watch = _env(source="DATAGO", data={"rows": [{"is_watch": True}]})
+    assert any("관심종목 흔적" in p for p in check_payload("trade/hs/85.json", json.dumps(watch)))
+
+
+def _p6_tree(tmp_path: Path) -> Path:
+    from kbj.services.public_export.export import write_files
+
+    files = [
+        PublicFile(name="trade/flash.json", source="DATAGO", as_of=NOW, quality="estimated",
+                   data={"segments": []}),
+        PublicFile(name="trade/hs/85.json", source="DATAGO", as_of=NOW, quality="ok", data={}),
+        PublicFile(name="trade/stock/000660.json", source="DART,DATAGO", as_of=NOW, quality="ok",
+                   data={"lines": []}),
+    ]  # fmt: skip
+    write_files(files, tmp_path, now=NOW)
+    return tmp_path
+
+
+def test_p6_nested_tree_is_written_checked_and_cleaned(tmp_path: Path) -> None:
+    from kbj.services.public_export.export import write_files
+
+    d = _p6_tree(tmp_path)
+    assert check_tree(d) == []
+    man = json.loads((d / MANIFEST_NAME).read_text(encoding="utf-8"))
+    assert [(x["name"], x["count"]) for x in man["dirs"]] == [("trade", 3)]
+    assert sorted(listed_paths(d)) == [
+        "trade/flash.json", "trade/hs/85.json", "trade/stock/000660.json",
+    ]  # fmt: skip
+    # 다음 회차에 빠진 코드 파일·빈 폴더는 지운다(한 단계 더 깊은 곳까지)
+    write_files(
+        [PublicFile(name="trade/flash.json", source="DATAGO", as_of=NOW, quality="ok", data={})],
+        d,
+        now=NOW,
+    )
+    assert not (d / "trade" / "hs").exists() and not (d / "trade" / "stock").exists()
+    assert check_tree(d) == []
+    # 코드 파일 상한(PREFIX_CAPS)을 넘으면 실패 — 자르지 않는다
+    big = PublicFile(name="trade/stock/000660.json", source="DATAGO", as_of=NOW, quality="ok",
+                     data={"pad": "x" * (101 * 1024)})  # fmt: skip
+    with pytest.raises(Exception, match="상한"):
+        write_files([big], d, now=NOW)

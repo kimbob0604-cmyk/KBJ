@@ -366,3 +366,35 @@ forbidden_modules = [
     "kbj.services.collectors",
     "kbj.services.api",
 ]
+
+# P6 수출입(docs/p6_design.md §1.6 5 — WRAP). 관세청·DART 는 공개 등급이라 엔진·작업·공개 내보내기가
+# 로그인 원천·저장소를 알면 공개판이 로그인 값을 실을 수 있다. verify_trade(VM CLI — 관심종목을 읽는다)는
+# 일부러 뺐다
+[[tool.importlinter.contracts]]
+name = "⑰ 수출입 엔진(kbj.engines.trade)·작업(collectors.customs·engine.trade·engine.trade_map)·공개 내보내기 trade 모듈은 로그인 원천·저장소를 import 하지 않는다"
+type = "forbidden"
+source_modules = [
+    "kbj.engines.trade",
+    "kbj.services.collectors.customs",
+    "kbj.services.engine.trade",
+    "kbj.services.engine.trade_map",
+    "kbj.services.public_export.trade_flash_json",
+    "kbj.services.public_export.trade_explore_json",
+    "kbj.services.public_export.trade_stock_json",
+]
+forbidden_modules = [
+    "kbj.data.private",
+    "kbj.services.collectors.macro_prv",
+    "kbj.services.collectors._p3",
+    "kbj.services.engine.verify_trade",
+    "kbj.store.repos.macro_prv",
+    "kbj.store.repos.us",
+    "kbj.store.repos.program",
+    "kbj.store.repos.consensus",
+    "kbj.store.repos.journal",
+    "kbj.store.repos.market",
+    "kbj.store.repos.flows",
+    "kbj.store.repos.board",
+    "kbj.store.repos.etf",
+    "kbj.store.repos.memory",
+]

@@ -73,8 +73,11 @@ def test_ribbon_chips(world: World, authed: TestClient) -> None:
     assert chips["market_turnover"]["value"]["quality"] in ("ok", "estimated")
     assert chips["newhigh_count"]["value"]["value"] > 0
     assert chips["cyc_def"]["value"] is None and chips["cyc_def"]["note"]
-    for k in ("credit_spread", "credit_balance", "export_flash", "kr_vs_global", "gex_flip"):
+    for k in ("credit_spread", "credit_balance", "kr_vs_global", "gex_flip"):
         assert chips[k]["phase_pending"] and chips[k]["value"] is None
+    # P6 FLASH: 수출 속보는 단계 표시 없이 값 없음 + 사유(관세청 10일 잠정치 수집 전)
+    ef = chips["export_flash"]
+    assert ef["phase_pending"] is None and ef["value"] is None and "수집 전" in ef["note"]
     mpc = chips["bok_mpc"]
     if mpc["value"] is not None:
         assert mpc["value"]["value"] >= 0

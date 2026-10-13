@@ -1,7 +1,7 @@
 // 탭·해시·←/→·미니맵, 13페이지 등록 (§6.8 pager.test) + P4 종목 해시 #/p/8/<코드> (p4_design §1.2·§6.5)
 import { describe, expect, it, vi } from 'vitest';
 import { mountApp } from '../src/app/app';
-import { pageLoaders, PAGES, P3_PAGES, P4_PAGES, P5_PAGES } from '../src/app/pages';
+import { pageLoaders, PAGES, P3_PAGES, P4_PAGES, P5_PAGES, P6_PAGES } from '../src/app/pages';
 import { formatHash, HASH_RE, isMostlyVisible, parseHash, parseRoute } from '../src/app/pager';
 import { createRoute, route as appRoute } from '../src/app/route';
 import type { DataSource } from '../src/data/source';
@@ -26,6 +26,7 @@ describe('페이지 등록부', () => {
     expect(P4_PAGES).toEqual([5, 8]);
     // 9 는 단계 표기만 P5 — 테마 사전 통합은 사용자가 따로 진행(2026-10-13 Q1), P3 자리표시 그대로
     expect(P5_PAGES).toEqual([6]);
+    expect(P6_PAGES).toEqual([7]); // P6 수출입(docs/p6_design.md §6)
     // DATA_TIERS §2: 7 은 공개 표시, 1·5·6·8 은 공개·로그인 섞임(D-P4-15·p5_design §6), 나머지는 로그인
     expect(PAGES.filter((p) => p.tier === 'public').map((p) => p.n)).toEqual([7]);
     expect(PAGES.filter((p) => p.tier === 'mixed').map((p) => p.n)).toEqual([1, 5, 6, 8]);
@@ -56,14 +57,22 @@ describe('페이지 등록부', () => {
       '../pages/p5_filings.ts': noop,
       '../pages/p8_stock.ts': noop,
       '../pages/p6_macro.ts': noop,
+      '../pages/p7_trade.ts': noop,
       '../pages/placeholder.ts': noop,
     });
-    expect([...m.keys()].sort((a, b) => a - b)).toEqual([1, 5, 6, 8, 10]);
+    expect([...m.keys()].sort((a, b) => a - b)).toEqual([1, 5, 6, 7, 8, 10]);
   });
 
-  it('빌드 glob 이 페이지 5·8·6 진입 파일도 찾는다(p{1,2,4,5,6,8,10}_*.ts — 9 는 자리표시)', async () => {
+  it('빌드 glob 이 페이지 5·8·6·7 진입 파일도 찾는다(p{1,2,4,5,6,7,8,10}_*.ts — 9 는 자리표시)', async () => {
     const src = (await import('../src/app/pages.ts?raw')).default;
-    expect(src).toContain("'../pages/p{1,2,4,5,6,8,10}_*.ts'");
+    expect(src).toContain("'../pages/p{1,2,4,5,6,7,8,10}_*.ts'");
+  });
+
+  it('P6 페이지 7 문구: 공개 전부, 탭 여섯·매핑 종목', () => {
+    const p7 = PAGES.find((p) => p.n === 7);
+    expect(p7).toMatchObject({ phase: 'P6', tier: 'public' });
+    expect(p7?.lock).toBeUndefined();
+    for (const w of ['속보', '품목', '국가', '지역', '급등', '104품목', '매핑 종목']) expect(p7?.plan).toContain(w);
   });
 
   it('해시 해석', () => {

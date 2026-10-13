@@ -1,5 +1,6 @@
 // 상단 띠 — 로그인: API 칩(값 형식·잠정·마감·준비 중·값 없음 사유)·1분 새로 고침·오류 격리.
-// 공개: calendar·events 공개 파일로 세션·금통위 D-n 계산, 신용 칩은 공개 파일 credit(P5 MAC), 로그인 칩은 자물쇠,
+// 공개: calendar·events 공개 파일로 세션·금통위 D-n 계산, 신용 칩은 공개 파일 credit(P5 MAC), 수출 속보 칩은 공개 파일
+// trade/ribbon(P6 FLASH), 로그인 칩은 자물쇠,
 // 로그인 API 를 부르지 않는다.
 import { describe, expect, it } from 'vitest';
 import type { AppContext } from '../../src/app/types';
@@ -19,6 +20,7 @@ import { fixedClock, json } from '../helpers';
 import fixtureRibbon from '../fixtures/api/market_ribbon.json';
 import publicCalendar from './fixtures/public_calendar.json';
 import { MAC_NOW, macLoginHarness, macPublicHarness } from '../fixtures/api/macro/harness';
+import { FLASH_NOW, flashLoginHarness, flashPublicHarness } from '../fixtures/api/trade_flash/harness';
 import { apiHarness, flush, publicHarness, text } from './support';
 
 const SEP16_1010 = new Date('2026-09-16T01:10:00Z'); // KST 09-16(수) 10:10
@@ -77,7 +79,7 @@ describe('상단 띠 — 로그인', () => {
     expect(text(semi.querySelector('.v'))).toBe('—');
     expect(semi.title).toBe('005930 값 없음');
     // 준비 중
-    expect(el.querySelectorAll('.chip.pending')).toHaveLength(5);
+    expect(el.querySelectorAll('.chip.pending')).toHaveLength(4); // 수출 속보(P6)는 단계 표시 없이 값·사유
     expect(text(chipByKey(el, 'gex_flip').querySelector('.v'))).toBe('준비 중(P7)');
     expect(el.querySelectorAll('.chip.locked')).toHaveLength(0);
 
@@ -149,7 +151,12 @@ describe('상단 띠 — 공개', () => {
     const now = new Date('2026-10-07T01:23:45Z'); // KST 10-07(수) 10:23:45
     const { ctx, el, every } = ctxOf('public', hz.source, now);
     await ribbon.mount(el, ctx);
-    expect(hz.paths().sort()).toEqual(['./data/calendar.json', './data/credit.json', './data/events.json']);
+    expect(hz.paths().sort()).toEqual([
+      './data/calendar.json',
+      './data/credit.json',
+      './data/events.json',
+      './data/trade/ribbon.json',
+    ]);
     expect(hz.paths().some((p) => p.includes('api'))).toBe(false);
 
     expect(text(chipByKey(el, 'session').querySelector('.v'))).toBe('정규장 · 마감까지 5:06');
@@ -169,17 +176,20 @@ describe('상단 띠 — 공개', () => {
       'kr_vs_global',
       'gex_flip',
     ]);
-    expect(el.querySelectorAll('.chip.pending')).toHaveLength(1); // 수출 속보(P6)만 — 신용 칩은 P5 에 들어왔다
+    expect(el.querySelectorAll('.chip.pending')).toHaveLength(0); // 신용 칩은 P5, 수출 속보는 P6 에 들어왔다
     for (const c of el.querySelectorAll('.chip.locked')) expect(text(c.querySelector('.v'))).toBe('로그인 필요');
     const spread = chipByKey(el, 'credit_spread');
     expect(text(spread.querySelector('.v'))).toBe('—');
     expect(spread.title).toContain('아직 없음');
+    const flash = chipByKey(el, 'export_flash'); // 파일이 없으면(수집 전) 0 이 아니라 — + 사유
+    expect(text(flash.querySelector('.v'))).toBe('—');
+    expect(flash.title).toContain('trade.customs_tenday');
 
     // 카운트다운은 파일을 다시 받지 않고 다시 계산
     expect(every.map((e) => e.ms)).toEqual([PUBLIC_TICK_MS]);
     every[0]?.fn();
     await flush();
-    expect(hz.calls).toHaveLength(3);
+    expect(hz.calls).toHaveLength(4);
   });
 
   it('캘린더를 못 받으면 세션 칩만 오류, 금통위는 계속', async () => {
@@ -283,8 +293,58 @@ describe('상단 띠 — P5 신용·한국 대 글로벌 칩(MAC)', () => {
     expect(o.cls).toBe('down');
   });
 
-  it('칩 자리: P5 칩은 단계 표시가 없다(값이 없으면 서버가 준비 중을 보낸다)', () => {
+  it('칩 자리: P5·P6 칩은 단계 표시가 없다(값이 없으면 서버가 준비 중·사유를 보낸다)', () => {
     const phased = CHIP_SLOTS.filter((s) => s.phase).map((s) => s.key);
-    expect(phased).toEqual(['export_flash', 'gex_flip']);
+    expect(phased).toEqual(['gex_flip']);
+  });
+});
+
+describe('상단 띠 — P6 수출 속보 칩(FLASH)', () => {
+  it('로그인: API 칩 — 기준 구간 + 발표 당시 YoY, 잠정 표시', async () => {
+    const hz = flashLoginHarness();
+    const { ctx, el } = ctxOf('login', hz.source, FLASH_NOW);
+    await ribbon.mount(el, ctx);
+    const c = chipByKey(el, 'export_flash');
+    expect(text(c.querySelector('.v'))).toBe('1~10일 +5.5%');
+    expect(c.dataset.state).toBe('estimated');
+    expect(c.classList.contains('pending')).toBe(false);
+    expect(c.title).toContain('DATAGO:15157908');
+  });
+
+  it('공개: trade/ribbon.json 의 칩 — 로그인과 같은 형식, 로그인 API 0', async () => {
+    const hz = flashPublicHarness({
+      calendar: () => json(structuredClone(publicCalendar)),
+      events: () => json({ source: 'config', as_of: '2026-12-11T00:00:00+09:00', quality: 'estimated', notes: [], generated_at: '2026-12-11T00:00:00+09:00', data: { events: [] } }),
+    });
+    const { ctx, el } = ctxOf('public', hz.source, FLASH_NOW);
+    await ribbon.mount(el, ctx);
+    expect(hz.paths().every((p) => p.startsWith('./data/'))).toBe(true);
+    expect(hz.paths()).toContain('./data/trade/ribbon.json');
+    expect(text(chipByKey(el, 'export_flash').querySelector('.v'))).toBe('1~10일 +5.5%');
+  });
+
+  it('값이 없으면(열 이름 바뀜 등) 0 이 아니라 — + 사유, 음수는 down 색', () => {
+    const none = chipOptions(
+      { key: 'export_flash', label: '수출 속보', value: null, tier: 'public', phase_pending: null, tags: ['잠정'], note: '전년 같은 구간 값 없음', detail: { span_label: '1~20일' } },
+      FLASH_NOW,
+    );
+    expect(none.value).toBe('—');
+    expect(none.title).toContain('전년 같은 구간 값 없음');
+    const neg = chipOptions(
+      {
+        key: 'export_flash',
+        label: '수출 속보',
+        value: { value: -0.0834, source: 'DATAGO:15157908', as_of: '2026-11-21T00:00:00+09:00', quality: 'estimated' },
+        tier: 'public',
+        phase_pending: null,
+        tags: ['잠정'],
+        note: null,
+        detail: { span_label: '1~20일' },
+      },
+      FLASH_NOW,
+    );
+    expect(neg.value).toBe('1~20일 -8.3%');
+    expect(neg.cls).toBe('down');
+    expect(neg.state).toBe('estimated');
   });
 });

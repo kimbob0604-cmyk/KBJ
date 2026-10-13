@@ -36,6 +36,7 @@ def test_domains_cover_routes() -> None:
         "market", "board", "flows", "etf", "stock", "filings",
         "macro", "program", "flows_minute", "board_us",
         "index_review",  # P5 2차 묶음 IDX
+        "trade",  # P6 묶음 FND
     }  # fmt: skip
 
 
@@ -49,6 +50,7 @@ def test_p4_domain_jobs_exist_in_registry() -> None:
     names = {j["name"] for j in doc["jobs"]}
     for domain in (
         "stock", "filings", "macro", "program", "flows_minute", "board_us", "index_review",
+        "trade", "market",
     ):  # fmt: skip
         assert set(DOMAIN_JOBS[domain]) <= names, domain
 

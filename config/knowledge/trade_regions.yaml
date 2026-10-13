@@ -1,0 +1,80 @@
+# 시군구 통합 ID(관세청 15134343 은 시군구 **이름만** 준다 — 개편 전후 이름·시도 코드를 한 ID 로, probe_results F4·R11).
+# 해석기 kbj/config/trade.py. 시험 tests/unit/config/test_trade_items.py(형식·중복·기간·전남광주 개편).
+#
+# 형식: regions: [{id: "KR-<시도>-<영문 id>", sido_cd: "41", sgg_nm: 시군구 이름, valid_from: "YYYY-MM"|null, valid_to: …}]
+# - 이름은 행정구역 공개 명칭(값 아님). 수출 거점(반도체·자동차·조선·석유화학·철강·전력기기·화장품 등 — 매핑 HS6 이
+#   걸릴 만한 곳)부터 적는다. 수집기가 못 찾은 이름은 region_id None(행은 남는다 — 화면은 시도·이름으로 보인다).
+# - 2026-07 시도 코드 개편: 전남광주통합특별시 12(2026-07 이후 신고분), 광주 29·전남 46(이전 신고분) — 같은 지역은
+#   한 id 에 기간을 나눠 두 줄로 적는다. 개편 뒤 시군구 이름이 그대로인지는 [확인 필요: 실측 F4].
+# - 시도 코드는 관세청 15134343 의 sidoCd 체계를 따른다(kbj.data.public.customs SIDO_CODES) [확인 필요: 실측 #4].
+version: 1
+regions:
+  # 경기
+  - {id: KR-41-hwaseong, sido_cd: "41", sgg_nm: 화성시}
+  - {id: KR-41-pyeongtaek, sido_cd: "41", sgg_nm: 평택시}
+  - {id: KR-41-icheon, sido_cd: "41", sgg_nm: 이천시}
+  - {id: KR-41-yongin, sido_cd: "41", sgg_nm: 용인시}
+  - {id: KR-41-suwon, sido_cd: "41", sgg_nm: 수원시}
+  - {id: KR-41-paju, sido_cd: "41", sgg_nm: 파주시}
+  - {id: KR-41-ansan, sido_cd: "41", sgg_nm: 안산시}
+  - {id: KR-41-siheung, sido_cd: "41", sgg_nm: 시흥시}
+  - {id: KR-41-gimpo, sido_cd: "41", sgg_nm: 김포시}
+  - {id: KR-41-anseong, sido_cd: "41", sgg_nm: 안성시}
+  - {id: KR-41-osan, sido_cd: "41", sgg_nm: 오산시}
+  # 인천
+  - {id: KR-28-seo, sido_cd: "28", sgg_nm: 서구}
+  - {id: KR-28-yeonsu, sido_cd: "28", sgg_nm: 연수구}
+  - {id: KR-28-namdong, sido_cd: "28", sgg_nm: 남동구}
+  - {id: KR-28-bupyeong, sido_cd: "28", sgg_nm: 부평구}
+  # 충청
+  - {id: KR-44-asan, sido_cd: "44", sgg_nm: 아산시}
+  - {id: KR-44-cheonan, sido_cd: "44", sgg_nm: 천안시}
+  - {id: KR-44-seosan, sido_cd: "44", sgg_nm: 서산시}
+  - {id: KR-44-dangjin, sido_cd: "44", sgg_nm: 당진시}
+  - {id: KR-43-cheongju, sido_cd: "43", sgg_nm: 청주시}
+  - {id: KR-43-eumseong, sido_cd: "43", sgg_nm: 음성군}
+  - {id: KR-43-jincheon, sido_cd: "43", sgg_nm: 진천군}
+  - {id: KR-30-daedeok, sido_cd: "30", sgg_nm: 대덕구}
+  - {id: KR-30-yuseong, sido_cd: "30", sgg_nm: 유성구}
+  - {id: KR-36-sejong, sido_cd: "36", sgg_nm: 세종시}
+  # 울산·부산·경남
+  - {id: KR-31-nam, sido_cd: "31", sgg_nm: 남구}
+  - {id: KR-31-buk, sido_cd: "31", sgg_nm: 북구}
+  - {id: KR-31-dong, sido_cd: "31", sgg_nm: 동구}
+  - {id: KR-31-ulju, sido_cd: "31", sgg_nm: 울주군}
+  - {id: KR-26-gangseo, sido_cd: "26", sgg_nm: 강서구}
+  - {id: KR-26-saha, sido_cd: "26", sgg_nm: 사하구}
+  - {id: KR-48-changwon, sido_cd: "48", sgg_nm: 창원시}
+  - {id: KR-48-geoje, sido_cd: "48", sgg_nm: 거제시}
+  - {id: KR-48-gimhae, sido_cd: "48", sgg_nm: 김해시}
+  - {id: KR-48-yangsan, sido_cd: "48", sgg_nm: 양산시}
+  - {id: KR-48-sacheon, sido_cd: "48", sgg_nm: 사천시}
+  # 대구·경북
+  - {id: KR-27-dalseong, sido_cd: "27", sgg_nm: 달성군}
+  - {id: KR-27-dalseo, sido_cd: "27", sgg_nm: 달서구}
+  - {id: KR-47-gumi, sido_cd: "47", sgg_nm: 구미시}
+  - {id: KR-47-pohang, sido_cd: "47", sgg_nm: 포항시}
+  - {id: KR-47-gyeongju, sido_cd: "47", sgg_nm: 경주시}
+  - {id: KR-47-gyeongsan, sido_cd: "47", sgg_nm: 경산시}
+  # 전북·강원·제주·서울
+  - {id: KR-52-gunsan, sido_cd: "52", sgg_nm: 군산시}
+  - {id: KR-52-wanju, sido_cd: "52", sgg_nm: 완주군}
+  - {id: KR-52-iksan, sido_cd: "52", sgg_nm: 익산시}
+  - {id: KR-51-wonju, sido_cd: "51", sgg_nm: 원주시}
+  - {id: KR-51-chuncheon, sido_cd: "51", sgg_nm: 춘천시}
+  - {id: KR-50-jeju, sido_cd: "50", sgg_nm: 제주시}
+  - {id: KR-11-gangnam, sido_cd: "11", sgg_nm: 강남구}
+  - {id: KR-11-yeongdeungpo, sido_cd: "11", sgg_nm: 영등포구}
+  # 전남·광주 — 2026-07 개편(전남광주통합특별시 12): 같은 id 에 기간을 나눈다
+  - {id: KR-46-yeosu, sido_cd: "46", sgg_nm: 여수시, valid_to: "2026-06"}
+  - {id: KR-46-yeosu, sido_cd: "12", sgg_nm: 여수시, valid_from: "2026-07"}
+  - {id: KR-46-gwangyang, sido_cd: "46", sgg_nm: 광양시, valid_to: "2026-06"}
+  - {id: KR-46-gwangyang, sido_cd: "12", sgg_nm: 광양시, valid_from: "2026-07"}
+  - {id: KR-46-yeongam, sido_cd: "46", sgg_nm: 영암군, valid_to: "2026-06"}
+  - {id: KR-46-yeongam, sido_cd: "12", sgg_nm: 영암군, valid_from: "2026-07"}
+  - {id: KR-46-mokpo, sido_cd: "46", sgg_nm: 목포시, valid_to: "2026-06"}
+  - {id: KR-46-mokpo, sido_cd: "12", sgg_nm: 목포시, valid_from: "2026-07"}
+  - {id: KR-29-gwangsan, sido_cd: "29", sgg_nm: 광산구, valid_to: "2026-06"}
+  - {id: KR-29-gwangsan, sido_cd: "12", sgg_nm: 광산구, valid_from: "2026-07"}
+  - {id: KR-29-buk, sido_cd: "29", sgg_nm: 북구, valid_to: "2026-06"}
+  - {id: KR-29-buk, sido_cd: "12", sgg_nm: 북구, valid_from: "2026-07"}

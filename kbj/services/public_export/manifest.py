@@ -24,6 +24,13 @@
   안 파일 원천들을 쉼표로 이은 것이다. 로그인 출처 이름·관심종목 흔적·`prv_` 글자는 여기서도
   0(하위 폴더 전부와 `P5_FLAT_NAMES`). 크기 상한은 `DIR_CAPS`(폴더 합계)·`FILE_CAPS`(파일
   하나) — 넘으면 실패(자르지 않는다). 숫자는 [제안](설계 §7) — `merge-public-data.mjs` 와 같게 둔다.
+- **P6 공개 파일(docs/p6_design.md §7)**: 하위 폴더 `trade/` — 평평한 `trade/<소문자>.json`(속보·
+  HS2·국가 총괄·급등·104품목·매핑 종목 랭킹)과 한 단계 더
+  `trade/(hs|country|region|stock)/<코드>.json`(장별·국가별·HS6 시군구·종목 겹쳐 보기).
+  원천은 관세청(DATAGO)·DART. 이름 규칙은 `SUBDIR_JSON_RE` 하나(`merge-public-data.mjs`·
+  `static.ts` 와 같은 정규식 — 시험). 상한은 `DIR_CAPS["trade"]`·`FILE_CAPS`(평평한 파일)·
+  `PREFIX_CAPS`(코드 파일 — `file_cap`). 내용 검사(`trade_problems`):
+  `origin: local`(VM 관심종목 매핑 — D-P6-14) 0, `trade/stock/` 에 시세 칸(close·price …) 0.
 - 문제 목록에는 값이 아니라 파일 이름·JSON 경로·규칙만 담는다.
 """
 
@@ -50,6 +57,7 @@ __all__ = [
     "MANIFEST_NAME",
     "NAME_RE",
     "P5_FLAT_NAMES",
+    "PREFIX_CAPS",
     "PUBLIC_FORBIDDEN",
     "QUALITIES",
     "SCHEMA_VERSION",
@@ -67,6 +75,7 @@ __all__ = [
     "check_tree",
     "dart_only",
     "dir_digest",
+    "file_cap",
     "forbidden_hits",
     "iso_kst",
     "listed_paths",
@@ -75,6 +84,7 @@ __all__ = [
     "read_manifest",
     "sha256_bytes",
     "sha256_text",
+    "trade_problems",
     "watch_trace_paths",
     "worst_quality",
 ]
@@ -83,10 +93,14 @@ SCHEMA_VERSION: Final = 1
 MANIFEST_NAME: Final = "manifest.json"
 NAME_RE: Final = re.compile(r"[a-z0-9_]+\.json")
 # 하위 폴더 — web/src/data/static.ts PUBLIC_SUBDIR·PUBLIC_DOWNLOAD, merge-public-data.mjs 와 같은
-# 규칙. P4 fin·reports(종목코드 이름 — DART 전용), P5 macro(소문자 이름 — 공개 출처 여럿)
-SUBDIRS: Final[tuple[str, ...]] = ("fin", "reports", "macro")
+# 규칙. P4 fin·reports(종목코드 이름 — DART 전용), P5 macro(소문자 이름 — 공개 출처 여럿),
+# P6 trade(평평한 소문자 이름 + (hs|country|region|stock)/<코드> 한 단계 — docs/p6_design.md §7)
+SUBDIRS: Final[tuple[str, ...]] = ("fin", "reports", "macro", "trade")
 DART_SUBDIRS: Final[tuple[str, ...]] = ("fin", "reports")
-SUBDIR_JSON_RE: Final = re.compile(r"(?:(fin|reports)/[0-9A-Z]{6}|(macro)/[a-z0-9_]+)\.json")
+SUBDIR_JSON_RE: Final = re.compile(
+    r"(?:(fin|reports)/[0-9A-Z]{6}|(macro)/[a-z0-9_]+"
+    r"|(trade)/(?:(?:hs|country|region|stock)/[0-9A-Z]{2,10}|[a-z0-9_]+))\.json"
+)
 SUBDIR_XLSX_RE: Final = re.compile(r"reports/[0-9A-Z]{6}\.xlsx")
 # P4 공시·재무 목록 파일 — 원천이 DART 하나(§7). merge-public-data.mjs DART_ONLY 와 같은 목록
 DART_ONLY_NAMES: Final = frozenset({
@@ -103,8 +117,29 @@ _KB: Final = 1024
 # P5 크기 상한(바이트, docs/p5_design.md §7 [제안]) — 폴더 합계·파일 하나. merge-public-data.mjs 와
 # 같다.
 # fin/ 상한은 config/fin.yaml(public_export.fin_max_total_mb)에서 따로 온다.
-DIR_CAPS: Final[dict[str, int]] = {"macro": 3 * _KB * _KB}
-FILE_CAPS: Final[dict[str, int]] = {"credit.json": 100 * _KB, "macro/calendar.json": 200 * _KB}
+# P6 trade/ 상한(docs/p6_design.md §7 [제안 — 실측 #57 뒤 확정], config/trade.yaml public_export 와
+# 같은 숫자 — 시험이 대조).
+DIR_CAPS: Final[dict[str, int]] = {"macro": 3 * _KB * _KB, "trade": 20 * _KB * _KB}
+FILE_CAPS: Final[dict[str, int]] = {
+    "credit.json": 100 * _KB,
+    "macro/calendar.json": 200 * _KB,
+    "trade/flash.json": 200 * _KB,
+    "trade/ribbon.json": 4 * _KB,  # 띠 칩(FLASH — credit.json 과 분리, 약 1 KB)
+    "trade/hs2.json": 1024 * _KB,
+    "trade/countries.json": 1024 * _KB,
+    "trade/surge.json": 1024 * _KB,
+    "trade/items104.json": 1024 * _KB,
+    "trade/stocks.json": 1024 * _KB,
+}
+# 코드 이름 파일(하위 폴더 한 단계 더) — 경로 접두 → 파일 하나 상한
+PREFIX_CAPS: Final[dict[str, int]] = {
+    "trade/hs/": 1024 * _KB,
+    "trade/country/": 1024 * _KB,
+    "trade/region/": 200 * _KB,
+    "trade/stock/": 100 * _KB,
+}
+# 공개 trade/stock/ 파일에 없어야 하는 시세 칸(로그인 등급 — D-P6-4)
+_TRADE_PRICE_KEYS: Final = frozenset({"close", "price", "chg_pct", "mktcap", "open", "high", "low"})
 Quality = Literal["ok", "stale", "estimated", "invalid"]
 QUALITIES: Final[tuple[Quality, ...]] = ("ok", "stale", "estimated", "invalid")
 _Q_RANK: Final[dict[str, int]] = {"ok": 0, "stale": 1, "estimated": 2, "invalid": 3}
@@ -140,6 +175,47 @@ def iso_kst(ts: datetime) -> str:
 
 def _public_name(name: str) -> bool:
     return name != MANIFEST_NAME and bool(NAME_RE.fullmatch(name) or SUBDIR_JSON_RE.fullmatch(name))
+
+
+def file_cap(name: str) -> int | None:
+    """파일 하나의 크기 상한(바이트) — 이름이 `FILE_CAPS` 에 있거나 `PREFIX_CAPS` 접두면.
+    없으면 None."""
+    if name in FILE_CAPS:
+        return FILE_CAPS[name]
+    for prefix, cap in PREFIX_CAPS.items():
+        if name.startswith(prefix):
+            return cap
+    return None
+
+
+def _key_paths(v: object, pred: Any, path: str = "$") -> list[str]:
+    out: list[str] = []
+    if isinstance(v, list):
+        for i, x in enumerate(v):  # pyright: ignore[reportUnknownVariableType, reportUnknownArgumentType]
+            out += _key_paths(x, pred, f"{path}[{i}]")
+    elif isinstance(v, dict):
+        for k, x in v.items():  # pyright: ignore[reportUnknownVariableType]
+            p = f"{path}.{k}"
+            if pred(str(k), x):  # pyright: ignore[reportUnknownArgumentType]
+                out.append(p)
+            out += _key_paths(x, pred, p)
+    return out
+
+
+def trade_problems(name: str, raw: object) -> list[str]:
+    """P6 `trade/` 파일 내용 검사 — `origin: local` 0(D-P6-14), `trade/stock/` 시세 칸 0(D-P6-4)."""
+    if not name.startswith("trade/"):
+        return []
+    out = [
+        f"{name}: 로그인 전용 매핑(origin local — {p})"
+        for p in _key_paths(raw, lambda k, x: k == "origin" and x == "local")  # pyright: ignore[reportUnknownLambdaType]
+    ]
+    if name.startswith("trade/stock"):
+        out += [
+            f"{name}: 시세 칸({p})"
+            for p in _key_paths(raw, lambda k, _x: k in _TRADE_PRICE_KEYS)  # pyright: ignore[reportUnknownLambdaType]
+        ]
+    return out
 
 
 def dart_only(name: str) -> bool:
@@ -393,6 +469,7 @@ def check_payload(name: str, text: str) -> list[str]:
         problems += [f"{name}: 관심종목 흔적 키({p})" for p in watch_trace_paths(raw)]
         if _LOGIN_SCHEMA_TEXT in text:
             problems.append(f"{name}: 로그인 등급 스키마 이름('{_LOGIN_SCHEMA_TEXT}' 규칙)")
+    problems += trade_problems(name, raw)
     if not isinstance(raw, dict):
         return [*problems, f"{name}: 봉투가 아님(최상위가 객체가 아님)"]
     env: dict[str, Any] = raw  # pyright: ignore[reportUnknownVariableType]
@@ -478,7 +555,8 @@ def _check_dir(directory: Path, entry: Mapping[str, Any]) -> list[str]:
         total += len(body)
         sha_of[rel] = sha256_bytes(body)
         hashes.append((rel, sha_of[rel]))
-        if rel in FILE_CAPS and len(body) > FILE_CAPS[rel]:
+        cap = file_cap(rel)
+        if cap is not None and len(body) > cap:
             problems.append(f"{rel}: 크기 상한을 넘는다")
         if rel.endswith(".xlsx"):
             continue

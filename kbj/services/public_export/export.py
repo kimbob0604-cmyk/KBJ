@@ -15,6 +15,9 @@ docs/p3_design.md §7, docs/p4_design.md §1.9·§7, DATA_TIERS §3, ADR 0002 §
 - P5(docs/p5_design.md §7): `macro/`·`credit.json`(`_p5_files` — 본문은 MAC). 테마 사전 `themes/` 는
   사용자가 따로 진행해 P5 에서 뺐다.
   크기 상한은 `manifest.DIR_CAPS`·`FILE_CAPS` — 넘으면 같은 식으로 실패.
+- P6(docs/p6_design.md §7): `trade/`(`_p6_files` — 본문은 FLASH `trade_flash_json`·EXP
+  `trade_explore_json`·MAP `trade_stock_json`). 공개 매핑(`origin = 'public'`)만, 시세 칸 없음.
+  상한은 `DIR_CAPS["trade"]`·`FILE_CAPS`·`PREFIX_CAPS`.
 - 그 밖에 쓰는 것: 거래 캘린더(코드 계산)·`config/calendar_events.yaml`(공개 설정)·`config/fin.yaml`
   (중요도 등급·크기 상한)·`config/reports.yaml`(공개 데모 종목).
 - 이 패키지는 로그인 등급 코드(`kbj.data.private`·`kbj.engines`·`kbj.services.{api,collectors,
@@ -54,7 +57,6 @@ from kbj.services.public_export.macro_json import build_macro
 from kbj.services.public_export.manifest import (
     DART_SUBDIRS,
     DIR_CAPS,
-    FILE_CAPS,
     MANIFEST_NAME,
     NAME_RE,
     SUBDIR_JSON_RE,
@@ -67,6 +69,7 @@ from kbj.services.public_export.manifest import (
     PublicFile,
     check_payload,
     dir_digest,
+    file_cap,
     iso_kst,
     sha256_bytes,
     sha256_text,
@@ -80,6 +83,9 @@ from kbj.services.public_export.push import (
     push_public_data,
     ssh_remote,
 )
+from kbj.services.public_export.trade_explore_json import build_trade_explore
+from kbj.services.public_export.trade_flash_json import build_trade_flash
+from kbj.services.public_export.trade_stock_json import build_trade_stock
 from kbj.services.scheduler.handlers import JobContext, JobResult
 from kbj.store.db import StoreError, connect
 
@@ -242,13 +248,18 @@ def _remove_stale(out_dir: Path, keep_flat: set[str], keep_sub: set[str]) -> Non
         root = out_dir / sub
         if not root.is_dir():
             continue
-        for old in root.iterdir():
-            rel = f"{sub}/{old.name}"
+        # P6 trade/ 는 한 단계 더 깊다(trade/hs/<장>.json …) — 아래까지 본다
+        for old in sorted(root.rglob("*"), reverse=True):
+            rel = old.relative_to(out_dir).as_posix()
+            if old.is_dir():
+                if not any(old.iterdir()):
+                    old.rmdir()
+                continue
             ours = bool(SUBDIR_JSON_RE.fullmatch(rel) or SUBDIR_XLSX_RE.fullmatch(rel))
             # 쓰다 끊긴 임시 파일(`_write_atomic` 의 `.<이름>.part`)도 지운다 — 남으면 check_tree 가
             # '허용하지 않는 이름'으로 막아 다음 푸시가 계속 실패한다
             part = old.name.startswith(".") and old.name.endswith(".part")
-            if old.is_file() and ((ours and rel not in keep_sub) or part):
+            if (ours and rel not in keep_sub) or part:
                 old.unlink()
         if not any(root.iterdir()):
             root.rmdir()
@@ -282,7 +293,7 @@ def write_files(
     if problems:
         raise PublicExportError("공개 산출물 검사 실패: " + "; ".join(problems[:5]))
     for f, text in rendered:
-        cap = FILE_CAPS.get(f.name)
+        cap = file_cap(f.name)
         if cap is not None and len(text.encode("utf-8")) > cap:
             raise PublicExportError(
                 f"{f.name}: {len(text.encode('utf-8'))} B 가 상한 {cap} B 를 넘는다 — "
@@ -356,6 +367,20 @@ def _p5_files(read: Reader, *, now: datetime) -> tuple[list[PublicFile], list[st
     return files, skipped
 
 
+def _p6_files(read: Reader, *, now: datetime) -> tuple[list[PublicFile], list[str]]:
+    """P6 공개 파일(trade/ — pub_trade·pub_fin 만, docs/p6_design.md §7).
+
+    본문은 FLASH(`trade_flash_json`)·EXP(`trade_explore_json`)·MAP(`trade_stock_json`).
+    공개 표가 비면 파일 0·이유 0."""
+    files: list[PublicFile] = []
+    skipped: list[str] = []
+    for build in (build_trade_flash, build_trade_explore, build_trade_stock):
+        out = build(read, now=now)
+        files += out.files
+        skipped += out.skipped
+    return files, skipped
+
+
 def export_all(
     conn_pub: psycopg.Connection[Any] | None,
     out_dir: Path,
@@ -396,10 +421,14 @@ def export_all(
         files += p4
         skipped += why
         caps[FIN_DIR] = int(fcfg.public_export.fin_max_total_mb * _MB)
-        # P5: macro/·credit.json (pub_macro·pub_market_stats). P6~: pub_trade …
+        # P5: macro/·credit.json (pub_macro·pub_market_stats)
         p5, why5 = _p5_files(reader, now=now)
         files += p5
         skipped += why5
+        # P6: trade/ (pub_trade — 공개 매핑만·시세 칸 없음)
+        p6, why6 = _p6_files(reader, now=now)
+        files += p6
+        skipped += why6
     caps.update(DIR_CAPS)
     return write_files(files, out_dir, now=now, blobs=blobs, caps=caps, skipped=skipped)
 

@@ -7,6 +7,9 @@ import {
   DIR_CAPS,
   dirDigest,
   FILE_CAPS,
+  fileCap,
+  PREFIX_CAPS,
+  tradeProblems,
   loginSourcePaths,
   manifestDirs,
   nonDartSourcePaths,
@@ -48,6 +51,7 @@ describe('check-bundle: 공개 번들', () => {
     'env.KBJ_WEB_USER',
     'document.cookie.includes("__Host-kbj_session")',
     'get("index-review",{index:i})', // P5 2차 IDX — 로그인 전용 API 이름
+    'title:"수출 겹쳐 보기 — 월말 종가"', // P6 — 페이지 8 로그인 줄(p8/trade_overlay_price.ts)
   ];
   it.each(bad)('찾는다: %s', (line) => {
     expect(scanText('a.js', line, PUBLIC_FORBIDDEN).length).toBeGreaterThan(0);
@@ -72,15 +76,18 @@ describe('check-bundle: 크기 예산(gzip)', () => {
   it('JS·CSS 합계, sw.js 는 제외', () => {
     const r = checkBudget(
       [
-        { name: 'assets/a.js', bytes: 50_000 },
+        { name: 'assets/a.js', bytes: 60_000 },
         { name: 'assets/b.js', bytes: 20_000 },
         { name: 'sw.js', bytes: 99_999 },
         { name: 'assets/a.css', bytes: 1_000 },
       ],
       BUDGET_GZIP.public,
     );
-    expect(r.js).toBe(70_000);
+    expect(r.js).toBe(80_000);
     expect(r.findings.map((f) => f.rule)).toEqual(['budget_js']);
+    // ADR 0025: 공개 JS 예산 72 KB(P6 페이지 7)
+    expect(BUDGET_GZIP.public.js).toBe(72 * 1024);
+    expect(checkBudget([{ name: 'assets/a.js', bytes: 70_000 }], BUDGET_GZIP.public).findings).toEqual([]);
     expect(checkBudget([{ name: 'assets/a.js', bytes: 70_000 }], BUDGET_GZIP.login).findings).toEqual([]);
   });
 });
@@ -295,11 +302,11 @@ describe('merge-public-data: P5 하위 폴더(macro)·credit.json — p5_design 
   });
 
   it('규칙: P5 폴더는 SUBDIRS 에 있고 DART 전용이 아니다, 크기 상한은 파이썬과 같은 숫자', () => {
-    expect(SUBDIRS).toEqual(['fin', 'reports', 'macro']);
+    expect(SUBDIRS).toEqual(['fin', 'reports', 'macro', 'trade']); // P6 trade 는 아래 묶음
     expect(DART_SUBDIRS).toEqual(['fin', 'reports']);
     expect([...P5_FLAT_NAMES]).toEqual(['credit.json']);
-    expect(DIR_CAPS).toEqual({ macro: 3 * 1024 * 1024 });
-    expect(FILE_CAPS).toEqual({ 'credit.json': 100 * 1024, 'macro/calendar.json': 200 * 1024 });
+    expect(DIR_CAPS).toMatchObject({ macro: 3 * 1024 * 1024 });
+    expect(FILE_CAPS).toMatchObject({ 'credit.json': 100 * 1024, 'macro/calendar.json': 200 * 1024 });
     for (const key of ['macro/tabs', 'themes/index', 'macro/Rates', 'macro/a-b', 'macro/x/y', 'credit']) {
       expect(SUBDIR_JSON_RE.test(`${key}.json`), key).toBe(PUBLIC_SUBDIR.test(key));
     }
@@ -336,5 +343,80 @@ describe('merge-public-data: P5 하위 폴더(macro)·credit.json — p5_design 
     const pad = 'x'.repeat(1024 * 1024);
     const many = { ...base, 'macro/a.json': env('ECOS', { pad }), 'macro/b.json': env('ECOS', { pad }), 'macro/c.json': env('ECOS', { pad }) };
     expect(planMerge(manifestOf(many), many).errors.join()).toContain('macro/: 합계 크기 상한을 넘는다');
+  });
+});
+
+describe('merge-public-data: P6 하위 폴더 trade/ — p6_design §7', () => {
+  const AS_OF = '2026-10-13T11:30:00+09:00';
+  const env = (source: string, data: unknown) =>
+    JSON.stringify({ source, as_of: AS_OF, quality: 'estimated', notes: [], generated_at: AS_OF, data });
+  const base: Record<string, string> = {
+    'trade/flash.json': env('DATAGO', { segments: [] }),
+    'trade/hs/85.json': env('DATAGO', { rows: [] }),
+    'trade/region/854232.json': env('DATAGO', { rows: [] }),
+    'trade/stock/000660.json': env('DATAGO,DART', { lines: [{ origin: 'public' }] }),
+  };
+  const manifestOf = (files: Record<string, string>) => {
+    const paths = Object.keys(files).filter((p) => p.startsWith('trade/'));
+    return {
+      files: [],
+      dirs: [
+        {
+          name: 'trade',
+          count: paths.length,
+          bytes: paths.reduce((n, p) => n + new TextEncoder().encode(files[p]).length, 0),
+          digest: dirDigest(paths.map((p) => [p, sha256(files[p]!)] as [string, string])),
+          source: 'DART,DATAGO',
+          as_of: AS_OF,
+          quality: 'estimated',
+        },
+      ],
+    };
+  };
+
+  it('규칙: 이름 정규식·상한이 파이썬(manifest.py)·프런트(static.ts)와 같다', () => {
+    expect(SUBDIRS).toContain('trade');
+    expect(DART_SUBDIRS).not.toContain('trade');
+    expect(DIR_CAPS['trade']).toBe(20 * 1024 * 1024);
+    expect(FILE_CAPS['trade/flash.json']).toBe(200 * 1024);
+    expect(FILE_CAPS['trade/ribbon.json']).toBe(4 * 1024);
+    expect(PREFIX_CAPS).toEqual({
+      'trade/hs/': 1024 * 1024,
+      'trade/country/': 1024 * 1024,
+      'trade/region/': 200 * 1024,
+      'trade/stock/': 100 * 1024,
+    });
+    expect(fileCap('trade/stock/000660.json')).toBe(100 * 1024);
+    expect(fileCap('trade/unknown.json')).toBeUndefined();
+    for (const key of [
+      'trade/flash', 'trade/hs/85', 'trade/hs/8542', 'trade/country/US', 'trade/region/854232',
+      'trade/stock/000660', 'trade/stock/0006601234567', 'trade/hs/8', 'trade/Flash', 'trade/x/85',
+      'trade/hs/85/x', 'trade/stock/00066!',
+    ]) {
+      expect(SUBDIR_JSON_RE.test(`${key}.json`), key).toBe(PUBLIC_SUBDIR.test(key));
+    }
+    expect(PUBLIC_SUBDIR.test('trade/hs/85')).toBe(true);
+    expect(PUBLIC_SUBDIR.test('trade/hs/8')).toBe(false);
+  });
+
+  it('한 단계 더 깊은 파일을 받아들이고 복사한다', () => {
+    const r = planMerge(manifestOf(base), base);
+    expect(r.errors).toEqual([]);
+    expect(r.copy).toContain('trade/hs/85.json');
+  });
+
+  it('origin local(관심종목 매핑)·종목 파일의 시세 칸은 실패', () => {
+    const bad = { ...base, 'trade/stock/000660.json': env('DATAGO', { lines: [{ origin: 'local' }], close: 1 }) };
+    const r = planMerge(manifestOf(bad), bad);
+    expect(r.copy).toEqual([]);
+    expect(r.errors.some((e) => e.includes('origin local'))).toBe(true);
+    expect(r.errors.some((e) => e.includes('시세 칸'))).toBe(true);
+    expect(tradeProblems('trade/flash.json', { data: { close: 1 } })).toEqual([]); // 시세 칸 검사는 stock 만
+  });
+
+  it('코드 파일 상한(PREFIX_CAPS)을 넘으면 실패', () => {
+    const big = { ...base, 'trade/stock/000660.json': env('DATAGO', { pad: 'x'.repeat(101 * 1024) }) };
+    const r = planMerge(manifestOf(big), big);
+    expect(r.errors.some((e) => e.includes('trade/stock/000660.json: 크기 상한'))).toBe(true);
   });
 });

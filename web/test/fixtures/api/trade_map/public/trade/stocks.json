@@ -1,0 +1,272 @@
+{
+  "source": "관세청(공공데이터포털)+DART",
+  "as_of": "2026-12-11T11:30:00+09:00",
+  "quality": "estimated",
+  "notes": [
+    "금액은 미화 달러(원화 환산 없음 — 환율 미조정)",
+    "매핑 가중치는 자체 큐레이션 초안 — '검토 전' 종목은 사람이 아직 확인하지 않았다",
+    "랭킹 = 2026-10 까지 최근 3개월 수출 지수 YoY"
+  ],
+  "generated_at": "2026-12-11T11:30:00+09:00",
+  "data": {
+    "map_version": "p6world-1",
+    "rows": [
+      {
+        "code": "992031",
+        "name": "가상상장31",
+        "yoy_3m": 0.1809002236020727,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "estimated"
+      },
+      {
+        "code": "99K170",
+        "name": "모의로보틱스",
+        "yoy_3m": 0.12056625900025719,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "ok"
+      },
+      {
+        "code": "994190",
+        "name": "모의건설",
+        "yoy_3m": 0.11279051357768521,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "ok"
+      },
+      {
+        "code": "992056",
+        "name": "가상상장56",
+        "yoy_3m": 0.11236058895538026,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "estimated"
+      },
+      {
+        "code": "992010",
+        "name": "가상상장10",
+        "yoy_3m": 0.11015702856313503,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "estimated"
+      },
+      {
+        "code": "992013",
+        "name": "가상상장13",
+        "yoy_3m": 0.10830246082637429,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "ok"
+      },
+      {
+        "code": "994030",
+        "name": "모의정밀",
+        "yoy_3m": 0.09762478173191935,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "ok"
+      },
+      {
+        "code": "992059",
+        "name": "가상상장59",
+        "yoy_3m": 0.09762478134856756,
+        "status": "short_overlap",
+        "reviewed": false,
+        "quality": "ok"
+      },
+      {
+        "code": "994015",
+        "name": "모의전자우",
+        "yoy_3m": 0.09762478134856756,
+        "status": "no_revenue",
+        "reviewed": false,
+        "quality": "ok"
+      },
+      {
+        "code": "992045",
+        "name": "가상상장45",
+        "yoy_3m": 0.09113542129137242,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "ok"
+      },
+      {
+        "code": "992024",
+        "name": "가상상장24",
+        "yoy_3m": 0.08861966389570863,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "ok"
+      },
+      {
+        "code": "992034",
+        "name": "가상상장34",
+        "yoy_3m": 0.08707124229721752,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "estimated"
+      },
+      {
+        "code": "992025",
+        "name": "가상상장25",
+        "yoy_3m": 0.08537786597033081,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "ok"
+      },
+      {
+        "code": "992006",
+        "name": "가상상장06",
+        "yoy_3m": 0.07456954851749797,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "estimated"
+      },
+      {
+        "code": "992005",
+        "name": "가상상장05",
+        "yoy_3m": 0.06349350400985632,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "estimated"
+      },
+      {
+        "code": "992040",
+        "name": "가상상장40",
+        "yoy_3m": 0.05471824957183369,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "estimated"
+      },
+      {
+        "code": "992018",
+        "name": "가상상장18",
+        "yoy_3m": 0.04964437335725047,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "estimated"
+      },
+      {
+        "code": "992048",
+        "name": "가상상장48",
+        "yoy_3m": 0.045703118056239056,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "ok"
+      },
+      {
+        "code": "992014",
+        "name": "가상상장14",
+        "yoy_3m": 0.041084911779451616,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "ok"
+      },
+      {
+        "code": "994110",
+        "name": "모의기계",
+        "yoy_3m": 0.03639786621935559,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "ok"
+      },
+      {
+        "code": "992030",
+        "name": "가상상장30",
+        "yoy_3m": 0.03384112421476826,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "estimated"
+      },
+      {
+        "code": "992017",
+        "name": "가상상장17",
+        "yoy_3m": 0.03325509462254761,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "estimated"
+      },
+      {
+        "code": "992008",
+        "name": "가상상장08",
+        "yoy_3m": 0.022083333673448502,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "estimated"
+      },
+      {
+        "code": "992044",
+        "name": "가상상장44",
+        "yoy_3m": 0.013513178633401512,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "ok"
+      },
+      {
+        "code": "992039",
+        "name": "가상상장39",
+        "yoy_3m": -0.013088234660949105,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "ok"
+      },
+      {
+        "code": "994070",
+        "name": "모의소재",
+        "yoy_3m": -0.03371269380365671,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "estimated"
+      },
+      {
+        "code": "992050",
+        "name": "가상상장50",
+        "yoy_3m": -0.03396740190145564,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "estimated"
+      },
+      {
+        "code": "992047",
+        "name": "가상상장47",
+        "yoy_3m": -0.04001929730915532,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "ok"
+      },
+      {
+        "code": "992004",
+        "name": "가상상장04",
+        "yoy_3m": -0.05061256313164453,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "ok"
+      },
+      {
+        "code": "994150",
+        "name": "모의소프트",
+        "yoy_3m": -0.08336614234964845,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "ok"
+      },
+      {
+        "code": "992033",
+        "name": "가상상장33",
+        "yoy_3m": -0.5000001314672349,
+        "status": "ok",
+        "reviewed": false,
+        "quality": "estimated"
+      },
+      {
+        "code": "992060",
+        "name": "가상상장60",
+        "yoy_3m": null,
+        "status": "no_trade",
+        "reviewed": false,
+        "quality": "estimated"
+      }
+    ]
+  }
+}

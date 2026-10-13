@@ -4,10 +4,12 @@
 //   node scripts/check-bundle.mjs                 # dist-public 과 dist-login 둘 다(둘 다 있어야 한다)
 //   node scripts/check-bundle.mjs dist-public     # 하나만
 //
-// 공개(dist-public): '/api'·'/telegram'·'auth/login'·'X-KBJ-CSRF'·'KBJ_'·'kbj_session'·'index-review' 문자열 0 — 하나라도 있으면 실패.
+// 공개(dist-public): '/api'·'/telegram'·'auth/login'·'X-KBJ-CSRF'·'KBJ_'·'kbj_session'·'index-review'·'월말 종가'(P6 로그인 줄)
+//   문자열 0 — 하나라도 있으면 실패.
 //   선택: 환경변수 KBJ_LOGIN_ORIGIN(로그인 VM 주소)을 주면 그 문자열도 0 이어야 한다(값은 출력하지 않는다).
 // 로그인(dist-login): TradingView 주소('tradingview.com'·'tradingview-widget.com'·'embed-widget-') 0(대소문자 무시).
-// 크기 예산(§6.9 [제안]): JS gzip 공개 ≤ 60 KB·로그인 ≤ 90 KB, CSS gzip ≤ 20 KB. 서비스 워커(sw.js)는 JS 합계에 넣지 않는다.
+// 크기 예산(§6.9 [제안]): JS gzip 공개 ≤ 72 KB(P6 페이지 7 공개 전체 — ADR 0025, 처음 60 KB)·로그인 ≤ 90 KB, CSS gzip ≤ 20 KB.
+// 서비스 워커(sw.js)는 JS 합계에 넣지 않는다.
 // 종료 코드: 0 통과, 1 발견, 2 사용법·빌드 없음.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
@@ -22,6 +24,7 @@ export const PUBLIC_FORBIDDEN = [
   { id: 'env_name', needle: 'KBJ_', why: 'KBJ 환경변수 이름' },
   { id: 'session_cookie', needle: 'kbj_session', why: '세션 쿠키 이름', ci: true },
   { id: 'index_review', needle: 'index-review', why: '지수 정기변경 API(로그인 전용 — 구성종목·컷오프 추정, P5 2차 IDX)' },
+  { id: 'trade_overlay_price', needle: '월말 종가', why: '페이지 8 수출 겹쳐 보기 로그인 줄(p8/trade_overlay_price.ts — 시세, P6 D-P6-4)' },
 ];
 
 export const LOGIN_FORBIDDEN = [
@@ -31,7 +34,7 @@ export const LOGIN_FORBIDDEN = [
 ];
 
 export const BUDGET_GZIP = {
-  public: { js: 60 * 1024, css: 20 * 1024 },
+  public: { js: 72 * 1024, css: 20 * 1024 }, // ADR 0025(P6 — 60 → 72 KB)
   login: { js: 90 * 1024, css: 20 * 1024 },
 };
 

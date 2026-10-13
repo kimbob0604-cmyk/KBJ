@@ -1,4 +1,5 @@
-"""상단 띠 — 쏠림 손계산 1건·경기민감 대 방어·세션·금통위·준비 중 칩(docs/metrics.md §6.4·§6.5)."""
+"""상단 띠 — 쏠림 손계산 1건·경기민감 대 방어·세션·금통위·준비 중 칩(docs/metrics.md §6.4·§6.5)·
+수출 속보 칩(P6 FLASH — metrics §25)."""
 
 from __future__ import annotations
 
@@ -14,6 +15,7 @@ from kbj.core.time import KST
 from kbj.engines.flows.totals import market_investor_totals
 from kbj.engines.market.ribbon import (
     CHIP_ORDER,
+    EXPORT_FLASH_NONE,
     PENDING,
     RibbonInputs,
     cyclical_vs_defensive,
@@ -22,6 +24,7 @@ from kbj.engines.market.ribbon import (
     semi_skew_from_ledger,
     session_chip,
 )
+from kbj.engines.trade.flash import FlashChip
 from tests.fixtures.synthetic.ledger_gen import generate
 from tests.unit.engines.flows.flow_rows import days, ledger_of, lrow
 
@@ -189,3 +192,40 @@ def test_값이_없으면_None_과_사유() -> None:
     for key in ("market_turnover", "foreign_spot", "inst_spot", "newhigh_count", "bok_mpc"):
         assert chips[key].value is None and chips[key].note
     assert chips["session"].value is not None
+
+
+# ── 수출 속보(P6 FLASH — metrics §25) ─────────────────────────────────────────────────────
+
+
+def _flash(yoy: float | None, why: str | None = None) -> FlashChip:
+    return FlashChip(
+        ym="2026-11", seg=2, span_text="01~20", usd=31_000_000_000, yoy=yoy, yoy_reason=why,
+        first_seen_at=datetime(2026, 11, 21, 10, 47, tzinfo=KST), source="DATAGO:15157908",
+        quality=Quality.ESTIMATED,
+    )  # fmt: skip
+
+
+def test_수출_속보_칩은_준비_중이_아니다() -> None:
+    assert "export_flash" not in PENDING
+    chips = {c.key: c for c in ribbon(RibbonInputs(), _kst(2026, 11, 23, 10), CAL)}
+    ef = chips["export_flash"]
+    assert ef.value is None and ef.phase_pending is None and ef.note == EXPORT_FLASH_NONE
+    assert ef.tier == "public"
+
+
+def test_수출_속보_칩_값은_발표_당시_YoY_와_기준_구간() -> None:
+    inputs = RibbonInputs(export_flash=_flash(0.123))
+    chips = {c.key: c for c in ribbon(inputs, _kst(2026, 11, 23, 10), CAL)}
+    ef = chips["export_flash"]
+    assert ef.value is not None and ef.value.value == pytest.approx(0.123)
+    assert ef.value.quality is Quality.ESTIMATED and ef.value.source == "DATAGO:15157908"
+    assert ef.value.as_of == datetime(2026, 11, 21, 10, 47, tzinfo=KST)
+    assert ef.detail["span_label"] == "1~20일" and ef.detail["ym"] == "2026-11"
+    assert ef.tags == ("잠정",)
+
+
+def test_수출_속보_YoY_없으면_값_없이_사유() -> None:
+    inputs = RibbonInputs(export_flash=_flash(None, "전년 같은 구간 값 없음"))
+    chips = {c.key: c for c in ribbon(inputs, _kst(2026, 11, 23, 10), CAL)}
+    ef = chips["export_flash"]
+    assert ef.value is None and ef.note == "전년 같은 구간 값 없음" and ef.detail["seg"] == 2

@@ -17,6 +17,9 @@
 // - P5 공개 파일(docs/p5_design.md §7): 하위 폴더 macro/<이름>.json(소문자 이름, 파일 자체가 봉투)과
 //   평평한 credit.json. 원천이 공개 출처 여럿이라 DART 전용이 아니고(폴더 source 는 원천들을 쉼표로 이은 것), 관심종목 흔적·'prv_'
 //   글자는 여기서도 0. 크기 상한 DIR_CAPS(폴더 합계)·FILE_CAPS(파일 하나) — 넘으면 실패(자르지 않는다).
+// - P6 공개 파일(docs/p6_design.md §7): 하위 폴더 trade/ — 평평한 trade/<소문자>.json 과 한 단계 더
+//   trade/(hs|country|region|stock)/<코드 2~10자>.json. 코드 파일 상한은 PREFIX_CAPS. 'origin: local'(VM 관심종목 매핑) 0,
+//   trade/stock/ 에 시세 칸(close·price …) 0(manifest.py trade_problems 와 같다).
 // - manifest 에 없는 파일·폴더는 복사하지 않고 목록만 알린다.
 // 규칙은 파이썬 kbj/services/public_export/manifest.py 와 같게 둔다(tests/unit/public_export/test_manifest.py 가 대조).
 import { createHash } from 'node:crypto';
@@ -25,10 +28,11 @@ import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 export const NAME_RE = /^[a-z0-9_]+\.json$/;
-export const SUBDIRS = ['fin', 'reports', 'macro'];
+export const SUBDIRS = ['fin', 'reports', 'macro', 'trade'];
 /** P4 하위 폴더 — 원천이 DART 하나(manifest.py DART_SUBDIRS) */
 export const DART_SUBDIRS = ['fin', 'reports'];
-export const SUBDIR_JSON_RE = /^(?:(fin|reports)\/[0-9A-Z]{6}|(macro)\/[a-z0-9_]+)\.json$/;
+export const SUBDIR_JSON_RE =
+  /^(?:(fin|reports)\/[0-9A-Z]{6}|(macro)\/[a-z0-9_]+|(trade)\/(?:(?:hs|country|region|stock)\/[0-9A-Z]{2,10}|[a-z0-9_]+))\.json$/;
 export const SUBDIR_XLSX_RE = /^reports\/[0-9A-Z]{6}\.xlsx$/;
 /** P4 공시·재무 목록 파일 — 원천이 DART 하나(manifest.py DART_ONLY_NAMES 와 같은 목록) */
 export const DART_ONLY = new Set([
@@ -42,9 +46,28 @@ export const DART_ONLY = new Set([
 /** P5 평평한 공개 파일 — 관심종목 흔적·로그인 스키마 이름 검사를 받는다(manifest.py P5_FLAT_NAMES) */
 export const P5_FLAT_NAMES = new Set(['credit.json']);
 const KB = 1024;
-/** P5 크기 상한(바이트, p5_design §7 [제안]) — manifest.py DIR_CAPS·FILE_CAPS 와 같다 */
-export const DIR_CAPS = { macro: 3 * KB * KB };
-export const FILE_CAPS = { 'credit.json': 100 * KB, 'macro/calendar.json': 200 * KB };
+/** 크기 상한(바이트, p5·p6_design §7 [제안]) — manifest.py DIR_CAPS·FILE_CAPS·PREFIX_CAPS 와 같다 */
+export const DIR_CAPS = { macro: 3 * KB * KB, trade: 20 * KB * KB };
+export const FILE_CAPS = {
+  'credit.json': 100 * KB,
+  'macro/calendar.json': 200 * KB,
+  'trade/flash.json': 200 * KB,
+  'trade/ribbon.json': 4 * KB,
+  'trade/hs2.json': 1024 * KB,
+  'trade/countries.json': 1024 * KB,
+  'trade/surge.json': 1024 * KB,
+  'trade/items104.json': 1024 * KB,
+  'trade/stocks.json': 1024 * KB,
+};
+/** 코드 이름 파일(trade/ 한 단계 더) — 경로 접두 → 파일 하나 상한 */
+export const PREFIX_CAPS = {
+  'trade/hs/': 1024 * KB,
+  'trade/country/': 1024 * KB,
+  'trade/region/': 200 * KB,
+  'trade/stock/': 100 * KB,
+};
+/** 공개 trade/stock/ 파일에 없어야 하는 시세 칸(로그인 등급 — D-P6-4) */
+const TRADE_PRICE_KEYS = new Set(['close', 'price', 'chg_pct', 'mktcap', 'open', 'high', 'low']);
 export const QUALITIES = ['ok', 'stale', 'estimated', 'invalid'];
 const AWARE_ISO = /^\d{4}-\d{2}-\d{2}T[\d:.]+(Z|[+-]\d{2}:?\d{2})$/;
 /** 로그인 등급 출처 이름(DATA_TIERS §1) — source 문자열에 단어로 나오면 안 된다 */
@@ -182,8 +205,40 @@ function dartOnlyProblems(name, text, parsed) {
   return [...out, ...traceProblems(name, text, parsed)];
 }
 
+/** 파일 하나 상한(바이트) — FILE_CAPS 이름 또는 PREFIX_CAPS 접두(manifest.py file_cap 과 같다). */
+export function fileCap(name) {
+  if (FILE_CAPS[name] !== undefined) return FILE_CAPS[name];
+  for (const [prefix, cap] of Object.entries(PREFIX_CAPS)) if (name.startsWith(prefix)) return cap;
+  return undefined;
+}
+
+function keyPaths(v, pred, path = '$') {
+  const out = [];
+  if (Array.isArray(v)) v.forEach((x, i) => out.push(...keyPaths(x, pred, `${path}[${i}]`)));
+  else if (v && typeof v === 'object') {
+    for (const [k, x] of Object.entries(v)) {
+      const p = `${path}.${k}`;
+      if (pred(k, x)) out.push(p);
+      out.push(...keyPaths(x, pred, p));
+    }
+  }
+  return out;
+}
+
+/** P6 trade/ 내용 검사 — origin local 0, trade/stock/ 시세 칸 0(manifest.py trade_problems 와 같다). */
+export function tradeProblems(name, parsed) {
+  if (!name.startsWith('trade/')) return [];
+  const out = keyPaths(parsed, (k, x) => k === 'origin' && x === 'local').map(
+    (p) => `${name}: 로그인 전용 매핑(origin local — ${p})`,
+  );
+  if (name.startsWith('trade/stock')) {
+    out.push(...keyPaths(parsed, (k) => TRADE_PRICE_KEYS.has(k)).map((p) => `${name}: 시세 칸(${p})`));
+  }
+  return out;
+}
+
 function sizeProblem(name, bytes) {
-  const cap = FILE_CAPS[name];
+  const cap = fileCap(name);
   return cap !== undefined && bytes > cap ? [`${name}: 크기 상한을 넘는다`] : [];
 }
 
@@ -206,6 +261,7 @@ function checkSubdirJson(p, data) {
   if (bad.length) errors.push(`${p}: source 에 로그인 등급 출처 이름(${bad.slice(0, 3).join(', ')})`);
   const dartDir = DART_SUBDIRS.includes(p.split('/')[0]);
   errors.push(...(dartDir ? dartOnlyProblems(p, text, env) : traceProblems(p, text, env)));
+  errors.push(...tradeProblems(p, env));
   const claim = env.data && typeof env.data === 'object' ? env.data.xlsx_sha256 : undefined;
   return { errors, claim: typeof claim === 'string' ? claim : null };
 }
@@ -327,13 +383,19 @@ export function readDataDir(srcAbs) {
     const p = join(srcAbs, n);
     if (n.endsWith('.json') && statSync(p).isFile()) files[n] = readFileSync(p, 'utf8');
   }
+  // 하위 폴더는 아래까지(P6 trade/hs/<장>.json 처럼 한 단계 더) — 허용 이름 검사는 planDir 이 한다
+  const walk = (dir, rel) => {
+    for (const n of readdirSync(dir)) {
+      const p = join(dir, n);
+      const r = `${rel}/${n}`;
+      if (statSync(p).isDirectory()) walk(p, r);
+      else files[r] = n.endsWith('.json') ? readFileSync(p, 'utf8') : readFileSync(p);
+    }
+  };
   for (const sub of SUBDIRS) {
     const dir = join(srcAbs, sub);
     if (!existsSync(dir) || !statSync(dir).isDirectory()) continue;
-    for (const n of readdirSync(dir)) {
-      const p = join(dir, n);
-      if (statSync(p).isFile()) files[`${sub}/${n}`] = n.endsWith('.json') ? readFileSync(p, 'utf8') : readFileSync(p);
-    }
+    walk(dir, sub);
   }
   return files;
 }

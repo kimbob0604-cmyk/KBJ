@@ -6,6 +6,9 @@
 
 - 경로 끝(오퍼레이션)으로 고른다: 금투협 4종(`getGrantingOfCreditBalanceInfo` …), 금융위
   주식 V2(`getStockPriceInfo_V2`)·지수(`getStockMarketIndex`), 관세청(XML fixture 그대로).
+- 관세청 가지(P6 COL): `FakeDatago(now, customs=CustomsWorld())` 이면 관세청 8개 오퍼레이션을
+  합성 세계에서 파라미터·공표 시각대로 만든다(`tests/fakes/customs_world.py`). 없으면 예전처럼
+  XML fixture 그대로.
 - `inject(code, count, *, path_part=None)`: 게이트웨이 오류 XML 봉투(`22` 일 한도·`23` 초당·
   `30` 키 …).
 - 기록 `seen`(시각·consumer·경로·파라미터 — `serviceKey` 는 빼고)·`calls(경로 끝)`.
@@ -24,6 +27,9 @@ from pathlib import Path
 from typing import Any, Final
 
 import httpx
+
+from tests.fakes.customs_world import OPS as CUSTOMS_OPS
+from tests.fakes.customs_world import CustomsWorld
 
 ROOT: Final = Path(__file__).resolve().parents[1] / "fixtures" / "synthetic"
 KEY: Final = "datago-sim-fake-service-key"
@@ -105,9 +111,12 @@ class DatagoSeen:
 
 
 class FakeDatago:
-    def __init__(self, now: Callable[[], datetime], *, key: str = KEY) -> None:
+    def __init__(
+        self, now: Callable[[], datetime], *, key: str = KEY, customs: CustomsWorld | None = None
+    ) -> None:
         self._now = now
         self.key = key
+        self.customs = customs
         self.seen: list[DatagoSeen] = []
         self._inject: list[list[Any]] = []  # [code, count, 경로에 든 문자열 | None]
         self._lock = threading.Lock()
@@ -131,6 +140,8 @@ class FakeDatago:
 
     def _body(self, op: str, params: dict[str, str]) -> tuple[int, str, str]:
         """(상태, 본문, content-type)."""
+        if self.customs is not None and op in CUSTOMS_OPS:
+            return 200, self.customs.respond(op, params, self._now()), "xml"
         day = _day(params)
         if op in KOFIA_OPS:
             items = _json(f"datago/{KOFIA_OPS[op]}")["response"]["body"]["items"]["item"]

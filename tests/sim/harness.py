@@ -662,7 +662,9 @@ class SimDay:
             due = spec.prev_at_or_before(before.astimezone(job.schedule.zone))
             if due is None or due.date() != self.start.astimezone(job.schedule.zone).date():
                 continue
-            if not holds(job.schedule.when, due.date(), self.kr, self.us):
+            if not holds(
+                job.schedule.when, due.date(), self.kr, self.us, month_days=job.schedule.month_days
+            ):
                 continue
             try:
                 as_of = resolve_as_of(job.run_as_of(), due, self.kr, self.us)

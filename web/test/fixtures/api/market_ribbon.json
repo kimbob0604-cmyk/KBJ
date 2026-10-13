@@ -67,9 +67,9 @@
         "label": "수출 속보",
         "value": null,
         "tier": "public",
-        "phase_pending": "P6",
+        "phase_pending": null,
         "tags": [],
-        "note": null,
+        "note": "아직 없음 — 관세청 10일 잠정치 수집 전(확인 전 #6·#17·#55)",
         "detail": {}
       },
       {

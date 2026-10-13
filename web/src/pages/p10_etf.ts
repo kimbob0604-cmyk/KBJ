@@ -20,7 +20,7 @@ import { mountP5, type P5Panels, TITLES as P5_TITLES } from './p10/index';
 import { INDEX_LOCK, INDEX_TITLE, type IndexReviewWidget, mountIndexReview } from './p10/index_review';
 
 // 공개 빌드에서는 P5 로그인 모듈(ETF 맵·보유 탐색·동시 편입)을 번들에서 빼고 같은 제목의 자물쇠 패널만 그린다
-// (p8_stock LOGIN_VALUE 와 같은 방식 — 공개 등급은 요청 없음, 공개 JS gzip 예산 60 KB. WRAP)
+// (p8_stock LOGIN_VALUE 와 같은 방식 — 공개 등급은 요청 없음, 공개 JS gzip 예산 72 KB(ADR 0025). WRAP)
 const LOGIN_P5 = import.meta.env.MODE === 'public' ? null : mountP5;
 
 function lockedP5(ctx: PageContext): P5Panels {
@@ -348,7 +348,7 @@ async function mount(ctx: PageContext): Promise<void> {
   await LOGIN_ETF_P3(ctx, { pFlow, pType, pPrem, pHold, p5, idx });
 }
 
-// 로그인 본문 — 공개 빌드에서는 번들에서 뺀다(p8_stock LOGIN_VALUE 와 같은 방식, 공개 JS gzip 예산 60 KB — P5 WRAP).
+// 로그인 본문 — 공개 빌드에서는 번들에서 뺀다(p8_stock LOGIN_VALUE 와 같은 방식, 공개 JS gzip 예산 72 KB(ADR 0025) — P5 WRAP).
 // 공개 등급은 위에서 자물쇠로 돌아가므로 실행 동작은 같다.
 interface EtfPanels {
   pFlow: Panel;

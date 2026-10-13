@@ -7,6 +7,8 @@
 - 상단 띠 P5 칩 셋(MAC — D-P5-20): 신용스프레드 AA-·신용잔고(공개)·한국 대 글로벌(로그인)은
   `kbj.engines.macro.ribbon` 이 값을 내면 P3 의 '준비 중' 칩을 갈아 끼운다(`_p5_chips`). 입력이
   없으면(수집 꺼짐·실측 전 #43·#48) '준비 중' 칩을 그대로 둔다.
+- 수출 속보 칩(P6 FLASH — metrics §25): `pub_trade.ten_day` 수출 품목 전체 최신 구간의 발표 당시 YoY
+  (`kbj.engines.trade.flash.flash_chip`). 표가 비면 값 없이 사유(수집 전 #6·#17·#55).
 """
 
 from __future__ import annotations
@@ -18,6 +20,7 @@ from typing import Any, Final
 from kbj.core.quality import Quality, Sourced
 from kbj.core.rows import IndexBar, IndexQuote
 from kbj.core.time import KST
+from kbj.core.trade_rows import prev_ym
 from kbj.engines.flows.ledger import Ledger, close_as_of, source_label
 from kbj.engines.flows.totals import market_investor_totals
 from kbj.engines.macro.ribbon import (
@@ -44,6 +47,7 @@ from kbj.engines.market.turnover import (
     turnover_ratio,
     turnover_series,
 )
+from kbj.engines.trade.flash import CHIP_KIND, FlashChip, flash_chip
 from kbj.services.api.models.common import ChipValue, Envelope, SourcedInt
 from kbj.services.api.models.flows import InvestorTotals
 from kbj.services.api.models.market import (
@@ -73,6 +77,7 @@ __all__ = ["market_ribbon", "market_sectors", "market_summary"]
 
 SUMMARY_WINDOW: Final = 21  # 20일선·20일 평균 + 오늘
 P5_LOOKBACK_DAYS: Final = 21  # 띠 P5 칩 입력 창(달력일 — 공표 지연 몇 날을 덮는다)
+FLASH_LOOKBACK_MONTHS: Final = 14  # 띠 수출 속보 입력 창(최신 구간 + 전년 같은 구간 + 공표 지연)
 KOFIA_OPEN: Final = (13, 30)  # 금투협 통계 D+1 13시 개방 + 수집 13:30(market_stats.kofia)
 SPARK_N: Final = 20
 KOSPI: Final = "0001"
@@ -350,6 +355,12 @@ def _p5_chips(ctx: ReadContext, now: datetime) -> dict[str, EngineChip]:
     return out
 
 
+def _export_flash(ctx: ReadContext, now: datetime) -> FlashChip | None:
+    """수출 속보 칩 입력(P6 FLASH — 관세청 10일 잠정치, 공개). 표가 비면 None(칩은 사유만)."""
+    since = prev_ym(f"{now.year:04d}-{now.month:02d}", FLASH_LOOKBACK_MONTHS)
+    return flash_chip(ctx.repos.trade.ten_day(kind=CHIP_KIND, ym_from=since))
+
+
 def market_ribbon(ctx: ReadContext) -> Envelope[Ribbon]:
     now = ctx.now_kst()
     today = now.date()
@@ -417,6 +428,7 @@ def market_ribbon(ctx: ReadContext) -> Envelope[Ribbon]:
             cyc_def=cyc,
             next_mpc=None if nxt is None else nxt.date,
             nxt_excluded=bool(ctx.venue_notes()),
+            export_flash=_export_flash(ctx, now),
         ),
         now,
         ctx.cal,

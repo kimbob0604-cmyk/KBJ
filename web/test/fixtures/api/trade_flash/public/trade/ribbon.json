@@ -1,0 +1,35 @@
+{
+  "source": "관세청(공공데이터포털)",
+  "as_of": "2026-12-01T00:00:00+09:00",
+  "quality": "estimated",
+  "notes": [],
+  "generated_at": "2026-12-11T11:30:00+09:00",
+  "data": {
+    "chips": [
+      {
+        "key": "export_flash",
+        "label": "수출 속보",
+        "value": {
+          "value": 0.0548512169622426,
+          "source": "DATAGO:15157908",
+          "as_of": "2026-12-01T00:00:00+09:00",
+          "quality": "estimated"
+        },
+        "tier": "public",
+        "phase_pending": null,
+        "tags": [
+          "잠정"
+        ],
+        "note": null,
+        "detail": {
+          "ym": "2026-12",
+          "seg": 1,
+          "span": "01~10",
+          "span_label": "1~10일",
+          "usd": 22622970000,
+          "basis": "first"
+        }
+      }
+    ]
+  }
+}

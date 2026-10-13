@@ -658,6 +658,54 @@ class MemReader:
     def q_credit_capital(self, p: dict[str, Any]) -> list[Row]:
         return self._mac("credit_capital", p)
 
+    # ── P6 FLASH(trade/flash.json·trade/ribbon.json) — 같은 뜻의 메모리 읽기는
+    # web_fixtures_p6.flash
+    # 한 곳. 이 세계(PubWorld)에는 pub_trade 가 없다(빈 표 — 파일 0) ─────────────────────────────
+    def _trade(self, name: str, p: dict[str, Any]) -> list[Row]:
+        from kbj.store.repos.trade import MemoryTradeRepo
+        from tests.unit.api.web_fixtures_p6.flash import memory_flash_reader
+
+        repo = getattr(self.world.repos, "trade", None)
+        return memory_flash_reader(repo if repo is not None else MemoryTradeRepo())(
+            Query(name, "SELECT 1"), p
+        )
+
+    def q_trade_ten_day_last(self, p: dict[str, Any]) -> list[Row]:
+        return self._trade("trade_ten_day_last", p)
+
+    def q_trade_ten_day(self, p: dict[str, Any]) -> list[Row]:
+        return self._trade("trade_ten_day", p)
+
+    def q_trade_ten_day_columns(self, p: dict[str, Any]) -> list[Row]:
+        return self._trade("trade_ten_day_columns", p)
+
+    # ── P6 EXP(trade/hs2·hs/<장>·countries·country/·region/·surge·items104) — 같은 뜻의 메모리
+    # 읽기는 web_fixtures_p6.explore 한 곳(Query 이름 trade_x_* 는 모두 그쪽으로) ─────────────────
+    def _explore(self, name: str, p: dict[str, Any]) -> list[Row]:
+        from kbj.store.repos.trade import MemoryTradeRepo
+        from tests.unit.api.web_fixtures_p6.explore import memory_explore_reader
+
+        repo = getattr(self.world.repos, "trade", None)
+        return memory_explore_reader(repo if repo is not None else MemoryTradeRepo())(
+            Query(name, "SELECT 1"), p
+        )
+
+    def __getattr__(self, attr: str) -> Any:
+        if attr.startswith("q_trade_x_"):
+            name = attr[2:]
+            return lambda p: self._explore(name, p)  # pyright: ignore[reportUnknownLambdaType]
+        if attr.startswith("q_trade_s_"):  # P6 MAP(trade/stocks·stock/) — web_fixtures_p6.map 한 곳
+            from types import SimpleNamespace
+
+            from kbj.store.repos.trade import MemoryTradeRepo
+            from tests.unit.api.web_fixtures_p6.map import memory_stock_reader
+
+            name = attr[2:]
+            trade = getattr(self.world.repos, "trade", None) or MemoryTradeRepo()
+            read = memory_stock_reader(SimpleNamespace(trade=trade))  # pyright: ignore[reportArgumentType]
+            return lambda p: read(Query(name, "SELECT 1"), p)  # pyright: ignore[reportUnknownLambdaType]
+        raise AttributeError(attr)
+
     # ── corp_index ─────────────────────────────────────────────────────────────────────
     def q_corps(self, p: dict[str, Any]) -> list[Row]:
         prof = {r["corp_code"]: r for r in self.t("corp_profile")}

@@ -5,7 +5,9 @@
 장중 지수 `prv_market.index_quote`(KIS — 마지막 값), 환율 `prv_macro`/`pub_macro` 최신, 시장 투자자
 `prv_flows.market_investor_daily`, 보드 산출 `prv_board.artifact`(KR — sectors·events·newhigh)·
 `stock_day`(이름), 종목 투자자 `prv_flows.stock_investor_daily`, 공시 `pub_filings.disclosure`
-(키워드 점수).
+(키워드 점수), 수출 속보 `pub_trade.ten_day`(관세청 10일 잠정치 — ① 섹션 끝 한 줄, 직전
+마감 요약 이후
+처음 본 구간만 — P6 D-P6-8).
 
 16:00 의 수급은 KIS 마감 수집 값이라 잠정일 수 있다 — 줄마다 **기준일·원천·quality** 를 적고, 기대
 기준일(실행일)과 다르면 실제 기준일을 적는다(ADR 0018 §2-5, metrics §20 ②).
@@ -19,11 +21,14 @@ from typing import Any, Final
 
 from kbj.core.quality import Quality
 from kbj.core.rows import Investor
+from kbj.core.trade_rows import prev_ym
+from kbj.engines.trade.flash import FlashChip, new_segments
 
 from .sections import BriefCtx, Material, SectionOut, eok, esc, fmt_num, mmdd, worst
 
 __all__ = [
     "FX_SERIES",
+    "export_flash_line",
     "filings_section",
     "flows_trend",
     "market_section",
@@ -37,6 +42,7 @@ MAIN_INVESTORS: Final = ((Investor.INDIVIDUAL, "개인"), (Investor.FOREIGN, "�
                          (Investor.INSTITUTION, "기관"))  # fmt: skip
 NEWHIGH_AXES: Final = (("hist", "🏔", "역사적"), ("w52", "📈", "52주"), ("d120", "📊", "120일"))
 NO_FILINGS: Final = "오늘 중요 공시 없음"
+FLASH_LOOKBACK_MONTHS: Final = 14  # 최신 구간 + 전년 같은 구간 + 공표 지연
 TOP_SECTORS, BOTTOM_SECTORS, TOP_MOVERS, TOP_FLOWS, NAMES_PER_AXIS = 5, 3, 5, 5, 5
 
 
@@ -105,9 +111,42 @@ def market_section(bc: BriefCtx) -> SectionOut:
                              "market.close_collect", "15:35"))  # fmt: skip
     if not mk:
         mats.append(Material("시장 수급", "not_ready", job="market.close_collect", due="15:35"))
+    fl = export_flash_line(bc)
+    if fl is not None:
+        line, fc = fl
+        lines.append(line)
+        qs.append(fc.quality)
+        srcs.add(fc.source)
     if not lines:
         return SectionOut(materials=tuple(mats), not_ready=True)
     return SectionOut(tuple(lines), "+".join(sorted(srcs)), bc.now, worst(qs), tuple(mats))
+
+
+# ── 수출 속보 한 줄(P6 FLASH — D-P6-8, metrics §25) ──────────────────────────────────
+
+
+def _usd_eok(usd: int) -> str:
+    return f"{usd / 100_000_000:,.1f}억 달러"
+
+
+def export_flash_line(bc: BriefCtx) -> tuple[str, FlashChip] | None:
+    """직전 마감 요약(전 거래일 `closing.send_at`) 이후 **처음 본** 관세청 10일 잠정치
+    수출 구간 한 줄
+    (가장 최근 구간 — 발표 당시 값 기준 YoY). 없으면 None(줄 없음 — 재료가 아니라 덧붙임이라
+    not_ready 가 아니다). 공표일이 휴장이면 다음 거래일 마감 요약에 실린다(창이 전 거래일부터)."""
+    hh, mm = (int(x) for x in bc.cfg.closing.send_at.split(":", 1))
+    tz = bc.now_kst.tzinfo
+    since = datetime.combine(bc.prev_kr_day(), time(hh, mm), tzinfo=tz)
+    ym = f"{bc.day.year:04d}-{bc.day.month:02d}"
+    rows = bc.repos.trade.ten_day(kind="exp_item", ym_from=prev_ym(ym, FLASH_LOOKBACK_MONTHS))
+    hits = new_segments(rows, since=since, until=bc.now)
+    if not hits:
+        return None
+    fc = hits[-1]
+    yoy = f"전년 대비 {fc.yoy * 100:+.1f}%" if fc.yoy is not None else (fc.yoy_reason or "YoY 없음")
+    m = int(fc.ym[5:])
+    text = f"수출 속보 {m}월 {fc.label} {_usd_eok(fc.usd)} · {yoy} (관세청 잠정 · 발표 당시)"
+    return esc(text), fc
 
 
 # ── 보드 산출 ────────────────────────────────────────────────────────────────────────

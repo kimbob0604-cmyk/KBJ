@@ -39,6 +39,8 @@ import { mount as mountOverhang } from './p8/overhang';
 import { mount as mountOverview } from './p8/overview';
 import { mount as mountReport } from './p8/report';
 import { mount as mountScenario } from './p8/scenario';
+import { mount as mountTradeOverlay } from './p8/trade_overlay';
+import { mount as mountTradeOverlayPrice } from './p8/trade_overlay_price';
 import { mount as mountValuation } from './p8/valuation';
 
 export type TabId = 'overview' | 'fin' | 'report' | 'value' | 'filings';
@@ -56,7 +58,7 @@ type TabMount = (t: TabCtx, el: HTMLElement) => Promise<void>;
 /**
  * '컨센·밸류' 탭의 로그인 패널 모듈(컨센서스·밸류에이션 밴드·시나리오 적정가 + 밴드 차트 부품). **공개 빌드에서는 번들에서
  * 뺀다** — 공개 등급은 이 탭을 늘 자물쇠 패널(LOCKED_VALUE)로만 그리므로 실행 동작은 같고, 공개 JS gzip 예산
- * (scripts/check-bundle.mjs 60 KB)을 지킨다. 등급 상수(VITE_KBJ_TIER)는 main.ts 만 읽는 규칙이라 vite 빌드 모드
+ * (scripts/check-bundle.mjs 72 KB — ADR 0025)을 지킨다. 등급 상수(VITE_KBJ_TIER)는 main.ts 만 읽는 규칙이라 vite 빌드 모드
  * (MODE — 'public'·'login', 시험은 'test')로 가른다. 시험은 두 등급 모두 이 모듈을 싣고, 공개 등급은 실행 중 tier 로
  * 자물쇠 길(lockedValue)을 탄다 — 공개 빌드와 같은 길.
  */
@@ -68,6 +70,11 @@ const LOGIN_VALUE: readonly TabMount[] | null =
  * 패널만 그린다(LOGIN_VALUE 와 같은 방식 — 공개 등급은 요청 없음). 고리는 WRAP(docs/p5_design.md §1.8 4).
  */
 const LOGIN_ETF: readonly TabMount[] | null = import.meta.env.MODE === 'public' ? null : [mountEtfHolders];
+/**
+ * P6 '재무' 탭 '수출 겹쳐 보기'의 로그인 한 줄(월말 종가 — p8/trade_overlay_price.ts). 공개 빌드에서는 번들에서 빼고
+ * 공개 등급은 공개 패널(p8/trade_overlay.ts — 수출 지수 대 DART 분기 매출)만 그린다(docs/p6_design.md §1.6 1·D-P6-4).
+ */
+const LOGIN_TRADE: readonly TabMount[] | null = import.meta.env.MODE === 'public' ? null : [mountTradeOverlayPrice];
 /** P5 2차(IDX) 머리 배지 한 줄(지수 편입·편출 후보) — 로그인 전용 API 라 공개 빌드는 모듈을 뺀다(LOGIN_VALUE 와 같은 방식) */
 const LOGIN_INDEX_BADGES = import.meta.env.MODE === 'public' ? null : loadIndexBadges;
 
@@ -97,7 +104,7 @@ function tabModules(id: TabId, t: TabCtx): readonly TabMount[] {
     case 'overview':
       return [mountOverview, ...(t.tier === 'login' && LOGIN_ETF ? LOGIN_ETF : [lockedEtf])];
     case 'fin':
-      return [mountFinancials];
+      return [mountFinancials, mountTradeOverlay, ...(t.tier === 'login' && LOGIN_TRADE ? LOGIN_TRADE : [])];
     case 'report':
       return [mountReport];
     case 'value':

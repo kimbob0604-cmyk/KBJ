@@ -10,6 +10,7 @@ import { createApiSource } from '../src/data/api';
 import { AuthRequiredError, hrefOf, LockedError, reportXlsxKey } from '../src/data/source';
 import { createStaticSource } from '../src/data/static';
 import p6 from '../src/pages/p6_macro';
+import p7 from '../src/pages/p7_trade';
 import { panel } from '../src/ui/panel';
 import calendar from './fixtures/public/calendar.json';
 import { appRoot, envelope, fakeFetch, fakeLoaders, fixedClock, json, memoryStorage } from './helpers';
@@ -280,4 +281,39 @@ describe('P5 섞인 페이지 6 과 자리표시 9 — 공개 몫은 공개 파�
     expect(root.querySelector('#page-9 .panel.is-pending')?.textContent).toContain('준비 중(P5)');
     app.destroy();
   });
+});
+
+describe('P6 페이지 7 수출입 — 공개 전부(탭 6, 자물쇠 없음), 웨이브 1 껍데기는 요청 없이 준비 중(P6)', () => {
+  const loaders = () => new Map([[7, () => Promise.resolve(p7)]]);
+
+  for (const tier of ['public', 'login'] as const) {
+    it(`${tier}: 탭 6 개·첫 탭(속보)만 그린다·자물쇠 0·요청 0`, async () => {
+      const root = appRoot();
+      const { fetch, calls } = fakeFetch(() => json({}, 404));
+      const opts = { fetch, now: fixedClock(), loaders: loaders(), ribbon: null };
+      const app =
+        tier === 'public'
+          ? bootPublic(root, opts)
+          : mountApp(root, {
+              tier: 'login',
+              source: createStaticSource({ fetch }),
+              now: fixedClock(),
+              loaders: loaders(),
+              ribbon: null,
+              storage: null,
+            });
+      app.pager.go(7, { smooth: false });
+      await app.settled();
+      const sec = root.querySelector('#page-7');
+      const tabsEl = [...(sec?.querySelectorAll('[role="tab"]') ?? [])].map((b) => b.textContent);
+      expect(tabsEl).toEqual(['속보', '품목', '국가', '지역', '급등', '104품목']);
+      expect(sec?.querySelectorAll('.panel.locked')).toHaveLength(0);
+      // 속보 탭은 FLASH 본문(웨이브 2) — 준비 중 상자가 아니라 데이터 요청, 없으면(404) 탭 안 안내 한 줄(오류 아님)
+      expect(sec?.querySelector('.panel h3 .src')?.textContent).not.toContain('준비 중');
+      expect(sec?.querySelector('.panel .msg:not(.err)')).not.toBeNull();
+      expect(sec?.querySelector('.panel .msg.err')).toBeNull();
+      expect(calls.filter((c) => c.url.includes('/api'))).toHaveLength(0);
+      app.destroy();
+    });
+  }
 });

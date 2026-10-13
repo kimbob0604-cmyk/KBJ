@@ -1,9 +1,14 @@
-"""마감 요약(16:00 — ADR 0018) 섹션 — 손 입력 시험(metrics §20, docs/p5_design.md §4.5)."""
+"""마감 요약(16:00 — ADR 0018) 섹션 — 손 입력 시험(metrics §20, docs/p5_design.md
+§4.5)·수출 속보 한 줄(P6 FLASH — D-P6-8)."""
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta
+from decimal import Decimal
 
+from kbj.core.quality import Quality
+from kbj.core.time import KST
+from kbj.core.trade_rows import TenDayRow
 from kbj.reports.briefs import closing_brief as C
 from kbj.reports.briefs.job import BUILDERS, build
 from kbj.reports.briefs.render import assemble
@@ -90,3 +95,52 @@ def test_전부_있으면_섹션_순서대로_나간다() -> None:
     pos = [text.index(f"<b>{t}</b>") for t in order]
     assert pos == sorted(pos)
     assert text.startswith("<b>🔔 마감 요약</b> · 2026-11-17(화) 16:00")
+
+
+# ── 수출 속보 한 줄(P6 FLASH — D-P6-8, metrics §25) ───────────────────────────────────────
+
+
+def _ten(ym: str, usd: int, seen: datetime, *, first: int | None = None) -> TenDayRow:
+    return TenDayRow(
+        kind="exp_item", ym=ym, seg=1, col_no=0, name="전체", usd=Decimal(usd),
+        first_usd=Decimal(first if first is not None else usd), first_seen_at=seen,
+        span_text="01~10", source="DATAGO:15157908", as_of=seen, quality=Quality.ESTIMATED,
+    )  # fmt: skip
+
+
+def _with_flash(rows: list[TenDayRow]) -> object:
+    r = closing_repos()
+    r.trade.upsert_ten_day(rows, loaded_by="test.briefs", received_at=CLOSING)
+    return r
+
+
+SEEN = datetime(2026, 11, 17, 10, 47, tzinfo=KST)  # 실행일 오전 — 직전 마감 요약(11-16 16:00) 뒤
+
+
+def test_수출_속보_한_줄은_처음_본_구간_발표_당시_YoY() -> None:
+    repos = _with_flash(
+        [_ten("2025-11", 20_000_000_000, SEEN - timedelta(days=365)),
+         _ten("2026-11", 22_500_000_000, SEEN, first=22_000_000_000)]
+    )  # fmt: skip
+    out = C.market_section(ctx(repos, CLOSING))
+    line = next(x for x in out.lines if x.startswith("수출 속보"))
+    assert line == "수출 속보 11월 1~10일 220.0억 달러 · 전년 대비 +10.0% (관세청 잠정 · 발표 당시)"
+    assert "DATAGO:15157908" in (out.source or "")
+    assert line in text_of(repos)
+
+
+def test_직전_마감_요약_전에_본_구간은_줄_없음() -> None:
+    old = datetime(2026, 11, 16, 15, 59, tzinfo=KST)
+    repos = _with_flash([_ten("2026-11", 22_000_000_000, old)])
+    assert not any(x.startswith("수출 속보") for x in C.market_section(ctx(repos, CLOSING)).lines)
+    assert C.export_flash_line(ctx(memory_repos(), CLOSING)) is None
+
+
+def test_휴장일_공표는_다음_거래일_마감_요약에() -> None:
+    sat = datetime(2026, 11, 21, 11, 0, tzinfo=KST)  # 토요일 공표
+    mon = datetime(2026, 11, 23, 16, 0, tzinfo=KST)
+    repos = _with_flash([_ten("2026-11", 22_000_000_000, sat)])
+    got = C.export_flash_line(ctx(repos, mon))
+    assert got is not None and "전년 같은 구간 값 없음" in got[0]
+    # 그다음 거래일에는 다시 싣지 않는다(직전 마감 요약 이후 처음 본 것만)
+    assert C.export_flash_line(ctx(repos, datetime(2026, 11, 24, 16, 0, tzinfo=KST))) is None

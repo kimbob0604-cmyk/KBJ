@@ -1,0 +1,498 @@
+# 종목↔HS 매핑표(공개 — 자체 큐레이션, docs/p6_design.md §4.5·D-P6-14, metrics §28). 해석기 kbj/config/trade.py.
+# 첫 판(웨이브 2 MAP — 사용자 결정 2026-10-13 Q7: reviewed: false 로 출시). 수출 비중이 사업보고서에 적히는
+# 업종(반도체·자동차·조선·전력기기·화장품·라면·방산·이차전지·석유화학·철강 등)에서 자체로 고른 61종목.
+# **가중치는 초안이다** — 사람이 사업보고서 매출 구성으로 검토한 뒤 reviewed: true 로 바꾼다. 근거의 접수번호(rcept_no)는
+# 검토 때 채운다 [확인 필요]. HS 는 업종 대표 HS4(일부 HS6)이고 실데이터 대조는 verify_trade [실측 필요 #56].
+#
+# 형식(한 종목):
+#   - code: "000000"          # 6자리 영숫자
+#     name: 종목 이름
+#     reviewed: false          # 사람이 가중치·근거를 검토했는가
+#     items:                   # 품목 행 — hs 는 2~10 짝수 자리 접두, flow exp·imp, weight 0~1
+#       - {hs: "854232", flow: exp, weight: 0.55, countries: [CN, US]}   # countries 비면 전 국가
+#     regions:                 # 지역 행 — trade_regions.yaml 의 통합 ID × HS6
+#       - {region_id: "KR-41-xxx", hs6: "330499", weight: 0.3}
+#     evidence:                # 근거 1개 이상 — DART 접수번호 + 자체 문장 요약(원문 복사 아님)
+#       - {kind: dart_business_report, rcept_no: "<14자리>", note: "매출 구성 요약"}
+# 규칙: 종목별 가중치 합 ≤ 1, 같은 품목·지역 행 중복 금지. 관심종목은 여기 넣지 않는다(공개판이 관심종목을
+# 드러내지 않게 — R9). 관심종목 전용은 VM local 파일(trade.yaml map.local_file).
+# 관세청 조회코드표 원본은 레포에 넣지 않는다.
+version: 1
+stocks:
+  - code: '005930'
+    name: 삼성전자
+    reviewed: false
+    items:
+    - {hs: '854232', flow: exp, weight: 0.3}
+    - {hs: '8517', flow: exp, weight: 0.1}
+    - {hs: '8471', flow: exp, weight: 0.05}
+    regions:
+    - {region_id: KR-41-pyeongtaek, hs6: '854232', weight: 0.1}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '000660'
+    name: SK하이닉스
+    reviewed: false
+    items:
+    - {hs: '854232', flow: exp, weight: 0.6}
+    regions:
+    - {region_id: KR-41-icheon, hs6: '854232', weight: 0.2}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '042700'
+    name: 한미반도체
+    reviewed: false
+    items:
+    - {hs: '8486', flow: exp, weight: 0.7}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '058470'
+    name: 리노공업
+    reviewed: false
+    items:
+    - {hs: '9030', flow: exp, weight: 0.5}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '240810'
+    name: 원익IPS
+    reviewed: false
+    items:
+    - {hs: '8486', flow: exp, weight: 0.4}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '005380'
+    name: 현대차
+    reviewed: false
+    items:
+    - hs: '8703'
+      flow: exp
+      weight: 0.4
+      countries: [US]
+    regions:
+    - {region_id: KR-31-buk, hs6: '870380', weight: 0.05}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '000270'
+    name: 기아
+    reviewed: false
+    items:
+    - {hs: '8703', flow: exp, weight: 0.5}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '012330'
+    name: 현대모비스
+    reviewed: false
+    items:
+    - {hs: '8708', flow: exp, weight: 0.3}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '204320'
+    name: HL만도
+    reviewed: false
+    items:
+    - {hs: '8708', flow: exp, weight: 0.3}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '161390'
+    name: 한국타이어앤테크놀로지
+    reviewed: false
+    items:
+    - {hs: '4011', flow: exp, weight: 0.5}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '073240'
+    name: 금호타이어
+    reviewed: false
+    items:
+    - {hs: '4011', flow: exp, weight: 0.5}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '002350'
+    name: 넥센타이어
+    reviewed: false
+    items:
+    - {hs: '4011', flow: exp, weight: 0.5}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '009540'
+    name: HD한국조선해양
+    reviewed: false
+    items:
+    - {hs: '8901', flow: exp, weight: 0.6}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '329180'
+    name: HD현대중공업
+    reviewed: false
+    items:
+    - {hs: '8901', flow: exp, weight: 0.6}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '010620'
+    name: HD현대미포
+    reviewed: false
+    items:
+    - {hs: '8901', flow: exp, weight: 0.6}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '010140'
+    name: 삼성중공업
+    reviewed: false
+    items:
+    - {hs: '8901', flow: exp, weight: 0.6}
+    regions:
+    - {region_id: KR-48-geoje, hs6: '890120', weight: 0.1}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '042660'
+    name: 한화오션
+    reviewed: false
+    items:
+    - {hs: '8901', flow: exp, weight: 0.5}
+    - {hs: '8906', flow: exp, weight: 0.1}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '082740'
+    name: 한화엔진
+    reviewed: false
+    items:
+    - {hs: '8408', flow: exp, weight: 0.5}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '267260'
+    name: HD현대일렉트릭
+    reviewed: false
+    items:
+    - hs: '8504'
+      flow: exp
+      weight: 0.5
+      countries: [US]
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '010120'
+    name: LS ELECTRIC
+    reviewed: false
+    items:
+    - {hs: '8504', flow: exp, weight: 0.2}
+    - {hs: '8537', flow: exp, weight: 0.2}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '298040'
+    name: 효성중공업
+    reviewed: false
+    items:
+    - {hs: '8504', flow: exp, weight: 0.4}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '103590'
+    name: 일진전기
+    reviewed: false
+    items:
+    - {hs: '8544', flow: exp, weight: 0.3}
+    - {hs: '8504', flow: exp, weight: 0.2}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '001440'
+    name: 대한전선
+    reviewed: false
+    items:
+    - {hs: '8544', flow: exp, weight: 0.5}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '006260'
+    name: LS
+    reviewed: false
+    items:
+    - {hs: '8544', flow: exp, weight: 0.3}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '090430'
+    name: 아모레퍼시픽
+    reviewed: false
+    items:
+    - {hs: '3304', flow: exp, weight: 0.4}
+    regions:
+    - {region_id: KR-41-osan, hs6: '330499', weight: 0.05}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '051900'
+    name: LG생활건강
+    reviewed: false
+    items:
+    - {hs: '3304', flow: exp, weight: 0.3}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '192820'
+    name: 코스맥스
+    reviewed: false
+    items:
+    - {hs: '3304', flow: exp, weight: 0.4}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '161890'
+    name: 한국콜마
+    reviewed: false
+    items:
+    - {hs: '3304', flow: exp, weight: 0.3}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '257720'
+    name: 실리콘투
+    reviewed: false
+    items:
+    - {hs: '3304', flow: exp, weight: 0.7}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '003230'
+    name: 삼양식품
+    reviewed: false
+    items:
+    - hs: '1902'
+      flow: exp
+      weight: 0.7
+      countries: [CN, US]
+    regions:
+    - {region_id: KR-51-wonju, hs6: '190230', weight: 0.1}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '004370'
+    name: 농심
+    reviewed: false
+    items:
+    - {hs: '1902', flow: exp, weight: 0.3}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '271560'
+    name: 오리온
+    reviewed: false
+    items:
+    - {hs: '1905', flow: exp, weight: 0.2}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '012450'
+    name: 한화에어로스페이스
+    reviewed: false
+    items:
+    - {hs: '8710', flow: exp, weight: 0.2}
+    - {hs: '9306', flow: exp, weight: 0.1}
+    - {hs: '8411', flow: exp, weight: 0.1}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '064350'
+    name: 현대로템
+    reviewed: false
+    items:
+    - {hs: '8710', flow: exp, weight: 0.4}
+    - {hs: '8603', flow: exp, weight: 0.1}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '079550'
+    name: LIG넥스원
+    reviewed: false
+    items:
+    - {hs: '9306', flow: exp, weight: 0.3}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '047810'
+    name: 한국항공우주
+    reviewed: false
+    items:
+    - {hs: '8802', flow: exp, weight: 0.3}
+    - {hs: '8803', flow: exp, weight: 0.1}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '373220'
+    name: LG에너지솔루션
+    reviewed: false
+    items:
+    - {hs: '8507', flow: exp, weight: 0.5}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '006400'
+    name: 삼성SDI
+    reviewed: false
+    items:
+    - {hs: '8507', flow: exp, weight: 0.5}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '247540'
+    name: 에코프로비엠
+    reviewed: false
+    items:
+    - {hs: '2841', flow: exp, weight: 0.5}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '003670'
+    name: 포스코퓨처엠
+    reviewed: false
+    items:
+    - {hs: '2841', flow: exp, weight: 0.3}
+    - {hs: '6902', flow: exp, weight: 0.1}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '066970'
+    name: 엘앤에프
+    reviewed: false
+    items:
+    - {hs: '2841', flow: exp, weight: 0.6}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '051910'
+    name: LG화학
+    reviewed: false
+    items:
+    - {hs: '3901', flow: exp, weight: 0.1}
+    - {hs: '3903', flow: exp, weight: 0.1}
+    - {hs: '2841', flow: exp, weight: 0.1}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '011170'
+    name: 롯데케미칼
+    reviewed: false
+    items:
+    - {hs: '3901', flow: exp, weight: 0.2}
+    - {hs: '2902', flow: exp, weight: 0.1}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '011780'
+    name: 금호석유화학
+    reviewed: false
+    items:
+    - {hs: '4002', flow: exp, weight: 0.3}
+    - {hs: '3903', flow: exp, weight: 0.1}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '010950'
+    name: S-Oil
+    reviewed: false
+    items:
+    - {hs: '2710', flow: exp, weight: 0.5}
+    regions:
+    - {region_id: KR-31-ulju, hs6: '271019', weight: 0.1}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '096770'
+    name: SK이노베이션
+    reviewed: false
+    items:
+    - {hs: '2710', flow: exp, weight: 0.3}
+    - {hs: '8507', flow: exp, weight: 0.1}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '298020'
+    name: 효성티앤씨
+    reviewed: false
+    items:
+    - {hs: '5402', flow: exp, weight: 0.4}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '005490'
+    name: POSCO홀딩스
+    reviewed: false
+    items:
+    - {hs: '7208', flow: exp, weight: 0.15}
+    - {hs: '7209', flow: exp, weight: 0.1}
+    - {hs: '7219', flow: exp, weight: 0.05}
+    regions:
+    - {region_id: KR-47-pohang, hs6: '720851', weight: 0.05}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '004020'
+    name: 현대제철
+    reviewed: false
+    items:
+    - {hs: '7208', flow: exp, weight: 0.2}
+    - {hs: '7216', flow: exp, weight: 0.1}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '103140'
+    name: 풍산
+    reviewed: false
+    items:
+    - {hs: '7409', flow: exp, weight: 0.3}
+    - {hs: '9306', flow: exp, weight: 0.2}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '010130'
+    name: 고려아연
+    reviewed: false
+    items:
+    - {hs: '7901', flow: exp, weight: 0.3}
+    - {hs: '7106', flow: exp, weight: 0.2}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '066570'
+    name: LG전자
+    reviewed: false
+    items:
+    - {hs: '8418', flow: exp, weight: 0.1}
+    - {hs: '8450', flow: exp, weight: 0.1}
+    - {hs: '8415', flow: exp, weight: 0.1}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '009150'
+    name: 삼성전기
+    reviewed: false
+    items:
+    - {hs: '8532', flow: exp, weight: 0.5}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '011070'
+    name: LG이노텍
+    reviewed: false
+    items:
+    - {hs: '8525', flow: exp, weight: 0.6}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '034220'
+    name: LG디스플레이
+    reviewed: false
+    items:
+    - {hs: '8524', flow: exp, weight: 0.6}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '207940'
+    name: 삼성바이오로직스
+    reviewed: false
+    items:
+    - {hs: '3002', flow: exp, weight: 0.6}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '068270'
+    name: 셀트리온
+    reviewed: false
+    items:
+    - {hs: '3002', flow: exp, weight: 0.6}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '033780'
+    name: KT&G
+    reviewed: false
+    items:
+    - {hs: '2402', flow: exp, weight: 0.2}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '241560'
+    name: 두산밥캣
+    reviewed: false
+    items:
+    - {hs: '8427', flow: exp, weight: 0.2}
+    - {hs: '8429', flow: exp, weight: 0.2}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '267270'
+    name: HD현대건설기계
+    reviewed: false
+    items:
+    - {hs: '8429', flow: exp, weight: 0.4}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+  - code: '034020'
+    name: 두산에너빌리티
+    reviewed: false
+    items:
+    - {hs: '8406', flow: exp, weight: 0.1}
+    - {hs: '8401', flow: exp, weight: 0.1}
+    - {hs: '8402', flow: exp, weight: 0.1}
+    evidence:
+    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}

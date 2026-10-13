@@ -251,8 +251,18 @@ kbj/
 - **완료 기준:** 합성 세계에서 세 지수의 리뷰 하나씩 후보가 계산·표시되고, 반올림·배수·완충·필요 상승률 속성 시험이 녹색, 공개 빌드·레포에 실자료 0(문서 §5).
 - **결과(2026-10-13, 묶음 IDX — ADR 0028 초안):** 백엔드(설정·엔진 6모듈·마이그레이션 0018 `prv_index` 5표·저장소·작업 `index.calendar`/`index.predict` **enabled: false**·API 두 개·백테스트 CLI)와 화면(페이지 10 '지수 정기변경' 패널, 페이지 5 캘린더 지수 줄, 페이지 8 머리 배지 — 로그인 전용, 공개 번들에서 모듈 제외·`check-bundle` 에 `index-review` 금지, 공개 JS gzip +196 B → 61,217 B). 합성 세계(240종목) MSCI 2026-11·KOSPI200 2026-12·KOSDAQ150 2026-12 후보 계산·골든·속성 시험·웹 시험 녹색. 남은 것: 규칙·일정·KRX 방법론·추종 자금 [확인 필요](probe #50~#54), 작업 켜기(목록·일정 확인 뒤), 로그인 화면 컷오프 입력(POST 라우트 — 다음 묶음).
 
-**P6 — 수출입·종목 매핑 (6~8일)** — docs/reference/plan_kr_v0.2.md 의 P5·P6
+**P6 — 수출입·종목 매핑 (6~8일)** — docs/reference/plan_kr_v0.2.md 의 P5·P6 — 완료(2026-10-13, 합성 데이터 기준 — 관세청 수집은 키·실측 뒤)
 - **완료 기준:** 수출 속보일 당일 자동으로 반영된다. 관심 종목 50개의 매핑과 겹쳐 보기 차트가 나온다.
+- **결과(2026-10-13, 웨이브 3 WRAP — 설계 `docs/p6_design.md`, ADR 0025~0027 채택):**
+  - 사용자 결정(설계서 열린 질문 기본값): 공개 JS 예산 60 → 72 KB(ADR 0025), 104품목 = 자체 고정 HS4 목록, 관세청 공개 집계는 public-data 브랜치에만(main·픽스처는 합성), 속보일 따로 발송 없이 16:00 마감 요약 한 줄, 조업일수·일평균·뉴스 RSS·원화 환산 없음, 매핑 초안은 `reviewed: false` 로 출시
+  - 작업 등록부: 외부 호출이 없는 `trade.map_load`·`trade.derive`·`trade.stock_index` 켬(`ENABLED_BY_PHASE["P6"]`). **관세청 `trade.customs_tenday`·`trade.customs_monthly` 는 꺼진 채** — 키 수령·실측 #1~#6·#17·#55·#57 뒤 켬. `public.export` 하루 4번(05:30·11:30·14:30·17:30)
+  - 완료 증명 ① 속보일: `tests/sim/test_flash_day.py`(운영 등록부의 10일 잠정치 한 줄을 사본에서만 켜고 실제 수집 처리기·가짜 관세청·가짜 시계) — 11-11 10:47 공표 → 11:00 폴링이 받음 → `/api/trade/flash`·띠 칩·공개 `trade/flash.json`·`trade/ribbon.json`(11:30 회차)·16:00 마감 요약 한 줄, 토요일 공표 → 월요일 16:00, 월초 말일 구간, 하루 늦은 공표, 열 구성 변경 → 그 종류만 실패·옛 값 유지, 같은 키 재폴링 0
+  - 완료 증명 ② 관심종목 50: `tests/acceptance/test_trade_map_watchlist50.py` — 합성 50종목에 실제 처리기(map_load → customs_monthly(가짜 관세청) → derive → stock_index) 뒤 `/api/trade/stock/{code}` × 50: 500 = 0, 매핑 50/50(공개 매핑 + VM local 매핑 — 공개 매핑에 없는 관심종목은 local 파일로, D-P6-14), 상태 행렬(ok·no_trade·no_revenue·short_overlap), NaN·Infinity 0, 공개 `trade/stock/*.json` 은 public 종목만. 웹 `web/test/acceptance/p6_pages.test.ts`(페이지 7 탭 6 × 등급 2, CSV BOM·이스케이프, 페이지 8 패널 50종목)
+  - 경계: import-linter **16 kept, 0 broken**(계약 ⑰ 수출입 엔진·작업·공개 내보내기 → 로그인 원천·저장소 금지). 페이지 8 고리: '재무' 탭에 겹쳐 보기(공개)·월말 종가 줄(로그인 — 공개 번들 검사 '월말 종가' 0)
+  - 저장소 보강(묶음 요청): `hs_dim` 처음·마지막 달 LEAST·GREATEST 병합, `replace_surge`(그 달 통째)·`replace_stock_export`(표 통째), 속보 칸 `mom`(API·공개)
+  - 프런트: 공개 JS gzip **73,088 B**(예산 73,728)·로그인 91,182 B(예산 92,160) — 둘 다 여유 1 KB 아래(ADR 0025 §3)
+  - legacy 정리: 없음 — legacy 에 관세청·HS·104품목 코드가 없다(설계 §9.1)
+  - 남은 것: ① 관세청 키 활용신청·실측 #1~#6·#17·#55~#57 뒤 수집 두 작업 켜기·5년 백필 ② 매핑표 첫 판 61종목 가중치·근거 검토(사용자)·VM local 매핑 파일 ③ `trade/flash.json` 10년 공개(종류별 분할 — #57) ④ p6_world 시군구 개편(29·46 지역 valid_to) 세계 보정 ⑤ Docker 통합·legacy 전체·sim 전체(메인 병렬 스크립트)·CI 녹색
 
 **P7 — GEX·진단 (3~5일)**
 - GEXLAB engine 이식(이미 서비스형), 페이지 3 진단, 국장 공포탐욕·종합 판정

@@ -694,8 +694,8 @@ def test_state_enter_and_run_once_backfill() -> None:
 
 
 def test_real_registry_one_day_runs_only_enabled_jobs() -> None:
-    """켜진 작업만 처리기를 부른다(P2 셋 + P3 아홉 + P4 아홉 + P5 일곱 — docs/p3_design.md §0.4·p4
-    §0.4·p5 D-P5-23, 웨이브 3 묶음이 켰다).
+    """켜진 작업만 처리기를 부른다(P2 셋 + P3 아홉 + P4 아홉 + P5 일곱 + P6 셋 — docs/p3_design.md
+    §0.4·p4 §0.4·p5 D-P5-23·p6 D-P6-20, 웨이브 3 묶음이 켰다).
 
     나머지는 '계획됨'(skipped·planned)으로만 남고 external 은 기록조차 없다. 켜진 작업의 데이터 키만
     선점 장부에 done 으로 남는다."""
@@ -713,10 +713,14 @@ def test_real_registry_one_day_runs_only_enabled_jobs() -> None:
     rig = Rig([], handlers, kst(2026, 10, 6, 0, 0), registry=reg)
     rig.run_until(kst(2026, 10, 7, 0, 0), every=timedelta(minutes=1))
     # market.backfill·fin.backfill 은 수동(발화 없음), filings.company_profile 은 토요일 04:00.
-    # us.universe 는 일요일 04:00(P5). 나머지 켜진 작업은 10-06(화, 거래일)에 모두 돈다
+    # us.universe 는 일요일 04:00(P5). trade.derive 는 month_days 14~20 만(P6). 나머지 켜진
+    # 작업은 10-06(화, 거래일)에 모두 돈다
     assert set(ran) == enabled - {
         "market.backfill", "fin.backfill", "filings.company_profile", "us.universe",
+        "trade.derive",
     }  # fmt: skip
+    # P6 웨이브 3 이 켠 매핑표·종목 수출 지수는 매일 돈다(외부 호출 없음)
+    assert ran.count("trade.map_load") == ran.count("trade.stock_index") == 1
     # P4 분 단위 작업(as_of: minute — 실행 as_of 하나에 한 번): 발화마다 한 번씩
     assert ran.count("filings.dart_feed") == 13 * 60  # 07:00~19:59 매분
     assert ran.count("earnings.alerts") == 14 * 12  # 07:00~20:55 5분마다

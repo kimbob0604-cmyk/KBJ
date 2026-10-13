@@ -350,7 +350,7 @@ async function mount(ctx: PageContext): Promise<void> {
   await LOGIN_FLOWS(ctx, { pScr, pInv, pDet, pIntra });
 }
 
-// 로그인 본문 — 공개 빌드에서는 번들에서 뺀다(p8_stock LOGIN_VALUE 와 같은 방식, 공개 JS gzip 예산 60 KB — P5 WRAP).
+// 로그인 본문 — 공개 빌드에서는 번들에서 뺀다(p8_stock LOGIN_VALUE 와 같은 방식, 공개 JS gzip 예산 72 KB(ADR 0025) — P5 WRAP).
 // 공개 등급은 위에서 자물쇠로 돌아가므로 실행 동작은 같다.
 interface FlowPanels {
   pScr: Panel;

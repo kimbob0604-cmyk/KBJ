@@ -1,0 +1,42 @@
+# p6_world(시드 20261211)의 손계산 기대값 — tests/unit/fixtures/test_p6_world.py 가 생성기 출력과 맞춘다.
+# 합성 데이터의 기대값이다(실측 아님). 생성기를 고치면 이 파일도 같은 커밋에서 고친다(FND 담당 — 다른 묶음은 요청).
+_source: "SYNTHETIC — tests/fixtures/synthetic/p6_world.py(고정 시드 생성기)가 만든 합성 데이터의 기대값. 실측 아님"
+seed: 20261211
+clock: "2026-12-11T11:30:00+09:00"
+
+months: {n: 60, first: "2021-11", last: "2026-10"}
+
+# 계층: 장 12 × (HS2 1 + HS4 2 + HS6 4 + HS10 4) + 850110 의 HS10 하나 더 = 133 / 달
+counts:
+  hs_dim: 133
+  items: 7978            # 133 × 60 − 결측 2행(390120·3901200000, 2026-06)
+  countries: 2400        # 40 × 60
+  item_countries: 14400  # HS4 24 × 상위 10개국 × 60
+  ten_day: 15884         # (120개월 × 3구간 + 2026-12 1구간) × 11열 × 4종
+  ten_day_columns: 45    # 4종 × 11열 + 바뀐 이름 1
+  stocks: 80
+  watchlist: 50
+  map_public_stocks: 30
+  map_local_stocks: 3
+
+# metrics §26 — 심은 급등·급락(평평한 값이라 정확히): 달러
+surge:
+  - {hs4: "8502", flow: exp, ym: "2026-10", usd: 120000000, usd_prev_year: 60000000, yoy: 1.0, yoy_3m: 1.0}
+plunge:
+  - {hs4: "2701", flow: exp, ym: "2026-10", usd: 30000000, usd_prev_year: 60000000, yoy: -0.5, yoy_3m: -0.5}
+zero_weight: {hs: "8401100000", ym: "2026-10"}   # 중량 0 → 단가 None(metrics §27)
+missing: {hs6: "390120", ym: "2026-06", parent_present: "3901"}
+
+# metrics §25 — 정정(발표 당시 ≠ 최신)·열 이름 바뀜(YoY 없음 사유)
+revision: {kind: exp_item, ym: "2026-11", seg: 3, col_no: 0, usd_minus_first: 120000000}
+column_change: {kind: exp_country, col_no: 10, valid_from: "2025-01", old: "말레이시아", new: "가상국-10"}
+ten_day_latest: {ym: "2026-12", seg: 1, span: "01~10"}
+
+# 시도 개편(2026-07 — 12 신설): 같은 통합 ID
+reorg: {region_id: "KR-46-a01", old_sido: "46", old_to: "2026-06", new_sido: "12", new_from: "2026-07"}
+
+# metrics §28 — 심은 겹쳐 보기 상태
+status:
+  no_trade: "992060"      # 매핑 접두 9901(세계에 없는 장)
+  no_revenue: "994015"    # p4_world — DART 고유번호 없음
+  short_overlap: "992059" # 분기 매출 6개

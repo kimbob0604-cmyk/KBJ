@@ -627,3 +627,63 @@ test_index_review_repo.py·tests/unit/engines/index_review/test_service.py·test
 | 페이지 10 '지수 정기변경' 패널 | 지수 탭(MSCI Korea·KOSPI200·KOSDAQ150) · 리뷰 고르기(지난 리뷰 '(지남)') · 일정 띠(기준일·발표·리밸런싱(패시브 매매일)·효력일 + D-day — `d_*` 음수 = 지남, `D+n`) · 컷오프 요약(엔진 추정·사용자 입력 한 줄씩: 값·추정 구간·근거(method)·편입/편출/경계 수·구성종목 수·추종 자금) · 컷오프마다 편입 후보·편출 후보·경계 표(§24.3 열 그대로) | 괴리율·필요 상승률은 소수 → %(소수 1자리, 부호), 필요 상승률 옆 작은 글자 = 기준(시총·유동 중 큰 쪽), 표는 필요 상승률 오름차순(없는 값은 뒤). 편출 표의 필요 상승률 = 유지에 필요한 상승. 예상 패시브 매수(억, 부호 — 편출은 −), 거래대금 대비 = 배수(x). 일정 미확인(`confirmed: false`)·엔진 컷오프·`estimated` 실행은 '추정' 배지. `no_constituents` 면 표 대신 '구성종목 목록 없음' 한 줄, 예측 없음은 서버 notes 한 줄, 404 는 서버 안내 문구. 행 → 페이지 8 |
 | 페이지 5 경제 캘린더 | 효력 전 리뷰마다 '결과 발표'·'리밸런싱(패시브 매매)' 두 줄(출처 '지수 일정(추정 포함)', 확인 전이면 제목 끝 '(추정)') | 경제 일정과 같은 표에 날짜순(같은 날·같은 시각은 경제 일정 먼저). 불러오기 실패는 캘린더를 멈추지 않고 notes 한 줄 |
 | 페이지 8 머리 | '지수 정기변경' 배지 한 줄(서버 label 그대로 — 예 `MSCI Korea 편입 후보 · 필요 +12.4%`, 이미 충족이면 `여유 −x%`, 사용자 컷오프면 '(사용자 컷오프)') | 유지 종목·예측 없음(404)은 줄 없음. 엔진 추정 배지는 '추정' |
+
+## 25. 수출 속보 (공개 — 관세청 10일 잠정치, P6 FLASH)
+
+> P6 지표(§25~§29)는 docs/p6_design.md 부록 A 를 옮겨 정본으로 했다(웨이브 1 FND). 원천은 관세청(공공데이터포털 —
+> 공개 등급, DATA_TIERS §1). 금액은 **미화 달러 정수**(원화 환산 없음 — 사용자 결정 2026-10-13 Q8), 비율은 소수
+> (0.5 = +50%). 저장 표 `pub_trade.*`(0019), 행 자료형 `kbj.core.trade_rows`, 숫자·목록은 `config/trade.yaml`.
+> 조업일수·일평균은 넣지 않는다(Q5 — 누계 YoY 만).
+
+| 지표 | 공식 | 입력·단위 | 예외·품질 | 시험 |
+|---|---|---|---|---|
+| 구간 누계 | 응답 값 × 1,000 | 15157908·941·901·909, 천 달러 → 달러(`pub_trade.ten_day.usd`) | `estimated`(잠정치). 쉼표·앞 공백 문자열(`parse_amount`). 전체 열(00)이 없으면 `invalid` | `test_flash.py` |
+| 구간 YoY | `v(kind,col,ym,seg) / v(kind,col,ym−12,seg) − 1` | 같음 | 전년 값 0·None → None(사유 `yoy_reason`). 그 시점 열 이름(`ten_day_columns`)이 전년과 다르면 None(비교 불가) | 같음·속성 |
+| 발표 당시/최신 | `first_usd`(처음 본 값 — 덮지 않는다)·`usd`(최신, 정정 반영 — `revised_at`) | 같음 | 정정이 있으면 화면에 두 값 | `test_trade_repo.py`(처음 값 유지) |
+| 칩 | 수출 품목(15157908) col 00 최신 seg YoY, 기준 `YYYY-MM 1~20일` 꼴 | 같음 | 공표 후 처음 본 값(`first_usd`). quality `estimated` | `test_ribbon.py` |
+| 10대 기여도 | `Δvᵢ / Δv₀₀`(전년 같은 구간 대비 차) | 같음 | 분모 0 → None | `test_flash.py` |
+| 마감 요약 한 줄 | 그 거래일 16:00 직전 마감 요약 이후 처음 본 구간만(D-P6-8, ADR 0018) | 같음 | 공표일이 휴장이면 다음 거래일 마감 요약. 새 발송 종류 없음 | `test_closing.py` |
+| 전월 같은 구간 대비 | `v(kind,col,ym,seg) / v(kind,col,ym−1,seg) − 1`(`mom` — 화면 보조) | 같음 | 전월 값 0·None·열 이름 바뀜 → None. API·공개 `trade/flash.json` 칸 `mom`(WRAP 이 모델에 칸을 더했다) | `test_flash.py` |
+
+값 기준(ADR 0026 — WRAP 확정): **칩·마감 요약 줄은 발표 당시 값**(`first_usd`)을 분자로, **분모는 전년 같은 구간의
+최신 값**(`usd` — 정정 반영)을 쓴다. 표·차트는 최신 값. 같은 달 누계가 앞 구간보다 줄면(1~20일 < 1~10일 — 정정·
+열 변경) 값을 고치지 않고 notes 에 경고 한 줄(`monotonic_breaks`). 공개 `trade/flash.json` 은 최근 6개월
+(`PUBLIC_MONTHS` — 200 KB 상한, 10년 공개는 종류별 파일로 쪼갠 뒤 #57), 띠 칩은 `trade/ribbon.json`(신용 칩
+`credit.json` 과 원천이 달라 분리, 상한 4 KB).
+
+## 26. 탐색·급등 (공개 — 관세청 월간, P6 EXP)
+
+| 지표 | 공식 | 입력·단위 | 예외·품질 | 시험 |
+|---|---|---|---|---|
+| 접두 합 | 그 HS 행이 있으면 **그 행**, 없으면 바로 아래 접두들의 합(재귀 — 이중 합산 금지. WRAP 이 EXP 구현에 맞춰 고침) | `item_monthly`·`item_country_monthly`, 달러·kg | 일관된 응답에서는 '가장 깊은 행만'과 값이 같다(속성 시험). 하위 행이 빠진 달(`p6_world` 390120 2026-06)은 상위 행 값이 남는다 | 속성(접두 합 = 상위 합 — `p6_world`) |
+| YoY·3개월 YoY | 월 / 전년 같은 달 − 1, 직전 3개월 합 / 전년 3개월 합 − 1 | 같음 | 0·None → None | `test_explore.py` |
+| 비중 | 품목 / 전체(같은 달·같은 흐름) | 같음 | 전체 0 → None | 같음 |
+| 급등 | 수준 ≥ `surge.min_usd`(월 1천만 달러 [제안]) ∧ YoY ≥ `surge_yoy`(0.5) ∧ 3개월 YoY ≥ `surge_yoy_3m`(0.3) | 같음, `config/trade.yaml surge` | 수준 미달은 목록에서 뺀다. 급락은 `plunge_yoy`(−0.3)·`plunge_yoy_3m`(−0.2) [제안] — 급락의 수준 문턱은 **전년 같은 달 금액** ≥ `min_usd`(이번 달이 줄어든 것이 핵심이라). 다시 돌리면 그 달 목록을 통째로 바꾼다(`replace_surge`). 단계 `levels`(hs2·hs4·hs6·country), 상위 `top` | `test_surge.py` 경계 |
+
+## 27. 단가 대 물량 (공개, P6 EXP)
+
+| 지표 | 공식 | 예외 | 시험 |
+|---|---|---|---|
+| 단가 | 금액 ÷ 중량(달러/kg) | 중량 0·None → None. `price_volume.weight_unfit`(HS 접두 — 선박 89 [확인 필요: 목록]) 은 '중량 기준 부적합' 꼬리표 | `test_price_volume.py` |
+| 분해 | `ln(1+YoY금액) = ln(1+YoY단가) + ln(1+YoY중량)`(항등식) | 어느 하나 None → 분해 없음 | 속성(항등식 오차 < 1e-9) |
+| 참고선 | 수출물가지수 `ECOS:402Y014:export_px`(P5 `pub_macro.series` 읽기만) | 그 시리즈가 없으면 참고선 생략(실측 #43 전) | 같음 |
+
+## 28. 종목 수출 지수·겹쳐 보기 (공개 매핑 → 공개, local 매핑 → 로그인, P6 MAP)
+
+| 지표 | 공식 | 입력·단위 | 예외·품질 | 시험 |
+|---|---|---|---|---|
+| 수출 지수 | `E_t = Σ wᵢ·Xᵢ,t` — 품목 행은 그 접두의 수출(국가 목록이 있으면 그 국가 합 — 품목×국가), 지역 행은 시군구×HS6 | `stock_map`·월간·품목×국가·시군구, 달러 | 입력 하나라도 `estimated` → `estimated`. 접두 자료가 없으면 `no_trade`. 국가 목록이 있는데 품목×국가 표에 그 접두가 없으면(국가 표는 HS4 까지) **전 국가 값으로 대신하고 `estimated`**(ADR 0027 §2-5). 표는 실행마다 통째로 바꾼다(`replace_stock_export`) | `test_overlay.py`·속성(선형성) |
+| 분기 YoY | 분기 합 / 전년 분기 합 − 1 | 같음 | 3개월 중 결측 → None | 같음 |
+| 매출 YoY | `pub_fin.quarterly` 매출(보고 기준 — P4 `to_quarterly`) | 원 | 미제출 → `no_revenue` | 같음 |
+| 시차 상관 | 피어슨(E 분기 YoY 의 k 분기 전, 매출 YoY), k ∈ `overlay.lags`(0·1·2 — 수출이 앞섬) | — | 겹침 < `overlay.min_quarters`(8) → None·`short_overlap`(선은 그린다) | 같음 |
+| 랭킹 | 최근 `overlay.rank_months`(3)개월 E YoY 내림차순 | — | 동률 코드 순 | `test_routes_trade_map.py` |
+| 매핑표 | 자체 큐레이션(`config/knowledge/trade_map.yaml` — 첫 판 `reviewed: false` 로 출시, 사용자 결정 Q7). 근거 1개 이상·종목별 가중치 합 ≤ 1·HS 짝수 자리 | — | 관심종목 전용은 VM local(`origin: local`) — 공개 내보내기 0(D-P6-14). 환율 미조정(달러) 꼬리표 | `test_trade_config.py`·`test_trade_map.py` |
+
+시세(월말 종가)는 로그인 한 줄만(`/api/stock/{code}/chart` — 공개 `trade/stock/*.json` 에 시세 칸 0, 공개 번들에
+`trade_overlay_price` 없음).
+
+## 29. 104품목 (공개, P6 EXP)
+
+`fixed`(기본 — 사용자 결정 2026-10-13 Q2: 자체 고정 HS4 목록 `config/knowledge/trade_items.yaml`) = 묶음 접두 합(§26 접두 합
+규칙), `top_n` = 직전 `items104.top_n_months`(12)개월 수출 상위 HS4 `n` 개(동률 코드 순 — 화면 '자동 선택' 꼬리표).
+묶음 사이 접두 겹침 = 설정 오류(`kbj.config.trade` 가 거부). bok 원본 목록은 레포에 없다(U3).

@@ -12,6 +12,8 @@
 - 세션·야간 카운트다운: `kbj.core.calendar`(코드 계산 — 공개 등급).
 - 금통위 D-n: 다음 결정회의까지 남은 **달력일**(당일 D-0) — `config/calendar_events.yaml`
   (공개 등급).
+- 수출 속보(P6 FLASH — metrics §25): 관세청 10일 잠정치 수출 품목 전체의 최신 구간 YoY(발표 당시 값,
+  estimated). 값은 `kbj.engines.trade.flash.flash_chip` 이 내고 부르는 쪽이 넘긴다.
 
 튜닝값(`ribbon.semis`·`cyclical`·`defensive`)과 금통위 날짜는 부르는 쪽이 `kbj.config.markets` 로
 읽어 넘긴다(이 모듈은 파일을 읽지 않는다).
@@ -43,6 +45,7 @@ from kbj.engines.flows.ledger import (
 )
 from kbj.engines.flows.totals import InvestorTotals
 from kbj.engines.market.sectors import index_return_pct
+from kbj.engines.trade.flash import CHIP_LABEL, FlashChip
 
 __all__ = [
     "CHIP_ORDER",
@@ -51,6 +54,7 @@ __all__ = [
     "RibbonInputs",
     "SkewResult",
     "cyclical_vs_defensive",
+    "export_flash_chip",
     "ribbon",
     "semi_skew",
     "semi_skew_from_ledger",
@@ -65,7 +69,6 @@ EVENTS_SOURCE: Final = "config:calendar_events(한국은행 공표 일정)"
 PENDING: Final[Mapping[str, tuple[str, Tier, str]]] = {
     "credit_spread": ("신용스프레드 AA-", "public", "P5"),
     "credit_balance": ("신용잔고", "public", "P5"),
-    "export_flash": ("수출 속보", "public", "P6"),
     "kr_vs_global": ("한국 대 글로벌", "login", "P5"),
     "gex_flip": ("GEX Flip 거리", "login", "P7"),
 }
@@ -286,6 +289,35 @@ def session_chip(now: datetime, cal: TradingCalendar) -> Chip:
     )
 
 
+# ── 수출 속보(P6 FLASH — metrics §25) ─────────────────────────────────────────────────────
+
+EXPORT_FLASH_NONE: Final = "아직 없음 — 관세청 10일 잠정치 수집 전(확인 전 #6·#17·#55)"
+
+
+def export_flash_chip(fc: FlashChip | None) -> Chip:
+    """수출 속보 칩(공개) — 값 = 발표 당시 YoY(비율, 0.123 = +12.3%), 기준 구간은 detail.
+    값이 없으면 자리만(사유) — '준비 중' 단계 표시는 없다(P6 에서 원천이 생겼다)."""
+    if fc is None:
+        return Chip("export_flash", CHIP_LABEL, None, "public", note=EXPORT_FLASH_NONE)
+    detail: dict[str, Any] = {
+        "ym": fc.ym, "seg": fc.seg, "span": fc.span_text, "span_label": fc.label,
+        "usd": fc.usd, "basis": "first",
+    }  # fmt: skip
+    if fc.yoy is None:
+        return Chip(
+            "export_flash", CHIP_LABEL, None, "public",
+            tags=("잠정",), note=fc.yoy_reason, detail=detail,
+        )  # fmt: skip
+    return Chip(
+        "export_flash",
+        CHIP_LABEL,
+        Sourced[float](value=fc.yoy, source=fc.source, as_of=fc.first_seen_at, quality=fc.quality),
+        "public",
+        tags=("잠정",),
+        detail=detail,
+    )
+
+
 # ── 띠 ──────────────────────────────────────────────────────────────────────────────────
 
 
@@ -303,6 +335,8 @@ class RibbonInputs:
     cyc_def: SkewResult | None = None
     next_mpc: date | None = None
     nxt_excluded: bool = True  # D-P3-9 — KRX 구분만
+    # P6 FLASH(metrics §25): 수출 품목 전체 최신 구간 YoY(발표 당시 기준 — kbj.engines.trade.flash)
+    export_flash: FlashChip | None = None
 
 
 def _skew_chip(key: str, label: str, res: SkewResult | None, pending_note: str) -> Chip:
@@ -382,6 +416,7 @@ def ribbon(inputs: RibbonInputs, now: datetime, cal: TradingCalendar) -> list[Ch
     chips["cyc_def"] = _skew_chip(
         "cyc_def", "경기민감 대 방어", inputs.cyc_def, "준비 중 — 업종 코드 [확인 필요]"
     )
+    chips["export_flash"] = export_flash_chip(inputs.export_flash)
     for key, (label, tier, phase) in PENDING.items():
         chips[key] = Chip(key, label, None, tier, phase_pending=phase)
     return [chips[k] for k in CHIP_ORDER]

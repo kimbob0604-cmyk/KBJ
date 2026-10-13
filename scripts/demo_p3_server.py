@@ -92,6 +92,12 @@ def main(argv: list[str] | None = None) -> int:
     from tests.unit.api.api_world import build_world
 
     world = build_world(transform=scale_market)
+    # P6 페이지 7 — 합성 수출입 세계(고정 시드, 실데이터 아님)를 같은 저장소에 싣고 파생까지
+    from tests.fixtures.synthetic.p6_world import build_world as build_p6_world
+    from tests.unit.api.web_fixtures_p6.explore import run_derive
+
+    build_p6_world().fill(world.repos.trade)
+    run_derive(world.repos.trade)
     if args.at == "intraday":
         world.clock.set(world.slot + timedelta(minutes=5))
     overrides: dict[str, Any] = {}

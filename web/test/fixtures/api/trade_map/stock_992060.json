@@ -1,0 +1,612 @@
+{
+  "source": "관세청(공공데이터포털)+DART",
+  "as_of": "2026-12-11T02:30:00Z",
+  "quality": "estimated",
+  "notes": [
+    "금액은 미화 달러(원화 환산 없음 — 환율 미조정)",
+    "매핑 가중치는 자체 큐레이션 초안 — '검토 전' 종목은 사람이 아직 확인하지 않았다"
+  ],
+  "generated_at": "2026-12-11T11:30:00+09:00",
+  "data": {
+    "code": "992060",
+    "name": "가상상장60",
+    "reviewed": false,
+    "origin": "public",
+    "map_version": "p6world-1",
+    "status": "no_trade",
+    "fx_note": "환율 미조정(달러)",
+    "lines": [
+      {
+        "hs": "9901",
+        "flow": "exp",
+        "region_id": null,
+        "weight": 0.4,
+        "countries": [],
+        "name": null
+      }
+    ],
+    "evidence": [
+      {
+        "kind": "synthetic",
+        "note": "합성 근거(실측 아님)",
+        "rcept_no": null
+      }
+    ],
+    "monthly": [
+      {
+        "period": "2021-11",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2021-12",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2022-01",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2022-02",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2022-03",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2022-04",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2022-05",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2022-06",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2022-07",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2022-08",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2022-09",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2022-10",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2022-11",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2022-12",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2023-01",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2023-02",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2023-03",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2023-04",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2023-05",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2023-06",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2023-07",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2023-08",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2023-09",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2023-10",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2023-11",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2023-12",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2024-01",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2024-02",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2024-03",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2024-04",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2024-05",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2024-06",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2024-07",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2024-08",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2024-09",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2024-10",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2024-11",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2024-12",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2025-01",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2025-02",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2025-03",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2025-04",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2025-05",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2025-06",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2025-07",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2025-08",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2025-09",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2025-10",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2025-11",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2025-12",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2026-01",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2026-02",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2026-03",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2026-04",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2026-05",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2026-06",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2026-07",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2026-08",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2026-09",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      },
+      {
+        "period": "2026-10",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      }
+    ],
+    "quarterly": [
+      {
+        "period": "2021Q4",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": -0.28948741664478495,
+        "quality": "estimated"
+      },
+      {
+        "period": "2022Q1",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": -0.13670970188193654,
+        "quality": "estimated"
+      },
+      {
+        "period": "2022Q2",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": 0.2649062843130199,
+        "quality": "estimated"
+      },
+      {
+        "period": "2022Q3",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": -0.3339063305249095,
+        "quality": "estimated"
+      },
+      {
+        "period": "2022Q4",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": -0.13754984382437152,
+        "quality": "estimated"
+      },
+      {
+        "period": "2023Q1",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": -0.17463522313226276,
+        "quality": "estimated"
+      },
+      {
+        "period": "2023Q2",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": 1.3561865622190425,
+        "quality": "estimated"
+      },
+      {
+        "period": "2023Q3",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": -0.18484796582019747,
+        "quality": "estimated"
+      },
+      {
+        "period": "2023Q4",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": 3.3883898962035373,
+        "quality": "estimated"
+      },
+      {
+        "period": "2024Q1",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": 0.8504829149105826,
+        "quality": "estimated"
+      },
+      {
+        "period": "2024Q2",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": -0.7542332227722564,
+        "quality": "estimated"
+      },
+      {
+        "period": "2024Q3",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": 3.092909806204898,
+        "quality": "estimated"
+      },
+      {
+        "period": "2024Q4",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": 0.16942144526645797,
+        "quality": "estimated"
+      },
+      {
+        "period": "2025Q1",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": 1.1926412654038119,
+        "quality": "estimated"
+      },
+      {
+        "period": "2025Q2",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": 0.8713487316036888,
+        "quality": "estimated"
+      },
+      {
+        "period": "2025Q3",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": -0.030657384198165216,
+        "quality": "estimated"
+      },
+      {
+        "period": "2025Q4",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": -0.08969732707601552,
+        "quality": "estimated"
+      },
+      {
+        "period": "2026Q1",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": -0.5147576019114521,
+        "quality": "estimated"
+      },
+      {
+        "period": "2026Q2",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": 1.2262228976430363,
+        "quality": "estimated"
+      },
+      {
+        "period": "2026Q3",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": -0.8993153703774399,
+        "quality": "estimated"
+      },
+      {
+        "period": "2026Q4",
+        "export_usd": null,
+        "yoy": null,
+        "revenue_yoy": null,
+        "quality": "estimated"
+      }
+    ],
+    "lag_corr": {
+      "0": null,
+      "1": null,
+      "2": null
+    }
+  }
+}

@@ -157,7 +157,7 @@ export async function mount(t: TabCtx, el: HTMLElement): Promise<void> {
   const pFlow = mkPanel(t, { title: '수급 20일', tier: 'login', span: 6, lock: 'investor' });
   const pRecent = mkPanel(t, { title: '최근 공시·잠정실적', tier: 'public', span: 6 });
   const pend = (title: string, phase: string): Panel => mkPanel(t, { title, tier: 'public', span: 4, pending: phase });
-  tabGrid(el, pChart, pCard, pFlow, pRecent, pend('피어', 'P5'), pend('검증 시트', 'P8'), pend('수출 겹쳐 보기', 'P6'));
+  tabGrid(el, pChart, pCard, pFlow, pRecent, pend('피어', 'P5'), pend('검증 시트', 'P8')); // 수출 겹쳐 보기는 P6 에서 '재무' 탭으로(p8/trade_overlay.ts)
   const code = t.code;
 
   if (pub) {

@@ -39,10 +39,18 @@ describe('페이지 8 — 공개판', () => {
     await openAll(root);
     const urls = hz.paths();
     expect(urls.every((u) => u.startsWith('./data/'))).toBe(true);
-    expect(urls.some((u) => /api|stock\/|watchlist|filings\//.test(u))).toBe(false);
+    // P6(WRAP 고리): '재무' 탭 '수출 겹쳐 보기'는 공개 파일 trade/stock/<코드>.json(없으면 404 → 매핑 없음)
+    expect(urls.some((u) => /api|(?<!trade\/)stock\/|watchlist|filings\//.test(u))).toBe(false);
     expect(new Set(urls)).toEqual(
-      new Set(['./data/corp_index.json', './data/fin/Q00001.json', './data/earnings_prelim.json', './data/reports/Q00001.json']),
+      new Set([
+        './data/corp_index.json',
+        './data/fin/Q00001.json',
+        './data/earnings_prelim.json',
+        './data/reports/Q00001.json',
+        './data/trade/stock/Q00001.json',
+      ]),
     );
+    expect(text(panelByTitle(root, '수출 겹쳐 보기'))).toContain('매핑 없음');
     const locked = [...root.querySelectorAll('section.panel.locked')].map((p) => text(p.querySelector('h3 > span')));
     // P5(WRAP 고리): 개요 탭 '담은 ETF'(운용사 PDF — 로그인)도 자물쇠
     expect(locked.sort()).toEqual(['밸류에이션 밴드', '수급 20일', '시나리오 적정가', '컨센서스', '담은 ETF'].sort());
@@ -96,7 +104,8 @@ describe('페이지 8 — 공개판', () => {
   it('재무 파일이 없는 종목(corp_index fin=false)은 요청 없이 "공시 재무 없음"', async () => {
     const { hz, root } = await mountPub('Q00004');
     await openAll(root);
-    expect(hz.paths()).toEqual(['./data/corp_index.json']);
+    // 수출 겹쳐 보기(P6)는 재무 파일과 무관하게 공개 매핑 파일만 본다
+    expect(hz.paths()).toEqual(['./data/corp_index.json', './data/trade/stock/Q00004.json']);
     for (const t of ['핵심 지표', '분기·연간 재무', '재무 비율', '부문 매출', '공시 목록', '오버행', '내부자']) {
       expect(text(panelByTitle(root, t))).toContain(NO_PUB_FIN);
     }

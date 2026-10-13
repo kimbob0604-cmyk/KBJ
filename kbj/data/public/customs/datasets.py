@@ -1,7 +1,7 @@
 """관세청 수출입 논리 데이터셋 — 작업 등록부·선점·카탈로그용 메타데이터(설계 §2·§6.7).
 
 등급은 모두 **공개**(이용허락 "제한 없음" — DATA_TIERS §1, probe_results §2.1)라 저장 표는
-`pub_trade.*`(마이그레이션 0012, P6). 수집 작업(`trade.customs_tenday`·
+`pub_trade.*`(마이그레이션 0019, P6). 수집 작업(`trade.customs_tenday`·
 `trade.customs_monthly`)은 P6. 리미터·예산은 포털 데이터셋 ID 마다(`limits.yaml` `datago` —
 25/s, 9,500/일).
 """

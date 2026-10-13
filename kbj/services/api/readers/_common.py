@@ -39,6 +39,7 @@ from kbj.store.repos import (
     MarketRepo,
     MarketStatsRepo,
     ProgramRepo,
+    TradeRepo,
     UsRepo,
 )
 
@@ -114,6 +115,10 @@ class ApiRepos(Protocol):
     # P5 2차 묶음 IDX(0018 — 지수 정기변경 예측, 로그인)
     @property
     def index_review(self) -> IndexReviewRepo: ...
+
+    # P6 묶음 FND(0019 — 수출입·매핑, 공개)
+    @property
+    def trade(self) -> TradeRepo: ...
 
 
 class NoData(Exception):

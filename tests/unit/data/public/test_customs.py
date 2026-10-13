@@ -344,3 +344,16 @@ def test_rows_carry_as_of_and_quality() -> None:
         amounts={**ten.amounts, "00": None},
     )
     assert blank.quality is Quality.INVALID
+
+
+def test_nodata_03_is_an_empty_list_not_an_error() -> None:
+    """P6 COL: 공표 전 달은 기관 `03`(데이터 없음) — 수집기가 `not_ready` 로 읽는다
+    [실측 필요 #1]."""
+    nodata = (
+        "<response><header><resultCode>03</resultCode><resultMsg>NODATA_ERROR</resultMsg>"
+        "</header></response>"
+    )
+    c, _ = _client(nodata)
+    assert c.items("202610", "202610", hs="85") == []
+    assert c.ten_day("exp_item", "202610", "202611") == []
+    assert c.sigungu("202610", "202610", "11", "850110") == []

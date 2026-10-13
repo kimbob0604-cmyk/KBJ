@@ -20,7 +20,7 @@ import { MINUTE_REFRESH_MS, MINUTE_TITLE, mountMinute } from './p1/flows_minute'
 import { DAILY_TITLE, mountProgram, TOP_TITLE } from './p1/program';
 
 // 공개 빌드에서는 P5 로그인 모듈을 번들에서 뺀다(p8_stock LOGIN_VALUE 와 같은 방식 — 공개 등급은 이 줄에 오기 전에
-// 자물쇠로 돌아가므로 실행 동작은 같고, 공개 JS gzip 예산 scripts/check-bundle.mjs 60 KB 를 지킨다. WRAP)
+// 자물쇠로 돌아가므로 실행 동작은 같고, 공개 JS gzip 예산 scripts/check-bundle.mjs 72 KB(ADR 0025) 를 지킨다. WRAP)
 const LOGIN_F2 = import.meta.env.MODE === 'public' ? null : { mountMinute, mountProgram };
 const NOOP = (): Promise<void> => Promise.resolve();
 

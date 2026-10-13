@@ -32,6 +32,9 @@
 #   `collectors.macro`·로그인 `collectors.macro_prv` 모듈로 나눴다(D-P5-7 — 계약 ⑭). 장중 투자자 1분
 #   (KIS:market_investor_intraday)의 수집 주인은 flows.market_minute 하나다(ADR 0019 — gex.poller 에서 옮김).
 #   새 발송 etf.report 는 아침 08:20(브리핑 아님 — U2 의 하루 1회에 세지 않는다). 장 마감 뒤 발송은 그대로 16:00.
+# - P6(docs/p6_design.md §0.4·§3.2): 웨이브 1(묶음 FND)이 trade.* 다섯 작업의 owner·schedule·as_of·collects·
+#   writes 를 확정했다 — 전부 enabled: false(켜기는 웨이브 3 WRAP, 관세청 수집은 실측 #1~#6·#17·#55 뒤).
+#   새 텔레그램 발송 없음 — 수출 속보는 16:00 brief.closing 한 줄(D-P6-8, ADR 0018). public.export 는 하루 4번(D-P6-7).
 version: 1
 
 defaults:
@@ -99,7 +102,7 @@ jobs:
     phase: P3
     enabled: true               # 웨이브 3(묶음 S) — 처리기 import 검증 통과
     owner: "kbj.services.public_export:run"
-    schedule: {cron: "30 5 * * *", when: always}
+    schedule: {cron: "30 5,11,14,17 * * *", when: always}   # P6 D-P6-7 — 하루 4번(관세청 당일 반영)
     retry: {max: 1, backoff_s: [600]}
     deadline_min: 30
     note: "D-P3-15·16 — pub_* 와 코드 계산(캘린더·금통위)만 JSON 으로(KBJ_DATA_DIR/public). 수집 없음·표 쓰기 없음. public-data 브랜치 푸시·Pages 디스패치는 KBJ_PUBLIC_PUSH_ENABLED(기본 false — 사용자 승인 필요)"
@@ -336,24 +339,28 @@ jobs:
 
   - name: trade.customs_tenday
     phase: P6
+    enabled: false              # P6 WRAP 도 꺼 둠 — 키 수령·실측 #6·#17·#55 뒤 켬
     owner: "kbj.services.collectors.customs:tenday"
-    schedule: {cron: "0 10 * * *", when: month_days, month_days: [1, 11, 21]}
-    retry: {max: 6, backoff_s: [3600]}
-    deadline_min: 420
+    schedule: {cron: "*/20 9-17 * * *", when: month_days, month_days: [1, 2, 3, 11, 12, 13, 21, 22, 23]}
+    retry: {max: 0}             # 20분 폴링이 재시도다(D-P6-6)
+    deadline_min: 15
+    as_of: ten_day
     collects:
       - {source: DATAGO, dataset: "15157908", as_of: ten_day}
       - {source: DATAGO, dataset: "15157941", as_of: ten_day}
       - {source: DATAGO, dataset: "15157901", as_of: ten_day}
       - {source: DATAGO, dataset: "15157909", as_of: ten_day}
     budget: datago
-    writes: [pub_trade.ten_day]
-    note: "관세청 10일 잠정치 — 11일(1~10일)·21일(1~20일)·다음 달 1일(월 전체) 공표(probe_results §2.6)"
+    writes: [pub_trade.ten_day, pub_trade.ten_day_columns]
+    note: "관세청 10일 잠정치(D-P6-6) — 공표일(1·11·21)과 그 뒤 이틀 09:00~17:40 20분마다(config/trade.yaml tenday.poll 과 같다). 새 10일 구간(데이터 키 YYYYMM-n)이 들어오면 선점 done 이라 나머지 폴링은 건너뛴다. 하루 최대 27회 × 4 = 108건(데이터셋당 27 ≪ 9,500). 열 구성이 바뀌면 실패(TenDayColumnsChanged — 삼키지 않는다). 막는 실측 #6·#17·#55(docs/probe_results.md §7). 텔레그램은 보내지 않는다 — 16:00 brief.closing 이 한 줄(D-P6-8, ADR 0018)"
 
   - name: trade.customs_monthly
     phase: P6
+    enabled: false              # P6 WRAP 도 꺼 둠 — 키 수령·실측 #1~#5 뒤 켬
     owner: "kbj.services.collectors.customs:monthly"
-    schedule: {cron: "0 10 * * *", when: month_days, month_days: [15, 16, 17]}
+    schedule: {cron: "10 10,15 * * *", when: month_days, month_days: [14, 15, 16, 17, 18, 19, 20]}
     retry: {max: 0}
+    as_of: month
     collects:
       - {source: DATAGO, dataset: "15101609", as_of: month}
       - {source: DATAGO, dataset: "15101612", as_of: month}
@@ -361,8 +368,43 @@ jobs:
       - {source: DATAGO, dataset: "15134343", as_of: month}
     budget: datago
     writes: [pub_trade.item_monthly, pub_trade.country_monthly, pub_trade.item_country_monthly,
-             pub_trade.sigungu_monthly]
-    note: "매월 15일경 공표 — 15~17일 하루 한 번씩 본다(받으면 선점 done 이라 다음 날은 건너뛴다)"
+             pub_trade.sigungu_monthly, pub_trade.hs_dim]
+    note: "관세청 월간 4종 — 매월 15일경 공표, 14~20일 10:10·15:10 에 본다(받으면 선점 done 이라 다음 회차는 건너뛴다). 1회 약 2,170건(§3.4). 시군구는 매핑표(config/knowledge/trade_map.yaml)의 HS6 만 — DB 의존 없음. 5년 백필은 사람이 `python -m kbj.services.collectors.customs backfill`(스케줄러 backfill 은 거래일 단위라 맞지 않는다). 막는 실측 #1~#5·#57"
+
+  - name: trade.map_load
+    phase: P6
+    enabled: true               # P6 웨이브 3(WRAP — D-P6-20)
+    owner: "kbj.services.engine.trade_map:load"
+    schedule: {cron: "35 7 * * *", when: always}
+    retry: {max: 1, backoff_s: [600]}
+    as_of: run_date
+    writes: [pub_trade.stock_map]
+    note: "종목↔HS 매핑표(공개 config/knowledge/trade_map.yaml + VM local — D-P6-14)를 판 단위로 통째로 바꾼다. 검증 실패면 실패(옛 판 유지 — 지우지 않는다). 외부 호출 없음"
+
+  - name: trade.derive
+    phase: P6
+    enabled: true               # P6 웨이브 3(WRAP — D-P6-20)
+    owner: "kbj.services.engine.trade:derive"
+    schedule: {cron: "40 10,15 * * *", when: month_days, month_days: [14, 15, 16, 17, 18, 19, 20]}
+    retry: {max: 1, backoff_s: [1200]}
+    as_of: month
+    depends_on: [{job: trade.customs_monthly, hard: true}]
+    writes: [pub_trade.surge, pub_trade.item_group_monthly]
+    note: "급등·급락(metrics §26)·104품목 묶음(§29) — pub_trade 월간만 읽는다(외부 호출 없음). 입력이 없으면 not_ready"
+
+  - name: trade.stock_index
+    phase: P6
+    enabled: true               # P6 웨이브 3(WRAP — D-P6-20)
+    owner: "kbj.services.engine.trade_map:stock_index"
+    schedule: {cron: "0 21 * * *", when: always}
+    retry: {max: 1, backoff_s: [1800]}
+    as_of: run_date
+    depends_on:
+      - {job: trade.derive, hard: false}
+      - {job: trade.map_load, hard: false}
+      - {job: fin.quarterly, hard: false}
+    writes: [pub_trade.stock_export]
+    note: "종목 수출 지수·분기 YoY·매출 YoY 시차 상관(metrics §28) — stock_map·월간·시군구·pub_fin.quarterly 만 읽는다. 시세 칸 없음(로그인 종가 줄은 /api/stock/{code}/chart)"
 
   - name: market.fsc_daily
     phase: P5                 # D-P3-17 — KRX 대조 보조는 P5

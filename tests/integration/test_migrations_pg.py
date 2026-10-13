@@ -1,4 +1,4 @@
-"""마이그레이션 0001~0017 을 실제 TimescaleDB 에 적용(Docker).
+"""마이그레이션 0001~0019 를 실제 TimescaleDB 에 적용(Docker).
 
 근거: docs/p2_design.md §8.2·§8.8, docs/p3_design.md §3.4.
 
@@ -59,8 +59,9 @@ P2 = [
     "0016_market_stats.sql",
     "0017_program.sql",
     "0018_index.sql",
-]  # 이름은 P2 시험 그대로 — 0001~0018 전부(P3 0007~0009, P4 0010~0013, P5 0014~0017,
-#   P5 2차 IDX 0018)
+    "0019_trade.sql",
+]  # 이름은 P2 시험 그대로 — 0001~0019 전부(P3 0007~0009, P4 0010~0013, P5 0014~0017,
+#   P5 2차 IDX 0018, P6 0019)
 GX_DAILY = {
     "prv_gex.raw_messages", "prv_gex.fut_ticks", "prv_gex.opt_ticks", "prv_gex.chain_snapshots",
     "prv_gex.fut_board", "prv_gex.investor_flow", "prv_gex.series_expiries",
@@ -595,5 +596,62 @@ BAD_IDX_ROWS = (
 
 @pytest.mark.parametrize("stmt", BAD_IDX_ROWS)
 def test_idx_constraints(dsn: str, stmt: str) -> None:
+    with pytest.raises(psycopg.errors.CheckViolation), psycopg.connect(dsn) as c:
+        c.execute(stmt.encode())
+
+
+# ── P6 묶음 FND(0019 — 수출입·매핑, 공개 등급 pub_trade — docs/p6_design.md §3.3) ──
+
+P6_PUB = {
+    "pub_trade.ten_day", "pub_trade.ten_day_columns", "pub_trade.item_monthly",
+    "pub_trade.country_monthly", "pub_trade.item_country_monthly", "pub_trade.sigungu_monthly",
+    "pub_trade.hs_dim", "pub_trade.surge", "pub_trade.item_group_monthly",
+    "pub_trade.stock_map", "pub_trade.stock_export",
+}  # fmt: skip
+
+
+def test_p6_tables_exist_and_export_role_reads_them(dsn: str) -> None:
+    rows = _rows(
+        dsn,
+        "SELECT table_schema || '.' || table_name FROM information_schema.tables "
+        "WHERE table_schema = 'pub_trade'",
+    )
+    assert {r[0] for r in rows} == P6_PUB
+    for table in sorted(P6_PUB):
+        _as_export(dsn, f"SELECT count(*) FROM {table}")  # noqa: S608 — 상수 표 이름
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        _as_export(dsn, "DELETE FROM pub_trade.stock_map")
+
+
+BAD_P6_ROWS = (
+    # 값이 없는 행은 ok 일 수 없다(0 으로 채우지 않는다)
+    "INSERT INTO pub_trade.item_monthly (ym, hs, hs_len, source, as_of, quality, received_at, "
+    "loaded_by) VALUES ('2026-09', '8542', 4, 'DATAGO:15101609', now(), 'ok', now(), 't')",
+    # hs_len 은 hs 의 자릿수
+    "INSERT INTO pub_trade.item_monthly (ym, hs, hs_len, exp_usd, source, as_of, quality, "
+    "received_at, loaded_by) VALUES ('2026-09', '8542', 6, 1, 'DATAGO:15101609', now(), 'ok', "
+    "now(), 't')",
+    # 관세청 행의 source 는 DATAGO:<포털 ID>
+    "INSERT INTO pub_trade.country_monthly (ym, country, country_name, exp_usd, source, as_of, "
+    "quality, received_at, loaded_by) VALUES ('2026-09', 'US', '미국', 1, 'KIS', now(), 'ok', "
+    "now(), 't')",
+    # 10일 구간은 1~3
+    "INSERT INTO pub_trade.ten_day (kind, ym, seg, col_no, name, usd, first_seen_at, span_text, "
+    "source, as_of, quality, received_at, loaded_by) VALUES ('exp_item', '2026-09', 4, 0, '전체', "
+    "1000, now(), '01~10', 'DATAGO:15157908', now(), 'estimated', now(), 't')",
+    # 지역 매핑 행은 HS6·수출만
+    "INSERT INTO pub_trade.stock_map (code, hs, flow, region_id, name, weight, origin, reviewed, "
+    "map_version, source, as_of, quality, countries, evidence, received_at, loaded_by) VALUES "
+    "('000000', '8542', 'exp', 'KR-41-x', '예시', 0.5, 'public', false, 'v', 'KBJ:trade_map', "
+    "now(), 'ok', '{}', '[]', now(), 't')",
+    # 겹쳐 보기 상태는 네 가지
+    "INSERT INTO pub_trade.stock_export (code, period, status, map_version, source, as_of, "
+    "quality, lag_corr, computed_at, loaded_by) VALUES ('000000', '2026Q3', 'great', 'v', "
+    "'KBJ:trade.stock_index', now(), 'ok', '{}', now(), 't')",
+)
+
+
+@pytest.mark.parametrize("stmt", BAD_P6_ROWS)
+def test_p6_constraints(dsn: str, stmt: str) -> None:
     with pytest.raises(psycopg.errors.CheckViolation), psycopg.connect(dsn) as c:
         c.execute(stmt.encode())

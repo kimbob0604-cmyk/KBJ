@@ -905,6 +905,193 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/trade/flash": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Flash */
+        get: operations["flash_api_trade_flash_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/trade/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Items */
+        get: operations["items_api_trade_items_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/trade/items/{hs}/series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Item Series */
+        get: operations["item_series_api_trade_items__hs__series_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/trade/items/{hs}/countries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Item Countries */
+        get: operations["item_countries_api_trade_items__hs__countries_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/trade/countries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Countries */
+        get: operations["countries_api_trade_countries_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/trade/countries/{cc}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Country Items */
+        get: operations["country_items_api_trade_countries__cc__items_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/trade/regions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Regions */
+        get: operations["regions_api_trade_regions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/trade/surges": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Surges */
+        get: operations["surges_api_trade_surges_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/trade/items104": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Items104 */
+        get: operations["items104_api_trade_items104_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/trade/stocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stocks */
+        get: operations["stocks_api_trade_stocks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/trade/stock/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stock */
+        get: operations["stock_api_trade_stock__code__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/telegram/webhook": {
         parameters: {
             query?: never;
@@ -2495,6 +2682,215 @@ export interface components {
              */
             generated_at: string;
             data: components["schemas"]["StockSearch"];
+        };
+        /** Envelope[TradeCountries] */
+        Envelope_TradeCountries_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["TradeCountries"];
+        };
+        /** Envelope[TradeCountryItems] */
+        Envelope_TradeCountryItems_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["TradeCountryItems"];
+        };
+        /** Envelope[TradeFlash] */
+        Envelope_TradeFlash_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["TradeFlash"];
+        };
+        /** Envelope[TradeItemCountries] */
+        Envelope_TradeItemCountries_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["TradeItemCountries"];
+        };
+        /** Envelope[TradeItemSeries] */
+        Envelope_TradeItemSeries_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["TradeItemSeries"];
+        };
+        /** Envelope[TradeItems104] */
+        Envelope_TradeItems104_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["TradeItems104"];
+        };
+        /** Envelope[TradeItems] */
+        Envelope_TradeItems_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["TradeItems"];
+        };
+        /** Envelope[TradeRegions] */
+        Envelope_TradeRegions_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["TradeRegions"];
+        };
+        /** Envelope[TradeStock] */
+        Envelope_TradeStock_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["TradeStock"];
+        };
+        /** Envelope[TradeStocks] */
+        Envelope_TradeStocks_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["TradeStocks"];
+        };
+        /** Envelope[TradeSurges] */
+        Envelope_TradeSurges_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["TradeSurges"];
         };
         /** Envelope[UsBoard] */
         Envelope_UsBoard_: {
@@ -4593,6 +4989,431 @@ export interface components {
             end: string | null;
             /** Active */
             active: boolean;
+        };
+        /** TradeCountries */
+        TradeCountries: {
+            /** Ym */
+            ym: string;
+            /** Rows */
+            rows: components["schemas"]["TradeCountryRow"][];
+        };
+        /** TradeCountryItems */
+        TradeCountryItems: {
+            /** Country */
+            country: string;
+            /** Country Name */
+            country_name: string | null;
+            /** Ym */
+            ym: string;
+            /**
+             * Flow
+             * @enum {string}
+             */
+            flow: "exp" | "imp";
+            /** Rows */
+            rows: components["schemas"]["TradeItemNode"][];
+        };
+        /** TradeCountryRow */
+        TradeCountryRow: {
+            /** Country */
+            country: string;
+            /** Country Name */
+            country_name: string;
+            /** Exp Usd */
+            exp_usd: number | null;
+            /** Imp Usd */
+            imp_usd: number | null;
+            /** Bal Usd */
+            bal_usd: number | null;
+            /** Exp Yoy */
+            exp_yoy: number | null;
+            /** Imp Yoy */
+            imp_yoy: number | null;
+            /** Exp Share */
+            exp_share: number | null;
+            quality: components["schemas"]["Quality"];
+        };
+        /** TradeFlash */
+        TradeFlash: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "exp_item" | "exp_country" | "imp_item" | "imp_country";
+            /** Months */
+            months: number;
+            /** Columns */
+            columns: string[];
+            /** Segments */
+            segments: components["schemas"]["TradeFlashSegment"][];
+        };
+        /**
+         * TradeFlashCell
+         * @description 한 구간의 한 열. usd = 최신(정정 반영), first_usd = 발표 당시. yoy 가 None 이면 사유
+         *     (`yoy_reason` — 전년 값 없음·열 이름 바뀜 등).
+         */
+        TradeFlashCell: {
+            /** Col No */
+            col_no: number;
+            /** Name */
+            name: string;
+            /** Usd */
+            usd: number | null;
+            /** First Usd */
+            first_usd: number | null;
+            /** Yoy */
+            yoy: number | null;
+            /** Yoy Reason */
+            yoy_reason?: string | null;
+            /** Contribution */
+            contribution?: number | null;
+            /** Mom */
+            mom?: number | null;
+        };
+        /** TradeFlashSegment */
+        TradeFlashSegment: {
+            /** Ym */
+            ym: string;
+            /** Seg */
+            seg: number;
+            /** Span Text */
+            span_text: string;
+            /**
+             * First Seen At
+             * Format: date-time
+             */
+            first_seen_at: string;
+            /** Revised At */
+            revised_at: string | null;
+            quality: components["schemas"]["Quality"];
+            /** Cells */
+            cells: components["schemas"]["TradeFlashCell"][];
+        };
+        /** TradeGroupRow */
+        TradeGroupRow: {
+            /** Group Id */
+            group_id: string;
+            /** Name */
+            name: string;
+            /** Exp Usd */
+            exp_usd: number | null;
+            /** Yoy */
+            yoy: number | null;
+            /** Unit Price */
+            unit_price: number | null;
+            /** Share */
+            share: number | null;
+            quality: components["schemas"]["Quality"];
+        };
+        /** TradeItemCountries */
+        TradeItemCountries: {
+            /** Hs */
+            hs: string;
+            /** Ym */
+            ym: string;
+            /**
+             * Flow
+             * @enum {string}
+             */
+            flow: "exp" | "imp";
+            /** Rows */
+            rows: components["schemas"]["TradeItemCountryRow"][];
+        };
+        /** TradeItemCountryRow */
+        TradeItemCountryRow: {
+            /** Country */
+            country: string;
+            /** Country Name */
+            country_name: string | null;
+            /** Usd */
+            usd: number | null;
+            /** Yoy */
+            yoy: number | null;
+            /** Share */
+            share: number | null;
+            quality: components["schemas"]["Quality"];
+        };
+        /**
+         * TradeItemNode
+         * @description 접두 트리 한 칸(트리맵 입력). usd·kg 는 기간 합(가장 깊은 행만 합산 — §26).
+         */
+        TradeItemNode: {
+            /** Hs */
+            hs: string;
+            /** Name */
+            name: string | null;
+            /** Usd */
+            usd: number | null;
+            /** Kg */
+            kg: number | null;
+            /** Yoy */
+            yoy: number | null;
+            /** Share */
+            share: number | null;
+            /** Unit Price */
+            unit_price: number | null;
+            /** Has Children */
+            has_children: boolean;
+            quality: components["schemas"]["Quality"];
+        };
+        /** TradeItemPoint */
+        TradeItemPoint: {
+            /** Ym */
+            ym: string;
+            /** Usd */
+            usd: number | null;
+            /** Kg */
+            kg: number | null;
+            /** Unit Price */
+            unit_price: number | null;
+            /** Yoy */
+            yoy: number | null;
+            /** Yoy 3M */
+            yoy_3m: number | null;
+            /** Ln Price */
+            ln_price: number | null;
+            /** Ln Volume */
+            ln_volume: number | null;
+            quality: components["schemas"]["Quality"];
+        };
+        /** TradeItemSeries */
+        TradeItemSeries: {
+            /** Hs */
+            hs: string;
+            /** Name */
+            name: string | null;
+            /**
+             * Flow
+             * @enum {string}
+             */
+            flow: "exp" | "imp";
+            /** Weight Unfit */
+            weight_unfit: boolean;
+            /** Points */
+            points: components["schemas"]["TradeItemPoint"][];
+        };
+        /** TradeItems */
+        TradeItems: {
+            /**
+             * Level
+             * @enum {integer}
+             */
+            level: 2 | 4 | 6 | 10;
+            /** Parent */
+            parent: string | null;
+            /**
+             * Flow
+             * @enum {string}
+             */
+            flow: "exp" | "imp";
+            /** Ym From */
+            ym_from: string;
+            /** Ym To */
+            ym_to: string;
+            /**
+             * Hs10 Login Only
+             * @default false
+             */
+            hs10_login_only: boolean;
+            /** Rows */
+            rows: components["schemas"]["TradeItemNode"][];
+        };
+        /** TradeItems104 */
+        TradeItems104: {
+            /** Ym */
+            ym: string;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "fixed" | "top_n";
+            /** Auto Selected */
+            auto_selected: boolean;
+            /** Rows */
+            rows: components["schemas"]["TradeGroupRow"][];
+        };
+        /** TradeMapEvidence */
+        TradeMapEvidence: {
+            /** Kind */
+            kind: string;
+            /** Note */
+            note: string;
+            /** Rcept No */
+            rcept_no: string | null;
+        };
+        /**
+         * TradeMapLine
+         * @description 매핑 한 줄 — 품목 행(region_id None) 또는 지역 행(region_id·hs = HS6).
+         */
+        TradeMapLine: {
+            /** Hs */
+            hs: string;
+            /**
+             * Flow
+             * @enum {string}
+             */
+            flow: "exp" | "imp";
+            /** Region Id */
+            region_id: string | null;
+            /** Weight */
+            weight: number;
+            /** Countries */
+            countries: string[];
+            /** Name */
+            name: string | null;
+        };
+        /** TradeRegionRow */
+        TradeRegionRow: {
+            /** Region Id */
+            region_id: string | null;
+            /** Sido Cd */
+            sido_cd: string;
+            /** Sgg Nm */
+            sgg_nm: string;
+            /** Hs6 */
+            hs6: string;
+            /** Exp Usd */
+            exp_usd: number | null;
+            /** Exp Yoy */
+            exp_yoy: number | null;
+            /** Share */
+            share: number | null;
+            quality: components["schemas"]["Quality"];
+        };
+        /** TradeRegions */
+        TradeRegions: {
+            /** Hs6 */
+            hs6: string | null;
+            /** Sido */
+            sido: string | null;
+            /** Ym */
+            ym: string;
+            /** Rows */
+            rows: components["schemas"]["TradeRegionRow"][];
+        };
+        /** TradeStock */
+        TradeStock: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Reviewed */
+            reviewed: boolean;
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "public" | "local";
+            /** Map Version */
+            map_version: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "no_revenue" | "short_overlap" | "no_trade";
+            /**
+             * Fx Note
+             * @default 환율 미조정(달러)
+             */
+            fx_note: string;
+            /** Lines */
+            lines: components["schemas"]["TradeMapLine"][];
+            /** Evidence */
+            evidence: components["schemas"]["TradeMapEvidence"][];
+            /** Monthly */
+            monthly: components["schemas"]["TradeStockPoint"][];
+            /** Quarterly */
+            quarterly: components["schemas"]["TradeStockPoint"][];
+            /** Lag Corr */
+            lag_corr: {
+                [key: string]: number | null;
+            };
+        };
+        /** TradeStockPoint */
+        TradeStockPoint: {
+            /** Period */
+            period: string;
+            /** Export Usd */
+            export_usd: number | null;
+            /** Yoy */
+            yoy: number | null;
+            /** Revenue Yoy */
+            revenue_yoy: number | null;
+            quality: components["schemas"]["Quality"];
+        };
+        /**
+         * TradeStockRank
+         * @description 매핑 종목 랭킹 한 줄 — 최근 3개월 수출 지수 YoY 내림차순(동률 코드 순).
+         */
+        TradeStockRank: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Yoy 3M */
+            yoy_3m: number | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "no_revenue" | "short_overlap" | "no_trade";
+            /** Reviewed */
+            reviewed: boolean;
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "public" | "local";
+            quality: components["schemas"]["Quality"];
+        };
+        /** TradeStocks */
+        TradeStocks: {
+            /** Map Version */
+            map_version: string;
+            /** Rows */
+            rows: components["schemas"]["TradeStockRank"][];
+        };
+        /** TradeSurgeRow */
+        TradeSurgeRow: {
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "hs2" | "hs4" | "hs6" | "hs10" | "country";
+            /** Key */
+            key: string;
+            /** Name */
+            name: string | null;
+            /**
+             * Flow
+             * @enum {string}
+             */
+            flow: "exp" | "imp";
+            /**
+             * Rule
+             * @enum {string}
+             */
+            rule: "surge" | "plunge";
+            /** Yoy */
+            yoy: number | null;
+            /** Yoy 3M */
+            yoy_3m: number | null;
+            /** Usd */
+            usd: number | null;
+            /** Rank */
+            rank: number;
+            quality: components["schemas"]["Quality"];
+        };
+        /** TradeSurges */
+        TradeSurges: {
+            /** Ym */
+            ym: string;
+            /** Level */
+            level: ("hs2" | "hs4" | "hs6" | "hs10" | "country") | null;
+            /** Min Usd */
+            min_usd: number;
+            /** Rows */
+            rows: components["schemas"]["TradeSurgeRow"][];
         };
         /** TurnoverPanel */
         TurnoverPanel: {
@@ -7810,6 +8631,658 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_StockIndexBadges_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    flash_api_trade_flash_get: {
+        parameters: {
+            query?: {
+                kind?: "exp_item" | "exp_country" | "imp_item" | "imp_country";
+                months?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_TradeFlash_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    items_api_trade_items_get: {
+        parameters: {
+            query?: {
+                level?: 2 | 4 | 6 | 10;
+                parent?: string | null;
+                flow?: "exp" | "imp";
+                from?: string | null;
+                to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_TradeItems_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    item_series_api_trade_items__hs__series_get: {
+        parameters: {
+            query?: {
+                flow?: "exp" | "imp";
+            };
+            header?: never;
+            path: {
+                hs: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_TradeItemSeries_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    item_countries_api_trade_items__hs__countries_get: {
+        parameters: {
+            query?: {
+                ym?: string | null;
+                flow?: "exp" | "imp";
+            };
+            header?: never;
+            path: {
+                hs: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_TradeItemCountries_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    countries_api_trade_countries_get: {
+        parameters: {
+            query?: {
+                ym?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_TradeCountries_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    country_items_api_trade_countries__cc__items_get: {
+        parameters: {
+            query?: {
+                ym?: string | null;
+                flow?: "exp" | "imp";
+            };
+            header?: never;
+            path: {
+                cc: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_TradeCountryItems_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    regions_api_trade_regions_get: {
+        parameters: {
+            query?: {
+                hs6?: string | null;
+                sido?: string | null;
+                ym?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_TradeRegions_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    surges_api_trade_surges_get: {
+        parameters: {
+            query?: {
+                ym?: string | null;
+                level?: ("hs2" | "hs4" | "hs6" | "hs10" | "country") | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_TradeSurges_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    items104_api_trade_items104_get: {
+        parameters: {
+            query?: {
+                ym?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_TradeItems104_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    stocks_api_trade_stocks_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_TradeStocks_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    stock_api_trade_stock__code__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_TradeStock_"];
                 };
             };
             /** @description 세션 없음·만료 */

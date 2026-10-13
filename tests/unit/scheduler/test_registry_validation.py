@@ -83,8 +83,17 @@ P5_ENABLED = {
     "us.eod",
     "flows.market_minute",  # K2I 3조합만(GX 2026-09-28 실측)
 }
-# 단계별 켜진 작업(웨이브 3 묶음이 P3·P4·P5 를 켰다). 새 단계가 작업을 켜면 이 표에 한 줄 더한다.
-ENABLED_BY_PHASE = {"P2": P2_ENABLED, "P3": P3_ENABLED, "P4": P4_ENABLED, "P5": P5_ENABLED}
+# P6(docs/p6_design.md D-P6-20 — 웨이브 3 WRAP). 외부 호출이 없는 세 작업만. 관세청 수집
+# 두 작업(trade.customs_*)은 키 수령·실측(#1~#6·#17·#55) 뒤 켠다
+P6_ENABLED = {"trade.map_load", "trade.derive", "trade.stock_index"}
+# 단계별 켜진 작업(웨이브 3 묶음이 P3~P6 을 켰다). 새 단계가 작업을 켜면 이 표에 한 줄 더한다.
+ENABLED_BY_PHASE = {
+    "P2": P2_ENABLED,
+    "P3": P3_ENABLED,
+    "P4": P4_ENABLED,
+    "P5": P5_ENABLED,
+    "P6": P6_ENABLED,
+}
 
 
 def raw() -> dict[str, Any]:
@@ -391,8 +400,13 @@ def test_store_must_be_in_writes_and_enabled_tables_must_exist() -> None:
 
 
 def test_enabled_owner_must_import_and_external_must_be_off() -> None:  # §6.6-6
-    # P5 묶음 US: us.eod 처리기가 생겨 예시를 아직 처리기가 없는 작업으로 바꿨다
-    errs = mutated(lambda d: job(d, "trade.customs_tenday").update(enabled=True))
+    # P5 묶음 US: us.eod 처리기가 생겨 예시를 아직 처리기가 없는 작업으로 바꿨다. P6 COL 이
+    # collectors/customs.py 를 만들어 처리기가 생겼다 — owner 를 없는 처리기로 바꿔 같은 규칙을 본다
+    errs = mutated(
+        lambda d: job(d, "trade.customs_tenday").update(
+            enabled=True, owner="kbj.services.collectors.nothing:run"
+        )
+    )
     assert any("trade.customs_tenday" in e and "처리기를 부를 수 없다" in e for e in errs)
     errs = mutated(lambda d: job(d, "kis.master").update(enabled=True))
     assert any("kis.master" in e and "enabled: false" in e for e in errs)
@@ -901,3 +915,114 @@ def test_p5_kis_venues_match_markets_config() -> None:
         for c in REG.by_name(name).collects:
             if CATALOG[c.dataset_id].venues:
                 assert tuple(v.value for v in c.venues) == venues, (name, c.dataset_id)
+
+
+# ── P6(docs/p6_design.md §0.4·§3.2 — 웨이브 1 묶음 FND 가 확정, 전부 꺼짐 — 켜기는 WRAP) ──
+
+P6_JOBS = {
+    "trade.customs_tenday": "kbj.services.collectors.customs:tenday",
+    "trade.customs_monthly": "kbj.services.collectors.customs:monthly",
+    "trade.map_load": "kbj.services.engine.trade_map:load",
+    "trade.derive": "kbj.services.engine.trade:derive",
+    "trade.stock_index": "kbj.services.engine.trade_map:stock_index",
+}
+P6_WRITES = {
+    "trade.customs_tenday": {"pub_trade.ten_day", "pub_trade.ten_day_columns"},
+    "trade.customs_monthly": {
+        "pub_trade.item_monthly", "pub_trade.country_monthly", "pub_trade.item_country_monthly",
+        "pub_trade.sigungu_monthly", "pub_trade.hs_dim",
+    },
+    "trade.map_load": {"pub_trade.stock_map"},
+    "trade.derive": {"pub_trade.surge", "pub_trade.item_group_monthly"},
+    "trade.stock_index": {"pub_trade.stock_export"},
+}  # fmt: skip
+P6_AS_OF = {
+    "trade.customs_tenday": "ten_day",
+    "trade.customs_monthly": "month",
+    "trade.map_load": "run_date",
+    "trade.derive": "month",
+    "trade.stock_index": "run_date",
+}
+
+
+def test_p6_jobs_are_registered_off_with_design_owners() -> None:
+    p6 = {j.name: j for j in REG.jobs if j.phase == "P6"}
+    assert set(p6) == set(P6_JOBS)
+    for name, owner in P6_JOBS.items():
+        assert p6[name].owner == owner, name
+        # 웨이브 3(WRAP)이 외부 호출 없는 셋을 켰다 — 관세청 수집은 키·실측 뒤
+        assert p6[name].enabled == (name in P6_ENABLED), name
+        assert REG.by_name(name).run_as_of() == P6_AS_OF[name], name
+    # 꺼진 관세청 수집은 노트에 막는 실측 번호
+    assert re.search(r"#6\b.*#17.*#55", p6["trade.customs_tenday"].note or "")
+    assert re.search(r"#1~#5", p6["trade.customs_monthly"].note or "")
+    # 계약 ⑨ — 엔진은 순수: 처리기는 kbj.services 에
+    assert all(o.startswith("kbj.services.") for o in P6_JOBS.values())
+
+
+def test_p6_writes_one_owner_per_trade_table() -> None:
+    from kbj.core.trade_rows import TRADE_TABLES
+
+    writes = {j.name: set(j.writes) for j in REG.jobs}
+    for name, want in P6_WRITES.items():
+        assert writes[name] == want, name
+    owners: dict[str, list[str]] = {}
+    for j in REG.jobs:
+        for w in j.writes:
+            if w.startswith("pub_trade."):
+                owners.setdefault(w, []).append(j.name)
+    assert set(owners) == set(TRADE_TABLES)
+    assert all(len(v) == 1 for v in owners.values()), owners
+    assert set(TRADE_TABLES) <= TABLES  # 0019 에 있는 표
+
+
+def test_p6_schedules_follow_the_design_and_trade_yaml() -> None:
+    from kbj.config.trade import load_trade
+
+    ten = REG.by_name("trade.customs_tenday")
+    assert ten.schedule.cron == "*/20 9-17 * * *" and ten.schedule.when == "month_days"
+    poll = load_trade().tenday.poll
+    assert tuple(ten.schedule.month_days) == poll.month_days
+    assert (poll.start, poll.end, poll.every_min) == ("09:00", "17:40", 20)
+    assert ten.schedule.first_time() == time(9, 0) and ten.schedule.fires_per_day() == 27
+    assert ten.retry.max == 0
+    monthly = REG.by_name("trade.customs_monthly")
+    assert monthly.schedule.cron == "10 10,15 * * *"
+    assert tuple(monthly.schedule.month_days) == tuple(range(14, 21))
+    derive = REG.by_name("trade.derive")
+    assert tuple(derive.schedule.month_days) == tuple(range(14, 21))
+    assert [(d.job, d.hard) for d in derive.depends_on] == [("trade.customs_monthly", True)]
+    assert REG.by_name("trade.map_load").schedule.cron == "35 7 * * *"
+    idx = REG.by_name("trade.stock_index")
+    assert idx.schedule.cron == "0 21 * * *"
+    assert {(d.job, d.hard) for d in idx.depends_on} == {
+        ("trade.derive", False), ("trade.map_load", False), ("fin.quarterly", False),
+    }  # fmt: skip
+    # 공개 내보내기는 하루 4번(D-P6-7)
+    assert REG.by_name("public.export").schedule.cron == "30 5,11,14,17 * * *"
+
+
+def test_p6_datago_daily_calls_fit_the_cap() -> None:  # §3.4
+    cap = BUDGETS["datago"][1]  # 데이터셋당 하루 한도(limits.yaml datago.daily_cap_per_dataset)
+    assert cap == 9500
+    calls = REG.daily_calls(CATALOG)
+    ten = {k: v for k, v in calls.items() if k.split(":")[-1] in TEN_DAY_DATASETS}
+    assert len(ten) == 4 and all(v == 27 for v in ten.values()), ten  # 20분 × 27회(데이터셋당)
+    assert sum(ten.values()) == 108
+    per_dataset = {k: v for k, v in calls.items() if k.startswith("datago:")}
+    assert all(v <= cap for v in per_dataset.values()), per_dataset  # type: ignore[operator]
+    # 월간은 실행 키(1개) × 2회로 센다 — 실제 1회 약 2,170건(§3.4 — 장·국가·시도 쪼갬)도 한도 안
+    assert 2_170 <= cap  # type: ignore[operator]
+
+
+TEN_DAY_DATASETS = {"15157908", "15157941", "15157901", "15157909"}
+
+
+def test_p6_sends_nothing_new_and_keeps_the_1600_rule() -> None:  # D-P6-8, ADR 0018
+    for name in P6_JOBS:
+        assert REG.by_name(name).notify is None, name
+    closing = [
+        j.name for j in REG.jobs if j.notify is not None and j.notify.kind == "brief.closing"
+    ]
+    assert closing == ["brief.closing"]
+    assert REG.by_name("brief.closing").schedule.cron == "0 16 * * 1-5"

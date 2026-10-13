@@ -76,6 +76,7 @@ from kbj.store.repos.market import (
 from kbj.store.repos.market_stats import MemoryMarketStatsRepo
 from kbj.store.repos.program import MemoryProgramRepo
 from kbj.store.repos.public import MemoryPublicRepos
+from kbj.store.repos.trade import MemoryTradeRepo
 from kbj.store.repos.us import MemoryUsRepo
 
 
@@ -725,6 +726,8 @@ class MemoryRepos:
     program: MemoryProgramRepo = field(default_factory=MemoryProgramRepo)
     # P5 2차 묶음 IDX(0018 — 로그인)
     index_review: MemoryIndexReviewRepo = field(default_factory=MemoryIndexReviewRepo)
+    # P6 묶음 FND(0019 — 공개)
+    trade: MemoryTradeRepo = field(default_factory=MemoryTradeRepo)
 
     def public(self) -> MemoryPublicRepos:
         """같은 공개 저장소 객체(filings·fin·macro·market_stats)를 공개 작업 묶음으로
