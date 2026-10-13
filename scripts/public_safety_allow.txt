@@ -5,3 +5,4 @@
 # - 규칙: 검사 규칙 이름(쉼표로 여러 개). `*` 는 모든 규칙 — 합성 데이터 파일처럼 꼭 필요할 때만.
 # - 사유: 필수. 왜 오탐인지, 무엇으로 확인했는지 적는다. 사유 없는 줄은 검사 전체를 실패시킨다.
 # 실제 비밀값을 허용 목록으로 덮지 않는다 — 지우고 키를 재발급한다(DATA_TIERS §4).
+web/test/fixtures/public/reports/Q00001.xlsx | data_extension | 합성 공개 픽스처 — 가짜 종목 Q00001 의 dart-report 엑셀. tests.unit.public_export.pub_rows 가 합성 세계에서 만들고 test_web_fixtures_are_fresh 가 지금 코드 출력과 같은지 본다(실데이터 아님)
