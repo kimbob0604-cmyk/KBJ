@@ -1,0 +1,46 @@
+{
+  "source": "KRX+DART",
+  "as_of": "2026-11-13T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "code": "994080",
+    "name": "모의테크",
+    "market": "KOSDAQ",
+    "kind": "common",
+    "common_code": "994080",
+    "corp_code": "99400080",
+    "corp_name": "모의테크",
+    "status_flags": [
+      "managed"
+    ],
+    "listed_on": "2014-11-20",
+    "acc_mt": 12,
+    "induty_code": "58221",
+    "last": {
+      "date": "2026-11-13",
+      "close": 2180.0,
+      "chg_pct": 3.07,
+      "volume": 52424,
+      "turnover": 114286433,
+      "mktcap": 32700000000,
+      "last_trade": "2026-11-13",
+      "stale": false,
+      "source": "KRX",
+      "quality": "ok"
+    },
+    "is_watch": true,
+    "detail_tier": true,
+    "newhigh": {
+      "date": "2026-11-13",
+      "basis": "close",
+      "d120": false,
+      "w52": false,
+      "hist": false,
+      "label": null,
+      "source": "KRX",
+      "quality": "ok"
+    }
+  }
+}

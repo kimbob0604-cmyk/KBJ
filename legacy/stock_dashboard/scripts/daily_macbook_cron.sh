@@ -45,8 +45,8 @@ log "=========================================="
 log "  daily_macbook_cron.sh 시작"
 log "=========================================="
 
-# ── 1. DART 분기 재무 (실패/미수집 종목만 retry) ──
-run_step "DART retry"          "$PYTHON" dart_collector.py retry
+# ── 1. DART 분기 재무 — KBJ P4 에 삭제(dart_collector.py). kbj fin.quarterly·fin.backfill(DART 정본
+#    클라이언트 — docs/p4_design.md §1.5)이 받는다 ──
 
 # ── 2. 5년 OHLCV 갱신 — KBJ P3 에 삭제(ohlcv_5y_collector.py — KRX 웹 스크랩). 일봉 이력은 kbj
 #    market.backfill(KRX OPEN API — docs/p3_design.md §3.8)이 받는다. 이 맥 cron 자체는 폐지 작업이다
@@ -55,14 +55,9 @@ run_step "DART retry"          "$PYTHON" dart_collector.py retry
 # ── 3. data_fetcher.py (네이버 테마 시세) ──
 run_step "data_fetcher (Naver 테마)"  "$PYTHON" data_fetcher.py
 
-# ── 4. 밸류에이션 밴드 재계산 ──
-run_step "Valuation band"      "$PYTHON" valuation_calculator.py all
-
-# ── 5. 컨센서스 (네이버 + yfinance) ──
-run_step "Consensus collector" "$PYTHON" consensus_collector.py all
-
-# ── 6. TAM 모델링 → JSON export ──
-run_step "TAM modeler"         "$PYTHON" tam_modeler.py all
+# ── 4~6. 밸류에이션 밴드·컨센서스(네이버 + yfinance)·TAM — KBJ P4 에 삭제(valuation_calculator.py·
+#    consensus_collector.py·tam_modeler.py). kbj fin.valuation_band(PIT 밴드·시나리오 적정가 — ADR 0016)·
+#    consensus.snapshot(KIS — ADR 0015). 옛 네이버 컨센서스 이력은 옮기지 않는다(U-P4-2) ──
 
 # ── 7. DB Gist 백업 (db_backup.CORE_TABLES만) ──
 run_step "Gist DB backup" "$PYTHON" -c "from db_backup import backup_db; print(backup_db())"

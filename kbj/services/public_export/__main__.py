@@ -3,9 +3,10 @@
     python -m kbj.services.public_export build --out <dir> [--now ISO] [--no-db]
     python -m kbj.services.public_export check <dir>
 
-- build: `KBJ_PUBLIC_EXPORT_DATABASE_URL` 이 있으면 그 연결을 확인하고(읽기 전용·역할 구성원),
-  없거나 `--no-db` 면 DB 없이 코드 계산·공개 설정 파일만 만든다(P3 은 읽는 공개 표가 없다 — 로컬
-  빌드·CI 용). 시각은 `--now`(시간대 포함 ISO)로 고정할 수 있다(시험).
+- build: `KBJ_PUBLIC_EXPORT_DATABASE_URL` 이 있으면 그 연결을 확인하고(읽기 전용·역할 구성원) 그
+  연결로 P4 공개 표(`pub_filings`·`pub_fin`)를 읽어 공시·재무 파일까지 만든다. 없거나 `--no-db` 면
+  DB 없이 코드 계산·공개 설정 파일만 만든다(로컬 빌드·CI 용 — P4 파일은 만들지 않고 이유를 stderr 에
+  적는다). 시각은 `--now`(시간대 포함 ISO)로 고정할 수 있다(시험).
 - check: manifest·sha256·봉투·로그인 등급 출처 이름·로그인 API 흔적 검사. 문제가 있으면 종료 1.
 - 출력은 파일 이름·규칙뿐(값·접속 정보 없음). 종료 코드 0 통과, 1 실패, 2 사용법.
 """
@@ -42,7 +43,7 @@ def _build(out: Path, now_text: str | None, no_db: bool) -> int:
         cal = TradingCalendar.default()
         connect_fn = None if no_db else default_connect(settings)
         if connect_fn is None:
-            print("DB 없이 만든다(공개 표 없음 — 코드 계산·공개 설정 파일만)", file=sys.stderr)
+            print("DB 없이 만든다(코드 계산·설정 파일만 — P4 파일 없음)", file=sys.stderr)
             manifest = export_all(None, out, now=now, cal=cal, settings=settings)
         else:
             with connect_fn() as conn:
@@ -53,6 +54,10 @@ def _build(out: Path, now_text: str | None, no_db: bool) -> int:
         return 1
     for f in manifest.files:
         print(f"{f.name}: quality={f.quality}")
+    for d in manifest.dirs:
+        print(f"{d.name}/: 파일 {d.count}개 {d.bytes} B quality={d.quality}")
+    for why in manifest.skipped:
+        print(f"건너뜀: {why}", file=sys.stderr)
     print(f"파일 {len(manifest.files)}개 + manifest.json → {out}")
     return 0
 

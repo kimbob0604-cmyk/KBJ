@@ -10,6 +10,7 @@
 - `not_kis`: 수급인데 KIS 가 아니다(§8.4 "KIS 행만")
 - `bad_code`·`bad_date`·`bad_value`·`volume_not_integer`·`bad_json`·`array_length`·`unknown_unit`·
   `no_update_id`·`bad_kind`·`no_asof`: 형식 오류 — 행을 고쳐 넣지 않는다
+- `not_kr`: 관심종목이 KR 종목이 아니다(SD 관심종목 market=us — 관심종목 표는 KR 종목코드만, P4)
 - `secret_like_key`: 키 이름이 토큰·비밀처럼 보인다(절대 규칙 5 — 값은 열어 보지 않고 버린다)
 
 값 규칙
@@ -650,5 +651,43 @@ def et_inbox(row: dict[str, object]) -> list[Candidate]:
             "kind": kind,
             "text_via": via if via in ("message", "oembed") else None,
             "received_at": None,
+        }
+    ]
+
+
+# ── P4: SD 관심종목(docs/p4_design.md §3.8 — sources.iter_sd_watchlist) ─────────────────────
+
+
+SD_WATCH_LIST: Final = "main"
+SD_WATCH_SOURCE: Final = "import:sd"
+
+
+def sd_watchlist(row: dict[str, object]) -> list[Candidate]:
+    """SD `server_watchlist.json` 항목 `{code, name, market, addedAt}` → `prv_journal.watchlist`.
+
+    목록 이름 'main', 순서는 파일 순서(`_index`), 출처 `import:sd`. market 이 'kr' 이 아니면
+    (미국 티커) `not_kr`, 코드 형식이 틀리면 `bad_code`. addedAt 은 오프셋 있는 ISO 만(없으면
+    NULL — 지어내지 않는다). `updated_at` 은 DB 기본값(now — 0013).
+    """
+    if row.get("_bad"):
+        return [Drop("bad_json")]
+    market = str(row.get("market") or "kr").strip().lower()
+    if market != "kr":
+        return [Drop("not_kr")]
+    code = kr_code(row.get("code"))
+    if code is None:
+        return [Drop("bad_code")]
+    idx = row.get("_index")
+    sort = idx if isinstance(idx, int) and not isinstance(idx, bool) and 0 <= idx < 32768 else 0
+    name = str(row.get("name") or "").strip() or None
+    return [
+        {
+            "list_name": SD_WATCH_LIST,
+            "code": code,
+            "name_at_add": name,
+            "added_at": parse_aware(row.get("addedAt")),
+            "sort": sort,
+            "note": None,
+            "source": SD_WATCH_SOURCE,
         }
     ]

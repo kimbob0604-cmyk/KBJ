@@ -8,6 +8,9 @@
 - 오류는 삼키지 않는다: 저장소·Redis 장애는 로그(종류만)와 503, 데이터 없음은 404 `no_data`,
   쿼리 검증 실패는 422(입력값을 싣지 않는다 — 비밀번호가 응답에 되돌아오지 않게).
 - 시계는 `now` 주입(시험은 가짜 시계). 거래 캘린더·시장 설정·금통위 일정도 주입할 수 있다.
+- P4(docs/p4_design.md §5 — 묶음 A): 종목 상세(`/api/stock/*`)·공시 패널(`/api/filings/*`)·관심종목
+  (`/api/watchlist`) 라우터, 모르는 종목코드 404 `unknown_code`, 공시·재무 설정(`config/fin.yaml`·
+  `config/reports.yaml` — 주입 가능, 완료 시험이 덮어쓴다).
 """
 
 from __future__ import annotations
@@ -25,6 +28,7 @@ from redis import Redis
 from redis.exceptions import RedisError
 
 from kbj.config.files import REPO_ROOT
+from kbj.config.fin import FinConfig, ReportsConfig, load_fin, load_reports
 from kbj.config.markets import (
     CalendarEvents,
     MarketsConfig,
@@ -45,8 +49,25 @@ from kbj.services.api.auth import (
 from kbj.services.api.cache import DataVersions, DataVersionSource, ResponseCache
 from kbj.services.api.deps import ApiError, ApiState, session_ttl
 from kbj.services.api.models.common import ErrorBody, NoDataBody
-from kbj.services.api.readers._common import ApiRepos, LedgerCache, NoData, ReadContext
-from kbj.services.api.routes import auth, board, etf, flows, health, market, webhook
+from kbj.services.api.readers._common import (
+    ApiRepos,
+    LedgerCache,
+    NoData,
+    ReadContext,
+    UnknownCode,
+)
+from kbj.services.api.routes import (
+    auth,
+    board,
+    etf,
+    filings,
+    flows,
+    health,
+    market,
+    stock,
+    watchlist,
+    webhook,
+)
 from kbj.services.notifier.webhook import WebhookHandler
 from kbj.store.db import StoreError
 
@@ -54,7 +75,7 @@ __all__ = ["API_VERSION", "SECURITY_HEADERS", "create_app"]
 
 log = logging.getLogger(__name__)
 
-API_VERSION: Final = "0.3.0"
+API_VERSION: Final = "0.4.0"
 # §5.4 보안 헤더. sw.js·manifest 는 같은 출처('self')라 worker-src·manifest-src 를
 # 밝혀 둔다(묶음 W 요청)
 CSP: Final = (
@@ -102,6 +123,11 @@ def _install_handlers(app: FastAPI) -> None:
         body = NoDataBody(message=exc.message).model_dump(mode="json")
         return JSONResponse(body, status_code=404, headers={"Cache-Control": "no-store"})
 
+    @app.exception_handler(UnknownCode)
+    async def _unknown(_: Request, __: UnknownCode) -> JSONResponse:
+        # 유니버스(전 거래일)에도 DART 고유번호 표에도 없는 코드 — 입력값은 싣지 않는다(§5.2)
+        return _error(404, "unknown_code", "모르는 종목코드")
+
     @app.exception_handler(RequestValidationError)
     async def _invalid(_: Request, exc: RequestValidationError) -> JSONResponse:
         # 입력값(input)·문맥(ctx)은 싣지 않는다 — 위치와 종류만(비밀번호가 되돌아오지 않게)
@@ -134,6 +160,8 @@ def create_app(
     events: CalendarEvents | None = None,
     data_versions: DataVersionSource | None = None,
     static_dir: Any = None,
+    fin: FinConfig | None = None,
+    reports: ReportsConfig | None = None,
 ) -> FastAPI:
     """앱 하나. `data_versions` 가 없으면 응답을 캐시하지 않는다(ETag 는 늘 붙인다).
 
@@ -154,6 +182,8 @@ def create_app(
         cal=cal if cal is not None else TradingCalendar.default(),
         markets=markets if markets is not None else load_markets(settings=settings),
         events=events if events is not None else load_calendar_events(settings=settings),
+        fin=fin if fin is not None else load_fin(settings=settings),
+        reports=reports if reports is not None else load_reports(settings=settings),
     )
     state = ApiState(
         settings=settings,
@@ -193,7 +223,7 @@ def create_app(
             resp.headers.setdefault("Cache-Control", "no-store")
         return resp
 
-    for r in (health, auth, market, board, flows, etf, webhook):
+    for r in (health, auth, market, board, flows, etf, stock, filings, watchlist, webhook):
         app.include_router(r.router)
 
     if static_dir is not False:

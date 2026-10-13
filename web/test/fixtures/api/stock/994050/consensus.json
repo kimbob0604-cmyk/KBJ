@@ -1,0 +1,28 @@
+{
+  "source": "KRX",
+  "as_of": "2026-11-13T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "컨센서스 수집 대상 아님(보통주·코스피/코스닥 · 관심종목 ∪ 시총 상위 0) — 관심종목에 넣으면 다음 수집(16:00)",
+    "출처 없음 — KIS 교체로 잃음: 분기 컨센서스·분기 어닝 서프라이즈·컨센서스 최고·최저"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "applicable": false,
+    "na_reason": "not_in_consensus_universe",
+    "code": "994050",
+    "label": "KIS 추정",
+    "snap_date": null,
+    "fy": [],
+    "ntm": null,
+    "target": null,
+    "opinions": null,
+    "revisions": [],
+    "recent": [],
+    "lost": [
+      "분기 컨센서스",
+      "분기 어닝 서프라이즈",
+      "컨센서스 최고·최저"
+    ]
+  }
+}

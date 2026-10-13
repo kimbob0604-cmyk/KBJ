@@ -30,7 +30,7 @@ import logging
 import re
 import time
 import zipfile
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Final
@@ -40,6 +40,7 @@ from pydantic import SecretStr
 from redis import Redis
 
 from kbj.config.settings import Settings
+from kbj.core.fin_rows import REPRT as _REPRT
 from kbj.core.time import utcnow
 from kbj.data.budget import DailyBudget
 from kbj.data.http import FetchError, get_capped, make_client, scrub
@@ -53,13 +54,10 @@ _BASE: Final = "https://opendart.fss.or.kr/api"
 KEY_PARAM: Final = "crtfc_key"
 KEY_LEN: Final = 40
 
-# 보고서 코드 → (분기 라벨, 누적 개월 수)
-REPRT: Final[Mapping[str, tuple[str, int]]] = {
-    "11013": ("1Q", 3),
-    "11012": ("2Q", 6),
-    "11014": ("3Q", 9),
-    "11011": ("4Q", 12),
-}
+# 보고서 코드 → (분기 라벨, 누적 개월 수). 정본은 `kbj.core.fin_rows.REPRT`(P4 — 엔진이 kbj.data 를
+# import 하지 못해 옮겼다, 계약 ⑨). 여기서는 같은 객체를 다시 내보낸다(legacy dart-report 가 이
+# 이름을 쓴다)
+REPRT: Final[Mapping[str, tuple[str, int]]] = _REPRT
 # "정상적인 빈 결과"로 보는 상태 코드
 EMPTY_STATUSES: Final = frozenset({"013"})
 QUOTA_STATUS: Final = "020"
@@ -157,6 +155,7 @@ class DartClient:
         cache_dir: Path | None = None,
         limiter: RateLimiter | None = None,
         budget: DailyBudget | None = None,
+        extra_budgets: Sequence[DailyBudget] = (),
         transport: httpx.BaseTransport | None = None,
         timeout: float = TIMEOUT_S,
         retries: int = 3,
@@ -188,6 +187,10 @@ class DartClient:
             load_limits().source(LIMITS_SOURCE).rate_config()
         )
         self._budget = budget
+        # 가져가는 순서: 좁은 예산(백필 `extra_budgets`) → 공용 일 예산(`budget`) — 백필 상한에 걸린
+        # 시도가
+        # 공용 `budget:dart` 를 헛되이 올려 장중 피드 몫을 깎지 않게(KrxClient 와 같은 순서)
+        self._budgets = tuple(b for b in (*extra_budgets, budget) if b is not None)
         self.timeout = timeout
         self._retries = retries
         self._backoff = backoff_s
@@ -212,9 +215,17 @@ class DartClient:
         *,
         limits: Limits | None = None,
         clock: Clock | None = None,
+        backfill: bool = False,
         **kw: Any,
     ) -> DartClient:
-        """`KBJ_DART_API_KEY` + Redis 리미터 `rl:dart:<키 해시>` + 일 예산 `budget:dart:<날짜>`."""
+        """`KBJ_DART_API_KEY` + Redis 리미터 `rl:dart:<키 해시>` + 일 예산 `budget:dart:<날짜>`.
+
+        `backfill=True` 면 백필 상한(`limits.yaml dart.backfill_cap` —
+        `budget:dart:backfill:<날짜>`)을
+        함께 센다(P4 `fin.backfill` — KrxClient.from_settings(backfill=) 와 같은 모양). 우선순위는
+        호출자가
+        `priority=Priority.P4` 로 준다(장중 피드에 양보).
+        """
         if settings.dart_api_key is None:
             raise DartKeyMissing("", "KBJ_DART_API_KEY 가 없다", "-")
         src = (limits or load_limits(settings=settings)).source(LIMITS_SOURCE)
@@ -223,7 +234,12 @@ class DartClient:
         key = settings.dart_api_key.get_secret_value()
         limiter = RedisRateLimiter.scoped(redis, LIMITS_SOURCE, key, src.rate_config(), clock)
         budget = DailyBudget(redis, LIMITS_SOURCE, src.daily_cap)
-        return cls(settings.dart_api_key, limiter=limiter, budget=budget, **kw)
+        extra: list[DailyBudget] = []
+        if backfill:
+            if src.backfill_cap is None:
+                raise ValueError("limits.yaml dart.backfill_cap 이 없다")
+            extra.append(DailyBudget(redis, LIMITS_SOURCE, src.backfill_cap, scope="backfill"))
+        return cls(settings.dart_api_key, limiter=limiter, budget=budget, extra_budgets=extra, **kw)
 
     def close(self) -> None:
         self._http.close()
@@ -261,8 +277,9 @@ class DartClient:
         status: int | None = None
         for i in range(attempts):
             self._limiter.acquire(self._priority, f"dart:{endpoint}", self._acquire_timeout)
-            if self._budget is not None:
-                self._budget.take(self._now())  # 상한·닫힘이면 BudgetExhausted — 부르지 않는다
+            at = self._now()
+            for budget in self._budgets:
+                budget.take(at)  # 상한·닫힘이면 BudgetExhausted — 부르지 않는다
             self.calls += 1
             try:
                 status, content = get_capped(

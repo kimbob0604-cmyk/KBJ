@@ -1,0 +1,79 @@
+{
+  "source": "DART",
+  "as_of": "2026-11-13T00:00:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "별도(OFS) — 연결재무제표 미작성"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "applicable": true,
+    "na_reason": null,
+    "code": "994020",
+    "corp_code": "99400020",
+    "basis": "q",
+    "fs_div": "OFS",
+    "currency": "KRW",
+    "tier": "full",
+    "rows": [
+      {
+        "period": "2026Q3",
+        "label": "2026 3Q",
+        "fiscal_year": 2026,
+        "fiscal_q": 3,
+        "period_start": "2026-07-01",
+        "period_end": "2026-09-30",
+        "rcept_dt": "2026-11-13",
+        "revenue": null,
+        "op": null,
+        "ni": null,
+        "ni_owner": null,
+        "opm": null,
+        "npm": null,
+        "rev_yoy": null,
+        "op_yoy": null,
+        "derived": true,
+        "quality": "ok",
+        "notes": [
+          "직전 분기 누적 없음 — 분기 단독을 만들지 않았다(derived)"
+        ]
+      }
+    ],
+    "ratios": {
+      "period": "2026Q3",
+      "fs_div": "OFS",
+      "ttm_revenue": null,
+      "ttm_op": null,
+      "ttm_ni_owner": null,
+      "opm": null,
+      "npm": null,
+      "roe": null,
+      "roa": null,
+      "debt_ratio": 38.01478877909676,
+      "net_debt_ratio": -6.354864380927117,
+      "rev_yoy": null,
+      "op_yoy": null,
+      "eps_ttm": null,
+      "bps": 3350.8888888888887,
+      "shares_basis": 18000000,
+      "na_reasons": {
+        "opm": "missing_input",
+        "npm": "missing_input",
+        "roe": "missing_input",
+        "roa": "missing_input",
+        "rev_yoy": "missing_input",
+        "op_yoy": "missing_input",
+        "eps_ttm": "missing_input"
+      },
+      "quality": "ok",
+      "notes": [
+        "연속 4분기(같은 기준)가 없어 TTM 을 만들지 않았다"
+      ]
+    },
+    "checks": {
+      "diff3m_max_pct": null,
+      "n_derived": 1,
+      "n_estimated": 0
+    }
+  }
+}

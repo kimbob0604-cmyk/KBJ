@@ -1,9 +1,13 @@
-// 공개 빌드 데이터 소스 — `./data/<이름>.json` 만 읽는다(docs/p3_design.md §6.6·§7.2).
+// 공개 빌드 데이터 소스 — `./data/<이름>.json` 만 읽는다(docs/p3_design.md §6.6·§7.2, docs/p4_design.md §1.2·§7).
 //
 // - 이름 허용 형식: 소문자·숫자·밑줄. 슬래시가 든 키(로그인 API 경로)는 **요청하지 않고** LockedError —
 //   공개 사이트는 로그인 API 주소조차 모른다(DATA_TIERS §3). 이 파일에는 API 경로 문자열이 없다.
+// - 예외는 P4 하위 폴더 **두 개뿐**: `fin/<코드>`(상장사 DART 재무)·`reports/<코드>`(dart-report 데모 종목),
+//   코드는 `^[0-9A-Z]{6}$`. 이 파일들은 manifest 항목이 아니라 **파일 자체가 봉투**(source·as_of·quality)여야 한다
+//   (내보내기 X 묶음과의 약속) — 봉투가 아니면 manifest 로 보충하지 않고 DataError.
 // - 파일이 봉투(source·as_of·quality·data)면 그대로, 아니면 manifest.json 의 같은 이름 항목으로 원천·시각·품질을
 //   붙인다. 둘 다 없으면 DataError — 원천 없는 숫자를 그리지 않는다(절대 규칙 1).
+// - 내려받기(href): `reports/<코드>.xlsx` 만 주소를 만든다(요청하지 않음). 그 밖은 null.
 import {
   asEnvelope,
   DataError,
@@ -17,6 +21,17 @@ import {
 } from './source';
 
 export const PUBLIC_NAME = /^[a-z0-9_]+$/;
+
+/** P4 하위 폴더 키 — 파일 자체가 봉투인 공개 파일(종목마다 하나) */
+export const PUBLIC_SUBDIR = /^(?:fin|reports)\/[0-9A-Z]{6}$/;
+
+/** 공개 내려받기 파일 — dart-report 엑셀(데모 종목만 있다) */
+export const PUBLIC_DOWNLOAD = /^reports\/[0-9A-Z]{6}\.xlsx$/;
+
+/** 공개판이 요청할 수 있는 키인가(그 밖은 요청 없이 LockedError). */
+export function isPublicKey(key: string): boolean {
+  return PUBLIC_NAME.test(key) || PUBLIC_SUBDIR.test(key);
+}
 
 export interface ManifestEntry {
   name: string;
@@ -104,10 +119,12 @@ export function createStaticSource(opts: StaticSourceOptions = {}): DataSource {
   return {
     tier: 'public',
     async get<T>(key: string): Promise<Envelope<T>> {
-      if (!PUBLIC_NAME.test(key)) throw new LockedError(key);
+      if (!isPublicKey(key)) throw new LockedError(key);
       const raw = await fetchJson(key);
       const env = asEnvelope<T>(raw);
       if (env) return env;
+      // 하위 폴더 파일은 그 자체가 봉투여야 한다 — manifest 에 종목마다 항목을 두지 않는다
+      if (PUBLIC_SUBDIR.test(key)) throw new DataError('원천·시각·품질 표시 없음');
       if (key === 'manifest') {
         const m = parseManifest(raw);
         throw new DataError(`manifest 는 봉투가 아님(파일 ${m.files.length}개)`);
@@ -123,6 +140,9 @@ export function createStaticSource(opts: StaticSourceOptions = {}): DataSource {
         generated_at: m.generated_at ?? entry.as_of,
         data: raw as T,
       };
+    },
+    href(key: string): string | null {
+      return PUBLIC_DOWNLOAD.test(key) ? `${base}${key}` : null;
     },
   };
 }

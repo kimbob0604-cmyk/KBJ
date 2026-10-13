@@ -1,0 +1,973 @@
+{
+ "_source": "SYNTHETIC — tests/fixtures/synthetic/kis/make_p4.py 가 가짜 KIS 서버의 컨센서스 출력(합성 20종목 세계 p4_world 시드 20261007·고정 시드)으로 만든 응답 모양. 실측 아님",
+ "estimate_empty": {
+  "body": {
+   "msg1": "정상처리 되었습니다.",
+   "msg_cd": "MCA00000",
+   "output1": {},
+   "output2": [],
+   "output3": [],
+   "output4": [],
+   "rt_cd": "0"
+  },
+  "day": "20261116",
+  "params": {
+   "SHT_CD": "994080"
+  },
+  "tr_id": "HHKST668300C0"
+ },
+ "estimate_full": {
+  "body": {
+   "msg1": "정상처리 되었습니다.",
+   "msg_cd": "MCA00000",
+   "output1": {
+    "estdate": "20261116",
+    "sht_cd": "994010"
+   },
+   "output2": [
+    {
+     "data1": "210224",
+     "data2": "218250",
+     "data3": "243896",
+     "data4": "267889",
+     "data5": "294713"
+    },
+    {
+     "data1": "",
+     "data2": "3.82",
+     "data3": "11.75",
+     "data4": "9.84",
+     "data5": "10.01"
+    },
+    {
+     "data1": "26646",
+     "data2": "27924",
+     "data3": "35535",
+     "data4": "39031",
+     "data5": "42939"
+    },
+    {
+     "data1": "",
+     "data2": "4.80",
+     "data3": "27.26",
+     "data4": "9.84",
+     "data5": "10.01"
+    },
+    {
+     "data1": "20542",
+     "data2": "21526",
+     "data3": "27393",
+     "data4": "30088",
+     "data5": "33101"
+    },
+    {
+     "data1": "",
+     "data2": "4.79",
+     "data3": "27.26",
+     "data4": "9.84",
+     "data5": "10.01"
+    }
+   ],
+   "output3": [
+    {
+     "data1": "34004",
+     "data2": "35563",
+     "data3": "43634",
+     "data4": "47926",
+     "data5": "52725"
+    },
+    {
+     "data1": "4385",
+     "data2": "4595",
+     "data3": "5848",
+     "data4": "6423",
+     "data5": "7066"
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    }
+   ],
+   "output4": [
+    {
+     "dt": "202412"
+    },
+    {
+     "dt": "202512"
+    },
+    {
+     "dt": "202612E"
+    },
+    {
+     "dt": "202712E"
+    },
+    {
+     "dt": "202812E"
+    }
+   ],
+   "rt_cd": "0"
+  },
+  "day": "20261116",
+  "params": {
+   "SHT_CD": "994010"
+  },
+  "tr_id": "HHKST668300C0"
+ },
+ "estimate_loss_sep": {
+  "body": {
+   "msg1": "정상처리 되었습니다.",
+   "msg_cd": "MCA00000",
+   "output1": {
+    "estdate": "20260901",
+    "sht_cd": "994070"
+   },
+   "output2": [
+    {
+     "data1": "2505",
+     "data2": "2590",
+     "data3": "2767",
+     "data4": "3050",
+     "data5": "3347"
+    },
+    {
+     "data1": "",
+     "data2": "3.39",
+     "data3": "6.83",
+     "data4": "10.23",
+     "data5": "9.74"
+    },
+    {
+     "data1": "170",
+     "data2": "2",
+     "data3": "-30",
+     "data4": "-183",
+     "data5": "-200"
+    },
+    {
+     "data1": "",
+     "data2": "-98.82",
+     "data3": "-1600.00",
+     "data4": "-510.00",
+     "data5": "-9.29"
+    },
+    {
+     "data1": "120",
+     "data2": "-33",
+     "data3": "-40",
+     "data4": "-202",
+     "data5": "-222"
+    },
+    {
+     "data1": "",
+     "data2": "-127.50",
+     "data3": "-21.21",
+     "data4": "-405.00",
+     "data5": "-9.90"
+    }
+   ],
+   "output3": [
+    {
+     "data1": "258",
+     "data2": "92",
+     "data3": "67",
+     "data4": "-76",
+     "data5": "-83"
+    },
+    {
+     "data1": "465",
+     "data2": "-126",
+     "data3": "-160",
+     "data4": "-785",
+     "data5": "-862"
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    }
+   ],
+   "output4": [
+    {
+     "dt": "202412"
+    },
+    {
+     "dt": "202512"
+    },
+    {
+     "dt": "202612E"
+    },
+    {
+     "dt": "202712E"
+    },
+    {
+     "dt": "202812E"
+    }
+   ],
+   "rt_cd": "0"
+  },
+  "day": "20260901",
+  "params": {
+   "SHT_CD": "994070"
+  },
+  "tr_id": "HHKST668300C0"
+ },
+ "estimate_march": {
+  "body": {
+   "msg1": "정상처리 되었습니다.",
+   "msg_cd": "MCA00000",
+   "output1": {
+    "estdate": "20261116",
+    "sht_cd": "994060"
+   },
+   "output2": [
+    {
+     "data1": "35524",
+     "data2": "36375",
+     "data3": "43123",
+     "data4": "47389",
+     "data5": "52044"
+    },
+    {
+     "data1": "",
+     "data2": "2.40",
+     "data3": "18.55",
+     "data4": "9.89",
+     "data5": "9.82"
+    },
+    {
+     "data1": "1450",
+     "data2": "1508",
+     "data3": "2316",
+     "data4": "2545",
+     "data5": "2795"
+    },
+    {
+     "data1": "",
+     "data2": "4.00",
+     "data3": "53.58",
+     "data4": "9.89",
+     "data5": "9.82"
+    },
+    {
+     "data1": "902",
+     "data2": "934",
+     "data3": "1425",
+     "data4": "1566",
+     "data5": "1719"
+    },
+    {
+     "data1": "",
+     "data2": "3.55",
+     "data3": "52.57",
+     "data4": "9.89",
+     "data5": "9.77"
+    }
+   ],
+   "output3": [
+    {
+     "data1": "2694",
+     "data2": "2781",
+     "data3": "3646",
+     "data4": "4007",
+     "data5": "4400"
+    },
+    {
+     "data1": "7289",
+     "data2": "7552",
+     "data3": "11517",
+     "data4": "12656",
+     "data5": "13899"
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    }
+   ],
+   "output4": [
+    {
+     "dt": "202503"
+    },
+    {
+     "dt": "202603"
+    },
+    {
+     "dt": "202703E"
+    },
+    {
+     "dt": "202803E"
+    },
+    {
+     "dt": "202903E"
+    }
+   ],
+   "rt_cd": "0"
+  },
+  "day": "20261116",
+  "params": {
+   "SHT_CD": "994060"
+  },
+  "tr_id": "HHKST668300C0"
+ },
+ "estimate_seeded": {
+  "body": {
+   "msg1": "정상처리 되었습니다.",
+   "msg_cd": "MCA00000",
+   "output1": {
+    "estdate": "20261007",
+    "sht_cd": "990010"
+   },
+   "output2": [
+    {
+     "data1": "28220",
+     "data2": "29913",
+     "data3": "32849",
+     "data4": "34820",
+     "data5": "36910"
+    },
+    {
+     "data1": "",
+     "data2": "6.00",
+     "data3": "9.82",
+     "data4": "6.00",
+     "data5": "6.00"
+    },
+    {
+     "data1": "847",
+     "data2": "897",
+     "data3": "985",
+     "data4": "1045",
+     "data5": "1107"
+    },
+    {
+     "data1": "",
+     "data2": "5.90",
+     "data3": "9.81",
+     "data4": "6.09",
+     "data5": "5.93"
+    },
+    {
+     "data1": "635",
+     "data2": "673",
+     "data3": "739",
+     "data4": "784",
+     "data5": "830"
+    },
+    {
+     "data1": "",
+     "data2": "5.98",
+     "data3": "9.81",
+     "data4": "6.09",
+     "data5": "5.87"
+    }
+   ],
+   "output3": [
+    {
+     "data1": "1101",
+     "data2": "1166",
+     "data3": "1280",
+     "data4": "1358",
+     "data5": "1439"
+    },
+    {
+     "data1": "158",
+     "data2": "168",
+     "data3": "184",
+     "data4": "196",
+     "data5": "207"
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": "",
+     "data4": "",
+     "data5": ""
+    }
+   ],
+   "output4": [
+    {
+     "dt": "202412"
+    },
+    {
+     "dt": "202512"
+    },
+    {
+     "dt": "202612E"
+    },
+    {
+     "dt": "202712E"
+    },
+    {
+     "dt": "202812E"
+    }
+   ],
+   "rt_cd": "0"
+  },
+  "day": "20261007",
+  "params": {
+   "SHT_CD": "990010"
+  },
+  "tr_id": "HHKST668300C0"
+ },
+ "estimate_thin": {
+  "body": {
+   "msg1": "정상처리 되었습니다.",
+   "msg_cd": "MCA00000",
+   "output1": {
+    "estdate": "20261116",
+    "sht_cd": "994020"
+   },
+   "output2": [
+    {
+     "data1": "633",
+     "data2": "703",
+     "data3": "774"
+    },
+    {
+     "data1": "",
+     "data2": "11.06",
+     "data3": "10.10"
+    },
+    {
+     "data1": "38",
+     "data2": "44",
+     "data3": "48"
+    },
+    {
+     "data1": "",
+     "data2": "15.79",
+     "data3": "9.09"
+    },
+    {
+     "data1": "29",
+     "data2": "35",
+     "data3": "38"
+    },
+    {
+     "data1": "",
+     "data2": "20.69",
+     "data3": "8.57"
+    }
+   ],
+   "output3": [
+    {
+     "data1": "60",
+     "data2": "68",
+     "data3": "75"
+    },
+    {
+     "data1": "159",
+     "data2": "186",
+     "data3": "205"
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": ""
+    },
+    {
+     "data1": "",
+     "data2": "",
+     "data3": ""
+    }
+   ],
+   "output4": [
+    {
+     "dt": "202512"
+    },
+    {
+     "dt": "202612E"
+    },
+    {
+     "dt": "202712E"
+    }
+   ],
+   "rt_cd": "0"
+  },
+  "day": "20261116",
+  "params": {
+   "SHT_CD": "994020"
+  },
+  "tr_id": "HHKST668300C0"
+ },
+ "opinion_empty": {
+  "body": {
+   "msg1": "정상처리 되었습니다.",
+   "msg_cd": "MCA00000",
+   "output": [],
+   "rt_cd": "0"
+  },
+  "day": "20261116",
+  "params": {
+   "FID_COND_MRKT_DIV_CODE": "J",
+   "FID_COND_SCR_DIV_CODE": "16633",
+   "FID_INPUT_DATE_1": "20260818",
+   "FID_INPUT_DATE_2": "20261116",
+   "FID_INPUT_ISCD": "994080"
+  },
+  "tr_id": "FHKST663300C0"
+ },
+ "opinion_full": {
+  "body": {
+   "msg1": "정상처리 되었습니다.",
+   "msg_cd": "MCA00000",
+   "output": [
+    {
+     "hts_goal_prc": "91400",
+     "invt_opnn": "매수",
+     "mbcr_name": "샘플증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20261106"
+    },
+    {
+     "hts_goal_prc": "89500",
+     "invt_opnn": "매수",
+     "mbcr_name": "시뮬투자증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20261105"
+    },
+    {
+     "hts_goal_prc": "83400",
+     "invt_opnn": "매수",
+     "mbcr_name": "모의증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20261104"
+    },
+    {
+     "hts_goal_prc": "80500",
+     "invt_opnn": "매수",
+     "mbcr_name": "가상증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20261102"
+    },
+    {
+     "hts_goal_prc": "91200",
+     "invt_opnn": "매수",
+     "mbcr_name": "테스트금융투자",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20261028"
+    },
+    {
+     "hts_goal_prc": "97600",
+     "invt_opnn": "매수",
+     "mbcr_name": "시뮬투자증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20260923"
+    },
+    {
+     "hts_goal_prc": "88600",
+     "invt_opnn": "매수",
+     "mbcr_name": "가상증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20260923"
+    },
+    {
+     "hts_goal_prc": "100000",
+     "invt_opnn": "매수",
+     "mbcr_name": "테스트금융투자",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20260918"
+    },
+    {
+     "hts_goal_prc": "96200",
+     "invt_opnn": "매수",
+     "mbcr_name": "샘플증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20260916"
+    },
+    {
+     "hts_goal_prc": "89800",
+     "invt_opnn": "매수",
+     "mbcr_name": "모의증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20260916"
+    }
+   ],
+   "rt_cd": "0"
+  },
+  "day": "20261116",
+  "params": {
+   "FID_COND_MRKT_DIV_CODE": "J",
+   "FID_COND_SCR_DIV_CODE": "16633",
+   "FID_INPUT_DATE_1": "20260818",
+   "FID_INPUT_DATE_2": "20261116",
+   "FID_INPUT_ISCD": "994010"
+  },
+  "tr_id": "FHKST663300C0"
+ },
+ "opinion_neutral": {
+  "body": {
+   "msg1": "정상처리 되었습니다.",
+   "msg_cd": "MCA00000",
+   "output": [
+    {
+     "hts_goal_prc": "14140",
+     "invt_opnn": "매수",
+     "mbcr_name": "가상증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20261104"
+    },
+    {
+     "hts_goal_prc": "15340",
+     "invt_opnn": "매수",
+     "mbcr_name": "모의증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20261028"
+    },
+    {
+     "hts_goal_prc": "15820",
+     "invt_opnn": "중립",
+     "mbcr_name": "시뮬투자증권",
+     "rgbf_invt_opnn": "중립",
+     "stck_bsop_date": "20261027"
+    },
+    {
+     "hts_goal_prc": "15510",
+     "invt_opnn": "중립",
+     "mbcr_name": "시뮬투자증권",
+     "rgbf_invt_opnn": "중립",
+     "stck_bsop_date": "20260923"
+    },
+    {
+     "hts_goal_prc": "15080",
+     "invt_opnn": "매수",
+     "mbcr_name": "모의증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20260923"
+    },
+    {
+     "hts_goal_prc": "13530",
+     "invt_opnn": "매수",
+     "mbcr_name": "가상증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20260916"
+    },
+    {
+     "hts_goal_prc": "15380",
+     "invt_opnn": "중립",
+     "mbcr_name": "시뮬투자증권",
+     "rgbf_invt_opnn": "중립",
+     "stck_bsop_date": "20260818"
+    }
+   ],
+   "rt_cd": "0"
+  },
+  "day": "20261116",
+  "params": {
+   "FID_COND_MRKT_DIV_CODE": "J",
+   "FID_COND_SCR_DIV_CODE": "16633",
+   "FID_INPUT_DATE_1": "20260818",
+   "FID_INPUT_DATE_2": "20261116",
+   "FID_INPUT_ISCD": "994070"
+  },
+  "tr_id": "FHKST663300C0"
+ },
+ "opinion_not_rated": {
+  "body": {
+   "msg1": "정상처리 되었습니다.",
+   "msg_cd": "MCA00000",
+   "output": [
+    {
+     "hts_goal_prc": "15580",
+     "invt_opnn": "매수",
+     "mbcr_name": "모의증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20261103"
+    },
+    {
+     "hts_goal_prc": "17110",
+     "invt_opnn": "매수",
+     "mbcr_name": "시뮬투자증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20261030"
+    },
+    {
+     "hts_goal_prc": "0",
+     "invt_opnn": "Not Rated",
+     "mbcr_name": "샘플증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20261030"
+    },
+    {
+     "hts_goal_prc": "17190",
+     "invt_opnn": "매수",
+     "mbcr_name": "가상증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20261026"
+    },
+    {
+     "hts_goal_prc": "16920",
+     "invt_opnn": "매수",
+     "mbcr_name": "시뮬투자증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20260923"
+    },
+    {
+     "hts_goal_prc": "16160",
+     "invt_opnn": "매수",
+     "mbcr_name": "가상증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20260923"
+    },
+    {
+     "hts_goal_prc": "18040",
+     "invt_opnn": "매수",
+     "mbcr_name": "샘플증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20260918"
+    },
+    {
+     "hts_goal_prc": "16620",
+     "invt_opnn": "매수",
+     "mbcr_name": "모의증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20260918"
+    },
+    {
+     "hts_goal_prc": "18180",
+     "invt_opnn": "매수",
+     "mbcr_name": "시뮬투자증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20260818"
+    }
+   ],
+   "rt_cd": "0"
+  },
+  "day": "20261116",
+  "params": {
+   "FID_COND_MRKT_DIV_CODE": "J",
+   "FID_COND_SCR_DIV_CODE": "16633",
+   "FID_INPUT_DATE_1": "20260818",
+   "FID_INPUT_DATE_2": "20261116",
+   "FID_INPUT_ISCD": "994030"
+  },
+  "tr_id": "FHKST663300C0"
+ },
+ "opinion_seeded": {
+  "body": {
+   "msg1": "정상처리 되었습니다.",
+   "msg_cd": "MCA00000",
+   "output": [
+    {
+     "hts_goal_prc": "262600",
+     "invt_opnn": "매수",
+     "mbcr_name": "합성증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20261007"
+    },
+    {
+     "hts_goal_prc": "274000",
+     "invt_opnn": "매수",
+     "mbcr_name": "가상투자증권",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20260930"
+    },
+    {
+     "hts_goal_prc": "285400",
+     "invt_opnn": "매수",
+     "mbcr_name": "모의금융투자",
+     "rgbf_invt_opnn": "매수",
+     "stck_bsop_date": "20260923"
+    },
+    {
+     "hts_goal_prc": "267100",
+     "invt_opnn": "매수",
+     "mbcr_name": "합성증권",
+     "rgbf_invt_opnn": "",
+     "stck_bsop_date": "20260902"
+    },
+    {
+     "hts_goal_prc": "278600",
+     "invt_opnn": "매수",
+     "mbcr_name": "가상투자증권",
+     "rgbf_invt_opnn": "",
+     "stck_bsop_date": "20260826"
+    },
+    {
+     "hts_goal_prc": "290000",
+     "invt_opnn": "매수",
+     "mbcr_name": "모의금융투자",
+     "rgbf_invt_opnn": "",
+     "stck_bsop_date": "20260819"
+    }
+   ],
+   "rt_cd": "0"
+  },
+  "day": "20261007",
+  "params": {
+   "FID_COND_MRKT_DIV_CODE": "J",
+   "FID_COND_SCR_DIV_CODE": "16633",
+   "FID_INPUT_DATE_1": "20260709",
+   "FID_INPUT_DATE_2": "20261007",
+   "FID_INPUT_ISCD": "990010"
+  },
+  "tr_id": "FHKST663300C0"
+ }
+}

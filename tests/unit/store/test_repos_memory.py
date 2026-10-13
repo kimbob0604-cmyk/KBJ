@@ -24,7 +24,10 @@ D = date(2026, 10, 6)
 
 def as_repos(m: MemoryRepos) -> Repos:
     # pyright 가 메모리 구현이 Protocol(MarketRepo 등)을 만족하는지 여기서 확인한다
-    return Repos(market=m.market, flows=m.flows, board=m.board, etf=m.etf)
+    return Repos(
+        market=m.market, flows=m.flows, board=m.board, etf=m.etf, filings=m.filings, fin=m.fin,
+        consensus=m.consensus, journal=m.journal,
+    )  # fmt: skip
 
 
 @pytest.mark.parametrize("case", CASES, ids=CASE_IDS)

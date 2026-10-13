@@ -41,8 +41,13 @@ def test_no_trading_day_job_runs(holiday: SimDay) -> None:
 def test_always_jobs_still_run(holiday: SimDay) -> None:
     final = holiday.final_runs()
     ran = Counter(job for job, _ in final)
-    for job in ("ops.nightly", "filings.corp_code", "macro.monthly", "earnings.backfill"):
+    # P4(docs/p4_design.md §0.4): earnings.backfill 은 거래일 작업(3·5·7 거래일 성과)이 됐다 — 대신
+    # 날마다 도는 reports.dart_excel(21:00)을 본다. DART 는 거래소 휴장일에도 접수하므로 공시 피드는
+    # 평일 휴장일에도 매분 돈다(R21 — when: always)
+    for job in ("ops.nightly", "filings.corp_code", "macro.monthly", "reports.dart_excel"):
         assert ran[job] == 1, job
+    assert ran["earnings.backfill"] == 0
+    assert ran["filings.dart_feed"] == 13 * 60
     assert {r.status for r in final.values()} == {"ok"}
 
 

@@ -40,6 +40,19 @@ scheduler 의 `KrxClient`(가짜 KRX — 가짜 KIS 종목도 KRX 원장에 둔�
 끈다(`Coverage(min_rows={})`). 창 시작 전에 있어야 할 데이터(장중 창의 감시 ETF 일별 등)는
 `SimOptions.prepare` 로 심는다.
 
+P4 확장(docs/p4_design.md §8.5 — 묶음 S): `SimOptions(p4=True)` 면 가짜 DART·KIS 가 합성 20종목
+세계(`tests/fixtures/synthetic/p4_world.py`)를 서빙하고, 등록부에서 **켜진 P4
+작업**(`filings.dart_feed`·
+`fin.quarterly`·`filings.derive`·`earnings.alerts`·`earnings.backfill`·`fin.valuation_band`·
+`reports.dart_excel` …)과 `public.export` 는 실제 처리기가 돈다. `SimOptions.enable` 은 **이
+시뮬레이션의 등록부 사본에서만** 켤 작업(운영 등록부에서 꺼진 `consensus.snapshot` — D-P4-10)이다.
+창 앞 이력(공시·잠정실적·오버행·소유보고·주식총수·기업개황·관심종목·종류주식은 창 전날까지, 시세·
+컨센서스는 전 거래일까지)은 저장소에 미리 넣고, 재무 5년 백필(`fin.backfill` — 상세 층 full 뒤
+주요계정 main)은 창 1시간 전에 **따로 둔 가짜 DART** 로 실제 처리기를 돌린다(창의 DART 호출
+수·예산에 넣지 않는다 — 운영에서는 며칠 전에 끝난 일). P3 작업은 시뮬레이션 처리기 그대로(P3 실제
+처리기는 `test_one_day_p3`)라 시세는 씨앗 값을 읽는다. 공개 내보내기의 P4 표 읽기는 자원
+`public_reader` (메모리 읽기 — `tests/unit/public_export/pub_rows.MemReader`)로 준다.
+
 키·토큰은 모두 가짜 값이다. 로그인 등급 응답은 합성(U3).
 """
 
@@ -60,10 +73,12 @@ from zoneinfo import ZoneInfo
 
 import fakeredis
 import httpx
+import yaml
 from pydantic import SecretStr
 from redis import Redis
 from redis.exceptions import RedisError
 
+from kbj.config.fin import load_fin
 from kbj.config.markets import MarketsConfig, load_markets
 from kbj.config.settings import Settings
 from kbj.core.calendar import (
@@ -89,11 +104,18 @@ from kbj.data.private.etf_issuers.base import IssuerHttp
 from kbj.data.private.etf_issuers.registry import build as build_issuers
 from kbj.data.private.fsc_index_price.client import FscIndexPriceClient
 from kbj.data.private.fsc_stock_price.client import FscStockPriceClient
+from kbj.data.private.kis.consensus import (
+    TR_ESTIMATE,
+    TR_OPINION,
+    params_estimate,
+    params_opinion,
+)
 from kbj.data.private.kis.credentials import KisCredentials
 from kbj.data.private.kis.master import download_fo_master, parse_master_zip
 from kbj.data.private.kis.rest import MINUTE_PATH, MINUTE_TR, KisRestClient, minute_chart_params
 from kbj.data.private.kis.token import reader
 from kbj.data.private.krx.client import KrxClient
+from kbj.data.public.customs.client import DATASET_IDS as CUSTOMS_DATASETS
 from kbj.data.public.dart.client import DartClient
 from kbj.data.public.ecos.client import RESTRICTED_TABLES, EcosClient
 from kbj.data.public.fsc_kofia_stats.client import KofiaStatsClient
@@ -103,6 +125,7 @@ from kbj.data.ratelimit import Priority, RedisRateLimiter
 from kbj.data.spec import DataKey
 from kbj.services.auth.service import AuthService, AuthStatus, build_auth_service, next_wait
 from kbj.services.collectors import corp_code, ops_watchdog
+from kbj.services.collectors import fin as fin_job
 from kbj.services.collectors.corp_code import MemoryCorpCodeStore
 from kbj.services.collectors.krx_daily import Coverage
 from kbj.services.notifier.client import NotifyClient, set_default_client
@@ -126,6 +149,7 @@ from kbj.services.scheduler.runner import JobRunner, inline_submit
 from kbj.services.scheduler.service import SchedulerService, SessionLogRecord
 from kbj.store.redis_keys import SESSION_EVENTS
 from kbj.store.repos import MemoryRepos, memory_repos
+from tests.acceptance.p4_pipeline import detail_codes, seed_history
 from tests.fakes import (
     dart_server,
     datago_server,
@@ -144,6 +168,11 @@ from tests.fakes.kosis_server import FakeKosis
 from tests.fakes.krx_server import FakeKrx
 from tests.fakes.telegram_server import FakeTelegram
 from tests.fakes.ws_server import FakeKisWsServer, subscribe_once
+from tests.fixtures.synthetic.p4_world import P4World, build_world
+from tests.golden.dart_report.golden import NoLimit
+from tests.unit.api.api_world_p4 import config_for_tests
+from tests.unit.engines.filings.filings_world import load as load_filings
+from tests.unit.public_export.pub_rows import MemReader, PubWorld
 
 KST: Final = ZoneInfo("Asia/Seoul")
 ROOT: Final = Path(__file__).resolve().parents[2]
@@ -198,6 +227,13 @@ def _stock(v: str, code: str, _d: str) -> dict[str, str]:
     return {"FID_COND_MRKT_DIV_CODE": v, "FID_INPUT_ISCD": code}
 
 
+def _opinion_params(code: str, ymd: str) -> dict[str, str]:
+    """종목투자의견 기간 = 그날 − config/fin.yaml consensus.opinion_window_days ~ 그날(묶음 K)."""
+    end = date(int(ymd[:4]), int(ymd[4:6]), int(ymd[6:8]))
+    window = load_fin().consensus.opinion_window_days
+    return params_opinion(code, end - timedelta(days=window), end)
+
+
 KIS_SPECS: Final[dict[str, KisSpec]] = {
     "stock_quote_eod": KisSpec("FHKST01010100", SYMBOLS, _stock),
     "stock_investor_daily": KisSpec("FHKST01010900", SYMBOLS, _stock),
@@ -236,8 +272,11 @@ KIS_SPECS: Final[dict[str, KisSpec]] = {
         lambda _v, c, _d: {"FID_COND_MRKT_DIV_CODE": "U", "FID_INPUT_ISCD": c},
     ),
     "watch_quotes_intraday": KisSpec("FHKST01010100", WATCH, _stock, Priority.P2),
-    # [추정 TR] 설계 R20 — 미실측. 가짜 서버의 TR 표와만 맞춘다
-    "consensus_estimate": KisSpec("FHKST663300C0", SYMBOLS, lambda _v, c, _d: {"SHT_CD": c}),
+    # P4 컨센서스(묶음 K) — TR 은 kis/datasets.py:CONSENSUS_TRS 상수([확인 필요 #29]), 파라미터는
+    # 파서 모듈의 params_*(같은 모양). consensus.snapshot 은 운영 등록부에서 꺼져 있어도 이 하루
+    # 시뮬레이션은 가짜 처리기로 돌린다(docs/p4_design.md §0.4 끝)
+    "consensus_estimate": KisSpec(TR_ESTIMATE.tr_id, SYMBOLS, lambda _v, c, _d: params_estimate(c)),
+    "invest_opinion": KisSpec(TR_OPINION.tr_id, SYMBOLS, lambda _v, c, d: _opinion_params(c, d)),
 }
 
 
@@ -364,6 +403,24 @@ class SimOptions:
     hooks: tuple[tuple[datetime, Callable[[SimDay], None]], ...] = ()
     p3: bool = False  # 켜진 P3 작업은 실제 처리기로(위 머리말)
     prepare: tuple[Callable[[SimDay], None], ...] = ()  # 만든 뒤 run 전에 한 번(데이터 심기)
+    p4: bool = False  # 합성 20종목 세계 + 켜진 P4 작업은 실제 처리기로(위 머리말)
+    enable: tuple[str, ...] = ()  # 이 시뮬레이션의 등록부 사본에서만 켤 작업(운영 등록부는 그대로)
+
+
+def load_registry(enable: tuple[str, ...] = ()) -> Registry:
+    """운영 등록부(`config/jobs.yaml`) — `enable` 의 작업만 켠 사본(없는 이름이면 실패)."""
+    path = ROOT / "config" / "jobs.yaml"
+    if not enable:
+        return Registry.load(path)
+    data: dict[str, Any] = yaml.safe_load(path.read_text(encoding="utf-8"))
+    names = set(enable)
+    for j in data["jobs"]:
+        if j["name"] in names:
+            j["enabled"] = True
+            names.discard(j["name"])
+    if names:
+        raise ValueError(f"등록부에 없는 작업: {sorted(names)}")
+    return Registry.parse(data)
 
 
 @dataclass
@@ -390,9 +447,10 @@ class SimDay:
         self.us = us_calendar()
         # ── 가짜 서버 ─────────────────────────────────────────────────────────────────
         now = self.clock.now
-        self.kis = FakeKisServer(now)
+        self.world: P4World | None = build_world() if opts.p4 else None
+        self.kis = FakeKisServer(now, consensus=self.world)
         self.krx = FakeKrx(now, extra=kis_symbols_on_krx() if opts.p3 else None)
-        self.dart = FakeDart(now)
+        self.dart = FakeDart(now, world=self.world)
         self.datago = FakeDatago(now)
         self.ecos = FakeEcos(now)
         self.kosis = FakeKosis(now)
@@ -402,7 +460,7 @@ class SimDay:
             self.ws = FakeKisWsServer(self.kis.valid_approval_key).start()
         self._publish_krx()
         # ── 남는 것(DB 처럼 재기동을 넘긴다) ──────────────────────────────────────────────
-        self.registry = Registry.load(ROOT / "config" / "jobs.yaml")
+        self.registry = load_registry(opts.enable)
         self.catalog = all_datasets()
         self.claims = MemoryClaimStore()
         self.runs = MemoryRunLog()
@@ -430,6 +488,15 @@ class SimDay:
         self.p3_owners: frozenset[str] = frozenset(
             j.owner for j in self.registry.jobs if opts.p3 and j.phase == "P3" and j.enabled
         )
+        # P4: 켜진 P4 작업(+ enable) + 공개 내보내기(P4 파일을 쓴다)는 실제 처리기
+        self.p4_owners: frozenset[str] = frozenset(
+            j.owner
+            for j in self.registry.jobs
+            if opts.p4 and j.enabled and (j.phase == "P4" or j.name == "public.export")
+        )
+        self.p4_seed_runs: list[JobResult] = []
+        if opts.p4:
+            self._p4_seed()
         if opts.seed_runs:
             self._seed_runs()
         # ── 프로세스 ─────────────────────────────────────────────────────────────────
@@ -639,8 +706,8 @@ class SimDay:
                 raise AssertionError(
                     f"owner 가 겹친다 — 시뮬레이션 처리기를 나눌 수 없다: {job.owner}"
                 )
-            if job.owner in self.p3_owners:
-                handlers[job.owner] = resolve(job.owner)  # 실제 P3 처리기(import 검증 겸)
+            if job.owner in self.p3_owners or job.owner in self.p4_owners:
+                handlers[job.owner] = resolve(job.owner)  # 실제 P3·P4 처리기(import 검증 겸)
                 continue
             handlers[job.owner] = REAL_HANDLERS.get(job.owner) or self._sim_handler(job)
         resources: dict[str, Any] = {
@@ -657,9 +724,14 @@ class SimDay:
             "inbox_days": self.notify_config.inbox.keep_days,
             "connect": lambda: _FakeConn(self.pg_log),
             "redis": self.sched_redis,
+            # P4(D-P4-25 ②) — event 키는 처리기가 실행기와 같은 선점 저장소로 직접 잡는다(운영
+            # scheduler/__main__.py 와 같은 자원)
+            "claims": self.claims,
         }
         if self.opts.p3:
             resources.update(self._p3_resources())
+        if self.opts.p4:
+            resources.update(self._p4_resources())
         return JobRunner(
             self.registry,
             handlers,
@@ -694,6 +766,78 @@ class SimDay:
             "parallel": False,
             "public_connect": lambda: _PublicConn(self.public_log),
             "public_out_dir": self.public_out,
+        }
+
+    # ── P4(docs/p4_design.md §8.5) ─────────────────────────────────────────────────────
+    def _p4_seed(self) -> None:
+        """창 앞 이력을 저장소에 넣고 재무 5년 백필을 실제 처리기로 돌린다(위 머리말)."""
+        w = self.world
+        assert w is not None
+        day = self.start.astimezone(KST).date()
+        eve = kst(day - timedelta(days=1), dtime(23, 59))  # 창 전날 끝 — 그날 공시는 피드가 받는다
+        self.repos = load_filings(eve, w=w).repos
+        seed_history(self.repos, w, until=self.kr.prev_trading_day(day), now=eve)
+        at = self.start - timedelta(hours=1)
+        clock = FakeClock(at)
+        fake = FakeDart(clock.now, world=w)
+        client = DartClient(
+            dart_server.KEY, transport=fake.transport("seed"), limiter=NoLimit(), retries=1,
+            backoff_s=0, now=clock.now, sleep=lambda _s: None,
+        )  # fmt: skip
+        fin_cfg, reports_cfg = config_for_tests()
+        for tier in ("full", "main"):
+            cfg = fin_cfg.model_copy(
+                update={"backfill": fin_cfg.backfill.model_copy(update={"tier": tier})}
+            )
+            ctx = JobContext(
+                job="fin.backfill", as_of=at.astimezone(KST).strftime("%Y-%m-%dT%H:%M"),
+                run_id=f"fin.backfill:seed:{tier}", attempt=1, now=at, keys=(),
+                resources={
+                    "public_repos": self.repos.public(), "dart": client, "claims": self.claims,
+                    "fin_config": cfg, "reports_config": reports_cfg,
+                    "detail_universe": lambda _d: detail_codes(self.repos),
+                },
+            )  # fmt: skip
+            res = fin_job.backfill(ctx)
+            if res.status != "ok":
+                raise RuntimeError(f"재무 백필 씨앗 실패: {res.status} {dict(res.detail)}")
+            self.p4_seed_runs.append(res)
+        # 씨앗 공시(창 앞 정기보고서)는 백필이 받은 것 — 운영에서는 이 공시들이 피드에 들어올 때
+        # 이미 fin.quarterly 가 처리 표시를 찍었다. 창의 fin.quarterly 는 그날 접수된 보고서만
+        # 받는다
+        old = self.repos.filings.fin_unloaded(kinds=("periodic",), limit=1_000_000)
+        self.repos.filings.mark_fin_loaded([d.rcept_no for d in old], now=at)
+
+    def _p4_resources(self) -> dict[str, Any]:
+        """실제 P4 처리기의 자원(각 처리기 머리말 — 운영은 연결로 만든다)."""
+        w = self.world
+        assert w is not None
+        fin_cfg, reports_cfg = config_for_tests()
+        corp_rows: list[dict[str, Any]] = [
+            {
+                "corp_code": c.corp_code,
+                "stock_code": c.stock_code,
+                "corp_name": c.corp_name,
+                "modify_date": date(2026, 10, 1),
+                "source": "DART",
+                "quality": "ok",
+                "received_at": self.start,
+            }
+            for c in w.corps
+        ]
+        pub = self.repos.public()
+        return {
+            "repos": self.repos,
+            "public_repos": pub,
+            "journal": self.repos.journal,
+            "dart": self.sched_dart,
+            "kis": self.sched_kis,
+            "fin_config": fin_cfg,
+            "reports_config": reports_cfg,
+            "detail_universe": lambda _d: detail_codes(self.repos),
+            "public_connect": lambda: _PublicConn(self.public_log),
+            "public_out_dir": self.public_out,
+            "public_reader": MemReader(PubWorld(repos=pub, corp_code_rows=corp_rows)),
         }
 
     def _backup(self, now: datetime) -> Path:
@@ -751,7 +895,7 @@ class SimDay:
         if key.source == "DART":
             return self._fetch_dart(key)
         if key.source == "DATAGO":
-            return self._fetch_datago(key)
+            return self._fetch_datago(key, job.name)
         if key.source == "ECOS":
             return self._fetch_ecos(key)
         if key.source == "KOSIS":
@@ -785,22 +929,23 @@ class SimDay:
                 use_cache=False,
             )
             return True
-        if key.dataset in ("fnlttSinglAcntAll", "fnlttMultiAcnt"):
-            year, q = key.as_of.split("Q")
-            reprt = {"1": "11013", "2": "11012", "3": "11014", "4": "11011"}[q]
-            c.get_json(
-                f"{key.dataset}.json",
-                {"corp_code": "90000000", "bsns_year": year, "reprt_code": reprt, "fs_div": "CFS"},
-                use_cache=False,
-            )
-            return True
+        # P4(묶음 M 웨이브 1): 재무제표(fnlttSinglAcntAll·MultiAcnt)·구조화 공시·지분공시·
+        # 주식총수·report_inputs 는 전부 event 데이터셋이라 실행기가 미리 잡지 않는다
+        # (D-P4-25 ②) — 이 시뮬레이션 처리기에 오지 않는다. P4 의 non-event DART 키는
+        # DART:list(minute)·DART:company(run_date) 둘뿐이다
         if key.dataset == "company":
             c.get_json("company.json", {"corp_code": "90000000"}, use_cache=False)
             return True
         self.unsupported.append(key.label())
         raise SimUnsupported(key.label())
 
-    def _fetch_datago(self, key: DataKey) -> bool:
+    def _fetch_datago(self, key: DataKey, job: str = "") -> bool:
+        if key.dataset in CUSTOMS_DATASETS:
+            # 관세청(P6 — 작업 꺼짐). 매달 15~17일·1·11·21일에만 발화해 P2·P3 창에는 오지 않았고,
+            # 가짜 공공데이터포털에 시군구·10일 잠정치 응답이 없다 — 부른 것만 기록한다(실제 수집은
+            # P6 시험)
+            self.offline_calls.append((job, key, self.clock.now()))
+            return True
         d = date.fromisoformat(key.as_of[:10])
         t = self.sched_datago
         if key.dataset == "15094808":

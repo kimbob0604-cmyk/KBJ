@@ -26,6 +26,7 @@ from kbj.store.legacy_import.mappings import TableMapping
 from kbj.store.legacy_import.sources import (
     SourceError,
     file_sha256,
+    iter_sd_watchlist,
     open_sqlite_ro,
     refuse_token_cache,
 )
@@ -342,3 +343,56 @@ def test_a_broken_transform_fails_only_its_mapping(
     )
     assert all(r.status == "ok" for n, r in res.items() if n != "board.snap")
     assert {r.mapping: r.status for r in target.records}["board.snap"] == "failed"
+
+
+# ── P4: SD 관심종목 JSON(docs/p4_design.md §3.8 — 합성 파일, 실 관심종목은 레포에 없다) ──────────
+
+
+def _watch_file(tmp_path: Path) -> Path:
+    import json
+
+    items = [
+        {"code": "994010", "name": "합성하나", "market": "kr", "addedAt": "2026-09-01T00:00:00Z"},
+        {"code": "AAPL", "name": "합성미국", "market": "us", "addedAt": "2026-09-02T00:00:00Z"},
+        {"code": "99K010", "name": "합성영숫자", "market": "kr"},
+        {"code": "994010", "name": "같은종목", "market": "kr"},
+        "깨진 항목",
+    ]
+    p = tmp_path / "server_watchlist.json"
+    p.write_text(json.dumps(items, ensure_ascii=False), encoding="utf-8")
+    return p
+
+
+def test_p4_watchlist_import_counts_drops_and_is_idempotent(tmp_path: Path) -> None:
+    src = {"watchlist": _watch_file(tmp_path)}
+    target = MemoryTarget()
+    first = run(src, target, phase="P4", now=clock, batch_id="b-w1")
+    assert first.ok, [r.line() for r in first.results]
+    (res,) = first.results
+    assert res.mapping == "sd.watchlist" and res.rows_written == 2
+    assert dict(res.drops) == {"not_kr": 1, "dup_key": 1, "bad_json": 1}
+    rows = target.tables["prv_journal.watchlist"]
+    codes = sorted(r["code"] for r in rows.values())  # type: ignore[type-var]
+    assert codes == ["994010", "99K010"]
+    assert {r["loaded_by"] for r in rows.values()} == {"legacy:sd.watchlist"}
+    again = run(src, target, phase="P4", now=clock, batch_id="b-w2")
+    assert again.ok and again.results[0].rows_written == 0
+    lines = "\n".join(x for r in first.results for x in [r.line()])
+    assert "994010" not in lines and "합성하나" not in lines  # 값·키를 찍지 않는다
+    # P2 원본에 관심종목 파일을 줘도 P2 에는 옮길 표가 없다고만 적는다
+    p2 = run(src, MemoryTarget(), phase="P2", now=clock, batch_id="b-w3", dry_run=True)
+    assert p2.results == [] and any("watchlist" in n for n in p2.notes)
+
+
+def test_p4_watchlist_cli_dry_run(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    code = cli.main(["--dry-run", "--phase", "P4", "--json", f"watchlist={_watch_file(tmp_path)}"])
+    out = capsys.readouterr().out
+    assert code == 0 and "994010" not in out
+    assert "server_watchlist.json → prv_journal.watchlist: 읽음 5 · 버림 3(" in out
+
+
+def test_p4_watchlist_file_must_be_a_list(tmp_path: Path) -> None:
+    bad = tmp_path / "server_watchlist.json"
+    bad.write_text('{"items": []}', encoding="utf-8")
+    with pytest.raises(SourceError, match="목록"):
+        list(iter_sd_watchlist(bad))

@@ -1,0 +1,116 @@
+# 공시·재무·컨센서스·밸류에이션 튜닝값 — 숫자는 이 한 곳(docs/p4_design.md §3.7, CLAUDE.md "기본값은 [확인 필요]").
+# 해석기 kbj/config/fin.py 하나(모르는 키는 오류). 비밀 아님(docs/secrets.md: 튜닝값은 환경변수가 아니라 config/*.yaml).
+# 근거 줄 번호: SD = legacy/stock_dashboard/. 메인 결정(2026-10-08 — 설계 §10 채택)을 사용자가 나중에 바꾸려면
+# 이 파일의 값을 고친다(코드는 그대로).
+version: 1
+
+filings:
+  # 공시 중요도 키워드 점수(SD server.py _DISCLOSURE_SCORE_TABLE:9920 그대로 — 맞은 키워드 점수 중 최댓값, 합이
+  # 아님 — score_disclosure:9986). 비교는 공백을 지운 제목에서 공백을 지운 키워드를 찾는다.
+  keywords:
+    # 10점: 즉시 매매 영향
+    상장폐지: 10
+    거래정지: 10
+    최대주주변경: 10
+    최대주주 변경: 10
+    공개매수: 10
+    회생: 10
+    파산: 10
+    경영권: 10
+    # 8점: 주가 급등락
+    대규모: 8
+    공급계약: 8
+    수주: 8
+    합병: 8
+    분할: 8
+    영업양수: 8
+    유상증자: 8
+    감자: 8
+    전환사채: 8
+    신주인수권: 8
+    # 6점: 중요 재무
+    자기주식: 6
+    자사주: 6
+    배당: 6
+    흑자전환: 6
+    적자전환: 6
+    실적: 6
+    영업이익: 6
+    # 4점: 참고
+    주식분할: 4
+    액면분할: 4
+    대표이사: 4
+    임원변경: 4
+    소송: 4
+    제재: 4
+    처분: 4
+    특허: 4
+    # 2점: 일반
+    정기주주총회: 2
+    이사회: 2
+    감사보고서: 2
+    분기보고서: 2
+    반기보고서: 2
+    사업보고서: 2
+  # 중요도 등급(총점 ≥ 값 — SD score_disclosure:9993). 그 밖은 low
+  importance_levels: {critical: 10, high: 6, medium: 4}
+  # 로그인 가산(읽을 때 계산 — 공개 pub_* 에 쓰지 않는다, §2 혼합 값). 시총은 전 거래일 회사 시총(원),
+  # '초과'(SD _cap_bonus_for_code:9946 — cap > 경계). 큰 경계부터 처음 맞는 것 하나
+  login_bonus:
+    watchlist: 3
+    mktcap_krw: [[10000000000000, 3], [1000000000000, 2], [100000000000, 1]]
+  feed:
+    max_pages: 30            # 한 실행이 읽는 list.json 최대 쪽 수(100건씩 — §4.1). 넘으면 complete=False + 경고
+    retry_parse_max: 3       # 한 건 파싱 재시도 상한(다음 실행들) — 넘으면 parse_state na + 사유
+    rescan_at: "07:00"       # 첫 실행이 전 영업일 전체를 한 번 더 훑는 시각(19:59 뒤 접수분 — §3.2)
+  # 정정 공시 제목 머리 [확인 필요 — 실측 #28]
+  correction_prefixes: ["[기재정정]", "[첨부정정]", "[첨부추가]", "[변경등록]"]
+
+earnings:
+  # 잠정실적 YoY 분류 경계(SD earnings_signal_classifier.THRESHOLDS:166 — %, 적자축소는 비율)
+  thresholds: {big_pct: 20.0, standard_pct: 10.0, inline_pct: 5.0, turnaround_partial_ratio: 0.5}
+  alert_max_priority: 2      # 관심종목 잠정실적 push 는 우선순위 ≤ 2 만(D-P4-14) [확인 필요]
+  perf_days: [3, 5, 7]       # 알림 후 성과 — 거래일(SD 는 달력일)
+  yoy_reported_tol_pp: 0.1   # 본문 '전년동기대비%' 와 우리 계산이 이 %p 넘게 다르면 notes(§4.2)
+
+consensus:
+  top_n: 300                 # 유니버스 = 관심종목 ∪ 전 거래일 시총 상위 N 보통주 [확인 필요]
+  opinion_window_days: 90    # 목표가 컨센서스 창(증권사별 마지막 의견 — §4.7)
+  min_brokers_ok: 3          # n ≥ 3 ok, 1~2 estimated [확인 필요]
+  revision_windows: [7, 30]  # SD revision_calculator.DEFAULT_WINDOWS:38
+  # 리비전 신호 경계(%, 위쪽 포함 — SD classify_signal:76): ≥ 15 강한상향, ≥ 5 상향, > −5 중립(위 경계 미만),
+  # > −15 하향, 그 밖 강한하향
+  signal_pct: {strong_up: 15.0, up: 5.0, down: -5.0, strong_down: -15.0}
+  alert_min_abs_pct: 5.0     # 관심종목 리비전 묶음 알림 대상 |pct| ≥ 이 값(§4.7 — 하루 1통, 0건이면 안 보냄)
+
+valuation:
+  band_days: 1240            # 5년(거래일)
+  min_days: 250              # 유효 일 < 이 값이면 밴드 None(short_history — 신규상장)
+  # 거름값(SD calculate_*_band 의 0 < x < 상한 그대로 [확인 필요]) — 밖이면 저장은 하되 flags.out_of_cap
+  caps:
+    per: [0.0, 200.0]
+    pbr: [0.0, 50.0]
+    psr: [0.0, 100.0]
+    ev_ebitda: [0.0, 100.0]
+  financial_ksic_prefixes: ["64", "65", "66"]   # 금융업 판정(induty_code 앞 두 자리 — R19 [확인 필요])
+
+scenario:                    # 시나리오 적정가(구 TAM — D-P4-12, SD tam_modeler:184·:201)
+  bear_eps_mult: 0.7
+  bull_eps_mult: 1.2
+
+overhang:
+  lockup_months_third_party: 12   # 제3자배정 신주 추정 보호예수(D-P4-18 [확인 필요: 규정]) — estimated
+
+# 상세 수집 대상(전체 재무제표 fnlttSinglAcntAll — D-P4-5): 관심종목 ∪ 컨센서스 유니버스(top_n) ∪ 공개 데모
+# (config/reports.yaml public_demo). 끄고 켤 수 있는 구성 요소만 여기 둔다.
+detail_universe: {watchlist: true, consensus_top_n: true, public_demo: true}
+
+# 공개 내보내기 fin/<종목코드>.json 합계 상한(D-P4-17 [제안]) — 넘으면 내보내기 실패(조용히 자르지 않는다)
+public_export:
+  fin_max_total_mb: 25
+
+# 재무 백필(fin.backfill — `python -m kbj.services.scheduler run-once fin.backfill --as-of <시각>`). 스케줄러
+# `backfill` 명령은 거래일 펼치기라 쓰지 않는다(§0.4). 이미 받은 statement_raw 는 건너뛰어 여러 날에 나눠 돈다.
+backfill:
+  from_year: 2021
+  tier: main                 # main(주요계정 5년 먼저) · full(상세 층 전체 재무제표)

@@ -54,6 +54,17 @@ DOMAIN_JOBS: Final[Mapping[str, tuple[str, ...]]] = {
               "board.daily", "board.confirm"),
     "etf": ("krx.daily", "market.backfill", "market.close_collect", "flows.intraday",
             "etf.collect"),
+    # P4(docs/p4_design.md §5.3 — 묶음 A): 종목 상세는 시세·보드 + 공시·재무·컨센서스·밸류 작업,
+    # 공시 패널(페이지 5)은 공시·파생·알림 작업(+ 회사 시총 가산의 시세).
+    # 관심종목(`/api/watchlist`)은 CLI 가 DB 에 직접 쓰므로 버전 캐시를 쓰지 않는다(영역 없음)
+    "stock": ("krx.daily", "market.backfill", "market.close_collect", "market.intraday",
+              "board.daily", "board.confirm", "filings.corp_code", "filings.company_profile",
+              "filings.dart_feed", "filings.derive", "fin.quarterly", "fin.backfill",
+              "reports.dart_excel", "consensus.snapshot", "fin.valuation_band", "earnings.alerts",
+              "earnings.backfill"),
+    "filings": ("filings.corp_code", "filings.company_profile", "filings.dart_feed",
+                "filings.derive", "fin.quarterly", "earnings.alerts", "earnings.backfill",
+                "krx.daily", "market.close_collect"),
 }  # fmt: skip
 
 

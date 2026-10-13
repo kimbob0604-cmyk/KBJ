@@ -1,0 +1,173 @@
+{
+  "source": "KRX+DART",
+  "as_of": "2026-11-13T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "q": "모의",
+    "n_total": 20,
+    "items": [
+      {
+        "code": "994010",
+        "name": "모의전자",
+        "market": "KOSPI",
+        "kind": "common",
+        "corp_code": "99400010",
+        "is_watch": true
+      },
+      {
+        "code": "994100",
+        "name": "모의금융지주",
+        "market": "KOSPI",
+        "kind": "common",
+        "corp_code": "99400100",
+        "is_watch": true
+      },
+      {
+        "code": "994140",
+        "name": "모의에너지",
+        "market": "KOSPI",
+        "kind": "common",
+        "corp_code": "99400140",
+        "is_watch": true
+      },
+      {
+        "code": "994015",
+        "name": "모의전자우",
+        "market": "KOSPI",
+        "kind": "pref",
+        "corp_code": "99400010",
+        "is_watch": true
+      },
+      {
+        "code": "994160",
+        "name": "모의화학",
+        "market": "KOSPI",
+        "kind": "common",
+        "corp_code": "99400160",
+        "is_watch": true
+      },
+      {
+        "code": "994060",
+        "name": "모의유통",
+        "market": "KOSPI",
+        "kind": "common",
+        "corp_code": "99400060",
+        "is_watch": true
+      },
+      {
+        "code": "994130",
+        "name": "모의모빌리티",
+        "market": "KOSDAQ",
+        "kind": "common",
+        "corp_code": "99400130",
+        "is_watch": true
+      },
+      {
+        "code": "994050",
+        "name": "모의리츠",
+        "market": "KOSPI",
+        "kind": "reit",
+        "corp_code": "99400050",
+        "is_watch": true
+      },
+      {
+        "code": "994030",
+        "name": "모의정밀",
+        "market": "KOSDAQ",
+        "kind": "common",
+        "corp_code": "99400030",
+        "is_watch": true
+      },
+      {
+        "code": "994020",
+        "name": "모의바이오",
+        "market": "KOSDAQ",
+        "kind": "common",
+        "corp_code": "99400020",
+        "is_watch": true
+      },
+      {
+        "code": "994070",
+        "name": "모의소재",
+        "market": "KOSDAQ",
+        "kind": "common",
+        "corp_code": "99400070",
+        "is_watch": true
+      },
+      {
+        "code": "99K170",
+        "name": "모의로보틱스",
+        "market": "KOSDAQ",
+        "kind": "common",
+        "corp_code": "99400170",
+        "is_watch": true
+      },
+      {
+        "code": "994110",
+        "name": "모의기계",
+        "market": "KOSDAQ",
+        "kind": "common",
+        "corp_code": "99400110",
+        "is_watch": true
+      },
+      {
+        "code": "994180",
+        "name": "모의홀딩스",
+        "market": "KOSDAQ",
+        "kind": "common",
+        "corp_code": "99400180",
+        "is_watch": true
+      },
+      {
+        "code": "994150",
+        "name": "모의소프트",
+        "market": "KOSDAQ",
+        "kind": "common",
+        "corp_code": "99400150",
+        "is_watch": false
+      },
+      {
+        "code": "994080",
+        "name": "모의테크",
+        "market": "KOSDAQ",
+        "kind": "common",
+        "corp_code": "99400080",
+        "is_watch": true
+      },
+      {
+        "code": "994090",
+        "name": "모의코넥스",
+        "market": "KONEX",
+        "kind": "common",
+        "corp_code": "99400090",
+        "is_watch": true
+      },
+      {
+        "code": "994190",
+        "name": "모의건설",
+        "market": "KOSDAQ",
+        "kind": "common",
+        "corp_code": "99400190",
+        "is_watch": true
+      },
+      {
+        "code": "994040",
+        "name": "모의스팩1호",
+        "market": "KOSDAQ",
+        "kind": "spac",
+        "corp_code": "99400040",
+        "is_watch": true
+      },
+      {
+        "code": "994120",
+        "name": "모의광학",
+        "market": "KOSDAQ",
+        "kind": "common",
+        "corp_code": "99400120",
+        "is_watch": true
+      }
+    ]
+  }
+}

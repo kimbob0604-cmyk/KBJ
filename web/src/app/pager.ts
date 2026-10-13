@@ -1,11 +1,15 @@
-// 탭·미니맵·좌우 스와이프·←/→·해시 #/p/<n>(docs/p3_design.md §6.4).
+// 탭·미니맵·좌우 스와이프·←/→·해시 #/p/<n>(/<종목코드>)?(docs/p3_design.md §6.4, docs/p4_design.md §1.2·§6.1).
 //
 // - 스와이프: CSS scroll-snap(.pages). 보이는 페이지 감지는 IntersectionObserver(없으면 scroll 위치로).
 // - 해시: 처음 열 때 #/p/4 면 4쪽으로. 페이지를 바꾸면 history.replaceState 로 해시만 바꾼다(뒤로 가기 기록을 쌓지 않음).
+// - 종목(P4): #/p/8/005930 처럼 **페이지 8 에만** 종목 코드(`^[0-9A-Z]{6}$`)가 붙는다. 코드는 선택 종목 상태
+//   (app/route.ts)로 넘기고, 종목이 바뀌면 페이지 8 에 있을 때만 해시를 replaceState 로 고친다. 잘못된 코드·
+//   다른 페이지에 붙은 코드는 무시한다(페이지 번호는 그대로 따른다).
 // - 키보드: 입력 칸 밖에서 ←/→(수정 키 없이). prefers-reduced-motion 이면 스크롤 애니메이션 없음.
 // - 탭: 13개 전부, aria-current="page". 미니맵은 장식(aria-hidden). 구현 전 페이지는 점선(todo).
 import { h, isEditable } from '../ui/dom';
 import type { PageDef } from './pages';
+import { isStockCode, type Route, STOCK_PAGE } from './route';
 
 export interface PagerOptions {
   pages: readonly PageDef[];
@@ -14,6 +18,8 @@ export interface PagerOptions {
   container: HTMLElement;
   sections: ReadonlyMap<number, HTMLElement>;
   onShow: (n: number) => void;
+  /** 선택 종목 상태(P4) — 주면 해시의 종목 코드를 넣고 꺼낸다. 없으면 해시는 #/p/<n> 만 */
+  route?: Route;
   win?: Window;
 }
 
@@ -25,13 +31,31 @@ export interface Pager {
   destroy(): void;
 }
 
-export const HASH_RE = /^#\/p\/(\d{1,2})$/;
+/** #/p/<n> 또는 #/p/<n>/<세그먼트> — 세그먼트가 종목 코드인지는 parseRoute 가 따로 본다 */
+export const HASH_RE = /^#\/p\/(\d{1,2})(?:\/([^/?#]{1,32}))?$/;
 
-export function parseHash(hash: string, pages: readonly PageDef[]): number | null {
+export interface HashRoute {
+  n: number;
+  /** 페이지 8 에 붙은 올바른 종목 코드만. 그 밖은 null */
+  code: string | null;
+}
+
+export function parseRoute(hash: string, pages: readonly PageDef[]): HashRoute | null {
   const m = HASH_RE.exec(hash);
   if (!m?.[1]) return null;
   const n = Number(m[1]);
-  return pages.some((p) => p.n === n) ? n : null;
+  if (!pages.some((p) => p.n === n)) return null;
+  const seg = m[2];
+  return { n, code: n === STOCK_PAGE && isStockCode(seg) ? seg : null };
+}
+
+export function parseHash(hash: string, pages: readonly PageDef[]): number | null {
+  return parseRoute(hash, pages)?.n ?? null;
+}
+
+/** 페이지 n 의 해시. 페이지 8 이고 종목이 있으면 #/p/8/<코드> */
+export function formatHash(n: number, code: string | null = null): string {
+  return n === STOCK_PAGE && isStockCode(code) ? `#/p/${n}/${code}` : `#/p/${n}`;
 }
 
 /** 페이지가 '보인다'고 볼 가로 비율 */
@@ -107,18 +131,22 @@ export function createPager(o: PagerOptions): Pager {
   // 한 번이라도 보인 페이지(위젯은 처음 보일 때 붙인다)
   const shown = new Set<number>();
 
+  function writeHash(n: number): void {
+    const want = formatHash(n, o.route?.getCode() ?? null);
+    if (win.location.hash === want) return;
+    try {
+      win.history.replaceState(null, '', want);
+    } catch {
+      // file:// 등 replaceState 가 막힌 곳 — 해시 동기화만 빠진다
+    }
+  }
+
   function setCurrent(n: number, fromHash = false): void {
     if (!order.includes(n)) return;
     const changed = n !== cur;
     cur = n;
     mark(n);
-    if (!fromHash && win.location.hash !== `#/p/${n}`) {
-      try {
-        win.history.replaceState(null, '', `#/p/${n}`);
-      } catch {
-        // file:// 등 replaceState 가 막힌 곳 — 해시 동기화만 빠진다
-      }
-    }
+    if (!fromHash) writeHash(n);
     if (changed || !shown.has(n)) {
       shown.add(n);
       o.onShow(n);
@@ -175,15 +203,22 @@ export function createPager(o: PagerOptions): Pager {
     api.go(next);
   };
   const onHash = (): void => {
-    const n = parseHash(win.location.hash, o.pages);
-    if (n !== null && n !== cur) {
+    const r = parseRoute(win.location.hash, o.pages);
+    if (r === null) return;
+    // 종목을 먼저 넣는다 — 페이지 8 이 처음 붙을 때 getCode() 가 이미 그 종목이게
+    if (r.code !== null) o.route?.setCode(r.code);
+    if (r.n !== cur) {
       suppressUntil = Date.now() + 600;
-      scrollToPage(n, false);
-      setCurrent(n, true);
+      scrollToPage(r.n, false);
+      setCurrent(r.n, true);
     }
   };
   win.addEventListener('keydown', onKey);
   win.addEventListener('hashchange', onHash);
+  // 종목이 바뀌면 페이지 8 에 있을 때만 해시를 고친다(다른 페이지의 해시에는 코드를 붙이지 않는다)
+  const offCode = o.route?.onCode(() => {
+    if (cur === STOCK_PAGE) writeHash(cur);
+  });
 
   const api: Pager = {
     tabs,
@@ -201,10 +236,16 @@ export function createPager(o: PagerOptions): Pager {
       o.container.removeEventListener('scroll', onScroll);
       win.removeEventListener('keydown', onKey);
       win.removeEventListener('hashchange', onHash);
+      offCode?.();
+      unbind?.();
     },
   };
+  // openStock(code) → 페이지 8 로(선택 종목 상태가 이 pager 로 이동한다)
+  const unbind = o.route?.bind({ go: (n) => api.go(n) });
 
-  const initial = parseHash(win.location.hash, o.pages) ?? cur;
+  const first = parseRoute(win.location.hash, o.pages);
+  if (first?.code) o.route?.setCode(first.code);
+  const initial = first?.n ?? cur;
   scrollToPage(initial, false);
   setCurrent(initial, true);
   return api;

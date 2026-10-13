@@ -3,13 +3,16 @@
 1. kbj/ 의 모든 import 는 kbj 자신·표준 라이브러리·선언한 런타임 의존성뿐이다. legacy 의 최상위 이름
    (`core`·`db`·`board`·`server` …)은 legacy 폴더가 sys.path 에 올라와야만 import 되는데, 이 시험은
    이름 목록을 따로 들지 않고 '허용된 것만'을 본다 — legacy 를 어떤 이름으로든 끌어오면 실패한다.
-2. 열 계약 각각에 위반을 하나씩 심은 사본에서 lint-imports 가 기대한 계약만 깨졌다고
+2. 열세 계약 각각에 위반을 하나씩 심은 사본에서 lint-imports 가 기대한 계약만 깨졌다고
    하는지 본다(계약이 빈말이 아님). ④~⑦ 은 P2 묶음 I 가 더했다(docs/p2_design.md §9.6):
    ④ KIS 발급 auth 밖 import 금지, ⑤ 텔레그램 HTTP 는 notifier 안에서만(간접 포함 — shim·outbox 의
    Attachment 두 줄만 예외), ⑥ 어댑터는 서비스를 모른다, ⑦ 저장소는 어댑터·서비스를 모른다.
    ⑧~⑩ 은 P3 묶음 S 가 더했다(docs/p3_design.md §2·§7.4·D-P3-3·D-P3-5): ⑧ 공개 내보내기는
    로그인 등급 코드를 모른다, ⑨ 엔진은 순수 계산(I/O 금지), ⑩ 로그인 API 는 로그인 원천
-   어댑터·수집기를 모른다.
+   어댑터·수집기를 모른다. ⑪~⑬ 은 P4 묶음 S 가 더했다(docs/p4_design.md §2): ⑪ 리포트는 로그인
+   원천·컨센서스·밸류 엔진·API 를 모른다, ⑫ 공개 엔진(공시·재무)은 로그인 엔진(컨센서스·밸류)을
+   모른다, ⑬ 공개 작업(dart_feed·dart_company·fin·engine.filings)은 로그인 원천·엔진·
+   저장소를 모른다.
    위반 하나가 두 계약에 함께 걸리면(예: 엔진이 auth 를 import — ④·⑨) 둘 다 기대값에 적는다.
 """
 
@@ -28,6 +31,8 @@ ROOT = Path(__file__).resolve().parent.parent
 # pyproject `dependencies` 의 import 이름. P2 S0: exchange_calendars(캘린더)·defusedxml(외부 XML).
 # fastapi·uvicorn 은 P3(메인 결정 D4)
 RUNTIME_IMPORTS = {
+    "bs4",  # P4 공시 원문·주석 표 파싱(beautifulsoup4 — docs/p4_design.md D-P4-20)
+    "openpyxl",  # P4 dart-report 엑셀 빌더(kbj.reports.dart_excel)
     "defusedxml",
     "exchange_calendars",
     "fastapi",  # P3 로그인 API(docs/p3_design.md §1.1·D-P3-3)
@@ -114,6 +119,21 @@ def test_kbj_imports_only_kbj_stdlib_and_declared_deps() -> None:
         # ⑩ — 로그인 API 가 원천 어댑터·수집기를 끌어오면(간접 포함) 실패
         ("kbj/services/api/_leak.py", "import kbj.data.private.kis.rest\n", "⑩"),
         ("kbj/services/api/_col.py", "from kbj.services.collectors import krx_daily\n", "⑩"),
+        # ④ — P4 새 패키지 관심종목 CLI 도 발급을 못 쓴다
+        ("kbj/services/watchlist/_leak.py", "import kbj.services.auth\n", "④"),
+        # ⑪ — 리포트가 로그인 원천·컨센서스·밸류 엔진·API 를 알면 실패
+        ("kbj/reports/_leak.py", "import kbj.engines.valuation\n", "⑪"),
+        ("kbj/reports/dart_excel/_leak.py", "import kbj.data.private.krx\n", "⑪"),
+        ("kbj/reports/dart_excel/_api.py", "import kbj.services.api\n", "⑪"),
+        # ⑫ — 공개 엔진이 컨센서스·밸류 엔진을 알면 실패(로그인 원천은 ⑨ 에도 걸린다)
+        ("kbj/engines/filings/_leak.py", "import kbj.engines.consensus\n", "⑫"),
+        ("kbj/engines/financials/_leak.py", "from kbj.engines.valuation import band\n", "⑫"),
+        ("kbj/engines/financials/_src.py", "import kbj.data.private.krx\n", "⑨⑫"),
+        # ⑬ — 공개 작업 모듈(사본을 덮어쓴다)이 로그인 원천·엔진·저장소를 끌어오면(간접 포함) 실패
+        ("kbj/services/engine/filings.py", "from kbj.store.repos import Repos\n", "⑬"),
+        ("kbj/services/collectors/fin.py", "import kbj.services.collectors._p3\n", "⑬"),
+        ("kbj/services/collectors/dart_feed.py", "import kbj.engines.valuation\n", "⑬"),
+        ("kbj/services/collectors/dart_company.py", "import kbj.store.repos.journal\n", "⑬"),
     ],
 )
 def test_contract_catches_violation(
@@ -148,13 +168,13 @@ def test_contract_catches_violation(
     assert all(c in section for c in want), broken.stdout
 
 
-def test_ten_contracts_are_declared() -> None:
-    """P3 묶음 S — 계약 ⑧~⑩ 이 실제로 들어 있다(이름 첫 글자 기호로)."""
+def test_thirteen_contracts_are_declared() -> None:
+    """P3 묶음 S — 계약 ⑧~⑩, P4 묶음 S — ⑪~⑬ 이 실제로 들어 있다(이름 첫 글자 기호로)."""
     text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     names = [
         line.split("=", 1)[1].strip().strip('"')
         for line in text.splitlines()
         if line.startswith("name = ")
-        and line.split("=", 1)[1].strip().strip('"')[:1] in "①②③④⑤⑥⑦⑧⑨⑩"
+        and line.split("=", 1)[1].strip().strip('"')[:1] in "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬"
     ]
-    assert [n[0] for n in names] == list("①②③④⑤⑥⑦⑧⑨⑩")
+    assert [n[0] for n in names] == list("①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬")

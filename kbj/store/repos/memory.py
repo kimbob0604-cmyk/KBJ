@@ -42,13 +42,17 @@ from kbj.core.rows import (
     pick_best,
 )
 from kbj.store.repos._common import require_aware, require_loaded_by, window_start
+from kbj.store.repos.consensus import MemoryConsensusRepo
 from kbj.store.repos.etf import best_etf_days, check_changes, check_holdings
+from kbj.store.repos.filings import MemoryFilingsRepo
+from kbj.store.repos.fin import MemoryFinRepo
 from kbj.store.repos.flows import (
     RevisionReport,
     StoredInvestorDay,
     best_investor_days,
     plan_investor_upsert,
 )
+from kbj.store.repos.journal import MemoryJournalRepo
 from kbj.store.repos.market import (
     Asset,
     best_universe,
@@ -56,6 +60,7 @@ from kbj.store.repos.market import (
     snap_extra,
     snap_rank,
 )
+from kbj.store.repos.public import MemoryPublicRepos
 
 
 @dataclass
@@ -628,6 +633,16 @@ class MemoryRepos:
     flows: MemoryFlowsRepo = field(default_factory=MemoryFlowsRepo)
     board: MemoryBoardRepo = field(default_factory=MemoryBoardRepo)
     etf: MemoryEtfRepo = field(default_factory=MemoryEtfRepo)
+    # P4(묶음 M) — 메모리 구현은 각 모듈에 있다(공개 작업이 consensus·journal 을 끌어오지 않게 — ⑬)
+    filings: MemoryFilingsRepo = field(default_factory=MemoryFilingsRepo)
+    fin: MemoryFinRepo = field(default_factory=MemoryFinRepo)
+    consensus: MemoryConsensusRepo = field(default_factory=MemoryConsensusRepo)
+    journal: MemoryJournalRepo = field(default_factory=MemoryJournalRepo)
+
+    def public(self) -> MemoryPublicRepos:
+        """같은 filings·fin 객체를 공개 작업 묶음으로(공개·로그인 처리기가 같은 메모리 표를
+        본다)."""
+        return MemoryPublicRepos(filings=self.filings, fin=self.fin)
 
 
 def memory_repos() -> MemoryRepos:

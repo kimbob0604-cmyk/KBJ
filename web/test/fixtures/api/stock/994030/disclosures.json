@@ -1,0 +1,59 @@
+{
+  "source": "DART",
+  "as_of": "2026-11-13T16:27:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "중요도 = 제목 키워드 + 관심종목 + 시총 가산(로그인 — 읽을 때 계산)"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "code": "994030",
+    "corp_code": "99400030",
+    "days": 90,
+    "kind": null,
+    "rows": [
+      {
+        "rcept_no": "20261113000008",
+        "rcept_dt": "2026-11-13",
+        "first_seen_at": "2026-11-13T16:27:00+09:00",
+        "corp_code": "99400030",
+        "stock_code": "994030",
+        "corp_name": "모의정밀",
+        "corp_cls": "K",
+        "title": "분기보고서 (2026.09)",
+        "kind": "periodic",
+        "is_correction": false,
+        "kw_score": 2,
+        "kw_matched": [
+          "분기보고서"
+        ],
+        "login_score": 6,
+        "importance": "high",
+        "is_watch": true,
+        "parse_state": "none",
+        "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261113000008"
+      },
+      {
+        "rcept_no": "20261106800001",
+        "rcept_dt": "2026-11-06",
+        "first_seen_at": "2026-11-06T17:30:00+09:00",
+        "corp_code": "99400030",
+        "stock_code": "994030",
+        "corp_name": "모의정밀",
+        "corp_cls": "K",
+        "title": "주권매매거래정지",
+        "kind": "other",
+        "is_correction": false,
+        "kw_score": 10,
+        "kw_matched": [
+          "거래정지"
+        ],
+        "login_score": 14,
+        "importance": "critical",
+        "is_watch": true,
+        "parse_state": "none",
+        "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261106800001"
+      }
+    ]
+  }
+}

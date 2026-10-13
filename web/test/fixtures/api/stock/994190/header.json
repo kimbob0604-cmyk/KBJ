@@ -1,0 +1,46 @@
+{
+  "source": "KRX+DART",
+  "as_of": "2026-11-13T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "code": "994190",
+    "name": "모의건설",
+    "market": "KOSDAQ",
+    "kind": "common",
+    "common_code": "994190",
+    "corp_code": "99400190",
+    "corp_name": "모의건설",
+    "status_flags": [
+      "liquidation"
+    ],
+    "listed_on": "2000-12-12",
+    "acc_mt": 12,
+    "induty_code": "41221",
+    "last": {
+      "date": "2026-11-13",
+      "close": 540.0,
+      "chg_pct": -17.81,
+      "volume": 370411,
+      "turnover": 200021999,
+      "mktcap": 16200000000,
+      "last_trade": "2026-11-13",
+      "stale": false,
+      "source": "KRX",
+      "quality": "ok"
+    },
+    "is_watch": true,
+    "detail_tier": true,
+    "newhigh": {
+      "date": "2026-11-13",
+      "basis": "close",
+      "d120": false,
+      "w52": false,
+      "hist": false,
+      "label": null,
+      "source": "KRX",
+      "quality": "ok"
+    }
+  }
+}

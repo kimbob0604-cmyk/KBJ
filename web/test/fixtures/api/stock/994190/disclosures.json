@@ -1,0 +1,78 @@
+{
+  "source": "DART",
+  "as_of": "2026-11-16T08:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "중요도 = 제목 키워드 + 관심종목 + 시총 가산(로그인 — 읽을 때 계산)"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "code": "994190",
+    "corp_code": "99400190",
+    "days": 90,
+    "kind": null,
+    "rows": [
+      {
+        "rcept_no": "20261116800028",
+        "rcept_dt": "2026-11-16",
+        "first_seen_at": "2026-11-16T08:30:00+09:00",
+        "corp_code": "99400190",
+        "stock_code": "994190",
+        "corp_name": "모의건설",
+        "corp_cls": "K",
+        "title": "기타시장안내",
+        "kind": "other",
+        "is_correction": false,
+        "kw_score": 0,
+        "kw_matched": [],
+        "login_score": 3,
+        "importance": "low",
+        "is_watch": true,
+        "parse_state": "none",
+        "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261116800028"
+      },
+      {
+        "rcept_no": "20261104800001",
+        "rcept_dt": "2026-11-04",
+        "first_seen_at": "2026-11-04T17:00:00+09:00",
+        "corp_code": "99400190",
+        "stock_code": "994190",
+        "corp_name": "모의건설",
+        "corp_cls": "K",
+        "title": "상장폐지에따른정리매매개시",
+        "kind": "other",
+        "is_correction": false,
+        "kw_score": 10,
+        "kw_matched": [
+          "상장폐지"
+        ],
+        "login_score": 13,
+        "importance": "critical",
+        "is_watch": true,
+        "parse_state": "none",
+        "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261104800001"
+      },
+      {
+        "rcept_no": "20261030800001",
+        "rcept_dt": "2026-10-30",
+        "first_seen_at": "2026-10-30T18:00:00+09:00",
+        "corp_code": "99400190",
+        "stock_code": "994190",
+        "corp_name": "모의건설",
+        "corp_cls": "K",
+        "title": "상장폐지결정",
+        "kind": "other",
+        "is_correction": false,
+        "kw_score": 10,
+        "kw_matched": [
+          "상장폐지"
+        ],
+        "login_score": 13,
+        "importance": "critical",
+        "is_watch": true,
+        "parse_state": "none",
+        "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261030800001"
+      }
+    ]
+  }
+}

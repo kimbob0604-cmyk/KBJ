@@ -1,7 +1,8 @@
 // 품질·원천 표시(docs/p3_design.md §6.7).
 //
 // | 상태 | 표시 |
-// | estimated | 값 옆 '잠정' 배지 + 점선 밑줄(--est) |
+// | estimated | 값 옆 '잠정' 배지 + 점선 밑줄(--est) — P4 의 공시·재무 추정값(오버행 상한·보호예수 추정 해제일·
+// |           | 결산월 추정·KIS 단일 추정)은 같은 표시에 글자만 '추정'(EST_LABEL — docs/p4_design.md §6.3) |
 // | stale | 흐린 글자 + '기준 HH:MM' 배지(경고색) — 패널 머리는 panel.ts 가 경고색으로 |
 // | invalid 행 | 그리지 않는다. 뺀 수는 notes 줄로 |
 // | 검산 불가 | '검산 불가: <사유>' — 0 으로 그리지 않는다 |
@@ -16,15 +17,32 @@ export const QUALITY_LABEL: Record<Quality, string> = {
   invalid: '검산 실패',
 };
 
+/** estimated 배지 글자 — P3 시세(장중 잠정)와 P4 공시·재무 추정(법정 기한·상한으로 계산한 값) */
+export interface EstLabel {
+  text: string;
+  title: string;
+}
+
+/** P3 기본: 장중 잠정 → 마감 뒤 확정 */
+export const PRELIM_LABEL: EstLabel = { text: '잠정', title: '장중 잠정 — 마감 뒤 확정' };
+
+/** P4: 출처가 직접 주지 않아 규칙으로 계산한 값(오버행 상한·보호예수 추정 해제일·결산월 추정 등) */
+export const EST_LABEL: EstLabel = { text: '추정', title: '추정값 — 원천이 직접 주지 않아 규칙으로 계산' };
+
+/** '추정'(또는 주어진 글자) 배지 하나 — 값이 아니라 패널·행 머리에 붙일 때 */
+export function estBadge(label: EstLabel = EST_LABEL): HTMLSpanElement {
+  return h('span', { class: 'q-badge', attrs: { title: label.title } }, label.text);
+}
+
 /**
  * 값 요소에 품질 표시를 붙인다. invalid 는 그리지 않아야 하므로 false 를 돌려준다(호출자가 행을 뺀다).
- * asOf 는 stale 일 때 '기준 HH:MM' 에 쓴다.
+ * asOf 는 stale 일 때 '기준 HH:MM' 에 쓴다. est 는 estimated 배지 글자(기본 '잠정' — P4 추정값은 EST_LABEL).
  */
-export function markQuality(el: HTMLElement, q: Quality, asOf?: string | null): boolean {
+export function markQuality(el: HTMLElement, q: Quality, asOf?: string | null, est: EstLabel = PRELIM_LABEL): boolean {
   if (q === 'invalid') return false;
   if (q === 'estimated') {
     el.classList.add('q-est');
-    el.appendChild(h('span', { class: 'q-badge', attrs: { title: '장중 잠정 — 마감 뒤 확정' } }, '잠정'));
+    el.appendChild(estBadge(est));
   } else if (q === 'stale') {
     el.classList.add('q-stale');
     el.appendChild(h('span', { class: 'q-badge stale' }, asOf ? `기준 ${kstTime(asOf)}` : '지연'));
@@ -33,9 +51,15 @@ export function markQuality(el: HTMLElement, q: Quality, asOf?: string | null): 
 }
 
 /** 값 하나를 품질 표시와 함께: <span>값 [잠정]</span> */
-export function qValue(text: string, q: Quality, asOf?: string | null, cls?: string): HTMLSpanElement | null {
+export function qValue(
+  text: string,
+  q: Quality,
+  asOf?: string | null,
+  cls?: string,
+  est: EstLabel = PRELIM_LABEL,
+): HTMLSpanElement | null {
   const el = h('span', cls ? { class: cls } : null, text);
-  return markQuality(el, q, asOf) ? el : null;
+  return markQuality(el, q, asOf, est) ? el : null;
 }
 
 /** invalid 행을 뺀다. 뺀 수를 같이 돌려준다(notes 줄에 쓰려고). */

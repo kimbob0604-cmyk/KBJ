@@ -97,7 +97,7 @@
 | `USE_SQLITE`, `DISABLE_AUTO_FETCH`, `SERVER_NO_STARTUP` | SD | 삭제(legacy 시험에서만 `SERVER_NO_STARTUP`) | — |
 | `TZ` | SD·GX | `TZ=UTC` 고정 | 코드에서 KST 로 바꾼다 |
 | `MIN_FUNDS`, `ACTION_PP`, `KEEP_DAYS`, `WORKERS`, `QTY_FLOOR`, `RETRIES`, `EMPTY_LIMIT` | ET ETF | `config/etf.yaml` | 비밀 아님 |
-| `STOCKS`, `YEAR_FROM`, `FS_DIV`, `DIAGNOSE`, `DART_STOCKS` | ET `report.yml` | CLI 인자·`config/reports.yaml` | — |
+| `STOCKS`, `YEAR_FROM`, `FS_DIV`, `DIAGNOSE`, `DART_STOCKS` | ET `report.yml` | CLI 인자(`python -m kbj.reports.dart_excel --stock … --years … --fs-div … --diagnose-*`)·`config/reports.yaml`(`years_back`·`fs_div`·`public_demo`) — **P4 확정**(docs/p4_design.md §3.7). 대상 종목은 관심종목(`prv_journal.watchlist`) ∪ `public_demo` — 환경변수로 종목을 받지 않는다 | 비밀 아님 |
 | `DASH_URL`, `PYTHON_BIN`, `PYTHONIOENCODING`, `NOTION_TOKEN`, `NOTION_DATABASE_ID` | ET | 삭제 | — |
 
 legacy 코드는 옮겨 온 그대로 옛 이름을 읽는다(P1 은 경로·import 만 고친다). 새 이름으로 바꾸는 것은 각 영역을 정본으로 갈아 끼우는 단계(P2~)에서 한다.

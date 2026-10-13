@@ -13,6 +13,8 @@ from pathlib import Path
 
 import pytest
 
+from kbj.services.public_export.pub_read import Query
+
 ROOT = Path(__file__).resolve().parents[3]
 PKG = ROOT / "kbj" / "services" / "public_export"
 _SQL_WORD = re.compile(r"\b(SELECT|FROM|JOIN|INSERT|UPDATE|DELETE|COPY|TABLE|INTO)\b", re.I)
@@ -61,7 +63,9 @@ def _files() -> list[Path]:
 
 
 def test_package_exists() -> None:
-    assert len(_files()) >= 7  # __init__·__main__·export·calendar_json·events_json·manifest·push
+    # __init__·__main__·export·calendar_json·events_json·manifest·push + P4 corp_index·filings_json·
+    # fin_json·pub_read
+    assert len(_files()) >= 11
 
 
 @pytest.mark.parametrize("path", _files(), ids=lambda p: p.name)
@@ -89,3 +93,64 @@ def test_checker_allows_pub_and_docstrings() -> None:
         'Q = "SELECT a FROM pub_trade.monthly JOIN pub_macro.x USING (d)"\n'
     )
     assert violations(ok) == []
+
+
+# ── P4 — 이름 붙은 SQL(Query) 상수 ─────────────────────────────────────────────────────────
+
+
+def _queries() -> list[tuple[str, Query]]:
+    import importlib
+
+    out: list[tuple[str, Query]] = []
+    for mod in ("corp_index", "filings_json", "fin_json"):
+        m = importlib.import_module(f"kbj.services.public_export.{mod}")
+        out += [(f"{mod}.{k}", v) for k, v in vars(m).items() if isinstance(v, Query)]
+    return out
+
+
+_CTE = re.compile(r"\b(?:WITH|,)\s*([a-z_][a-z0-9_]*)\s+AS\s*\(", re.I)
+_TARGET = re.compile(r"\b(?:FROM|JOIN)\s+(?:LATERAL\s+)?(?!\(|LATERAL\b)([A-Za-z_][\w.]*)", re.I)
+
+
+def unqualified_tables(sql: str) -> list[str]:
+    """FROM·JOIN 대상 중 스키마가 없고 같은 질의의 CTE 도 아닌 이름(하위 질의 `(` 는 뺀다)."""
+    ctes = {c.lower() for c in _CTE.findall(sql)}
+    return [t for t in _TARGET.findall(sql) if "." not in t and t.lower() not in ctes]
+
+
+def test_unqualified_table_checker_is_not_empty() -> None:
+    assert unqualified_tables("SELECT a FROM disclosure") == ["disclosure"]
+    assert unqualified_tables("SELECT a FROM pub_fin.x JOIN LATERAL foo f ON true") == ["foo"]
+    ok = (
+        "WITH days AS (SELECT d FROM pub_filings.disclosure) SELECT x FROM pub_filings.disclosure"
+        " t JOIN days ON true LEFT JOIN LATERAL (SELECT 1 FROM pub_fin.ratio) s ON true"
+    )
+    assert unqualified_tables(ok) == []
+
+
+def test_p4_queries_read_only_pub_tables() -> None:
+    qs = _queries()
+    assert len(qs) >= 12
+    for where, q in qs:
+        sql = q.sql
+        assert violations(f"Q = {sql!r}\n") == [], where
+        tables = set(re.findall(r"\b(?:FROM|JOIN)\s+([a-z_]+)\.([a-z_]+)", sql, re.I))
+        assert tables, where
+        assert {s for s, _ in tables} <= {"pub_filings", "pub_fin"}, where
+        # 스키마 없는 표 이름도 없다(search_path 로 public.* 를 읽을 수 있다) — 하위 질의·CTE 예외
+        assert unqualified_tables(sql) == [], where
+        # 읽기만 — 쓰기·DDL 문 없음
+        assert not re.search(
+            r"\b(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|GRANT)\b", sql, re.I
+        )
+        assert ";" not in sql, where
+
+
+def test_p4_query_names_unique_and_answered_by_memory_reader() -> None:
+    from tests.unit.public_export.pub_rows import MemReader
+
+    names = [q.name for _, q in _queries()]
+    # 같은 Query 객체를 다른 모듈이 다시 내보낸 것은 한 번으로 센다
+    assert len(set(names)) == len({id(q) for _, q in _queries()})
+    for n in set(names):
+        assert hasattr(MemReader, f"q_{n}"), f"시험용 메모리 읽기에 질의 {n} 이 없다"

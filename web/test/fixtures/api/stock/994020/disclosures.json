@@ -1,0 +1,59 @@
+{
+  "source": "DART",
+  "as_of": "2026-11-13T17:59:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "중요도 = 제목 키워드 + 관심종목 + 시총 가산(로그인 — 읽을 때 계산)"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "code": "994020",
+    "corp_code": "99400020",
+    "days": 90,
+    "kind": null,
+    "rows": [
+      {
+        "rcept_no": "20261113000020",
+        "rcept_dt": "2026-11-13",
+        "first_seen_at": "2026-11-13T17:59:00+09:00",
+        "corp_code": "99400020",
+        "stock_code": "994020",
+        "corp_name": "모의바이오",
+        "corp_cls": "K",
+        "title": "분기보고서 (2026.09)",
+        "kind": "periodic",
+        "is_correction": false,
+        "kw_score": 2,
+        "kw_matched": [
+          "분기보고서"
+        ],
+        "login_score": 6,
+        "importance": "high",
+        "is_watch": true,
+        "parse_state": "none",
+        "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261113000020"
+      },
+      {
+        "rcept_no": "20261014000001",
+        "rcept_dt": "2026-10-14",
+        "first_seen_at": "2026-10-14T17:00:00+09:00",
+        "corp_code": "99400020",
+        "stock_code": "994020",
+        "corp_name": "모의바이오",
+        "corp_cls": "K",
+        "title": "증권발행실적보고서",
+        "kind": "earnings",
+        "is_correction": false,
+        "kw_score": 6,
+        "kw_matched": [
+          "실적"
+        ],
+        "login_score": 10,
+        "importance": "critical",
+        "is_watch": true,
+        "parse_state": "none",
+        "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261014000001"
+      }
+    ]
+  }
+}

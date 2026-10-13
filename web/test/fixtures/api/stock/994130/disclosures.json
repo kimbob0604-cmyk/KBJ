@@ -1,0 +1,99 @@
+{
+  "source": "DART",
+  "as_of": "2026-11-16T17:23:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "중요도 = 제목 키워드 + 관심종목 + 시총 가산(로그인 — 읽을 때 계산)"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "code": "994130",
+    "corp_code": "99400130",
+    "days": 90,
+    "kind": null,
+    "rows": [
+      {
+        "rcept_no": "20261116800125",
+        "rcept_dt": "2026-11-16",
+        "first_seen_at": "2026-11-16T14:10:00+09:00",
+        "corp_code": "99400130",
+        "stock_code": "994130",
+        "corp_name": "모의모빌리티",
+        "corp_cls": "K",
+        "title": "신주인수권행사",
+        "kind": "overhang_exercise",
+        "is_correction": false,
+        "kw_score": 8,
+        "kw_matched": [
+          "신주인수권"
+        ],
+        "login_score": 12,
+        "importance": "critical",
+        "is_watch": true,
+        "parse_state": "done",
+        "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261116800125"
+      },
+      {
+        "rcept_no": "20261116800058",
+        "rcept_dt": "2026-11-16",
+        "first_seen_at": "2026-11-16T10:40:00+09:00",
+        "corp_code": "99400130",
+        "stock_code": "994130",
+        "corp_name": "모의모빌리티",
+        "corp_cls": "K",
+        "title": "전환가액의조정",
+        "kind": "price_adjust",
+        "is_correction": false,
+        "kw_score": 0,
+        "kw_matched": [],
+        "login_score": 4,
+        "importance": "medium",
+        "is_watch": true,
+        "parse_state": "done",
+        "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261116800058"
+      },
+      {
+        "rcept_no": "20261116000027",
+        "rcept_dt": "2026-11-16",
+        "first_seen_at": "2026-11-16T17:23:00+09:00",
+        "corp_code": "99400130",
+        "stock_code": "994130",
+        "corp_name": "모의모빌리티",
+        "corp_cls": "K",
+        "title": "분기보고서 (2026.09)",
+        "kind": "periodic",
+        "is_correction": false,
+        "kw_score": 2,
+        "kw_matched": [
+          "분기보고서"
+        ],
+        "login_score": 6,
+        "importance": "high",
+        "is_watch": true,
+        "parse_state": "none",
+        "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261116000027"
+      },
+      {
+        "rcept_no": "20260901000001",
+        "rcept_dt": "2026-09-01",
+        "first_seen_at": "2026-09-01T16:00:00+09:00",
+        "corp_code": "99400130",
+        "stock_code": "994130",
+        "corp_name": "모의모빌리티",
+        "corp_cls": "K",
+        "title": "주요사항보고서(전환사채권발행결정)",
+        "kind": "overhang",
+        "is_correction": false,
+        "kw_score": 8,
+        "kw_matched": [
+          "전환사채"
+        ],
+        "login_score": 12,
+        "importance": "critical",
+        "is_watch": true,
+        "parse_state": "done",
+        "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260901000001"
+      }
+    ]
+  }
+}

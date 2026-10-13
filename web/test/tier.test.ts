@@ -2,11 +2,12 @@
 import { describe, expect, it } from 'vitest';
 import { mountApp } from '../src/app/app';
 import { PAGES } from '../src/app/pages';
+import { createRoute } from '../src/app/route';
 import type { PageContext } from '../src/app/types';
 import { bootLogin } from '../src/boot/login';
 import { bootPublic } from '../src/boot/public';
 import { createApiSource } from '../src/data/api';
-import { AuthRequiredError, LockedError } from '../src/data/source';
+import { AuthRequiredError, hrefOf, LockedError, reportXlsxKey } from '../src/data/source';
 import { createStaticSource } from '../src/data/static';
 import { panel } from '../src/ui/panel';
 import calendar from './fixtures/public/calendar.json';
@@ -163,5 +164,75 @@ describe('셸은 등급을 인자로만 안다', () => {
       app.destroy();
       root.remove();
     }
+  });
+});
+
+/**
+ * 가짜 페이지 8(섞인 등급 — D-P4-15): 공개 패널(재무)과 로그인 패널(컨센서스·밸류). 종목은 선택 종목 상태에서,
+ * 키는 등급마다(공개 fin/<코드>, 로그인 stock/<코드>/…). 페이지 모듈은 '/api' 문자열을 쓰지 않는다.
+ */
+function stockPage(log: string[], code: () => string | null) {
+  return async (ctx: PageContext) => {
+    const c = code() ?? 'Q00001';
+    const fin = panel(ctx.tier, { title: '재무', tier: 'public', span: 6 });
+    const cons = panel(ctx.tier, { title: '컨센서스', tier: 'login', lock: 'consensus', span: 3 });
+    const val = panel(ctx.tier, { title: '밸류 밴드', tier: 'login', lock: 'valuation', span: 3 });
+    ctx.root.append(fin.el, cons.el, val.el);
+    const env = await ctx.source.get(ctx.tier === 'public' ? `fin/${c}` : `stock/${c}/financials`);
+    fin.setSource(env);
+    log.push(`fin:${env.source}`);
+    if (!cons.locked) log.push(`cons:${(await ctx.source.get(`stock/${c}/consensus`)).source}`);
+    log.push(`xlsx:${hrefOf(ctx.source, reportXlsxKey(ctx.tier, c)) ?? 'none'}`);
+  };
+}
+
+describe('P4 섞인 페이지(8) — 등급별 키·자물쇠', () => {
+  const dart = envelope({ rows: [] }, { source: 'DART' });
+
+  it('공개: fin/<코드>.json 만 읽고 컨센서스·밸류는 자물쇠, /api 요청 0', async () => {
+    window.history.replaceState(null, '', '#/p/8/005930');
+    const root = appRoot();
+    const route = createRoute();
+    const { fetch, calls } = fakeFetch((url) => (url === './data/fin/005930.json' ? json(dart) : json({}, 404)));
+    const log: string[] = [];
+    const app = bootPublic(root, {
+      fetch,
+      now: fixedClock(),
+      route,
+      loaders: fakeLoaders({ 8: stockPage(log, () => route.getCode()) }),
+      ribbon: null,
+      storage: memoryStorage(),
+    });
+    await app.settled();
+    expect(calls.map((c) => c.url)).toEqual(['./data/fin/005930.json']);
+    expect(log).toEqual(['fin:DART', 'xlsx:./data/reports/005930.xlsx']);
+    const locked = [...root.querySelectorAll('#page-8 .panel.locked .lockmsg')].map((e) => e.textContent);
+    expect(locked).toEqual(['LOGIN컨센서스 — 제3자 유료·재배포 금지', expect.stringContaining('시세 기반')]);
+    app.destroy();
+  });
+
+  it('로그인: 같은 페이지가 API 경로로 읽고 자물쇠 없음, 엑셀은 같은 출처 API 주소', async () => {
+    window.history.replaceState(null, '', '#/p/8/005930');
+    const root = appRoot();
+    const route = createRoute();
+    const { fetch, calls } = fakeFetch((url) => {
+      if (url === '/api/auth/me') return json({ user: 'me', csrf_token: 't0k' });
+      if (url === '/api/stock/005930/financials') return json(dart);
+      if (url === '/api/stock/005930/consensus') return json(envelope({}, { source: 'KIS' }));
+      return json({}, 404);
+    });
+    const log: string[] = [];
+    const boot = await bootLogin(root, {
+      fetch,
+      now: fixedClock(),
+      ribbon: null,
+      route,
+      loaders: fakeLoaders({ 8: stockPage(log, () => route.getCode()) }),
+    });
+    await boot.app()?.settled();
+    expect(calls.map((c) => c.url)).toEqual(['/api/auth/me', '/api/stock/005930/financials', '/api/stock/005930/consensus']);
+    expect(log).toEqual(['fin:DART', 'cons:KIS', 'xlsx:/api/stock/005930/report.xlsx']);
+    expect(root.querySelector('#page-8 .panel.locked')).toBeNull();
+    boot.app()?.destroy();
   });
 });

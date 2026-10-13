@@ -26,10 +26,32 @@ export type Params = Readonly<Record<string, ParamValue>>;
 export interface DataSource {
   readonly tier: Tier;
   /**
-   * 공개: key = 공개 파일 이름(예 'calendar' → ./data/calendar.json).
+   * 공개: key = 공개 파일 이름(예 'calendar' → ./data/calendar.json) 또는 하위 폴더 두 개
+   *       `fin/<코드>`·`reports/<코드>`(P4 — 파일 자체가 봉투).
    * 로그인: key = API 경로(예 'market/summary' → 같은 출처 API).
    */
   get<T>(key: string, params?: Params): Promise<Envelope<T>>;
+  /**
+   * 내려받기 주소(P4 — 리포트 엑셀). 요청은 하지 않고 주소 문자열만 만든다. 이 등급에서 받을 수 없는 키는 null.
+   * 공개: `reports/<코드>.xlsx` → ./data/reports/<코드>.xlsx(데모 종목만 파일이 있다 — 링크는 리포트 블록이 있을 때만 그린다).
+   * 로그인: API 경로 + 확장자(`stock/<코드>/report.xlsx`) → 같은 출처 API.
+   * 페이지 모듈은 주소를 직접 만들지 않는다(공개 번들에 로그인 API 경로 문자열 금지 — check-bundle.mjs).
+   * 시험 가짜 소스는 없어도 된다 — hrefOf() 가 null 로 본다.
+   */
+  href?(key: string): string | null;
+}
+
+/** 내려받기 주소 — 소스에 href 가 없으면 null(링크를 그리지 않는다). */
+export function hrefOf(source: Pick<DataSource, 'href'>, key: string): string | null {
+  return source.href ? source.href(key) : null;
+}
+
+/**
+ * 종목 리포트 엑셀(dart-report)의 내려받기 키 — 등급마다 다르다(§5.3 `report.xlsx`, §7 `reports/<코드>.xlsx`).
+ * 이 키를 hrefOf(ctx.source, key) 에 넘긴다.
+ */
+export function reportXlsxKey(tier: Tier, code: string): string {
+  return tier === 'login' ? `stock/${code}/report.xlsx` : `reports/${code}.xlsx`;
 }
 
 /** 로그인이 필요하다(로그인 빌드의 401). */

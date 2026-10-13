@@ -11,7 +11,7 @@ KIS 토큰 발급은 auth 한 곳, KIS·KRX·DART 호출은 kbj 어댑터, 텔�
 — 가짜 오류 문구에 호스트가 들어간다), 이 스크립트 자신(패턴은 조각을 이어 만든다).
 
 규칙
-- 호스트 그룹(``--list`` 로 본다). 목표 0 그룹(kis_oauth·kis_rest·kis_master·krx_api·dart)은
+- 호스트 그룹(``--list`` 로 본다). 목표 0 그룹(kis_oauth·kis_rest·kis_master·krx_api·dart·fnguide)은
   허용 위치 밖 어디서든 한 줄이라도 있으면 실패한다. 기준선 그룹(telegram·ecos·datago·
   kosis·kis_ws·naver·etf_issuers·krx_scrape)은 ``kbj/`` 에서는 허용 위치 밖이면 실패, 그
   밖(legacy 등)은 ``scripts/canonical_baseline.txt`` 와 견준다.
@@ -218,6 +218,20 @@ GROUPS: dict[str, Group] = {
             "P3~P5",
         ),
         Group(
+            "fnguide",
+            re.compile(
+                _dots("fnguide", "com")
+                + "|(?<!navercomp"
+                + r"\.)"
+                + _dots("wisereport", "co", "kr")
+            ),
+            (),
+            True,
+            "FnGuide·WiseReport 컨센서스 스크랩 — 유료·재배포 금지(U4·ADR 0015), "
+            "컨센서스는 KIS(consensus.snapshot)",
+            "P4",
+        ),
+        Group(
             "krx_scrape",
             re.compile(r"(?<![-\w])" + _dots("data", "krx", "co", "kr") + r"|\bpy" + r"krx\b"),
             (),
@@ -278,6 +292,11 @@ LEGACY_KBJ_ALLOW: tuple[str, ...] = (
     "kbj.engines.etf",
     "kbj.data.private.etf_issuers",
     "kbj.config.markets",
+    # P4 묶음 R(docs/p4_design.md §1.5·D-P4-6 ④): DR dartreport/{statements,costs,bridge,
+    # orders,excel}.py 가 kbj 재무 엔진·엑셀 빌더를 다시 내보내는 shim(같은 객체 — tests_bridge.py
+    # 가 확인), run.py 는 매핑 기본 경로만 config/dart_report/mapping.yaml. 웨이브 3 묶음 S 확정
+    "kbj.engines.financials",
+    "kbj.reports.dart_excel",
 )
 
 ALL_RULES: dict[str, str] = {**{g.name: g.desc for g in GROUPS.values()}, **AST_RULES}

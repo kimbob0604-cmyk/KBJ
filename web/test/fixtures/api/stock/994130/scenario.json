@@ -1,0 +1,56 @@
+{
+  "source": "KRX+KIS+DART",
+  "as_of": "2026-11-13T15:30:00+09:00",
+  "quality": "estimated",
+  "notes": [
+    "시나리오 적정가 = EPS × 배수(Bear·Base·Bull) — 시장 규모 추정이 아니다(D-P4-12)",
+    "컨센서스 최고값 출처 없음(KIS 교체) — Bull EPS = Base × 1.2"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "applicable": true,
+    "na_reason": null,
+    "code": "994130",
+    "as_of": "2026-11-13",
+    "method": "PER",
+    "cases": {
+      "bear": {
+        "case": "bear",
+        "method": "PER",
+        "eps": 219.79999999999998,
+        "eps_source": "CONSENSUS_×0.7",
+        "multiple": 33.639881580555965,
+        "multiple_source": "5Y_P25",
+        "tp": 7394.045971406201,
+        "upside_pct": -27.366935447876216,
+        "na_reason": null,
+        "quality": "estimated"
+      },
+      "base": {
+        "case": "base",
+        "method": "PER",
+        "eps": 314.0,
+        "eps_source": "CONSENSUS",
+        "multiple": 35.59236712184418,
+        "multiple_source": "5Y_P50",
+        "tp": 11176.00327625907,
+        "upside_pct": 9.783922163645098,
+        "na_reason": null,
+        "quality": "estimated"
+      },
+      "bull": {
+        "case": "bull",
+        "method": "PER",
+        "eps": 376.8,
+        "eps_source": "BASE_×1.2",
+        "multiple": 37.57508778185232,
+        "multiple_source": "5Y_P75",
+        "tp": 14158.293076201953,
+        "upside_pct": 39.07949976622744,
+        "na_reason": null,
+        "quality": "estimated"
+      }
+    },
+    "price": 10180.0
+  }
+}

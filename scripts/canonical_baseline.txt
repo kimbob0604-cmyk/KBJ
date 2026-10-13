@@ -14,17 +14,23 @@
 #   backtest·search·screen·classify — P5·P8, triggers — P4)이 import 해서 파일 단위로 뗄 수 없다(R17) — 그
 #   기능을 kbj 가 대체하는 단계에서 지운다. monitor/flow krx·kissrc 는 flows.report(P5), SD 파일은 P4,
 #   etf_tracker_v9 market.py 는 ETF 리포트(P5), flowlab naver.py 는 flows·verify·selftest 가 써서 P8.
+# - 2026-10-08 P4 묶음 S(docs/p4_design.md §1.12·D-P4-19): SD 컨센서스·리비전·어닝·오버행·DART 수집·밸류·TAM
+#   모듈 12개를 지우고(kbj filings.dart_feed·fin.quarterly·earnings.alerts·consensus.snapshot·fin.valuation_band
+#   가 대신), SD server.py 를 함수 단위로 지웠다(종목 상세·공시·DART·리비전·어닝·TAM 라우트, 네이버 리서치·
+#   종목토론실, P3 대체 라우트·장중 브로드캐스터 — 18,889 → 16,032 줄). naver 88 → 67, krx_scrape 68 → 62. 새 그룹
+#   fnguide(목표 0). server.py 에 남은 네이버·KRX 스크랩 호출은 아직 남은 SD 마감 시황·워치독(검사 스크립트가
+#   본다)·피어 유니버스·뉴스·옵션이 부른다 — 지우면 그 코드가 깨져(R14) 그 기능을 대체하는 단계(P5·P7)에서.
 datago | legacy/etf_traker/board/ingest/datago.py | 1 | P4~P8(P3 S 이월) — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import — 그 기능 대체 때 삭제
 kis_ws | legacy/gexlab/config/kis_ws.yaml | 4 | P7 — ws-gateway 승격 때 kbj/services/ws_gateway 로(메인 결정 D2, 접속키는 auth 만 발급)
 krx_scrape | legacy/etf_traker/board/ingest/flows.py | 2 | P4~P8(P3 S 이월) — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import — 그 기능 대체 때 삭제
 krx_scrape | legacy/etf_traker/board/ingest/pipeline.py | 1 | P4~P8(P3 S 이월) — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import — 그 기능 대체 때 삭제
 krx_scrape | legacy/etf_traker/flowlab/naver.py | 1 | P8(P3 S 이월) — flowlab flows·verify·selftest 가 import — 이벤트 스터디 대체 때 삭제
 krx_scrape | legacy/etf_traker/monitor/flow/krx.py | 5 | P5(P3 S 이월) — monitor/flow run.py(flows.report)가 import — 수급 리포트 대체 때 삭제
-krx_scrape | legacy/stock_dashboard/data_fetcher.py | 12 | P4(P3 S 이월 — D-P3-18) — server.py 함수 단위·SD 검사 스크립트가 쓴다. 종목 상세 대체 때
-krx_scrape | legacy/stock_dashboard/data_freshness.py | 1 | P4(P3 S 이월 — D-P3-18) — server.py 함수 단위·SD 검사 스크립트가 쓴다. 종목 상세 대체 때
-krx_scrape | legacy/stock_dashboard/krx_api.py | 1 | P4(P3 S 이월 — D-P3-18) — server.py 함수 단위·SD 검사 스크립트가 쓴다. 종목 상세 대체 때
-krx_scrape | legacy/stock_dashboard/ohlcv_autofill.py | 8 | P4(P3 S 이월 — D-P3-18) — server.py 함수 단위·SD 검사 스크립트가 쓴다. 종목 상세 대체 때
-krx_scrape | legacy/stock_dashboard/server.py | 35 | P4(P3 S 이월 — D-P3-18) — server.py 함수 단위·SD 검사 스크립트가 쓴다. 종목 상세 대체 때
+krx_scrape | legacy/stock_dashboard/data_fetcher.py | 12 | P5(P4 S 이월 — D-P4-19·R14) — 남은 SD 마감 시황·워치독·피어·뉴스·옵션(server.py)과 SD 검사 스크립트가 쓴다. 그 기능 대체 때
+krx_scrape | legacy/stock_dashboard/data_freshness.py | 1 | P5(P4 S 이월 — D-P4-19·R14) — 남은 SD 마감 시황·워치독·피어·뉴스·옵션(server.py)과 SD 검사 스크립트가 쓴다. 그 기능 대체 때
+krx_scrape | legacy/stock_dashboard/krx_api.py | 1 | P5(P4 S 이월 — D-P4-19·R14) — 남은 SD 마감 시황·워치독·피어·뉴스·옵션(server.py)과 SD 검사 스크립트가 쓴다. 그 기능 대체 때
+krx_scrape | legacy/stock_dashboard/ohlcv_autofill.py | 8 | P5(P4 S 이월 — D-P4-19·R14) — 남은 SD 마감 시황·워치독·피어·뉴스·옵션(server.py)과 SD 검사 스크립트가 쓴다. 그 기능 대체 때
+krx_scrape | legacy/stock_dashboard/server.py | 29 | P5(P4 S 이월 — D-P4-19·R14) — 남은 SD 마감 시황·워치독·피어·뉴스·옵션(server.py)과 SD 검사 스크립트가 쓴다. 그 기능 대체 때
 krx_scrape | pyproject.toml | 2 | D8 — legacy 의존성 그룹의 pykrx 줄·주석: legacy 그룹을 지울 때 함께
 naver | legacy/etf_traker/board/config/settings.yaml | 1 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
 naver | legacy/etf_traker/board/ingest/flows.py | 6 | P4~P8(P3 S 이월) — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import — 그 기능 대체 때 삭제
@@ -42,11 +48,9 @@ naver | legacy/etf_traker/flowlab/config.py | 3 | P8(P3 S 이월) — flowlab fl
 naver | legacy/etf_traker/flowlab/naver.py | 4 | P8(P3 S 이월) — flowlab flows·verify·selftest 가 import — 이벤트 스터디 대체 때 삭제
 naver | legacy/etf_traker/flowlab/tests.py | 1 | P8(P3 S 이월) — flowlab flows·verify·selftest 가 import — 이벤트 스터디 대체 때 삭제
 naver | legacy/stock_dashboard/agents/pipeline.py | 1 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
-naver | legacy/stock_dashboard/consensus_collector.py | 2 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
-naver | legacy/stock_dashboard/consensus_quarterly_collector.py | 2 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
 naver | legacy/stock_dashboard/data_fetcher.py | 1 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
 naver | legacy/stock_dashboard/ohlcv_autofill.py | 2 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
 naver | legacy/stock_dashboard/scripts/validate_valuechain_external.py | 1 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
-naver | legacy/stock_dashboard/server.py | 32 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+naver | legacy/stock_dashboard/server.py | 15 | P5(P4 S 이월 — R14) — 마감 시황·워치독(검사 스크립트가 본다)·피어 유니버스·뉴스·ETF 시세가 쓴다. U4: 기능별로 KRX·KIS 로 교체
 naver | legacy/stock_dashboard/theme_crawler.py | 3 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
 naver | legacy/stock_dashboard/valuechain.py | 1 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)

@@ -164,6 +164,15 @@
 |---|---|---|---|---|
 | SD:`server.py:poll_dart_disclosures`:10294(매분)·`_load_dart_corp_code_map`:10453·`init_dart_corp_map_db`:10267·`_fetch_dart_quarter`:10552·`_try_dart_segment_revenue`:10581·`_fetch_kr_earnings`:11174·`score_disclosure`:10102, SD:`dart_collector.py`(aiohttp+tenacity, **requirements 누락**), `earnings_parser.py`, `overhang_parser.py` · ET:`board/ingest/dart.py`(`corp_codes`:75·`company`·`disclosures`·`disclosures_for`·`stock_actions`), `ingest/financials.py`(`fnlttMultiAcnt`, 계정 동의어는 dart-report 사본이라고 주석), `ingest/triggers.py:_dart`, `run.py:_dart_ksic` · ET:`dart-report/dartreport/client.py:DartClient`:43(디스크 캐시·0.12초 스로틀·013 처리·일 20,000 보호·키 길이 검사), `statements.py`·`costs.py`·`bridge.py`·`orders.py`·`excel.py` | 전송층 **ET `dart-report/dartreport/client.py`** + 도메인 함수 **ET `board/ingest/dart.py`** + 리포트 모듈 **dart-report**(엑셀 8시트) + 공시 피드·잠정실적·오버행 파서 **SD**(`poll_dart_disclosures`·`earnings_parser`·`overhang_parser` — 다른 곳에 없음) | `DartClient` 는 캐시·한도·013을 가장 꼼꼼히 다룬다(시험은 스모크뿐). board 함수는 `test_dart_for` 7·`test_split_actions` 7·`test_financials` 12. corp_code 캐시 3벌 → 1벌 | SD `dart_collector.py`(5년 분기) 폐기 → dart-report `statements` 로. corp_code는 `pub_filings.corp_code` 하나. 누적→분기 환산 3벌은 §4 Q4. dart-report `app.py:106` 오류 화면 키 노출 제거(Streamlit은 KBJ 웹으로 대체) | P2(클라이언트), P4(공시·재무·리포트) |
 
+> **P4 결과(2026-10-13 — 묶음 S, ADR 0013·0014)**: 공시 피드·잠정실적·오버행·내부자 파서는 `kbj/data/public/dart/{feed,structured,
+> ownership,prelim_doc,overhang_doc,company,shares}.py`·작업 `filings.dart_feed`·`filings.derive`·`earnings.alerts`, 재무 2층·분기 환산
+> 하나는 `kbj/engines/financials`·`fin.quarterly`·`fin.backfill`, dart-report 는 `kbj/reports/dart_excel`(legacy `dartreport/*` 는 shim —
+> 골든 G1·G2 가 이식 전과 같음을 본다, Streamlit `app.py` 삭제). SD `dart_collector.py`·`earnings_parser.py`·`overhang_parser.py` 와
+> `server.py` 의 공시·DART 함수(`poll_dart_disclosures`·`score_disclosure`·`_fetch_dart_quarter`·`_try_dart_segment_revenue`·
+> `init_dart_corp_map_db`·`_load_dart_corp_code_map` …)는 지웠다(`legacy/stock_dashboard/MIGRATION.md` 'P4'). `_fetch_kr_earnings` 는
+> 미국 실적 일정과 함께 쓰는 `api_calendar_earnings` 때문에 남겼다(P5 경제 캘린더). ET `board/ingest/{dart,financials,triggers}.py` 는
+> board 툴팁·monitor/kr 가 써서 남김(P5).
+
 ### 1.13 네이버 (U4: 로그인 전용, 데이터는 KRX·KIS로 교체, 스크래핑 미사용)
 
 정본 없음 — 네이버 금융 스크래핑 코드는 전부 legacy에서 지운다. 기능별 대체 출처는 아래와 같다. TR·엔드포인트 가운데 지금 코드에 없는 것은 **[추정: 실측 필요]**.
@@ -186,9 +195,9 @@
 | 분봉 | SD:`_fetch_naver_minute_candles`:4163 | KIS `FHKST03010200`(이미 SD `kis_api.get_minute_chart`) | — |
 | 시간외 단일가 | SD:`price_sync_afterhours`(16~17시) | KIS `FHPST02300000`(시간외 현재가)[추정] | — |
 | 재무비율(PER·EPS·PBR·BPS·배당·외인비율) | SD:`api_financial`:3854 | KIS `FHKST01010100` 응답의 PER·PBR·EPS·BPS[추정: 필드] + DART 재무 계산 + KIS `FHKST66430300`(재무비율)[추정] | — |
-| 컨센서스(Fwd EPS·목표가·분기 컨센) | SD:`consensus_collector.fetch_naver_consensus`, `consensus_quarterly_collector.fetch_naver_main`, `consensus_snapshot_collector.run_daily_snapshot` | KIS `FHKST668300C0`(종목 추정실적) + `FHKST663300C0`(종목 투자의견·목표가)[추정] | ⚠ 커버리지·분기 단위 미확인. 확인 전에는 리비전 기능을 '출처 미확보'로 비워 둔다(추정치로 채우지 않음) |
-| 증권사 리포트 목록 | SD:`_crawl_naver_research`:2351·`_scrape_naver_research_list`:9230·`alert_new_reports`:6282 | — | ⚠ **대체 없음** → 기능 폐지 |
-| 종목토론실 감성 | SD:`_fetch_naver_board_titles`:15419·`_score_sentiment_titles`:15455 | — | ⚠ **대체 없음** → 기능 폐지 |
+| 컨센서스(Fwd EPS·목표가·분기 컨센) | SD:`consensus_collector.fetch_naver_consensus`, `consensus_quarterly_collector.fetch_naver_main`, `consensus_snapshot_collector.run_daily_snapshot` | KIS `FHKST668300C0`(종목 추정실적) + `FHKST663300C0`(종목 투자의견·목표가)[추정] | ⚠ 커버리지·분기 단위 미확인. 확인 전에는 리비전 기능을 '출처 미확보'로 비워 둔다(추정치로 채우지 않음). **P4(2026-10-13): TR id·경로의 정본은 `kbj/data/private/kis/datasets.py:CONSENSUS_TRS` 한 곳**(이 표의 값은 P0 기록 — 기본값은 그 상수와 ADR 0015, [확인 필요 #29]). 수집 작업 `consensus.snapshot` 은 실측 전까지 꺼짐. SD 컨센서스 3모듈·`revision_calculator.py` 는 지웠다(옛 네이버 이력은 옮기지 않음 — U-P4-2) |
+| 증권사 리포트 목록 | SD:`_crawl_naver_research`:2351·`_scrape_naver_research_list`:9230·`alert_new_reports`:6282 | — | ⚠ **대체 없음** → 기능 폐지(P4 에 `server.py` 에서 지웠다) |
+| 종목토론실 감성 | SD:`_fetch_naver_board_titles`:15419·`_score_sentiment_titles`:15455 | — | ⚠ **대체 없음** → 기능 폐지(P4 에 `server.py` 에서 지웠다) |
 | 테마-종목 매핑 | SD:`theme_crawler.py` | — (외부 출처 없음) | ⚠ 외부 대체 없음 → KBJ 분류 사전(§1.8)으로 |
 | 종목 뉴스·트리거 | ET:`board/ingest/triggers.py`(네이버 종목 뉴스 URL), 네이버 검색 API 4곳(SD `api_news`:2270·`valuechain._fetch_naver_news`·`agents/pipeline.agent1_news`, ET `ingest/news.py`) | KIS `FHKST01011800`(종합 시황·공시 제목)[추정] + DART 공시 | 네이버 **검색 API**는 스크래핑이 아닌 공식 API로 DATA_TIERS상 로그인 등급이다. U4대로 로그인 전용. ⚠ 테마 키워드 뉴스 검색은 KIS로 대체 불가 |
 
@@ -323,8 +332,8 @@ U3가 정해지기 전이므로 "U3 대기" 표시가 있는 파일은 옮길지
 | anthropic | — | `>=0.40.0` | — | **1.11.0**(메이저 1.x) | board 시험 통과(오프라인). 실호출은 미확인[추정] |
 | openpyxl | — | `>=3.1` | — | 3.1.5 | 없음 |
 | matplotlib | (pykrx `>=3.8`) | flow 무제한 | — | 3.11.2 | 없음 |
-| streamlit | — | dart-report `>=1.36` | — | 1.65.0(+pyarrow·protobuf 7) | 무거운 의존성 — KBJ 웹으로 대체하면 제거 [제안] |
-| aiohttp, tenacity | **requirements 누락**(`dart_collector.py:21`) | — | — | 3.14.4, 9.1.4 | ⚠ 누락 — 단일 lock에 추가하거나 `dart_collector` 폐기(§1.12) |
+| streamlit | — | dart-report `>=1.36` | — | 1.65.0(+pyarrow·protobuf 7) | 무거운 의존성 — KBJ 웹으로 대체하면 제거 [제안]. **P4: DR `app.py` 를 지우고 legacy 그룹에서 뺐다**(페이지 8 '리포트' 탭이 대체) |
+| aiohttp, tenacity | **requirements 누락**(`dart_collector.py:21`) | — | — | 3.14.4, 9.1.4 | ⚠ 누락 — 단일 lock에 추가하거나 `dart_collector` 폐기(§1.12). **P4: `dart_collector.py` 를 지우고 legacy 그룹에서도 뺐다** |
 | pykrx | `>=1.0.51` → 1.2.9 | — | — | 1.2.9 | ⚠ import 때 `KRX_ID`·`KRX_PW` 로 자동 로그인(E5). U4·§1.13에 따라 제거 대상 |
 | Flask·APScheduler·gunicorn·flask-socketio·simple-websocket | SD | — | — | 해석됨 | FastAPI 전환 뒤 제거 |
 | yfinance | `>=0.2.40` → 1.7.0 | (preview 워크플로만) | — | 1.7.0 | 로그인 등급 어댑터 하나로 |

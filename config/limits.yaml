@@ -42,11 +42,14 @@ krx:
 
 # OpenDART(rl:dart:<키 해시> + budget:dart:<날짜>). dart-report 0.12초 스로틀 ≈ 8/s.
 # 일 20,000건의 90%. `020`(요청 제한 초과) → 그날 예산 닫기, `013` → 빈 결과.
+# 백필(P4 fin.backfill — 재무 5년)은 그 안에서 최대 8,000 [제안 — docs/p4_design.md §3.5](budget:dart:backfill:<날짜>,
+# DartClient.from_settings(backfill=True)). 평일 보통 약 1,400·시즌 최대 약 4,200 + 백필 8,000 < 18,000.
 dart:
   rate: 8.0
   floor_rate: 2.0
   step_rate: 2.0
   daily_cap: 18000
+  backfill_cap: 8000
 
 # 공공데이터포털(rl:datago:<데이터셋 해시> + budget:datago:<데이터셋 ID>:<날짜>) — 데이터셋마다 따로.
 # 문서 30 tps 의 약 80%, 개발계정 10,000/일의 95%(probe_results.md §1).

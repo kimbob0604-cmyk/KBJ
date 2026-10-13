@@ -17,10 +17,18 @@ dataset)` 은 등록부 전체에서 한 작업만 받는다(설계 §6.5). 수�
 - 리미터는 모두 앱키 하나(`limits.yaml` 의 `kis` — `rl:kis:<앱키 해시>`). KIS 는 일 한도를 공표하지
   않아 예산(budget)은 없다.
 - 이 모듈은 문자열 메타데이터뿐이다. 카탈로그(`kbj/data/catalog.py`, 묶음 F)가 모은다.
+- **KIS 컨센서스 TR id·경로는 `CONSENSUS_TRS` 한 곳**(docs/p4_design.md D-P4-9·§9.3, ADR
+  0015 2-1 — 메인 결정 2026-10-08). 레포 안의 옛 값이 서로 어긋났다(이 파일의 옛 노트·
+  conflict_map §1.13·가짜 서버). 파서(`kbj.data.private.kis.consensus`)·가짜 서버
+  (`tests/fakes/kis_server.py`)·시뮬레이션(`tests/sim/harness.py`)·시험은 이 상수를 import 하고
+  문자열을 다시 쓰지 않는다(`tests/unit/kis/test_consensus_tr_single.py` 가 지킨다). 실측
+  (probe_results §7 #29) 뒤에는 이 상수 하나만 고친다.
 """
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Final
 
 from kbj.data.spec import AsOfKind, DatasetSpec, Tier, Venue
@@ -28,6 +36,37 @@ from kbj.data.spec import AsOfKind, DatasetSpec, Tier, Venue
 SOURCE: Final = "KIS"
 LIMITER: Final = "kis"
 _SPLIT: Final = (Venue.KRX, Venue.NXT, Venue.TOTAL)
+
+# KIS 컨센서스 TR — 데이터셋 이름 → (tr_id, 경로). **전부 [확인 필요 #29]**(기억에 기댄 값 —
+# 실측 전).
+# - consensus_estimate: 국내주식 종목추정실적(결산년월별 매출·영업이익·순이익·EBITDA·EPS). 여러
+#   증권사 평균인지 한국투자증권 자체 추정인지 모른다(ADR 0015 §1 — 자체 추정이면 화면 이름
+#   "KIS 추정").
+# - invest_opinion: 국내주식 종목투자의견(종목 하나의 증권사별 의견·목표가, 기간 질의).
+# - invest_opinion_by_broker: 국내주식 증권사별 투자의견(증권사 하나의 종목들) — 대안. P4 는 부르지
+#   않는다(등록부 collects 에 없음 — 종목 단위 invest_opinion 이 기본).
+CONSENSUS_TRS: Final[Mapping[str, tuple[str, str]]] = MappingProxyType(
+    {
+        "consensus_estimate": (
+            "HHKST668300C0",
+            "/uapi/domestic-stock/v1/quotations/estimate-perform",
+        ),
+        "invest_opinion": (
+            "FHKST663300C0",
+            "/uapi/domestic-stock/v1/quotations/invest-opinion",
+        ),
+        "invest_opinion_by_broker": (
+            "FHKST663400C0",
+            "/uapi/domestic-stock/v1/quotations/invest-opbysec",
+        ),
+    }
+)
+
+
+def _tr_note(dataset: str) -> str:
+    """카탈로그 노트의 TR 문구 — 상수에서 만든다(문자열을 다시 쓰지 않는다)."""
+    tr_id, path = CONSENSUS_TRS[dataset]
+    return f"{tr_id}({path}) [확인 필요 #29 — 상수 CONSENSUS_TRS]"
 
 
 def _kis(
@@ -204,15 +243,32 @@ DATASETS: Final[tuple[DatasetSpec, ...]] = (
         store="",
         notes="FHKST01010100 단건 현재가. 저장하지 않는다(설계 §6.5 끝)",
     ),
-    # ── 컨센서스(P4) ──────────────────────────────────────────────────────────────────────
+    # ── 컨센서스(P4 — 묶음 K, docs/p4_design.md §3.3·§4.7, ADR 0015) ──────────────────────────
+    # 작업 consensus.snapshot(16:00 — ADR 0018)이 두 데이터셋을 함께 받는다. 실데이터 확인(#29)
+    # 전까지 등록부에서 꺼져 있다(D-P4-10). 유니버스 = 관심종목 ∪ 전 거래일 시총 상위 top_n
+    # 보통주.
     _kis(
         "consensus_estimate",
-        published="장 마감 뒤 [실측 필요]",
+        published="장 마감 뒤 [실측 필요 #29: 갱신 시각]",
         as_of="trade_date",
         store="prv_fin.consensus_snapshot",
         notes=(
-            "[추정 TR] 투자의견 FHKST668300C0·추정실적 FHKST663300C0 — 미실측(설계 R20). 실측 뒤 "
-            "데이터셋을 확정한다(추정치로 채우지 않는다)"
+            f"[추정 TR] 종목추정실적 {_tr_note('consensus_estimate')}. 결산년월별 실적·추정 구분, "
+            "매출·영업이익·순이익·EBITDA·EPS — 출력 이름·금액 단위(억원?)·순이익 기준(지배?)·"
+            "시장 컨센서스 여부 [실측 필요 #29]. 빈 응답은 KisEmpty(0 으로 채우지 않는다). 파서 "
+            "kbj.data.private.kis.consensus"
+        ),
+    ),
+    _kis(
+        "invest_opinion",
+        published="장 마감 뒤 [실측 필요 #29: 갱신 시각]",
+        as_of="trade_date",
+        store="prv_fin.invest_opinion",
+        notes=(
+            f"[추정 TR] 종목투자의견 {_tr_note('invest_opinion')}. 종목 하나의 증권사별 의견·직전 "
+            "의견·목표가, 기간 질의(config/fin.yaml consensus.opinion_window_days — 90일). 대안 "
+            f"증권사별 투자의견 {_tr_note('invest_opinion_by_broker')} 은 부르지 않는다. 출력 이름·"
+            "의견 문구 [실측 필요 #29]. 목표가 컨센서스는 우리가 계산(kbj.engines.consensus.target)"
         ),
     ),
     # ── GEX(legacy GX — P7 까지 runner: external) ──────────────────────────────────────────

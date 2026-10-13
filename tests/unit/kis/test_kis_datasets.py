@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from kbj.data.limits import load_limits
@@ -29,6 +31,8 @@ DESIGN_IDS = {
     "KIS:index_quote_intraday",
     "KIS:sector_quote_intraday",
     "KIS:etf_investor_daily",
+    # P4(docs/p4_design.md §3.3 — 묶음 K)
+    "KIS:invest_opinion",
 }
 
 # 메인 결정 D7 — 거래대금·투자자별 순매수·ETF 수급에 필요한 KIS TR
@@ -127,3 +131,37 @@ def test_etf_investor_daily_is_split_by_venue_and_unmeasured() -> None:
     assert d.as_of_kind == "trade_date"
     assert {v.value for v in d.venues} == {"KRX", "NXT", "TOTAL"}
     assert "FHKST01010900" in d.notes and "[실측 필요" in d.notes
+
+
+# ── P4 컨센서스(docs/p4_design.md §3.3·§9.3 — 묶음 K) ───────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    ("dataset_id", "store"),
+    [
+        ("KIS:consensus_estimate", "prv_fin.consensus_snapshot"),
+        ("KIS:invest_opinion", "prv_fin.invest_opinion"),
+    ],
+)
+def test_p4_consensus_datasets(dataset_id: str, store: str) -> None:
+    d = BY_ID[dataset_id]
+    assert d.store == store and d.as_of_kind == "trade_date" and d.venues == ()
+    assert "[추정 TR]" in d.notes and "[확인 필요 #29" in d.notes and "[실측 필요 #29" in d.notes
+
+
+def test_invest_opinion_is_collected_by_consensus_snapshot_only() -> None:
+    """등록부: 두 데이터셋을 consensus.snapshot 한 작업만 받는다(꺼진 채 — D-P4-10)."""
+    from kbj.services.scheduler.registry import Registry
+
+    reg = Registry.load(Path(__file__).resolve().parents[3] / "config" / "jobs.yaml")
+    owners = {
+        (c.dataset_id, c.as_of): j.name
+        for j in reg.jobs
+        for c in j.collects
+        if c.dataset_id in ("KIS:consensus_estimate", "KIS:invest_opinion")
+    }
+    assert owners == {
+        ("KIS:consensus_estimate", "trade_date"): "consensus.snapshot",
+        ("KIS:invest_opinion", "trade_date"): "consensus.snapshot",
+    }
+    assert not reg.by_name("consensus.snapshot").enabled  # 실측 #29 전까지 꺼짐

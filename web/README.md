@@ -12,7 +12,7 @@
 | `npm run build:public` | 공개 빌드 → `dist-public/` (정적 Pages, `./data/*.json` 만 읽음) |
 | `npm run build:login` | 로그인 빌드 → `dist-login/` (VM API 와 같은 출처 `/api`) |
 | `node scripts/check-bundle.mjs` | 두 빌드 검사: 공개 번들에 API 경로·CSRF 헤더·`KBJ_`·세션 쿠키 이름 0, 로그인 번들에 TradingView 주소 0, gzip 예산 |
-| `node scripts/merge-public-data.mjs <public-data> [dist-public]` | `manifest.json` 에 적힌 공개 JSON 만 `dist-public/data/` 로(로그인 등급 출처 이름이 source 에 있으면 실패) |
+| `node scripts/merge-public-data.mjs <public-data> [dist-public]` | `manifest.json` 에 적힌 공개 JSON 만 `dist-public/data/` 로(로그인 등급 출처 이름이 source 에 있으면 실패). P4: manifest `dirs`(`fin`·`reports`) 하위 폴더는 개수·크기·요약 해시를 검사해 복사(허용 이름 `fin/<코드>.json`·`reports/<코드>.json`·`reports/<코드>.xlsx` — 코드 `^[0-9A-Z]{6}$`) |
 | `npm run gen:types [-- --check]` | `src/api/openapi.json`(A 묶음) → `src/api/types.gen.ts`(W2 묶음). `--check` 는 낡았으면 실패 |
 | `npm run dev` · `npm run dev:login` | 개발 서버(127.0.0.1). 로그인 모드는 `/api` 를 `127.0.0.1:8000` 으로 넘긴다 |
 
@@ -27,16 +27,18 @@ src/
   boot/login.ts      세션 확인 → 로그인 화면 → mountApp, 401 이면 앱을 내리고 로그인 화면
   app/app.ts         셸 조립(상단 바·띠·탭/미니맵·페이지·바닥 줄), 페이지는 처음 보일 때 붙인다
   app/shell.ts       상단 바(브랜드·KST 시계·등급 배지·스킨·로그아웃)
-  app/pager.ts       탭·미니맵·scroll-snap 스와이프·←/→·해시 #/p/<n>
+  app/pager.ts       탭·미니맵·scroll-snap 스와이프·←/→·해시 #/p/<n>(/<코드>)? — 코드 ^[0-9A-Z]{6}$(P4)
+  app/route.ts       선택 종목 상태(getCode·onCode·setCode)·openStock(code) → #/p/8/<코드>(P4)
   app/pages.ts       13페이지 등록부(번호·제목·단계·등급·자물쇠 사유) + 위젯 모듈 찾기(glob)
   app/skin.ts        스킨 5종(<html data-skin>, localStorage 'kbj-skin' — try/catch)
   app/refresh.ts     주기 실행(탭이 숨으면 멈춤)
   app/types.ts       셸 ↔ 페이지 모듈 약속(AppContext·PageContext·PageModule·RibbonModule)
   data/source.ts     DataSource·Envelope·오류형(AuthRequiredError·LockedError·DataError)
-  data/static.ts     공개: ./data/<이름>.json (슬래시 든 키는 요청 없이 LockedError)
+  data/static.ts     공개: ./data/<이름>.json (슬래시 든 키는 요청 없이 LockedError — P4 예외 둘: fin/<코드>·reports/<코드>,
+                     파일 자체가 봉투). 내려받기 주소는 DataSource.href(key) — 페이지에 '/api' 문자열 금지
   data/api.ts        로그인: 같은 출처 API, 쿠키 세션, 401 → 로그인 화면        ← boot/login 만 import
   data/auth.ts       로그인 폼·me·로그아웃(CSRF 헤더, 메모리 보관)               ← boot/login 만 import
-  ui/                dom(h)·fmt(억·조·KST)·quality·panel·lock·table·seg·svg·chip
+  ui/                dom(h)·fmt(억·조·KST)·quality·panel·lock·table·seg·svg·chip, P4: search·tabs·band·waterfall·stackbar·timeline·kv
   pages/placeholder.ts  빈 자리 페이지(준비 중(Pn)·등급 자물쇠)
   pages/tradingview.ts  TradingView 임베드(공개 전용)                            ← boot/public 만 import
   pwa/               sw.ts(앱 셸만 캐시 — 허용 목록 routes.ts)·register.ts
@@ -48,7 +50,7 @@ test/                vitest — fmt·quality·tier·pager·a11y(axe-core)·token
 
 W(셸)와 W2(위젯)는 같은 파일을 고치지 않는다. 셸은 **파일이 있으면** 찾아 붙이고, 없으면 '준비 중' 자리를 그린다.
 
-- 페이지 1·2·4·10: `src/pages/p1_market.ts`·`p2_board.ts`·`p4_flows.ts`·`p10_etf.ts` 가 `export default` 로 `PageModule` 을 내보낸다(`app/pages.ts` 의 `import.meta.glob('../pages/p{1,2,4,10}_*.ts')`).
+- 페이지 1·2·4·10: `src/pages/p1_market.ts`·`p2_board.ts`·`p4_flows.ts`·`p10_etf.ts` 가 `export default` 로 `PageModule` 을 내보낸다(`app/pages.ts` 의 `import.meta.glob('../pages/p{1,2,4,5,8,10}_*.ts')`). P4: 페이지 5·8 은 진입 모듈 `p5_filings.ts`·`p8_stock.ts` + 하위 폴더 `pages/p5/**`·`pages/p8/**`(하위 폴더는 glob 에 걸리지 않는다 — 진입 모듈이 import).
   `mount(ctx: PageContext)` 는 페이지가 **처음 보일 때 한 번** 불린다. 정리 함수를 돌려주면 앱이 내려갈 때 부른다.
 - 상단 띠: `src/app/ribbon.ts` 가 `export default` 로 `RibbonModule`(`mount(el, ctx)`). 칩은 `ui/chip.ts` 의 `chip(ctx.tier, {...})`.
 - 등급: 패널은 `panel(ctx.tier, { tier: 'login', lock: 'krx', ... })` 로 만든다. 공개 빌드면 자물쇠만 그리고 `p.locked === true` — **그때는 데이터를 요청하지 않는다**. 공개 데이터 키는 파일 이름(`'calendar'`), 로그인 키는 API 경로(`'market/summary'`). 공개 빌드에서 로그인 키를 물으면 요청 없이 `LockedError`.

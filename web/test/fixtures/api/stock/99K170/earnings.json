@@ -1,0 +1,93 @@
+{
+  "source": "DART",
+  "as_of": "2026-11-16T00:00:00+09:00",
+  "quality": "estimated",
+  "notes": [
+    "분류 = 전년동기 대비(YoY — 공개 규칙)",
+    "분기 컨센서스 대비 서프라이즈는 출처 없음(KIS 교체로 잃음 — D-P4-10)",
+    "법정 제출기한은 추정(분기·반기 45일, 사업 90일 [확인 필요])"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "code": "99K170",
+    "corp_code": "99400170",
+    "prelims": [
+      {
+        "rcept_no": "20261116800135",
+        "rcept_dt": "2026-11-16",
+        "corp_code": "99400170",
+        "stock_code": "99K170",
+        "corp_name": "모의로보틱스",
+        "scope": "consolidated",
+        "period": "2026Q3",
+        "label": "2026 3Q",
+        "fiscal_year": 2026,
+        "fiscal_q": 3,
+        "is_annual": false,
+        "period_end": "2026-09-30",
+        "period_inferred": true,
+        "currency": "KRW",
+        "revenue_cur": 34339000000,
+        "revenue_prev_q": 33664000000,
+        "revenue_prev_y": null,
+        "op_cur": 2440000000,
+        "op_prev_q": 2244000000,
+        "op_prev_y": null,
+        "ni_cur": 1803000000,
+        "ni_prev_q": 1648000000,
+        "ni_prev_y": null,
+        "ni_owner_cur": 1749000000,
+        "eps_cur": null,
+        "rev_yoy": null,
+        "op_yoy": null,
+        "rev_qoq": 2.005109315589354,
+        "op_qoq": 8.73440285204991,
+        "signal": "NO_DATA",
+        "priority": 5,
+        "is_correction": false,
+        "is_watch": true,
+        "alerted": false,
+        "quality": "estimated",
+        "notes": [
+          "전년동기 값 없음 — 분류 불가(2열 폼 등)"
+        ],
+        "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261116800135"
+      }
+    ],
+    "schedule": [
+      {
+        "corp_code": "99400170",
+        "stock_code": "99K170",
+        "corp_name": "모의로보틱스",
+        "period_end": "2026-12-31",
+        "kind": "statutory",
+        "planned_date": "2027-03-31",
+        "fiscal_year": 2026,
+        "fiscal_q": 4,
+        "rcept_no": null,
+        "note": "법정 제출기한(결산일 + 90일) — 추정",
+        "is_watch": true,
+        "quality": "estimated"
+      }
+    ],
+    "surprises": [
+      {
+        "rcept_no": "20261116800135",
+        "period": "2026Q3",
+        "scope": "consolidated",
+        "signal": "NO_DATA",
+        "priority": 5,
+        "rev_yoy": null,
+        "op_yoy": null,
+        "rev_surprise": null,
+        "op_surprise": null,
+        "alerted_at": null,
+        "price_at_alert": null,
+        "perf_3d": null,
+        "perf_5d": null,
+        "perf_7d": null,
+        "quality": "estimated"
+      }
+    ]
+  }
+}

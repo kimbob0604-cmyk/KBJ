@@ -327,6 +327,346 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/stock/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search */
+        get: operations["search_api_stock_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stock/{code}/header": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Header */
+        get: operations["header_api_stock__code__header_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stock/{code}/chart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Chart */
+        get: operations["chart_api_stock__code__chart_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stock/{code}/financials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Financials */
+        get: operations["financials_api_stock__code__financials_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stock/{code}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Report */
+        get: operations["report_api_stock__code__report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stock/{code}/report.xlsx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Report Xlsx */
+        get: operations["report_xlsx_api_stock__code__report_xlsx_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stock/{code}/segments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Segments */
+        get: operations["segments_api_stock__code__segments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stock/{code}/consensus": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Consensus */
+        get: operations["consensus_api_stock__code__consensus_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stock/{code}/valuation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Valuation */
+        get: operations["valuation_api_stock__code__valuation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stock/{code}/scenario": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Scenario */
+        get: operations["scenario_api_stock__code__scenario_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stock/{code}/overhang": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Overhang */
+        get: operations["overhang_api_stock__code__overhang_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stock/{code}/insiders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Insiders */
+        get: operations["insiders_api_stock__code__insiders_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stock/{code}/disclosures": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Disclosures */
+        get: operations["disclosures_api_stock__code__disclosures_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stock/{code}/earnings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Earnings */
+        get: operations["earnings_api_stock__code__earnings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/filings/feed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Feed */
+        get: operations["feed_api_filings_feed_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/filings/earnings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Earnings */
+        get: operations["earnings_api_filings_earnings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/filings/overhang": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Overhang */
+        get: operations["overhang_api_filings_overhang_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/filings/insiders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Insiders */
+        get: operations["insiders_api_filings_insiders_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/filings/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Schedule */
+        get: operations["schedule_api_filings_schedule_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/watchlist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Watchlist */
+        get: operations["watchlist_api_watchlist_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/telegram/webhook": {
         parameters: {
             query?: never;
@@ -348,6 +688,47 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** BandView */
+        BandView: {
+            /**
+             * Metric
+             * @enum {string}
+             */
+            metric: "per" | "pbr" | "psr" | "ev_ebitda";
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** P10 */
+            p10: number | null;
+            /** P25 */
+            p25: number | null;
+            /** P50 */
+            p50: number | null;
+            /** P75 */
+            p75: number | null;
+            /** P90 */
+            p90: number | null;
+            /** Min */
+            min: number | null;
+            /** Max */
+            max: number | null;
+            /** N Days */
+            n_days: number;
+            /** N Excluded */
+            n_excluded: number;
+            /** Current */
+            current: number | null;
+            /** Current Rank Pct */
+            current_rank_pct: number | null;
+            /** Window From */
+            window_from: string | null;
+            /** Applicable */
+            applicable: boolean;
+            na_reason: components["schemas"]["NaReason"] | null;
+            quality: components["schemas"]["Quality"];
+        };
         /** BoardEvents */
         BoardEvents: {
             /** As Of */
@@ -583,6 +964,43 @@ export interface components {
             /** Gap Days */
             gap_days: number;
         };
+        /** ChartBar */
+        ChartBar: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** O */
+            o: number | null;
+            /** H */
+            h: number | null;
+            /** L */
+            l: number | null;
+            /** C */
+            c: number | null;
+            /** V */
+            v: number | null;
+            /** Turnover */
+            turnover: number | null;
+        };
+        /** ChartEvent */
+        ChartEvent: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "split";
+            /** Ratio */
+            ratio: number;
+            /** Note */
+            note: string;
+        };
         /**
          * Check3
          * @description 검산 ③(순자산 변화 = 순유입 + 가격효과) — 집계에 넣은 흐름의 합.
@@ -642,6 +1060,53 @@ export interface components {
             as_of: string;
             quality: components["schemas"]["Quality"];
         };
+        /** ClassCap */
+        ClassCap: {
+            /** Code */
+            code: string;
+            /**
+             * Share Class
+             * @enum {string}
+             */
+            share_class: "common" | "pref";
+            /** Close */
+            close: number | null;
+            /** Shares */
+            shares: number | null;
+            /** Mktcap */
+            mktcap: number | null;
+        };
+        /**
+         * Consensus
+         * @description 컨센서스(§4.7). 우선주는 보통주 것(`code` = 쓴 보통주 코드). `label` = "KIS 추정"(시장
+         *     컨센서스인지 [확인 필요 #29] — 확인 전에는 컨센서스라 부르지 않는다). `lost` = KIS 교체로 잃은
+         *     것 (D-P4-10 — 화면 '출처 없음 — KIS 교체로 잃음' 줄).
+         */
+        Consensus: {
+            /**
+             * Applicable
+             * @default true
+             */
+            applicable: boolean;
+            na_reason?: components["schemas"]["NaReason"] | null;
+            /** Code */
+            code: string;
+            /** Label */
+            label: string;
+            /** Snap Date */
+            snap_date: string | null;
+            /** Fy */
+            fy: components["schemas"]["FyEstimateView"][];
+            ntm: components["schemas"]["NtmView"] | null;
+            target: components["schemas"]["TargetView"] | null;
+            opinions: components["schemas"]["OpinionDist"] | null;
+            /** Revisions */
+            revisions: components["schemas"]["RevisionView"][];
+            /** Recent */
+            recent: components["schemas"]["OpinionView"][];
+            /** Lost */
+            lost: string[];
+        };
         /** CsrfResponse */
         CsrfResponse: {
             /** Csrf Token */
@@ -697,6 +1162,111 @@ export interface components {
             quality: components["schemas"]["Quality"] | null;
             /** Source */
             source: string;
+        };
+        /**
+         * DisclosureView
+         * @description 공시 한 건. `kw_score` = 제목 키워드 점수(공개), `login_score`·`importance` = 키워드 +
+         *     관심종목 + 시총 가산(로그인 — 읽을 때 계산). `first_seen_at` = 우리가 처음 본 시각(DART
+         *     응답에는 날짜만).
+         */
+        DisclosureView: {
+            /** Rcept No */
+            rcept_no: string;
+            /**
+             * Rcept Dt
+             * Format: date
+             */
+            rcept_dt: string;
+            /**
+             * First Seen At
+             * Format: date-time
+             */
+            first_seen_at: string;
+            /** Corp Code */
+            corp_code: string;
+            /** Stock Code */
+            stock_code: string | null;
+            /** Corp Name */
+            corp_name: string;
+            /** Corp Cls */
+            corp_cls: string | null;
+            /** Title */
+            title: string;
+            /** Kind */
+            kind: string;
+            /** Is Correction */
+            is_correction: boolean;
+            /** Kw Score */
+            kw_score: number | null;
+            /** Kw Matched */
+            kw_matched: string[];
+            /** Login Score */
+            login_score: number;
+            /**
+             * Importance
+             * @enum {string}
+             */
+            importance: "critical" | "high" | "medium" | "low";
+            /** Is Watch */
+            is_watch: boolean;
+            /** Parse State */
+            parse_state: string;
+            /** Link */
+            link: string;
+        };
+        /** Disclosures */
+        Disclosures: {
+            /** Code */
+            code: string;
+            /** Corp Code */
+            corp_code: string;
+            /** Days */
+            days: number;
+            /** Kind */
+            kind: string | null;
+            /** Rows */
+            rows: components["schemas"]["DisclosureView"][];
+        };
+        /** Earnings */
+        Earnings: {
+            /** Code */
+            code: string;
+            /** Corp Code */
+            corp_code: string;
+            /** Prelims */
+            prelims: components["schemas"]["PrelimView"][];
+            /** Schedule */
+            schedule: components["schemas"]["ScheduleView"][];
+            /** Surprises */
+            surprises: components["schemas"]["SurpriseView"][];
+        };
+        /**
+         * EarningsList
+         * @description 페이지 5 잠정실적(기간 — 최대 31일).
+         */
+        EarningsList: {
+            /**
+             * From Date
+             * Format: date
+             */
+            from_date: string;
+            /**
+             * To Date
+             * Format: date
+             */
+            to_date: string;
+            /** Rows */
+            rows: components["schemas"]["PrelimView"][];
+        };
+        /**
+         * EarningsSchedule
+         * @description 페이지 5 실적 일정(오늘부터 days 일).
+         */
+        EarningsSchedule: {
+            /** Days */
+            days: number;
+            /** Rows */
+            rows: components["schemas"]["ScheduleView"][];
         };
         /** Envelope[BoardEvents] */
         Envelope_BoardEvents_: {
@@ -774,6 +1344,101 @@ export interface components {
             generated_at: string;
             data: components["schemas"]["BoardSectors"];
         };
+        /** Envelope[Consensus] */
+        Envelope_Consensus_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["Consensus"];
+        };
+        /** Envelope[Disclosures] */
+        Envelope_Disclosures_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["Disclosures"];
+        };
+        /** Envelope[EarningsList] */
+        Envelope_EarningsList_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["EarningsList"];
+        };
+        /** Envelope[EarningsSchedule] */
+        Envelope_EarningsSchedule_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["EarningsSchedule"];
+        };
+        /** Envelope[Earnings] */
+        Envelope_Earnings_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["Earnings"];
+        };
         /** Envelope[EtfFlows] */
         Envelope_EtfFlows_: {
             /** Source */
@@ -850,6 +1515,82 @@ export interface components {
             generated_at: string;
             data: components["schemas"]["EtfTypes"];
         };
+        /** Envelope[FilingsFeed] */
+        Envelope_FilingsFeed_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["FilingsFeed"];
+        };
+        /** Envelope[Financials] */
+        Envelope_Financials_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["Financials"];
+        };
+        /** Envelope[InsiderRecent] */
+        Envelope_InsiderRecent_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["InsiderRecent"];
+        };
+        /** Envelope[Insiders] */
+        Envelope_Insiders_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["Insiders"];
+        };
         /** Envelope[IntradayFlows] */
         Envelope_IntradayFlows_: {
             /** Source */
@@ -907,6 +1648,82 @@ export interface components {
             generated_at: string;
             data: components["schemas"]["MarketSummary"];
         };
+        /** Envelope[OverhangRecent] */
+        Envelope_OverhangRecent_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["OverhangRecent"];
+        };
+        /** Envelope[Overhang] */
+        Envelope_Overhang_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["Overhang"];
+        };
+        /** Envelope[PriceChart] */
+        Envelope_PriceChart_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["PriceChart"];
+        };
+        /** Envelope[ReportView] */
+        Envelope_ReportView_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["ReportView"];
+        };
         /** Envelope[Ribbon] */
         Envelope_Ribbon_: {
             /** Source */
@@ -925,6 +1742,25 @@ export interface components {
              */
             generated_at: string;
             data: components["schemas"]["Ribbon"];
+        };
+        /** Envelope[Scenario] */
+        Envelope_Scenario_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["Scenario"];
         };
         /** Envelope[ScreenResponse] */
         Envelope_ScreenResponse_: {
@@ -964,6 +1800,25 @@ export interface components {
             generated_at: string;
             data: components["schemas"]["SectorHeat"];
         };
+        /** Envelope[Segments] */
+        Envelope_Segments_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["Segments"];
+        };
         /** Envelope[StockFlowDetail] */
         Envelope_StockFlowDetail_: {
             /** Source */
@@ -982,6 +1837,82 @@ export interface components {
              */
             generated_at: string;
             data: components["schemas"]["StockFlowDetail"];
+        };
+        /** Envelope[StockHeader] */
+        Envelope_StockHeader_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["StockHeader"];
+        };
+        /** Envelope[StockSearch] */
+        Envelope_StockSearch_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["StockSearch"];
+        };
+        /** Envelope[Valuation] */
+        Envelope_Valuation_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["Valuation"];
+        };
+        /** Envelope[Watchlist] */
+        Envelope_Watchlist_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["Watchlist"];
         };
         /**
          * ErrorBody
@@ -1114,6 +2045,142 @@ export interface components {
             /** Status Unknown */
             status_unknown: number;
         };
+        /**
+         * FilingsFeed
+         * @description 페이지 5 공시 피드(하루). `by_kind` = 거르기 전 종류별 수.
+         */
+        FilingsFeed: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Kind */
+            kind: string | null;
+            /** Importance */
+            importance: ("critical" | "high" | "medium" | "low") | null;
+            /** Market */
+            market: ("KOSPI" | "KOSDAQ" | "KONEX") | null;
+            /** Watch Only */
+            watch_only: boolean;
+            /** N Total */
+            n_total: number;
+            /** By Kind */
+            by_kind: {
+                [key: string]: number;
+            };
+            /** Rows */
+            rows: components["schemas"]["DisclosureView"][];
+        };
+        /** FinChecks */
+        FinChecks: {
+            /** Diff3M Max Pct */
+            diff3m_max_pct: number | null;
+            /** N Derived */
+            n_derived: number;
+            /** N Estimated */
+            n_estimated: number;
+        };
+        /**
+         * FinRow
+         * @description 분기 단독(basis=q — 누적 차분, Q4 = 연간 − 3분기 누적) 또는 회계연도 합(basis=a).
+         */
+        FinRow: {
+            /** Period */
+            period: string;
+            /** Label */
+            label: string;
+            /** Fiscal Year */
+            fiscal_year: number;
+            /** Fiscal Q */
+            fiscal_q: number | null;
+            /**
+             * Period Start
+             * Format: date
+             */
+            period_start: string;
+            /**
+             * Period End
+             * Format: date
+             */
+            period_end: string;
+            /** Rcept Dt */
+            rcept_dt: string | null;
+            /** Revenue */
+            revenue: number | null;
+            /** Op */
+            op: number | null;
+            /** Ni */
+            ni: number | null;
+            /** Ni Owner */
+            ni_owner: number | null;
+            /** Opm */
+            opm: number | null;
+            /** Npm */
+            npm: number | null;
+            /** Rev Yoy */
+            rev_yoy: number | null;
+            /** Op Yoy */
+            op_yoy: number | null;
+            /** Derived */
+            derived: boolean;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes: string[];
+        };
+        /** Financials */
+        Financials: {
+            /**
+             * Applicable
+             * @default true
+             */
+            applicable: boolean;
+            na_reason?: components["schemas"]["NaReason"] | null;
+            /** Code */
+            code: string;
+            /** Corp Code */
+            corp_code: string;
+            /**
+             * Basis
+             * @enum {string}
+             */
+            basis: "q" | "a";
+            /** Fs Div */
+            fs_div: ("CFS" | "OFS") | null;
+            /** Currency */
+            currency: string | null;
+            /** Tier */
+            tier: ("main" | "full") | null;
+            /** Rows */
+            rows: components["schemas"]["FinRow"][];
+            ratios: components["schemas"]["RatioView"] | null;
+            checks: components["schemas"]["FinChecks"];
+        };
+        /** FyEstimateView */
+        FyEstimateView: {
+            /** Fiscal Ym */
+            fiscal_ym: string;
+            /**
+             * Fiscal End
+             * Format: date
+             */
+            fiscal_end: string;
+            /** Is Estimate */
+            is_estimate: boolean;
+            /** Revenue */
+            revenue: number | null;
+            /** Op */
+            op: number | null;
+            /** Ni */
+            ni: number | null;
+            /** Ni Owner */
+            ni_owner: number | null;
+            /** Eps */
+            eps: number | null;
+            /** Ebitda */
+            ebitda: number | null;
+            quality: components["schemas"]["Quality"];
+        };
         /** Health */
         Health: {
             /** Ok */
@@ -1143,6 +2210,146 @@ export interface components {
              */
             as_of: string;
             quality: components["schemas"]["Quality"];
+        };
+        /** InsiderRecent */
+        InsiderRecent: {
+            /** Days */
+            days: number;
+            /** Min Ratio Pct */
+            min_ratio_pct: number | null;
+            /** Label */
+            label: string;
+            /** Rows */
+            rows: components["schemas"]["InsiderRecentRow"][];
+        };
+        /** InsiderRecentRow */
+        InsiderRecentRow: {
+            /** Corp Code */
+            corp_code: string;
+            /** Stock Code */
+            stock_code: string | null;
+            /** Corp Name */
+            corp_name: string | null;
+            /** N Reports */
+            n_reports: number;
+            /** N Reporters */
+            n_reporters: number;
+            /** Net Shares */
+            net_shares: number;
+            /** Buy Shares */
+            buy_shares: number;
+            /** Sell Shares */
+            sell_shares: number;
+            /** Ratio Pct */
+            ratio_pct: number | null;
+            /**
+             * Last Rcept Dt
+             * Format: date
+             */
+            last_rcept_dt: string;
+            /** Is Watch */
+            is_watch: boolean;
+            quality: components["schemas"]["Quality"];
+        };
+        /** InsiderReportView */
+        InsiderReportView: {
+            /** Rcept No */
+            rcept_no: string;
+            /**
+             * Rcept Dt
+             * Format: date
+             */
+            rcept_dt: string;
+            /** Reporter */
+            reporter: string;
+            /** Position */
+            position: string | null;
+            /** Registered */
+            registered: boolean | null;
+            /** Major Holder */
+            major_holder: boolean | null;
+            /** Shares After */
+            shares_after: number | null;
+            /** Shares Delta */
+            shares_delta: number | null;
+            /** Ratio After */
+            ratio_after: number | null;
+            /** Ratio Delta */
+            ratio_delta: number | null;
+            /** Reason */
+            reason: string | null;
+            quality: components["schemas"]["Quality"];
+            /** Link */
+            link: string;
+        };
+        /** Insiders */
+        Insiders: {
+            /** Code */
+            code: string;
+            /** Corp Code */
+            corp_code: string;
+            /** Days */
+            days: number;
+            /** Label */
+            label: string;
+            /** Windows */
+            windows: components["schemas"]["WindowView"][];
+            /** Reports */
+            reports: components["schemas"]["InsiderReportView"][];
+            /** Major Holders */
+            major_holders: components["schemas"]["MajorHolderView"][];
+        };
+        /** InstrumentView */
+        InstrumentView: {
+            /** Rcept No */
+            rcept_no: string;
+            /**
+             * Rcept Dt
+             * Format: date
+             */
+            rcept_dt: string;
+            /**
+             * Instrument
+             * @enum {string}
+             */
+            instrument: "cb" | "bw" | "eb" | "paid_in" | "bonus";
+            /** Seq */
+            seq: string | null;
+            /** Face Value */
+            face_value: number | null;
+            /** Remaining Face */
+            remaining_face: number | null;
+            /** Price */
+            price: number | null;
+            /** Refix Floor */
+            refix_floor: number | null;
+            /** Potential Shares */
+            potential_shares: number | null;
+            /** Active */
+            active: boolean;
+            /** Exercisable */
+            exercisable: boolean;
+            /** Exercise Start */
+            exercise_start: string | null;
+            /** Exercise End */
+            exercise_end: string | null;
+            /** Maturity */
+            maturity: string | null;
+            /** Listing Date */
+            listing_date: string | null;
+            /** Alloc Method */
+            alloc_method: string | null;
+            /** Lockup End Est */
+            lockup_end_est: string | null;
+            /** Itm */
+            itm: boolean | null;
+            /** Amount */
+            amount: number | null;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes: string[];
+            /** Link */
+            link: string;
         };
         /** IntradayFlows */
         IntradayFlows: {
@@ -1202,6 +2409,29 @@ export interface components {
             /** Recent */
             recent: components["schemas"]["DayTotals"][];
         };
+        JsonValue: unknown;
+        /** LockupView */
+        LockupView: {
+            /** Rcept No */
+            rcept_no: string;
+            /**
+             * Listing Date
+             * Format: date
+             */
+            listing_date: string;
+            /**
+             * Lockup End Est
+             * Format: date
+             */
+            lockup_end_est: string;
+            /** Shares */
+            shares: number | null;
+            /** Months */
+            months: number;
+            /** Basis */
+            basis: string;
+            quality: components["schemas"]["Quality"];
+        };
         /**
          * LoginBody
          * @description POST /api/auth/login 본문. 값은 검증 오류 문구에 싣지 않는다(app 의 422 처리기).
@@ -1211,6 +2441,33 @@ export interface components {
             username: string;
             /** Password */
             password: string;
+        };
+        /** MajorHolderView */
+        MajorHolderView: {
+            /** Rcept No */
+            rcept_no: string;
+            /**
+             * Rcept Dt
+             * Format: date
+             */
+            rcept_dt: string;
+            /** Reporter */
+            reporter: string;
+            /** Report Type */
+            report_type: string | null;
+            /** Shares */
+            shares: number | null;
+            /** Shares Delta */
+            shares_delta: number | null;
+            /** Ratio */
+            ratio: number | null;
+            /** Ratio Delta */
+            ratio_delta: number | null;
+            /** Reason */
+            reason: string | null;
+            quality: components["schemas"]["Quality"];
+            /** Link */
+            link: string;
         };
         /** MarketSummary */
         MarketSummary: {
@@ -1228,6 +2485,57 @@ export interface components {
             user: string;
             /** Csrf Token */
             csrf_token: string;
+        };
+        /** MultipleCell */
+        MultipleCell: {
+            /** Value */
+            value: number | null;
+            /** Applicable */
+            applicable: boolean;
+            na_reason: components["schemas"]["NaReason"] | null;
+            /**
+             * Out Of Cap
+             * @default false
+             */
+            out_of_cap: boolean;
+        };
+        /**
+         * NaReason
+         * @description 적용 불가 사유(설계 §5.2) — 값 칸은 None 이고 0 으로 채우지 않는다.
+         *
+         *     `currency_mismatch`(§8.4 #19 외국기업 — 재무 통화 ≠ KRW 시세)와 `missing_input`(D&A 없는
+         *     EV/EBITDA 처럼 필요한 입력이 공시에 없음)은 이 묶음(M)이 더한 두 값이다 [확인 필요 — A·V 와
+         *     약속].
+         * @enum {string}
+         */
+        NaReason: "loss" | "capital_impairment" | "no_revenue" | "financial_sector" | "short_history" | "not_detail_tier" | "not_in_consensus_universe" | "no_filings" | "spac" | "konex_no_consensus" | "currency_mismatch" | "missing_input";
+        /**
+         * NewHighBadges
+         * @description 신고가 3축(ADR 0017 — 120일 = 120 KRX 거래일, 52주 = 달력 364일, 역사적 = 상장 이후, 엄격
+         *     '>'). board 엔진 산출을 읽기만 한다(D-P4-23). None = 창을 못 채운 축('—').
+         */
+        NewHighBadges: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /**
+             * Basis
+             * @enum {string}
+             */
+            basis: "close" | "high";
+            /** D120 */
+            d120: boolean | null;
+            /** W52 */
+            w52: boolean | null;
+            /** Hist */
+            hist: boolean | null;
+            /** Label */
+            label: ("hist" | "w52" | "d120") | null;
+            /** Source */
+            source: string;
+            quality: components["schemas"]["Quality"];
         };
         /** NewListing */
         NewListing: {
@@ -1257,6 +2565,263 @@ export interface components {
             /** Message */
             message: string;
         };
+        /** NtmView */
+        NtmView: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /**
+             * Snap Date
+             * Format: date
+             */
+            snap_date: string;
+            /** Fy1 Ym */
+            fy1_ym: string;
+            /** Fy2 Ym */
+            fy2_ym: string | null;
+            /** Weight */
+            weight: number | null;
+            /** Revenue */
+            revenue: number | null;
+            /** Op */
+            op: number | null;
+            /** Ni */
+            ni: number | null;
+            /** Eps */
+            eps: number | null;
+            /** Ebitda */
+            ebitda: number | null;
+            quality: components["schemas"]["Quality"];
+        };
+        /** OpinionDist */
+        OpinionDist: {
+            /** Buy */
+            buy: number;
+            /** Hold */
+            hold: number;
+            /** Sell */
+            sell: number;
+            /** Unrated */
+            unrated: number;
+            /** Unknown */
+            unknown: number;
+            /** N Brokers */
+            n_brokers: number;
+            /** Window Days */
+            window_days: number;
+        };
+        /** OpinionView */
+        OpinionView: {
+            /** Broker */
+            broker: string;
+            /**
+             * Opinion Date
+             * Format: date
+             */
+            opinion_date: string;
+            /** Opinion */
+            opinion: string | null;
+            /** Opinion Prev */
+            opinion_prev: string | null;
+            /** Target Price */
+            target_price: number | null;
+            quality: components["schemas"]["Quality"];
+        };
+        /** Overhang */
+        Overhang: {
+            /** Code */
+            code: string;
+            /** Corp Code */
+            corp_code: string;
+            /** Close */
+            close: number | null;
+            /** Close Date */
+            close_date: string | null;
+            summary: components["schemas"]["OverhangSummaryView"] | null;
+            /** Instruments */
+            instruments: components["schemas"]["InstrumentView"][];
+            /** Lockups */
+            lockups: components["schemas"]["LockupView"][];
+            /** Timeline */
+            timeline: components["schemas"]["TimelineItem"][];
+        };
+        /** OverhangRecent */
+        OverhangRecent: {
+            /** Days */
+            days: number;
+            /** Instrument */
+            instrument: ("cb" | "bw" | "eb" | "paid_in" | "bonus") | null;
+            /** Rows */
+            rows: components["schemas"]["OverhangRecentRow"][];
+        };
+        /** OverhangRecentRow */
+        OverhangRecentRow: {
+            /** Rcept No */
+            rcept_no: string;
+            /**
+             * Rcept Dt
+             * Format: date
+             */
+            rcept_dt: string;
+            /** Corp Code */
+            corp_code: string;
+            /** Stock Code */
+            stock_code: string | null;
+            /** Corp Name */
+            corp_name: string | null;
+            /**
+             * Instrument
+             * @enum {string}
+             */
+            instrument: "cb" | "bw" | "eb" | "paid_in" | "bonus";
+            /** Face Value */
+            face_value: number | null;
+            /** Price */
+            price: number | null;
+            /** Shares */
+            shares: number | null;
+            /** Exercise Start */
+            exercise_start: string | null;
+            /** Exercise End */
+            exercise_end: string | null;
+            /** Ratio Pct */
+            ratio_pct: number | null;
+            /** Is Watch */
+            is_watch: boolean;
+            quality: components["schemas"]["Quality"];
+            /** Link */
+            link: string;
+        };
+        /**
+         * OverhangSummaryView
+         * @description 회사 요약. 공개 칸(DART 주식총수 분모) + 로그인 칸(`listed_shares` 분모 비율·금액·ITM 주식
+         *     수 — 전 거래일 종가 기준 추정, 시가가 아님).
+         */
+        OverhangSummaryView: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Potential New Shares */
+            potential_new_shares: number;
+            /** Exercisable Shares */
+            exercisable_shares: number;
+            /** Exchange Shares */
+            exchange_shares: number;
+            /** Denominator */
+            denominator: number | null;
+            /** Denom Source */
+            denom_source: string | null;
+            /** Ratio Pct */
+            ratio_pct: number | null;
+            /** Exercisable Ratio Pct */
+            exercisable_ratio_pct: number | null;
+            /** Listed Shares */
+            listed_shares: number | null;
+            /** Login Ratio Pct */
+            login_ratio_pct: number | null;
+            /** Amount */
+            amount: number | null;
+            /** Itm Shares */
+            itm_shares: number | null;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes: string[];
+        };
+        /**
+         * PrelimView
+         * @description 잠정실적 한 건(원 — 본문 단위 × unit_mult) + YoY 분류(공개 규칙 — §4.2).
+         *
+         *     `signal`·`priority` 는 알림 작업이 남긴 분류(`prv_fin.earnings_surprise`)가 있으면 그것, 없으면
+         *     읽을 때 같은 엔진 규칙(`classify_prelim`)으로 낸다. `alerted` = 관심종목 알림을 넣었다.
+         */
+        PrelimView: {
+            /** Rcept No */
+            rcept_no: string;
+            /**
+             * Rcept Dt
+             * Format: date
+             */
+            rcept_dt: string;
+            /** Corp Code */
+            corp_code: string;
+            /** Stock Code */
+            stock_code: string | null;
+            /** Corp Name */
+            corp_name: string | null;
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "consolidated" | "standalone" | "subsidiary";
+            /** Period */
+            period: string;
+            /** Label */
+            label: string;
+            /** Fiscal Year */
+            fiscal_year: number;
+            /** Fiscal Q */
+            fiscal_q: number;
+            /** Is Annual */
+            is_annual: boolean;
+            /**
+             * Period End
+             * Format: date
+             */
+            period_end: string;
+            /** Period Inferred */
+            period_inferred: boolean;
+            /** Currency */
+            currency: string;
+            /** Revenue Cur */
+            revenue_cur: number | null;
+            /** Revenue Prev Q */
+            revenue_prev_q: number | null;
+            /** Revenue Prev Y */
+            revenue_prev_y: number | null;
+            /** Op Cur */
+            op_cur: number | null;
+            /** Op Prev Q */
+            op_prev_q: number | null;
+            /** Op Prev Y */
+            op_prev_y: number | null;
+            /** Ni Cur */
+            ni_cur: number | null;
+            /** Ni Prev Q */
+            ni_prev_q: number | null;
+            /** Ni Prev Y */
+            ni_prev_y: number | null;
+            /** Ni Owner Cur */
+            ni_owner_cur: number | null;
+            /** Eps Cur */
+            eps_cur: number | null;
+            /** Rev Yoy */
+            rev_yoy: number | null;
+            /** Op Yoy */
+            op_yoy: number | null;
+            /** Rev Qoq */
+            rev_qoq: number | null;
+            /** Op Qoq */
+            op_qoq: number | null;
+            /** Signal */
+            signal: string | null;
+            /** Priority */
+            priority: number | null;
+            /** Is Correction */
+            is_correction: boolean;
+            /** Is Watch */
+            is_watch: boolean;
+            /** Alerted */
+            alerted: boolean;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes: string[];
+            /** Link */
+            link: string;
+        };
         /** PremiumRow */
         PremiumRow: {
             /** Code */
@@ -1283,6 +2848,34 @@ export interface components {
             source: string;
         };
         /**
+         * PriceChart
+         * @description KRX 일별(비수정 — `adjusted=false`). 거래가 없는 날(정지 — 거래량 0)은 봉에서 뺀다.
+         *
+         *     `sma` 는 봉과 같은 길이(키 '20'·'60'·'120' — D-P4-21, 앞쪽 창을 못 채운 칸은 null).
+         */
+        PriceChart: {
+            /** Code */
+            code: string;
+            /** Days */
+            days: number;
+            /**
+             * Adjusted
+             * @default false
+             * @constant
+             */
+            adjusted: false;
+            /** Bars */
+            bars: components["schemas"]["ChartBar"][];
+            /** Sma */
+            sma: {
+                [key: string]: (number | null)[];
+            };
+            /** Events */
+            events: components["schemas"]["ChartEvent"][];
+            /** Last Trade */
+            last_trade: string | null;
+        };
+        /**
          * Quality
          * @description 값의 품질. 문자열 값이 그대로 DB `quality` 열과 API 응답에 들어간다.
          * @enum {string}
@@ -1303,6 +2896,127 @@ export interface components {
             /** Chg Pct */
             chg_pct: number | null;
         };
+        /**
+         * RatioView
+         * @description 최근 분기 비율(§4.5 — DART 만, 공개). 분모 ≤ 0 이면 null + `na_reasons[칸]`.
+         */
+        RatioView: {
+            /** Period */
+            period: string;
+            /**
+             * Fs Div
+             * @enum {string}
+             */
+            fs_div: "CFS" | "OFS";
+            /** Ttm Revenue */
+            ttm_revenue: number | null;
+            /** Ttm Op */
+            ttm_op: number | null;
+            /** Ttm Ni Owner */
+            ttm_ni_owner: number | null;
+            /** Opm */
+            opm: number | null;
+            /** Npm */
+            npm: number | null;
+            /** Roe */
+            roe: number | null;
+            /** Roa */
+            roa: number | null;
+            /** Debt Ratio */
+            debt_ratio: number | null;
+            /** Net Debt Ratio */
+            net_debt_ratio: number | null;
+            /** Rev Yoy */
+            rev_yoy: number | null;
+            /** Op Yoy */
+            op_yoy: number | null;
+            /** Eps Ttm */
+            eps_ttm: number | null;
+            /** Bps */
+            bps: number | null;
+            /** Shares Basis */
+            shares_basis: number | null;
+            /** Na Reasons */
+            na_reasons: {
+                [key: string]: components["schemas"]["NaReason"];
+            };
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes: string[];
+        };
+        /**
+         * ReportBlocks
+         * @description dart-report 화면 블록(엑셀과 같은 입력·같은 셈 — `kbj.reports.dart_excel.blocks`, 금액
+         *     억원).
+         */
+        ReportBlocks: {
+            quarterly: components["schemas"]["JsonValue"];
+            annual_costs: components["schemas"]["JsonValue"];
+            bridge: components["schemas"]["JsonValue"];
+            orders: components["schemas"]["JsonValue"];
+            quarterly_costs: components["schemas"]["JsonValue"];
+        };
+        /** ReportView */
+        ReportView: {
+            /** Code */
+            code: string;
+            /** Corp Code */
+            corp_code: string;
+            /**
+             * Built On
+             * Format: date
+             */
+            built_on: string;
+            /**
+             * Fs Div Used
+             * @enum {string}
+             */
+            fs_div_used: "CFS" | "OFS";
+            /** Year From */
+            year_from: number;
+            /** Year To */
+            year_to: number;
+            /** Unit */
+            unit: string;
+            blocks: components["schemas"]["ReportBlocks"];
+            /** Warnings */
+            warnings: string[];
+            unmapped: components["schemas"]["JsonValue"];
+            /** Xlsx Available */
+            xlsx_available: boolean;
+            /** Engine Version */
+            engine_version: string;
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+        };
+        /** RevisionView */
+        RevisionView: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Metric */
+            metric: string;
+            /** Fiscal Ym */
+            fiscal_ym: string;
+            /** Window Days */
+            window_days: number;
+            /** Current */
+            current: number | null;
+            /** Baseline */
+            baseline: number | null;
+            /** Baseline Date */
+            baseline_date: string | null;
+            /** Pct */
+            pct: number | null;
+            /** Signal */
+            signal: string | null;
+            quality: components["schemas"]["Quality"];
+        };
         /** Ribbon */
         Ribbon: {
             /** Chips */
@@ -1319,6 +3033,98 @@ export interface components {
             inst: number | null;
             /** Quality */
             quality: string | null;
+        };
+        /** Scenario */
+        Scenario: {
+            /**
+             * Applicable
+             * @default true
+             */
+            applicable: boolean;
+            na_reason?: components["schemas"]["NaReason"] | null;
+            /** Code */
+            code: string;
+            /** As Of */
+            as_of: string | null;
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "PER" | "PBR" | "INSUFFICIENT";
+            cases: components["schemas"]["ScenarioCases"];
+            /** Price */
+            price: number | null;
+        };
+        /** ScenarioCase */
+        ScenarioCase: {
+            /**
+             * Case
+             * @enum {string}
+             */
+            case: "bear" | "base" | "bull";
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "PER" | "PBR" | "INSUFFICIENT";
+            /** Eps */
+            eps: number | null;
+            /** Eps Source */
+            eps_source: string | null;
+            /** Multiple */
+            multiple: number | null;
+            /** Multiple Source */
+            multiple_source: string | null;
+            /** Tp */
+            tp: number | null;
+            /** Upside Pct */
+            upside_pct: number | null;
+            na_reason: components["schemas"]["NaReason"] | null;
+            quality: components["schemas"]["Quality"];
+        };
+        /** ScenarioCases */
+        ScenarioCases: {
+            bear: components["schemas"]["ScenarioCase"] | null;
+            base: components["schemas"]["ScenarioCase"] | null;
+            bull: components["schemas"]["ScenarioCase"] | null;
+        };
+        /**
+         * ScheduleView
+         * @description 실적 일정 — pre_announce(결산실적공시예고 본문 — ok)·statutory(법정 제출기한 — 추정).
+         */
+        ScheduleView: {
+            /** Corp Code */
+            corp_code: string;
+            /** Stock Code */
+            stock_code: string | null;
+            /** Corp Name */
+            corp_name: string | null;
+            /**
+             * Period End
+             * Format: date
+             */
+            period_end: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "pre_announce" | "statutory";
+            /**
+             * Planned Date
+             * Format: date
+             */
+            planned_date: string;
+            /** Fiscal Year */
+            fiscal_year: number;
+            /** Fiscal Q */
+            fiscal_q: number;
+            /** Rcept No */
+            rcept_no: string | null;
+            /** Note */
+            note: string | null;
+            /** Is Watch */
+            is_watch: boolean;
+            quality: components["schemas"]["Quality"];
         };
         /** ScreenResponse */
         ScreenResponse: {
@@ -1420,6 +3226,47 @@ export interface components {
             /** Cells */
             cells: components["schemas"]["SectorCell"][];
         };
+        /** SegmentView */
+        SegmentView: {
+            /** Segment */
+            segment: string;
+            /** Amounts */
+            amounts: {
+                [key: string]: number | null;
+            };
+        };
+        /**
+         * Segments
+         * @description 부문 매출(사업보고서 원문 표 best-effort — 언제나 추정, D-P4-22).
+         */
+        Segments: {
+            /** Code */
+            code: string;
+            /** Corp Code */
+            corp_code: string;
+            /** Year */
+            year: number;
+            /** Rcept No */
+            rcept_no: string | null;
+            /** Rows */
+            rows: components["schemas"]["SegmentView"][];
+            quality: components["schemas"]["Quality"];
+        };
+        /**
+         * SeriesPoint
+         * @description 밴드 차트 한 점(주 1점 — 그 주 마지막 거래일). 화면 밴드가 = 배수_p × price ÷ value.
+         */
+        SeriesPoint: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Price */
+            price: number | null;
+            /** Value */
+            value: number | null;
+        };
         /**
          * SourcedInt
          * @description 원천이 붙은 원 단위 정수.
@@ -1434,6 +3281,34 @@ export interface components {
              * Format: date-time
              */
             as_of: string;
+            quality: components["schemas"]["Quality"];
+        };
+        /**
+         * SourcedQuote
+         * @description 마지막 시세(전 거래일 또는 오늘 마감 — 원장 우선순위 krx > kis, D-P3-7).
+         */
+        SourcedQuote: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Close */
+            close: number | null;
+            /** Chg Pct */
+            chg_pct: number | null;
+            /** Volume */
+            volume: number | null;
+            /** Turnover */
+            turnover: number | null;
+            /** Mktcap */
+            mktcap: number | null;
+            /** Last Trade */
+            last_trade: string | null;
+            /** Stale */
+            stale: boolean;
+            /** Source */
+            source: string;
             quality: components["schemas"]["Quality"];
         };
         /** StockFlowDetail */
@@ -1452,6 +3327,139 @@ export interface components {
             checks: {
                 [key: string]: number;
             };
+        };
+        /** StockHeader */
+        StockHeader: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string | null;
+            /** Market */
+            market: string | null;
+            /** Kind */
+            kind: ("common" | "pref" | "spac" | "reit" | "etf" | "etn") | null;
+            /** Common Code */
+            common_code: string | null;
+            /** Corp Code */
+            corp_code: string | null;
+            /** Corp Name */
+            corp_name: string | null;
+            /** Status Flags */
+            status_flags: string[] | null;
+            /** Listed On */
+            listed_on: string | null;
+            /** Acc Mt */
+            acc_mt: number | null;
+            /** Induty Code */
+            induty_code: string | null;
+            last: components["schemas"]["SourcedQuote"] | null;
+            /** Is Watch */
+            is_watch: boolean;
+            /** Detail Tier */
+            detail_tier: boolean;
+            newhigh: components["schemas"]["NewHighBadges"] | null;
+        };
+        /** StockSearch */
+        StockSearch: {
+            /** Q */
+            q: string;
+            /** N Total */
+            n_total: number;
+            /** Items */
+            items: components["schemas"]["StockSearchItem"][];
+        };
+        /** StockSearchItem */
+        StockSearchItem: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string | null;
+            /** Market */
+            market: string | null;
+            /** Kind */
+            kind: ("common" | "pref" | "spac" | "reit" | "etf" | "etn") | null;
+            /** Corp Code */
+            corp_code: string | null;
+            /** Is Watch */
+            is_watch: boolean;
+        };
+        /**
+         * SurpriseView
+         * @description 알림 작업의 분류·알림·성과 기록(로그인). 서프라이즈(컨센 대비)는 분기 컨센서스가 있을
+         *     때만.
+         */
+        SurpriseView: {
+            /** Rcept No */
+            rcept_no: string;
+            /** Period */
+            period: string;
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "consolidated" | "standalone" | "subsidiary";
+            /** Signal */
+            signal: string;
+            /** Priority */
+            priority: number;
+            /** Rev Yoy */
+            rev_yoy: number | null;
+            /** Op Yoy */
+            op_yoy: number | null;
+            /** Rev Surprise */
+            rev_surprise: number | null;
+            /** Op Surprise */
+            op_surprise: number | null;
+            /** Alerted At */
+            alerted_at: string | null;
+            /** Price At Alert */
+            price_at_alert: number | null;
+            /** Perf 3D */
+            perf_3d: number | null;
+            /** Perf 5D */
+            perf_5d: number | null;
+            /** Perf 7D */
+            perf_7d: number | null;
+            quality: components["schemas"]["Quality"];
+        };
+        /** TargetView */
+        TargetView: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Mean */
+            mean: number;
+            /** Median */
+            median: number;
+            /** High */
+            high: number;
+            /** Low */
+            low: number;
+            /** N Brokers */
+            n_brokers: number;
+            /** Window Days */
+            window_days: number;
+            /** Upside Pct */
+            upside_pct: number | null;
+            quality: components["schemas"]["Quality"];
+        };
+        /** TimelineItem */
+        TimelineItem: {
+            /** Rcept No */
+            rcept_no: string;
+            /**
+             * Instrument
+             * @enum {string}
+             */
+            instrument: "cb" | "bw" | "eb" | "paid_in" | "bonus";
+            /** Start */
+            start: string | null;
+            /** End */
+            end: string | null;
+            /** Active */
+            active: boolean;
         };
         /** TurnoverPanel */
         TurnoverPanel: {
@@ -1484,6 +3492,129 @@ export interface components {
             n_new: number;
             /** N Invalid */
             n_invalid: number;
+        };
+        /**
+         * Valuation
+         * @description 밸류에이션(§4.8). 우선주는 회사 배수(보통 + 우선 시총 — 보통주와 같은 값).
+         */
+        Valuation: {
+            /**
+             * Applicable
+             * @default true
+             */
+            applicable: boolean;
+            na_reason?: components["schemas"]["NaReason"] | null;
+            /** Code */
+            code: string;
+            /**
+             * Metric
+             * @enum {string}
+             */
+            metric: "per" | "pbr" | "psr" | "ev_ebitda";
+            current: components["schemas"]["ValuationCurrent"] | null;
+            /** Bands */
+            bands: components["schemas"]["BandView"][];
+            /** Series */
+            series: components["schemas"]["SeriesPoint"][];
+            /** Mktcap Company */
+            mktcap_company: number | null;
+            /** Classes */
+            classes: components["schemas"]["ClassCap"][];
+        };
+        /**
+         * ValuationCurrent
+         * @description 그날(전 거래일) PIT 배수 — t 까지 공시된 정기보고서 분기만(D-P4-11).
+         */
+        ValuationCurrent: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Price */
+            price: number | null;
+            /** Ttm Ref */
+            ttm_ref: string | null;
+            /** Ev */
+            ev: number | null;
+            per: components["schemas"]["MultipleCell"];
+            pbr: components["schemas"]["MultipleCell"];
+            psr: components["schemas"]["MultipleCell"];
+            ev_ebitda: components["schemas"]["MultipleCell"];
+            per_fwd: components["schemas"]["MultipleCell"];
+            psr_fwd: components["schemas"]["MultipleCell"];
+            ev_ebitda_fwd: components["schemas"]["MultipleCell"];
+            quality: components["schemas"]["Quality"];
+        };
+        /** WatchRow */
+        WatchRow: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string | null;
+            /** Sort */
+            sort: number;
+            /** Added At */
+            added_at: string | null;
+            /** Note */
+            note: string | null;
+            /** Source */
+            source: string;
+            /** Market */
+            market: string | null;
+            /** Kind */
+            kind: ("common" | "pref" | "spac" | "reit" | "etf" | "etn") | null;
+            /** Date */
+            date: string | null;
+            /** Close */
+            close: number | null;
+            /** Chg Pct */
+            chg_pct: number | null;
+            /** Mktcap */
+            mktcap: number | null;
+            quality: components["schemas"]["Quality"] | null;
+        };
+        /** Watchlist */
+        Watchlist: {
+            /** List Name */
+            list_name: string;
+            /** N */
+            n: number;
+            /** Items */
+            items: components["schemas"]["WatchRow"][];
+        };
+        /**
+         * WindowView
+         * @description 보고 기준 순증감(사유 미구분 포함 — 장내 순매수가 아니다, §4.4). `amount` = Σ 증감 ×
+         *     보고일 종가(로그인 — 추정), `amount_missing` = 종가를 몰라 금액에서 뺀 보고 수.
+         */
+        WindowView: {
+            /** Days */
+            days: number;
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Net Shares */
+            net_shares: number;
+            /** Buy Shares */
+            buy_shares: number;
+            /** Sell Shares */
+            sell_shares: number;
+            /** N Reports */
+            n_reports: number;
+            /** N Reporters */
+            n_reporters: number;
+            /** Ratio Pct */
+            ratio_pct: number | null;
+            /** Reason Known Pct */
+            reason_known_pct: number | null;
+            /** Amount */
+            amount: number | null;
+            /** Amount Missing */
+            amount_missing: number;
+            quality: components["schemas"]["Quality"];
         };
     };
     responses: never;
@@ -2492,6 +4623,1187 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_EtfHoldingChanges_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    search_api_stock_search_get: {
+        parameters: {
+            query: {
+                q: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_StockSearch_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    header_api_stock__code__header_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_StockHeader_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    chart_api_stock__code__chart_get: {
+        parameters: {
+            query?: {
+                days?: number;
+            };
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_PriceChart_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    financials_api_stock__code__financials_get: {
+        parameters: {
+            query?: {
+                basis?: "q" | "a";
+                n?: number;
+            };
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_Financials_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    report_api_stock__code__report_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_ReportView_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    report_xlsx_api_stock__code__report_xlsx_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description dart-report 엑셀(`<회사>_<코드>_재무리포트.xlsx`) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": string;
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    segments_api_stock__code__segments_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_Segments_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    consensus_api_stock__code__consensus_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_Consensus_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    valuation_api_stock__code__valuation_get: {
+        parameters: {
+            query?: {
+                metric?: "per" | "pbr" | "psr" | "ev_ebitda";
+            };
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_Valuation_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    scenario_api_stock__code__scenario_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_Scenario_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    overhang_api_stock__code__overhang_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_Overhang_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    insiders_api_stock__code__insiders_get: {
+        parameters: {
+            query?: {
+                days?: 30 | 90 | 180;
+            };
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_Insiders_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    disclosures_api_stock__code__disclosures_get: {
+        parameters: {
+            query?: {
+                days?: number;
+                kind?: string | null;
+            };
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_Disclosures_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    earnings_api_stock__code__earnings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_Earnings_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    feed_api_filings_feed_get: {
+        parameters: {
+            query?: {
+                date?: string | null;
+                kind?: string | null;
+                importance?: ("critical" | "high" | "medium" | "low") | null;
+                market?: ("KOSPI" | "KOSDAQ" | "KONEX") | null;
+                watch_only?: boolean;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_FilingsFeed_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    earnings_api_filings_earnings_get: {
+        parameters: {
+            query?: {
+                from?: string | null;
+                to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_EarningsList_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    overhang_api_filings_overhang_get: {
+        parameters: {
+            query?: {
+                days?: number;
+                instrument?: ("cb" | "bw" | "eb" | "paid_in" | "bonus") | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_OverhangRecent_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    insiders_api_filings_insiders_get: {
+        parameters: {
+            query?: {
+                days?: number;
+                min_ratio_pct?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_InsiderRecent_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    schedule_api_filings_schedule_get: {
+        parameters: {
+            query?: {
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_EarningsSchedule_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    watchlist_api_watchlist_get: {
+        parameters: {
+            query?: {
+                list?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_Watchlist_"];
                 };
             };
             /** @description 세션 없음·만료 */

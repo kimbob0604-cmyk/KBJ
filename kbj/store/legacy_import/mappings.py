@@ -8,6 +8,10 @@
   `nothing` — 다른 원본이 이미 넣은 키는 `other_origin` 으로 세고 넣지 않는다(예: ET px 는 board.db
   우선, backtest.db 는 board.db 에 없는 날짜만 — §8.4).
 - 이 단계(P2)에 옮기는 것만 `MAPPINGS` 에 있다. P3 이후 매핑은 `LATER` 에 이름만(§8.4 표).
+- P4(docs/p4_design.md §3.8 — 묶음 M): SD 관심종목(`cache/server_watchlist.json` →
+  `prv_journal.watchlist`)만 옮긴다(`phase="P4"` — 사용자가 VM 에 올린 파일, 레포에 넣지 않는다).
+  SD 공시·잠정실적·오버행·재무는 DART 로 다시 받고, 네이버·FnGuide 파생 컨센서스·밴드·서프라이즈는
+  옮기지 않는다(`NEVER` — U-P4-2).
 """
 
 from __future__ import annotations
@@ -140,6 +144,11 @@ STOCK_INVESTOR_DAILY = Target(
     sums=("net_qty", "net_value"),
     date_keys=frozenset({"trade_date"}),
 )  # fmt: skip
+WATCHLIST = Target(
+    "prv_journal.watchlist",
+    ("list_name", "code", "name_at_add", "added_at", "sort", "note", "source", "loaded_by"),
+    key=("list_name", "code"),
+)  # P4 — updated_at 은 DB 기본값(now)
 TG_INBOX = Target(
     "prv_alerts.tg_inbox",
     (
@@ -158,6 +167,7 @@ TARGETS: tuple[Target, ...] = (
     DAILY_BAR,
     STOCK_INVESTOR_DAILY,
     TG_INBOX,
+    WATCHLIST,
 )
 
 
@@ -259,6 +269,15 @@ MAPPINGS: tuple[TableMapping, ...] = (
     TableMapping(
         "board.inbox", "inbox", "inbox.json", TG_INBOX, tf.et_inbox, on_conflict="nothing"
     ),
+    # ── P4(docs/p4_design.md §3.8) — SD 관심종목. 파일이 정본이라 같은 키는 덮는다(update) ──
+    TableMapping(
+        "sd.watchlist",
+        "watchlist",
+        "server_watchlist.json",
+        WATCHLIST,
+        tf.sd_watchlist,
+        phase="P4",
+    ),
 )
 
 # P3 이후(§8.4 표 — 이 단계에서는 옮기지 않는다). (원본, 대상, 단계)
@@ -266,9 +285,6 @@ LATER: tuple[tuple[str, str, str], ...] = (
     ("SD ohlcv", "market.backfill 로 KRX 에서 다시 받는다", "P3"),
     ("ETF etf.db etf_px", "KRX etp/etf_bydd_trd 로 다시 받는다", "P3"),
     ("ET alltime·label·lowlabel·split_check·state/<날짜>/*.json", "prv_board.*", "P3"),
-    ("SD disclosure_history·dart_disclosure_overhang·earnings_actual", "pub_filings.*", "P4"),
-    ("SD financial_quarterly·ET state/financials.json", "pub_fin.quarterly", "P4"),
-    ("SD consensus_*·valuation_band·earnings_surprise·earnings_alert_queue", "prv_fin.*", "P4"),
     ("ET sector_map·knowledge/*.yaml", "pub_themes.*", "P5"),
     ("ETF fund·holding·etf_ticker·change_log·etf_meta·etf_aum", "prv_etf.*", "P5"),
     ("SD alert_rules·alert_history(_v2)", "prv_alerts.rule·event", "P8"),
@@ -282,6 +298,12 @@ NEVER: tuple[str, ...] = (
     "SD chart_cache·misc_cache·yinfo_cache·discover_results·llm_cache.db(캐시)",
     "SD dart_corp_map·ET .dart_corp.json·dart-report 캐시(corpCode.xml 로 다시 받는다)",
     "토큰 캐시(cache/kis_token.json·state/.kis_token.json·state/kis.token.json)",
+    # P4(docs/p4_design.md §3.8 — 메인 결정 2026-10-08 채택)
+    "SD disclosure_history·dart_disclosure_overhang·earnings_actual(DART 로 다시 받는다 — "
+    "공시는 최근 30일, SD 보존 30일이라 잃는 것 없음)",
+    "SD financial_quarterly·ET state/financials.json(fin.backfill 로 DART 에서 다시 받는다)",
+    "SD consensus_*·valuation_band·revision_alerts·earnings_surprise·earnings_alert_queue"
+    "(네이버·FnGuide 파생 — U4·약관, 밴드는 네이버 주식 수 — U-P4-2)",
 )
 
 

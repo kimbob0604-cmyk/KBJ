@@ -1,0 +1,28 @@
+{
+  "source": "KRX",
+  "as_of": "2026-11-13T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "코넥스 — 컨센서스 없음",
+    "출처 없음 — KIS 교체로 잃음: 분기 컨센서스·분기 어닝 서프라이즈·컨센서스 최고·최저"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "applicable": false,
+    "na_reason": "konex_no_consensus",
+    "code": "994090",
+    "label": "KIS 추정",
+    "snap_date": null,
+    "fy": [],
+    "ntm": null,
+    "target": null,
+    "opinions": null,
+    "revisions": [],
+    "recent": [],
+    "lost": [
+      "분기 컨센서스",
+      "분기 어닝 서프라이즈",
+      "컨센서스 최고·최저"
+    ]
+  }
+}

@@ -4,7 +4,8 @@
 레포 Deploy keys 에 쓰기로 등록, 키 파일은 VM 에만), 디스패치 토큰(`KBJ_GITHUB_DISPATCH_TOKEN` — 이
 레포 `actions:write` 만인 세분 토큰). 승인 전에는 `KBJ_PUBLIC_PUSH_ENABLED=false`(기본)로 둔다.
 
-- `push_public_data`: 내보낸 디렉터리를 다시 검사(`check_tree`)하고, manifest 에 적힌 파일만 임시
+- `push_public_data`: 내보낸 디렉터리를 다시 검사(`check_tree`)하고, manifest 에 적힌 파일(P4 하위
+  폴더 `fin/`·`reports/` 는 manifest `dirs` 가 덮는 허용 이름 파일 — `listed_paths`)만 임시
   저장소에 담아 **고아 브랜치 `public-data` 에 커밋 1개로 강제 푸시**한다(이력을 쌓지 않는다 — 공개
   데이터의 최신본만). 꺼져 있으면 아무것도 하지 않고 `PushResult(pushed=False, reason="disabled")`.
 - `dispatch_pages`: `pages.yml`(workflow_dispatch) 실행 요청. 응답 본문·토큰은 오류 문구에
@@ -29,7 +30,7 @@ import httpx
 from pydantic import SecretStr
 
 from kbj.core.masking import mask_text
-from kbj.services.public_export.manifest import MANIFEST_NAME, check_tree, iso_kst, read_manifest
+from kbj.services.public_export.manifest import MANIFEST_NAME, check_tree, iso_kst, listed_paths
 
 __all__ = [
     "GITHUB_API",
@@ -107,7 +108,8 @@ def push_public_data(
     problems = check_tree(out_dir)
     if problems:
         raise PushError("공개 산출물 검사 실패 — 푸시하지 않는다: " + "; ".join(problems[:5]))
-    names = [str(e["name"]) for e in read_manifest(out_dir)["files"]]
+    # manifest 의 평평한 파일 + 적힌 하위 폴더(P4 fin/·reports/)의 허용 이름 파일
+    names = listed_paths(out_dir)
     # git·ssh 자식 프로세스에 KBJ_* 설정(키·토큰·DSN)과 다른 git·ssh 에이전트 설정을 넘기지 않는다
     env = {
         k: v
@@ -135,6 +137,7 @@ def push_public_data(
     with tempfile.TemporaryDirectory(prefix="kbj-public-data-") as tmp:
         work = Path(tmp)
         for n in [*names, MANIFEST_NAME]:
+            (work / n).parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(out_dir / n, work / n)
         _git(["init", "-q", "-b", PUBLIC_DATA_BRANCH], work, env, runner)
         _git(["add", "--", *names, MANIFEST_NAME], work, env, runner)

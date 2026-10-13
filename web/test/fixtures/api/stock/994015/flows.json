@@ -1,0 +1,267 @@
+{
+  "source": "KRX+KIS",
+  "as_of": "2026-11-13T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "NXT 미포함(KRX 구분만 — D-P3-9)"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "code": "994015",
+    "name": "모의전자우",
+    "days": [
+      {
+        "date": "2026-10-19",
+        "turnover": 6679453046,
+        "foreign": -200000000,
+        "inst": -2158000000,
+        "other_corp": 16000000,
+        "indiv": 2342000000,
+        "check1": 0,
+        "check2": 0,
+        "traded": true,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-10-20",
+        "turnover": 9137093044,
+        "foreign": -342000000,
+        "inst": -1824000000,
+        "other_corp": -46000000,
+        "indiv": 2212000000,
+        "check1": 0,
+        "check2": 0,
+        "traded": true,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-10-21",
+        "turnover": 7109773639,
+        "foreign": 106000000,
+        "inst": 177000000,
+        "other_corp": -18000000,
+        "indiv": -265000000,
+        "check1": 0,
+        "check2": 0,
+        "traded": true,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-10-22",
+        "turnover": 6091419913,
+        "foreign": 76000000,
+        "inst": -2432000000,
+        "other_corp": 15000000,
+        "indiv": 2341000000,
+        "check1": 0,
+        "check2": 0,
+        "traded": true,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-10-23",
+        "turnover": 8168678084,
+        "foreign": -123000000,
+        "inst": 1020000000,
+        "other_corp": -62000000,
+        "indiv": -835000000,
+        "check1": 0,
+        "check2": 0,
+        "traded": true,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-10-26",
+        "turnover": 7710253140,
+        "foreign": -116000000,
+        "inst": 2880000000,
+        "other_corp": 57000000,
+        "indiv": -2821000000,
+        "check1": 0,
+        "check2": 0,
+        "traded": true,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-10-27",
+        "turnover": 4562935957,
+        "foreign": 205000000,
+        "inst": 798000000,
+        "other_corp": 11000000,
+        "indiv": -1014000000,
+        "check1": 0,
+        "check2": 0,
+        "traded": true,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-10-28",
+        "turnover": 7280305766,
+        "foreign": 473000000,
+        "inst": 910000000,
+        "other_corp": -37000000,
+        "indiv": -1346000000,
+        "check1": 0,
+        "check2": 0,
+        "traded": true,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-10-29",
+        "turnover": 6598050657,
+        "foreign": 475000000,
+        "inst": -1312000000,
+        "other_corp": 16000000,
+        "indiv": 821000000,
+        "check1": 0,
+        "check2": 0,
+        "traded": true,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-10-30",
+        "turnover": 6382862021,
+        "foreign": 206000000,
+        "inst": 1749000000,
+        "other_corp": -48000000,
+        "indiv": -1907000000,
+        "check1": 0,
+        "check2": 0,
+        "traded": true,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-11-02",
+        "turnover": 5507614497,
+        "foreign": 54000000,
+        "inst": 2466000000,
+        "other_corp": 13000000,
+        "indiv": -2533000000,
+        "check1": 0,
+        "check2": 0,
+        "traded": true,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-11-03",
+        "turnover": 10259838501,
+        "foreign": -461000000,
+        "inst": -1792000000,
+        "other_corp": 51000000,
+        "indiv": 2202000000,
+        "check1": 0,
+        "check2": 0,
+        "traded": true,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-11-04",
+        "turnover": 7335262788,
+        "foreign": -257000000,
+        "inst": -366000000,
+        "other_corp": -19000000,
+        "indiv": 642000000,
+        "check1": 0,
+        "check2": 0,
+        "traded": true,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-11-05",
+        "turnover": 8221140451,
+        "foreign": 102000000,
+        "inst": 820000000,
+        "other_corp": 41000000,
+        "indiv": -963000000,
+        "check1": 0,
+        "check2": 0,
+        "traded": true,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-11-06",
+        "turnover": 11780723420,
+        "foreign": -30000000,
+        "inst": 2058000000,
+        "other_corp": 58000000,
+        "indiv": -2086000000,
+        "check1": 0,
+        "check2": 0,
+        "traded": true,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-11-09",
+        "turnover": 9760459384,
+        "foreign": 195000000,
+        "inst": 2928000000,
+        "other_corp": 48000000,
+        "indiv": -3171000000,
+        "check1": 0,
+        "check2": 0,
+        "traded": true,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-11-10",
+        "turnover": 7014088666,
+        "foreign": 280000000,
+        "inst": -2800000000,
+        "other_corp": 52000000,
+        "indiv": 2468000000,
+        "check1": 0,
+        "check2": 0,
+        "traded": true,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-11-11",
+        "turnover": 8468392185,
+        "foreign": -401000000,
+        "inst": -2110000000,
+        "other_corp": 63000000,
+        "indiv": 2448000000,
+        "check1": 0,
+        "check2": 0,
+        "traded": true,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-11-12",
+        "turnover": 4251430118,
+        "foreign": -96000000,
+        "inst": 212000000,
+        "other_corp": -32000000,
+        "indiv": -84000000,
+        "check1": 0,
+        "check2": 0,
+        "traded": true,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-11-13",
+        "turnover": 6951341637,
+        "foreign": 259000000,
+        "inst": 1384000000,
+        "other_corp": -35000000,
+        "indiv": -1608000000,
+        "check1": 0,
+        "check2": 0,
+        "traded": true,
+        "quality": "ok"
+      }
+    ],
+    "cumulative": {
+      "foreign": 405000000,
+      "inst": 2608000000,
+      "other_corp": 144000000,
+      "indiv": -3157000000
+    },
+    "checks": {
+      "c1_failed": 0,
+      "c1_unavailable": 0,
+      "c2_failed": 0,
+      "c2_unavailable": 0
+    }
+  }
+}

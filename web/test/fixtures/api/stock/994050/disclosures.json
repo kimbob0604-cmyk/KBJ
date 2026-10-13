@@ -1,0 +1,38 @@
+{
+  "source": "DART",
+  "as_of": "2026-08-25T15:00:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "중요도 = 제목 키워드 + 관심종목 + 시총 가산(로그인 — 읽을 때 계산)"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "code": "994050",
+    "corp_code": "99400050",
+    "days": 90,
+    "kind": null,
+    "rows": [
+      {
+        "rcept_no": "20260825800001",
+        "rcept_dt": "2026-08-25",
+        "first_seen_at": "2026-08-25T15:00:00+09:00",
+        "corp_code": "99400050",
+        "stock_code": "994050",
+        "corp_name": "모의리츠",
+        "corp_cls": "Y",
+        "title": "현금ㆍ현물배당결정",
+        "kind": "other",
+        "is_correction": false,
+        "kw_score": 6,
+        "kw_matched": [
+          "배당"
+        ],
+        "login_score": 10,
+        "importance": "critical",
+        "is_watch": true,
+        "parse_state": "none",
+        "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260825800001"
+      }
+    ]
+  }
+}

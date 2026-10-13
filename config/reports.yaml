@@ -1,0 +1,12 @@
+# dart-report(재무 엑셀·화면 블록) 설정 — docs/p4_design.md §3.7·§4.6. 해석기 kbj/config/fin.py(load_reports).
+# 옛 secrets.md 의 STOCKS·DART_STOCKS(dart-report 대상 종목 환경변수)를 이 파일이 대체한다(docs/secrets.md).
+version: 1
+
+years_back: 3              # 올해 포함 4개 연도(DR run.py:69 기본값)
+fs_div: CFS                # 연결 우선 — 없으면 OFS 폴백(DR 그대로)
+# 공개판(정적 사이트)에 엑셀·블록을 올릴 데모 종목 2~5개 [결정 필요 — U-P4-6, 사용자 결정 대기]. 비면 공개판
+# 리포트 탭은 안내만. 관심종목은 여기 적지 않는다(관심종목은 개인 데이터 — prv_journal.watchlist).
+public_demo: []
+mapping: dart_report/mapping.yaml   # config/ 기준 상대 경로(묶음 R 이 DR config/mapping.yaml 을 옮긴다)
+keep_per_stock: 4          # pub_fin.report 종목마다 남길 개수(ops.nightly)
+xlsx_max_bytes: 2097152    # 2 MiB(0011 CHECK 와 같다)

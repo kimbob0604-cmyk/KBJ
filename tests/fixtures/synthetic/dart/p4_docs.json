@@ -1,0 +1,150 @@
+{
+ "_source": "SYNTHETIC — tests/fixtures/synthetic/dart/make_dart.py(p4_world 시드 20261007 + 고정 틀)가 만든 합성 공시 원문. 실측 아님",
+ "docs": {
+  "bw_decision": {
+   "corp_code": "99400130",
+   "html": "<html><head><meta charset=\"utf-8\"><title>주요사항보고서(신주인수권부사채권발행결정)</title></head><body><!-- SYNTHETIC — tests/fixtures/synthetic/p4_world.py(고정 시드 생성기)가 만든 합성 데이터. 실측 아님 --><p>1. 사채의 종류 : 회차 1, 무기명식 이권부 무보증 분리형 신주인수권부사채</p><p>2. 사채의 액면총액 : 8,000,000,000원</p><p>행사가액 : 11,000원</p><p>행사에 따라 발행할 주식수 : 727,272주</p><p>행사청구기간 : 2026-07-01 ~ 2028-06-01</p><p>시가하락에 따른 조정 최저 조정가액 : 7,700원</p><p>사채만기일 : 2028-07-01</p><p>사채발행방법 : 사모</p></body></html>",
+   "ident": "e14.bw1",
+   "rcept_dt": "2025-07-01",
+   "rcept_no": "20250701000001",
+   "title": "주요사항보고서(신주인수권부사채권발행결정)"
+  },
+  "bw_exercise": {
+   "corp_code": "99400130",
+   "html": "<html><head><meta charset=\"utf-8\"><title>신주인수권행사</title></head><body><!-- SYNTHETIC — tests/fixtures/synthetic/p4_world.py(고정 시드 생성기)가 만든 합성 데이터. 실측 아님 --><table border=1><tr><td>1. 신주인수권행사 주식수 누계(주)</td><td>200,000</td></tr><tr><td>2. 신주인수권행사 내역</td><td></td></tr><tr><td>행사일자</td><td>회차</td><td>행사금액(원)</td><td>가액(원)</td><td>발행주식수(주)</td><td>상장(예정)일</td></tr><tr><td>2026-11-16</td><td>1</td><td>2,200,000,000</td><td>11,000</td><td>200,000</td><td>2026-11-27</td></tr></table></body></html>",
+   "ident": "e14.bwex",
+   "rcept_dt": "2026-11-16",
+   "rcept_no": "20261116800125",
+   "title": "신주인수권행사"
+  },
+  "cb_decision": {
+   "corp_code": "99400130",
+   "html": "<html><head><meta charset=\"utf-8\"><title>주요사항보고서(전환사채권발행결정)</title></head><body><!-- SYNTHETIC — tests/fixtures/synthetic/p4_world.py(고정 시드 생성기)가 만든 합성 데이터. 실측 아님 --><p>1. 사채의 종류 : 회차 2, 무기명식 이권부 무보증 사모 전환사채</p><p>2. 사채의 액면총액 : 15,000,000,000원</p><p>전환가액 : 10,000원</p><p>전환에 따라 발행할 주식수 : 1,500,000주</p><p>전환청구기간 : 2026-01-20 ~ 2027-12-20</p><p>시가하락에 따른 조정 최저 조정가액 : 7,000원</p><p>사채만기일 : 2028-01-20</p><p>사채발행방법 : 사모</p></body></html>",
+   "ident": "e14.cb2",
+   "rcept_dt": "2025-01-20",
+   "rcept_no": "20250120000001",
+   "title": "주요사항보고서(전환사채권발행결정)"
+  },
+  "cb_exercise": {
+   "corp_code": "99400130",
+   "html": "<html><head><meta charset=\"utf-8\"><title>전환청구권행사</title></head><body><!-- SYNTHETIC — tests/fixtures/synthetic/p4_world.py(고정 시드 생성기)가 만든 합성 데이터. 실측 아님 --><table border=1><tr><td>1. 전환청구권행사 주식수 누계(주)</td><td>250,000</td></tr><tr><td>2. 전환청구권행사 내역</td><td></td></tr><tr><td>청구일자</td><td>회차</td><td>청구금액(원)</td><td>가액(원)</td><td>발행주식수(주)</td><td>상장(예정)일</td></tr><tr><td>2025-06-10</td><td>1</td><td>3,000,000,000</td><td>12,000</td><td>250,000</td><td>2025-06-25</td></tr></table></body></html>",
+   "ident": "e14.ex1",
+   "rcept_dt": "2025-06-10",
+   "rcept_no": "20250610800001",
+   "title": "전환청구권행사"
+  },
+  "exercise_multi": {
+   "html": "<html><head><meta charset=\"utf-8\"><title>전환청구권행사</title></head><body><!-- SYNTHETIC — tests/fixtures/synthetic/p4_world.py(고정 시드 생성기)가 만든 합성 데이터. 실측 아님 --><table border=1><tr><td>1. 전환청구권행사 주식수 누계(주)</td><td>300,000</td></tr><tr><td>2. 전환청구권행사 내역</td><td></td></tr><tr><td>청구일자</td><td>회차</td><td>청구금액(원)</td><td>가액(원)</td><td>발행주식수(주)</td><td>상장(예정)일</td></tr><tr><td>2026-09-01</td><td>5</td><td>1,000,000,000</td><td>10,000</td><td>100,000</td><td>2026-09-15</td></tr><tr><td>2026-09-03</td><td>5</td><td>2,000,000,000</td><td>10,000</td><td>200,000</td><td>2026-09-17</td></tr></table></body></html>",
+   "ident": null,
+   "title": "전환청구권행사"
+  },
+  "generic_notice": {
+   "corp_code": "99400080",
+   "html": "<html><head><meta charset=\"utf-8\"><title>기타시장안내</title></head><body><!-- SYNTHETIC — tests/fixtures/synthetic/p4_world.py(고정 시드 생성기)가 만든 합성 데이터. 실측 아님 --><p>모의테크</p><p>기타시장안내</p><p>합성 공시 원문 — 본문 표 없음(세계 밖 내용)</p></body></html>",
+   "ident": "e9.notice",
+   "rcept_dt": "2026-11-16",
+   "rcept_no": "20261116800140",
+   "title": "기타시장안내"
+  },
+  "insider_doc": {
+   "corp_code": "99400140",
+   "html": "<html><head><meta charset=\"utf-8\"><title>임원ㆍ주요주주특정증권등소유상황보고서</title></head><body><!-- SYNTHETIC — tests/fixtures/synthetic/p4_world.py(고정 시드 생성기)가 만든 합성 데이터. 실측 아님 --><table border=1><tr><td>보고자</td><td>가상대표</td></tr><tr><td>직위</td><td>대표이사</td></tr><tr><td>변동일</td><td>2026-11-13</td></tr><tr><td>변동사유</td><td>장내매도(-)</td></tr><tr><td>변동 전 주식수</td><td>1,700,000</td></tr><tr><td>증감</td><td>-500,000</td></tr><tr><td>변동 후 주식수</td><td>1,200,000</td></tr></table></body></html>",
+   "ident": "e15.ins_ceo2",
+   "rcept_dt": "2026-11-16",
+   "rcept_no": "20261116000010",
+   "title": "임원ㆍ주요주주특정증권등소유상황보고서"
+  },
+  "paid_in_decision": {
+   "corp_code": "99400130",
+   "html": "<html><head><meta charset=\"utf-8\"><title>주요사항보고서(유상증자결정)</title></head><body><!-- SYNTHETIC — tests/fixtures/synthetic/p4_world.py(고정 시드 생성기)가 만든 합성 데이터. 실측 아님 --><p>1. 신주의 종류와 수 : 보통주식</p><p>신주의 수 : 1,000,000주</p><p>1주당 발행가액 : 8,000원</p><p>증자방식 : 제3자배정증자</p><p>배정방법 : 제3자배정(가상투자조합)</p><p>신주 상장 예정일 : 2026-07-15</p></body></html>",
+   "ident": "e14.paid",
+   "rcept_dt": "2026-06-10",
+   "rcept_no": "20260610000001",
+   "title": "주요사항보고서(유상증자결정)"
+  },
+  "pre_announce": {
+   "corp_code": "99400010",
+   "html": "<html><head><meta charset=\"utf-8\"><title>결산실적공시예고</title></head><body><!-- SYNTHETIC — tests/fixtures/synthetic/p4_world.py(고정 시드 생성기)가 만든 합성 데이터. 실측 아님 --><p>결산실적공시 예고</p><table border=1><tr><td>1. 공시예정일</td><td>2027-01-28</td></tr><tr><td>2. 공시예정시간</td><td>16:00</td></tr><tr><td>3. 공시대상</td><td>2026년 연간 및 4분기 잠정실적</td></tr><tr><td>4. 공시방법</td><td>거래소 공정공시</td></tr></table></body></html>",
+   "ident": "e1.preann",
+   "rcept_dt": "2026-11-16",
+   "rcept_no": "20261116800039",
+   "title": "결산실적공시예고"
+  },
+  "prelim_2col": {
+   "corp_code": "99400170",
+   "html": "<html><head><meta charset=\"utf-8\"><title>영업(잠정)실적(공정공시)</title></head><body><!-- SYNTHETIC — tests/fixtures/synthetic/p4_world.py(고정 시드 생성기)가 만든 합성 데이터. 실측 아님 --><p>영업(잠정)실적(공정공시)</p><p>※ 동 정보는 연결재무제표 기준의 잠정 영업실적입니다.</p><table border=1><tr><td>1. 실적내용</td><td>(단위 : 백만원, %)</td></tr><tr><td>구분</td><td></td><td>당기</td><td>전기</td></tr><tr><td>매출액</td><td>당해실적</td><td>34,339</td><td>33,664</td></tr><tr><td>누계실적</td><td>99,466</td><td>-</td></tr><tr><td>영업이익</td><td>당해실적</td><td>2,440</td><td>2,244</td></tr><tr><td>누계실적</td><td>6,987</td><td>-</td></tr><tr><td>법인세비용차감전계속사업이익</td><td>당해실적</td><td>2,312</td><td>2,113</td></tr><tr><td>누계실적</td><td>6,586</td><td>-</td></tr><tr><td>당기순이익</td><td>당해실적</td><td>1,803</td><td>1,648</td></tr><tr><td>누계실적</td><td>5,137</td><td>-</td></tr><tr><td>지배기업 소유주지분 순이익</td><td>당해실적</td><td>1,749</td><td>1,599</td></tr><tr><td>누계실적</td><td>4,983</td><td>-</td></tr></table><table border=1><tr><td>3. 정보제공내역</td><td>정보제공자: IR팀, 정보제공대상자: 국내외 투자자</td></tr></table></body></html>",
+   "ident": "e18.prelim",
+   "rcept_dt": "2026-11-16",
+   "rcept_no": "20261116800135",
+   "title": "영업(잠정)실적(공정공시)"
+  },
+  "prelim_annual": {
+   "html": "<html><head><meta charset=\"utf-8\"><title>연결재무제표기준영업(잠정)실적(공정공시)</title></head><body><!-- SYNTHETIC — tests/fixtures/synthetic/p4_world.py(고정 시드 생성기)가 만든 합성 데이터. 실측 아님 --><p>연결재무제표기준영업(잠정)실적(공정공시)</p><p>※ 동 정보는 연결재무제표 기준의 잠정 영업실적입니다.</p><table border=1><tr><td>1. 실적내용</td><td>(단위 : 억원, %)</td></tr><tr><td>구분</td><td></td><td>당기</td><td>전기</td><td>전기대비증감율(%)</td><td>흑자적자전환여부</td><td>전년동기</td><td>전년동기대비증감율(%)</td><td>흑자적자전환여부</td></tr><tr><td>매출액</td><td>당해실적</td><td>12,000</td><td>11,000</td><td>9.1</td><td>-</td><td>10,000</td><td>20.0</td><td>-</td></tr><tr><td>영업이익</td><td>당해실적</td><td>1,200</td><td>1,000</td><td>20.0</td><td>-</td><td>900</td><td>33.3</td><td>-</td></tr><tr><td>당기순이익</td><td>당해실적</td><td>900</td><td>800</td><td>12.5</td><td>-</td><td>700</td><td>28.6</td><td>-</td></tr></table><table border=1><tr><td>2. 실적기간</td><td>2025.01.01 ~ 2025.12.31</td></tr><tr><td>3. 정보제공내역</td><td>정보제공자: IR팀</td></tr></table></body></html>",
+   "ident": null,
+   "title": "연결재무제표기준영업(잠정)실적(공정공시)"
+  },
+  "prelim_consolidated_eok": {
+   "corp_code": "99400010",
+   "html": "<html><head><meta charset=\"utf-8\"><title>연결재무제표기준영업(잠정)실적(공정공시)</title></head><body><!-- SYNTHETIC — tests/fixtures/synthetic/p4_world.py(고정 시드 생성기)가 만든 합성 데이터. 실측 아님 --><p>연결재무제표기준영업(잠정)실적(공정공시)</p><p>※ 동 정보는 연결재무제표 기준의 잠정 영업실적입니다.</p><table border=1><tr><td>1. 실적내용</td><td>(단위 : 억원, %)</td></tr><tr><td>구분</td><td></td><td>당기</td><td>전기</td><td>전기대비증감율(%)</td><td>흑자적자전환여부</td><td>전년동기</td><td>전년동기대비증감율(%)</td><td>흑자적자전환여부</td></tr><tr><td>매출액</td><td>당해실적</td><td>57,168</td><td>55,563</td><td>2.9</td><td>-</td><td>54,922</td><td>4.1</td><td>-</td></tr><tr><td>누계실적</td><td>167,752</td><td>-</td><td>-</td><td>-</td><td>161,597</td><td>3.8</td><td>-</td></tr><tr><td>영업이익</td><td>당해실적</td><td>7,527</td><td>7,254</td><td>3.8</td><td>-</td><td>6,756</td><td>11.4</td><td>-</td></tr><tr><td>누계실적</td><td>21,835</td><td>-</td><td>-</td><td>-</td><td>20,725</td><td>5.4</td><td>-</td></tr><tr><td>법인세비용차감전계속사업이익</td><td>당해실적</td><td>7,443</td><td>7,163</td><td>3.9</td><td>-</td><td>6,675</td><td>11.5</td><td>-</td></tr><tr><td>누계실적</td><td>21,570</td><td>-</td><td>-</td><td>-</td><td>20,473</td><td>5.4</td><td>-</td></tr><tr><td>당기순이익</td><td>당해실적</td><td>5,805</td><td>5,587</td><td>3.9</td><td>-</td><td>5,206</td><td>11.5</td><td>-</td></tr><tr><td>누계실적</td><td>16,824</td><td>-</td><td>-</td><td>-</td><td>15,969</td><td>5.4</td><td>-</td></tr><tr><td>지배기업 소유주지분 순이익</td><td>당해실적</td><td>5,631</td><td>5,419</td><td>3.9</td><td>-</td><td>5,050</td><td>11.5</td><td>-</td></tr><tr><td>누계실적</td><td>16,320</td><td>-</td><td>-</td><td>-</td><td>15,490</td><td>5.4</td><td>-</td></tr></table><table border=1><tr><td>2. 실적기간</td><td>2026.07.01 ~ 2026.09.30</td></tr><tr><td>3. 정보제공내역</td><td>정보제공자: IR팀, 정보제공대상자: 국내외 투자자</td></tr></table></body></html>",
+   "ident": "e1.prelim_26q3",
+   "rcept_dt": "2026-10-08",
+   "rcept_no": "20261008800001",
+   "title": "연결재무제표기준영업(잠정)실적(공정공시)"
+  },
+  "prelim_correction": {
+   "corp_code": "99400140",
+   "html": "<html><head><meta charset=\"utf-8\"><title>[기재정정]연결재무제표기준영업(잠정)실적(공정공시)</title></head><body><!-- SYNTHETIC — tests/fixtures/synthetic/p4_world.py(고정 시드 생성기)가 만든 합성 데이터. 실측 아님 --><p>[기재정정]연결재무제표기준영업(잠정)실적(공정공시)</p><p>※ 동 정보는 연결재무제표 기준의 잠정 영업실적입니다.</p><table border=1><tr><td>1. 실적내용</td><td>(단위 : 억원, %)</td></tr><tr><td>구분</td><td></td><td>당기</td><td>전기</td><td>전기대비증감율(%)</td><td>흑자적자전환여부</td><td>전년동기</td><td>전년동기대비증감율(%)</td><td>흑자적자전환여부</td></tr><tr><td>매출액</td><td>당해실적</td><td>22,287</td><td>21,243</td><td>4.9</td><td>-</td><td>21,613</td><td>3.1</td><td>-</td></tr><tr><td>누계실적</td><td>64,057</td><td>-</td><td>-</td><td>-</td><td>61,477</td><td>4.2</td><td>-</td></tr><tr><td>영업이익</td><td>당해실적</td><td>2,016</td><td>1,173</td><td>71.9</td><td>-</td><td>1,322</td><td>52.5</td><td>-</td></tr><tr><td>누계실적</td><td>4,363</td><td>-</td><td>-</td><td>-</td><td>3,650</td><td>19.5</td><td>-</td></tr><tr><td>법인세비용차감전계속사업이익</td><td>당해실적</td><td>1,877</td><td>1,030</td><td>82.2</td><td>-</td><td>1,190</td><td>57.7</td><td>-</td></tr><tr><td>누계실적</td><td>3,934</td><td>-</td><td>-</td><td>-</td><td>3,237</td><td>21.5</td><td>-</td></tr><tr><td>당기순이익</td><td>당해실적</td><td>1,464</td><td>803</td><td>82.3</td><td>-</td><td>928</td><td>57.8</td><td>-</td></tr><tr><td>누계실적</td><td>3,068</td><td>-</td><td>-</td><td>-</td><td>2,525</td><td>21.5</td><td>-</td></tr><tr><td>지배기업 소유주지분 순이익</td><td>당해실적</td><td>1,420</td><td>779</td><td>82.3</td><td>-</td><td>900</td><td>57.8</td><td>-</td></tr><tr><td>누계실적</td><td>2,976</td><td>-</td><td>-</td><td>-</td><td>2,449</td><td>21.5</td><td>-</td></tr></table><table border=1><tr><td>2. 실적기간</td><td>2026.07.01 ~ 2026.09.30</td></tr><tr><td>3. 정보제공내역</td><td>정보제공자: IR팀, 정보제공대상자: 국내외 투자자</td></tr></table></body></html>",
+   "ident": "e15.prelim_fix",
+   "rcept_dt": "2026-11-16",
+   "rcept_no": "20261116800167",
+   "title": "[기재정정]연결재무제표기준영업(잠정)실적(공정공시)"
+  },
+  "prelim_mil_no_period": {
+   "corp_code": "99400070",
+   "html": "<html><head><meta charset=\"utf-8\"><title>연결재무제표기준영업(잠정)실적(공정공시)</title></head><body><!-- SYNTHETIC — tests/fixtures/synthetic/p4_world.py(고정 시드 생성기)가 만든 합성 데이터. 실측 아님 --><p>연결재무제표기준영업(잠정)실적(공정공시)</p><p>※ 동 정보는 연결재무제표 기준의 잠정 영업실적입니다.</p><table border=1><tr><td>1. 실적내용</td><td>(단위 : 백만원, %)</td></tr><tr><td>구분</td><td></td><td>당기</td><td>전기</td><td>전기대비증감율(%)</td><td>흑자적자전환여부</td><td>전년동기</td><td>전년동기대비증감율(%)</td><td>흑자적자전환여부</td></tr><tr><td>매출액</td><td>당해실적</td><td>68,212</td><td>65,566</td><td>4.0</td><td>-</td><td>65,144</td><td>4.7</td><td>-</td></tr><tr><td>누계실적</td><td>198,129</td><td>-</td><td>-</td><td>-</td><td>188,148</td><td>5.3</td><td>-</td></tr><tr><td>영업이익</td><td>당해실적</td><td>-3,777</td><td>-4,232</td><td>10.8</td><td>-</td><td>-4,205</td><td>10.2</td><td>-</td></tr><tr><td>누계실적</td><td>-11,806</td><td>-</td><td>-</td><td>-</td><td>4,467</td><td>-</td><td>적자전환</td></tr><tr><td>법인세비용차감전계속사업이익</td><td>당해실적</td><td>-4,222</td><td>-4,686</td><td>9.9</td><td>-</td><td>-4,637</td><td>8.9</td><td>-</td></tr><tr><td>누계실적</td><td>-13,159</td><td>-</td><td>-</td><td>-</td><td>3,148</td><td>-</td><td>적자전환</td></tr><tr><td>당기순이익</td><td>당해실적</td><td>-4,222</td><td>-4,686</td><td>9.9</td><td>-</td><td>-4,637</td><td>8.9</td><td>-</td></tr><tr><td>누계실적</td><td>-13,159</td><td>-</td><td>-</td><td>-</td><td>1,436</td><td>-</td><td>적자전환</td></tr><tr><td>지배기업 소유주지분 순이익</td><td>당해실적</td><td>-4,095</td><td>-4,545</td><td>9.9</td><td>-</td><td>-4,498</td><td>9.0</td><td>-</td></tr><tr><td>누계실적</td><td>-12,763</td><td>-</td><td>-</td><td>-</td><td>1,393</td><td>-</td><td>적자전환</td></tr></table><table border=1><tr><td>3. 정보제공내역</td><td>정보제공자: IR팀, 정보제공대상자: 국내외 투자자</td></tr></table></body></html>",
+   "ident": "e8.prelim_26q3",
+   "rcept_dt": "2026-10-28",
+   "rcept_no": "20261028800001",
+   "title": "연결재무제표기준영업(잠정)실적(공정공시)"
+  },
+  "prelim_no_unit": {
+   "html": "<html><head><meta charset=\"utf-8\"><title>연결재무제표기준영업(잠정)실적(공정공시)</title></head><body><!-- SYNTHETIC — tests/fixtures/synthetic/p4_world.py(고정 시드 생성기)가 만든 합성 데이터. 실측 아님 --><p>연결재무제표기준영업(잠정)실적(공정공시)</p><p>※ 동 정보는 연결재무제표 기준의 잠정 영업실적입니다.</p><table border=1><tr><td>1. 실적내용</td><td>(%)</td></tr><tr><td>구분</td><td></td><td>당기</td><td>전기</td><td>전기대비증감율(%)</td><td>흑자적자전환여부</td><td>전년동기</td><td>전년동기대비증감율(%)</td><td>흑자적자전환여부</td></tr><tr><td>매출액</td><td>당해실적</td><td>5,000</td><td>4,000</td><td>25.0</td><td>-</td><td>4,500</td><td>11.1</td><td>-</td></tr><tr><td>영업이익</td><td>당해실적</td><td>500</td><td>400</td><td>25.0</td><td>-</td><td>450</td><td>11.1</td><td>-</td></tr></table><table border=1><tr><td>3. 정보제공내역</td><td>정보제공자: IR팀</td></tr></table></body></html>",
+   "ident": null,
+   "title": "연결재무제표기준영업(잠정)실적(공정공시)"
+  },
+  "prelim_standalone_thousand": {
+   "corp_code": "99400150",
+   "html": "<html><head><meta charset=\"utf-8\"><title>영업(잠정)실적(공정공시)</title></head><body><!-- SYNTHETIC — tests/fixtures/synthetic/p4_world.py(고정 시드 생성기)가 만든 합성 데이터. 실측 아님 --><p>영업(잠정)실적(공정공시)</p><p>※ 동 정보는 별도재무제표 기준의 잠정 영업실적입니다.</p><table border=1><tr><td>1. 실적내용</td><td>(단위 : 천원, %)</td></tr><tr><td>구분</td><td></td><td>당기</td><td>전기</td><td>전기대비증감율(%)</td><td>흑자적자전환여부</td><td>전년동기</td><td>전년동기대비증감율(%)</td><td>흑자적자전환여부</td></tr><tr><td>매출액</td><td>당해실적</td><td>13,165,000</td><td>12,427,000</td><td>5.9</td><td>-</td><td>12,206,000</td><td>7.9</td><td>-</td></tr><tr><td>누계실적</td><td>37,127,000</td><td>-</td><td>-</td><td>-</td><td>35,569,000</td><td>4.4</td><td>-</td></tr><tr><td>영업이익</td><td>당해실적</td><td>2,219,000</td><td>1,177,000</td><td>88.5</td><td>-</td><td>1,222,000</td><td>81.6</td><td>-</td></tr><tr><td>누계실적</td><td>4,544,000</td><td>-</td><td>-</td><td>-</td><td>3,413,000</td><td>33.1</td><td>-</td></tr><tr><td>법인세비용차감전계속사업이익</td><td>당해실적</td><td>2,139,000</td><td>1,093,000</td><td>95.7</td><td>-</td><td>1,142,000</td><td>87.3</td><td>-</td></tr><tr><td>누계실적</td><td>4,292,000</td><td>-</td><td>-</td><td>-</td><td>3,171,000</td><td>35.4</td><td>-</td></tr><tr><td>당기순이익</td><td>당해실적</td><td>1,668,000</td><td>853,000</td><td>95.5</td><td>-</td><td>891,000</td><td>87.2</td><td>-</td></tr><tr><td>누계실적</td><td>3,348,000</td><td>-</td><td>-</td><td>-</td><td>2,474,000</td><td>35.3</td><td>-</td></tr></table><table border=1><tr><td>3. 정보제공내역</td><td>정보제공자: IR팀, 정보제공대상자: 국내외 투자자</td></tr></table></body></html>",
+   "ident": "e16.prelim",
+   "rcept_dt": "2026-11-16",
+   "rcept_no": "20261116800163",
+   "title": "영업(잠정)실적(공정공시)"
+  },
+  "prelim_subsidiary": {
+   "corp_code": "99400100",
+   "html": "<html><head><meta charset=\"utf-8\"><title>연결재무제표기준영업(잠정)실적(공정공시)(자회사의 주요경영사항)</title></head><body><!-- SYNTHETIC — tests/fixtures/synthetic/p4_world.py(고정 시드 생성기)가 만든 합성 데이터. 실측 아님 --><p>연결재무제표기준영업(잠정)실적(공정공시)(자회사의 주요경영사항)</p><p>※ 동 정보는 연결재무제표 기준의 잠정 영업실적입니다.</p><table border=1><tr><td>1. 실적내용</td><td>(단위 : 억원, %)</td></tr><tr><td>구분</td><td></td><td>당기</td><td>전기</td><td>전기대비증감율(%)</td><td>흑자적자전환여부</td><td>전년동기</td><td>전년동기대비증감율(%)</td><td>흑자적자전환여부</td></tr><tr><td>매출액</td><td>당해실적</td><td>11,440</td><td>10,803</td><td>5.9</td><td>-</td><td>11,115</td><td>2.9</td><td>-</td></tr><tr><td>누계실적</td><td>32,541</td><td>-</td><td>-</td><td>-</td><td>31,684</td><td>2.7</td><td>-</td></tr><tr><td>영업이익</td><td>당해실적</td><td>3,991</td><td>3,476</td><td>14.8</td><td>-</td><td>3,758</td><td>6.2</td><td>-</td></tr><tr><td>누계실적</td><td>10,889</td><td>-</td><td>-</td><td>-</td><td>10,844</td><td>0.4</td><td>-</td></tr><tr><td>법인세비용차감전계속사업이익</td><td>당해실적</td><td>3,767</td><td>3,249</td><td>15.9</td><td>-</td><td>3,541</td><td>6.4</td><td>-</td></tr><tr><td>누계실적</td><td>10,211</td><td>-</td><td>-</td><td>-</td><td>10,188</td><td>0.2</td><td>-</td></tr><tr><td>당기순이익</td><td>당해실적</td><td>2,938</td><td>2,535</td><td>15.9</td><td>-</td><td>2,762</td><td>6.4</td><td>-</td></tr><tr><td>누계실적</td><td>7,965</td><td>-</td><td>-</td><td>-</td><td>7,947</td><td>0.2</td><td>-</td></tr><tr><td>지배기업 소유주지분 순이익</td><td>당해실적</td><td>2,791</td><td>2,408</td><td>15.9</td><td>-</td><td>2,624</td><td>6.4</td><td>-</td></tr><tr><td>누계실적</td><td>7,566</td><td>-</td><td>-</td><td>-</td><td>7,549</td><td>0.2</td><td>-</td></tr></table><table border=1><tr><td>3. 정보제공내역</td><td>정보제공자: IR팀, 정보제공대상자: 국내외 투자자</td></tr></table></body></html>",
+   "ident": "e11.sub_prelim",
+   "rcept_dt": "2026-11-16",
+   "rcept_no": "20261116800143",
+   "title": "연결재무제표기준영업(잠정)실적(공정공시)(자회사의 주요경영사항)"
+  },
+  "prelim_won_negative": {
+   "html": "<html><head><meta charset=\"utf-8\"><title>영업(잠정)실적(공정공시)</title></head><body><!-- SYNTHETIC — tests/fixtures/synthetic/p4_world.py(고정 시드 생성기)가 만든 합성 데이터. 실측 아님 --><p>영업(잠정)실적(공정공시)</p><p>※ 동 정보는 별도재무제표 기준의 잠정 영업실적입니다.</p><table border=1><tr><td>1. 실적내용</td><td>(단위 : 원, %)</td></tr><tr><td>구분</td><td></td><td>당기</td><td>전기</td><td>전기대비증감율(%)</td><td>흑자적자전환여부</td><td>전년동기</td><td>전년동기대비증감율(%)</td><td>흑자적자전환여부</td></tr><tr><td>매출액</td><td>당해실적</td><td>1,234,567,890</td><td>1,000,000,000</td><td>23.5</td><td>-</td><td>(987,654,321)</td><td>-</td><td>흑자전환</td></tr><tr><td>누계실적</td><td>3,000,000,000</td><td>-</td><td>-</td><td>-</td><td>2,000,000,000</td><td>50.0</td><td>-</td></tr><tr><td>영업이익</td><td>당해실적</td><td>△120,000,000</td><td>-50,000,000</td><td>-</td><td>적자지속</td><td>80,000,000</td><td>-</td><td>적자전환</td></tr><tr><td>누계실적</td><td>-100,000,000</td><td>-</td><td>-</td><td>-</td><td>200,000,000</td><td>-</td><td>적자전환</td></tr></table><table border=1><tr><td>2. 실적기간</td><td>2026.07.01 ~ 2026.09.30</td></tr><tr><td>3. 정보제공내역</td><td>정보제공자: IR팀</td></tr></table></body></html>",
+   "ident": null,
+   "title": "영업(잠정)실적(공정공시)"
+  },
+  "price_adjust": {
+   "corp_code": "99400130",
+   "html": "<html><head><meta charset=\"utf-8\"><title>전환가액의조정</title></head><body><!-- SYNTHETIC — tests/fixtures/synthetic/p4_world.py(고정 시드 생성기)가 만든 합성 데이터. 실측 아님 --><table border=1><tr><td>1. 조정에 관한 사항</td><td></td><td></td></tr><tr><td>회차</td><td>조정전 전환가액(원)</td><td>조정후 전환가액(원)</td></tr><tr><td>2</td><td>10,000</td><td>8,500</td></tr><tr><td>2. 전환가능주식수</td><td>조정전 1,500,000</td><td>조정후 1,764,705</td></tr><tr><td>3. 조정가액 적용일</td><td>2026-04-20</td><td></td></tr><tr><td>4. 조정사유</td><td>시가하락에 따른 전환가액 조정(리픽싱)</td><td></td></tr></table></body></html>",
+   "ident": "e14.adj1",
+   "rcept_dt": "2026-04-20",
+   "rcept_no": "20260420800001",
+   "title": "전환가액의조정"
+  },
+  "price_adjust_multi": {
+   "html": "<html><head><meta charset=\"utf-8\"><title>전환가액의조정</title></head><body><!-- SYNTHETIC — tests/fixtures/synthetic/p4_world.py(고정 시드 생성기)가 만든 합성 데이터. 실측 아님 --><table border=1><tr><td>1. 조정에 관한 사항</td><td></td><td></td></tr><tr><td>회차</td><td>조정전 전환가액(원)</td><td>조정후 전환가액(원)</td></tr><tr><td>3</td><td>9,000</td><td>8,100</td></tr><tr><td>4</td><td>12,000</td><td>10,800</td></tr><tr><td>2. 조정가액 적용일</td><td>2026-10-02</td><td></td></tr><tr><td>3. 조정사유</td><td>시가하락에 따른 조정</td><td></td></tr></table></body></html>",
+   "ident": null,
+   "title": "전환가액의조정"
+  }
+ }
+}

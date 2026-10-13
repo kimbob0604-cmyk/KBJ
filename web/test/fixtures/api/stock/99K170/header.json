@@ -1,0 +1,44 @@
+{
+  "source": "KRX+DART",
+  "as_of": "2026-11-13T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "code": "99K170",
+    "name": "모의로보틱스",
+    "market": "KOSDAQ",
+    "kind": "common",
+    "common_code": "99K170",
+    "corp_code": "99400170",
+    "corp_name": "모의로보틱스",
+    "status_flags": [],
+    "listed_on": "2024-05-20",
+    "acc_mt": 12,
+    "induty_code": "29280",
+    "last": {
+      "date": "2026-11-13",
+      "close": 9450.0,
+      "chg_pct": -1.97,
+      "volume": 62842,
+      "turnover": 593859536,
+      "mktcap": 207900000000,
+      "last_trade": "2026-11-13",
+      "stale": false,
+      "source": "KRX",
+      "quality": "ok"
+    },
+    "is_watch": true,
+    "detail_tier": true,
+    "newhigh": {
+      "date": "2026-11-13",
+      "basis": "close",
+      "d120": false,
+      "w52": false,
+      "hist": false,
+      "label": null,
+      "source": "KRX",
+      "quality": "ok"
+    }
+  }
+}

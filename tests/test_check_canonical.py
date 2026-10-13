@@ -38,6 +38,7 @@ SAMPLES = {
     "naver": NAVER,
     "etf_issuers": "https://www.samsung" + "fund.com/api/v1/fund/product/pdf",  # P3 묶음 S
     "krx_scrape": "http://data" + ".krx.co.kr/comm/bldAttendant/getJsonData.cmd",
+    "fnguide": "https://comp" + ".fnguide.com/SVO2/ASP/SVD_Main.asp",  # P4 묶음 S(목표 0)
 }
 
 
@@ -99,13 +100,26 @@ def test_dart_needs_scheme_and_krx_scrape_skips_dbg_host() -> None:
     assert not cc.GROUPS["krx_scrape"].pattern.search(KRX_API)
 
 
+def test_fnguide_is_zero_anywhere_and_does_not_double_count_naver_wisereport() -> None:
+    """P4 묶음 S(docs/p4_design.md §1.11) — FnGuide·WiseReport 컨센서스 스크랩은 목표 0
+    (kbj·legacy 모두). 네이버가 끼운 WiseReport(navercomp…)는 naver 그룹 하나에만 걸린다."""
+    g = cc.GROUPS["fnguide"]
+    assert g.zero and g.allowed == ()
+    assert g.pattern.search("https://comp" + ".wisereport.co.kr/company/c1010001.aspx")
+    naver_wise = "https://navercomp" + ".wisereport.co.kr/v2/company/c1010001.aspx"
+    hit = {x.name for x in cc.GROUPS.values() if x.pattern.search(naver_wise)}
+    assert hit == {"naver"}
+
+
 def test_script_itself_has_no_whole_host_strings() -> None:
     text = (ROOT / "scripts" / "check_canonical.py").read_text(encoding="utf-8")
     assert cc.scan_hosts("legacy/x.py", text, cc.GROUPS.values()) == []
 
 
 # ── 목표 0 그룹 ───────────────────────────────────────────────────────────────────────────
-@pytest.mark.parametrize("group", ["kis_oauth", "kis_rest", "kis_master", "krx_api", "dart"])
+@pytest.mark.parametrize(
+    "group", ["kis_oauth", "kis_rest", "kis_master", "krx_api", "dart", "fnguide"]
+)
 def test_zero_group_in_legacy_fails(
     tmp_path: Path, capsys: pytest.CaptureFixture[str], group: str
 ) -> None:

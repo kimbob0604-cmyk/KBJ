@@ -1,0 +1,313 @@
+{
+ "_note": "DR tests_smoke.py 와 같은 합성 데이터(수치·순서 그대로)",
+ "_source": "SYNTHETIC — make_golden.py",
+ "bridge": {
+  "details": {
+   "FVPL 평가이익": 5930000000.0,
+   "배당·기타": -170000000.0,
+   "순외환손익": -229999999.99999997,
+   "순이자손익": -459999999.99999994
+  },
+  "label": "2025년",
+  "target": -5
+ },
+ "costs": {
+  "mode": "smoke"
+ },
+ "meta": {
+  "corp_code": "00000000",
+  "corp_name": "테스트",
+  "fs_div_used": "CFS",
+  "period_label": "2023–2026",
+  "stock_code": "000000"
+ },
+ "orders": [
+  {
+   "amount": 35600000000,
+   "content": "NVIDIA Infiniband 네트워크",
+   "counterparty": "카카오",
+   "end": "2030-12-31",
+   "rcept_dt": "20250820",
+   "rcept_no": "20250820000123",
+   "report_nm": "단일판매·공급계약체결",
+   "start": "2025-08-20"
+  },
+  {
+   "amount": 104000000000,
+   "content": "2026 NIPA 고성능 AI 스토리지",
+   "counterparty": "네이버클라우드",
+   "end": "2027-03-31",
+   "rcept_dt": "20260703",
+   "rcept_no": "20260703000456",
+   "report_nm": "단일판매·공급계약체결",
+   "start": "2026-07-03"
+  }
+ ],
+ "periods": [
+  {
+   "balance": {
+    "cash": 30000000000,
+    "total_assets": 200000000000,
+    "total_equity": 120000000000
+   },
+   "cumulative": {
+    "cogs": 21000000000.0,
+    "net_income": 1650000000.0,
+    "operating_income": 1500000000.0,
+    "pretax_income": 2100000000.0000002,
+    "revenue": 30000000000,
+    "tax": 450000000.0
+   },
+   "fs_div": "CFS",
+   "quarter": "1Q",
+   "year": 2023
+  },
+  {
+   "balance": {
+    "cash": 30000000000,
+    "total_assets": 200000000000,
+    "total_equity": 120000000000
+   },
+   "cumulative": {
+    "cogs": 42000000000.0,
+    "net_income": 3300000000.0,
+    "operating_income": 3000000000.0,
+    "pretax_income": 4200000000.0000005,
+    "revenue": 60000000000,
+    "tax": 900000000.0
+   },
+   "fs_div": "CFS",
+   "quarter": "2Q",
+   "year": 2023
+  },
+  {
+   "balance": {
+    "cash": 30000000000,
+    "total_assets": 200000000000,
+    "total_equity": 120000000000
+   },
+   "cumulative": {
+    "cogs": 63000000000.0,
+    "net_income": 4950000000.0,
+    "operating_income": 4500000000.0,
+    "pretax_income": 6300000000.000001,
+    "revenue": 90000000000,
+    "tax": 1350000000.0
+   },
+   "fs_div": "CFS",
+   "quarter": "3Q",
+   "year": 2023
+  },
+  {
+   "balance": {
+    "cash": 30000000000,
+    "total_assets": 200000000000,
+    "total_equity": 120000000000
+   },
+   "cumulative": {
+    "cogs": 84000000000.0,
+    "net_income": 6600000000.0,
+    "operating_income": 6000000000.0,
+    "pretax_income": 8400000000.000001,
+    "revenue": 120000000000,
+    "tax": 1800000000.0
+   },
+   "fs_div": "CFS",
+   "quarter": "4Q",
+   "year": 2023
+  },
+  {
+   "balance": {
+    "cash": 30000000000,
+    "total_assets": 200000000000,
+    "total_equity": 120000000000
+   },
+   "cumulative": {
+    "cogs": 21000000000.0,
+    "net_income": 1650000000.0,
+    "operating_income": 1500000000.0,
+    "pretax_income": 2100000000.0000002,
+    "revenue": 30000000000,
+    "tax": 450000000.0
+   },
+   "fs_div": "CFS",
+   "quarter": "1Q",
+   "year": 2024
+  },
+  {
+   "balance": {
+    "cash": 30000000000,
+    "total_assets": 200000000000,
+    "total_equity": 120000000000
+   },
+   "cumulative": {
+    "cogs": 42000000000.0,
+    "net_income": 3300000000.0,
+    "operating_income": 3000000000.0,
+    "pretax_income": 4200000000.0000005,
+    "revenue": 60000000000,
+    "tax": 900000000.0
+   },
+   "fs_div": "CFS",
+   "quarter": "2Q",
+   "year": 2024
+  },
+  {
+   "balance": {
+    "cash": 30000000000,
+    "total_assets": 200000000000,
+    "total_equity": 120000000000
+   },
+   "cumulative": {
+    "cogs": 63000000000.0,
+    "net_income": 4950000000.0,
+    "operating_income": 4500000000.0,
+    "pretax_income": 6300000000.000001,
+    "revenue": 90000000000,
+    "tax": 1350000000.0
+   },
+   "fs_div": "CFS",
+   "quarter": "3Q",
+   "year": 2024
+  },
+  {
+   "balance": {
+    "cash": 30000000000,
+    "total_assets": 200000000000,
+    "total_equity": 120000000000
+   },
+   "cumulative": {
+    "cogs": 84000000000.0,
+    "net_income": 6600000000.0,
+    "operating_income": 6000000000.0,
+    "pretax_income": 8400000000.000001,
+    "revenue": 120000000000,
+    "tax": 1800000000.0
+   },
+   "fs_div": "CFS",
+   "quarter": "4Q",
+   "year": 2024
+  },
+  {
+   "balance": {
+    "cash": 30000000000,
+    "total_assets": 200000000000,
+    "total_equity": 120000000000
+   },
+   "cumulative": {
+    "cogs": 21000000000.0,
+    "net_income": 1650000000.0,
+    "operating_income": 1500000000.0,
+    "pretax_income": 2100000000.0000002,
+    "revenue": 30000000000,
+    "tax": 450000000.0
+   },
+   "fs_div": "CFS",
+   "quarter": "1Q",
+   "year": 2025
+  },
+  {
+   "balance": {
+    "cash": 30000000000,
+    "total_assets": 200000000000,
+    "total_equity": 120000000000
+   },
+   "cumulative": {
+    "cogs": 42000000000.0,
+    "net_income": 3300000000.0,
+    "operating_income": 3000000000.0,
+    "pretax_income": 4200000000.0000005,
+    "revenue": 60000000000,
+    "tax": 900000000.0
+   },
+   "fs_div": "CFS",
+   "quarter": "2Q",
+   "year": 2025
+  },
+  {
+   "balance": {
+    "cash": 30000000000,
+    "total_assets": 200000000000,
+    "total_equity": 120000000000
+   },
+   "cumulative": {
+    "cogs": 63000000000.0,
+    "net_income": 4950000000.0,
+    "operating_income": 4500000000.0,
+    "pretax_income": 6300000000.000001,
+    "revenue": 90000000000,
+    "tax": 1350000000.0
+   },
+   "fs_div": "CFS",
+   "quarter": "3Q",
+   "year": 2025
+  },
+  {
+   "balance": {
+    "cash": 30000000000,
+    "total_assets": 200000000000,
+    "total_equity": 120000000000
+   },
+   "cumulative": {
+    "cogs": 84000000000.0,
+    "net_income": 6600000000.0,
+    "operating_income": 6000000000.0,
+    "pretax_income": 8400000000.000001,
+    "revenue": 120000000000,
+    "tax": 1800000000.0
+   },
+   "fs_div": "CFS",
+   "quarter": "4Q",
+   "year": 2025
+  },
+  {
+   "balance": {
+    "cash": 30000000000,
+    "total_assets": 200000000000,
+    "total_equity": 120000000000
+   },
+   "cumulative": {
+    "cogs": 21000000000.0,
+    "net_income": 1650000000.0,
+    "operating_income": 1500000000.0,
+    "pretax_income": 2100000000.0000002,
+    "revenue": 30000000000,
+    "tax": 450000000.0
+   },
+   "fs_div": "CFS",
+   "quarter": "1Q",
+   "year": 2026
+  },
+  {
+   "balance": {
+    "cash": 30000000000,
+    "total_assets": 200000000000,
+    "total_equity": 120000000000
+   },
+   "cumulative": {
+    "cogs": 42000000000.0,
+    "net_income": 3300000000.0,
+    "operating_income": 3000000000.0,
+    "pretax_income": 4200000000.0000005,
+    "revenue": 60000000000,
+    "tax": 900000000.0
+   },
+   "fs_div": "CFS",
+   "quarter": "2Q",
+   "year": 2026
+  }
+ ],
+ "unmapped": [
+  [
+   "알수없는수수료",
+   120000000.0
+  ],
+  [
+   "잡비",
+   34000000.0
+  ]
+ ],
+ "warnings": [
+  "스모크 테스트 실행"
+ ]
+}

@@ -1,0 +1,13 @@
+{
+  "source": "DART",
+  "as_of": "2026-11-16T21:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "법정 제출기한(statutory)은 추정 — 결산실적공시예고(pre_announce)가 있으면 그 날"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "days": 60,
+    "rows": []
+  }
+}

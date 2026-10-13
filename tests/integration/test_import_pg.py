@@ -22,7 +22,7 @@ import pytest
 
 from kbj.store.legacy_import import ImportReport, run
 from kbj.store.legacy_import import __main__ as cli
-from kbj.store.legacy_import.mappings import MAPPINGS
+from kbj.store.legacy_import.mappings import for_phase
 from kbj.store.legacy_import.sources import file_sha256
 from kbj.store.legacy_import.targets import MemoryTarget, PgTarget
 from kbj.store.migrate import migrate
@@ -32,6 +32,7 @@ from tests.integration.conftest import PgContainer
 pytestmark = pytest.mark.integration
 
 NOW = datetime(2026, 10, 7, 1, 0, tzinfo=UTC)
+P2_MAPPINGS = for_phase("P2")  # P4 는 SD 관심종목 매핑 하나를 더했다(아래 P4 시험)
 
 
 def clock() -> datetime:
@@ -74,7 +75,7 @@ def test_import_matches_the_memory_run_and_is_idempotent(dsn: str, paths: dict[s
     assert first.ok, first.lines()
     mem = run(paths, MemoryTarget(), phase="P2", now=clock, batch_id="b1")
     assert _summary(first) == _summary(mem)
-    assert len(first.results) == len(MAPPINGS)
+    assert len(first.results) == len(P2_MAPPINGS)
     second = _pg_run(dsn, paths, "b2")
     assert second.ok and all(r.rows_written == 0 for r in second.results), second.lines()
     for a, b in zip(first.results, second.results, strict=True):
@@ -83,7 +84,7 @@ def test_import_matches_the_memory_run_and_is_idempotent(dsn: str, paths: dict[s
     logs = _rows(
         dsn, "SELECT batch_id, status, count(*) FROM ops.legacy_import GROUP BY 1, 2 ORDER BY 1"
     )
-    assert logs == [("b1", "ok", len(MAPPINGS)), ("b2", "ok", len(MAPPINGS))]
+    assert logs == [("b1", "ok", len(P2_MAPPINGS)), ("b2", "ok", len(P2_MAPPINGS))]
     sha = _rows(
         dsn,
         "SELECT source_sha256 FROM ops.legacy_import WHERE batch_id='b1' AND mapping='board.px'",
@@ -173,3 +174,32 @@ def test_cli_imports_with_the_settings_url(
     for text in (first, second):
         assert timescale.password not in text and "990010" not in text and "합성" not in text
     assert cli.main([*argv, "--verify-only"]) == 0
+
+
+# ── P4: SD 관심종목 → prv_journal.watchlist(docs/p4_design.md §3.8 — 합성 파일) ──────────────
+
+
+def test_p4_watchlist_import_writes_prv_journal(dsn: str, tmp_path: Path) -> None:
+    import json
+
+    p = tmp_path / "server_watchlist.json"
+    items = [
+        {"code": "994010", "name": "합성하나", "market": "kr", "addedAt": "2026-09-01T00:00:00Z"},
+        {"code": "AAPL", "market": "us"},
+        {"code": "99K010", "name": "합성영숫자"},
+    ]
+    p.write_text(json.dumps(items, ensure_ascii=False), encoding="utf-8")
+    with psycopg.connect(dsn, autocommit=True) as conn:
+        first = run({"watchlist": p}, PgTarget(conn), phase="P4", now=clock, batch_id="w1")
+        again = run({"watchlist": p}, PgTarget(conn), phase="P4", now=clock, batch_id="w2")
+    assert first.ok and again.ok, first.lines()
+    assert first.results[0].rows_written == 2 and again.results[0].rows_written == 0
+    rows = _rows(
+        dsn,
+        "SELECT list_name, code, sort, source, loaded_by, updated_at IS NOT NULL "
+        "FROM prv_journal.watchlist ORDER BY sort",
+    )
+    assert rows == [
+        ("main", "994010", 0, "import:sd", "legacy:sd.watchlist", True),
+        ("main", "99K010", 2, "import:sd", "legacy:sd.watchlist", True),
+    ]

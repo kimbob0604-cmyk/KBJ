@@ -161,3 +161,48 @@ shim(`kbj.services.notifier.client.legacy_send`)으로, 휴장·장중은 KBJ �
 
 시험 수: SD 래퍼 13 그대로. 남은 문서 속 `ohlcv_5y_collector.py` 이름(`db_backup.py` 머리말·`data_freshness.py` 의
 출처 표시)은 P4 SD 정리 때 함께 고친다.
+
+## P4. 종목 상세·공시·컨센서스·밸류 대체 — 묶음 S(웨이브 3, 2026-10-08)
+
+근거: `docs/p4_design.md` §1.12·D-P4-19·R14. 기준: P4 kbj 작업·페이지가 그 기능을 대체했고 **떼어낼 수 있는 것만**
+지운다. 지우기 전에 남는 코드가 지울 이름을 부르는지(정의되지 않은 이름 — `ruff --select F821` 0 유지)와 검사
+스크립트 10개(AST·정규식으로 `server.py` 를 떼어 쓴다)를 확인했다.
+
+**지운 모듈 12개**(kbj 대체 — 원본 시험 없음, 옮긴 시험 0)
+
+| 파일 | kbj 대체 |
+|---|---|
+| `consensus_collector.py`·`consensus_quarterly_collector.py`(네이버)·`consensus_snapshot_collector.py`·`revision_calculator.py` | `consensus.snapshot`(KIS — ADR 0015)·`kbj.engines.consensus`. 분류 표(`_self_test`)는 `tests/unit/engines/consensus/test_revision.py` 로 승격. 옛 네이버 컨센서스 이력은 옮기지 않는다(U-P4-2) |
+| `earnings_parser.py`·`earnings_signal_classifier.py`·`earnings_alert_writer.py`(Ollama — 폐기)·`earnings_telegram_sender.py` | `filings.dart_feed`(잠정실적 원문 파싱 — `kbj.data.public.dart.prelim_doc`)·`earnings.alerts`·`earnings.backfill`(알림은 notifier shim `alert.earnings` — 사건 시점) |
+| `overhang_parser.py`·`dart_collector.py`(aiohttp·tenacity) | `filings.dart_feed`(구조화 API·원문 폴백)·`fin.quarterly`·`fin.backfill` |
+| `valuation_calculator.py`·`tam_modeler.py` | `fin.valuation_band`(PIT 밴드·시나리오 적정가 — ADR 0016) |
+
+남은 legacy 코드의 늦은 import 세 곳(`review_validator.compare_review_vs_auto`·`analysis_journal_helper`·
+`server.api_vc2_stock_full` 의 `tam_modeler`)은 `try/except` 안이라 그 칸만 오류 문구가 된다(분석 일지·검증 시트·
+밸류체인 화면 — P5·P8 에서 kbj 시나리오 적정가로). `data_freshness.py` 의 출처 이름 문자열과 `review_validator.py`
+의 안내 문구는 표시용이라 그대로 뒀다. 레포 `pyproject.toml` legacy 그룹의 `aiohttp`·`tenacity`(dart_collector 만)와
+`streamlit`(dart-report `app.py` 만)을 지우고 `uv.lock` 을 다시 만들었다.
+
+**`server.py` 함수 단위 삭제**(18,889 → 16,032줄). 지운 자리에는 `# KBJ P4 삭제: <이름> — <대체>` 한 줄을 남겼다.
+
+| 묶음 | 지운 것 | 대체 |
+|---|---|---|
+| 종목 상세 | `api_financial`(네이버)·`api_dart_financial`·`_fetch_dart_quarter`·`_try_dart_segment_revenue`·`api_chart`·`api_chart_intraday`·`api_price`·`_fetch_naver_minute_candles`·`_append_today_candle_kr`·`api_compare`·`api_vc2_stock_tam` | 페이지 8 `/api/stock/{code}/*` |
+| 공시 | `poll_dart_disclosures`·`score_disclosure`·`_DISCLOSURE_SCORE_TABLE`·`_cap_bonus_for_code`·`_classify_disclosure`·`recalc_disclosure_scores`·`api_disclosure_bonus`·`api_disclosure_events`·`api_disclosures_recalc`·`api_disclosures`·`init_dart_corp_map_db`·`_load_dart_corp_code_map` + `_startup` 의 DART 폴링·corp_map 등록 | `filings.dart_feed`·`filings.derive`(`kbj.engines.filings.importance`)·`filings.corp_code`·`/api/filings/*` |
+| 리비전·컨센서스·어닝 | `/api/revision/*` 4개·`alert_revision_signals`·`_fmt_revision_period`·`/api/earnings/*` 4개 + `_startup` 의 `tg_revision_signals`·분기 컨센서스·어닝 파이프라인·어닝 백필·컨센서스 스냅샷 등록 | `consensus.snapshot`(alert.revision 16:00 — ADR 0018)·`earnings.alerts`·`earnings.backfill` |
+| 네이버 전용·대체 없음(폐지 — conflict_map §1.13) | `_crawl_naver_research`·`_extract_report_html`·`_extract_report_pdf`·`api_reports`·`_scrape_naver_research_list`·`api_research_sectors`·`api_research_companies`·`api_research_recommend`·`_fetch_naver_board_titles`·`api_sentiment` | 없음(증권사 리포트 목록·종목토론실 감성) |
+| P3 대체(D-P3-18 이월) | `api_flow`·`api_sectors`·`api_sector_detail`·`_scrape_naver_sectors_legacy_unused`·`_scrape_naver_sector_detail_legacy_unused`·`_fetch_and_save_flow_legacy_unused`·`_price_broadcaster`(+ `_startup` 의 브로드캐스터 스레드) | 페이지 1·2·4 |
+
+**남긴 것(R14 — 지우면 남은 코드가 깨진다)**: `_fetch_kr_indices_live`·`_refresh_prices_from_naver`(마감 시황·
+`_market_watchdog` — 검사 스크립트 `check_closing_brief`·`check_brief_sections`·`check_watchdog_*` 가 본다),
+`_fetch_naver_live_prices`·`_overlay_live_prices_on_data`(`/data.json` 경로), `_fetch_naver_trend`·`_fetch_and_save_flow`·
+`_refresh_flow_batch`(마감 시황 수급 섹션·텔레그램 명령), `_naver_json`·`_scrape_naver_sectors`·
+`_scrape_naver_sector_detail`(`_load_naver_universe` 피어 유니버스 — P5), `_fetch_kr_earnings`(`api_calendar_earnings` 가
+미국 실적 일정과 함께 쓴다 — 경제 캘린더 P5). 설계 표의 `check_new_high_logic`·`check_newhigh_full_list`·
+`check_newhigh_flow` 퇴역은 하지 않았다 — 그 스크립트가 떼어 쓰는 마감 시황 신고가 코드가 남아 있고 여전히 통과한다
+(시험을 줄일 근거가 없다).
+
+시험 수: SD 래퍼 **13 그대로**(검사 10 + 목록 대조 + 합성 재현 + 다리 1). 다리 시험 `tests/test_kbj_bridge.py` 는
+`dart_collector`(브리지 `dart:` 의 마지막 사용처)를 지웠으므로 그 단언 대신 지운 모듈 7개가 다시 생기지 않는지 본다.
+기준선(`scripts/canonical_baseline.txt`): naver 88 → 67, krx_scrape 68 → 62. kbj 쪽 `tests/unit/notifier/test_client_shim.py`
+의 shim 대상에서 `earnings_telegram_sender.send_telegram_message` 를 뺐다(파일 삭제 — 알림은 `earnings.alerts`).

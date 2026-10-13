@@ -1,0 +1,60 @@
+{
+  "source": "DART",
+  "as_of": "2026-11-13T17:41:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "중요도 = 제목 키워드 + 관심종목 + 시총 가산(로그인 — 읽을 때 계산)"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "code": "994160",
+    "corp_code": "99400160",
+    "days": 90,
+    "kind": null,
+    "rows": [
+      {
+        "rcept_no": "20261113000019",
+        "rcept_dt": "2026-11-13",
+        "first_seen_at": "2026-11-13T17:41:00+09:00",
+        "corp_code": "99400160",
+        "stock_code": "994160",
+        "corp_name": "모의화학",
+        "corp_cls": "Y",
+        "title": "분기보고서 (2026.09)",
+        "kind": "periodic",
+        "is_correction": false,
+        "kw_score": 2,
+        "kw_matched": [
+          "분기보고서"
+        ],
+        "login_score": 7,
+        "importance": "high",
+        "is_watch": true,
+        "parse_state": "none",
+        "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261113000019"
+      },
+      {
+        "rcept_no": "20260915800001",
+        "rcept_dt": "2026-09-15",
+        "first_seen_at": "2026-09-15T16:40:00+09:00",
+        "corp_code": "99400160",
+        "stock_code": "994160",
+        "corp_name": "모의화학",
+        "corp_cls": "Y",
+        "title": "주식분할결정",
+        "kind": "capital",
+        "is_correction": false,
+        "kw_score": 8,
+        "kw_matched": [
+          "분할",
+          "주식분할"
+        ],
+        "login_score": 13,
+        "importance": "critical",
+        "is_watch": true,
+        "parse_state": "none",
+        "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260915800001"
+      }
+    ]
+  }
+}

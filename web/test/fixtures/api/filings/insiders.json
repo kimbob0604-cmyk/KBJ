@@ -1,0 +1,30 @@
+{
+  "source": "DART",
+  "as_of": "2026-11-16T00:00:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "보고 기준 순증감(사유 미구분 포함) — 비율 분모 = 최근 DART 주식총수(보통주 발행)"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "days": 30,
+    "min_ratio_pct": null,
+    "label": "보고 기준 순증감(사유 미구분 포함)",
+    "rows": [
+      {
+        "corp_code": "99400140",
+        "stock_code": "994140",
+        "corp_name": "모의에너지",
+        "n_reports": 2,
+        "n_reporters": 2,
+        "net_shares": -1650000,
+        "buy_shares": 0,
+        "sell_shares": 1650000,
+        "ratio_pct": -3.3000000000000003,
+        "last_rcept_dt": "2026-11-16",
+        "is_watch": true,
+        "quality": "ok"
+      }
+    ]
+  }
+}

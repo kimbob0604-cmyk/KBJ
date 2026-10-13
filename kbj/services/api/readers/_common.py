@@ -3,6 +3,10 @@
 readers 는 **저장소 → 순수 엔진 → 응답 모델** 만 한다. 외부 원천을 부르지 않는다(D-P3-3, 계약 ⑩ —
 `kbj.data.private`·`kbj.services.collectors` 를 import 하지 않는다). 계산은 엔진이 하고 여기서는 원
 단위 정수로 반올림·모양 맞추기만 한다(절대 규칙 3 — 숫자를 지어내지 않는다).
+
+P4(docs/p4_design.md §5 — 묶음 A): 저장소 묶음에 `filings`·`fin`·`consensus`·`journal`, 읽기 문맥에
+공시·재무 설정(`config/fin.yaml`·`config/reports.yaml`)을 더했다. 모르는 종목코드는 `UnknownCode`
+(404 `unknown_code` — 유니버스에도 DART 고유번호 표에도 없다, §5.2).
 """
 
 from __future__ import annotations
@@ -13,6 +17,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 from typing import Final, Protocol
 
+from kbj.config.fin import FinConfig, ReportsConfig
 from kbj.config.markets import CalendarEvents, MarketsConfig
 from kbj.core.calendar import TradingCalendar
 from kbj.core.quality import Quality
@@ -20,7 +25,16 @@ from kbj.core.time import KST
 from kbj.engines.flows.checks import apply_checks
 from kbj.engines.flows.ledger import Ledger, build_ledger, source_label, worst_quality
 from kbj.services.api.models.common import Envelope
-from kbj.store.repos import BoardRepo, EtfRepo, FlowsRepo, MarketRepo
+from kbj.store.repos import (
+    BoardRepo,
+    ConsensusRepo,
+    EtfRepo,
+    FilingsRepo,
+    FinRepo,
+    FlowsRepo,
+    JournalRepo,
+    MarketRepo,
+)
 
 __all__ = [
     "LEDGER_WINDOW",
@@ -29,6 +43,7 @@ __all__ = [
     "LedgerCache",
     "NoData",
     "ReadContext",
+    "UnknownCode",
     "day_start",
     "envelope",
     "label",
@@ -59,6 +74,20 @@ class ApiRepos(Protocol):
     @property
     def etf(self) -> EtfRepo: ...
 
+    # P4(묶음 M 이 `Repos`·`MemoryRepos` 에 더한 것 — 공시·재무는 공개 표, 컨센서스·관심종목은
+    # 로그인)
+    @property
+    def filings(self) -> FilingsRepo: ...
+
+    @property
+    def fin(self) -> FinRepo: ...
+
+    @property
+    def consensus(self) -> ConsensusRepo: ...
+
+    @property
+    def journal(self) -> JournalRepo: ...
+
 
 class NoData(Exception):
     """데이터가 아직 없다 → 404 `no_data`(화면 '아직 없음 — <작업> <예정 시각>')."""
@@ -66,6 +95,13 @@ class NoData(Exception):
     def __init__(self, message: str) -> None:
         super().__init__(message)
         self.message = message
+
+
+class UnknownCode(Exception):
+    """모르는 종목코드 → 404 `unknown_code`(유니버스(전 거래일)에도 DART 고유번호 표에도 없다 —
+    §5.2).
+
+    문구에 코드를 싣지 않는다(입력값을 응답에 되돌리지 않는다 — P3 422 규칙과 같다)."""
 
 
 class LedgerCache:
@@ -105,6 +141,10 @@ class ReadContext:
     markets: MarketsConfig
     events: CalendarEvents
     ledgers: LedgerCache | None = None
+    # P4 — 공시·재무·컨센서스·밸류 튜닝값(config/fin.yaml)·dart-report 설정(config/reports.yaml).
+    # create_app 이 읽어 넣는다(시험은 덮어쓴 값 — 완료 시험의 consensus.top_n=0 등)
+    fin: FinConfig | None = None
+    reports: ReportsConfig | None = None
 
     def ledger(self, end: date) -> Ledger:
         """end 이하 최근 `LEDGER_WINDOW` 영업일 원장(검산 적용). 모든 readers 가 같은 창을 쓴다 —
@@ -124,6 +164,20 @@ class ReadContext:
 
     def venue_notes(self) -> list[str]:
         return [NXT_NOTE] if tuple(self.markets.kis.venues) == ("KRX",) else []
+
+    def fin_config(self) -> FinConfig:
+        if self.fin is None:
+            raise RuntimeError(
+                "공시·재무 설정(config/fin.yaml)이 주입되지 않았다 — create_app 이 넣는다"
+            )
+        return self.fin
+
+    def reports_config(self) -> ReportsConfig:
+        if self.reports is None:
+            raise RuntimeError(
+                "리포트 설정(config/reports.yaml)이 주입되지 않았다 — create_app 이 넣는다"
+            )
+        return self.reports
 
 
 def day_start(d: date) -> datetime:

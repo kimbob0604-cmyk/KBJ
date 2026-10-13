@@ -92,3 +92,40 @@ def test_datago_datasets_match_client_portal_ids() -> None:
     assert ten_day == set(customs_client.TEN_DAY.values())
     # 소매채권수익률(15094783)은 폐지 — 받지 않는다(probe_results F1)
     assert all("15094783" not in d.dataset for d in ALL)
+
+
+# ── P4(docs/p4_design.md §3.3 — 묶음 M) ──────────────────────────────────────────────────────
+
+P4_EVENT = {
+    "document": "pub_filings.earnings_prelim",
+    "cvbdIsDecsn": "pub_filings.overhang_event",
+    "bdwtIsDecsn": "pub_filings.overhang_event",
+    "exbdIsDecsn": "pub_filings.overhang_event",
+    "piicDecsn": "pub_filings.overhang_event",
+    "fricDecsn": "pub_filings.overhang_event",
+    "tsstkAqDecsn": "pub_filings.buyback_event",
+    "tsstkDpDecsn": "pub_filings.buyback_event",
+    "elestock": "pub_filings.insider_report",
+    "majorstock": "pub_filings.major_holder_report",
+    "stockTotqySttus": "pub_filings.share_count",
+    "fnlttSinglAcntAll": "pub_fin.statement_raw",
+    "fnlttMultiAcnt": "pub_fin.quarterly",
+    "report_inputs": "pub_fin.report",
+}
+
+
+def test_p4_dart_datasets_are_events_with_one_store() -> None:
+    """접수번호·회사 단위로 수시로 받는 DART 데이터셋은 event(처리기가 claims 로 직접 선점 —
+    D-P4-25),
+    카탈로그 store 는 표 하나(나머지 표는 작업 writes 에만)."""
+    by = {d.dataset: d for d in dart.DATASETS}
+    for name, store in P4_EVENT.items():
+        assert by[name].as_of_kind == "event", name
+        assert by[name].store == store, name
+    assert by["list"].as_of_kind == "minute" and by["list"].store == "pub_filings.disclosure"
+    assert by["company"].as_of_kind == "run_date"
+    assert by["company"].store == "pub_filings.corp_profile"  # corp_code 표는 filings.corp_code 몫
+    assert by["corpCode"].store == "pub_filings.corp_code"
+    assert all(d.budget == "dart" and d.limiter == "dart" for d in dart.DATASETS)
+    # 구조화 엔드포인트 이름·필드는 실측 전 기본값 — 노트에 적는다
+    assert "[확인 필요" in dart.__doc__  # type: ignore[operator]

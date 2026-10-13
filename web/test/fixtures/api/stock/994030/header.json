@@ -1,0 +1,39 @@
+{
+  "source": "KRX+DART",
+  "as_of": "2026-11-13T15:30:00+09:00",
+  "quality": "stale",
+  "notes": [
+    "정지 — 마지막 거래 2026-11-06"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "code": "994030",
+    "name": "모의정밀",
+    "market": "KOSDAQ",
+    "kind": "common",
+    "common_code": "994030",
+    "corp_code": "99400030",
+    "corp_name": "모의정밀",
+    "status_flags": [
+      "halted"
+    ],
+    "listed_on": "2005-08-10",
+    "acc_mt": 12,
+    "induty_code": "29271",
+    "last": {
+      "date": "2026-11-13",
+      "close": 12670.0,
+      "chg_pct": 0.0,
+      "volume": 0,
+      "turnover": 0,
+      "mktcap": 380100000000,
+      "last_trade": "2026-11-06",
+      "stale": true,
+      "source": "KRX",
+      "quality": "stale"
+    },
+    "is_watch": true,
+    "detail_tier": true,
+    "newhigh": null
+  }
+}

@@ -613,3 +613,158 @@ input[type='password'] {
   min-height: 1em;
   margin: 0;
 }
+
+/* ── P4 부품(docs/p4_design.md §1.2) — 스킨 토큰만, 새 색 없음 ───────── */
+
+/* 손으로 그린 SVG 글자색(svg text 의 기본은 --dim — base.css) */
+svg text.fg {
+  fill: var(--fg);
+}
+svg text.warn {
+  fill: var(--warn);
+}
+
+/* 종목 검색 상자(ui/search.ts) */
+.search {
+  position: relative;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--kr);
+  min-width: 0;
+}
+.search label {
+  color: var(--dim);
+  font-size: 11px;
+}
+.search input[type='text'] {
+  width: 16em;
+  max-width: 100%;
+}
+.search-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 5;
+  min-width: 100%;
+  max-height: 280px;
+  overflow-y: auto;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+.search-list li {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  padding: 5px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.search-list li small {
+  color: var(--dim);
+  font-family: var(--mono);
+}
+.search-list li[aria-selected='true'],
+.search-list li:hover {
+  background: var(--sel);
+}
+.search-msg {
+  margin: 0;
+  color: var(--dim);
+  font-size: 11px;
+}
+.search-msg.err {
+  color: var(--warn);
+}
+
+/* 페이지 안 탭(ui/tabs.ts) — 셸의 .tabs(페이지 탭)와 별개 */
+.tabbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.tabbar button {
+  font: inherit;
+  font-family: var(--kr);
+  font-size: 12px;
+  background: transparent;
+  color: var(--dim);
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  padding: 5px 10px;
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+.tabbar button[aria-selected='true'] {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--panel);
+}
+.tabbar button[aria-disabled='true'] {
+  border-style: dashed;
+  cursor: default;
+}
+.tabpanel {
+  padding-top: 10px;
+  min-width: 0;
+}
+
+/* 키-값 표 보탬(ui/kv.ts) — .kv 는 위 '지수 타일·키값' 의 것 */
+.kv dt small {
+  display: block;
+  color: var(--dim);
+  font-size: 9.5px;
+}
+.kv dd.na {
+  color: var(--dim);
+  font-family: var(--kr);
+  font-size: 11px;
+  font-weight: 400;
+}
+.kv.rows {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+.kv.rows div {
+  grid-template-columns: minmax(8em, 40%) 1fr;
+  border: 0;
+  border-bottom: 1px dotted var(--line);
+  padding: 4px 0;
+  align-items: baseline;
+}
+.kv.rows dd {
+  text-align: right;
+}
+
+/* 누적 막대 범례(ui/stackbar.ts) */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  font-family: var(--kr);
+  font-size: 11px;
+  color: var(--dim);
+}
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.legend .sw {
+  width: 10px;
+  height: 10px;
+  display: inline-block;
+}
+.stackbar .def {
+  padding: 4px 0 0;
+}

@@ -1,4 +1,4 @@
-"""마이그레이션 0001~0009 를 실제 TimescaleDB 에 적용(Docker).
+"""마이그레이션 0001~0013 을 실제 TimescaleDB 에 적용(Docker).
 
 근거: docs/p2_design.md §8.2·§8.8, docs/p3_design.md §3.4.
 
@@ -6,6 +6,10 @@
 - 파일 자체도 멱등: 적용된 DB 에 각 파일을 한 번 더 돌려도 오류가 없다
 - hypertable·청크 간격·압축 정책(GX 그대로 + daily_bar·stock_investor_daily 365일)
 - P3(0007~0009): 장중 이력 표는 청크 1일 + 보존 정책(90일·ETF 30일), 일 단위 표는 365일
+- P4(0010~0013, docs/p4_design.md §3.4): 공개 표(pub_filings·pub_fin)는 내보내기 역할이 읽고,
+  로그인·개인 표(prv_fin·prv_market.share_class·prv_journal.watchlist)는 못 읽는다. 공개 표 source
+  는
+  DART 만, 엑셀 2 MiB 상한, 조정 공시 연결 실패는 invalid + 사유. 밸류 일별은 hypertable(365일)
 - 권한: kbj_public_export 는 pub_* 만 읽고, prv_*(P3 새 표 포함)·ops 는 못 읽고, 아무것도
   쓰지 못한다
 - 제약: data_claim 부분 유일(claimed·done 하나), notify_message → notify_log 외래키(커밋 때 검사),
@@ -41,7 +45,11 @@ P2 = [
     "0007_board.sql",
     "0008_market_flows_p3.sql",
     "0009_etf.sql",
-]  # 이름은 P2 시험 그대로 — 0001~0009 전부(P3 는 0007~0009 를 더했다)
+    "0010_filings.sql",
+    "0011_fin.sql",
+    "0012_fin_prv.sql",
+    "0013_journal_watchlist.sql",
+]  # 이름은 P2 시험 그대로 — 0001~0013 전부(P3 는 0007~0009, P4 는 0010~0013 을 더했다)
 GX_DAILY = {
     "prv_gex.raw_messages", "prv_gex.fut_ticks", "prv_gex.opt_ticks", "prv_gex.chain_snapshots",
     "prv_gex.fut_board", "prv_gex.investor_flow", "prv_gex.series_expiries",
@@ -55,6 +63,8 @@ YEARLY = {
     # P3(0007~0009)
     "prv_board.label", "prv_board.stock_day", "prv_market.eod_reconcile",
     "prv_flows.investor_revision", "prv_etf.etf_daily", "prv_etf.holding",
+    # P4(0012)
+    "prv_fin.valuation_daily",
 }  # fmt: skip
 # P3 장중 이력 — 청크 1일 + 보존(docs/p3_design.md §3.4, R21 [제안])
 P3_INTRADAY = {
@@ -359,3 +369,69 @@ def test_migration_files_only_touch_tiered_schemas(dsn: str) -> None:
         "prv_board",
         "prv_etf",
     } <= schemas
+
+
+# ── P4(0010~0013 — docs/p4_design.md §3.4) ──
+
+P4_PUB = {
+    "pub_filings.disclosure", "pub_filings.corp_profile", "pub_filings.earnings_prelim",
+    "pub_filings.earnings_schedule", "pub_filings.overhang_event", "pub_filings.overhang_adjust",
+    "pub_filings.overhang_state", "pub_filings.overhang_summary", "pub_filings.insider_report",
+    "pub_filings.major_holder_report", "pub_filings.insider_window", "pub_filings.buyback_event",
+    "pub_filings.share_count", "pub_fin.statement_raw", "pub_fin.quarterly", "pub_fin.ratio",
+    "pub_fin.report", "pub_fin.segment",
+}  # fmt: skip
+P4_PRV = {
+    "prv_fin.consensus_snapshot", "prv_fin.invest_opinion", "prv_fin.target_consensus",
+    "prv_fin.revision", "prv_fin.valuation_daily", "prv_fin.valuation_band", "prv_fin.scenario",
+    "prv_fin.earnings_surprise", "prv_market.share_class", "prv_journal.watchlist",
+}  # fmt: skip
+
+
+def test_p4_tables_exist(dsn: str) -> None:
+    rows = _rows(
+        dsn,
+        "SELECT table_schema || '.' || table_name FROM information_schema.tables "
+        "WHERE table_schema IN ('pub_filings', 'pub_fin', 'prv_fin', 'prv_journal') "
+        "OR table_name = 'share_class'",
+    )
+    assert {r[0] for r in rows} == P4_PUB | P4_PRV | {"pub_filings.corp_code"}
+
+
+def test_export_role_reads_p4_pub_tables_but_not_prv(dsn: str) -> None:
+    for table in sorted(P4_PUB):
+        _as_export(dsn, f"SELECT count(*) FROM {table}")  # noqa: S608 — 상수 표 이름
+    for table in sorted(P4_PRV):
+        with pytest.raises(psycopg.errors.InsufficientPrivilege):
+            _as_export(dsn, f"SELECT 1 FROM {table} LIMIT 1")  # noqa: S608
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        _as_export(dsn, "DELETE FROM pub_fin.quarterly")
+
+
+BAD_P4_ROWS = (
+    # 공개 표에 로그인 원천을 쓰지 않는다
+    "INSERT INTO pub_filings.disclosure (rcept_no, corp_code, corp_name, title, base_title, "
+    "rcept_dt, kind, first_seen_at, source, received_at, loaded_by) VALUES ('20261113000001', "
+    "'99400010', '합성', 't', 't', '2026-11-13', 'other', now(), 'KIS', now(), 'test')",
+    # 대상 결정 공시를 못 이으면 invalid + 사유
+    "INSERT INTO pub_filings.overhang_adjust (rcept_no, corp_code, rcept_dt, kind, received_at, "
+    "loaded_by) VALUES ('20261113000002', '99400010', '2026-11-13', 'exercise', now(), 'test')",
+    # 엑셀 2 MiB 상한
+    "INSERT INTO pub_fin.report (stock_code, built_on, corp_code, year_from, year_to, "
+    "fs_div_used, payload, xlsx, xlsx_sha256, engine_version, input_digest, generated_at, "
+    "loaded_by) VALUES ('994010', '2026-11-16', '99400010', 2023, 2026, 'CFS', '{}', "
+    "decode(repeat('00', 2097153), 'hex'), repeat('a', 64), 'v', 'd', now(), 't')",
+    # 법정 기한은 추정
+    "INSERT INTO pub_filings.earnings_schedule (corp_code, period_end, kind, fiscal_year, "
+    "fiscal_q, planned_date, quality, computed_at, loaded_by) VALUES ('99400010', '2026-09-30', "
+    "'statutory', 2026, 3, '2026-11-14', 'ok', now(), 't')",
+    # 우선주의 보통주 코드는 자기 코드가 아니다
+    "INSERT INTO prv_market.share_class (code, share_class, common_code, source, quality, "
+    "updated_at, loaded_by) VALUES ('994015', 'pref', '994015', 'krx', 'ok', now(), 't')",
+)
+
+
+@pytest.mark.parametrize("stmt", BAD_P4_ROWS)
+def test_p4_constraints(dsn: str, stmt: str) -> None:
+    with pytest.raises(psycopg.errors.CheckViolation), psycopg.connect(dsn) as c:
+        c.execute(stmt.encode())

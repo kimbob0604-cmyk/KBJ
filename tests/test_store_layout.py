@@ -1,4 +1,4 @@
-"""DB 스키마 마이그레이션 0001~0009 와 docker-compose.yml 의 구조 검사(정적 — DB·데몬 없이).
+"""DB 스키마 마이그레이션 0001~0013 과 docker-compose.yml 의 구조 검사(정적 — DB·데몬 없이).
 
 ADR 0002: 공개 등급은 pub_*, 로그인 등급은 prv_*, 운영은 ops. kbj_public_export 는 pub_* 에만
 USAGE·SELECT. compose 는 비밀번호 기본값이 없고 포트는 127.0.0.1 에만 연다.
@@ -570,3 +570,181 @@ def test_p3_etf_type_check_matches_rows_enum() -> None:
     m = re.search(r"etf_type\s+text CHECK \(etf_type IN \(([^)]*)\)\)", _body("0009_etf.sql"))
     assert m is not None
     assert set(re.findall(r"'(\w+)'", m.group(1))) == {t.value for t in EtfType}
+
+
+# ── P4 마이그레이션 0010~0013 (docs/p4_design.md §3.4, D-P4-2) ──────────────────────────────
+
+P4_FILES = (
+    "0010_filings.sql",
+    "0011_fin.sql",
+    "0012_fin_prv.sql",
+    "0013_journal_watchlist.sql",
+)
+P4_EXPECT = {
+    "0010_filings.sql": {
+        "pub_filings.disclosure", "pub_filings.corp_profile", "pub_filings.earnings_prelim",
+        "pub_filings.earnings_schedule", "pub_filings.overhang_event",
+        "pub_filings.overhang_adjust", "pub_filings.overhang_state",
+        "pub_filings.overhang_summary", "pub_filings.insider_report",
+        "pub_filings.major_holder_report", "pub_filings.insider_window",
+        "pub_filings.buyback_event", "pub_filings.share_count",
+    },
+    "0011_fin.sql": {
+        "pub_fin.statement_raw", "pub_fin.quarterly", "pub_fin.ratio", "pub_fin.report",
+        "pub_fin.segment",
+    },
+    "0012_fin_prv.sql": {
+        "prv_fin.consensus_snapshot", "prv_fin.invest_opinion", "prv_fin.target_consensus",
+        "prv_fin.revision", "prv_fin.valuation_daily", "prv_fin.valuation_band",
+        "prv_fin.scenario", "prv_fin.earnings_surprise", "prv_market.share_class",
+    },
+    "0013_journal_watchlist.sql": {"prv_journal.watchlist"},
+}  # fmt: skip
+# 시세·수급(로그인 원천)에서만 나오는 열 이름 — pub_* 에 있으면 안 된다(ADR 0002 §2.1).
+# 오버행 price·shares 는 DART 결정 공시의 전환가·주식 수라 허용한다.
+# 혼합 값(오버행 금액·ITM·관심종목·서프라이즈)도 pub_* 에 없다.
+LOGIN_ONLY_COLS = {
+    "open", "high", "low", "close", "volume", "turnover", "mktcap", "mktcap_company", "chg_pct",
+    "net_qty", "net_value", "nav", "itm", "itm_shares", "amount_krw", "per", "pbr", "psr",
+    "ev_ebitda", "is_watch", "login_score", "rev_surprise", "op_surprise", "consensus_ref",
+}  # fmt: skip
+
+
+def _all_p4_tables() -> dict[str, list[str]]:
+    found: dict[str, list[str]] = {}
+    for name in P4_FILES:
+        found.update(_tables(_body(name)))
+    return found
+
+
+def test_p4_migration_files_follow_p3_in_order() -> None:
+    names = sorted(p.name for p in MIGRATIONS.glob("*.sql"))
+    assert names[: 1 + len(P2_FILES) + len(P3_FILES) + len(P4_FILES)] == [
+        "0001_schemas.sql", *P2_FILES, *P3_FILES, *P4_FILES,
+    ]  # fmt: skip
+
+
+def test_p4_statements_are_idempotent_and_never_alter_or_write() -> None:
+    for name in P4_FILES:
+        body = _body(name)
+        assert not re.search(r"CREATE (SCHEMA|TABLE|EXTENSION)(?! IF NOT EXISTS)", body), name
+        assert not re.search(r"CREATE (UNIQUE )?INDEX(?! IF NOT EXISTS)", body), name
+        starts = {s.strip().split(maxsplit=1)[0].upper() for s in body.split(";") if s.strip()}
+        assert starts <= {"CREATE", "SELECT", "GRANT"}, (name, starts)  # ALTER·DROP·INSERT 없음
+        for call in re.findall(r"create_hypertable\((.*?)\);", body, flags=re.S):
+            assert "if_not_exists => TRUE" in call, (name, call)
+
+
+def test_p4_tables_live_in_the_expected_files_and_tiers() -> None:
+    for name, tables in P4_EXPECT.items():
+        assert set(_tables(_body(name))) == tables, name
+    earlier = set(_all_p2_tables()) | set(_all_p3_tables())
+    assert not set(_all_p4_tables()) & earlier  # 앞 번호 표를 다시 만들지 않는다
+    for name in ("0010_filings.sql", "0011_fin.sql"):  # 공개 — pub_* 에만
+        for t in _tables(_body(name)):
+            assert t.startswith(("pub_filings.", "pub_fin.")), (name, t)
+    for name in ("0012_fin_prv.sql", "0013_journal_watchlist.sql"):  # 로그인·개인 — prv_* 에만
+        body = _body(name)
+        for t in _tables(body):
+            assert t.startswith(("prv_fin.", "prv_market.", "prv_journal.")), (name, t)
+        assert "kbj_public_export" not in body and not re.search(r"\bpub_", body), name
+        assert not re.search(r"\bpublic\.", body), name
+
+
+def test_p4_pub_tables_hold_dart_values_only() -> None:
+    """pub_* 표: source 는 'DART' 만(CHECK), 시세·혼합 값 열이 없다(ADR 0002 §2.1, 설계 §2)."""
+    for name in ("0010_filings.sql", "0011_fin.sql"):
+        body = _body(name)
+        for table, cols in _tables(body).items():
+            assert {"source", "quality", "loaded_by"} <= set(cols), table
+            assert not LOGIN_ONLY_COLS & set(cols), (table, LOGIN_ONLY_COLS & set(cols))
+        n_tables = len(_tables(body))
+        assert body.count("CHECK (source = 'DART')") == n_tables, name
+        assert not re.search(r"\b(KIS|KRX|naver|yahoo|fnguide|wisereport)\b", body, flags=re.I)
+
+
+def test_p4_pub_tables_are_granted_select_only() -> None:
+    for name in ("0010_filings.sql", "0011_fin.sql"):
+        body = _body(name)
+        stmts = [s.strip() for s in body.split(";")]
+        grants = [s for s in stmts if re.search(r"\bkbj_public_export\b", s)]
+        for g in grants:
+            assert re.fullmatch(r"GRANT SELECT ON pub_[a-z_]+\.[a-z_]+ TO kbj_public_export", g), g
+        granted = {re.search(r"ON ([\w.]+) TO", g).group(1) for g in grants}  # type: ignore[union-attr]
+        assert granted == set(_tables(body)), name  # 표마다 명시 GRANT(0004 방식)
+
+
+def test_p4_value_tables_carry_source_quality_and_loader() -> None:
+    for table, cols in _all_p4_tables().items():
+        if table == "prv_journal.watchlist":  # 개인 데이터 — 출처는 source(import:sd·cli·api)
+            assert {"source", "loaded_by", "updated_at"} <= set(cols)
+            continue
+        assert {"source", "quality", "loaded_by"} <= set(cols), table
+        assert {"received_at", "computed_at", "updated_at", "generated_at"} & set(cols), table
+
+
+def test_p4_quality_checks_and_keys_match_the_design() -> None:
+    for name in P4_FILES:
+        body = _body(name)
+        for m in re.finditer(r"quality\s+text NOT NULL[^,]*CHECK \((quality IN \([^)]*\))\)", body):
+            assert m.group(1) == "quality IN ('ok', 'stale', 'estimated', 'invalid')", name
+        n_q = len(re.findall(r"\bquality\s+text", body))
+        assert n_q == len(re.findall(r"quality\s+text NOT NULL[^,]*CHECK \(quality IN", body)), name
+    body = "\n".join(_body(n) for n in P4_FILES)
+
+    def pk(table: str) -> str:
+        m = re.search(rf"CREATE TABLE IF NOT EXISTS {re.escape(table)} \((.*?)\n\);", body, re.S)
+        assert m is not None, table
+        inline = re.search(r"^\s*(\w+)\s+\w+ PRIMARY KEY", m.group(1), re.M)
+        if inline:
+            return inline.group(1)
+        found = re.search(r"PRIMARY KEY \(([^)]*)\)", m.group(1))
+        assert found is not None, table
+        return found.group(1)
+
+    assert pk("pub_filings.disclosure") == "rcept_no"
+    assert pk("pub_filings.overhang_state") == "corp_code, as_of, rcept_no"
+    assert pk("pub_filings.insider_window") == "corp_code, as_of, days"
+    assert pk("pub_filings.share_count") == "corp_code, period_end, rcept_no"
+    assert pk("pub_fin.statement_raw") == "corp_code, bsns_year, reprt_code, fs_div"
+    assert pk("pub_fin.quarterly") == "corp_code, fiscal_year, fiscal_q, fs_div"
+    assert pk("pub_fin.report") == "stock_code, built_on"
+    assert pk("prv_fin.consensus_snapshot") == "code, snap_date, fiscal_ym, source"
+    assert pk("prv_fin.invest_opinion") == "code, broker, opinion_date, source"
+    assert pk("prv_fin.revision") == "code, as_of, metric, fiscal_ym, window_days"
+    assert pk("prv_fin.valuation_daily") == "code, trade_date"
+    assert pk("prv_fin.scenario") == "code, as_of, scenario_case"
+    assert pk("prv_journal.watchlist") == "list_name, code"
+    assert "octet_length(xlsx) <= 2097152" in body  # 엑셀 2 MiB 상한(§3.4)
+    hyper = re.findall(
+        r"create_hypertable\(\s*'([\w.]+)', by_range\('(\w+)', INTERVAL '([^']+)'", body
+    )
+    assert hyper == [("prv_fin.valuation_daily", "trade_date", "365 days")]
+    assert "add_retention_policy" not in body  # 밸류 일별은 보존 없음(§3.4)
+
+
+def test_p4_enum_checks_match_rows() -> None:
+    """DB CHECK 의 값 목록 = kbj.core.fin_rows 의 열거(같은 말을 쓴다)."""
+    from kbj.core import fin_rows as fr
+
+    body = "\n".join(_body(n) for n in P4_FILES)
+
+    def values(col: str) -> set[str]:
+        """그 열 이름의 CHECK 목록 전부의 합(같은 이름이 여러 표에 있으면 — metric)."""
+        found = re.findall(rf"\b{col}\s+text NOT NULL CHECK \({col} IN \(([^)]*)\)\)", body)
+        assert found, col
+        return {v for f in found for v in re.findall(r"'([\w:]+)'", f)}
+
+    assert values("instrument") == {i.value for i in fr.Instrument}
+    assert values("scope") == {s.value for s in fr.PrelimScope}
+    assert values("metric") == {*fr.BAND_METRICS, "revenue", "op", "ni", "eps", "target_mean"}
+    assert values("scenario_case") == set(fr.SCENARIO_CASES)
+    assert values("method") == set(fr.SCENARIO_METHODS)
+    assert values("source") == set(fr.WATCH_SOURCES)
+    m = re.search(
+        r"parse_state\s+text NOT NULL DEFAULT 'none' CHECK \(parse_state IN \(([^)]*)\)", body
+    )
+    assert m is not None and set(re.findall(r"'(\w+)'", m.group(1))) == set(fr.PARSE_STATES)
+    signals = re.search(r"signal IN \(([^)]*)\)", body)
+    assert signals is not None
+    assert set(re.findall(r"'(\w+)'", signals.group(1))) == set(fr.REVISION_SIGNALS)

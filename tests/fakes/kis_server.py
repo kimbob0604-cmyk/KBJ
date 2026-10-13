@@ -16,6 +16,13 @@ GEX 체인·분봉 세부(전광판 행사가·야간 시각 표기)는 P7 승�
   `RANK_ROWS` 행, FHPST02400000 iNAV·괴리율, FHPUP02100000 지수, FHPUP02140000 업종
   `SECTORS_PER_MARKET` 개. 모양은 `kbj.data.private.kis.{investors,quotes,ranks,etf,index}` 파서가
   읽는 칸이다(tests/unit/fakes/test_kis_server_p3.py).
+- **P4 컨센서스 TR(묶음 K)**: TR id·경로는 `kbj.data.private.kis.datasets.CONSENSUS_TRS` 에서 채운다
+  (문자열을 다시 쓰지 않는다 — tests/unit/kis/test_consensus_tr_single.py). 출력 모양은
+  `kbj.data.private.kis.consensus` 파서의 상수 표(행 순서·열·단위 — [확인 필요 #29])를 따른다.
+  `FakeKisServer(consensus=world)` 로 합성 20종목 세계(tests/fixtures/synthetic/p4_world.py — 의미값
+  `consensus_rows`·`opinion_rows`)를 주면 세계 종목은 그 값을 TR 출력으로 바꿔 싣고(커버 없는 종목은
+  빈 출력), 세계 밖 종목(시뮬레이션의 `SYMBOLS`)은 고정 시드 합성 값을 준다(`estimate_body`·
+  `opinion_body` — tests/unit/fakes/test_kis_server_p4.py).
 - **오류 주입** `inject(msg_cd, count=1, *, start=None, until=None, tr_id=None, consumers=None)`:
   `EGW00201`(초당 한도)·`EGW00123`(토큰 거절)·`EGW00133`(발급 1분 1회 — POST)·`HTTP500`. 시각은 가짜
   시계 기준, consumers 를 주면 그 프로세스의 요청만.
@@ -34,18 +41,35 @@ import io
 import json
 import threading
 import zipfile
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Any, Final
+from typing import Any, Final, Protocol
 from zoneinfo import ZoneInfo
 
 import httpx
 from pydantic import SecretStr
 from redis import Redis
 
+from kbj.core.fin_rows import ConsensusRow, OpinionRow
+from kbj.data.private.kis.consensus import (
+    AMOUNT_UNIT_KRW,
+    COLUMNS,
+    IND_ROWS,
+    OPINION_FIELDS,
+    OUT_HEAD,
+    OUT_IND,
+    OUT_OPINION,
+    OUT_PERIODS,
+    OUT_PL,
+    PERIOD_FIELD,
+    PL_ROWS,
+    TR_ESTIMATE,
+    TR_OPINION,
+)
 from kbj.data.private.kis.credentials import KisCredentials
+from kbj.data.private.kis.datasets import CONSENSUS_TRS
 from kbj.data.private.kis.master import FO_MASTER_FILE
 from kbj.data.private.kis.rest import MINUTE_PATH, MINUTE_TR, KisRestClient
 from kbj.data.private.kis.token import reader
@@ -65,7 +89,7 @@ APP_SECRET: Final = "SIMsecretVALUE9876543210zyx"
 SYMBOLS: Final[tuple[str, ...]] = tuple(f"99{i:04d}" for i in range(10, 210, 10))
 
 # TR → 경로. 주식 TR 은 kbj/data/private/kis/datasets.py 의 notes, GEX TR 은 GX 실측 경로
-# (scripts/probe_common.py). `FHKST663300C0` 는 [추정 TR](설계 R20 — 미실측)
+# (scripts/probe_common.py). 컨센서스 TR 은 datasets.CONSENSUS_TRS 상수에서(묶음 K — #29 전)
 TRS: Final[dict[str, str]] = {
     "FHKST01010100": "/uapi/domestic-stock/v1/quotations/inquire-price",
     "FHKST01010900": "/uapi/domestic-stock/v1/quotations/inquire-investor",
@@ -73,7 +97,7 @@ TRS: Final[dict[str, str]] = {
     "FHPTJ04400000": "/uapi/domestic-stock/v1/quotations/foreign-institution-total",
     "FHPST01710000": "/uapi/domestic-stock/v1/quotations/volume-rank",
     "FHPST02400000": "/uapi/etfetn/v1/quotations/inquire-price",
-    "FHKST663300C0": "/uapi/domestic-stock/v1/quotations/estimate-perform",
+    **dict(CONSENSUS_TRS.values()),
     MINUTE_TR: MINUTE_PATH,
     "FHPIF05030100": "/uapi/domestic-futureoption/v1/quotations/display-board-callput",
     "FHPTJ04030000": "/uapi/domestic-stock/v1/quotations/inquire-investor-time-by-market",
@@ -238,10 +262,176 @@ RANK_ROWS: Final = 10  # 합성 거래대금 순위 행 수(시장마다)
 SECTORS_PER_MARKET: Final = 5  # 합성 업종 수(시장마다)
 
 
+# ── P4 컨센서스(묶음 K) — 의미값 ↔ TR 출력 ─────────────────────────────────────────────────
+CONSENSUS_TR_IDS: Final = frozenset({TR_ESTIMATE.tr_id, TR_OPINION.tr_id})
+SYN_BROKERS: Final = ("합성증권", "가상투자증권", "모의금융투자")  # 세계 밖 종목의 합성 증권사
+
+
+class ConsensusWorld(Protocol):
+    """가짜 서버가 싣는 컨센서스 의미값 — tests/fixtures/synthetic/p4_world.P4World 가 이 모양."""
+
+    @property
+    def stocks(self) -> Sequence[Any]: ...  # .code 가 있는 항목
+
+    def consensus_rows(self, code: str, snap_date: date | None = None) -> list[ConsensusRow]: ...
+
+    def opinion_rows(self, code: str, *, upto: date | None = None) -> list[OpinionRow]: ...
+
+
+def _amount(v: int | None) -> str:
+    if v is None:
+        return ""
+    if v % AMOUNT_UNIT_KRW:
+        raise ValueError(f"금액이 출력 단위({AMOUNT_UNIT_KRW}원)로 나누어지지 않는다: {v}")
+    return str(v // AMOUNT_UNIT_KRW)
+
+
+def _plain(x: float | None) -> str:
+    if x is None:
+        return ""
+    return str(int(x)) if float(x).is_integer() else f"{x:.2f}"
+
+
+def _growth(cur: int | None, prev: int | None) -> str:
+    if cur is None or prev is None or prev == 0:
+        return ""
+    return f"{(cur - prev) / abs(prev) * 100:.2f}"
+
+
+def estimate_body(code: str, rows: Sequence[ConsensusRow], estdate: date | None) -> dict[str, Any]:
+    """`ConsensusRow`(한 스냅) → 종목추정실적 TR 출력(파서 상수 표 모양 — [확인 필요 #29]).
+
+    행이 없으면 빈 출력(커버 없음 — 파서가 KisEmpty). 열은 결산년월 순 최대 5개, 추정 열은 'E'
+    표지. 금액은 억원(나누어떨어져야 한다 — 세계는 억원 단위로 맞춘 원), EPS 는 원."""
+    cols = sorted(rows, key=lambda r: r.fiscal_ym)[: len(COLUMNS)]
+    if not cols:
+        return {**OK_MSG, OUT_HEAD: {}, OUT_PL: [], OUT_IND: [], OUT_PERIODS: []}
+    head = {"sht_cd": code, "estdate": "" if estdate is None else estdate.strftime("%Y%m%d")}
+    periods = [{PERIOD_FIELD: r.fiscal_ym + ("E" if r.is_estimate else "")} for r in cols]
+    pl: list[dict[str, str]] = []
+    for name in PL_ROWS:
+        line: dict[str, str] = {}
+        for j, (col, r) in enumerate(zip(COLUMNS, cols, strict=False)):
+            if name.endswith("_growth_pct"):
+                metric = name.removesuffix("_growth_pct")
+                prev = getattr(cols[j - 1], metric) if j else None
+                line[col] = _growth(getattr(r, metric), prev)
+            else:
+                line[col] = _amount(getattr(r, name))
+        pl.append(line)
+    ind: list[dict[str, str]] = []
+    for name in IND_ROWS:
+        line = {}
+        for col, r in zip(COLUMNS, cols, strict=False):
+            if name == "ebitda":
+                line[col] = _amount(r.ebitda)
+            elif name == "eps":
+                line[col] = _plain(r.eps)
+            else:
+                line[col] = ""  # 비율 칸은 싣지 않는다(계산에 쓰지 않는 칸 — extra)
+        ind.append(line)
+    return {**OK_MSG, OUT_HEAD: head, OUT_PL: pl, OUT_IND: ind, OUT_PERIODS: periods}
+
+
+def opinion_body(rows: Sequence[OpinionRow]) -> dict[str, Any]:
+    """`OpinionRow` → 종목투자의견 TR 출력(최근 날짜 먼저). 행이 없으면 빈 출력."""
+    f = OPINION_FIELDS
+    out = [
+        {
+            f["date"][0]: o.opinion_date.strftime("%Y%m%d"),
+            f["broker"][0]: o.broker,
+            f["opinion"][0]: o.opinion or "",
+            f["opinion_prev"][0]: o.opinion_prev or "",
+            f["target"][0]: _plain(o.target_price),
+        }
+        for o in sorted(rows, key=lambda o: (o.opinion_date, o.broker), reverse=True)
+    ]
+    return {**OK_MSG, OUT_OPINION: out}
+
+
+def _ymd(text: str) -> date:
+    return date(int(text[:4]), int(text[4:6]), int(text[6:8]))
+
+
+def synthetic_consensus(code: str, day: date) -> list[ConsensusRow]:
+    """세계 밖 종목(시뮬레이션 `SYMBOLS`)의 합성 추정실적 — 고정 시드, 날마다 조금씩 움직인다."""
+    s = _seed("consensus", code)
+    rev0 = _num(s, 1_000, 90_000)  # 억원
+    margin = _num(s >> 9, 3, 18) / 100
+    shares = _num(s >> 17, 5_000_000, 500_000_000)
+    drift = 1 + (day.toordinal() % 60) / 1_000
+    out: list[ConsensusRow] = []
+    for k, year in enumerate(range(day.year - 2, day.year + 3)):
+        est = k >= 2
+        grow = 1.06**k * (drift if est else 1.0)
+        rev = round(rev0 * grow)
+        op = round(rev * margin)
+        ni = round(op * 0.75)
+        out.append(
+            ConsensusRow(
+                code=code,
+                snap_date=day,
+                fiscal_ym=f"{year}12",
+                is_estimate=est,
+                revenue=rev * AMOUNT_UNIT_KRW,
+                op=op * AMOUNT_UNIT_KRW,
+                ni=ni * AMOUNT_UNIT_KRW,
+                ni_owner=None,
+                eps=float(round(ni * AMOUNT_UNIT_KRW / shares)),
+                ebitda=round(op * 1.3) * AMOUNT_UNIT_KRW,
+            )
+        )
+    return out
+
+
+def synthetic_opinions(code: str, start: date, end: date) -> list[OpinionRow]:
+    """세계 밖 종목의 합성 투자의견 — 증권사 셋, 각 [start, end] 안 의견 둘(고정 시드)."""
+    s = _seed("opinion", code)
+    base = _num(s, 5_000, 300_000)
+    out: list[OpinionRow] = []
+    for k, broker in enumerate(SYN_BROKERS):
+        prev: str | None = None
+        for j in (1, 0):
+            d = end - timedelta(days=7 * k + 35 * j)
+            if d < start:
+                continue
+            target = float(round(base * (1.15 + 0.05 * k + 0.02 * j), -2))
+            out.append(OpinionRow(code, broker, d, "매수", prev, target))
+            prev = "매수"
+    return out
+
+
+def consensus_output(
+    tr_id: str, params: dict[str, str], day: str, world: ConsensusWorld | None = None
+) -> dict[str, Any]:
+    """컨센서스 TR 출력. 세계 종목이면 세계의 의미값(없으면 빈 출력), 아니면 고정 시드 합성."""
+    covered = {str(getattr(x, "code", "")) for x in world.stocks} if world is not None else set()
+    on = _ymd(day)
+    if tr_id == TR_ESTIMATE.tr_id:
+        code = params.get("SHT_CD", "")
+        if world is not None and code in covered:
+            rows = [r for r in world.consensus_rows(code) if r.snap_date <= on]
+            last = max((r.snap_date for r in rows), default=None)
+            snap = [r for r in rows if r.snap_date == last]
+            return estimate_body(code, snap, last)
+        return estimate_body(code, synthetic_consensus(code, on), on)
+    if tr_id == TR_OPINION.tr_id:
+        code = params.get("FID_INPUT_ISCD", "")
+        start = _ymd(params.get("FID_INPUT_DATE_1", day))
+        end = min(_ymd(params.get("FID_INPUT_DATE_2", day)), on)
+        if world is not None and code in covered:
+            rows = [o for o in world.opinion_rows(code, upto=end) if o.opinion_date >= start]
+            return opinion_body(rows)
+        return opinion_body(synthetic_opinions(code, start, end))
+    raise ValueError(f"컨센서스 TR 이 아니다: {tr_id}")
+
+
 def synthetic_output(
     tr_id: str, params: dict[str, str], day: str, slot: str = ""
 ) -> dict[str, Any]:
     """TR 별 합성 응답 본문(정상). 같은 (tr_id, 파라미터, 날짜, 슬롯)이면 같은 값."""
+    if tr_id in CONSENSUS_TR_IDS:
+        return consensus_output(tr_id, params, day)
     code = params.get("FID_INPUT_ISCD", "") or params.get("fid_input_iscd", "")
     s = _seed(tr_id, sorted(params.items()), day, slot)
     price = _num(s, 5_000, 300_000)
@@ -355,8 +545,10 @@ class FakeKisServer:
         app_key: str = APP_KEY,
         app_secret: str = APP_SECRET,
         token_life: timedelta = TOKEN_LIFE,
+        consensus: ConsensusWorld | None = None,
     ) -> None:
         self._now = now
+        self.consensus = consensus  # P4 컨센서스 TR 의 의미값 세계(없으면 고정 시드 합성만)
         self.app_key = app_key
         self.app_secret = app_secret
         self.token_life = token_life
@@ -524,6 +716,8 @@ class FakeKisServer:
         # 장중 TR 은 10분 슬롯마다 값이 바뀐다
         slot = f"{local:%H}{local.minute - local.minute % 10:02d}"
         params = {k: v for k, v in req.url.params.items()}
+        if tr_id in CONSENSUS_TR_IDS:
+            return reply(200, consensus_output(tr_id, params, day, self.consensus))
         return reply(200, synthetic_output(tr_id, params, day, slot))
 
     # ── 조회(시험) ───────────────────────────────────────────────────────────────────
@@ -601,17 +795,25 @@ def fake_credentials() -> KisCredentials:
 __all__ = [
     "APP_KEY",
     "APP_SECRET",
+    "CONSENSUS_TR_IDS",
     "MASTER_PATH",
     "RANK_ROWS",
     "SECTORS_PER_MARKET",
     "SYMBOLS",
+    "SYN_BROKERS",
     "TRS",
+    "ConsensusWorld",
     "FakeKisServer",
     "Issued",
     "KisCall",
+    "consensus_output",
+    "estimate_body",
     "fake_credentials",
     "make_client",
     "market_symbols",
     "master_zip",
+    "opinion_body",
+    "synthetic_consensus",
+    "synthetic_opinions",
     "synthetic_output",
 ]

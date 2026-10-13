@@ -694,7 +694,8 @@ def test_state_enter_and_run_once_backfill() -> None:
 
 
 def test_real_registry_one_day_runs_only_enabled_jobs() -> None:
-    """켜진 작업만 처리기를 부른다(P2 셋 + P3 아홉 — docs/p3_design.md §0.4, 묶음 S 가 켰다).
+    """켜진 작업만 처리기를 부른다(P2 셋 + P3 아홉 + P4 아홉 — docs/p3_design.md §0.4·p4 §0.4,
+    묶음 S 가 켰다).
 
     나머지는 '계획됨'(skipped·planned)으로만 남고 external 은 기록조차 없다. 켜진 작업의 데이터 키만
     선점 장부에 done 으로 남는다."""
@@ -711,8 +712,14 @@ def test_real_registry_one_day_runs_only_enabled_jobs() -> None:
     handlers = {j.owner: ok for j in reg.enabled_jobs()}
     rig = Rig([], handlers, kst(2026, 10, 6, 0, 0), registry=reg)
     rig.run_until(kst(2026, 10, 7, 0, 0), every=timedelta(minutes=1))
-    # market.backfill 은 수동(발화 없음). 나머지 켜진 작업은 10-06(화, 거래일)에 모두 돈다
-    assert set(ran) == enabled - {"market.backfill"}
+    # market.backfill·fin.backfill 은 수동(발화 없음), filings.company_profile 은 토요일 04:00.
+    # 나머지 켜진 작업은 10-06(화, 거래일)에 모두 돈다
+    assert set(ran) == enabled - {"market.backfill", "fin.backfill", "filings.company_profile"}
+    # P4 분 단위 작업(as_of: minute — 실행 as_of 하나에 한 번): 발화마다 한 번씩
+    assert ran.count("filings.dart_feed") == 13 * 60  # 07:00~19:59 매분
+    assert ran.count("earnings.alerts") == 14 * 12  # 07:00~20:55 5분마다
+    assert ran.count("fin.quarterly") == 15 * 2  # 07:00~21:30 30분마다
+    assert ran.count("filings.derive") == 15 * 2  # 07:10~21:40 — 10·40분
     assert ran.count("ops.watchdog") == 26  # 08:00~20:30 30분마다
     # equity {start: open, end: close, every_min: 10} — 09:00~15:30 양 끝 포함 40 슬롯
     assert ran.count("flows.intraday") == ran.count("market.intraday") == 40

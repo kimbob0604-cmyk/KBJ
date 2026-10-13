@@ -1,0 +1,205 @@
+{
+  "source": "DART",
+  "as_of": "2026-11-13T00:00:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "별도(OFS) — 연결재무제표 미작성"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "applicable": true,
+    "na_reason": null,
+    "code": "994040",
+    "corp_code": "99400040",
+    "basis": "q",
+    "fs_div": "OFS",
+    "currency": "KRW",
+    "tier": "full",
+    "rows": [
+      {
+        "period": "2025Q1",
+        "label": "2025 1Q",
+        "fiscal_year": 2025,
+        "fiscal_q": 1,
+        "period_start": "2025-01-01",
+        "period_end": "2025-03-31",
+        "rcept_dt": "2025-05-09",
+        "revenue": 0,
+        "op": -60000000,
+        "ni": 18000000,
+        "ni_owner": 18000000,
+        "opm": null,
+        "npm": null,
+        "rev_yoy": null,
+        "op_yoy": null,
+        "derived": false,
+        "quality": "ok",
+        "notes": [
+          "금융업 — 매출총이익·EBITDA 해당 없음(financial_sector)"
+        ]
+      },
+      {
+        "period": "2025Q2",
+        "label": "2025 2Q",
+        "fiscal_year": 2025,
+        "fiscal_q": 2,
+        "period_start": "2025-04-01",
+        "period_end": "2025-06-30",
+        "rcept_dt": "2025-08-11",
+        "revenue": 0,
+        "op": -61000000,
+        "ni": 19000000,
+        "ni_owner": 19000000,
+        "opm": null,
+        "npm": null,
+        "rev_yoy": null,
+        "op_yoy": null,
+        "derived": false,
+        "quality": "ok",
+        "notes": [
+          "금융업 — 매출총이익·EBITDA 해당 없음(financial_sector)"
+        ]
+      },
+      {
+        "period": "2025Q3",
+        "label": "2025 3Q",
+        "fiscal_year": 2025,
+        "fiscal_q": 3,
+        "period_start": "2025-07-01",
+        "period_end": "2025-09-30",
+        "rcept_dt": "2025-11-14",
+        "revenue": 0,
+        "op": -55000000,
+        "ni": 25000000,
+        "ni_owner": 25000000,
+        "opm": null,
+        "npm": null,
+        "rev_yoy": null,
+        "op_yoy": null,
+        "derived": false,
+        "quality": "ok",
+        "notes": [
+          "금융업 — 매출총이익·EBITDA 해당 없음(financial_sector)"
+        ]
+      },
+      {
+        "period": "2025Q4",
+        "label": "2025 4Q",
+        "fiscal_year": 2025,
+        "fiscal_q": 4,
+        "period_start": "2025-10-01",
+        "period_end": "2025-12-31",
+        "rcept_dt": "2026-03-31",
+        "revenue": 0,
+        "op": -55000000,
+        "ni": 23000000,
+        "ni_owner": 23000000,
+        "opm": null,
+        "npm": null,
+        "rev_yoy": null,
+        "op_yoy": null,
+        "derived": false,
+        "quality": "ok",
+        "notes": [
+          "금융업 — 매출총이익·EBITDA 해당 없음(financial_sector)"
+        ]
+      },
+      {
+        "period": "2026Q1",
+        "label": "2026 1Q",
+        "fiscal_year": 2026,
+        "fiscal_q": 1,
+        "period_start": "2026-01-01",
+        "period_end": "2026-03-31",
+        "rcept_dt": "2026-05-13",
+        "revenue": 0,
+        "op": -63000000,
+        "ni": 18000000,
+        "ni_owner": 18000000,
+        "opm": null,
+        "npm": null,
+        "rev_yoy": null,
+        "op_yoy": -5.0,
+        "derived": false,
+        "quality": "ok",
+        "notes": [
+          "금융업 — 매출총이익·EBITDA 해당 없음(financial_sector)"
+        ]
+      },
+      {
+        "period": "2026Q2",
+        "label": "2026 2Q",
+        "fiscal_year": 2026,
+        "fiscal_q": 2,
+        "period_start": "2026-04-01",
+        "period_end": "2026-06-30",
+        "rcept_dt": "2026-08-13",
+        "revenue": 0,
+        "op": -61000000,
+        "ni": 19000000,
+        "ni_owner": 19000000,
+        "opm": null,
+        "npm": null,
+        "rev_yoy": null,
+        "op_yoy": 0.0,
+        "derived": false,
+        "quality": "ok",
+        "notes": [
+          "금융업 — 매출총이익·EBITDA 해당 없음(financial_sector)"
+        ]
+      },
+      {
+        "period": "2026Q3",
+        "label": "2026 3Q",
+        "fiscal_year": 2026,
+        "fiscal_q": 3,
+        "period_start": "2026-07-01",
+        "period_end": "2026-09-30",
+        "rcept_dt": "2026-11-13",
+        "revenue": 0,
+        "op": -57000000,
+        "ni": 22000000,
+        "ni_owner": 22000000,
+        "opm": null,
+        "npm": null,
+        "rev_yoy": null,
+        "op_yoy": -3.6363636363636362,
+        "derived": false,
+        "quality": "ok",
+        "notes": [
+          "금융업 — 매출총이익·EBITDA 해당 없음(financial_sector)"
+        ]
+      }
+    ],
+    "ratios": {
+      "period": "2026Q3",
+      "fs_div": "OFS",
+      "ttm_revenue": 0,
+      "ttm_op": -236000000,
+      "ttm_ni_owner": 82000000,
+      "opm": null,
+      "npm": null,
+      "roe": 0.8116401068989408,
+      "roa": 0.7952671903792067,
+      "debt_ratio": 2.089905362776025,
+      "net_debt_ratio": -16.423501577287066,
+      "rev_yoy": null,
+      "op_yoy": -3.6363636363636362,
+      "eps_ttm": 17.0,
+      "bps": 2028.8,
+      "shares_basis": 5000000,
+      "na_reasons": {
+        "opm": "no_revenue",
+        "npm": "no_revenue",
+        "rev_yoy": "missing_input"
+      },
+      "quality": "ok",
+      "notes": []
+    },
+    "checks": {
+      "diff3m_max_pct": 0.0,
+      "n_derived": 0,
+      "n_estimated": 0
+    }
+  }
+}

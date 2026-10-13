@@ -1,0 +1,47 @@
+{
+  "source": "DART",
+  "as_of": "2026-11-16T21:30:00+09:00",
+  "quality": "estimated",
+  "notes": [
+    "분류 = 전년동기 대비(YoY — 공개 규칙)",
+    "분기 컨센서스 대비 서프라이즈는 출처 없음(KIS 교체로 잃음 — D-P4-10)",
+    "법정 제출기한은 추정(분기·반기 45일, 사업 90일 [확인 필요])"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "code": "994080",
+    "corp_code": "99400080",
+    "prelims": [],
+    "schedule": [
+      {
+        "corp_code": "99400080",
+        "stock_code": "994080",
+        "corp_name": "모의테크",
+        "period_end": "2026-09-30",
+        "kind": "statutory",
+        "planned_date": "2026-11-14",
+        "fiscal_year": 2026,
+        "fiscal_q": 3,
+        "rcept_no": null,
+        "note": "법정 제출기한(분기말 + 45일) — 추정 · 기한 지남 — 정기보고서 미제출 [추정]",
+        "is_watch": true,
+        "quality": "estimated"
+      },
+      {
+        "corp_code": "99400080",
+        "stock_code": "994080",
+        "corp_name": "모의테크",
+        "period_end": "2026-12-31",
+        "kind": "statutory",
+        "planned_date": "2027-03-31",
+        "fiscal_year": 2026,
+        "fiscal_q": 4,
+        "rcept_no": null,
+        "note": "법정 제출기한(결산일 + 90일) — 추정",
+        "is_watch": true,
+        "quality": "estimated"
+      }
+    ],
+    "surprises": []
+  }
+}

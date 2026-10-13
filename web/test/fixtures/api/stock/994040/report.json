@@ -1,0 +1,272 @@
+{
+  "source": "DART",
+  "as_of": "2026-11-16T21:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "엑셀과 같은 입력·같은 셈(dart-report — 금액 억원)",
+    "경고 1건 — warnings"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "code": "994040",
+    "corp_code": "99400040",
+    "built_on": "2026-11-16",
+    "fs_div_used": "OFS",
+    "year_from": 2023,
+    "year_to": 2026,
+    "unit": "억원",
+    "blocks": {
+      "quarterly": {
+        "unit": "억원",
+        "rows": [
+          {
+            "label": "1Q25",
+            "year": 2025,
+            "quarter": "1Q",
+            "fs_div": "OFS",
+            "derived": false,
+            "revenue": 0.0,
+            "operating_income": -0.6,
+            "net_income": 0.2,
+            "opm": null,
+            "npm": null
+          },
+          {
+            "label": "2Q25",
+            "year": 2025,
+            "quarter": "2Q",
+            "fs_div": "OFS",
+            "derived": false,
+            "revenue": 0.0,
+            "operating_income": -0.6,
+            "net_income": 0.2,
+            "opm": null,
+            "npm": null
+          },
+          {
+            "label": "3Q25",
+            "year": 2025,
+            "quarter": "3Q",
+            "fs_div": "OFS",
+            "derived": false,
+            "revenue": 0.0,
+            "operating_income": -0.6,
+            "net_income": 0.2,
+            "opm": null,
+            "npm": null
+          },
+          {
+            "label": "4Q25",
+            "year": 2025,
+            "quarter": "4Q",
+            "fs_div": "OFS",
+            "derived": false,
+            "revenue": 0.0,
+            "operating_income": -0.6,
+            "net_income": 0.2,
+            "opm": null,
+            "npm": null
+          },
+          {
+            "label": "1Q26",
+            "year": 2026,
+            "quarter": "1Q",
+            "fs_div": "OFS",
+            "derived": false,
+            "revenue": 0.0,
+            "operating_income": -0.6,
+            "net_income": 0.2,
+            "opm": null,
+            "npm": null
+          },
+          {
+            "label": "2Q26",
+            "year": 2026,
+            "quarter": "2Q",
+            "fs_div": "OFS",
+            "derived": false,
+            "revenue": 0.0,
+            "operating_income": -0.6,
+            "net_income": 0.2,
+            "opm": null,
+            "npm": null
+          },
+          {
+            "label": "3Q26",
+            "year": 2026,
+            "quarter": "3Q",
+            "fs_div": "OFS",
+            "derived": false,
+            "revenue": 0.0,
+            "operating_income": -0.6,
+            "net_income": 0.2,
+            "opm": null,
+            "npm": null
+          }
+        ]
+      },
+      "annual_costs": {
+        "unit": "억원",
+        "columns": [
+          "2025",
+          "9M26"
+        ],
+        "revenue": [
+          0.0,
+          0.0
+        ],
+        "buckets": {
+          "원가": [
+            null,
+            null
+          ],
+          "인건비": [
+            null,
+            null
+          ],
+          "감가상각비": [
+            null,
+            null
+          ],
+          "지급수수료": [
+            null,
+            null
+          ],
+          "외주용역비": [
+            null,
+            null
+          ],
+          "유지보수비": [
+            null,
+            null
+          ],
+          "기타": [
+            null,
+            null
+          ]
+        },
+        "total": [
+          0.0,
+          0.0
+        ],
+        "operating_income": [
+          0.0,
+          0.0
+        ],
+        "opm": [
+          null,
+          null
+        ],
+        "has_costs": false
+      },
+      "bridge": {
+        "unit": "억원",
+        "label": "2025년",
+        "steps": [
+          {
+            "name": "영업이익",
+            "kind": "total",
+            "value": -2.3,
+            "base": 0.0,
+            "up": 0.0,
+            "down": 0.0,
+            "total": -2.3,
+            "note": ""
+          },
+          {
+            "name": "영업외손익",
+            "kind": "delta",
+            "value": 3.4,
+            "base": -2.3,
+            "up": 3.4,
+            "down": 0.0,
+            "total": 0.0,
+            "note": "주석 분해 미적용"
+          },
+          {
+            "name": "법인세차감전순이익",
+            "kind": "total",
+            "value": 1.1,
+            "base": 0.0,
+            "up": 0.0,
+            "down": 0.0,
+            "total": 1.1,
+            "note": ""
+          },
+          {
+            "name": "법인세비용",
+            "kind": "delta",
+            "value": -0.2,
+            "base": 0.9,
+            "up": 0.0,
+            "down": 0.2,
+            "total": 0.0,
+            "note": ""
+          },
+          {
+            "name": "당기순이익",
+            "kind": "total",
+            "value": 0.8,
+            "base": 0.0,
+            "up": 0.0,
+            "down": 0.0,
+            "total": 0.8,
+            "note": ""
+          }
+        ],
+        "residual": 3.4,
+        "complete": true
+      },
+      "orders": {
+        "unit": "억원",
+        "total_eok": 0,
+        "nipa_eok": 0,
+        "nipa_ratio": null,
+        "rows": []
+      },
+      "quarterly_costs": {
+        "unit": "억원",
+        "columns": [],
+        "revenue": [],
+        "buckets": {
+          "원가": [],
+          "인건비": [],
+          "감가상각비": [],
+          "지급수수료": [],
+          "외주용역비": [],
+          "유지보수비": [],
+          "기타": []
+        },
+        "behavior": {
+          "원가": "변동비",
+          "인건비": "고정비",
+          "감가상각비": "고정비",
+          "지급수수료": "변동비",
+          "외주용역비": "변동비",
+          "유지보수비": "고정비",
+          "기타": "고정비"
+        },
+        "total": [],
+        "operating_income": [],
+        "opm": [],
+        "contribution_margin": [],
+        "share": {
+          "원가": [],
+          "인건비": [],
+          "감가상각비": [],
+          "지급수수료": [],
+          "외주용역비": [],
+          "유지보수비": [],
+          "기타": []
+        }
+      }
+    },
+    "warnings": [
+      "비용 성격별 주석 표를 찾지 못했습니다. config/mapping.yaml 의 note_titles 를 회사 보고서 문구에 맞게 보강하세요."
+    ],
+    "unmapped": [],
+    "xlsx_available": true,
+    "engine_version": "dart_excel/1",
+    "generated_at": "2026-11-16T21:30:00+09:00"
+  }
+}

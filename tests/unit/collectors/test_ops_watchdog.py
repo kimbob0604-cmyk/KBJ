@@ -52,6 +52,17 @@ def seeded_runs() -> MemoryRunLog:
         ("board.confirm", "2026-10-02"),
     ):
         runs.record(RunRecord(f"{job}:{as_of}:1", job, as_of, 1, "ok"))
+    # P4(묶음 S 가 켰다 — docs/p4_design.md §0.4): 10:30 기준 마지막으로 끝났어야 할 실행. 분 단위
+    # 작업(as_of: minute)은 마지막 발화 하나만 본다(워치독 규칙 그대로)
+    for job, as_of in (
+        ("earnings.backfill", "2026-10-06"),  # 06:30 거래일
+        ("fin.valuation_band", "2026-10-02"),  # 08:50 — 전 거래일
+        ("filings.dart_feed", "2026-10-06T10:20"),
+        ("earnings.alerts", "2026-10-06T10:20"),
+        ("fin.quarterly", "2026-10-06T10:00"),
+        ("filings.derive", "2026-10-06T10:10"),
+    ):
+        runs.record(RunRecord(f"{job}:{as_of}:1", job, as_of, 1, "ok"))
     runs.record(
         RunRecord("ops.watchdog:2026-10-06T10:00:1", "ops.watchdog", "2026-10-06T10:00", 1, "ok")
     )
@@ -119,6 +130,15 @@ def test_holiday_has_no_missed_trading_day_runs() -> None:
     # public.export(P3)는 when: always — 휴장일에도 05:30 에 돈다(그 기록은 있어야 한다)
     for job in ("ops.nightly", "filings.corp_code", "public.export"):
         runs.record(RunRecord(f"{job}:2026-10-05:1", job, "2026-10-05", 1, "ok"))
+    # P4 공시·재무 작업도 when: always — DART 는 거래소 휴장일에도 접수한다 [확인 필요 #28]
+    for job, hhmm in (
+        ("filings.dart_feed", "11:50"),
+        ("earnings.alerts", "11:50"),
+        ("fin.quarterly", "11:30"),
+        ("filings.derive", "11:40"),
+    ):
+        as_of = f"2026-10-05T{hhmm}"
+        runs.record(RunRecord(f"{job}:{as_of}:1", job, as_of, 1, "ok"))
     notes = Notes()
     problems = wd.find_problems(REG, runs, [], healthy, KR, US, hol)
     assert problems == [] and notes.sent == []

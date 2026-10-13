@@ -1,5 +1,6 @@
 // 자물쇠(공개 빌드에서 로그인 등급 위젯 자리) — 사유 문구는 미리보기 .lockmsg 와 같은 뜻(§6.6).
 // 자물쇠 패널에는 데이터를 그리지 않는다(흐리게 감추는 게 아니라 아예 요청·렌더를 하지 않는다).
+// P4(docs/p4_design.md §1.2·§6.2): consensus 문구를 '제3자 유료'로, valuation(배수·밴드·시나리오 적정가) 추가.
 import { h } from './dom';
 
 export const LOCK_REASONS = {
@@ -12,7 +13,8 @@ export const LOCK_REASONS = {
   etf: 'KRX ETF 시세·투자자별',
   etf_issuers: '운용사 구성종목 — 약관마다 달라 로그인',
   options: 'KIS 옵션 체인 기반',
-  consensus: '컨센서스 — 유료·재배포 금지',
+  consensus: '컨센서스 — 제3자 유료·재배포 금지',
+  valuation: '시세 기반 — 배수·밴드·시나리오 적정가는 KRX 계열 시세로 계산',
   personal: '개인 기능 — 로그인',
 } as const;
 

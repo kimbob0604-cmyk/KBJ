@@ -1,8 +1,8 @@
 // 데이터 소스 계층 — 봉투 검사, 공개 manifest 보충, API 오류 처리(본문 미표시)
 import { describe, expect, it, vi } from 'vitest';
-import { API_PATH, createApiSource } from '../src/data/api';
-import { asEnvelope, AuthRequiredError, DataError, queryString } from '../src/data/source';
-import { createStaticSource, parseManifest } from '../src/data/static';
+import { API_DOWNLOAD, API_PATH, createApiSource } from '../src/data/api';
+import { asEnvelope, AuthRequiredError, DataError, hrefOf, LockedError, queryString, reportXlsxKey } from '../src/data/source';
+import { createStaticSource, isPublicKey, parseManifest, PUBLIC_DOWNLOAD, PUBLIC_SUBDIR } from '../src/data/static';
 import calendar from './fixtures/public/calendar.json';
 import events from './fixtures/public/events.json';
 import manifest from './fixtures/public/manifest.json';
@@ -143,5 +143,99 @@ describe('로그인 API 소스', () => {
     await expect(createApiSource({ fetch }).get('etf/flows')).rejects.toThrow('원천·시각·품질 표시 없음');
     const bad = fakeFetch(() => new Response('<html>', { status: 200 }));
     await expect(createApiSource({ fetch: bad.fetch }).get('etf/flows')).rejects.toThrow('JSON 형식 오류');
+  });
+});
+
+describe('P4 공개 하위 폴더(fin/<코드>·reports/<코드>) — p4_design §1.2·§7', () => {
+  const finEnv = envelope({ code: 'Q00001', quarters: [] }, { source: 'DART', as_of: '2026-10-07T05:30:00+09:00' });
+
+  it('허용 키는 하위 폴더 두 개 + 코드 형식만', () => {
+    for (const ok of ['calendar', 'fin/Q00001', 'fin/005930', 'reports/005930']) expect(isPublicKey(ok), ok).toBe(true);
+    for (const bad of [
+      'fin/q00001',
+      'fin/00593',
+      'fin/0059300',
+      'fin/Q00001/x',
+      'reports/005930.xlsx',
+      'stock/005930/header',
+      'filings/feed',
+      'flows/stock/005930',
+      'fin/../manifest',
+      'FIN/005930',
+    ]) {
+      expect(isPublicKey(bad), bad).toBe(false);
+    }
+    expect(PUBLIC_SUBDIR.test('fin/Q00001')).toBe(true);
+  });
+
+  it('하위 폴더 파일은 ./data/<폴더>/<코드>.json 을 읽고, 봉투 그대로', async () => {
+    const { fetch, calls } = fakeFetch(() => json(finEnv));
+    const src = createStaticSource({ fetch });
+    const env = await src.get<{ code: string }>('fin/Q00001');
+    expect(env.source).toBe('DART');
+    expect(env.data.code).toBe('Q00001');
+    expect(calls.map((c) => c.url)).toEqual(['./data/fin/Q00001.json']);
+    expect(calls[0]?.init?.credentials).toBe('omit');
+    await src.get('reports/005930');
+    expect(calls[1]?.url).toBe('./data/reports/005930.json');
+  });
+
+  it('하위 폴더 파일이 봉투가 아니면 manifest 로 보충하지 않고 오류(manifest 도 읽지 않는다)', async () => {
+    const { fetch, calls } = fakeFetch((url) => (url.endsWith('manifest.json') ? json(manifest) : json({ quarters: [] })));
+    await expect(createStaticSource({ fetch }).get('fin/Q00001')).rejects.toThrow('원천·시각·품질 표시 없음');
+    expect(calls.map((c) => c.url)).toEqual(['./data/fin/Q00001.json']);
+  });
+
+  it('없는 종목 파일은 404 "아직 없음"(공개판 — "공시 재무 없음" 은 페이지가 정한다)', async () => {
+    const { fetch } = fakeFetch(() => json({}, 404));
+    const err = (await createStaticSource({ fetch })
+      .get('fin/Q99999')
+      .catch((e: unknown) => e)) as DataError;
+    expect(err).toBeInstanceOf(DataError);
+    expect(err.status).toBe(404);
+    expect(err.message).toBe('아직 없음');
+  });
+
+  it('그 밖의 슬래시 키는 요청 없이 LockedError(로그인 API 경로를 모른다)', async () => {
+    const { fetch, calls } = fakeFetch(() => json(finEnv));
+    const src = createStaticSource({ fetch });
+    for (const key of ['stock/005930/header', 'stock/005930/consensus', 'watchlist/main', 'fin/q00001', 'reports/005930.xlsx']) {
+      await expect(src.get(key), key).rejects.toBeInstanceOf(LockedError);
+    }
+    expect(calls).toHaveLength(0);
+  });
+});
+
+describe('P4 내려받기 주소(href) — 리포트 엑셀', () => {
+  it('키: 로그인 = API 경로(stock/<코드>/report.xlsx), 공개 = reports/<코드>.xlsx', () => {
+    expect(reportXlsxKey('login', '005930')).toBe('stock/005930/report.xlsx');
+    expect(reportXlsxKey('public', '005930')).toBe('reports/005930.xlsx');
+  });
+
+  it('공개: reports/<코드>.xlsx 만 주소를 만든다(요청하지 않음), 그 밖은 null', () => {
+    const { fetch, calls } = fakeFetch(() => json({}, 500));
+    const src = createStaticSource({ fetch });
+    expect(hrefOf(src, 'reports/005930.xlsx')).toBe('./data/reports/005930.xlsx');
+    expect(createStaticSource({ fetch, base: '/kbj/data/' }).href?.('reports/Q00001.xlsx')).toBe('/kbj/data/reports/Q00001.xlsx');
+    for (const bad of ['stock/005930/report.xlsx', 'reports/005930', 'reports/q00001.xlsx', 'fin/005930.json', '../x.xlsx']) {
+      expect(hrefOf(src, bad), bad).toBeNull();
+    }
+    expect(PUBLIC_DOWNLOAD.test('reports/005930.xlsx')).toBe(true);
+    expect(calls).toHaveLength(0);
+  });
+
+  it('로그인: 같은 출처 API 주소(쿠키 세션으로 브라우저가 받는다), 형식이 틀리면 null', () => {
+    const { fetch, calls } = fakeFetch(() => json({}, 500));
+    const src = createApiSource({ fetch });
+    expect(hrefOf(src, reportXlsxKey('login', '005930'))).toBe('/api/stock/005930/report.xlsx');
+    for (const bad of ['stock/005930/report', '../auth/logout.xlsx', 'stock/005930/report.csv', '/api/x.xlsx', 'a//b.xlsx']) {
+      expect(hrefOf(src, bad), bad).toBeNull();
+    }
+    expect(API_DOWNLOAD.test('stock/Q00001/report.xlsx')).toBe(true);
+    expect(calls).toHaveLength(0);
+  });
+
+  it('href 가 없는 소스(시험 가짜)는 null', () => {
+    expect(hrefOf({}, 'reports/005930.xlsx')).toBeNull();
   });
 });

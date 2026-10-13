@@ -1,10 +1,37 @@
 // 빌드 검사 스크립트 — 공개 번들 금지 문자열·크기 예산, 공개 데이터 합치기 규칙(§6.6·§7.3·§7.4)
 import { describe, expect, it } from 'vitest';
 import { BUDGET_GZIP, checkBudget, LOGIN_FORBIDDEN, PUBLIC_FORBIDDEN, scanText } from '../scripts/check-bundle.mjs';
-import { loginSourcePaths, planMerge } from '../scripts/merge-public-data.mjs';
+import {
+  DART_ONLY,
+  dirDigest,
+  loginSourcePaths,
+  manifestDirs,
+  nonDartSourcePaths,
+  planMerge,
+  sha256,
+  SUBDIR_JSON_RE,
+  SUBDIR_XLSX_RE,
+  watchTracePaths,
+} from '../scripts/merge-public-data.mjs';
+import { PUBLIC_DOWNLOAD, PUBLIC_SUBDIR } from '../src/data/static';
 import manifest from './fixtures/public/manifest.json';
 import calendar from './fixtures/public/calendar.json';
 import events from './fixtures/public/events.json';
+// P4 픽스처는 파이썬 내보내기가 만든 그대로(바이트가 요약 해시에 들어가 ?raw 로 읽는다 —
+// `uv run python -m tests.unit.public_export.pub_rows` 로 다시 만든다)
+import manifestP4 from './fixtures/public/manifest_p4.json?raw';
+import corpIndex from './fixtures/public/corp_index.json?raw';
+import filingsFeed from './fixtures/public/filings_feed.json?raw';
+import earningsPrelim from './fixtures/public/earnings_prelim.json?raw';
+import overhangRecent from './fixtures/public/overhang_recent.json?raw';
+import insiderRecent from './fixtures/public/insider_recent.json?raw';
+import earningsSchedule from './fixtures/public/earnings_schedule.json?raw';
+import fin1 from './fixtures/public/fin/Q00001.json?raw';
+import fin2 from './fixtures/public/fin/Q00002.json?raw';
+import fin3 from './fixtures/public/fin/Q00003.json?raw';
+import fin5 from './fixtures/public/fin/Q00005.json?raw';
+import report1 from './fixtures/public/reports/Q00001.json?raw';
+import report1Xlsx from './fixtures/public/reports/Q00001.xlsx?raw';
 
 describe('check-bundle: 공개 번들', () => {
   const bad = [
@@ -112,5 +139,124 @@ describe('merge-public-data', () => {
   it('manifest 객체 모양·이름에 .json 없어도', () => {
     const m = { files: { calendar: { source: 'S', as_of: '2026-10-07T05:30:00+09:00', quality: 'ok' } } };
     expect(planMerge(m, files).copy).toEqual(['calendar.json', 'manifest.json']);
+  });
+});
+
+describe('merge-public-data: P4 하위 폴더(fin·reports)·DART 전용 파일', () => {
+  const p4: Record<string, string> = {
+    'manifest.json': manifestP4,
+    'calendar.json': JSON.stringify(calendar),
+    'events.json': JSON.stringify(events),
+    'corp_index.json': corpIndex,
+    'filings_feed.json': filingsFeed,
+    'earnings_prelim.json': earningsPrelim,
+    'overhang_recent.json': overhangRecent,
+    'insider_recent.json': insiderRecent,
+    'earnings_schedule.json': earningsSchedule,
+    'fin/Q00001.json': fin1,
+    'fin/Q00002.json': fin2,
+    'fin/Q00003.json': fin3,
+    'fin/Q00005.json': fin5,
+    'reports/Q00001.json': report1,
+    'reports/Q00001.xlsx': report1Xlsx,
+  };
+  const man = JSON.parse(manifestP4) as { files: { name: string }[]; dirs: { name: string; count: number }[] };
+  const plan = (files: Record<string, string | Uint8Array>, m: unknown = man) => planMerge(m, files);
+
+  it('파이썬이 만든 산출물을 그대로 받아들인다(하위 폴더는 폴더 한 항목 — 개수·크기·요약 해시)', () => {
+    const r = plan(p4);
+    expect(r.errors).toEqual([]);
+    expect(r.ignored).toEqual([]);
+    expect(r.copy).toEqual([
+      ...man.files.map((e) => e.name),
+      'fin/Q00001.json',
+      'fin/Q00002.json',
+      'fin/Q00003.json',
+      'fin/Q00005.json',
+      'reports/Q00001.json',
+      'reports/Q00001.xlsx',
+      'manifest.json',
+    ]);
+    expect(manifestDirs(man).map((d) => [d.name, d.count])).toEqual([
+      ['fin', 4],
+      ['reports', 2],
+    ]);
+  });
+
+  it('하위 폴더 파일을 바꾸거나 더하면 아무것도 복사하지 않는다', () => {
+    const tampered = plan({ ...p4, 'fin/Q00001.json': fin1.replace('합성전자', '합성전자X') });
+    expect(tampered.copy).toEqual([]);
+    expect(tampered.errors.join()).toContain('fin/: manifest 요약 해시와 다름');
+    expect(plan({ ...p4, 'fin/Q99999.json': fin3 }).errors.join()).toContain('fin/: manifest 개수와 다름');
+    expect(plan({ ...p4, 'fin/q00001.json': fin1 }).errors.join()).toContain('fin/q00001.json: 허용하지 않는 이름');
+  });
+
+  it('하위 폴더·DART 전용 파일의 원천은 DART 하나 — 다른 원천·관심종목 흔적·prv_ 는 실패', () => {
+    const env = JSON.parse(fin3) as Record<string, unknown>;
+    const other = JSON.stringify({ ...env, data: { rows: [{ source: '한국은행' }] } });
+    const watch = JSON.stringify({ ...env, data: { is_watch: true } });
+    const cases: [string, string][] = [
+      [other, 'source 가 DART 가 아님($.data.rows[0].source)'],
+      [watch, '관심종목 흔적 키($.data.is_watch)'],
+      [fin3.replace('합성홀딩스', 'prv_journal'), "로그인 등급 스키마 이름('prv_' 규칙)"],
+    ];
+    for (const [text, msg] of cases) {
+      const r = plan({ ...p4, 'fin/Q00003.json': text });
+      expect(r.copy, msg).toEqual([]);
+      expect(r.errors.join(), msg).toContain(msg);
+    }
+    const feed = JSON.parse(filingsFeed) as Record<string, unknown>;
+    const r = plan({ ...p4, 'filings_feed.json': JSON.stringify({ ...feed, source: 'KOSIS' }) });
+    expect(r.errors.join()).toContain('filings_feed.json: source 가 DART 가 아님($.source)');
+    expect(nonDartSourcePaths({ a: [{ source: 'DART' }, { source: 'X' }] })).toEqual(['$.a[1].source']);
+    expect(watchTracePaths({ rows: [{ watchlist: [] }] })).toEqual(['$.rows[0].watchlist']);
+    const names = ['corp_index', 'earnings_prelim', 'earnings_schedule', 'filings_feed', 'insider_recent', 'overhang_recent'];
+    expect([...DART_ONLY].sort()).toEqual(names.map((n) => `${n}.json`));
+  });
+
+  it('엑셀은 짝 JSON 의 xlsx_sha256 과 같아야 한다', () => {
+    const r = plan({ ...p4, 'reports/Q00001.xlsx': new Uint8Array([1, 2, 3]) });
+    expect(r.copy).toEqual([]);
+    expect(r.errors.join()).toContain('reports/Q00001.xlsx: 짝 JSON 의 xlsx_sha256 과 다름');
+    const noXlsx = { ...p4 };
+    delete noXlsx['reports/Q00001.xlsx'];
+    expect(plan(noXlsx).errors.join()).toContain('짝 JSON 은 엑셀이 있다는데 파일이 없음');
+  });
+
+  it('manifest 에 폴더 항목이 없으면 하위 폴더 파일은 건너뛴다(P3 manifest)', () => {
+    const files = {
+      'manifest.json': JSON.stringify(manifest),
+      'calendar.json': JSON.stringify(calendar),
+      'events.json': JSON.stringify(events),
+      'fin/Q00001.json': fin1,
+    };
+    const r = plan(files, manifest);
+    expect(r.errors).toEqual([]);
+    expect(r.ignored).toEqual(['fin/Q00001.json']);
+    expect(r.copy).toEqual(['calendar.json', 'events.json', 'manifest.json']);
+  });
+
+  it('모르는·겹친 폴더 항목은 실패', () => {
+    expect(plan(p4, { ...man, dirs: [...man.dirs, { name: 'secret', count: 0 }] }).errors.join()).toContain(
+      'secret/: 허용하지 않는',
+    );
+    expect(plan(p4, { ...man, dirs: [...man.dirs, man.dirs[0]] }).errors.join()).toContain('fin/: 허용하지 않는(또는 겹친)');
+  });
+
+  it('요약 해시 정의(경로 순 `경로<탭>해시<줄바꿈>` 의 sha256)', () => {
+    const a: [string, string][] = [
+      ['fin/A00002.json', '2'.repeat(64)],
+      ['fin/A00001.json', '1'.repeat(64)],
+    ];
+    expect(dirDigest(a)).toBe(sha256(`fin/A00001.json\t${'1'.repeat(64)}\nfin/A00002.json\t${'2'.repeat(64)}\n`));
+  });
+
+  it('하위 폴더 이름 규칙이 프런트(static.ts)와 같다', () => {
+    for (const key of ['fin/Q00001', 'reports/005930', 'fin/q00001', 'fin/Q0001', 'other/Q00001', 'fin/../x']) {
+      expect(SUBDIR_JSON_RE.test(`${key}.json`), key).toBe(PUBLIC_SUBDIR.test(key));
+    }
+    for (const key of ['reports/Q00001.xlsx', 'fin/Q00001.xlsx', 'reports/q00001.xlsx']) {
+      expect(SUBDIR_XLSX_RE.test(key), key).toBe(PUBLIC_DOWNLOAD.test(key));
+    }
   });
 });

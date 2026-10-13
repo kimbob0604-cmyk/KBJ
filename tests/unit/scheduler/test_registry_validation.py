@@ -2,8 +2,10 @@
 
 1 형식(모르는 키·이름) · 2 cron·tz·when·as_of · 3 의존 존재·비순환 · 4 같은 데이터셋은 한 곳만 ·
 5 카탈로그·등급↔스키마 · 6 enabled ⇒ 처리기 import, external ⇒ 꺼짐 · 7 U2 · 8 inventory (c) 전부 ·
-9 예산 · 10 단계별 켜진 작업 목록(P2 셋 + P3 아홉 — docs/p3_design.md §0.4) · 11 장 마감 뒤 발송은
-16:00 과 무른 의존 wait_min(ADR 0018).
+9 예산 · 10 단계별 켜진 작업 목록(P2 셋 + P3 아홉 + P4 아홉 — docs/p3_design.md §0.4·p4 §0.4) ·
+11 장 마감 뒤 발송은 16:00 과 무른 의존 wait_min(ADR 0018) · 12 P4 작업 행(docs/p4_design.md
+§0.4·D-P4-25 — 웨이브 1 묶음 M 이 확정, 웨이브 3 묶음 S 가 `ENABLED_BY_PHASE["P4"]` 아홉을 켰다 —
+consensus.snapshot 은 꺼짐).
 """
 
 from __future__ import annotations
@@ -50,8 +52,21 @@ P3_ENABLED = {
     "etf.collect",
     "public.export",
 }
-# 단계별 켜진 작업(웨이브 3 묶음 S 가 P3 를 켰다). 새 단계가 작업을 켜면 이 표에 한 줄 더한다.
-ENABLED_BY_PHASE = {"P2": P2_ENABLED, "P3": P3_ENABLED}
+# P4(docs/p4_design.md §0.4 — 웨이브 3 묶음 S). consensus.snapshot 은 실데이터 확인(probe #29)
+# 전까지 꺼 둔다(D-P4-10) — 그래서 P4 작업 10개 중 9개
+P4_ENABLED = {
+    "filings.dart_feed",
+    "filings.company_profile",
+    "fin.quarterly",
+    "fin.backfill",
+    "filings.derive",
+    "earnings.alerts",
+    "earnings.backfill",
+    "fin.valuation_band",
+    "reports.dart_excel",
+}
+# 단계별 켜진 작업(웨이브 3 묶음 S 가 P3·P4 를 켰다). 새 단계가 작업을 켜면 이 표에 한 줄 더한다.
+ENABLED_BY_PHASE = {"P2": P2_ENABLED, "P3": P3_ENABLED, "P4": P4_ENABLED}
 
 
 def raw() -> dict[str, Any]:
@@ -515,3 +530,170 @@ def test_p3_handlers_import_and_a_missing_one_is_caught() -> None:
         lambda d: job(d, "market.intraday").update(owner="kbj.services.collectors.nope:x")
     )
     assert any("market.intraday" in e and "처리기를 부를 수 없다" in e for e in errs)
+
+
+# ── P4 작업 행(docs/p4_design.md §0.4·§3.2·D-P4-25 — 웨이브 1 묶음 M: 확정하되 꺼 둔다) ──────
+
+P4_JOBS = {
+    "filings.dart_feed": "kbj.services.collectors.dart_feed:run",
+    "filings.company_profile": "kbj.services.collectors.dart_company:run",
+    "fin.quarterly": "kbj.services.collectors.fin:quarterly",
+    "fin.backfill": "kbj.services.collectors.fin:backfill",
+    "filings.derive": "kbj.services.engine.filings:derive",
+    "earnings.alerts": "kbj.services.engine.earnings:alerts",
+    "earnings.backfill": "kbj.services.engine.earnings:backfill",
+    "consensus.snapshot": "kbj.services.collectors.consensus:run",
+    "fin.valuation_band": "kbj.services.engine.valuation:band",
+    "reports.dart_excel": "kbj.reports.dart_excel.job:run",
+}
+DART_EVENT_FEED = {
+    "document", "cvbdIsDecsn", "bdwtIsDecsn", "exbdIsDecsn", "piicDecsn", "fricDecsn",
+    "tsstkAqDecsn", "tsstkDpDecsn", "elestock", "majorstock",
+}  # fmt: skip
+
+
+def test_p4_jobs_are_registered_with_design_owners() -> None:
+    p4 = {j.name: j for j in REG.jobs if j.phase == "P4"}
+    assert set(p4) == set(P4_JOBS)
+    for name, owner in P4_JOBS.items():
+        assert p4[name].owner == owner, name
+    # 처리기는 웨이브 2 — 웨이브 3(S)이 ENABLED_BY_PHASE["P4"] 와 함께 켰다. consensus.snapshot 은
+    # 실데이터 확인(#29) 전까지 꺼 둔다(D-P4-10)
+    assert {n for n, j in p4.items() if j.enabled} == set(P4_JOBS) - {"consensus.snapshot"}
+    assert ENABLED_BY_PHASE["P4"] == set(P4_JOBS) - {"consensus.snapshot"}
+    assert not REG.by_name("consensus.snapshot").enabled
+
+
+def test_p4_jobs_follow_the_runner_semantics() -> None:  # D-P4-25
+    run_as_of = {name: REG.by_name(name).run_as_of() for name in P4_JOBS}
+    # ① 하루 여러 번 도는 작업은 as_of: minute 을 명시한다(실행 as_of 하나에 한 번)
+    for name in ("filings.dart_feed", "fin.quarterly", "earnings.alerts", "filings.derive"):
+        assert REG.by_name(name).as_of == "minute" == run_as_of[name], name
+    # ③ collects 가 전부 event 인 작업은 as_of 를 명시해야 발화한다
+    assert run_as_of["reports.dart_excel"] == "run_date"
+    # ④ 굳은 의존은 as_of 종류가 같다 — fin.valuation_band 는 krx.daily 와 같이 전 거래일
+    band = REG.by_name("fin.valuation_band")
+    assert (
+        run_as_of["fin.valuation_band"]
+        == "prev_trading_day"
+        == REG.by_name("krx.daily").run_as_of()
+    )
+    assert [(d.job, d.hard) for d in band.depends_on] == [
+        ("krx.daily", True), ("fin.quarterly", False),
+    ]  # fmt: skip
+    assert band.schedule.cron == "50 8 * * 1-5" and band.schedule.when == "trading_day"
+    # ⑤ cron 하나 — filings.derive 는 10·40분(21:10·21:40 이 밤 마무리)
+    assert REG.by_name("filings.derive").schedule.cron == "10,40 7-21 * * *"
+    assert REG.by_name("fin.quarterly").schedule.cron == "*/30 7-21 * * *"
+    assert REG.by_name("earnings.alerts").schedule.cron == "*/5 7-20 * * 1-5"
+    assert REG.by_name("reports.dart_excel").schedule.cron == "0 21 * * *"
+    assert REG.by_name("fin.quarterly").schedule.triggered_by == ()  # 실행기 구현 없음(D-P4-4)
+    # DART 는 거래소 휴장일에도 접수한다 — 평일 cron + when: always [확인 필요 #28]
+    for name in ("filings.dart_feed", "fin.quarterly", "earnings.alerts", "filings.derive"):
+        assert REG.by_name(name).schedule.when == "always", name
+    assert REG.by_name("earnings.backfill").schedule.when == "trading_day"  # 거래일 성과
+    fb = REG.by_name("fin.backfill")
+    assert fb.schedule.manual and fb.backfill_of == ("fin.quarterly",) and fb.budget == "dart"
+
+
+def test_p4_collects_and_writes_follow_the_design() -> None:
+    coll = {j.name: {(c.dataset_id, c.as_of) for c in j.collects} for j in REG.jobs}
+    feed = coll["filings.dart_feed"]
+    assert ("DART:list", "minute") in feed
+    assert {d for d, a in feed if a == "event"} == {f"DART:{d}" for d in DART_EVENT_FEED}
+    assert coll["fin.quarterly"] == {
+        ("DART:fnlttSinglAcntAll", "event"), ("DART:fnlttMultiAcnt", "event"),
+        ("DART:stockTotqySttus", "event"),
+    }  # fmt: skip
+    assert coll["reports.dart_excel"] == {("DART:report_inputs", "event")}
+    assert coll["filings.company_profile"] == {("DART:company", "run_date")}
+    # consensus.snapshot 의 collects 는 웨이브 1 에 그대로(invest_opinion 줄은 묶음 K — §1.13)
+    assert ("KIS:consensus_estimate", "trade_date") in coll["consensus.snapshot"]
+    for name in ("filings.derive", "earnings.alerts", "earnings.backfill", "fin.valuation_band"):
+        assert coll[name] == set(), name  # DB 만
+    w = {j.name: set(j.writes) for j in REG.jobs}
+    assert w["filings.dart_feed"] == {
+        "pub_filings.disclosure", "pub_filings.earnings_prelim", "pub_filings.overhang_event",
+        "pub_filings.overhang_adjust", "pub_filings.insider_report",
+        "pub_filings.major_holder_report", "pub_filings.buyback_event",
+    }  # fmt: skip
+    assert w["filings.company_profile"] == {"pub_filings.corp_profile"}
+    assert {"pub_fin.statement_raw", "pub_fin.quarterly", "pub_fin.ratio",
+            "pub_filings.share_count"} <= w["fin.quarterly"]  # fmt: skip
+    assert w["filings.derive"] >= {
+        "pub_filings.overhang_state", "pub_filings.overhang_summary",
+        "pub_filings.insider_window", "pub_filings.earnings_schedule",
+    }  # fmt: skip
+    assert w["fin.valuation_band"] == {
+        "prv_fin.valuation_daily", "prv_fin.valuation_band", "prv_fin.scenario",
+        "prv_market.share_class",
+    }  # fmt: skip
+    assert w["consensus.snapshot"] == {
+        "prv_fin.consensus_snapshot", "prv_fin.invest_opinion", "prv_fin.target_consensus",
+        "prv_fin.revision",
+    }  # fmt: skip
+    assert w["earnings.alerts"] == w["earnings.backfill"] == {"prv_fin.earnings_surprise"}
+    assert w["reports.dart_excel"] == {"pub_fin.report", "pub_fin.segment"}  # 부문(D-P4-22)
+    for name in P4_JOBS:  # 켤 때 표가 있어야 한다(등록부 검증이 enabled 작업에만 보는 것을 미리)
+        assert w[name] <= TABLES, (name, w[name] - TABLES)
+    # 공개 작업은 pub_* 에만 쓴다(계약 ⑬ 의 표 쪽 — 로그인 원천을 받지 않는다)
+    public = ("filings.dart_feed", "filings.company_profile", "fin.quarterly", "fin.backfill",
+              "filings.derive", "reports.dart_excel")  # fmt: skip
+    for name in public:
+        assert all(t.startswith("pub_") for t in w[name]), name
+
+
+def test_p4_notify_alert_earnings_only_from_earnings_alerts() -> None:  # D-P4-14·ADR 0018
+    senders = {j.name: j.notify.kind for j in REG.jobs if j.notify is not None and j.phase == "P4"}
+    assert senders == {"earnings.alerts": "alert.earnings", "consensus.snapshot": "alert.revision"}
+    assert REG.by_name("filings.dart_feed").notify is None  # 일반 공시 push 없음
+    assert POLICIES["alert.earnings"] == "subject" and POLICIES["alert.revision"] == "daily"
+    legacy = REG.legacy_mentions()
+    assert "SD:earnings_pipeline_5min" in REG.by_name("earnings.alerts").absorbs
+    assert "SD:mac-crontab:tam_modeler" in REG.by_name("fin.valuation_band").absorbs
+    assert legacy["SD:mac-crontab:tam_modeler"] == 1  # retired 에서 옮겼다(정확히 한 번)
+
+
+def test_p4_event_keys_are_not_preclaimed_by_the_runner() -> None:
+    """D-P4-25 ② — 정시 발화(cron)에서 event 수집은 실행기가 미리 잡지 않는다: fin.quarterly
+    처리기가 받는
+    키는 0개이고 처리기가 자원 claims 로 직접 잡는다(처리기는 웨이브 2 — 여기서는 실행기 쪽만).
+
+    run-once(수동)는 다르다: 준 as_of 를 수집 키에도 써서 event 데이터셋마다 `<데이터셋>@<as_of>`
+    실행 키를
+    하나씩 잡는다 — 처리기는 받은 키(ctx.keys)를 collected 로 돌려줘야 ok 다(fin.backfill 이 이
+    길)."""
+    from datetime import UTC, datetime
+
+    from kbj.core.calendar import TradingCalendar, us_calendar
+    from kbj.services.runtime.health import MemoryHealthSink
+    from kbj.services.scheduler.claims import MemoryClaimStore, MemoryRunLog
+    from kbj.services.scheduler.handlers import JobContext, JobResult
+    from kbj.services.scheduler.runner import JobRunner, inline_submit
+
+    seen: list[JobContext] = []
+
+    def handler(ctx: JobContext) -> JobResult:
+        seen.append(ctx)
+        return JobResult("ok", collected=ctx.keys)
+
+    claims = MemoryClaimStore()
+    only = Registry.parse({"version": 1, "jobs": [job(raw(), "fin.quarterly")]})  # 실제 행 그대로
+    runner = JobRunner(
+        only, {"kbj.services.collectors.fin:quarterly": handler}, claims,
+        TradingCalendar.default(), us_calendar(), runs=MemoryRunLog(), catalog=CATALOG,
+        health=MemoryHealthSink(), submit=inline_submit, resources={"claims": claims},
+    )  # fmt: skip
+    now = datetime(2026, 11, 16, 0, 30, tzinfo=UTC)  # 09:30 KST — fin.quarterly 정시 발화
+    events = runner.tick(now)
+    ok = [e for e in events if e.job == "fin.quarterly"]
+    assert [e.kind for e in ok][-1] == "ok"
+    assert len(seen) == 1 and seen[0].keys == () and seen[0].as_of == "2026-11-16T09:30"
+    assert seen[0].resource("claims") is claims
+    assert claims.rows == []  # 실행기는 아무 키도 잡지 않았다
+    manual = runner.run_once("fin.quarterly", now, as_of="2026-11-16T09:31")
+    assert [e.kind for e in manual][-1] == "ok"
+    assert {k.dataset for k in seen[-1].keys} == {
+        "fnlttSinglAcntAll", "fnlttMultiAcnt", "stockTotqySttus",
+    }  # fmt: skip
+    assert {k.as_of for k in seen[-1].keys} == {"2026-11-16T09:31"}

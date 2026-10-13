@@ -7,6 +7,8 @@ JSON 경로만 담긴다.
 from __future__ import annotations
 
 import json
+import shutil
+import subprocess
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -15,14 +17,28 @@ import pytest
 
 from kbj.core.time import KST
 from kbj.services.public_export.manifest import (
+    DART_ONLY_NAMES,
     LOGIN_SOURCES,
     MANIFEST_NAME,
+    NAME_RE,
+    SUBDIR_JSON_RE,
+    SUBDIR_XLSX_RE,
+    SUBDIRS,
+    BlobFile,
     PublicFile,
     check_payload,
     check_tree,
+    dir_digest,
     forbidden_hits,
+    listed_paths,
     login_source_paths,
+    non_dart_source_paths,
+    sha256_bytes,
+    sha256_text,
+    watch_trace_paths,
 )
+
+ROOT = Path(__file__).resolve().parents[3]
 
 NOW = datetime(2026, 10, 7, 5, 30, tzinfo=KST)
 
@@ -170,3 +186,188 @@ def test_check_tree_meta_mismatch_and_no_manifest(tmp_path: Path) -> None:
     (d / MANIFEST_NAME).write_text(json.dumps(m), encoding="utf-8")
     assert any("quality" in p and "다름" in p for p in check_tree(d))
     assert check_tree(tmp_path / "nothing") == ["manifest.json: 없음"]
+
+
+# ── P4 — 하위 폴더·DART 전용 파일(docs/p4_design.md §1.9·§7) ─────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    "name", ["fin/Q00001.json", "fin/005930.json", "reports/A12345.json", "corp_index.json"]
+)
+def test_subdir_names_allowed(name: str) -> None:
+    PublicFile(name=name, source="DART", as_of=NOW, quality="ok", data={})
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "fin/q00001.json",  # 소문자 코드
+        "fin/Q0001.json",
+        "fin/../x.json",
+        "other/Q00001.json",
+        "fin/Q00001/x.json",
+        "reports/Q00001.xlsx",  # 바이너리는 BlobFile
+        "fin/Q00001.JSON",
+    ],
+)
+def test_bad_subdir_names_refused(name: str) -> None:
+    with pytest.raises(ValueError):
+        PublicFile(name=name, source="DART", as_of=NOW, quality="ok", data={})
+
+
+def test_blob_names_and_size() -> None:
+    BlobFile("reports/Q00001.xlsx", b"x")
+    for bad in ("fin/Q00001.xlsx", "reports/q00001.xlsx", "Q00001.xlsx"):
+        with pytest.raises(ValueError):
+            BlobFile(bad, b"x")
+    with pytest.raises(ValueError, match="초과"):
+        BlobFile("reports/Q00001.xlsx", b"x" * (2 * 1024 * 1024 + 1))
+
+
+def test_subdir_render_is_compact() -> None:
+    f = PublicFile(name="fin/Q00001.json", source="DART", as_of=NOW, quality="ok", data={"a": [1]})
+    text = f.render(NOW)
+    assert "\n " not in text and text.endswith("}\n")
+    flat = PublicFile(name="x.json", source="DART", as_of=NOW, quality="ok", data={"a": [1]})
+    assert "\n " in flat.render(NOW)  # P3 파일은 그대로(들여쓰기)
+
+
+@pytest.mark.parametrize("name", [*sorted(DART_ONLY_NAMES), "fin/Q00001.json"])
+def test_dart_only_files_reject_other_sources_watch_and_prv(name: str) -> None:
+    ok = _env(source="DART", data={"rows": [{"source": "DART"}]})
+    assert check_payload(name, json.dumps(ok)) == []
+    other = _env(source="DART", data={"rows": [{"source": "한국은행"}]})
+    assert any(
+        "DART 가 아님($.data.rows[0].source)" in p for p in check_payload(name, json.dumps(other))
+    )
+    top = _env(source="KOSIS")
+    assert any("DART 가 아님($.source)" in p for p in check_payload(name, json.dumps(top)))
+    watch = _env(source="DART", data={"rows": [{"is_watch": False}]})
+    assert any("관심종목 흔적" in p for p in check_payload(name, json.dumps(watch)))
+    prv = _env(source="DART", notes=["prv_journal.watchlist"])
+    assert any("스키마 이름" in p for p in check_payload(name, json.dumps(prv)))
+
+
+def test_p3_files_keep_their_own_sources() -> None:
+    env = _env(source="KBJ 거래 캘린더(코드 계산)", data={"watchers": 1})
+    assert check_payload("calendar.json", json.dumps(env, ensure_ascii=False)) == []
+
+
+def test_watch_and_source_path_helpers() -> None:
+    v = {"a": [{"watchlist": 1, "source": "DART"}, {"x": {"source": "X"}}]}
+    assert watch_trace_paths(v) == ["$.a[0].watchlist"]
+    assert non_dart_source_paths(v) == ["$.a[1].x.source"]
+
+
+def test_dir_digest_order_independent() -> None:
+    a = [("fin/A00001.json", "1" * 64), ("fin/A00002.json", "2" * 64)]
+    assert dir_digest(a) == dir_digest(reversed(a))
+    assert dir_digest(a) != dir_digest(a[:1])
+    lines = "fin/A00001.json\t" + "1" * 64 + "\nfin/A00002.json\t" + "2" * 64 + "\n"
+    assert dir_digest(a) == sha256_text(lines)
+
+
+def _p4_tree(tmp_path: Path) -> Path:
+    from kbj.services.public_export.export import write_files
+
+    files = [
+        PublicFile(name="fin/Q00001.json", source="DART", as_of=NOW, quality="ok", data={"a": 1}),
+        PublicFile(name="fin/Q00002.json", source="DART", as_of=NOW, quality="estimated", data={}),
+        PublicFile(
+            name="reports/Q00001.json",
+            source="DART",
+            as_of=NOW,
+            quality="ok",
+            data={"xlsx_sha256": sha256_bytes(b"xl")},
+        ),
+    ]
+    write_files(files, tmp_path, now=NOW, blobs=[BlobFile("reports/Q00001.xlsx", b"xl")])
+    return tmp_path
+
+
+def test_check_tree_subdirs_clean_and_listed_paths(tmp_path: Path) -> None:
+    d = _p4_tree(tmp_path)
+    assert check_tree(d) == []
+    man = json.loads((d / MANIFEST_NAME).read_text(encoding="utf-8"))
+    assert [(x["name"], x["count"], x["quality"]) for x in man["dirs"]] == [
+        ("fin", 2, "estimated"),
+        ("reports", 2, "ok"),
+    ]
+    assert listed_paths(d) == [
+        "fin/Q00001.json",
+        "fin/Q00002.json",
+        "reports/Q00001.json",
+        "reports/Q00001.xlsx",
+    ]
+
+
+def test_check_tree_subdir_tamper_extra_bad_name(tmp_path: Path) -> None:
+    d = _p4_tree(tmp_path)
+    (d / "fin" / "Q00003.json").write_text("{}", encoding="utf-8")
+    (d / "fin" / "notes.txt").write_text("x", encoding="utf-8")
+    probs = check_tree(d)
+    assert any("fin/: manifest 개수와 다름" in p for p in probs)
+    assert any("fin/: manifest 요약 해시와 다름" in p for p in probs)
+    assert any("fin/notes.txt: 허용하지 않는 이름" in p for p in probs)
+    assert any("fin/Q00003.json: 봉투" in p for p in probs)
+
+
+def test_check_tree_xlsx_pairing(tmp_path: Path) -> None:
+    d = _p4_tree(tmp_path)
+    (d / "reports" / "Q00001.xlsx").write_bytes(b"changed")
+    assert any("xlsx_sha256 과 다름" in p for p in check_tree(d))
+    (d / "reports" / "Q00001.xlsx").unlink()
+    assert any("파일이 없음" in p for p in check_tree(d))
+
+
+def test_check_tree_unlisted_or_unknown_subdir(tmp_path: Path) -> None:
+    d = _tree(tmp_path)  # P3 모양(하위 폴더 없음)
+    (d / "fin").mkdir()
+    (d / "fin" / "Q00001.json").write_text("{}", encoding="utf-8")
+    assert any("manifest 에 없는 하위 폴더" in p for p in check_tree(d))
+    man = json.loads((d / MANIFEST_NAME).read_text(encoding="utf-8"))
+    man["dirs"] = [{"name": "secret", "count": 0}]
+    (d / MANIFEST_NAME).write_text(json.dumps(man), encoding="utf-8")
+    assert any("secret/: 허용하지 않는" in p for p in check_tree(d))
+
+
+def test_p3_manifest_without_dirs_still_reads(tmp_path: Path) -> None:
+    d = _tree(tmp_path)
+    man = json.loads((d / MANIFEST_NAME).read_text(encoding="utf-8"))
+    del man["dirs"]
+    (d / MANIFEST_NAME).write_text(json.dumps(man), encoding="utf-8")
+    assert check_tree(d) == []
+    assert listed_paths(d) == ["calendar.json"]
+
+
+NODE = shutil.which("node")
+
+
+@pytest.mark.skipif(NODE is None, reason="node 가 없다")
+def test_js_merge_rules_match_python() -> None:
+    """merge-public-data.mjs 의 이름 규칙·DART 전용 목록이 이 모듈과 같다(두 검사기가 같은 규칙)."""
+    script = (
+        "import * as m from './web/scripts/merge-public-data.mjs';\n"
+        "console.log(JSON.stringify({sj: m.SUBDIR_JSON_RE.source, sx: m.SUBDIR_XLSX_RE.source,"
+        " subdirs: m.SUBDIRS, dart: [...m.DART_ONLY].sort(), name: m.NAME_RE.source,"
+        " digest: m.dirDigest([['fin/A00002.json', '2'.repeat(64)],"
+        " ['fin/A00001.json', '1'.repeat(64)]])}));\n"
+    )
+    assert NODE is not None
+    p = subprocess.run(  # noqa: S603
+        [NODE, "--input-type=module", "-e", script],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=True,
+    )
+    js = json.loads(p.stdout)
+    assert js["sj"] == "^" + SUBDIR_JSON_RE.pattern.replace("/", "\\/") + "$"
+    assert js["sx"] == "^" + SUBDIR_XLSX_RE.pattern.replace("/", "\\/") + "$"
+    assert js["name"] == "^" + NAME_RE.pattern + "$"
+    assert tuple(js["subdirs"]) == SUBDIRS
+    assert js["dart"] == sorted(DART_ONLY_NAMES)
+    assert js["digest"] == dir_digest(
+        [("fin/A00001.json", "1" * 64), ("fin/A00002.json", "2" * 64)]
+    )

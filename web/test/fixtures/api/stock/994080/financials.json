@@ -1,0 +1,26 @@
+{
+  "source": "DART",
+  "as_of": "2026-11-16T00:00:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "정기보고서 없음 — 재무 미제출(최근 400일 정기보고서 공시 없음)"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "applicable": false,
+    "na_reason": "no_filings",
+    "code": "994080",
+    "corp_code": "99400080",
+    "basis": "q",
+    "fs_div": null,
+    "currency": null,
+    "tier": null,
+    "rows": [],
+    "ratios": null,
+    "checks": {
+      "diff3m_max_pct": null,
+      "n_derived": 0,
+      "n_estimated": 0
+    }
+  }
+}

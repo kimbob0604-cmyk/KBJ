@@ -104,10 +104,11 @@ def _build(settings: Settings, *, inline: bool = False) -> tuple[Any, Any, Any, 
     registry = Registry.load(config_path("jobs.yaml", settings=settings))
     us = us_calendar()
     runs = PgRunLog(connect_fn)
+    claims = PgClaimStore(connect_fn)
     runner = JobRunner(
         registry,
         None,
-        PgClaimStore(connect_fn),
+        claims,
         kr,
         us,
         runs=runs,
@@ -125,6 +126,9 @@ def _build(settings: Settings, *, inline: bool = False) -> tuple[Any, Any, Any, 
             "runs": runs,
             "kr": kr,
             "us": us,
+            # P4(D-P4-25 ②): event 데이터 키(접수번호·회사 단위)는 처리기가 실행기와 같은
+            # 선점 저장소로 직접 claim → complete/fail 한다(실행기는 event 키를 미리 잡지 않는다)
+            "claims": claims,
         },
     )
     svc = SchedulerService(redis, runner, kr, PgSessionLogStore(connect_fn), health=health)

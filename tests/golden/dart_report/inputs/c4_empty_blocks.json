@@ -1,0 +1,113 @@
+{
+ "_note": "세 블록이 비는 경우의 안내 문구(데이터 부족·주석 파싱 결과 없음·계약 공시 없음)",
+ "_source": "SYNTHETIC — make_golden.py",
+ "bridge": {
+  "details": null,
+  "label": "2025년",
+  "target": 3
+ },
+ "costs": {
+  "mode": "none"
+ },
+ "meta": {
+  "corp_code": "99000004",
+  "corp_name": "합성서비스",
+  "fs_div_used": "CFS",
+  "period_label": "2025–2025",
+  "stock_code": "990004"
+ },
+ "orders": null,
+ "periods": [
+  {
+   "balance": {
+    "cash": 8000000000.0,
+    "total_assets": 100000000000.0,
+    "total_equity": 55000000000.00001,
+    "total_liabilities": 45000000000.0
+   },
+   "cumulative": {
+    "cogs": 20400000000.0,
+    "finance_cost": 540000000.0,
+    "finance_income": 360000000.0,
+    "gross_profit": 9600000000.0,
+    "operating_income": 2400000000.0,
+    "other_expense": 180000000.0,
+    "other_income": 120000000.0,
+    "revenue": 30000000000.0,
+    "sgna": 7200000000.0
+   },
+   "fs_div": "CFS",
+   "quarter": "1Q",
+   "year": 2025
+  },
+  {
+   "balance": {
+    "cash": 8000000000.0,
+    "total_assets": 101000000000.0,
+    "total_equity": 55000000000.00001,
+    "total_liabilities": 46000000000.0
+   },
+   "cumulative": {
+    "cogs": 41208000000.0,
+    "finance_cost": 1080000000.0,
+    "finance_income": 720000000.0,
+    "gross_profit": 19392000000.0,
+    "operating_income": 4848000000.0,
+    "other_expense": 360000000.0,
+    "other_income": 240000000.0,
+    "revenue": 60600000000.0,
+    "sgna": 14544000000.0
+   },
+   "fs_div": "CFS",
+   "quarter": "2Q",
+   "year": 2025
+  },
+  {
+   "balance": {
+    "cash": 8000000000.0,
+    "total_assets": 102000000000.0,
+    "total_equity": 55000000000.00001,
+    "total_liabilities": 47000000000.0
+   },
+   "cumulative": {
+    "cogs": 62432000000.0,
+    "finance_cost": 1620000000.0,
+    "finance_income": 1080000000.0,
+    "gross_profit": 29380000000.0,
+    "operating_income": 7345000000.0,
+    "other_expense": 540000000.0,
+    "other_income": 360000000.0,
+    "revenue": 91812000000.0,
+    "sgna": 22035000000.0
+   },
+   "fs_div": "CFS",
+   "quarter": "3Q",
+   "year": 2025
+  },
+  {
+   "balance": {
+    "cash": 8000000000.0,
+    "total_assets": 103000000000.0,
+    "total_equity": 55000000000.00001,
+    "total_liabilities": 48000000000.0
+   },
+   "cumulative": {
+    "cogs": 84080000000.0,
+    "finance_cost": 2160000000.0,
+    "finance_income": 1440000000.0,
+    "gross_profit": 39568000000.0,
+    "operating_income": 9892000000.0,
+    "other_expense": 720000000.0,
+    "other_income": 480000000.0,
+    "revenue": 123648000000.0,
+    "sgna": 29676000000.0
+   },
+   "fs_div": "CFS",
+   "quarter": "4Q",
+   "year": 2025
+  }
+ ],
+ "warnings": [
+  "비용 성격별 주석 표를 찾지 못했습니다. config/mapping.yaml 의 note_titles 를 회사 보고서 문구에 맞게 보강하세요."
+ ]
+}

@@ -1,0 +1,189 @@
+{
+  "source": "DART",
+  "as_of": "2026-11-16T21:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "엑셀과 같은 입력·같은 셈(dart-report — 금액 억원)",
+    "경고 2건 — warnings"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "code": "994020",
+    "corp_code": "99400020",
+    "built_on": "2026-11-16",
+    "fs_div_used": "OFS",
+    "year_from": 2023,
+    "year_to": 2026,
+    "unit": "억원",
+    "blocks": {
+      "quarterly": {
+        "unit": "억원",
+        "rows": [
+          {
+            "label": "3Q26",
+            "year": 2026,
+            "quarter": "3Q",
+            "fs_div": "OFS",
+            "derived": true,
+            "revenue": null,
+            "operating_income": null,
+            "net_income": null,
+            "opm": null,
+            "npm": null
+          }
+        ]
+      },
+      "annual_costs": {
+        "unit": "억원",
+        "columns": [
+          "9M26"
+        ],
+        "revenue": [
+          509.7
+        ],
+        "buckets": {
+          "원가": [
+            null
+          ],
+          "인건비": [
+            null
+          ],
+          "감가상각비": [
+            null
+          ],
+          "지급수수료": [
+            null
+          ],
+          "외주용역비": [
+            null
+          ],
+          "유지보수비": [
+            null
+          ],
+          "기타": [
+            null
+          ]
+        },
+        "total": [
+          0.0
+        ],
+        "operating_income": [
+          509.7
+        ],
+        "opm": [
+          1.0
+        ],
+        "has_costs": false
+      },
+      "bridge": {
+        "unit": "억원",
+        "label": "2026년 3Q 누적",
+        "steps": [
+          {
+            "name": "영업이익",
+            "kind": "total",
+            "value": 31.1,
+            "base": 0.0,
+            "up": 0.0,
+            "down": 0.0,
+            "total": 31.1,
+            "note": ""
+          },
+          {
+            "name": "영업외손익",
+            "kind": "delta",
+            "value": 0.2,
+            "base": 31.1,
+            "up": 0.2,
+            "down": 0.0,
+            "total": 0.0,
+            "note": "주석 분해 미적용"
+          },
+          {
+            "name": "법인세차감전순이익",
+            "kind": "total",
+            "value": 31.2,
+            "base": 0.0,
+            "up": 0.0,
+            "down": 0.0,
+            "total": 31.2,
+            "note": ""
+          },
+          {
+            "name": "법인세비용",
+            "kind": "delta",
+            "value": -6.9,
+            "base": 24.4,
+            "up": 0.0,
+            "down": 6.9,
+            "total": 0.0,
+            "note": ""
+          },
+          {
+            "name": "당기순이익",
+            "kind": "total",
+            "value": 24.4,
+            "base": 0.0,
+            "up": 0.0,
+            "down": 0.0,
+            "total": 24.4,
+            "note": ""
+          }
+        ],
+        "residual": 0.2,
+        "complete": true
+      },
+      "orders": {
+        "unit": "억원",
+        "total_eok": 0,
+        "nipa_eok": 0,
+        "nipa_ratio": null,
+        "rows": []
+      },
+      "quarterly_costs": {
+        "unit": "억원",
+        "columns": [],
+        "revenue": [],
+        "buckets": {
+          "원가": [],
+          "인건비": [],
+          "감가상각비": [],
+          "지급수수료": [],
+          "외주용역비": [],
+          "유지보수비": [],
+          "기타": []
+        },
+        "behavior": {
+          "원가": "변동비",
+          "인건비": "고정비",
+          "감가상각비": "고정비",
+          "지급수수료": "변동비",
+          "외주용역비": "변동비",
+          "유지보수비": "고정비",
+          "기타": "고정비"
+        },
+        "total": [],
+        "operating_income": [],
+        "opm": [],
+        "contribution_margin": [],
+        "share": {
+          "원가": [],
+          "인건비": [],
+          "감가상각비": [],
+          "지급수수료": [],
+          "외주용역비": [],
+          "유지보수비": [],
+          "기타": []
+        }
+      }
+    },
+    "warnings": [
+      "매출액을 산출하지 못한 분기: 3Q26 (직전 분기 보고서 누락)",
+      "비용 성격별 주석 표를 찾지 못했습니다. config/mapping.yaml 의 note_titles 를 회사 보고서 문구에 맞게 보강하세요."
+    ],
+    "unmapped": [],
+    "xlsx_available": true,
+    "engine_version": "dart_excel/1",
+    "generated_at": "2026-11-16T21:30:00+09:00"
+  }
+}

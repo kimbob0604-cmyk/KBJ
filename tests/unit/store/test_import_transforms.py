@@ -335,7 +335,10 @@ def test_target_columns_and_keys_match_the_migrations(target: Target) -> None:
 
 def test_p2_mappings_are_named_once_and_ordered_by_priority() -> None:
     names = [m.name for m in MAPPINGS]
-    assert len(names) == len(set(names)) and for_phase("P2") == MAPPINGS
+    assert len(names) == len(set(names))
+    assert for_phase("P2") == tuple(m for m in MAPPINGS if m.phase == "P2")
+    assert {m.phase for m in MAPPINGS} == {"P2", "P4"}  # P4 는 SD 관심종목 하나(§3.8)
+    assert len(for_phase("P2")) == 17
     assert for_phase("P3") == ()
     by_table: dict[str, list[str]] = {}
     for m in MAPPINGS:
@@ -354,3 +357,37 @@ def test_mapping_targets_never_write_pub_schemas() -> None:
     """이관 원본은 전부 로그인 등급·개인·운영 — 공개 스키마에는 쓰지 않는다(corp_code 는 다시
     받는다)."""
     assert all(not m.target.table.startswith("pub_") for m in MAPPINGS)
+
+
+# ── P4: SD 관심종목(docs/p4_design.md §3.8 — 묶음 M) ──────────────────────────────────────
+
+
+def test_p4_watchlist_mapping_and_later_never_lists() -> None:
+    from kbj.store.legacy_import.mappings import LATER, NEVER
+
+    (m,) = for_phase("P4")
+    assert (m.name, m.source, m.target.table, m.on_conflict) == (
+        "sd.watchlist", "watchlist", "prv_journal.watchlist", "update",
+    )  # fmt: skip
+    assert m.is_json and m.origin == "legacy:sd.watchlist"
+    # P4 의 SD 공시·재무는 다시 받고, 네이버 컨센서스·밴드는 옮기지 않는다 — LATER 에 P4 줄이 없다
+    assert not [x for x in LATER if x[2] == "P4"]
+    never = " ".join(NEVER)
+    assert "consensus_" in never and "valuation_band" in never and "disclosure_history" in never
+
+
+def test_sd_watchlist_rows() -> None:
+    item = {"code": "994010", "name": "합성전자", "market": "kr",
+            "addedAt": "2026-09-01T00:00:00.000Z", "_index": 2}  # fmt: skip
+    out = _one(tf.sd_watchlist(item))
+    assert out == {
+        "list_name": "main", "code": "994010", "name_at_add": "합성전자",
+        "added_at": datetime(2026, 9, 1, 0, 0, tzinfo=UTC), "sort": 2, "note": None,
+        "source": "import:sd",
+    }  # fmt: skip
+    assert _one(tf.sd_watchlist({**item, "market": None, "code": 994010}))["code"] == "994010"
+    assert _one(tf.sd_watchlist({**item, "addedAt": "2026-09-01 09:00"}))["added_at"] is None
+    assert _one(tf.sd_watchlist({**item, "code": "99k010"}))["code"] == "99K010"
+    assert _drops(tf.sd_watchlist({**item, "market": "us", "code": "AAPL"})) == ["not_kr"]
+    assert _drops(tf.sd_watchlist({**item, "code": "KR7005930003"})) == ["bad_code"]
+    assert _drops(tf.sd_watchlist({"_bad": True, "_index": 0})) == ["bad_json"]

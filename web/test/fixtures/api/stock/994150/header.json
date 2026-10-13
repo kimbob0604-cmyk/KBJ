@@ -1,0 +1,44 @@
+{
+  "source": "KRX+DART",
+  "as_of": "2026-11-13T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "code": "994150",
+    "name": "모의소프트",
+    "market": "KOSDAQ",
+    "kind": "common",
+    "common_code": "994150",
+    "corp_code": "99400150",
+    "corp_name": "모의소프트",
+    "status_flags": [],
+    "listed_on": "2018-05-15",
+    "acc_mt": 12,
+    "induty_code": "58221",
+    "last": {
+      "date": "2026-11-13",
+      "close": 8140.0,
+      "chg_pct": 1.75,
+      "volume": 50932,
+      "turnover": 414593481,
+      "mktcap": 130240000000,
+      "last_trade": "2026-11-13",
+      "stale": false,
+      "source": "KRX",
+      "quality": "ok"
+    },
+    "is_watch": false,
+    "detail_tier": false,
+    "newhigh": {
+      "date": "2026-11-13",
+      "basis": "close",
+      "d120": false,
+      "w52": false,
+      "hist": false,
+      "label": null,
+      "source": "KRX",
+      "quality": "ok"
+    }
+  }
+}

@@ -272,7 +272,9 @@ def test_webhook_status_reads_notifier_summary(
 SHIM_TARGETS = (
     ("legacy/stock_dashboard/server.py", "send_telegram"),
     ("legacy/stock_dashboard/server.py", "send_telegram_long"),
-    ("legacy/stock_dashboard/earnings_telegram_sender.py", "send_telegram_message"),
+    # SD earnings_telegram_sender.py(send_telegram_message)는 P4 묶음 S 가 지웠다 — 관심종목
+    # 잠정실적 알림은 kbj earnings.alerts 가 notifier shim(notify kind=alert.earnings)으로
+    # 보낸다(docs/p4_design.md §1.12)
     ("legacy/etf_traker/board/report/telegram.py", "send"),
     ("legacy/etf_traker/board/report/telegram.py", "send_document"),
     ("legacy/etf_traker/etf_tracker_v9/tracker.py", "send_telegram"),

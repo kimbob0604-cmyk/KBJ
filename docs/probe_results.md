@@ -368,7 +368,7 @@
 | 16 | KOSIS·ECOS 오류 (P2 묶음 C) | KOSIS 오류 코드표(err 30 빈 결과·10·11 키·40~42 한도 — 지금 [추정]), ECOS `602` 를 받은 날 닫는 기준 3회(`config/limits.yaml` `ecos.close_after_throttles`) |
 | 17 | DART·관세청 10일 잠정치 (P2 묶음 C) | DART `corpCode` 에서 한 종목코드가 두 회사에 걸리는 재사용이 있는지(지금은 최근 `modify_date` 쪽, 같으면 `corp_map()` 전체 실패 — 나오면 그 코드만 실패하도록), 10일 잠정치 swagger 열 설명 문구 형식(`verify_ten_day_columns` 입력), 관세청 합계 행·`priodTitle` 형식, `endBasDt` 미만 해석 |
 | 18 | KRX 응답 세부 (P2 묶음 D) | 401 본문(Unauthorized API Call 대 키 오류) 구분, `stk_bydd_trd` 의 `SECT_TP_NM` 이 소속부인지 업종인지, 영숫자 단축코드(예: `0009K0` 꼴) 여부, 주식·지수·ETP 공표 시각, 지수 필드 이름(`CLSPRC_IDX` 대 `TDD_CLSPRC`), 일 한도 초과 응답 모양(지금은 부르기 전 `krx:calls` 예산으로만 막는다), NXT 포함 여부 |
-| 19 | KIS 인증·구분 (P2 묶음 A, 설계 R4·R20) | 웹소켓 접속키 수명(12시간 가정 — 11시간마다 갱신), 접근토큰과 접속키가 1분 1회 발급 제한을 함께 쓰는지, 토큰 거절 코드 `EGW00121`·`EGW00123`, 거래소 구분 파라미터(`J`·`NX`·`UN` [추정]), 투자의견·추정실적 TR(`FHKST668300C0`·`FHKST663300C0`) |
+| 19 | KIS 인증·구분 (P2 묶음 A, 설계 R4·R20) | 웹소켓 접속키 수명(12시간 가정 — 11시간마다 갱신), 접근토큰과 접속키가 1분 1회 발급 제한을 함께 쓰는지, 토큰 거절 코드 `EGW00121`·`EGW00123`, 거래소 구분 파라미터(`J`·`NX`·`UN` [추정]), 투자의견·추정실적 TR(`FHKST668300C0`·`FHKST663300C0` — P2 기록. P4 정본 위치·기본값은 #29 의 `CONSENSUS_TRS`) |
 | 20 | 실데이터 검산 ①②③ (P3 — `docs/p3_design.md` §8.7, 메인 결정 R2) | `python -m kbj.services.engine.verify --date <D>` 를 실 DB 원장에 돌려 ①(투자자 4구분 합 0)·②(기관 7구분 합 = 기관)·③(ETF 순자산 변화 = 순유입 + 가격효과) 잔차 분포·**검산 불가 수와 사유**(기타법인 미제공·7구분 없음), ETF 분할 감지 목록, ETF 유형 분류표(7유형 수·`other` 수 — metrics §8.1 낱말 검토). 여기에는 **건수·분포만** 적고 값은 적지 않는다. P3 완료는 합성 원장으로 증명했다 — 이 항목은 키 수령 뒤 |
 | 21 | KRX OpenAPI 일별 (P3 — R7·R10·R11) | 제공 시작일(역사적 신고가 깊이 `history_from` — R8), 주식·ETP 공표 시각(지금 08:00 가정), ETF 필드·순자산(`INVSTASST_NETASST_TOTAMT`) 단위(원·백만원 — 검산 ③ 허용오차), 지수 일별에 코드 칸이 없는지(지금은 공백 뺀 지수 이름을 코드로), 커버리지 하한(코스피 700·코스닥 1,200 [확인 필요]), `MKT_TP_NM` 소속 구분 |
 | 22 | KIS FHKST01010900·FHKST01010100 (P3 — R1·R2·R22) | 금액 단위(백만원 가정), 기타법인·기관 7구분 칸 유무(없으면 ①·② 불가 — R2), ETF 코드로 되는지(`KIS:etf_investor_daily`), 시총 `hts_avls` 억원·`acml_tr_pbmn` 원, 상태 칸(`iscd_stat_cls_code` 51/58·`mang_issu_cls_code`·`temp_stop_yn`·`sltr_yn`), 4구분 TR(`FHPTJ04160001` [추정]), 장 마감 직후(15:35~16:00) FHKST01010900 이 당일 투자자 행을 주는지·그 값이 저녁(18:00 뒤) 값과 같은지(ADR 0018 — 16:00 수급 리포트의 기준일·잠정 표시) |
@@ -377,7 +377,17 @@
 | 25 | 거래소 구분 (P3 — R3, #14·#19 이어서) | KIS `J`·`NX`·`UN` 응답이 통합인지·KRX 만인지, KRX OpenAPI 일별의 NXT 포함 여부. 지금은 `kis.venues: [KRX]`·화면 'NXT 미포함' 꼬리표 |
 | 26 | Q1 비교 (P3 — ADR 0001 Q1·0012) | 5거래일 KIS 마감 대 KRX 확정 — `prv_market.eod_reconcile` 집계(종가 차이 0·거래대금 0.5%·시총 0.5% 허용 [확인 필요]), 불일치율 1% 이상이면 경고(`reconcile_mismatch`) |
 | 27 | ETF 운용사 9곳 (P3 — R11) | 운용사별 실응답(목록·PDF 키 이름·HTML 구조·기준일 폴백)과 이용약관, 전용 어댑터가 없는 운용사의 구성종목 대체(KIS `FHKST121600C0` 후보), 빈 응답 연속 상한 3(`EMPTY_LIMIT` [확인 필요]) |
-| 28 | TradingView 위젯 (P3 — R14, 사용자 확인) | 공개판 페이지 1 지수 자리 `mini-symbol-overview` 의 `KRX:KOSPI`·`KRX:KOSDAQ`·`KRX:KOSPI200` 심볼이 그려지는지, 히트맵 위젯의 KRX 지원·이용약관 범위. 확인 전에는 공개판 업종 히트맵을 자물쇠로 둔다(W2). 공개 빌드는 Pages 활성(사용자 승인) 뒤 실제 브라우저로 확인 |
+| 28 | DART 공시 목록 (P4 — R4·R21, ADR 0013) | `list.json` 기본 정렬(접수 내림차순 가정 — 증분 멈춤의 전제)·`page_count` 상한·하루 건수 분포(평시·3월 말/5·8·11월 중순 시즌), 정정 제목 머리 종류(`config/fin.yaml filings.correction_prefixes`), 거래소 휴장일(12/31·근로자의 날) 접수 여부(그래서 `when: always`), 접수번호 앞 8자리 = 접수일 관행 |
+| 29 | KIS 컨센서스 (P4 — R1·R2, ADR 0015) | 추정실적·투자의견·증권사별 TR id·경로·파라미터·출력 이름·행 순서·금액 단위(억원 가정)·순이익 기준(지배 여부)·추정 표지·의견 문구 매핑. **정본 위치는 `kbj/data/private/kis/datasets.py:CONSENSUS_TRS` 하나**(#19 의 옛 값 `FHKST668300C0`·`FHKST663300C0` 은 P2 기록 — 지금 기본값은 추정실적 `HHKST668300C0`·투자의견 `FHKST663300C0`·증권사별 `FHKST663400C0`, 전부 [확인 필요]). **시장 컨센서스인지 KIS 자체 추정인지**, 분기 추정 유무, 커버리지(시총 상위 300 중 몇 종목). 결과를 본 사용자 확인 뒤 `consensus.snapshot` 을 켠다(등록부 한 줄 + 등록부 시험) |
+| 30 | 잠정실적·재무 반영 (P4 — R5, ADR 0013·0014) | 잠정실적 원문 폼(5열·2열·기간 표기·4분기 '당해실적'이 분기인지 연간인지), 정기보고서 접수 뒤 `fnlttSinglAcntAll` 반영 지연(빈 응답을 다시 받을 규칙이 필요한지), 실데이터 골든 G3 캡처(2~3종목 — DART 는 공개 등급이라 실응답 fixture 커밋 가능, `tests/golden/dart_report/test_real_golden.py`) |
+| 31 | DART 구조화 공시 (P4 — R3) | 주요사항보고서 구조화 엔드포인트 이름·필드(CB·BW·EB·유상·무상증자·자기주식), 날짜·금액 표기, 7년 기간 한 번 조회 허용 여부, 전환청구·전환가 조정·상환 공시의 제목·원문 표 모양, 한 공시에 회차가 여럿인 빈도(`overhang_adjust` 키 결정 — ADR 0013 S 메모) |
+| 32 | 소유보고·대량보유 (P4 — R16) | `elestock`·`majorstock` 필드(증감·사유 칸 유무), 응답 크기(회사 보고 전체가 오는지), `rcept_dt` 형식, 반영 지연 |
+| 33 | 주식총수 (P4) | `stockTotqySttus` 엔드포인트·필드(보통·우선·자기주식), 자기주식 '-' 의 뜻(지금 0) |
+| 34 | 비12월 결산 (P4 — R6) | 3·6·9월 결산 회사의 `bsns_year`·`reprt_code` 뜻(지금 '회계연도 시작 연도'), `company.json` `acc_mt` 형식 |
+| 35 | 재무 태그 (P4 — ADR 0014·0016) | `fnlttSinglAcntAll` 의 지배순이익·감가상각·차입금·비지배지분 태그 분포(상세 층 약 350사), 차입 계정 줄이 없을 때 0 으로 보는 규칙, 금융업 매출 동의어, `rcept_no` 칸 유무(PIT 공시일), 정정 보고서 빈도(정정 PIT 결정 — ADR 0016 §5-4) |
+| 36 | Q4 비교 (P4 — ADR 0001 Q4·0014) | 20종목 12분기: 누적 차분(`to_quarterly`) 대 보고서 3개월값 대 SD 방식 — 결과로 ADR 0001 Q4 확정 |
+| 37 | 실 관심종목 수용 (P4 완료 기준의 실데이터 판 — ADR 0016 §2-6) | 관심종목 파일을 VM 에 올리고(`python -m kbj.services.watchlist import --from sd-json <파일>` — 레포에 넣지 않음) `python -m kbj.services.engine.verify_stock --watchlist main --json` 을 돌려 **종목 수·라우트별 결과 분포·실패 칸 수만** 적는다(값·종목코드는 적지 않는다). 실패 칸이 있으면 VM 에서만 `--show-codes`. 알려진 결함 S-R1(유니버스 종류 — ADR 0016 §5-3) 을 고치기 전에는 컨센서스·우선주·스팩 칸이 404·적용 불가로 나온다 |
+| 38 | TradingView 위젯 (P3 — R14, 사용자 확인 — 처음 번호 28. P4 설계가 #28~#37 을 먼저 써서 2026-10-13 묶음 S 가 옮김) | 공개판 페이지 1 지수 자리 `mini-symbol-overview` 의 `KRX:KOSPI`·`KRX:KOSDAQ`·`KRX:KOSPI200` 심볼이 그려지는지, 히트맵 위젯의 KRX 지원·이용약관 범위. 확인 전에는 공개판 업종 히트맵을 자물쇠로 둔다(W2). 공개 빌드는 Pages 활성(사용자 승인) 뒤 실제 브라우저로 확인 |
 
 ---
 

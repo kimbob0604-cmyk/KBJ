@@ -1,0 +1,44 @@
+{
+  "source": "KRX+DART",
+  "as_of": "2026-11-13T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "code": "994015",
+    "name": "모의전자우",
+    "market": "KOSPI",
+    "kind": "pref",
+    "common_code": "994010",
+    "corp_code": "99400010",
+    "corp_name": "모의전자",
+    "status_flags": [],
+    "listed_on": "1995-03-02",
+    "acc_mt": 12,
+    "induty_code": "26429",
+    "last": {
+      "date": "2026-11-13",
+      "close": 62400.0,
+      "chg_pct": 0.48,
+      "volume": 111399,
+      "turnover": 6951341637,
+      "mktcap": 3744000000000,
+      "last_trade": "2026-11-13",
+      "stale": false,
+      "source": "KRX",
+      "quality": "ok"
+    },
+    "is_watch": true,
+    "detail_tier": true,
+    "newhigh": {
+      "date": "2026-11-13",
+      "basis": "close",
+      "d120": false,
+      "w52": false,
+      "hist": false,
+      "label": null,
+      "source": "KRX",
+      "quality": "ok"
+    }
+  }
+}

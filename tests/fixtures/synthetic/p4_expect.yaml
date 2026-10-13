@@ -1,0 +1,431 @@
+# 합성 20종목 세계(p4_world.py)의 기대 행렬 — 페이지 8 라우트 14개 × 20종목(docs/p4_design.md §8.4)
+#
+# 이 파일은 묶음 M 의 [제안]이었고 웨이브 3(묶음 S)이 완료 시험(tests/acceptance)으로 확정했다. 처리기(F·E·R·K·V)·API(A)의 동작이 정해지며 칸이 바뀌면 S·A 가 M 에게
+# 고칠 칸을 요청한다(설계 §1.13 — p4_world·p4_expect 는 M 담당). 숫자 칸(손계산)은
+# tests/unit/fixtures/test_p4_world.py 가 world.expect_*() 와 같은지 본다.
+#
+# 상태 값
+#   ok            200, 봉투 검증 통과(적용 가능 칸이면 applicable=true)
+#   na:<사유>     200, data.applicable=false, data.na_reason=<NaReason> — 값 칸 null(0 으로 채우지 않음)
+#   no_data       404, code=no_data("아직 없음 — <작업> <예정 시각>")
+#   ok:PER·ok:PBR 시나리오 method(200)
+# valuation 은 칸마다: current(전 거래일 현재 배수)·band(5년 밴드 — 1,240거래일, 유효 250일 미만은
+# short_history). scenario 의 na:<사유> 는 method=INSUFFICIENT. case = §8.4 표 번호(= WorldStock.no —
+# 키 이름 'no' 는 YAML 1.1 에서 false 로 읽혀 쓰지 않는다).
+#
+# 사유 우선순위 [제안 — V·A 와 맞출 것]: currency_mismatch > no_filings > spac > financial_sector >
+#   not_detail_tier > short_history > loss·capital_impairment·no_revenue > missing_input
+#   (#5 스팩은 KSIC 64999 라 금융업이기도 하다 — spac 이 먼저. 반기 보고만 하는 리츠·코넥스는 분기
+#   차분이 derived(None)라 TTM 이 없다 → missing_input.)
+_source: "SYNTHETIC — tests/fixtures/synthetic/p4_world.py(고정 시드 20261007) 기대 행렬. 실측 아님"
+version: 1
+seed: 20261007
+clock: "2026-11-16T21:30:00+09:00"   # 처리기를 이 시각까지 돌린 뒤 라우트를 부른다(가짜 시계)
+valuation_as_of: "2026-11-13"        # fin.valuation_band 의 as_of = 전 거래일(PIT — 공시일 ≤ 11-13)
+
+# 완료 시험의 설정 덮어쓰기(운영 기본값과 다름 — 세계가 20종목뿐이라)
+config_overrides:
+  fin.yaml:
+    consensus:
+      top_n: 0          # 컨센서스 유니버스 = 관심종목(보통주·코넥스 제외). 300 이면 20종목이 다 들어간다
+    backfill:
+      from_year: 2021   # 운영 기본값과 같음 — 5년 밴드(2021-09~)가 PIT TTM 을 갖게
+  reports.yaml:
+    public_demo: []     # 공개 데모 없음 → 상세 층 = 관심종목 19개(#16 은 관심 밖)
+
+routes: [header, chart, financials, report, report_xlsx, segments, consensus, valuation, scenario,
+         overhang, insiders, disclosures, earnings, flows]
+
+# 그날(2026-11-16) 알림 기대(§8.5 와 같은 세계)
+alerts:
+  alert.earnings:
+    count: 1                                   # 관심종목 잠정실적 중 우선순위 ≤ 2 만
+    subject: "99400140:2026Q3:consolidated"    # #15 영업익 YoY +52.5%(YOY_BIG_UP) — 정정 1건도 같은 subject
+    not: ["994150 관심 밖", "99K170 2열 폼(전년동기 없음 — 분류 불가)", "994100 자회사 잠정(범위 subsidiary)",
+          "994010 실적등에대한전망(제외)"]
+  alert.revision:
+    count: 1                                   # 하루 1통 묶음(16:00 — ADR 0018), |pct| ≥ 5 이거나 부호 전환(TURN)인
+                                               # 관심종목 중 그날 스냅이 있는 것(ADR 0015 §4-7·metrics §10 — S 확정)
+    codes: ["994010", "994060", "994070", "994140"]   # 994070 은 부호 전환(TURN — pct 없음)
+
+# 손계산(§4.3·§4.4 정의를 엔진과 따로 — world.expect_overhang()·expect_insider_windows() 와 같아야 한다)
+hand:
+  overhang_994130:            # #14, t = 2026-11-16(조정·행사 적용일 ≤ t 포함)
+    potential_new_shares: 3749493     # CB1 7e9/12,000 + CB2 15e9/7,200 + BW 5.8e9/11,000 + CB3 5e9/9,000(버림)
+    exercisable_shares: 3193938       # CB3 는 청구기간 전(2027-09-01~)
+    denominator: 41250000             # 2026 3Q 주식총수(보통주 발행 — 자기주식 포함)
+    ratio_pct: 9.0897
+    exercisable_ratio_pct: 7.7429
+  insider_994140:             # #15, 창 = 공시일 ∈ [t − days, t](metrics §13 — 닫힌 구간), 정정은 늦은 접수번호만
+    30:  {net_shares: -1650000, buy_shares: 0, sell_shares: 1650000, n_reports: 2, n_reporters: 2, ratio_pct: -3.3}
+    90:  {net_shares: -1930000, buy_shares: 20000, sell_shares: 1950000, n_reports: 4, n_reporters: 3, ratio_pct: -3.86}
+    180: {net_shares: -1925000, buy_shares: 25000, sell_shares: 1950000, n_reports: 5, n_reporters: 4, ratio_pct: -3.85}
+
+# 공개 내보내기(§8.4 ⑥): DART 재무가 있는 회사의 종목(보통주 코드 — 우선주는 보통주 파일을 쓴다 [제안])
+public_fin_codes: ["994010", "994020", "994030", "994040", "994050", "994060", "994070", "994090",
+                   "994100", "994110", "994120", "994130", "994140", "994150", "994160", "99K170",
+                   "994180", "994190"]
+
+stocks:
+  "994010":   # 1 대형 보통주(12월·연결) — 기준
+    case: 1
+    header: ok
+    chart: ok
+    financials: ok
+    report: ok
+    report_xlsx: ok
+    segments: ok
+    consensus: ok
+    valuation:
+      current: {per: ok, pbr: ok, psr: ok, ev_ebitda: ok}
+      band: {per: ok, pbr: ok, psr: ok, ev_ebitda: ok}
+    scenario: ok:PER
+    overhang: ok
+    insiders: ok
+    disclosures: ok
+    earnings: ok
+    flows: ok
+  "994015":   # 2 우선주 — 재무·공시·컨센서스·밴드는 회사(994010) 것, 시세·수급은 자기 코드
+    case: 2
+    header: ok
+    chart: ok
+    financials: ok
+    report: ok
+    report_xlsx: ok
+    segments: ok
+    consensus: ok
+    valuation:
+      current: {per: ok, pbr: ok, psr: ok, ev_ebitda: ok}   # 배수 = 994010 과 같은 값(회사 시총 합)
+      band: {per: ok, pbr: ok, psr: ok, ev_ebitda: ok}
+    scenario: ok:PER
+    overhang: ok
+    insiders: ok
+    disclosures: ok
+    earnings: ok
+    flows: ok
+  "994020":   # 3 신규상장(20거래일) — 정기보고서는 2026 3Q(11-13 접수) 하나, 분기 차분 derived
+    case: 3
+    header: ok
+    chart: ok
+    financials: ok
+    report: ok
+    report_xlsx: ok
+    segments: no_data
+    consensus: ok          # 증권사 2곳 — 목표가 컨센서스 quality estimated
+    valuation:
+      current: {per: na:short_history, pbr: ok, psr: na:short_history, ev_ebitda: na:short_history}
+      band: {per: na:short_history, pbr: na:short_history, psr: na:short_history, ev_ebitda: na:short_history}
+    scenario: na:short_history
+    overhang: ok
+    insiders: ok
+    disclosures: ok
+    earnings: ok
+    flows: ok
+  "994030":   # 4 거래정지(마지막 5거래일) — header stale 배지, 차트 마지막 봉 = 정지 전(11-06)
+    case: 4
+    header: {status: ok, flags: [halted], stale: true}
+    chart: ok
+    financials: ok
+    report: ok
+    report_xlsx: ok
+    segments: no_data
+    consensus: ok
+    valuation:
+      current: {per: ok, pbr: ok, psr: ok, ev_ebitda: ok}
+      band: {per: ok, pbr: ok, psr: ok, ev_ebitda: ok}
+    scenario: ok:PER
+    overhang: ok
+    insiders: ok
+    disclosures: ok
+    earnings: ok
+    flows: ok
+  "994040":   # 5 스팩 — 매출 0
+    case: 5
+    header: ok
+    chart: ok
+    financials: ok
+    report: ok
+    report_xlsx: ok
+    segments: no_data
+    consensus: na:not_in_consensus_universe
+    valuation:
+      current: {per: na:spac, pbr: ok, psr: na:spac, ev_ebitda: na:spac}
+      band: {per: na:spac, pbr: ok, psr: na:spac, ev_ebitda: na:spac}
+    scenario: ok:PBR
+    overhang: ok
+    insiders: ok
+    disclosures: ok
+    earnings: ok
+    flows: ok
+  "994050":   # 6 리츠(반기·연간 보고만) — 재무는 반기 행만, derived
+    case: 6
+    header: ok
+    chart: ok
+    financials: ok
+    report: ok
+    report_xlsx: ok
+    segments: no_data
+    consensus: na:not_in_consensus_universe
+    valuation:
+      current: {per: na:missing_input, pbr: ok, psr: na:missing_input, ev_ebitda: na:missing_input}
+      band: {per: na:missing_input, pbr: ok, psr: na:missing_input, ev_ebitda: na:missing_input}
+    scenario: ok:PBR
+    overhang: ok
+    insiders: ok
+    disclosures: ok
+    earnings: ok
+    flows: ok
+  "994060":   # 7 3월 결산 — 라벨 'FY26 2Q (26.07~26.09)'
+    case: 7
+    header: ok
+    chart: ok
+    financials: ok
+    report: ok
+    report_xlsx: ok
+    segments: no_data
+    consensus: ok
+    valuation:
+      current: {per: ok, pbr: ok, psr: ok, ev_ebitda: ok}
+      band: {per: ok, pbr: ok, psr: ok, ev_ebitda: ok}
+    scenario: ok:PER
+    overhang: ok
+    insiders: ok
+    disclosures: ok
+    earnings: ok
+    flows: ok
+  "994070":   # 8 적자(2025 3Q 부터) — 현재 PER loss. 시나리오는 metrics §15 Base 규칙(FY1 지배 EPS 추정 > 0
+              #   → 그것 × PER 밴드 p50): 11-13 기준 합성 컨센서스 FY1 순이익이 부호 전환을 마쳐 + 이고 PER
+              #   밴드가 ok 라 PER(묶음 S 웨이브 3 — V·A 요청, 처음 [제안]은 'TTM 적자 → PBR')
+    case: 8
+    header: ok
+    chart: ok
+    financials: ok
+    report: ok
+    report_xlsx: ok
+    segments: no_data
+    consensus: ok
+    valuation:
+      current: {per: na:loss, pbr: ok, psr: ok, ev_ebitda: na:loss}
+      band: {per: ok, pbr: ok, psr: ok, ev_ebitda: ok}
+    scenario: ok:PER
+    overhang: ok
+    insiders: ok
+    disclosures: ok
+    earnings: ok
+    flows: ok
+  "994080":   # 9 재무 미제출·관리종목 — 공시는 있다
+    case: 9
+    header: {status: ok, flags: [managed], stale: false}
+    chart: ok
+    financials: na:no_filings
+    report: no_data
+    report_xlsx: no_data
+    segments: no_data
+    consensus: no_data     # 유니버스 안이지만 KIS 가 빈 응답(KisEmpty — 0 을 사실로 쓰지 않음)
+    valuation:
+      current: {per: na:no_filings, pbr: na:no_filings, psr: na:no_filings, ev_ebitda: na:no_filings}
+      band: {per: na:no_filings, pbr: na:no_filings, psr: na:no_filings, ev_ebitda: na:no_filings}
+    scenario: na:no_filings
+    overhang: ok
+    insiders: ok
+    disclosures: ok
+    earnings: ok
+    flows: ok
+  "994090":   # 10 코넥스(반기·연간 보고만) — 컨센 konex_no_consensus
+    case: 10
+    header: ok
+    chart: ok
+    financials: ok
+    report: ok
+    report_xlsx: ok
+    segments: no_data
+    consensus: na:konex_no_consensus
+    valuation:
+      current: {per: na:missing_input, pbr: ok, psr: na:missing_input, ev_ebitda: na:missing_input}
+      band: {per: na:missing_input, pbr: ok, psr: na:missing_input, ev_ebitda: na:missing_input}
+    scenario: ok:PBR
+    overhang: ok
+    insiders: ok
+    disclosures: ok
+    earnings: ok
+    flows: ok
+  "994100":   # 11 은행지주(금융업) — 매출 = 영업수익
+    case: 11
+    header: ok
+    chart: ok
+    financials: ok
+    report: ok
+    report_xlsx: ok
+    segments: no_data
+    consensus: ok
+    valuation:
+      current: {per: ok, pbr: ok, psr: ok, ev_ebitda: na:financial_sector}
+      band: {per: ok, pbr: ok, psr: ok, ev_ebitda: na:financial_sector}
+    scenario: ok:PER
+    overhang: ok
+    insiders: ok
+    disclosures: ok
+    earnings: ok
+    flows: ok
+  "994110":   # 12 연결 미작성 — fs_div=OFS
+    case: 12
+    header: ok
+    chart: ok
+    financials: ok
+    report: ok
+    report_xlsx: ok
+    segments: ok
+    consensus: ok
+    valuation:
+      current: {per: ok, pbr: ok, psr: ok, ev_ebitda: ok}
+      band: {per: ok, pbr: ok, psr: ok, ev_ebitda: ok}
+    scenario: ok:PER
+    overhang: ok
+    insiders: ok
+    disclosures: ok
+    earnings: ok
+    flows: ok
+  "994120":   # 13 자본잠식 — PBR capital_impairment
+    case: 13
+    header: ok
+    chart: ok
+    financials: ok
+    report: ok
+    report_xlsx: ok
+    segments: no_data
+    consensus: no_data
+    valuation:
+      current: {per: na:loss, pbr: na:capital_impairment, psr: ok, ev_ebitda: na:loss}
+      band: {per: ok, pbr: ok, psr: ok, ev_ebitda: ok}
+    scenario: na:capital_impairment
+    overhang: ok
+    insiders: ok
+    disclosures: ok
+    earnings: ok
+    flows: ok
+  "994130":   # 14 CB 3·BW 1 — 오버행 비율 = 손계산(hand.overhang_994130)
+    case: 14
+    header: ok
+    chart: ok
+    financials: ok
+    report: ok
+    report_xlsx: ok
+    segments: no_data
+    consensus: ok
+    valuation:
+      current: {per: ok, pbr: ok, psr: ok, ev_ebitda: ok}
+      band: {per: ok, pbr: ok, psr: ok, ev_ebitda: ok}
+    scenario: ok:PER
+    overhang: ok
+    insiders: ok
+    disclosures: ok
+    earnings: ok
+    flows: ok
+  "994140":   # 15 내부자 대량 매도 + 5% 보고 — 90일 순증감 = 손계산(hand.insider_994140)
+    case: 15
+    header: ok
+    chart: ok
+    financials: ok
+    report: ok
+    report_xlsx: ok
+    segments: no_data
+    consensus: ok
+    valuation:
+      current: {per: ok, pbr: ok, psr: ok, ev_ebitda: ok}
+      band: {per: ok, pbr: ok, psr: ok, ev_ebitda: ok}
+    scenario: ok:PER
+    overhang: ok
+    insiders: ok
+    disclosures: ok
+    earnings: ok
+    flows: ok
+  "994150":   # 16 관심 밖·컨센 없는 소형 코스닥(상세 층 아님) — EV/EBITDA not_detail_tier
+    case: 16
+    header: ok
+    chart: ok
+    financials: ok
+    report: no_data
+    report_xlsx: no_data
+    segments: no_data
+    consensus: na:not_in_consensus_universe
+    valuation:
+      current: {per: ok, pbr: ok, psr: ok, ev_ebitda: na:not_detail_tier}
+      band: {per: ok, pbr: ok, psr: ok, ev_ebitda: na:not_detail_tier}
+    scenario: ok:PER
+    overhang: ok
+    insiders: ok
+    disclosures: ok
+    earnings: ok
+    flows: ok
+  "994160":   # 17 액면분할 직후(5:1, 2026-10-26) — 배수 연속
+    case: 17
+    header: ok
+    chart: ok
+    financials: ok
+    report: ok
+    report_xlsx: ok
+    segments: no_data
+    consensus: ok
+    valuation:
+      current: {per: ok, pbr: ok, psr: ok, ev_ebitda: ok}
+      band: {per: ok, pbr: ok, psr: ok, ev_ebitda: ok}
+    scenario: ok:PER
+    overhang: ok
+    insiders: ok
+    disclosures: ok
+    earnings: ok
+    flows: ok
+  "99K170":   # 18 영숫자 단축코드
+    case: 18
+    header: ok
+    chart: ok
+    financials: ok
+    report: ok
+    report_xlsx: ok
+    segments: no_data
+    consensus: ok
+    valuation:
+      current: {per: ok, pbr: ok, psr: ok, ev_ebitda: ok}
+      band: {per: ok, pbr: ok, psr: ok, ev_ebitda: ok}
+    scenario: ok:PER
+    overhang: ok
+    insiders: ok
+    disclosures: ok
+    earnings: ok
+    flows: ok
+  "994180":   # 19 외국기업(재무 USD) — 환산 안 함, 배수 currency_mismatch, 리포트 안 만듦 [제안 — R]
+    case: 19
+    header: ok
+    chart: ok
+    financials: ok
+    report: no_data
+    report_xlsx: no_data
+    segments: no_data
+    consensus: no_data
+    valuation:
+      current: {per: na:currency_mismatch, pbr: na:currency_mismatch, psr: na:currency_mismatch, ev_ebitda: na:currency_mismatch}
+      band: {per: na:currency_mismatch, pbr: na:currency_mismatch, psr: na:currency_mismatch, ev_ebitda: na:currency_mismatch}
+    scenario: na:currency_mismatch
+    overhang: ok
+    insiders: ok
+    disclosures: ok
+    earnings: ok
+    flows: ok
+  "994190":   # 20 정리매매(상장폐지 결정) — 상태 배지, 나머지 정상(재무는 2026 반기까지)
+    case: 20
+    header: {status: ok, flags: [liquidation], stale: false}
+    chart: ok
+    financials: ok
+    report: ok
+    report_xlsx: ok
+    segments: no_data
+    consensus: no_data
+    valuation:
+      current: {per: ok, pbr: ok, psr: ok, ev_ebitda: ok}
+      band: {per: ok, pbr: ok, psr: ok, ev_ebitda: ok}
+    scenario: ok:PER
+    overhang: ok
+    insiders: ok
+    disclosures: ok
+    earnings: ok
+    flows: ok

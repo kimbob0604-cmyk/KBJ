@@ -23,6 +23,12 @@ KEPT = [
     "fixtures/synthetic/a.json",
     ".env.example",
     "legacy/gexlab/.env.example",
+    # P4 — 합성 관심종목·API 시험 fixture 는 막지 않는다
+    "tests/fixtures/synthetic/p4_world.py",
+    "tests/fixtures/synthetic/p4_expect.yaml",
+    "web/test/fixtures/api/watchlist.json",
+    "web/test/fixtures/api/watchlist/main.json",
+    "kbj/services/watchlist/__main__.py",
 ]
 IGNORED = [
     ".env",
@@ -52,6 +58,13 @@ IGNORED = [
     "x.sqlite",
     "x.parquet",
     "x.xlsx",
+    # P4 — 사용자 관심종목 파일(개인 데이터 — U-P4-5)
+    "cache/server_watchlist.json",
+    "server_watchlist.json",
+    "backup/server_watchlist.json",
+    "legacy/stock_dashboard/cache/server_watchlist.json",
+    "watchlist.json",
+    "my_watchlist.csv",
 ]
 
 

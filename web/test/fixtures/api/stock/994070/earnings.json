@@ -1,0 +1,91 @@
+{
+  "source": "DART",
+  "as_of": "2026-10-28T00:00:00+09:00",
+  "quality": "estimated",
+  "notes": [
+    "분류 = 전년동기 대비(YoY — 공개 규칙)",
+    "분기 컨센서스 대비 서프라이즈는 출처 없음(KIS 교체로 잃음 — D-P4-10)",
+    "법정 제출기한은 추정(분기·반기 45일, 사업 90일 [확인 필요])"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "code": "994070",
+    "corp_code": "99400070",
+    "prelims": [
+      {
+        "rcept_no": "20261028800001",
+        "rcept_dt": "2026-10-28",
+        "corp_code": "99400070",
+        "stock_code": "994070",
+        "corp_name": "모의소재",
+        "scope": "consolidated",
+        "period": "2026Q3",
+        "label": "2026 3Q",
+        "fiscal_year": 2026,
+        "fiscal_q": 3,
+        "is_annual": false,
+        "period_end": "2026-09-30",
+        "period_inferred": true,
+        "currency": "KRW",
+        "revenue_cur": 68212000000,
+        "revenue_prev_q": 65566000000,
+        "revenue_prev_y": 65144000000,
+        "op_cur": -3777000000,
+        "op_prev_q": -4232000000,
+        "op_prev_y": -4205000000,
+        "ni_cur": -4222000000,
+        "ni_prev_q": -4686000000,
+        "ni_prev_y": -4637000000,
+        "ni_owner_cur": -4095000000,
+        "eps_cur": null,
+        "rev_yoy": 4.709566498833354,
+        "op_yoy": 10.178359096313912,
+        "rev_qoq": 4.0356282219443,
+        "op_qoq": 10.751417769376182,
+        "signal": "YOY_UP",
+        "priority": 2,
+        "is_correction": false,
+        "is_watch": true,
+        "alerted": false,
+        "quality": "estimated",
+        "notes": [],
+        "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261028800001"
+      }
+    ],
+    "schedule": [
+      {
+        "corp_code": "99400070",
+        "stock_code": "994070",
+        "corp_name": "모의소재",
+        "period_end": "2026-12-31",
+        "kind": "statutory",
+        "planned_date": "2027-03-31",
+        "fiscal_year": 2026,
+        "fiscal_q": 4,
+        "rcept_no": null,
+        "note": "법정 제출기한(결산일 + 90일) — 추정",
+        "is_watch": true,
+        "quality": "estimated"
+      }
+    ],
+    "surprises": [
+      {
+        "rcept_no": "20261028800001",
+        "period": "2026Q3",
+        "scope": "consolidated",
+        "signal": "YOY_UP",
+        "priority": 2,
+        "rev_yoy": 4.709566498833354,
+        "op_yoy": 10.178359096313912,
+        "rev_surprise": null,
+        "op_surprise": null,
+        "alerted_at": null,
+        "price_at_alert": null,
+        "perf_3d": null,
+        "perf_5d": null,
+        "perf_7d": null,
+        "quality": "estimated"
+      }
+    ]
+  }
+}

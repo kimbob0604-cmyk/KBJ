@@ -19,18 +19,39 @@ import psycopg
 import pytest
 from pydantic import SecretStr
 
+from kbj.config.fin import load_fin, load_reports
 from kbj.config.settings import Settings
 from kbj.core.calendar import TradingCalendar
 from kbj.core.time import KST
 from kbj.services.public_export import export as ex
+from kbj.services.public_export.corp_index import NAME as CORP_INDEX_NAME
+from kbj.services.public_export.filings_json import NAMES as FILINGS_NAMES
 from kbj.services.public_export.manifest import (
+    DART_ONLY_NAMES,
     LOGIN_SOURCES,
     MANIFEST_NAME,
+    BlobFile,
     PublicFile,
     check_tree,
+    dir_digest,
     forbidden_hits,
+    listed_paths,
+    sha256_bytes,
 )
+from kbj.services.public_export.push import push_public_data
 from kbj.services.scheduler.handlers import JobContext
+from tests.unit.public_export.pub_rows import (
+    CODES,
+    ELEC,
+    EVENTS,
+    P4_MANIFEST,
+    REPORT_CODE,
+    WEB_PUBLIC,
+    XLSX,
+    reader,
+    web_fixture_files,
+)
+from tests.unit.public_export.pub_rows import NOW as P4_NOW
 
 NOW = datetime(2026, 10, 7, 5, 30, tzinfo=KST)
 
@@ -310,3 +331,232 @@ def test_run_push_and_dispatch_when_approved(tmp_path: Path, cal: TradingCalenda
     assert (res.detail["push"], res.detail["dispatch"]) == ("pushed", "sent")
     assert len(sent) == 1
     assert "tok-SECRET" not in json.dumps(dict(res.detail))
+
+
+# ── P4 — 공시·재무 파일(합성 공개 표 메모리 읽기 — docs/p4_design.md §1.9·§7) ─────────────────────
+
+
+def _p4(tmp_path: Path, cal: TradingCalendar, **kw: Any) -> ex.Manifest:
+    rcfg = load_reports().model_copy(update={"public_demo": (REPORT_CODE,)})
+    return ex.export_all(
+        None, tmp_path, now=P4_NOW, cal=cal, events=EVENTS, reader=reader(), reports_cfg=rcfg, **kw
+    )
+
+
+def _tree(d: Path) -> dict[str, bytes]:
+    return {
+        p.relative_to(d).as_posix(): p.read_bytes() for p in sorted(d.rglob("*")) if p.is_file()
+    }
+
+
+def test_p4_export_writes_lists_index_and_subdirs(tmp_path: Path, cal: TradingCalendar) -> None:
+    m = _p4(tmp_path, cal)
+    assert m.names == (
+        "calendar.json",
+        "events.json",
+        *FILINGS_NAMES,
+        CORP_INDEX_NAME,
+    )
+    assert [(d.name, d.count) for d in m.dirs] == [("fin", 4), ("reports", 2)]
+    assert m.skipped == ()
+    assert check_tree(tmp_path) == []
+    man = json.loads((tmp_path / MANIFEST_NAME).read_text(encoding="utf-8"))
+    # 하위 폴더 파일은 manifest files 에 하나씩 적지 않는다 — 폴더 한 항목(개수·크기·요약 해시)
+    assert all("/" not in e["name"] for e in man["files"])
+    fin = next(d for d in man["dirs"] if d["name"] == "fin")
+    files = sorted((tmp_path / "fin").iterdir())
+    assert fin["count"] == len(files) == 4
+    assert fin["bytes"] == sum(p.stat().st_size for p in files)
+    assert fin["digest"] == dir_digest(
+        (f"fin/{p.name}", sha256_bytes(p.read_bytes())) for p in files
+    )
+    assert fin["source"] == "DART"
+    for p in files:
+        env = json.loads(p.read_text(encoding="utf-8"))
+        assert env["source"] == "DART" and env["as_of"].endswith("+09:00")  # 파일 자체가 봉투
+        assert "\n " not in p.read_text(encoding="utf-8")  # 공백 없는 JSON
+    assert (tmp_path / "reports" / f"{REPORT_CODE}.xlsx").read_bytes() == XLSX
+
+
+def test_p4_output_has_zero_login_traces(tmp_path: Path, cal: TradingCalendar) -> None:
+    _p4(tmp_path, cal)
+    for rel, body in _tree(tmp_path).items():
+        if rel.endswith(".xlsx"):
+            continue
+        text = body.decode("utf-8")
+        assert forbidden_hits(text) == [], rel
+        assert LOGIN_SOURCES.search(text) is None, rel
+        assert "prv_" not in text and "is_watch" not in text, rel
+
+
+def test_p4_rerun_deterministic_and_stale_subdir_files_removed(
+    tmp_path: Path, cal: TradingCalendar
+) -> None:
+    _p4(tmp_path, cal)
+    first = _tree(tmp_path)
+    (tmp_path / "fin" / "Q99999.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "reports" / "Q99999.xlsx").write_bytes(b"old")
+    _p4(tmp_path, cal)
+    assert _tree(tmp_path) == first
+
+
+def test_interrupted_part_files_in_subdirs_are_cleared(
+    tmp_path: Path, cal: TradingCalendar
+) -> None:
+    """쓰다 끊긴 임시 파일(`.<이름>.part`)이 하위 폴더에 남아도 다음 실행이 지운다 — 남으면
+    check_tree('허용하지 않는 이름')가 푸시를 계속 막는다."""
+    _p4(tmp_path, cal)
+    first = _tree(tmp_path)
+    (tmp_path / "fin" / ".Q00001.json.part").write_text("{", encoding="utf-8")
+    (tmp_path / "reports" / ".Q00001.xlsx.part").write_bytes(b"PK")
+    assert any("허용하지 않는 이름" in p for p in check_tree(tmp_path))
+    _p4(tmp_path, cal)
+    assert _tree(tmp_path) == first
+    assert check_tree(tmp_path) == []
+
+
+def test_no_db_skips_p4_files_with_reason(tmp_path: Path, cal: TradingCalendar) -> None:
+    m = ex.export_all(None, tmp_path, now=NOW, cal=cal)
+    assert m.dirs == () and m.skipped == (ex.NO_DB_SKIP,)
+    assert not (tmp_path / "fin").exists()
+    man = json.loads((tmp_path / MANIFEST_NAME).read_text(encoding="utf-8"))
+    assert man["dirs"] == []
+
+
+def test_stub_connection_reads_nothing_and_says_so(tmp_path: Path, cal: TradingCalendar) -> None:
+    conn = FakeConn()
+    m = ex.export_all(_conn(conn), tmp_path, now=NOW, cal=cal)
+    assert m.skipped == (ex.NOT_PG_SKIP,)
+    assert conn.cur.sql == [ex._CHECK_SQL]  # pyright: ignore[reportPrivateUsage]
+
+
+def test_previous_p4_tree_is_cleared_when_p4_not_built(
+    tmp_path: Path, cal: TradingCalendar
+) -> None:
+    _p4(tmp_path, cal)
+    ex.export_all(None, tmp_path, now=NOW, cal=cal)
+    assert not (tmp_path / "fin").exists() and not (tmp_path / "reports").exists()
+    assert not (tmp_path / "filings_feed.json").exists()
+    assert check_tree(tmp_path) == []
+
+
+def test_fin_size_cap_fails_loudly_and_writes_nothing(tmp_path: Path, cal: TradingCalendar) -> None:
+    ex.export_all(None, tmp_path, now=NOW, cal=cal)
+    before = _tree(tmp_path)
+    tiny = load_fin()
+    tiny = tiny.model_copy(
+        update={"public_export": tiny.public_export.model_copy(update={"fin_max_total_mb": 0.001})}
+    )
+    with pytest.raises(ex.PublicExportError, match="상한") as ei:
+        _p4(tmp_path, cal, fin_cfg=tiny)
+    assert "자르지 않는다" in str(ei.value)
+    assert _tree(tmp_path) == before  # 아무것도 바꾸지 않았다
+
+
+def test_blob_needs_matching_pair_json(tmp_path: Path) -> None:
+    f = PublicFile(
+        name=f"reports/{REPORT_CODE}.json",
+        source="DART",
+        as_of=NOW,
+        quality="ok",
+        data={"xlsx_sha256": "0" * 64},
+    )
+    blob = BlobFile(f"reports/{REPORT_CODE}.xlsx", XLSX)
+    with pytest.raises(ex.PublicExportError, match="xlsx_sha256"):
+        ex.write_files([f], tmp_path, now=NOW, blobs=[blob])
+    with pytest.raises(ex.PublicExportError, match="짝 JSON"):
+        ex.write_files([], tmp_path, now=NOW, blobs=[blob])
+    assert not list(tmp_path.rglob("*"))
+
+
+def test_nan_is_refused_not_written(tmp_path: Path) -> None:
+    bad = PublicFile(
+        name="fin/Q00001.json", source="DART", as_of=NOW, quality="ok", data={"opm": float("nan")}
+    )
+    with pytest.raises(ex.PublicExportError, match="JSON 으로 쓸 수 없는 값"):
+        ex.write_files([bad], tmp_path, now=NOW)
+
+
+def test_non_dart_source_in_p4_file_is_refused(tmp_path: Path) -> None:
+    bad = PublicFile(
+        name="fin/Q00001.json",
+        source="DART",
+        as_of=NOW,
+        quality="ok",
+        data={"rows": [{"source": "공시 요약"}]},
+    )
+    with pytest.raises(ex.PublicExportError, match="DART 가 아님"):
+        ex.write_files([bad], tmp_path, now=NOW)
+
+
+def test_run_with_injected_reader_exports_p4(tmp_path: Path, cal: TradingCalendar) -> None:
+    @contextmanager
+    def connect() -> Iterator[FakeConn]:
+        yield FakeConn()
+
+    ctx = JobContext(
+        job="public.export",
+        as_of="2026-11-16",
+        run_id="r1",
+        attempt=1,
+        now=P4_NOW,
+        settings=_settings(),
+        resources={
+            "public_out_dir": tmp_path / "public",
+            "public_connect": connect,
+            "kr": cal,
+            "public_reader": reader(),
+        },
+    )
+    res = ex.run(ctx)
+    assert res.status == "ok", res.detail
+    assert res.detail["dirs"] == {"fin": 4}  # 공개 데모는 설정(reports.yaml — 비어 있음)
+    assert CORP_INDEX_NAME in res.detail["files"]
+    assert res.rows == len(res.detail["files"]) + 4
+    assert check_tree(tmp_path / "public") == []
+
+
+def test_run_detail_lists_skip_reason(tmp_path: Path, cal: TradingCalendar) -> None:
+    @contextmanager
+    def connect() -> Iterator[FakeConn]:
+        yield FakeConn()
+
+    res = ex.run(_ctx(tmp_path, _settings(), public_connect=connect, kr=cal))
+    assert res.status == "ok"
+    assert res.detail["skipped"] == [ex.NOT_PG_SKIP]
+
+
+@pytest.mark.skipif(shutil.which("git") is None, reason="git 이 없다")
+def test_push_carries_subdir_files(tmp_path: Path, cal: TradingCalendar) -> None:
+    out = tmp_path / "out"
+    _p4(out, cal)
+    remote = tmp_path / "remote.git"
+    subprocess.run(["git", "init", "-q", "--bare", str(remote)], check=True)  # noqa: S603, S607
+    res = push_public_data(out, enabled=True, remote=str(remote), now=P4_NOW)
+    assert res.pushed
+    ls = subprocess.run(  # noqa: S603
+        ["git", "--git-dir", str(remote), "ls-tree", "-r", "--name-only", "public-data"],  # noqa: S607
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.split()
+    assert sorted(ls) == sorted([*listed_paths(out), MANIFEST_NAME])
+    assert f"fin/{CODES[ELEC]}.json" in ls and f"reports/{REPORT_CODE}.xlsx" in ls
+
+
+def test_web_fixtures_are_fresh(tmp_path: Path) -> None:
+    """`web/test/fixtures/public` 의 P4 파일이 지금 코드의 출력과 같다(`python -m
+    tests.unit.public_export.pub_rows` 로 다시 만든다). manifest_p4 의 P3 항목(캘린더 — 거래소 달력
+    판에 따라 바뀐다)은 빼고 본다."""
+    want = web_fixture_files(tmp_path)
+    for rel, body in want.items():
+        path = WEB_PUBLIC / rel
+        assert path.exists(), f"{rel} 없음 — python -m tests.unit.public_export.pub_rows"
+        if rel == P4_MANIFEST:
+            got = json.loads(path.read_text(encoding="utf-8"))
+            new = json.loads(body.decode("utf-8"))
+            for m in (got, new):
+                m["files"] = [e for e in m["files"] if e["name"] in DART_ONLY_NAMES]
+            assert got == new, "manifest_p4.json 이 낡았다"
+        else:
+            assert path.read_bytes() == body, f"{rel} 이 낡았다"

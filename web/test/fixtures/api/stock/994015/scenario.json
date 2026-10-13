@@ -1,0 +1,57 @@
+{
+  "source": "KRX+KIS+DART",
+  "as_of": "2026-11-13T15:30:00+09:00",
+  "quality": "estimated",
+  "notes": [
+    "시나리오 적정가 = EPS × 배수(Bear·Base·Bull) — 시장 규모 추정이 아니다(D-P4-12)",
+    "컨센서스 최고값 출처 없음(KIS 교체) — Bull EPS = Base × 1.2",
+    "우선주 — 회사(보통주 994010) 기준 EPS·배수, 적정가·업사이드는 보통주 종가 기준"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "applicable": true,
+    "na_reason": null,
+    "code": "994015",
+    "as_of": "2026-11-13",
+    "method": "PER",
+    "cases": {
+      "bear": {
+        "case": "bear",
+        "method": "PER",
+        "eps": 4053.7,
+        "eps_source": "CONSENSUS_×0.7",
+        "multiple": 14.659368126898611,
+        "multiple_source": "5Y_P25",
+        "tp": 59424.6805760089,
+        "upside_pct": -19.369497183162963,
+        "na_reason": null,
+        "quality": "estimated"
+      },
+      "base": {
+        "case": "base",
+        "method": "PER",
+        "eps": 5791.0,
+        "eps_source": "CONSENSUS",
+        "multiple": 15.710476949296249,
+        "multiple_source": "5Y_P50",
+        "tp": 90979.37201337458,
+        "upside_pct": 23.445552256953306,
+        "na_reason": null,
+        "quality": "estimated"
+      },
+      "bull": {
+        "case": "bull",
+        "method": "PER",
+        "eps": 6949.2,
+        "eps_source": "BASE_×1.2",
+        "multiple": 16.47224844709093,
+        "multiple_source": "5Y_P75",
+        "tp": 114468.94890852428,
+        "upside_pct": 55.317434068553986,
+        "na_reason": null,
+        "quality": "estimated"
+      }
+    },
+    "price": 73700.0
+  }
+}

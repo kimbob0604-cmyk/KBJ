@@ -1,0 +1,69 @@
+{
+ "builder_cases": [
+  "c1_smoke",
+  "c2_ofs_mixed",
+  "c3_derived_gap",
+  "c4_empty_blocks",
+  "c5_all_mapped",
+  "c6_bridge_residual",
+  "c7_negative",
+  "c8_partial_labels"
+ ],
+ "checksums": {
+  "builder/c1_smoke.json.gz": "069c49d59dc89f519abd3d59301a324935eae08a653389f558f0b1bdec13d7b4",
+  "builder/c2_ofs_mixed.json.gz": "c72cd9d57ada20cf6848af9abb35512d2cbf21776953885cdfc57ecf6064e5b1",
+  "builder/c3_derived_gap.json.gz": "7a3d621ae6662bb7a8c46b0121f34de3b614bf8e80e15bb274ce842454c4be97",
+  "builder/c4_empty_blocks.json.gz": "2612281ef631739c9a58742f07be23e5165674a6ea51c35add0f75cbaf4876bf",
+  "builder/c5_all_mapped.json.gz": "37b909a1956db600ac96656ffff161b05cc13e162a97438da0c6239ca4412d9c",
+  "builder/c6_bridge_residual.json.gz": "400ac7ea32e4afccd056ba8a715d772c1d01143d59a864effcb9462bc7073ddf",
+  "builder/c7_negative.json.gz": "93c8d3244341a668ff1518378b1e9237509a86c1bb18b4e00e157571a6661642",
+  "builder/c8_partial_labels.json.gz": "07ae902748b19aa036116a5ae7c21f9dd8779db5725859d2fc80e966614ed506",
+  "inputs/c1_smoke.json": "a6bda43996b7280f0c62c723993c4b9954c8337d7d522059cf4526a3c2848391",
+  "inputs/c2_ofs_mixed.json": "8069dbd0989ad0e979558b1c54c37d347bb1b010b4ecf0b413d8dca1214fb94a",
+  "inputs/c3_derived_gap.json": "a547144878372d11a55714317103ec597d9044b7f311049965b91be285330146",
+  "inputs/c4_empty_blocks.json": "1d7e70bcb6ccb287ff4d69b8676ea7a0c9b3e4a7986e787865a52dbff8a81e40",
+  "inputs/c5_all_mapped.json": "053a4bacabf8c307f50652ff74f3bfd9678bd11d58e448d7febdb3575332db04",
+  "inputs/c6_bridge_residual.json": "166d8d283881043a8a96b045d19f4fc96610747d2982c2a4f3a5c222f5fc7d3e",
+  "inputs/c7_negative.json": "178fc57e06e2cc16df34d1c16220177effbcb3be56301b82b95bb8d52dcdc583",
+  "inputs/c8_partial_labels.json": "ee082771d3b38c0ce7fe2aeee9cd8b27c5e25966c15e6fbc21cdf0f1222797c9",
+  "pipeline/994010.json.gz": "971699f052450f806251551b4ad089bd4c258a7f06d510974492e64b2a3c8a51",
+  "pipeline/994110.json.gz": "2542a3c0066f35bb8681e6f6efe9439e687dca8f7844c35b97e90b83e02e57a1"
+ },
+ "compare": {
+  "abs_tol": 1e-09,
+  "ignore": [
+   "docProps/*",
+   "요약!'생성 시각' 값"
+  ],
+  "rel_tol": 1e-09
+ },
+ "formula_counts": {
+  "994010": 210,
+  "994110": 210,
+  "c1_smoke": 197,
+  "c2_ofs_mixed": 223,
+  "c3_derived_gap": 100,
+  "c4_empty_blocks": 14,
+  "c5_all_mapped": 113,
+  "c6_bridge_residual": 113,
+  "c7_negative": 113,
+  "c8_partial_labels": 200
+ },
+ "kbj_generated_at": "2026-10-08T21:00:00+09:00",
+ "legacy_commit": "607b761",
+ "legacy_source": "git archive 607b761 legacy/etf_traker/dart-report (shim 전 — D-P4-6 ①)",
+ "mapping_sha256": "59cbbe9d850441c3200ef9f24eb22f8ed0cd21aa39e154ce5b6a4e45b33c8722",
+ "openpyxl": "3.1.5",
+ "pipeline": {
+  "companies": [
+   "994010",
+   "994110"
+  ],
+  "world_clock": "2026-11-16T21:30:00+09:00",
+  "world_seed": 20261007,
+  "years": [
+   2023,
+   2026
+  ]
+ }
+}

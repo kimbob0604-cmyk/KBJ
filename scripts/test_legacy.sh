@@ -13,7 +13,7 @@
 #   board                legacy/etf_traker       unittest discover -s board/tests
 #   kr | flow            legacy/etf_traker       unittest discover -s monitor/<kr|flow>
 #   flowlab              legacy/etf_traker       python -m flowlab selftest
-#   dart-report          legacy/etf_traker/dart-report   tests_smoke.py
+#   dart-report          legacy/etf_traker/dart-report   tests_smoke.py + tests_bridge.py(P4 shim 다리)
 #   etf_tracker_v9       legacy/etf_traker/etf_tracker_v9  모듈 13개 import 스모크
 #   stock_dashboard      legacy/stock_dashboard  pytest 래퍼(검사 스크립트 10개 + 목록 대조 + 합성 재현
 #                                                + KBJ 다리 시험 1 — P2, 13)
@@ -182,6 +182,10 @@ run_part() {
             rm -rf "$ET/flowlab/cache" "$ET/flowlab/out"
             ;;
         dart-report)
+            # P4(묶음 R·S): dartreport/* 는 kbj 정본(kbj.engines.financials·kbj.reports.dart_excel)을 다시
+            # 내보내는 shim 이다. 스모크 출력이 이식 전과 같고(PLAN §8 P4 완료 기준 — 골든은 kbj 쪽
+            # tests/golden/dart_report), 다리 시험 tests_bridge.py 가 legacy 이름 = kbj 객체·매핑 기본 경로·
+            # app.py 삭제를 확인한다(legacy 시험 +1 — 다리, 옮긴 원본 시험 0: dart-report/MIGRATION.md)
             local log="$LOGDIR/dart-report.log" rc
             run_in "$ET/dart-report" "$log" "$PY" tests_smoke.py
             rc=$?
@@ -193,6 +197,15 @@ run_part() {
                 record dart-report "FAIL" "${line:-built 줄 없음} (rc=$rc) — 기준 'quarters= 14 annual= 4 bridge steps= 9'"
             fi
             rm -rf "$ET/dart-report/out"
+            local blog="$LOGDIR/dart-report-bridge.log" brc bline
+            run_in "$ET/dart-report" "$blog" "$PY" tests_bridge.py
+            brc=$?
+            bline="$(grep -E '^bridge ok:' "$blog" | tail -1)"
+            if [[ $brc -eq 0 && "$bline" == "bridge ok: 5 modules" ]]; then
+                record dart-report-bridge "OK" "$bline (rc=$brc)"
+            else
+                record dart-report-bridge "FAIL" "${bline:-bridge 줄 없음} (rc=$brc) — 기준 'bridge ok: 5 modules'"
+            fi
             ;;
         etf_tracker_v9)
             local log="$LOGDIR/etf_tracker_v9.log" rc
@@ -210,6 +223,10 @@ run_part() {
         stock_dashboard)
             # 루트 pyproject 의 pytest 설정(pythonpath ., scripts)이 잡히지 않게 -c /dev/null 로 설정을 끊는다
             # P1 12 → P2 13: KBJ 다리 시험(tests/test_kbj_bridge.py) +1
+            # P4(묶음 S) 13 그대로: SD 컨센서스·어닝·오버행·DART·밸류·TAM 모듈 12개와 server.py 의 종목 상세·공시·
+            # 리비전·네이버 리서치 함수를 지웠지만 그 코드에는 원본 시험이 없었다(옮긴 원본 시험 0 — kbj 쪽은 새로
+            # 썼다). 검사 스크립트 10개가 떼어 쓰는 함수(마감 시황·신고가·워치독·ETF 표시)는 남겼다(R14 — 다리
+            # 시험은 지운 모듈이 다시 생기지 않는지도 본다). 근거: legacy/stock_dashboard/MIGRATION.md 'P4'
             part_pytest stock_dashboard "$SD" 13 -c /dev/null --rootdir "$SD" -q tests
             ;;
         *)

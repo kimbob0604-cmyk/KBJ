@@ -1,0 +1,57 @@
+{
+  "source": "KRX+DART",
+  "as_of": "2026-11-13T15:30:00+09:00",
+  "quality": "estimated",
+  "notes": [
+    "시나리오 적정가 = EPS × 배수(Bear·Base·Bull) — 시장 규모 추정이 아니다(D-P4-12)",
+    "컨센서스 최고값 출처 없음(KIS 교체) — Bull EPS = Base × 1.2",
+    "PBR 폴백 — Base EPS 가 없거나(적자) PER 밴드가 없다(BPS × PBR 밴드)"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "applicable": true,
+    "na_reason": null,
+    "code": "994090",
+    "as_of": "2026-11-13",
+    "method": "PBR",
+    "cases": {
+      "bear": {
+        "case": "bear",
+        "method": "PBR",
+        "eps": 2935.0,
+        "eps_source": "BPS",
+        "multiple": 0.9650202144489366,
+        "multiple_source": "PBR_5Y_P25",
+        "tp": 2832.334329407629,
+        "upside_pct": -5.273099350915422,
+        "na_reason": null,
+        "quality": "estimated"
+      },
+      "base": {
+        "case": "base",
+        "method": "PBR",
+        "eps": 2935.0,
+        "eps_source": "BPS",
+        "multiple": 1.0008756514726591,
+        "multiple_source": "PBR_5Y_P50",
+        "tp": 2937.5700370722543,
+        "upside_pct": -1.7535104658108924,
+        "na_reason": null,
+        "quality": "estimated"
+      },
+      "bull": {
+        "case": "bull",
+        "method": "PBR",
+        "eps": 2935.0,
+        "eps_source": "BPS",
+        "multiple": 1.0335735630163474,
+        "multiple_source": "PBR_5Y_P75",
+        "tp": 3033.5384074529798,
+        "upside_pct": 1.4561340285277558,
+        "na_reason": null,
+        "quality": "estimated"
+      }
+    },
+    "price": 2990.0
+  }
+}

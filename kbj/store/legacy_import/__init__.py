@@ -6,6 +6,9 @@
         [--json inbox=<state/inbox.json> --json stockflows=<ET state 폴더>]
         [--json krflows=<flows.json>] [--dry-run | --verify-only]
 
+    python -m kbj.store.legacy_import --phase P4 --json watchlist=<server_watchlist.json>
+        (SD 관심종목 — 사용자가 VM 에 올린 파일, 레포에 넣지 않는다. docs/p4_design.md §3.8)
+
 - 원본은 읽기 전용으로만 연다(`sources.open_sqlite_ro` — `mode=ro&immutable=1`). 원본 사본 선택은
   ADR 0001 Q12(맥 로컬 사본 — 사용자 제공). 토큰 캐시는 열지 않는다.
 - 매핑마다(`mappings.MAPPINGS` 순서 = 우선순위): 원본 행 → 순수 변환(`transforms`) → 버림
@@ -52,6 +55,8 @@ _JSON_READERS: dict[str, Callable[[Path], Iterator[dict[str, object]]]] = {
     "inbox": src.iter_inbox,
     "stockflows": src.iter_stockflows,
     "krflows": src.iter_krflows,
+    # P4 — SD cache/server_watchlist.json(사용자가 VM 에 올린다 — 레포에 넣지 않는다)
+    "watchlist": src.iter_sd_watchlist,
 }
 
 
@@ -226,7 +231,9 @@ def run(
         raise ValueError("--dry-run 과 --verify-only 는 함께 쓰지 않는다")
     mappings = for_phase(phase)
     if not mappings:
-        raise ValueError(f"{phase} 에 옮길 매핑이 없다(P2 만 있다 — 나머지는 mappings.LATER)")
+        raise ValueError(
+            f"{phase} 에 옮길 매핑이 없다(P2·P4 만 있다 — 나머지는 mappings.LATER·NEVER)"
+        )
     if not dry_run and target is None:
         raise ValueError("대상(DB)이 없다 — --dry-run 이 아니면 대상이 필요하다")
     for name, path in sources.items():

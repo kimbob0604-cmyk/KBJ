@@ -1,0 +1,82 @@
+{
+ "schema_version": 1,
+ "generated_at": "2026-11-16T05:30:00+09:00",
+ "files": [
+  {
+   "name": "calendar.json",
+   "source": "KBJ 거래 캘린더(코드 계산)",
+   "as_of": "2026-11-16T05:30:00+09:00",
+   "quality": "ok",
+   "sha256": "e41084f578d71f8bd61432ca5bd5cd898d5de6efb3997866e8d20c6659692999"
+  },
+  {
+   "name": "events.json",
+   "source": "한국은행 공표 일정(수기 설정)",
+   "as_of": "2026-11-16T05:30:00+09:00",
+   "quality": "estimated",
+   "sha256": "651c7b504e4d90dd294d1d274c02c97bfe8bc211c4f220c501f9e22117dabbc7"
+  },
+  {
+   "name": "filings_feed.json",
+   "source": "DART",
+   "as_of": "2026-11-13T18:00:00+09:00",
+   "quality": "ok",
+   "sha256": "b520b5860dccba1280b88429f88b238537ed923a481f3136ac08afbd36fd387d"
+  },
+  {
+   "name": "earnings_prelim.json",
+   "source": "DART",
+   "as_of": "2026-11-13T18:00:00+09:00",
+   "quality": "ok",
+   "sha256": "442e6e3691e912d016b089996b60a5a2c20a4a3302b842c47bc6099bc2ee683b"
+  },
+  {
+   "name": "overhang_recent.json",
+   "source": "DART",
+   "as_of": "2026-11-13T18:00:00+09:00",
+   "quality": "ok",
+   "sha256": "07988ab8ba23cd875ddf125b840d72411b9b343c343c9f42a2386f09040c7933"
+  },
+  {
+   "name": "insider_recent.json",
+   "source": "DART",
+   "as_of": "2026-11-16T03:00:00+09:00",
+   "quality": "estimated",
+   "sha256": "911bb3aa07fc73a25be017df729828b4c2808358d71bbb5d8436a1e219c17bae"
+  },
+  {
+   "name": "earnings_schedule.json",
+   "source": "DART",
+   "as_of": "2026-11-16T03:00:00+09:00",
+   "quality": "estimated",
+   "sha256": "beed6ae9b6309f152365627cb370b9b60b93a3f7bb381c96ffcc1de9f9c72166"
+  },
+  {
+   "name": "corp_index.json",
+   "source": "DART",
+   "as_of": "2026-11-16T03:00:00+09:00",
+   "quality": "ok",
+   "sha256": "8b6aea0e4502a3f799048e245aa0253a58723f0139d2b5e6fe32bb05ee2c2a2f"
+  }
+ ],
+ "dirs": [
+  {
+   "name": "fin",
+   "count": 4,
+   "bytes": 17045,
+   "digest": "3739ff6059f94feed515b3167268616b41fd2061c8cc0b7e63bc604793cc8d8e",
+   "source": "DART",
+   "as_of": "2026-11-13T00:00:00+09:00",
+   "quality": "estimated"
+  },
+  {
+   "name": "reports",
+   "count": 2,
+   "bytes": 747,
+   "digest": "4390fa11118be61e241d4f8bda62f32e019499dd4c8c378748743eec5b61cd10",
+   "source": "DART",
+   "as_of": "2026-11-15T21:05:00+09:00",
+   "quality": "ok"
+  }
+ ]
+}

@@ -1,0 +1,594 @@
+{
+  "source": "KRX+DART",
+  "as_of": "2026-11-13T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "PIT — 그날까지 공시된 정기보고서 분기만(D-P4-11, ADR 0016)"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "applicable": true,
+    "na_reason": null,
+    "code": "994040",
+    "metric": "per",
+    "current": {
+      "date": "2026-11-13",
+      "price": 2140.0,
+      "ttm_ref": "2026Q3:OFS",
+      "ev": 9034000000,
+      "per": {
+        "value": null,
+        "applicable": false,
+        "na_reason": "spac",
+        "out_of_cap": false
+      },
+      "pbr": {
+        "value": 1.0548107255520505,
+        "applicable": true,
+        "na_reason": null,
+        "out_of_cap": false
+      },
+      "psr": {
+        "value": null,
+        "applicable": false,
+        "na_reason": "spac",
+        "out_of_cap": false
+      },
+      "ev_ebitda": {
+        "value": null,
+        "applicable": false,
+        "na_reason": "spac",
+        "out_of_cap": false
+      },
+      "per_fwd": {
+        "value": null,
+        "applicable": false,
+        "na_reason": "not_in_consensus_universe",
+        "out_of_cap": false
+      },
+      "psr_fwd": {
+        "value": null,
+        "applicable": false,
+        "na_reason": "not_in_consensus_universe",
+        "out_of_cap": false
+      },
+      "ev_ebitda_fwd": {
+        "value": null,
+        "applicable": false,
+        "na_reason": "not_in_consensus_universe",
+        "out_of_cap": false
+      },
+      "quality": "ok"
+    },
+    "bands": [
+      {
+        "metric": "per",
+        "as_of": "2026-11-13",
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "min": null,
+        "max": null,
+        "n_days": 0,
+        "n_excluded": 413,
+        "current": null,
+        "current_rank_pct": null,
+        "window_from": "2025-03-10",
+        "applicable": false,
+        "na_reason": "spac",
+        "quality": "ok"
+      },
+      {
+        "metric": "pbr",
+        "as_of": "2026-11-13",
+        "p10": 1.0145501336236762,
+        "p25": 1.0244481837078097,
+        "p50": 1.0318717212709096,
+        "p75": 1.0410455177897038,
+        "p90": 1.0485782398016779,
+        "min": 0.9957077260930326,
+        "max": 1.064512942106303,
+        "n_days": 372,
+        "n_excluded": 41,
+        "current": 1.0548107255520505,
+        "current_rank_pct": 94.08602150537635,
+        "window_from": "2025-03-10",
+        "applicable": true,
+        "na_reason": null,
+        "quality": "ok"
+      },
+      {
+        "metric": "psr",
+        "as_of": "2026-11-13",
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "min": null,
+        "max": null,
+        "n_days": 0,
+        "n_excluded": 413,
+        "current": null,
+        "current_rank_pct": null,
+        "window_from": "2025-03-10",
+        "applicable": false,
+        "na_reason": "spac",
+        "quality": "ok"
+      },
+      {
+        "metric": "ev_ebitda",
+        "as_of": "2026-11-13",
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "min": null,
+        "max": null,
+        "n_days": 0,
+        "n_excluded": 413,
+        "current": null,
+        "current_rank_pct": null,
+        "window_from": "2025-03-10",
+        "applicable": false,
+        "na_reason": "spac",
+        "quality": "ok"
+      }
+    ],
+    "series": [
+      {
+        "date": "2025-03-14",
+        "price": 1958.0,
+        "value": null
+      },
+      {
+        "date": "2025-03-21",
+        "price": 1960.0,
+        "value": null
+      },
+      {
+        "date": "2025-03-28",
+        "price": 1981.0,
+        "value": null
+      },
+      {
+        "date": "2025-04-04",
+        "price": 1990.0,
+        "value": null
+      },
+      {
+        "date": "2025-04-11",
+        "price": 2005.0,
+        "value": null
+      },
+      {
+        "date": "2025-04-18",
+        "price": 2025.0,
+        "value": null
+      },
+      {
+        "date": "2025-04-25",
+        "price": 2020.0,
+        "value": null
+      },
+      {
+        "date": "2025-05-02",
+        "price": 2030.0,
+        "value": null
+      },
+      {
+        "date": "2025-05-09",
+        "price": 2015.0,
+        "value": null
+      },
+      {
+        "date": "2025-05-16",
+        "price": 2005.0,
+        "value": null
+      },
+      {
+        "date": "2025-05-23",
+        "price": 2030.0,
+        "value": null
+      },
+      {
+        "date": "2025-05-30",
+        "price": 2040.0,
+        "value": null
+      },
+      {
+        "date": "2025-06-05",
+        "price": 2025.0,
+        "value": null
+      },
+      {
+        "date": "2025-06-13",
+        "price": 2030.0,
+        "value": null
+      },
+      {
+        "date": "2025-06-20",
+        "price": 2055.0,
+        "value": null
+      },
+      {
+        "date": "2025-06-27",
+        "price": 2070.0,
+        "value": null
+      },
+      {
+        "date": "2025-07-04",
+        "price": 2095.0,
+        "value": null
+      },
+      {
+        "date": "2025-07-11",
+        "price": 2105.0,
+        "value": null
+      },
+      {
+        "date": "2025-07-18",
+        "price": 2090.0,
+        "value": null
+      },
+      {
+        "date": "2025-07-25",
+        "price": 2065.0,
+        "value": null
+      },
+      {
+        "date": "2025-08-01",
+        "price": 2050.0,
+        "value": null
+      },
+      {
+        "date": "2025-08-08",
+        "price": 2065.0,
+        "value": null
+      },
+      {
+        "date": "2025-08-14",
+        "price": 2100.0,
+        "value": null
+      },
+      {
+        "date": "2025-08-22",
+        "price": 2070.0,
+        "value": null
+      },
+      {
+        "date": "2025-08-29",
+        "price": 2070.0,
+        "value": null
+      },
+      {
+        "date": "2025-09-05",
+        "price": 2065.0,
+        "value": null
+      },
+      {
+        "date": "2025-09-12",
+        "price": 2065.0,
+        "value": null
+      },
+      {
+        "date": "2025-09-19",
+        "price": 2085.0,
+        "value": null
+      },
+      {
+        "date": "2025-09-26",
+        "price": 2075.0,
+        "value": null
+      },
+      {
+        "date": "2025-10-02",
+        "price": 2060.0,
+        "value": null
+      },
+      {
+        "date": "2025-10-10",
+        "price": 2065.0,
+        "value": null
+      },
+      {
+        "date": "2025-10-17",
+        "price": 2100.0,
+        "value": null
+      },
+      {
+        "date": "2025-10-24",
+        "price": 2120.0,
+        "value": null
+      },
+      {
+        "date": "2025-10-31",
+        "price": 2105.0,
+        "value": null
+      },
+      {
+        "date": "2025-11-07",
+        "price": 2090.0,
+        "value": null
+      },
+      {
+        "date": "2025-11-14",
+        "price": 2105.0,
+        "value": null
+      },
+      {
+        "date": "2025-11-21",
+        "price": 2105.0,
+        "value": null
+      },
+      {
+        "date": "2025-11-28",
+        "price": 2125.0,
+        "value": null
+      },
+      {
+        "date": "2025-12-05",
+        "price": 2105.0,
+        "value": null
+      },
+      {
+        "date": "2025-12-12",
+        "price": 2085.0,
+        "value": null
+      },
+      {
+        "date": "2025-12-19",
+        "price": 2090.0,
+        "value": null
+      },
+      {
+        "date": "2025-12-26",
+        "price": 2075.0,
+        "value": null
+      },
+      {
+        "date": "2026-01-02",
+        "price": 2055.0,
+        "value": null
+      },
+      {
+        "date": "2026-01-09",
+        "price": 2040.0,
+        "value": null
+      },
+      {
+        "date": "2026-01-16",
+        "price": 2020.0,
+        "value": null
+      },
+      {
+        "date": "2026-01-23",
+        "price": 2070.0,
+        "value": null
+      },
+      {
+        "date": "2026-01-30",
+        "price": 2075.0,
+        "value": null
+      },
+      {
+        "date": "2026-02-06",
+        "price": 2080.0,
+        "value": null
+      },
+      {
+        "date": "2026-02-13",
+        "price": 2090.0,
+        "value": null
+      },
+      {
+        "date": "2026-02-20",
+        "price": 2080.0,
+        "value": null
+      },
+      {
+        "date": "2026-02-27",
+        "price": 2065.0,
+        "value": null
+      },
+      {
+        "date": "2026-03-06",
+        "price": 2070.0,
+        "value": null
+      },
+      {
+        "date": "2026-03-13",
+        "price": 2080.0,
+        "value": null
+      },
+      {
+        "date": "2026-03-20",
+        "price": 2100.0,
+        "value": null
+      },
+      {
+        "date": "2026-03-27",
+        "price": 2090.0,
+        "value": null
+      },
+      {
+        "date": "2026-04-03",
+        "price": 2095.0,
+        "value": null
+      },
+      {
+        "date": "2026-04-10",
+        "price": 2085.0,
+        "value": null
+      },
+      {
+        "date": "2026-04-17",
+        "price": 2110.0,
+        "value": null
+      },
+      {
+        "date": "2026-04-24",
+        "price": 2105.0,
+        "value": null
+      },
+      {
+        "date": "2026-04-30",
+        "price": 2115.0,
+        "value": null
+      },
+      {
+        "date": "2026-05-08",
+        "price": 2105.0,
+        "value": null
+      },
+      {
+        "date": "2026-05-15",
+        "price": 2080.0,
+        "value": null
+      },
+      {
+        "date": "2026-05-22",
+        "price": 2055.0,
+        "value": null
+      },
+      {
+        "date": "2026-05-29",
+        "price": 2065.0,
+        "value": null
+      },
+      {
+        "date": "2026-06-05",
+        "price": 2075.0,
+        "value": null
+      },
+      {
+        "date": "2026-06-12",
+        "price": 2070.0,
+        "value": null
+      },
+      {
+        "date": "2026-06-19",
+        "price": 2060.0,
+        "value": null
+      },
+      {
+        "date": "2026-06-26",
+        "price": 2050.0,
+        "value": null
+      },
+      {
+        "date": "2026-07-03",
+        "price": 2070.0,
+        "value": null
+      },
+      {
+        "date": "2026-07-10",
+        "price": 2105.0,
+        "value": null
+      },
+      {
+        "date": "2026-07-17",
+        "price": 2090.0,
+        "value": null
+      },
+      {
+        "date": "2026-07-24",
+        "price": 2080.0,
+        "value": null
+      },
+      {
+        "date": "2026-07-31",
+        "price": 2080.0,
+        "value": null
+      },
+      {
+        "date": "2026-08-07",
+        "price": 2100.0,
+        "value": null
+      },
+      {
+        "date": "2026-08-14",
+        "price": 2085.0,
+        "value": null
+      },
+      {
+        "date": "2026-08-21",
+        "price": 2095.0,
+        "value": null
+      },
+      {
+        "date": "2026-08-28",
+        "price": 2080.0,
+        "value": null
+      },
+      {
+        "date": "2026-09-04",
+        "price": 2070.0,
+        "value": null
+      },
+      {
+        "date": "2026-09-11",
+        "price": 2060.0,
+        "value": null
+      },
+      {
+        "date": "2026-09-18",
+        "price": 2085.0,
+        "value": null
+      },
+      {
+        "date": "2026-09-23",
+        "price": 2075.0,
+        "value": null
+      },
+      {
+        "date": "2026-10-02",
+        "price": 2070.0,
+        "value": null
+      },
+      {
+        "date": "2026-10-08",
+        "price": 2075.0,
+        "value": null
+      },
+      {
+        "date": "2026-10-16",
+        "price": 2070.0,
+        "value": null
+      },
+      {
+        "date": "2026-10-23",
+        "price": 2090.0,
+        "value": null
+      },
+      {
+        "date": "2026-10-30",
+        "price": 2130.0,
+        "value": null
+      },
+      {
+        "date": "2026-11-06",
+        "price": 2155.0,
+        "value": null
+      },
+      {
+        "date": "2026-11-13",
+        "price": 2140.0,
+        "value": null
+      }
+    ],
+    "mktcap_company": 10700000000,
+    "classes": [
+      {
+        "code": "994040",
+        "share_class": "common",
+        "close": 2140.0,
+        "shares": 5000000,
+        "mktcap": 10700000000
+      }
+    ]
+  }
+}

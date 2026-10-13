@@ -3,7 +3,7 @@
 import axe from 'axe-core';
 import { describe, expect, it, vi } from 'vitest';
 import { mountApp } from '../../src/app/app';
-import { P3_PAGES, pageLoaders } from '../../src/app/pages';
+import { P3_PAGES, P4_PAGES, pageLoaders } from '../../src/app/pages';
 import { appRoot, fixedClock } from '../helpers';
 import { apiHarness, publicHarness } from './support';
 
@@ -15,8 +15,8 @@ async function serious(root: Element): Promise<string[]> {
 }
 
 describe('셸 + W2 모듈', () => {
-  it('빌드가 페이지 1·2·4·10 모듈을 모두 찾는다', () => {
-    expect([...pageLoaders().keys()].sort((a, b) => a - b)).toEqual([...P3_PAGES].sort((a, b) => a - b));
+  it('빌드가 페이지 1·2·4·10(P3)과 5·8(P4) 모듈을 모두 찾는다', () => {
+    expect([...pageLoaders().keys()].sort((a, b) => a - b)).toEqual([...P3_PAGES, ...P4_PAGES].sort((a, b) => a - b));
   });
 
   it('로그인: 띠·네 페이지가 오류 없이 붙고 axe 심각 위반 0', async () => {
@@ -43,7 +43,7 @@ describe('셸 + W2 모듈', () => {
     expect(err).not.toHaveBeenCalled();
     expect(await serious(document.body)).toEqual([]);
     app.destroy();
-  });
+  }, 20_000); // axe 를 문서 전체에 돌린다 — 전체 시험을 병렬로 돌리면 5초를 넘길 수 있다
 
   it('공개: 로그인 API 0회, 공개 파일만, 로그인 위젯은 자물쇠, axe 심각 위반 0', async () => {
     const hz = publicHarness();
@@ -67,5 +67,5 @@ describe('셸 + W2 모듈', () => {
     expect(root.querySelectorAll('.ribbon .chip.locked').length).toBeGreaterThan(0);
     expect(await serious(document.body)).toEqual([]);
     app.destroy();
-  });
+  }, 20_000);
 });

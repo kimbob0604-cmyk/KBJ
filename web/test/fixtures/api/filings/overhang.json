@@ -1,0 +1,32 @@
+{
+  "source": "DART",
+  "as_of": "2026-09-01T00:00:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "비율 = 회사 오버행 비율(최근 요약 — DART 주식총수 분모)"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "days": 90,
+    "instrument": null,
+    "rows": [
+      {
+        "rcept_no": "20260901000001",
+        "rcept_dt": "2026-09-01",
+        "corp_code": "99400130",
+        "stock_code": "994130",
+        "corp_name": "모의모빌리티",
+        "instrument": "cb",
+        "face_value": 5000000000,
+        "price": 9000.0,
+        "shares": 555555,
+        "exercise_start": "2027-09-01",
+        "exercise_end": "2029-08-01",
+        "ratio_pct": 9.08968,
+        "is_watch": true,
+        "quality": "ok",
+        "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260901000001"
+      }
+    ]
+  }
+}

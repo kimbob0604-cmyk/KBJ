@@ -1,0 +1,299 @@
+{
+  "source": "DART",
+  "as_of": "2026-08-12T00:00:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "별도(OFS) — 연결재무제표 미작성"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "applicable": true,
+    "na_reason": null,
+    "code": "994090",
+    "corp_code": "99400090",
+    "basis": "q",
+    "fs_div": "OFS",
+    "currency": "KRW",
+    "tier": "full",
+    "rows": [
+      {
+        "period": "2021Q2",
+        "label": "2021 2Q",
+        "fiscal_year": 2021,
+        "fiscal_q": 2,
+        "period_start": "2021-04-01",
+        "period_end": "2021-06-30",
+        "rcept_dt": "2021-08-12",
+        "revenue": null,
+        "op": null,
+        "ni": null,
+        "ni_owner": null,
+        "opm": null,
+        "npm": null,
+        "rev_yoy": null,
+        "op_yoy": null,
+        "derived": true,
+        "quality": "ok",
+        "notes": [
+          "직전 분기 누적 없음 — 분기 단독을 만들지 않았다(derived)"
+        ]
+      },
+      {
+        "period": "2021Q4",
+        "label": "2021 4Q",
+        "fiscal_year": 2021,
+        "fiscal_q": 4,
+        "period_start": "2021-10-01",
+        "period_end": "2021-12-31",
+        "rcept_dt": "2022-03-25",
+        "revenue": null,
+        "op": null,
+        "ni": null,
+        "ni_owner": null,
+        "opm": null,
+        "npm": null,
+        "rev_yoy": null,
+        "op_yoy": null,
+        "derived": true,
+        "quality": "ok",
+        "notes": [
+          "직전 분기 누적 없음 — 분기 단독을 만들지 않았다(derived)"
+        ]
+      },
+      {
+        "period": "2022Q2",
+        "label": "2022 2Q",
+        "fiscal_year": 2022,
+        "fiscal_q": 2,
+        "period_start": "2022-04-01",
+        "period_end": "2022-06-30",
+        "rcept_dt": "2022-08-12",
+        "revenue": null,
+        "op": null,
+        "ni": null,
+        "ni_owner": null,
+        "opm": null,
+        "npm": null,
+        "rev_yoy": null,
+        "op_yoy": null,
+        "derived": true,
+        "quality": "ok",
+        "notes": [
+          "직전 분기 누적 없음 — 분기 단독을 만들지 않았다(derived)"
+        ]
+      },
+      {
+        "period": "2022Q4",
+        "label": "2022 4Q",
+        "fiscal_year": 2022,
+        "fiscal_q": 4,
+        "period_start": "2022-10-01",
+        "period_end": "2022-12-31",
+        "rcept_dt": "2023-03-29",
+        "revenue": null,
+        "op": null,
+        "ni": null,
+        "ni_owner": null,
+        "opm": null,
+        "npm": null,
+        "rev_yoy": null,
+        "op_yoy": null,
+        "derived": true,
+        "quality": "ok",
+        "notes": [
+          "직전 분기 누적 없음 — 분기 단독을 만들지 않았다(derived)"
+        ]
+      },
+      {
+        "period": "2023Q2",
+        "label": "2023 2Q",
+        "fiscal_year": 2023,
+        "fiscal_q": 2,
+        "period_start": "2023-04-01",
+        "period_end": "2023-06-30",
+        "rcept_dt": "2023-08-11",
+        "revenue": null,
+        "op": null,
+        "ni": null,
+        "ni_owner": null,
+        "opm": null,
+        "npm": null,
+        "rev_yoy": null,
+        "op_yoy": null,
+        "derived": true,
+        "quality": "ok",
+        "notes": [
+          "직전 분기 누적 없음 — 분기 단독을 만들지 않았다(derived)"
+        ]
+      },
+      {
+        "period": "2023Q4",
+        "label": "2023 4Q",
+        "fiscal_year": 2023,
+        "fiscal_q": 4,
+        "period_start": "2023-10-01",
+        "period_end": "2023-12-31",
+        "rcept_dt": "2024-03-29",
+        "revenue": null,
+        "op": null,
+        "ni": null,
+        "ni_owner": null,
+        "opm": null,
+        "npm": null,
+        "rev_yoy": null,
+        "op_yoy": null,
+        "derived": true,
+        "quality": "ok",
+        "notes": [
+          "직전 분기 누적 없음 — 분기 단독을 만들지 않았다(derived)"
+        ]
+      },
+      {
+        "period": "2024Q2",
+        "label": "2024 2Q",
+        "fiscal_year": 2024,
+        "fiscal_q": 2,
+        "period_start": "2024-04-01",
+        "period_end": "2024-06-30",
+        "rcept_dt": "2024-08-14",
+        "revenue": null,
+        "op": null,
+        "ni": null,
+        "ni_owner": null,
+        "opm": null,
+        "npm": null,
+        "rev_yoy": null,
+        "op_yoy": null,
+        "derived": true,
+        "quality": "ok",
+        "notes": [
+          "직전 분기 누적 없음 — 분기 단독을 만들지 않았다(derived)"
+        ]
+      },
+      {
+        "period": "2024Q4",
+        "label": "2024 4Q",
+        "fiscal_year": 2024,
+        "fiscal_q": 4,
+        "period_start": "2024-10-01",
+        "period_end": "2024-12-31",
+        "rcept_dt": "2025-03-28",
+        "revenue": null,
+        "op": null,
+        "ni": null,
+        "ni_owner": null,
+        "opm": null,
+        "npm": null,
+        "rev_yoy": null,
+        "op_yoy": null,
+        "derived": true,
+        "quality": "ok",
+        "notes": [
+          "직전 분기 누적 없음 — 분기 단독을 만들지 않았다(derived)"
+        ]
+      },
+      {
+        "period": "2025Q2",
+        "label": "2025 2Q",
+        "fiscal_year": 2025,
+        "fiscal_q": 2,
+        "period_start": "2025-04-01",
+        "period_end": "2025-06-30",
+        "rcept_dt": "2025-08-14",
+        "revenue": null,
+        "op": null,
+        "ni": null,
+        "ni_owner": null,
+        "opm": null,
+        "npm": null,
+        "rev_yoy": null,
+        "op_yoy": null,
+        "derived": true,
+        "quality": "ok",
+        "notes": [
+          "직전 분기 누적 없음 — 분기 단독을 만들지 않았다(derived)"
+        ]
+      },
+      {
+        "period": "2025Q4",
+        "label": "2025 4Q",
+        "fiscal_year": 2025,
+        "fiscal_q": 4,
+        "period_start": "2025-10-01",
+        "period_end": "2025-12-31",
+        "rcept_dt": "2026-03-27",
+        "revenue": null,
+        "op": null,
+        "ni": null,
+        "ni_owner": null,
+        "opm": null,
+        "npm": null,
+        "rev_yoy": null,
+        "op_yoy": null,
+        "derived": true,
+        "quality": "ok",
+        "notes": [
+          "직전 분기 누적 없음 — 분기 단독을 만들지 않았다(derived)"
+        ]
+      },
+      {
+        "period": "2026Q2",
+        "label": "2026 2Q",
+        "fiscal_year": 2026,
+        "fiscal_q": 2,
+        "period_start": "2026-04-01",
+        "period_end": "2026-06-30",
+        "rcept_dt": "2026-08-12",
+        "revenue": null,
+        "op": null,
+        "ni": null,
+        "ni_owner": null,
+        "opm": null,
+        "npm": null,
+        "rev_yoy": null,
+        "op_yoy": null,
+        "derived": true,
+        "quality": "ok",
+        "notes": [
+          "직전 분기 누적 없음 — 분기 단독을 만들지 않았다(derived)"
+        ]
+      }
+    ],
+    "ratios": {
+      "period": "2026Q2",
+      "fs_div": "OFS",
+      "ttm_revenue": null,
+      "ttm_op": null,
+      "ttm_ni_owner": null,
+      "opm": null,
+      "npm": null,
+      "roe": null,
+      "roa": null,
+      "debt_ratio": 83.89551391254969,
+      "net_debt_ratio": 6.490630323679728,
+      "rev_yoy": null,
+      "op_yoy": null,
+      "eps_ttm": null,
+      "bps": 2935.0,
+      "shares_basis": 6000000,
+      "na_reasons": {
+        "opm": "missing_input",
+        "npm": "missing_input",
+        "roe": "missing_input",
+        "roa": "missing_input",
+        "rev_yoy": "missing_input",
+        "op_yoy": "missing_input",
+        "eps_ttm": "missing_input"
+      },
+      "quality": "ok",
+      "notes": [
+        "연속 4분기(같은 기준)가 없어 TTM 을 만들지 않았다"
+      ]
+    },
+    "checks": {
+      "diff3m_max_pct": null,
+      "n_derived": 11,
+      "n_estimated": 0
+    }
+  }
+}

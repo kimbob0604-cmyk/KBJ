@@ -39,6 +39,13 @@ legacy/**/probe_out/
 legacy/**/runs/
 legacy/**/data_store/
 
+# ── 개인 데이터 — 관심종목 파일은 레포에 넣지 않는다(docs/p4_design.md D-P4-13·U-P4-5) ──────────────
+# SD cache/server_watchlist.json 은 /cache/ 가 이미 막는다. 다른 자리·이름으로 복사해 온 경우를 막는다
+# (어디에 있든 server_watchlist*.json, 루트의 *watchlist*.json). 시험 fixture 이름(…/fixtures/…)은 막지 않는다
+**/server_watchlist*.json
+/*watchlist*.json
+/*watchlist*.csv
+
 # ── DB·대용량 데이터 파일 (어디에 있든) ─────────────────────────────────────────────────────
 *.db
 *.db-journal

@@ -1,0 +1,44 @@
+{
+  "source": "KRX+DART",
+  "as_of": "2026-11-13T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "code": "994060",
+    "name": "모의유통",
+    "market": "KOSPI",
+    "kind": "common",
+    "common_code": "994060",
+    "corp_code": "99400060",
+    "corp_name": "모의유통",
+    "status_flags": [],
+    "listed_on": "1998-01-05",
+    "acc_mt": 3,
+    "induty_code": "47111",
+    "last": {
+      "date": "2026-11-13",
+      "close": 163600.0,
+      "chg_pct": 2.76,
+      "volume": 48590,
+      "turnover": 7949425366,
+      "mktcap": 1963200000000,
+      "last_trade": "2026-11-13",
+      "stale": false,
+      "source": "KRX",
+      "quality": "ok"
+    },
+    "is_watch": true,
+    "detail_tier": true,
+    "newhigh": {
+      "date": "2026-11-13",
+      "basis": "close",
+      "d120": false,
+      "w52": false,
+      "hist": false,
+      "label": null,
+      "source": "KRX",
+      "quality": "ok"
+    }
+  }
+}

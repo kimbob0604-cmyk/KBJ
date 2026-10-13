@@ -11,7 +11,7 @@ pip install -r requirements.txt
 
 python run.py --stock 006110 --years 2023 2026   # CLI
 python run.py --stock 006110 --diagnose-costs    # 매핑 튜닝용 진단
-streamlit run app.py                             # 웹 UI
+# 웹 UI(Streamlit app.py)는 KBJ P4 에서 폐지 — 페이지 8 '리포트' 탭(MIGRATION.md)
 python tests_smoke.py                            # API 키 없이 합성 데이터로 빌더 검증
 ```
 
@@ -25,7 +25,7 @@ python tests_smoke.py                            # API 키 없이 합성 데이�
 | `dartreport/orders.py` | 단일판매·공급계약 공시 파싱 |
 | `dartreport/bridge.py` | 영업이익→당기순이익 워터폴 |
 | `dartreport/excel.py` | 워크북 빌더 (8시트 + 차트 4개) |
-| `config/mapping.yaml` | 계정명 동의어 사전. **코드 수정 대신 여기를 먼저 고칠 것** |
+| `config/mapping.yaml` | 계정명 동의어 사전. **코드 수정 대신 여기를 먼저 고칠 것** — KBJ P4: 정본은 레포 `config/dart_report/mapping.yaml`(이 경로는 링크) |
 
 ## 데이터 신뢰도 — 이걸 모르면 틀린 리포트를 만든다
 

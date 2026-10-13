@@ -1,0 +1,393 @@
+{
+  "source": "DART",
+  "as_of": "2026-11-16T21:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "엑셀과 같은 입력·같은 셈(dart-report — 금액 억원)",
+    "경고 2건 — warnings"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "code": "994030",
+    "corp_code": "99400030",
+    "built_on": "2026-11-16",
+    "fs_div_used": "CFS",
+    "year_from": 2023,
+    "year_to": 2026,
+    "unit": "억원",
+    "blocks": {
+      "quarterly": {
+        "unit": "억원",
+        "rows": [
+          {
+            "label": "1Q23",
+            "year": 2023,
+            "quarter": "1Q",
+            "fs_div": "CFS",
+            "derived": false,
+            "revenue": 671.5,
+            "operating_income": 58.4,
+            "net_income": 41.7,
+            "opm": 0.08696947133283693,
+            "npm": 0.062099776619508565
+          },
+          {
+            "label": "2Q23",
+            "year": 2023,
+            "quarter": "2Q",
+            "fs_div": "CFS",
+            "derived": false,
+            "revenue": 702.4,
+            "operating_income": 60.6,
+            "net_income": 43.5,
+            "opm": 0.08627562642369022,
+            "npm": 0.061930523917995445
+          },
+          {
+            "label": "3Q23",
+            "year": 2023,
+            "quarter": "3Q",
+            "fs_div": "CFS",
+            "derived": false,
+            "revenue": 710.0,
+            "operating_income": 59.9,
+            "net_income": 43.0,
+            "opm": 0.0843661971830986,
+            "npm": 0.06056338028169014
+          },
+          {
+            "label": "4Q23",
+            "year": 2023,
+            "quarter": "4Q",
+            "fs_div": "CFS",
+            "derived": false,
+            "revenue": 736.2,
+            "operating_income": 63.8,
+            "net_income": 46.1,
+            "opm": 0.08666123336049986,
+            "npm": 0.0626188535723988
+          },
+          {
+            "label": "1Q24",
+            "year": 2024,
+            "quarter": "1Q",
+            "fs_div": "CFS",
+            "derived": false,
+            "revenue": 697.0,
+            "operating_income": 58.9,
+            "net_income": 42.0,
+            "opm": 0.08450502152080344,
+            "npm": 0.06025824964131994
+          },
+          {
+            "label": "2Q24",
+            "year": 2024,
+            "quarter": "2Q",
+            "fs_div": "CFS",
+            "derived": false,
+            "revenue": 754.8,
+            "operating_income": 71.8,
+            "net_income": 52.2,
+            "opm": 0.0951245363010069,
+            "npm": 0.06915739268680446
+          },
+          {
+            "label": "3Q24",
+            "year": 2024,
+            "quarter": "3Q",
+            "fs_div": "CFS",
+            "derived": false,
+            "revenue": 732.0,
+            "operating_income": 64.2,
+            "net_income": 46.1,
+            "opm": 0.08770491803278689,
+            "npm": 0.06297814207650274
+          },
+          {
+            "label": "4Q24",
+            "year": 2024,
+            "quarter": "4Q",
+            "fs_div": "CFS",
+            "derived": false,
+            "revenue": 768.4,
+            "operating_income": 68.8,
+            "net_income": 49.8,
+            "opm": 0.08953669963560645,
+            "npm": 0.06480999479437792
+          },
+          {
+            "label": "1Q25",
+            "year": 2025,
+            "quarter": "1Q",
+            "fs_div": "CFS",
+            "derived": false,
+            "revenue": 719.8,
+            "operating_income": 62.3,
+            "net_income": 44.4,
+            "opm": 0.0865518199499861,
+            "npm": 0.06168380105584885
+          },
+          {
+            "label": "2Q25",
+            "year": 2025,
+            "quarter": "2Q",
+            "fs_div": "CFS",
+            "derived": false,
+            "revenue": 791.3,
+            "operating_income": 75.8,
+            "net_income": 55.2,
+            "opm": 0.09579173511942374,
+            "npm": 0.06975862504739037
+          },
+          {
+            "label": "3Q25",
+            "year": 2025,
+            "quarter": "3Q",
+            "fs_div": "CFS",
+            "derived": false,
+            "revenue": 778.9,
+            "operating_income": 65.1,
+            "net_income": 46.7,
+            "opm": 0.08357940685582231,
+            "npm": 0.05995634869688022
+          },
+          {
+            "label": "4Q25",
+            "year": 2025,
+            "quarter": "4Q",
+            "fs_div": "CFS",
+            "derived": false,
+            "revenue": 836.0,
+            "operating_income": 76.1,
+            "net_income": 55.5,
+            "opm": 0.09102870813397128,
+            "npm": 0.06638755980861244
+          },
+          {
+            "label": "1Q26",
+            "year": 2026,
+            "quarter": "1Q",
+            "fs_div": "CFS",
+            "derived": false,
+            "revenue": 764.9,
+            "operating_income": 74.0,
+            "net_income": 53.4,
+            "opm": 0.09674467250620997,
+            "npm": 0.06981304745718395
+          },
+          {
+            "label": "2Q26",
+            "year": 2026,
+            "quarter": "2Q",
+            "fs_div": "CFS",
+            "derived": false,
+            "revenue": 784.5,
+            "operating_income": 66.2,
+            "net_income": 47.4,
+            "opm": 0.08438495857233907,
+            "npm": 0.06042065009560229
+          },
+          {
+            "label": "3Q26",
+            "year": 2026,
+            "quarter": "3Q",
+            "fs_div": "CFS",
+            "derived": false,
+            "revenue": 816.1,
+            "operating_income": 68.2,
+            "net_income": 49.0,
+            "opm": 0.08356819017277295,
+            "npm": 0.0600416615610832
+          }
+        ]
+      },
+      "annual_costs": {
+        "unit": "억원",
+        "columns": [
+          "2023",
+          "2024",
+          "2025",
+          "9M26"
+        ],
+        "revenue": [
+          2820.2,
+          2952.2,
+          3126.0,
+          2365.5
+        ],
+        "buckets": {
+          "원가": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "인건비": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "감가상각비": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "지급수수료": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "외주용역비": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "유지보수비": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "기타": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        "total": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "operating_income": [
+          2820.2,
+          2952.2,
+          3126.0,
+          2365.5
+        ],
+        "opm": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "has_costs": false
+      },
+      "bridge": {
+        "unit": "억원",
+        "label": "2025년",
+        "steps": [
+          {
+            "name": "영업이익",
+            "kind": "total",
+            "value": 279.3,
+            "base": 0.0,
+            "up": 0.0,
+            "down": 0.0,
+            "total": 279.3,
+            "note": ""
+          },
+          {
+            "name": "영업외손익",
+            "kind": "delta",
+            "value": -20.5,
+            "base": 258.8,
+            "up": 0.0,
+            "down": 20.5,
+            "total": 0.0,
+            "note": "주석 분해 미적용"
+          },
+          {
+            "name": "법인세차감전순이익",
+            "kind": "total",
+            "value": 258.8,
+            "base": 0.0,
+            "up": 0.0,
+            "down": 0.0,
+            "total": 258.8,
+            "note": ""
+          },
+          {
+            "name": "법인세비용",
+            "kind": "delta",
+            "value": -56.9,
+            "base": 201.9,
+            "up": 0.0,
+            "down": 56.9,
+            "total": 0.0,
+            "note": ""
+          },
+          {
+            "name": "당기순이익",
+            "kind": "total",
+            "value": 201.8,
+            "base": 0.0,
+            "up": 0.0,
+            "down": 0.0,
+            "total": 201.8,
+            "note": ""
+          }
+        ],
+        "residual": -20.5,
+        "complete": true
+      },
+      "orders": {
+        "unit": "억원",
+        "total_eok": 0,
+        "nipa_eok": 0,
+        "nipa_ratio": null,
+        "rows": []
+      },
+      "quarterly_costs": {
+        "unit": "억원",
+        "columns": [],
+        "revenue": [],
+        "buckets": {
+          "원가": [],
+          "인건비": [],
+          "감가상각비": [],
+          "지급수수료": [],
+          "외주용역비": [],
+          "유지보수비": [],
+          "기타": []
+        },
+        "behavior": {
+          "원가": "변동비",
+          "인건비": "고정비",
+          "감가상각비": "고정비",
+          "지급수수료": "변동비",
+          "외주용역비": "변동비",
+          "유지보수비": "고정비",
+          "기타": "고정비"
+        },
+        "total": [],
+        "operating_income": [],
+        "opm": [],
+        "contribution_margin": [],
+        "share": {
+          "원가": [],
+          "인건비": [],
+          "감가상각비": [],
+          "지급수수료": [],
+          "외주용역비": [],
+          "유지보수비": [],
+          "기타": []
+        }
+      }
+    },
+    "warnings": [
+      "비용 성격별 주석 표를 찾지 못했습니다. config/mapping.yaml 의 note_titles 를 회사 보고서 문구에 맞게 보강하세요.",
+      "이익브릿지 잔차가 -20.5억원입니다 — config/mapping.yaml 의 bridge 설정을 보강하면 줄어듭니다."
+    ],
+    "unmapped": [],
+    "xlsx_available": true,
+    "engine_version": "dart_excel/1",
+    "generated_at": "2026-11-16T21:30:00+09:00"
+  }
+}

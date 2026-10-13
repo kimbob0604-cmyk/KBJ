@@ -1,0 +1,174 @@
+{
+  "source": "KRX+KIS+DART",
+  "as_of": "2026-11-13T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "PIT — 그날까지 공시된 정기보고서 분기만(D-P4-11, ADR 0016)"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "applicable": true,
+    "na_reason": null,
+    "code": "994020",
+    "metric": "per",
+    "current": {
+      "date": "2026-11-13",
+      "price": 15390.0,
+      "ttm_ref": "2026Q3:OFS",
+      "ev": 273187000000,
+      "per": {
+        "value": null,
+        "applicable": false,
+        "na_reason": "short_history",
+        "out_of_cap": false
+      },
+      "pbr": {
+        "value": 4.592811194376285,
+        "applicable": true,
+        "na_reason": null,
+        "out_of_cap": false
+      },
+      "psr": {
+        "value": null,
+        "applicable": false,
+        "na_reason": "short_history",
+        "out_of_cap": false
+      },
+      "ev_ebitda": {
+        "value": null,
+        "applicable": false,
+        "na_reason": "short_history",
+        "out_of_cap": false
+      },
+      "per_fwd": {
+        "value": 75.67719482074696,
+        "applicable": true,
+        "na_reason": null,
+        "out_of_cap": false
+      },
+      "psr_fwd": {
+        "value": 3.6174194587052573,
+        "applicable": true,
+        "na_reason": null,
+        "out_of_cap": false
+      },
+      "ev_ebitda_fwd": {
+        "value": 40.17455882352941,
+        "applicable": true,
+        "na_reason": null,
+        "out_of_cap": false
+      },
+      "quality": "ok"
+    },
+    "bands": [
+      {
+        "metric": "per",
+        "as_of": "2026-11-13",
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "min": null,
+        "max": null,
+        "n_days": 0,
+        "n_excluded": 20,
+        "current": null,
+        "current_rank_pct": null,
+        "window_from": "2026-10-19",
+        "applicable": false,
+        "na_reason": "short_history",
+        "quality": "ok"
+      },
+      {
+        "metric": "pbr",
+        "as_of": "2026-11-13",
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "min": null,
+        "max": null,
+        "n_days": 1,
+        "n_excluded": 19,
+        "current": 4.592811194376285,
+        "current_rank_pct": null,
+        "window_from": "2026-10-19",
+        "applicable": false,
+        "na_reason": "short_history",
+        "quality": "ok"
+      },
+      {
+        "metric": "psr",
+        "as_of": "2026-11-13",
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "min": null,
+        "max": null,
+        "n_days": 0,
+        "n_excluded": 20,
+        "current": null,
+        "current_rank_pct": null,
+        "window_from": "2026-10-19",
+        "applicable": false,
+        "na_reason": "short_history",
+        "quality": "ok"
+      },
+      {
+        "metric": "ev_ebitda",
+        "as_of": "2026-11-13",
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "min": null,
+        "max": null,
+        "n_days": 0,
+        "n_excluded": 20,
+        "current": null,
+        "current_rank_pct": null,
+        "window_from": "2026-10-19",
+        "applicable": false,
+        "na_reason": "short_history",
+        "quality": "ok"
+      }
+    ],
+    "series": [
+      {
+        "date": "2026-10-23",
+        "price": 18650.0,
+        "value": null
+      },
+      {
+        "date": "2026-10-30",
+        "price": 18510.0,
+        "value": null
+      },
+      {
+        "date": "2026-11-06",
+        "price": 16680.0,
+        "value": null
+      },
+      {
+        "date": "2026-11-13",
+        "price": 15390.0,
+        "value": null
+      }
+    ],
+    "mktcap_company": 277020000000,
+    "classes": [
+      {
+        "code": "994020",
+        "share_class": "common",
+        "close": 15390.0,
+        "shares": 18000000,
+        "mktcap": 277020000000
+      }
+    ]
+  }
+}

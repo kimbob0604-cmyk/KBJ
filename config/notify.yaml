@@ -83,11 +83,11 @@ kinds:
   alert.earnings:
     topic: alert
     dedup: subject
-    note: "접수번호마다 1회. 작업 filings.dart_feed(P4). 흡수 #16"
+    note: "관심종목 잠정실적(우선순위 ≤ 2 — config/fin.yaml earnings.alert_max_priority)만 사건 시점 push. subject = <corp_code>:<회계기간>:<연결/별도>(접수번호가 아니다 — 정정공시가 30일 안에 다시 울리지 않게, D-P4-14). 일반 공시는 push 하지 않는다. 작업 earnings.alerts(P4 — 5분 폴링, 장 마감 뒤 사건도 바로 — ADR 0018 의 16:00 대상 아님). 흡수 #16"
   alert.revision:
     topic: alert
     dedup: daily
-    note: "작업 consensus.snapshot 16:00(P4, ADR 0018 — 마감 수집 뒤 약 3분 수집하고 보낸다, 평소 16:00~16:05). 흡수 #10"
+    note: "관심종목 리비전(|pct| ≥ 5 — config/fin.yaml consensus.alert_min_abs_pct) 하루 1통 묶음, 0건이면 보내지 않는다. 작업 consensus.snapshot 16:00(P4, ADR 0018 — 마감 수집 뒤 약 3분 수집하고 보낸다, 평소 16:00~16:05. 실데이터 확인 #29 전까지 작업이 꺼져 있다 — D-P4-10). 흡수 #10"
   alert.gex_level:
     topic: alert
     dedup: cooldown

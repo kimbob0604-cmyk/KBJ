@@ -45,7 +45,8 @@ def test_runtime_import_closure_has_no_login_tier_modules() -> None:
         timeout=120,
     )
     loaded: list[str] = json.loads(out.stdout.strip().splitlines()[-1])
-    assert "kbj.services.public_export.export" in loaded
+    for mod in ("export", "filings_json", "fin_json", "corp_index", "pub_read", "manifest"):
+        assert f"kbj.services.public_export.{mod}" in loaded  # P4 모듈도 같은 닫힘 안
     bad = [m for m in loaded if any(m == f or m.startswith(f + ".") for f in FORBIDDEN)]
     assert bad == []
 

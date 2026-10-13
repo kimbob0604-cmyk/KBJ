@@ -20,7 +20,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 SQLITE_SOURCES = ("sd", "board", "us", "backtest", "us_backtest", "etf")
-JSON_SOURCES = ("inbox", "stockflows", "krflows")
+JSON_SOURCES = ("inbox", "stockflows", "krflows", "watchlist")
 _TOKEN_FILE = re.compile(r"(?i)(^|[._-])(kis[._-]?token|token)([._-]|$)|\.token\.json$")
 _CHUNK = 1 << 20
 
@@ -127,3 +127,18 @@ def iter_krflows(path: Path) -> Iterator[dict[str, object]]:
     for code, by_date in _dict(doc.get("by_code")).items():
         for day, vals in _dict(by_date).items():
             yield {"code": code, "date": day, "unit": unit, "source": source, **_dict(vals)}
+
+
+def iter_sd_watchlist(path: Path) -> Iterator[dict[str, object]]:
+    """SD `cache/server_watchlist.json`(SD server.py api_watchlist_sync:5821 — 브라우저 localStorage
+    `[{code, name, market, addedAt}]` 를 그대로 쓴 파일) — 항목마다 한 행 + 순서(`_index`).
+
+    사용자가 VM 에 올린 파일이다(레포에 넣지 않는다 — U-P4-5). 목록이 아니면 SourceError.
+    """
+    doc = read_json(path)
+    if not isinstance(doc, list):
+        raise SourceError("server_watchlist.json 형식이 아니다(목록이 아님)")
+    for i, it in enumerate(doc):  # pyright: ignore[reportUnknownVariableType, reportUnknownArgumentType]
+        row: dict[str, object] = _dict(it) if isinstance(it, dict) else {"_bad": True}
+        row["_index"] = i
+        yield row

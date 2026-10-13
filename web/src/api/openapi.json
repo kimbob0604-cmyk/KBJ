@@ -3,7 +3,7 @@
   "info": {
     "title": "KBJ API",
     "description": "KBJ 로그인 등급 API(사용자 1명). 모든 데이터 응답은 봉투(source·as_of·quality·notes·generated_at·data), 금액은 원 단위 정수. 외부 원천을 부르지 않는다(DB·Redis 읽기만).",
-    "version": "0.3.0"
+    "version": "0.4.0"
   },
   "paths": {
     "/api/health": {
@@ -1583,6 +1583,1739 @@
         }
       }
     },
+    "/api/stock/search": {
+      "get": {
+        "tags": [
+          "stock"
+        ],
+        "summary": "Search",
+        "operationId": "search_api_stock_search_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20,
+              "title": "Q"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 20,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_StockSearch_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stock/{code}/header": {
+      "get": {
+        "tags": [
+          "stock"
+        ],
+        "summary": "Header",
+        "operationId": "header_api_stock__code__header_get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-Z]{6}$",
+              "title": "Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_StockHeader_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stock/{code}/chart": {
+      "get": {
+        "tags": [
+          "stock"
+        ],
+        "summary": "Chart",
+        "operationId": "chart_api_stock__code__chart_get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-Z]{6}$",
+              "title": "Code"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1240,
+              "minimum": 1,
+              "default": 250,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_PriceChart_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stock/{code}/financials": {
+      "get": {
+        "tags": [
+          "stock"
+        ],
+        "summary": "Financials",
+        "operationId": "financials_api_stock__code__financials_get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-Z]{6}$",
+              "title": "Code"
+            }
+          },
+          {
+            "name": "basis",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "q",
+                "a"
+              ],
+              "type": "string",
+              "default": "q",
+              "title": "Basis"
+            }
+          },
+          {
+            "name": "n",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 20,
+              "minimum": 1,
+              "default": 12,
+              "title": "N"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_Financials_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stock/{code}/report": {
+      "get": {
+        "tags": [
+          "stock"
+        ],
+        "summary": "Report",
+        "operationId": "report_api_stock__code__report_get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-Z]{6}$",
+              "title": "Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ReportView_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stock/{code}/report.xlsx": {
+      "get": {
+        "tags": [
+          "stock"
+        ],
+        "summary": "Report Xlsx",
+        "operationId": "report_xlsx_api_stock__code__report_xlsx_get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-Z]{6}$",
+              "title": "Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "dart-report 엑셀(`<회사>_<코드>_재무리포트.xlsx`)",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stock/{code}/segments": {
+      "get": {
+        "tags": [
+          "stock"
+        ],
+        "summary": "Segments",
+        "operationId": "segments_api_stock__code__segments_get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-Z]{6}$",
+              "title": "Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_Segments_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stock/{code}/consensus": {
+      "get": {
+        "tags": [
+          "stock"
+        ],
+        "summary": "Consensus",
+        "operationId": "consensus_api_stock__code__consensus_get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-Z]{6}$",
+              "title": "Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_Consensus_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stock/{code}/valuation": {
+      "get": {
+        "tags": [
+          "stock"
+        ],
+        "summary": "Valuation",
+        "operationId": "valuation_api_stock__code__valuation_get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-Z]{6}$",
+              "title": "Code"
+            }
+          },
+          {
+            "name": "metric",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "per",
+                "pbr",
+                "psr",
+                "ev_ebitda"
+              ],
+              "type": "string",
+              "default": "per",
+              "title": "Metric"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_Valuation_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stock/{code}/scenario": {
+      "get": {
+        "tags": [
+          "stock"
+        ],
+        "summary": "Scenario",
+        "operationId": "scenario_api_stock__code__scenario_get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-Z]{6}$",
+              "title": "Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_Scenario_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stock/{code}/overhang": {
+      "get": {
+        "tags": [
+          "stock"
+        ],
+        "summary": "Overhang",
+        "operationId": "overhang_api_stock__code__overhang_get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-Z]{6}$",
+              "title": "Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_Overhang_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stock/{code}/insiders": {
+      "get": {
+        "tags": [
+          "stock"
+        ],
+        "summary": "Insiders",
+        "operationId": "insiders_api_stock__code__insiders_get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-Z]{6}$",
+              "title": "Code"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                30,
+                90,
+                180
+              ],
+              "type": "integer",
+              "default": 90,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_Insiders_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stock/{code}/disclosures": {
+      "get": {
+        "tags": [
+          "stock"
+        ],
+        "summary": "Disclosures",
+        "operationId": "disclosures_api_stock__code__disclosures_get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-Z]{6}$",
+              "title": "Code"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 365,
+              "minimum": 1,
+              "default": 30,
+              "title": "Days"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]{0,31}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_Disclosures_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stock/{code}/earnings": {
+      "get": {
+        "tags": [
+          "stock"
+        ],
+        "summary": "Earnings",
+        "operationId": "earnings_api_stock__code__earnings_get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-Z]{6}$",
+              "title": "Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_Earnings_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/filings/feed": {
+      "get": {
+        "tags": [
+          "filings"
+        ],
+        "summary": "Feed",
+        "operationId": "feed_api_filings_feed_get",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]{0,31}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "importance",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "critical",
+                    "high",
+                    "medium",
+                    "low"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Importance"
+            }
+          },
+          {
+            "name": "market",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "KOSPI",
+                    "KOSDAQ",
+                    "KONEX"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Market"
+            }
+          },
+          {
+            "name": "watch_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Watch Only"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_FilingsFeed_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/filings/earnings": {
+      "get": {
+        "tags": [
+          "filings"
+        ],
+        "summary": "Earnings",
+        "operationId": "earnings_api_filings_earnings_get",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_EarningsList_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/filings/overhang": {
+      "get": {
+        "tags": [
+          "filings"
+        ],
+        "summary": "Overhang",
+        "operationId": "overhang_api_filings_overhang_get",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "default": 7,
+              "title": "Days"
+            }
+          },
+          {
+            "name": "instrument",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "cb",
+                    "bw",
+                    "eb",
+                    "paid_in",
+                    "bonus"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Instrument"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_OverhangRecent_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/filings/insiders": {
+      "get": {
+        "tags": [
+          "filings"
+        ],
+        "summary": "Insiders",
+        "operationId": "insiders_api_filings_insiders_get",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "default": 7,
+              "title": "Days"
+            }
+          },
+          {
+            "name": "min_ratio_pct",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 100,
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Ratio Pct"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_InsiderRecent_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/filings/schedule": {
+      "get": {
+        "tags": [
+          "filings"
+        ],
+        "summary": "Schedule",
+        "operationId": "schedule_api_filings_schedule_get",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 60,
+              "minimum": 1,
+              "default": 14,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_EarningsSchedule_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/watchlist": {
+      "get": {
+        "tags": [
+          "watchlist"
+        ],
+        "summary": "Watchlist",
+        "operationId": "watchlist_api_watchlist_get",
+        "parameters": [
+          {
+            "name": "list",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]{0,31}$",
+              "default": "main",
+              "title": "List"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_Watchlist_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/telegram/webhook": {
       "post": {
         "tags": [
@@ -1635,6 +3368,183 @@
   },
   "components": {
     "schemas": {
+      "BandView": {
+        "properties": {
+          "metric": {
+            "type": "string",
+            "enum": [
+              "per",
+              "pbr",
+              "psr",
+              "ev_ebitda"
+            ],
+            "title": "Metric"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "p10": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P10"
+          },
+          "p25": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P25"
+          },
+          "p50": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P50"
+          },
+          "p75": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P75"
+          },
+          "p90": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P90"
+          },
+          "min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min"
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max"
+          },
+          "n_days": {
+            "type": "integer",
+            "title": "N Days"
+          },
+          "n_excluded": {
+            "type": "integer",
+            "title": "N Excluded"
+          },
+          "current": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current"
+          },
+          "current_rank_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Rank Pct"
+          },
+          "window_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window From"
+          },
+          "applicable": {
+            "type": "boolean",
+            "title": "Applicable"
+          },
+          "na_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NaReason"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "metric",
+          "as_of",
+          "p10",
+          "p25",
+          "p50",
+          "p75",
+          "p90",
+          "min",
+          "max",
+          "n_days",
+          "n_excluded",
+          "current",
+          "current_rank_pct",
+          "window_from",
+          "applicable",
+          "na_reason",
+          "quality"
+        ],
+        "title": "BandView"
+      },
       "BoardEvents": {
         "properties": {
           "as_of": {
@@ -2422,6 +4332,124 @@
         ],
         "title": "ChangeRow"
       },
+      "ChartBar": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "o": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "O"
+          },
+          "h": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "H"
+          },
+          "l": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "L"
+          },
+          "c": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "C"
+          },
+          "v": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "V"
+          },
+          "turnover": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "o",
+          "h",
+          "l",
+          "c",
+          "v",
+          "turnover"
+        ],
+        "title": "ChartBar"
+      },
+      "ChartEvent": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "kind": {
+            "type": "string",
+            "const": "split",
+            "title": "Kind"
+          },
+          "ratio": {
+            "type": "number",
+            "title": "Ratio"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "kind",
+          "ratio",
+          "note"
+        ],
+        "title": "ChartEvent"
+      },
       "Check3": {
         "properties": {
           "net_asset_chg": {
@@ -2597,6 +4625,178 @@
         ],
         "title": "ChipValue",
         "description": "상단 띠 칩 값(수·문자 — 원천·시각·품질 필수)."
+      },
+      "ClassCap": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "share_class": {
+            "type": "string",
+            "enum": [
+              "common",
+              "pref"
+            ],
+            "title": "Share Class"
+          },
+          "close": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close"
+          },
+          "shares": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shares"
+          },
+          "mktcap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mktcap"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "share_class",
+          "close",
+          "shares",
+          "mktcap"
+        ],
+        "title": "ClassCap"
+      },
+      "Consensus": {
+        "properties": {
+          "applicable": {
+            "type": "boolean",
+            "title": "Applicable",
+            "default": true
+          },
+          "na_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NaReason"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "snap_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snap Date"
+          },
+          "fy": {
+            "items": {
+              "$ref": "#/components/schemas/FyEstimateView"
+            },
+            "type": "array",
+            "title": "Fy"
+          },
+          "ntm": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NtmView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "target": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TargetView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "opinions": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OpinionDist"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "revisions": {
+            "items": {
+              "$ref": "#/components/schemas/RevisionView"
+            },
+            "type": "array",
+            "title": "Revisions"
+          },
+          "recent": {
+            "items": {
+              "$ref": "#/components/schemas/OpinionView"
+            },
+            "type": "array",
+            "title": "Recent"
+          },
+          "lost": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Lost"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "label",
+          "snap_date",
+          "fy",
+          "ntm",
+          "target",
+          "opinions",
+          "revisions",
+          "recent",
+          "lost"
+        ],
+        "title": "Consensus",
+        "description": "컨센서스(§4.7). 우선주는 보통주 것(`code` = 쓴 보통주 코드). `label` = \"KIS 추정\"(시장\n컨센서스인지 [확인 필요 #29] — 확인 전에는 컨센서스라 부르지 않는다). `lost` = KIS 교체로 잃은\n것 (D-P4-10 — 화면 '출처 없음 — KIS 교체로 잃음' 줄)."
       },
       "CsrfResponse": {
         "properties": {
@@ -2804,6 +5004,273 @@
         ],
         "title": "DayValue"
       },
+      "DisclosureView": {
+        "properties": {
+          "rcept_no": {
+            "type": "string",
+            "title": "Rcept No"
+          },
+          "rcept_dt": {
+            "type": "string",
+            "format": "date",
+            "title": "Rcept Dt"
+          },
+          "first_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "First Seen At"
+          },
+          "corp_code": {
+            "type": "string",
+            "title": "Corp Code"
+          },
+          "stock_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stock Code"
+          },
+          "corp_name": {
+            "type": "string",
+            "title": "Corp Name"
+          },
+          "corp_cls": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corp Cls"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "is_correction": {
+            "type": "boolean",
+            "title": "Is Correction"
+          },
+          "kw_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kw Score"
+          },
+          "kw_matched": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Kw Matched"
+          },
+          "login_score": {
+            "type": "integer",
+            "title": "Login Score"
+          },
+          "importance": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low"
+            ],
+            "title": "Importance"
+          },
+          "is_watch": {
+            "type": "boolean",
+            "title": "Is Watch"
+          },
+          "parse_state": {
+            "type": "string",
+            "title": "Parse State"
+          },
+          "link": {
+            "type": "string",
+            "title": "Link"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rcept_no",
+          "rcept_dt",
+          "first_seen_at",
+          "corp_code",
+          "stock_code",
+          "corp_name",
+          "corp_cls",
+          "title",
+          "kind",
+          "is_correction",
+          "kw_score",
+          "kw_matched",
+          "login_score",
+          "importance",
+          "is_watch",
+          "parse_state",
+          "link"
+        ],
+        "title": "DisclosureView",
+        "description": "공시 한 건. `kw_score` = 제목 키워드 점수(공개), `login_score`·`importance` = 키워드 +\n관심종목 + 시총 가산(로그인 — 읽을 때 계산). `first_seen_at` = 우리가 처음 본 시각(DART\n응답에는 날짜만)."
+      },
+      "Disclosures": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "corp_code": {
+            "type": "string",
+            "title": "Corp Code"
+          },
+          "days": {
+            "type": "integer",
+            "title": "Days"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/DisclosureView"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "corp_code",
+          "days",
+          "kind",
+          "rows"
+        ],
+        "title": "Disclosures"
+      },
+      "Earnings": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "corp_code": {
+            "type": "string",
+            "title": "Corp Code"
+          },
+          "prelims": {
+            "items": {
+              "$ref": "#/components/schemas/PrelimView"
+            },
+            "type": "array",
+            "title": "Prelims"
+          },
+          "schedule": {
+            "items": {
+              "$ref": "#/components/schemas/ScheduleView"
+            },
+            "type": "array",
+            "title": "Schedule"
+          },
+          "surprises": {
+            "items": {
+              "$ref": "#/components/schemas/SurpriseView"
+            },
+            "type": "array",
+            "title": "Surprises"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "corp_code",
+          "prelims",
+          "schedule",
+          "surprises"
+        ],
+        "title": "Earnings"
+      },
+      "EarningsList": {
+        "properties": {
+          "from_date": {
+            "type": "string",
+            "format": "date",
+            "title": "From Date"
+          },
+          "to_date": {
+            "type": "string",
+            "format": "date",
+            "title": "To Date"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/PrelimView"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "from_date",
+          "to_date",
+          "rows"
+        ],
+        "title": "EarningsList",
+        "description": "페이지 5 잠정실적(기간 — 최대 31일)."
+      },
+      "EarningsSchedule": {
+        "properties": {
+          "days": {
+            "type": "integer",
+            "title": "Days"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ScheduleView"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "days",
+          "rows"
+        ],
+        "title": "EarningsSchedule",
+        "description": "페이지 5 실적 일정(오늘부터 days 일)."
+      },
       "Envelope_BoardEvents_": {
         "properties": {
           "source": {
@@ -2975,6 +5442,221 @@
           "data"
         ],
         "title": "Envelope[BoardSectors]"
+      },
+      "Envelope_Consensus_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Consensus"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[Consensus]"
+      },
+      "Envelope_Disclosures_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Disclosures"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[Disclosures]"
+      },
+      "Envelope_EarningsList_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/EarningsList"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[EarningsList]"
+      },
+      "Envelope_EarningsSchedule_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/EarningsSchedule"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[EarningsSchedule]"
+      },
+      "Envelope_Earnings_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Earnings"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[Earnings]"
       },
       "Envelope_EtfFlows_": {
         "properties": {
@@ -3148,6 +5830,178 @@
         ],
         "title": "Envelope[EtfTypes]"
       },
+      "Envelope_FilingsFeed_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/FilingsFeed"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[FilingsFeed]"
+      },
+      "Envelope_Financials_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Financials"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[Financials]"
+      },
+      "Envelope_InsiderRecent_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/InsiderRecent"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[InsiderRecent]"
+      },
+      "Envelope_Insiders_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Insiders"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[Insiders]"
+      },
       "Envelope_IntradayFlows_": {
         "properties": {
           "source": {
@@ -3277,6 +6131,178 @@
         ],
         "title": "Envelope[MarketSummary]"
       },
+      "Envelope_OverhangRecent_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/OverhangRecent"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[OverhangRecent]"
+      },
+      "Envelope_Overhang_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Overhang"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[Overhang]"
+      },
+      "Envelope_PriceChart_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PriceChart"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[PriceChart]"
+      },
+      "Envelope_ReportView_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ReportView"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[ReportView]"
+      },
       "Envelope_Ribbon_": {
         "properties": {
           "source": {
@@ -3319,6 +6345,49 @@
           "data"
         ],
         "title": "Envelope[Ribbon]"
+      },
+      "Envelope_Scenario_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Scenario"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[Scenario]"
       },
       "Envelope_ScreenResponse_": {
         "properties": {
@@ -3406,6 +6475,49 @@
         ],
         "title": "Envelope[SectorHeat]"
       },
+      "Envelope_Segments_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Segments"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[Segments]"
+      },
       "Envelope_StockFlowDetail_": {
         "properties": {
           "source": {
@@ -3448,6 +6560,178 @@
           "data"
         ],
         "title": "Envelope[StockFlowDetail]"
+      },
+      "Envelope_StockHeader_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/StockHeader"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[StockHeader]"
+      },
+      "Envelope_StockSearch_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/StockSearch"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[StockSearch]"
+      },
+      "Envelope_Valuation_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Valuation"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[Valuation]"
+      },
+      "Envelope_Watchlist_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Watchlist"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[Watchlist]"
       },
       "ErrorBody": {
         "properties": {
@@ -3888,6 +7172,512 @@
         ],
         "title": "Excluded"
       },
+      "FilingsFeed": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "importance": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "critical",
+                  "high",
+                  "medium",
+                  "low"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Importance"
+          },
+          "market": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "KOSPI",
+                  "KOSDAQ",
+                  "KONEX"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market"
+          },
+          "watch_only": {
+            "type": "boolean",
+            "title": "Watch Only"
+          },
+          "n_total": {
+            "type": "integer",
+            "title": "N Total"
+          },
+          "by_kind": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Kind"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/DisclosureView"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "kind",
+          "importance",
+          "market",
+          "watch_only",
+          "n_total",
+          "by_kind",
+          "rows"
+        ],
+        "title": "FilingsFeed",
+        "description": "페이지 5 공시 피드(하루). `by_kind` = 거르기 전 종류별 수."
+      },
+      "FinChecks": {
+        "properties": {
+          "diff3m_max_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Diff3M Max Pct"
+          },
+          "n_derived": {
+            "type": "integer",
+            "title": "N Derived"
+          },
+          "n_estimated": {
+            "type": "integer",
+            "title": "N Estimated"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "diff3m_max_pct",
+          "n_derived",
+          "n_estimated"
+        ],
+        "title": "FinChecks"
+      },
+      "FinRow": {
+        "properties": {
+          "period": {
+            "type": "string",
+            "title": "Period"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "fiscal_year": {
+            "type": "integer",
+            "title": "Fiscal Year"
+          },
+          "fiscal_q": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fiscal Q"
+          },
+          "period_start": {
+            "type": "string",
+            "format": "date",
+            "title": "Period Start"
+          },
+          "period_end": {
+            "type": "string",
+            "format": "date",
+            "title": "Period End"
+          },
+          "rcept_dt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rcept Dt"
+          },
+          "revenue": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revenue"
+          },
+          "op": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Op"
+          },
+          "ni": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ni"
+          },
+          "ni_owner": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ni Owner"
+          },
+          "opm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opm"
+          },
+          "npm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Npm"
+          },
+          "rev_yoy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rev Yoy"
+          },
+          "op_yoy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Op Yoy"
+          },
+          "derived": {
+            "type": "boolean",
+            "title": "Derived"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "period",
+          "label",
+          "fiscal_year",
+          "fiscal_q",
+          "period_start",
+          "period_end",
+          "rcept_dt",
+          "revenue",
+          "op",
+          "ni",
+          "ni_owner",
+          "opm",
+          "npm",
+          "rev_yoy",
+          "op_yoy",
+          "derived",
+          "quality",
+          "notes"
+        ],
+        "title": "FinRow",
+        "description": "분기 단독(basis=q — 누적 차분, Q4 = 연간 − 3분기 누적) 또는 회계연도 합(basis=a)."
+      },
+      "Financials": {
+        "properties": {
+          "applicable": {
+            "type": "boolean",
+            "title": "Applicable",
+            "default": true
+          },
+          "na_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NaReason"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "corp_code": {
+            "type": "string",
+            "title": "Corp Code"
+          },
+          "basis": {
+            "type": "string",
+            "enum": [
+              "q",
+              "a"
+            ],
+            "title": "Basis"
+          },
+          "fs_div": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "CFS",
+                  "OFS"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fs Div"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "tier": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "main",
+                  "full"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tier"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/FinRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "ratios": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RatioView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "checks": {
+            "$ref": "#/components/schemas/FinChecks"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "corp_code",
+          "basis",
+          "fs_div",
+          "currency",
+          "tier",
+          "rows",
+          "ratios",
+          "checks"
+        ],
+        "title": "Financials"
+      },
+      "FyEstimateView": {
+        "properties": {
+          "fiscal_ym": {
+            "type": "string",
+            "title": "Fiscal Ym"
+          },
+          "fiscal_end": {
+            "type": "string",
+            "format": "date",
+            "title": "Fiscal End"
+          },
+          "is_estimate": {
+            "type": "boolean",
+            "title": "Is Estimate"
+          },
+          "revenue": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revenue"
+          },
+          "op": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Op"
+          },
+          "ni": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ni"
+          },
+          "ni_owner": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ni Owner"
+          },
+          "eps": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eps"
+          },
+          "ebitda": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ebitda"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "fiscal_ym",
+          "fiscal_end",
+          "is_estimate",
+          "revenue",
+          "op",
+          "ni",
+          "ni_owner",
+          "eps",
+          "ebitda",
+          "quality"
+        ],
+        "title": "FyEstimateView"
+      },
       "Health": {
         "properties": {
           "ok": {
@@ -3991,6 +7781,550 @@
           "quality"
         ],
         "title": "IndexTile"
+      },
+      "InsiderRecent": {
+        "properties": {
+          "days": {
+            "type": "integer",
+            "title": "Days"
+          },
+          "min_ratio_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Ratio Pct"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/InsiderRecentRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "days",
+          "min_ratio_pct",
+          "label",
+          "rows"
+        ],
+        "title": "InsiderRecent"
+      },
+      "InsiderRecentRow": {
+        "properties": {
+          "corp_code": {
+            "type": "string",
+            "title": "Corp Code"
+          },
+          "stock_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stock Code"
+          },
+          "corp_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corp Name"
+          },
+          "n_reports": {
+            "type": "integer",
+            "title": "N Reports"
+          },
+          "n_reporters": {
+            "type": "integer",
+            "title": "N Reporters"
+          },
+          "net_shares": {
+            "type": "integer",
+            "title": "Net Shares"
+          },
+          "buy_shares": {
+            "type": "integer",
+            "title": "Buy Shares"
+          },
+          "sell_shares": {
+            "type": "integer",
+            "title": "Sell Shares"
+          },
+          "ratio_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ratio Pct"
+          },
+          "last_rcept_dt": {
+            "type": "string",
+            "format": "date",
+            "title": "Last Rcept Dt"
+          },
+          "is_watch": {
+            "type": "boolean",
+            "title": "Is Watch"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "corp_code",
+          "stock_code",
+          "corp_name",
+          "n_reports",
+          "n_reporters",
+          "net_shares",
+          "buy_shares",
+          "sell_shares",
+          "ratio_pct",
+          "last_rcept_dt",
+          "is_watch",
+          "quality"
+        ],
+        "title": "InsiderRecentRow"
+      },
+      "InsiderReportView": {
+        "properties": {
+          "rcept_no": {
+            "type": "string",
+            "title": "Rcept No"
+          },
+          "rcept_dt": {
+            "type": "string",
+            "format": "date",
+            "title": "Rcept Dt"
+          },
+          "reporter": {
+            "type": "string",
+            "title": "Reporter"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
+          },
+          "registered": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registered"
+          },
+          "major_holder": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Major Holder"
+          },
+          "shares_after": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shares After"
+          },
+          "shares_delta": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shares Delta"
+          },
+          "ratio_after": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ratio After"
+          },
+          "ratio_delta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ratio Delta"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "link": {
+            "type": "string",
+            "title": "Link"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rcept_no",
+          "rcept_dt",
+          "reporter",
+          "position",
+          "registered",
+          "major_holder",
+          "shares_after",
+          "shares_delta",
+          "ratio_after",
+          "ratio_delta",
+          "reason",
+          "quality",
+          "link"
+        ],
+        "title": "InsiderReportView"
+      },
+      "Insiders": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "corp_code": {
+            "type": "string",
+            "title": "Corp Code"
+          },
+          "days": {
+            "type": "integer",
+            "title": "Days"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "windows": {
+            "items": {
+              "$ref": "#/components/schemas/WindowView"
+            },
+            "type": "array",
+            "title": "Windows"
+          },
+          "reports": {
+            "items": {
+              "$ref": "#/components/schemas/InsiderReportView"
+            },
+            "type": "array",
+            "title": "Reports"
+          },
+          "major_holders": {
+            "items": {
+              "$ref": "#/components/schemas/MajorHolderView"
+            },
+            "type": "array",
+            "title": "Major Holders"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "corp_code",
+          "days",
+          "label",
+          "windows",
+          "reports",
+          "major_holders"
+        ],
+        "title": "Insiders"
+      },
+      "InstrumentView": {
+        "properties": {
+          "rcept_no": {
+            "type": "string",
+            "title": "Rcept No"
+          },
+          "rcept_dt": {
+            "type": "string",
+            "format": "date",
+            "title": "Rcept Dt"
+          },
+          "instrument": {
+            "type": "string",
+            "enum": [
+              "cb",
+              "bw",
+              "eb",
+              "paid_in",
+              "bonus"
+            ],
+            "title": "Instrument"
+          },
+          "seq": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seq"
+          },
+          "face_value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Face Value"
+          },
+          "remaining_face": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remaining Face"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "refix_floor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refix Floor"
+          },
+          "potential_shares": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Potential Shares"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          },
+          "exercisable": {
+            "type": "boolean",
+            "title": "Exercisable"
+          },
+          "exercise_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exercise Start"
+          },
+          "exercise_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exercise End"
+          },
+          "maturity": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maturity"
+          },
+          "listing_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Listing Date"
+          },
+          "alloc_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alloc Method"
+          },
+          "lockup_end_est": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lockup End Est"
+          },
+          "itm": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Itm"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "link": {
+            "type": "string",
+            "title": "Link"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rcept_no",
+          "rcept_dt",
+          "instrument",
+          "seq",
+          "face_value",
+          "remaining_face",
+          "price",
+          "refix_floor",
+          "potential_shares",
+          "active",
+          "exercisable",
+          "exercise_start",
+          "exercise_end",
+          "maturity",
+          "listing_date",
+          "alloc_method",
+          "lockup_end_est",
+          "itm",
+          "amount",
+          "quality",
+          "notes",
+          "link"
+        ],
+        "title": "InstrumentView"
       },
       "IntradayFlows": {
         "properties": {
@@ -4193,6 +8527,59 @@
         ],
         "title": "InvestorTotals"
       },
+      "JsonValue": {},
+      "LockupView": {
+        "properties": {
+          "rcept_no": {
+            "type": "string",
+            "title": "Rcept No"
+          },
+          "listing_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Listing Date"
+          },
+          "lockup_end_est": {
+            "type": "string",
+            "format": "date",
+            "title": "Lockup End Est"
+          },
+          "shares": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shares"
+          },
+          "months": {
+            "type": "integer",
+            "title": "Months"
+          },
+          "basis": {
+            "type": "string",
+            "title": "Basis"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rcept_no",
+          "listing_date",
+          "lockup_end_est",
+          "shares",
+          "months",
+          "basis",
+          "quality"
+        ],
+        "title": "LockupView"
+      },
       "LoginBody": {
         "properties": {
           "username": {
@@ -4216,6 +8603,112 @@
         ],
         "title": "LoginBody",
         "description": "POST /api/auth/login 본문. 값은 검증 오류 문구에 싣지 않는다(app 의 422 처리기)."
+      },
+      "MajorHolderView": {
+        "properties": {
+          "rcept_no": {
+            "type": "string",
+            "title": "Rcept No"
+          },
+          "rcept_dt": {
+            "type": "string",
+            "format": "date",
+            "title": "Rcept Dt"
+          },
+          "reporter": {
+            "type": "string",
+            "title": "Reporter"
+          },
+          "report_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Type"
+          },
+          "shares": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shares"
+          },
+          "shares_delta": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shares Delta"
+          },
+          "ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ratio"
+          },
+          "ratio_delta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ratio Delta"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "link": {
+            "type": "string",
+            "title": "Link"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rcept_no",
+          "rcept_dt",
+          "reporter",
+          "report_type",
+          "shares",
+          "shares_delta",
+          "ratio",
+          "ratio_delta",
+          "reason",
+          "quality",
+          "link"
+        ],
+        "title": "MajorHolderView"
       },
       "MarketSummary": {
         "properties": {
@@ -4299,6 +8792,154 @@
         ],
         "title": "MeResponse"
       },
+      "MultipleCell": {
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "applicable": {
+            "type": "boolean",
+            "title": "Applicable"
+          },
+          "na_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NaReason"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "out_of_cap": {
+            "type": "boolean",
+            "title": "Out Of Cap",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "value",
+          "applicable",
+          "na_reason"
+        ],
+        "title": "MultipleCell"
+      },
+      "NaReason": {
+        "type": "string",
+        "enum": [
+          "loss",
+          "capital_impairment",
+          "no_revenue",
+          "financial_sector",
+          "short_history",
+          "not_detail_tier",
+          "not_in_consensus_universe",
+          "no_filings",
+          "spac",
+          "konex_no_consensus",
+          "currency_mismatch",
+          "missing_input"
+        ],
+        "title": "NaReason",
+        "description": "적용 불가 사유(설계 §5.2) — 값 칸은 None 이고 0 으로 채우지 않는다.\n\n`currency_mismatch`(§8.4 #19 외국기업 — 재무 통화 ≠ KRW 시세)와 `missing_input`(D&A 없는\nEV/EBITDA 처럼 필요한 입력이 공시에 없음)은 이 묶음(M)이 더한 두 값이다 [확인 필요 — A·V 와\n약속]."
+      },
+      "NewHighBadges": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "basis": {
+            "type": "string",
+            "enum": [
+              "close",
+              "high"
+            ],
+            "title": "Basis"
+          },
+          "d120": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "D120"
+          },
+          "w52": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "W52"
+          },
+          "hist": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hist"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "hist",
+                  "w52",
+                  "d120"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "basis",
+          "d120",
+          "w52",
+          "hist",
+          "label",
+          "source",
+          "quality"
+        ],
+        "title": "NewHighBadges",
+        "description": "신고가 3축(ADR 0017 — 120일 = 120 KRX 거래일, 52주 = 달력 364일, 역사적 = 상장 이후, 엄격\n'>'). board 엔진 산출을 읽기만 한다(D-P4-23). None = 창을 못 채운 축('—')."
+      },
       "NewListing": {
         "properties": {
           "code": {
@@ -4363,6 +9004,969 @@
         ],
         "title": "NoDataBody",
         "description": "데이터가 아직 없을 때(404) — 화면은 '아직 없음 — <작업> <예정 시각>' 으로 그린다(§6.7)."
+      },
+      "NtmView": {
+        "properties": {
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "snap_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Snap Date"
+          },
+          "fy1_ym": {
+            "type": "string",
+            "title": "Fy1 Ym"
+          },
+          "fy2_ym": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fy2 Ym"
+          },
+          "weight": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight"
+          },
+          "revenue": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revenue"
+          },
+          "op": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Op"
+          },
+          "ni": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ni"
+          },
+          "eps": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eps"
+          },
+          "ebitda": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ebitda"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "as_of",
+          "snap_date",
+          "fy1_ym",
+          "fy2_ym",
+          "weight",
+          "revenue",
+          "op",
+          "ni",
+          "eps",
+          "ebitda",
+          "quality"
+        ],
+        "title": "NtmView"
+      },
+      "OpinionDist": {
+        "properties": {
+          "buy": {
+            "type": "integer",
+            "title": "Buy"
+          },
+          "hold": {
+            "type": "integer",
+            "title": "Hold"
+          },
+          "sell": {
+            "type": "integer",
+            "title": "Sell"
+          },
+          "unrated": {
+            "type": "integer",
+            "title": "Unrated"
+          },
+          "unknown": {
+            "type": "integer",
+            "title": "Unknown"
+          },
+          "n_brokers": {
+            "type": "integer",
+            "title": "N Brokers"
+          },
+          "window_days": {
+            "type": "integer",
+            "title": "Window Days"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "buy",
+          "hold",
+          "sell",
+          "unrated",
+          "unknown",
+          "n_brokers",
+          "window_days"
+        ],
+        "title": "OpinionDist"
+      },
+      "OpinionView": {
+        "properties": {
+          "broker": {
+            "type": "string",
+            "title": "Broker"
+          },
+          "opinion_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Opinion Date"
+          },
+          "opinion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opinion"
+          },
+          "opinion_prev": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opinion Prev"
+          },
+          "target_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Price"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "broker",
+          "opinion_date",
+          "opinion",
+          "opinion_prev",
+          "target_price",
+          "quality"
+        ],
+        "title": "OpinionView"
+      },
+      "Overhang": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "corp_code": {
+            "type": "string",
+            "title": "Corp Code"
+          },
+          "close": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close"
+          },
+          "close_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close Date"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OverhangSummaryView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "instruments": {
+            "items": {
+              "$ref": "#/components/schemas/InstrumentView"
+            },
+            "type": "array",
+            "title": "Instruments"
+          },
+          "lockups": {
+            "items": {
+              "$ref": "#/components/schemas/LockupView"
+            },
+            "type": "array",
+            "title": "Lockups"
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineItem"
+            },
+            "type": "array",
+            "title": "Timeline"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "corp_code",
+          "close",
+          "close_date",
+          "summary",
+          "instruments",
+          "lockups",
+          "timeline"
+        ],
+        "title": "Overhang"
+      },
+      "OverhangRecent": {
+        "properties": {
+          "days": {
+            "type": "integer",
+            "title": "Days"
+          },
+          "instrument": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "cb",
+                  "bw",
+                  "eb",
+                  "paid_in",
+                  "bonus"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instrument"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/OverhangRecentRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "days",
+          "instrument",
+          "rows"
+        ],
+        "title": "OverhangRecent"
+      },
+      "OverhangRecentRow": {
+        "properties": {
+          "rcept_no": {
+            "type": "string",
+            "title": "Rcept No"
+          },
+          "rcept_dt": {
+            "type": "string",
+            "format": "date",
+            "title": "Rcept Dt"
+          },
+          "corp_code": {
+            "type": "string",
+            "title": "Corp Code"
+          },
+          "stock_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stock Code"
+          },
+          "corp_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corp Name"
+          },
+          "instrument": {
+            "type": "string",
+            "enum": [
+              "cb",
+              "bw",
+              "eb",
+              "paid_in",
+              "bonus"
+            ],
+            "title": "Instrument"
+          },
+          "face_value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Face Value"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "shares": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shares"
+          },
+          "exercise_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exercise Start"
+          },
+          "exercise_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exercise End"
+          },
+          "ratio_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ratio Pct"
+          },
+          "is_watch": {
+            "type": "boolean",
+            "title": "Is Watch"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "link": {
+            "type": "string",
+            "title": "Link"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rcept_no",
+          "rcept_dt",
+          "corp_code",
+          "stock_code",
+          "corp_name",
+          "instrument",
+          "face_value",
+          "price",
+          "shares",
+          "exercise_start",
+          "exercise_end",
+          "ratio_pct",
+          "is_watch",
+          "quality",
+          "link"
+        ],
+        "title": "OverhangRecentRow"
+      },
+      "OverhangSummaryView": {
+        "properties": {
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "potential_new_shares": {
+            "type": "integer",
+            "title": "Potential New Shares"
+          },
+          "exercisable_shares": {
+            "type": "integer",
+            "title": "Exercisable Shares"
+          },
+          "exchange_shares": {
+            "type": "integer",
+            "title": "Exchange Shares"
+          },
+          "denominator": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Denominator"
+          },
+          "denom_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Denom Source"
+          },
+          "ratio_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ratio Pct"
+          },
+          "exercisable_ratio_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exercisable Ratio Pct"
+          },
+          "listed_shares": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Listed Shares"
+          },
+          "login_ratio_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Login Ratio Pct"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "itm_shares": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Itm Shares"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "as_of",
+          "potential_new_shares",
+          "exercisable_shares",
+          "exchange_shares",
+          "denominator",
+          "denom_source",
+          "ratio_pct",
+          "exercisable_ratio_pct",
+          "listed_shares",
+          "login_ratio_pct",
+          "amount",
+          "itm_shares",
+          "quality",
+          "notes"
+        ],
+        "title": "OverhangSummaryView",
+        "description": "회사 요약. 공개 칸(DART 주식총수 분모) + 로그인 칸(`listed_shares` 분모 비율·금액·ITM 주식\n수 — 전 거래일 종가 기준 추정, 시가가 아님)."
+      },
+      "PrelimView": {
+        "properties": {
+          "rcept_no": {
+            "type": "string",
+            "title": "Rcept No"
+          },
+          "rcept_dt": {
+            "type": "string",
+            "format": "date",
+            "title": "Rcept Dt"
+          },
+          "corp_code": {
+            "type": "string",
+            "title": "Corp Code"
+          },
+          "stock_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stock Code"
+          },
+          "corp_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corp Name"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "consolidated",
+              "standalone",
+              "subsidiary"
+            ],
+            "title": "Scope"
+          },
+          "period": {
+            "type": "string",
+            "title": "Period"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "fiscal_year": {
+            "type": "integer",
+            "title": "Fiscal Year"
+          },
+          "fiscal_q": {
+            "type": "integer",
+            "title": "Fiscal Q"
+          },
+          "is_annual": {
+            "type": "boolean",
+            "title": "Is Annual"
+          },
+          "period_end": {
+            "type": "string",
+            "format": "date",
+            "title": "Period End"
+          },
+          "period_inferred": {
+            "type": "boolean",
+            "title": "Period Inferred"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "revenue_cur": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revenue Cur"
+          },
+          "revenue_prev_q": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revenue Prev Q"
+          },
+          "revenue_prev_y": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revenue Prev Y"
+          },
+          "op_cur": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Op Cur"
+          },
+          "op_prev_q": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Op Prev Q"
+          },
+          "op_prev_y": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Op Prev Y"
+          },
+          "ni_cur": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ni Cur"
+          },
+          "ni_prev_q": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ni Prev Q"
+          },
+          "ni_prev_y": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ni Prev Y"
+          },
+          "ni_owner_cur": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ni Owner Cur"
+          },
+          "eps_cur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eps Cur"
+          },
+          "rev_yoy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rev Yoy"
+          },
+          "op_yoy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Op Yoy"
+          },
+          "rev_qoq": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rev Qoq"
+          },
+          "op_qoq": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Op Qoq"
+          },
+          "signal": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signal"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority"
+          },
+          "is_correction": {
+            "type": "boolean",
+            "title": "Is Correction"
+          },
+          "is_watch": {
+            "type": "boolean",
+            "title": "Is Watch"
+          },
+          "alerted": {
+            "type": "boolean",
+            "title": "Alerted"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "link": {
+            "type": "string",
+            "title": "Link"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rcept_no",
+          "rcept_dt",
+          "corp_code",
+          "stock_code",
+          "corp_name",
+          "scope",
+          "period",
+          "label",
+          "fiscal_year",
+          "fiscal_q",
+          "is_annual",
+          "period_end",
+          "period_inferred",
+          "currency",
+          "revenue_cur",
+          "revenue_prev_q",
+          "revenue_prev_y",
+          "op_cur",
+          "op_prev_q",
+          "op_prev_y",
+          "ni_cur",
+          "ni_prev_q",
+          "ni_prev_y",
+          "ni_owner_cur",
+          "eps_cur",
+          "rev_yoy",
+          "op_yoy",
+          "rev_qoq",
+          "op_qoq",
+          "signal",
+          "priority",
+          "is_correction",
+          "is_watch",
+          "alerted",
+          "quality",
+          "notes",
+          "link"
+        ],
+        "title": "PrelimView",
+        "description": "잠정실적 한 건(원 — 본문 단위 × unit_mult) + YoY 분류(공개 규칙 — §4.2).\n\n`signal`·`priority` 는 알림 작업이 남긴 분류(`prv_fin.earnings_surprise`)가 있으면 그것, 없으면\n읽을 때 같은 엔진 규칙(`classify_prelim`)으로 낸다. `alerted` = 관심종목 알림을 넣었다."
       },
       "PremiumRow": {
         "properties": {
@@ -4429,6 +10033,79 @@
           "source"
         ],
         "title": "PremiumRow"
+      },
+      "PriceChart": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "days": {
+            "type": "integer",
+            "title": "Days"
+          },
+          "adjusted": {
+            "type": "boolean",
+            "const": false,
+            "title": "Adjusted",
+            "default": false
+          },
+          "bars": {
+            "items": {
+              "$ref": "#/components/schemas/ChartBar"
+            },
+            "type": "array",
+            "title": "Bars"
+          },
+          "sma": {
+            "additionalProperties": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Sma"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/ChartEvent"
+            },
+            "type": "array",
+            "title": "Events"
+          },
+          "last_trade": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Trade"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "days",
+          "bars",
+          "sma",
+          "events",
+          "last_trade"
+        ],
+        "title": "PriceChart",
+        "description": "KRX 일별(비수정 — `adjusted=false`). 거래가 없는 날(정지 — 거래량 0)은 봉에서 뺀다.\n\n`sma` 는 봉과 같은 길이(키 '20'·'60'·'120' — D-P4-21, 앞쪽 창을 못 채운 칸은 null)."
       },
       "Quality": {
         "type": "string",
@@ -4501,6 +10178,424 @@
         ],
         "title": "RankItem"
       },
+      "RatioView": {
+        "properties": {
+          "period": {
+            "type": "string",
+            "title": "Period"
+          },
+          "fs_div": {
+            "type": "string",
+            "enum": [
+              "CFS",
+              "OFS"
+            ],
+            "title": "Fs Div"
+          },
+          "ttm_revenue": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ttm Revenue"
+          },
+          "ttm_op": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ttm Op"
+          },
+          "ttm_ni_owner": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ttm Ni Owner"
+          },
+          "opm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opm"
+          },
+          "npm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Npm"
+          },
+          "roe": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roe"
+          },
+          "roa": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roa"
+          },
+          "debt_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Debt Ratio"
+          },
+          "net_debt_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Debt Ratio"
+          },
+          "rev_yoy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rev Yoy"
+          },
+          "op_yoy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Op Yoy"
+          },
+          "eps_ttm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eps Ttm"
+          },
+          "bps": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bps"
+          },
+          "shares_basis": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shares Basis"
+          },
+          "na_reasons": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/NaReason"
+            },
+            "type": "object",
+            "title": "Na Reasons"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "period",
+          "fs_div",
+          "ttm_revenue",
+          "ttm_op",
+          "ttm_ni_owner",
+          "opm",
+          "npm",
+          "roe",
+          "roa",
+          "debt_ratio",
+          "net_debt_ratio",
+          "rev_yoy",
+          "op_yoy",
+          "eps_ttm",
+          "bps",
+          "shares_basis",
+          "na_reasons",
+          "quality",
+          "notes"
+        ],
+        "title": "RatioView",
+        "description": "최근 분기 비율(§4.5 — DART 만, 공개). 분모 ≤ 0 이면 null + `na_reasons[칸]`."
+      },
+      "ReportBlocks": {
+        "properties": {
+          "quarterly": {
+            "$ref": "#/components/schemas/JsonValue"
+          },
+          "annual_costs": {
+            "$ref": "#/components/schemas/JsonValue"
+          },
+          "bridge": {
+            "$ref": "#/components/schemas/JsonValue"
+          },
+          "orders": {
+            "$ref": "#/components/schemas/JsonValue"
+          },
+          "quarterly_costs": {
+            "$ref": "#/components/schemas/JsonValue"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "quarterly",
+          "annual_costs",
+          "bridge",
+          "orders",
+          "quarterly_costs"
+        ],
+        "title": "ReportBlocks",
+        "description": "dart-report 화면 블록(엑셀과 같은 입력·같은 셈 — `kbj.reports.dart_excel.blocks`, 금액\n억원)."
+      },
+      "ReportView": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "corp_code": {
+            "type": "string",
+            "title": "Corp Code"
+          },
+          "built_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Built On"
+          },
+          "fs_div_used": {
+            "type": "string",
+            "enum": [
+              "CFS",
+              "OFS"
+            ],
+            "title": "Fs Div Used"
+          },
+          "year_from": {
+            "type": "integer",
+            "title": "Year From"
+          },
+          "year_to": {
+            "type": "integer",
+            "title": "Year To"
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit"
+          },
+          "blocks": {
+            "$ref": "#/components/schemas/ReportBlocks"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "unmapped": {
+            "$ref": "#/components/schemas/JsonValue"
+          },
+          "xlsx_available": {
+            "type": "boolean",
+            "title": "Xlsx Available"
+          },
+          "engine_version": {
+            "type": "string",
+            "title": "Engine Version"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "corp_code",
+          "built_on",
+          "fs_div_used",
+          "year_from",
+          "year_to",
+          "unit",
+          "blocks",
+          "warnings",
+          "unmapped",
+          "xlsx_available",
+          "engine_version",
+          "generated_at"
+        ],
+        "title": "ReportView"
+      },
+      "RevisionView": {
+        "properties": {
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "metric": {
+            "type": "string",
+            "title": "Metric"
+          },
+          "fiscal_ym": {
+            "type": "string",
+            "title": "Fiscal Ym"
+          },
+          "window_days": {
+            "type": "integer",
+            "title": "Window Days"
+          },
+          "current": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current"
+          },
+          "baseline": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline"
+          },
+          "baseline_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline Date"
+          },
+          "pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pct"
+          },
+          "signal": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signal"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "as_of",
+          "metric",
+          "fiscal_ym",
+          "window_days",
+          "current",
+          "baseline",
+          "baseline_date",
+          "pct",
+          "signal",
+          "quality"
+        ],
+        "title": "RevisionView"
+      },
       "Ribbon": {
         "properties": {
           "chips": {
@@ -4563,6 +10658,335 @@
         ],
         "title": "RowFlows",
         "description": "신고가 행에 붙이는 그날 원장 순매수(원) — 값이 없으면 None."
+      },
+      "Scenario": {
+        "properties": {
+          "applicable": {
+            "type": "boolean",
+            "title": "Applicable",
+            "default": true
+          },
+          "na_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NaReason"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "PER",
+              "PBR",
+              "INSUFFICIENT"
+            ],
+            "title": "Method"
+          },
+          "cases": {
+            "$ref": "#/components/schemas/ScenarioCases"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "as_of",
+          "method",
+          "cases",
+          "price"
+        ],
+        "title": "Scenario"
+      },
+      "ScenarioCase": {
+        "properties": {
+          "case": {
+            "type": "string",
+            "enum": [
+              "bear",
+              "base",
+              "bull"
+            ],
+            "title": "Case"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "PER",
+              "PBR",
+              "INSUFFICIENT"
+            ],
+            "title": "Method"
+          },
+          "eps": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eps"
+          },
+          "eps_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eps Source"
+          },
+          "multiple": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Multiple"
+          },
+          "multiple_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Multiple Source"
+          },
+          "tp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tp"
+          },
+          "upside_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upside Pct"
+          },
+          "na_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NaReason"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "case",
+          "method",
+          "eps",
+          "eps_source",
+          "multiple",
+          "multiple_source",
+          "tp",
+          "upside_pct",
+          "na_reason",
+          "quality"
+        ],
+        "title": "ScenarioCase"
+      },
+      "ScenarioCases": {
+        "properties": {
+          "bear": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScenarioCase"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "base": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScenarioCase"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "bull": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScenarioCase"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "bear",
+          "base",
+          "bull"
+        ],
+        "title": "ScenarioCases"
+      },
+      "ScheduleView": {
+        "properties": {
+          "corp_code": {
+            "type": "string",
+            "title": "Corp Code"
+          },
+          "stock_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stock Code"
+          },
+          "corp_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corp Name"
+          },
+          "period_end": {
+            "type": "string",
+            "format": "date",
+            "title": "Period End"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "pre_announce",
+              "statutory"
+            ],
+            "title": "Kind"
+          },
+          "planned_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Planned Date"
+          },
+          "fiscal_year": {
+            "type": "integer",
+            "title": "Fiscal Year"
+          },
+          "fiscal_q": {
+            "type": "integer",
+            "title": "Fiscal Q"
+          },
+          "rcept_no": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rcept No"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "is_watch": {
+            "type": "boolean",
+            "title": "Is Watch"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "corp_code",
+          "stock_code",
+          "corp_name",
+          "period_end",
+          "kind",
+          "planned_date",
+          "fiscal_year",
+          "fiscal_q",
+          "rcept_no",
+          "note",
+          "is_watch",
+          "quality"
+        ],
+        "title": "ScheduleView",
+        "description": "실적 일정 — pre_announce(결산실적공시예고 본문 — ok)·statutory(법정 제출기한 — 추정)."
       },
       "ScreenResponse": {
         "properties": {
@@ -4984,6 +11408,124 @@
         ],
         "title": "SectorHeat"
       },
+      "SegmentView": {
+        "properties": {
+          "segment": {
+            "type": "string",
+            "title": "Segment"
+          },
+          "amounts": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Amounts"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "segment",
+          "amounts"
+        ],
+        "title": "SegmentView"
+      },
+      "Segments": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "corp_code": {
+            "type": "string",
+            "title": "Corp Code"
+          },
+          "year": {
+            "type": "integer",
+            "title": "Year"
+          },
+          "rcept_no": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rcept No"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/SegmentView"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "corp_code",
+          "year",
+          "rcept_no",
+          "rows",
+          "quality"
+        ],
+        "title": "Segments",
+        "description": "부문 매출(사업보고서 원문 표 best-effort — 언제나 추정, D-P4-22)."
+      },
+      "SeriesPoint": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "price",
+          "value"
+        ],
+        "title": "SeriesPoint",
+        "description": "밴드 차트 한 점(주 1점 — 그 주 마지막 거래일). 화면 밴드가 = 배수_p × price ÷ value."
+      },
       "SourcedInt": {
         "properties": {
           "value": {
@@ -5014,6 +11556,109 @@
         ],
         "title": "SourcedInt",
         "description": "원천이 붙은 원 단위 정수."
+      },
+      "SourcedQuote": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "close": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close"
+          },
+          "chg_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chg Pct"
+          },
+          "volume": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volume"
+          },
+          "turnover": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover"
+          },
+          "mktcap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mktcap"
+          },
+          "last_trade": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Trade"
+          },
+          "stale": {
+            "type": "boolean",
+            "title": "Stale"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "close",
+          "chg_pct",
+          "volume",
+          "turnover",
+          "mktcap",
+          "last_trade",
+          "stale",
+          "source",
+          "quality"
+        ],
+        "title": "SourcedQuote",
+        "description": "마지막 시세(전 거래일 또는 오늘 마감 — 원장 우선순위 krx > kis, D-P3-7)."
       },
       "StockFlowDetail": {
         "properties": {
@@ -5071,6 +11716,557 @@
           "checks"
         ],
         "title": "StockFlowDetail"
+      },
+      "StockHeader": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "market": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "common",
+                  "pref",
+                  "spac",
+                  "reit",
+                  "etf",
+                  "etn"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "common_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Common Code"
+          },
+          "corp_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corp Code"
+          },
+          "corp_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corp Name"
+          },
+          "status_flags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Flags"
+          },
+          "listed_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Listed On"
+          },
+          "acc_mt": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acc Mt"
+          },
+          "induty_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Induty Code"
+          },
+          "last": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SourcedQuote"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "is_watch": {
+            "type": "boolean",
+            "title": "Is Watch"
+          },
+          "detail_tier": {
+            "type": "boolean",
+            "title": "Detail Tier"
+          },
+          "newhigh": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NewHighBadges"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "market",
+          "kind",
+          "common_code",
+          "corp_code",
+          "corp_name",
+          "status_flags",
+          "listed_on",
+          "acc_mt",
+          "induty_code",
+          "last",
+          "is_watch",
+          "detail_tier",
+          "newhigh"
+        ],
+        "title": "StockHeader"
+      },
+      "StockSearch": {
+        "properties": {
+          "q": {
+            "type": "string",
+            "title": "Q"
+          },
+          "n_total": {
+            "type": "integer",
+            "title": "N Total"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/StockSearchItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "q",
+          "n_total",
+          "items"
+        ],
+        "title": "StockSearch"
+      },
+      "StockSearchItem": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "market": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "common",
+                  "pref",
+                  "spac",
+                  "reit",
+                  "etf",
+                  "etn"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "corp_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corp Code"
+          },
+          "is_watch": {
+            "type": "boolean",
+            "title": "Is Watch"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "market",
+          "kind",
+          "corp_code",
+          "is_watch"
+        ],
+        "title": "StockSearchItem"
+      },
+      "SurpriseView": {
+        "properties": {
+          "rcept_no": {
+            "type": "string",
+            "title": "Rcept No"
+          },
+          "period": {
+            "type": "string",
+            "title": "Period"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "consolidated",
+              "standalone",
+              "subsidiary"
+            ],
+            "title": "Scope"
+          },
+          "signal": {
+            "type": "string",
+            "title": "Signal"
+          },
+          "priority": {
+            "type": "integer",
+            "title": "Priority"
+          },
+          "rev_yoy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rev Yoy"
+          },
+          "op_yoy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Op Yoy"
+          },
+          "rev_surprise": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rev Surprise"
+          },
+          "op_surprise": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Op Surprise"
+          },
+          "alerted_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alerted At"
+          },
+          "price_at_alert": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price At Alert"
+          },
+          "perf_3d": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Perf 3D"
+          },
+          "perf_5d": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Perf 5D"
+          },
+          "perf_7d": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Perf 7D"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rcept_no",
+          "period",
+          "scope",
+          "signal",
+          "priority",
+          "rev_yoy",
+          "op_yoy",
+          "rev_surprise",
+          "op_surprise",
+          "alerted_at",
+          "price_at_alert",
+          "perf_3d",
+          "perf_5d",
+          "perf_7d",
+          "quality"
+        ],
+        "title": "SurpriseView",
+        "description": "알림 작업의 분류·알림·성과 기록(로그인). 서프라이즈(컨센 대비)는 분기 컨센서스가 있을\n때만."
+      },
+      "TargetView": {
+        "properties": {
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "mean": {
+            "type": "number",
+            "title": "Mean"
+          },
+          "median": {
+            "type": "number",
+            "title": "Median"
+          },
+          "high": {
+            "type": "number",
+            "title": "High"
+          },
+          "low": {
+            "type": "number",
+            "title": "Low"
+          },
+          "n_brokers": {
+            "type": "integer",
+            "title": "N Brokers"
+          },
+          "window_days": {
+            "type": "integer",
+            "title": "Window Days"
+          },
+          "upside_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upside Pct"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "as_of",
+          "mean",
+          "median",
+          "high",
+          "low",
+          "n_brokers",
+          "window_days",
+          "upside_pct",
+          "quality"
+        ],
+        "title": "TargetView"
+      },
+      "TimelineItem": {
+        "properties": {
+          "rcept_no": {
+            "type": "string",
+            "title": "Rcept No"
+          },
+          "instrument": {
+            "type": "string",
+            "enum": [
+              "cb",
+              "bw",
+              "eb",
+              "paid_in",
+              "bonus"
+            ],
+            "title": "Instrument"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rcept_no",
+          "instrument",
+          "start",
+          "end",
+          "active"
+        ],
+        "title": "TimelineItem"
       },
       "TurnoverPanel": {
         "properties": {
@@ -5195,6 +12391,449 @@
           "n_invalid"
         ],
         "title": "TypeRollup"
+      },
+      "Valuation": {
+        "properties": {
+          "applicable": {
+            "type": "boolean",
+            "title": "Applicable",
+            "default": true
+          },
+          "na_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NaReason"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "metric": {
+            "type": "string",
+            "enum": [
+              "per",
+              "pbr",
+              "psr",
+              "ev_ebitda"
+            ],
+            "title": "Metric"
+          },
+          "current": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ValuationCurrent"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "bands": {
+            "items": {
+              "$ref": "#/components/schemas/BandView"
+            },
+            "type": "array",
+            "title": "Bands"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/SeriesPoint"
+            },
+            "type": "array",
+            "title": "Series"
+          },
+          "mktcap_company": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mktcap Company"
+          },
+          "classes": {
+            "items": {
+              "$ref": "#/components/schemas/ClassCap"
+            },
+            "type": "array",
+            "title": "Classes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "metric",
+          "current",
+          "bands",
+          "series",
+          "mktcap_company",
+          "classes"
+        ],
+        "title": "Valuation",
+        "description": "밸류에이션(§4.8). 우선주는 회사 배수(보통 + 우선 시총 — 보통주와 같은 값)."
+      },
+      "ValuationCurrent": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "ttm_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ttm Ref"
+          },
+          "ev": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ev"
+          },
+          "per": {
+            "$ref": "#/components/schemas/MultipleCell"
+          },
+          "pbr": {
+            "$ref": "#/components/schemas/MultipleCell"
+          },
+          "psr": {
+            "$ref": "#/components/schemas/MultipleCell"
+          },
+          "ev_ebitda": {
+            "$ref": "#/components/schemas/MultipleCell"
+          },
+          "per_fwd": {
+            "$ref": "#/components/schemas/MultipleCell"
+          },
+          "psr_fwd": {
+            "$ref": "#/components/schemas/MultipleCell"
+          },
+          "ev_ebitda_fwd": {
+            "$ref": "#/components/schemas/MultipleCell"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "price",
+          "ttm_ref",
+          "ev",
+          "per",
+          "pbr",
+          "psr",
+          "ev_ebitda",
+          "per_fwd",
+          "psr_fwd",
+          "ev_ebitda_fwd",
+          "quality"
+        ],
+        "title": "ValuationCurrent",
+        "description": "그날(전 거래일) PIT 배수 — t 까지 공시된 정기보고서 분기만(D-P4-11)."
+      },
+      "WatchRow": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "sort": {
+            "type": "integer",
+            "title": "Sort"
+          },
+          "added_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Added At"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "market": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "common",
+                  "pref",
+                  "spac",
+                  "reit",
+                  "etf",
+                  "etn"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "close": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close"
+          },
+          "chg_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chg Pct"
+          },
+          "mktcap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mktcap"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "sort",
+          "added_at",
+          "note",
+          "source",
+          "market",
+          "kind",
+          "date",
+          "close",
+          "chg_pct",
+          "mktcap",
+          "quality"
+        ],
+        "title": "WatchRow"
+      },
+      "Watchlist": {
+        "properties": {
+          "list_name": {
+            "type": "string",
+            "title": "List Name"
+          },
+          "n": {
+            "type": "integer",
+            "title": "N"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/WatchRow"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "list_name",
+          "n",
+          "items"
+        ],
+        "title": "Watchlist"
+      },
+      "WindowView": {
+        "properties": {
+          "days": {
+            "type": "integer",
+            "title": "Days"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "net_shares": {
+            "type": "integer",
+            "title": "Net Shares"
+          },
+          "buy_shares": {
+            "type": "integer",
+            "title": "Buy Shares"
+          },
+          "sell_shares": {
+            "type": "integer",
+            "title": "Sell Shares"
+          },
+          "n_reports": {
+            "type": "integer",
+            "title": "N Reports"
+          },
+          "n_reporters": {
+            "type": "integer",
+            "title": "N Reporters"
+          },
+          "ratio_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ratio Pct"
+          },
+          "reason_known_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Known Pct"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "amount_missing": {
+            "type": "integer",
+            "title": "Amount Missing"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "days",
+          "as_of",
+          "net_shares",
+          "buy_shares",
+          "sell_shares",
+          "n_reports",
+          "n_reporters",
+          "ratio_pct",
+          "reason_known_pct",
+          "amount",
+          "amount_missing",
+          "quality"
+        ],
+        "title": "WindowView",
+        "description": "보고 기준 순증감(사유 미구분 포함 — 장내 순매수가 아니다, §4.4). `amount` = Σ 증감 ×\n보고일 종가(로그인 — 추정), `amount_missing` = 종가를 몰라 금액에서 뺀 보고 수."
       }
     }
   }

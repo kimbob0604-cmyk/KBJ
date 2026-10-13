@@ -196,6 +196,15 @@ describe('패널', () => {
     expect(lockText('krx')).toBe(LOCK_REASONS.krx);
     expect(lockText('직접 쓴 사유')).toBe('직접 쓴 사유');
   });
+
+  it('P4 자물쇠 사유: 컨센서스는 제3자 유료, 밸류에이션은 시세 기반(p4_design §1.2·§6.2)', () => {
+    expect(lockText('consensus')).toBe('컨센서스 — 제3자 유료·재배포 금지');
+    expect(lockText('valuation')).toContain('시세 기반');
+    expect(lockText('valuation')).not.toContain('TAM');
+    const p = panel('public', { title: '밸류 밴드', tier: 'login', lock: 'valuation' });
+    expect(p.locked).toBe(true);
+    expect(p.el.querySelector('.lockmsg')?.textContent).toBe(`LOGIN${LOCK_REASONS.valuation}`);
+  });
 });
 
 describe('칩', () => {

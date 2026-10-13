@@ -13,11 +13,17 @@ requires-python = ">=3.12,<3.13"
 # - fastapi·uvicorn(extras 없음): 로그인 API·텔레그램 웹훅 수신·로그인 SPA 정적 파일을 한 프로세스로(compose
 #   서비스 api). starlette 은 fastapi 가 끌어온다. 비밀번호 해시는 표준 라이브러리 hashlib.scrypt(새 의존성 없음),
 #   DB 풀은 쓰지 않는다(psycopg pool 은 새 의존성 — §5.1). 프런트(web/)는 npm 쪽(묶음 W)
+# P4(docs/p4_design.md §1.1·D-P4-20, 묶음 M — 웨이브 2 가 쓸 의존성을 한 번에):
+# - openpyxl: dart-report 엑셀 빌더 승격(kbj.reports.dart_excel — 묶음 R)
+# - beautifulsoup4: DART 공시 원문·주석 표 파싱(표준 html.parser — DR 3곳 그대로, lxml 불필요)
+#   둘 다 legacy 그룹과 같은 하한(단일 lock — 같은 버전으로 묶인다)
 dependencies = [
+    "beautifulsoup4>=4.12",
     "defusedxml>=0.7.1",
     "exchange-calendars>=4.13.2",
     "fastapi>=0.115",
     "httpx>=0.28",
+    "openpyxl>=3.1",
     "psycopg[binary]>=3.3.6",
     "pydantic>=2.13",
     "pydantic-settings>=2.15",
@@ -62,9 +68,9 @@ legacy = [
     "openpyxl>=3.1",
     "matplotlib>=3.8",
     "fonttools>=4.40",
-    "streamlit>=1.36",
     "playwright>=1.40",
-    # stock_dashboard (requirements.txt + 누락분 aiohttp·tenacity — dart_collector.py)
+    # stock_dashboard (requirements.txt). 누락분이던 aiohttp·tenacity(dart_collector.py)는 P4 묶음 S 가 그 모듈과 함께
+    # 지웠다. etf_traker 의 streamlit(dart-report app.py)도 P4 에 app.py 삭제(D-P4-6)와 함께 지웠다
     "flask>=3.0",
     "pykrx>=1.0.51",
     "apscheduler>=3.10",
@@ -72,8 +78,6 @@ legacy = [
     "yfinance>=0.2.40",
     "flask-socketio>=5.3",
     "simple-websocket>=1.0",
-    "aiohttp>=3.9",
-    "tenacity>=8.2",
 ]
 
 [build-system]
@@ -172,6 +176,7 @@ source_modules = [
     "kbj.services.scheduler",
     "kbj.services.ws_gateway",
     "kbj.services.runtime",
+    "kbj.services.watchlist",
 ]
 forbidden_modules = ["kbj.services.auth"]
 
@@ -197,6 +202,7 @@ source_modules = [
     "kbj.services.scheduler",
     "kbj.services.ws_gateway",
     "kbj.services.runtime",
+    "kbj.services.watchlist",
 ]
 forbidden_modules = ["kbj.services.notifier.telegram_api"]
 ignore_imports = [
@@ -262,3 +268,46 @@ name = "⑩ 로그인 API(kbj.services.api)는 로그인 원천 어댑터·수�
 type = "forbidden"
 source_modules = ["kbj.services.api"]
 forbidden_modules = ["kbj.data.private", "kbj.services.collectors"]
+
+# ── P4 묶음 S — 공시·재무(공개)와 컨센서스·밸류(로그인)의 경계(docs/p4_design.md §2). 소스 모듈이 다 생긴
+# 웨이브 3 에 넣었다. 셋 다 간접 import 까지 막는다(기본값) ──
+# ⑪ dart-report(공개 리포트 — pub_fin.report)는 로그인 원천·컨센서스·밸류 엔진·API 를 모른다. 관심종목
+# 목록(대상 고르기)은 저장소 JournalRepo 로 읽되 산출물에 남기지 않는다(시험: 공개 파일에 관심 흔적 0)
+[[tool.importlinter.contracts]]
+name = "⑪ 리포트(kbj.reports)는 로그인 원천·컨센서스·밸류 엔진·API 를 import 하지 않는다"
+type = "forbidden"
+source_modules = ["kbj.reports"]
+forbidden_modules = [
+    "kbj.data.private",
+    "kbj.engines.consensus",
+    "kbj.engines.valuation",
+    "kbj.services.api",
+]
+
+# ⑫ 공개 엔진(공시·재무 — DART 만)은 로그인 엔진(컨센서스·밸류)과 로그인 원천을 모른다. 엔진 순수성은 ⑨
+[[tool.importlinter.contracts]]
+name = "⑫ 공개 엔진(kbj.engines.filings·financials)은 컨센서스·밸류 엔진과 로그인 원천을 import 하지 않는다"
+type = "forbidden"
+source_modules = ["kbj.engines.filings", "kbj.engines.financials"]
+forbidden_modules = ["kbj.engines.consensus", "kbj.engines.valuation", "kbj.data.private"]
+
+# ⑬ 공개 작업(pub_* 에만 쓰는 수집·파생)은 로그인 원천·로그인 엔진·로그인 저장소(컨센서스·관심종목)를
+# 모른다. 저장소는 kbj.store.repos.public(공개 묶음)만 — 패키지 이름 kbj.store.repos 는 __init__ 이 로그인
+# 저장소까지 끌어와 간접 위반이다. P3 도우미 kbj.services.collectors._p3 도 KIS·KRX 를 끌어와 위반.
+# SQL 의 스키마가 pub_ 뿐인지는 tests/unit/test_public_writers.py 가 따로 본다
+[[tool.importlinter.contracts]]
+name = "⑬ 공개 작업(dart_feed·dart_company·fin·engine.filings)은 로그인 원천·엔진·저장소를 import 하지 않는다"
+type = "forbidden"
+source_modules = [
+    "kbj.services.collectors.dart_feed",
+    "kbj.services.collectors.dart_company",
+    "kbj.services.collectors.fin",
+    "kbj.services.engine.filings",
+]
+forbidden_modules = [
+    "kbj.data.private",
+    "kbj.engines.consensus",
+    "kbj.engines.valuation",
+    "kbj.store.repos.consensus",
+    "kbj.store.repos.journal",
+]

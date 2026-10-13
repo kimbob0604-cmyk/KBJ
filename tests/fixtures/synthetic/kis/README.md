@@ -9,6 +9,7 @@ DATA_TIERS §4, ADR 0001 U3). 이 폴더의 JSON 은 모두 **고정 시드 생�
 | `callput_202610.json` | 전광판 콜/풋(FHPIF05030100) 월물 202610 응답 모양 | `test_kis_master.py`(마스터와 코드·행사가 대조) |
 | `callput_wkm_260904.json` | 전광판 콜/풋 위클리(월) 260904 응답 모양 | 같음 |
 | `p3_responses.json` | P3 TR 8개(현재가·종목/시장 투자자·가집계·거래대금 순위·ETF 현재가·지수·업종 [추정 TR]) 응답 모양 — 생성기 `make_p3.py`(가짜 KIS 서버 `synthetic_output`, sha256 고정 시드) | `tests/unit/kis/test_parse_*.py`(묶음 C) |
+| `p4_consensus.json` | P4 컨센서스 TR 2개(종목추정실적·종목투자의견 — TR id·경로는 `kbj/data/private/kis/datasets.py:CONSENSUS_TRS`, 모양은 `kbj.data.private.kis.consensus` 상수 표, 전부 [확인 필요 #29]) 응답 11건 — 생성기 `make_p4.py`(가짜 KIS 서버 `consensus_output` — 합성 20종목 세계 `p4_world` 시드 20261007 의 의미값·세계 밖은 sha256 고정 시드) | `tests/unit/kis/test_parse_consensus.py`(P4 묶음 K) |
 
 - 생성기: `legacy/gexlab/scripts/make_synthetic_fixtures.py`(시드 `kbj-p1-gexlab-synthetic-v1`, fixture 마다
   `random.Random(f"{SEED}:{이름}")`). P1 이식 때 GEXLAB 실측 fixture 를 바꾼 것이다(`legacy/gexlab/MIGRATION.md` §2).
@@ -21,3 +22,6 @@ DATA_TIERS §4, ADR 0001 U3). 이 폴더의 JSON 은 모두 **고정 시드 생�
 - 하루 운영 시뮬레이션의 가짜 KIS 서버가 쓰는 합성 응답(묶음 I)도 이 폴더에 둔다.
 - `p3_responses.json` 은 `uv run python tests/fixtures/synthetic/kis/make_p3.py --write` 로 다시 만든다. 커밋본이
   생성기 출력과 같은지는 `tests/unit/kis/test_parse_fixtures.py` 가 본다(P3 묶음 C).
+- `p4_consensus.json` 은 `uv run python tests/fixtures/synthetic/kis/make_p4.py --write` 로 다시 만든다. 커밋본이
+  생성기 출력과 같은지는 `tests/unit/kis/test_parse_consensus.py` 가 본다(P4 묶음 K). 실측(#29) 뒤 파서 상수 표가 바뀌면
+  같은 변경에서 다시 만든다.

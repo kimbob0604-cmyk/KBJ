@@ -37,8 +37,9 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--source", action="append", metavar="이름=SQLite",
                    help="sd·board·us·backtest·us_backtest·etf")  # fmt: skip
     p.add_argument("--json", action="append", metavar="이름=경로",
-                   help="inbox(inbox.json)·stockflows(state 폴더)·krflows(flows.json)")  # fmt: skip
-    p.add_argument("--phase", required=True, help="이 단계 매핑만(P2)")
+                   help="inbox(inbox.json)·stockflows(state 폴더)·krflows(flows.json)·"
+                        "watchlist(SD server_watchlist.json — P4)")  # fmt: skip
+    p.add_argument("--phase", required=True, help="이 단계 매핑만(P2·P4)")
     mode = p.add_mutually_exclusive_group()
     mode.add_argument("--dry-run", action="store_true", help="DB 없이 읽고 변환·집계만")
     mode.add_argument("--verify-only", action="store_true", help="쓰지 않고 대조만")

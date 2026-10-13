@@ -1,0 +1,44 @@
+{
+  "source": "KRX+DART",
+  "as_of": "2026-11-13T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "code": "994100",
+    "name": "모의금융지주",
+    "market": "KOSPI",
+    "kind": "common",
+    "common_code": "994100",
+    "corp_code": "99400100",
+    "corp_name": "모의금융지주",
+    "status_flags": [],
+    "listed_on": "2001-09-10",
+    "acc_mt": 12,
+    "induty_code": "64992",
+    "last": {
+      "date": "2026-11-13",
+      "close": 64000.0,
+      "chg_pct": -0.16,
+      "volume": 2685598,
+      "turnover": 171878295096,
+      "mktcap": 19200000000000,
+      "last_trade": "2026-11-13",
+      "stale": false,
+      "source": "KRX",
+      "quality": "ok"
+    },
+    "is_watch": true,
+    "detail_tier": true,
+    "newhigh": {
+      "date": "2026-11-13",
+      "basis": "close",
+      "d120": false,
+      "w52": false,
+      "hist": false,
+      "label": null,
+      "source": "KRX",
+      "quality": "ok"
+    }
+  }
+}

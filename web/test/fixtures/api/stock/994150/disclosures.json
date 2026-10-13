@@ -1,0 +1,59 @@
+{
+  "source": "DART",
+  "as_of": "2026-11-16T17:19:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "중요도 = 제목 키워드 + 관심종목 + 시총 가산(로그인 — 읽을 때 계산)"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "code": "994150",
+    "corp_code": "99400150",
+    "days": 90,
+    "kind": null,
+    "rows": [
+      {
+        "rcept_no": "20261116800163",
+        "rcept_dt": "2026-11-16",
+        "first_seen_at": "2026-11-16T16:05:00+09:00",
+        "corp_code": "99400150",
+        "stock_code": "994150",
+        "corp_name": "모의소프트",
+        "corp_cls": "K",
+        "title": "영업(잠정)실적(공정공시)",
+        "kind": "prelim",
+        "is_correction": false,
+        "kw_score": 6,
+        "kw_matched": [
+          "실적"
+        ],
+        "login_score": 7,
+        "importance": "high",
+        "is_watch": false,
+        "parse_state": "done",
+        "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261116800163"
+      },
+      {
+        "rcept_no": "20261116000024",
+        "rcept_dt": "2026-11-16",
+        "first_seen_at": "2026-11-16T17:19:00+09:00",
+        "corp_code": "99400150",
+        "stock_code": "994150",
+        "corp_name": "모의소프트",
+        "corp_cls": "K",
+        "title": "분기보고서 (2026.09)",
+        "kind": "periodic",
+        "is_correction": false,
+        "kw_score": 2,
+        "kw_matched": [
+          "분기보고서"
+        ],
+        "login_score": 3,
+        "importance": "low",
+        "is_watch": false,
+        "parse_state": "none",
+        "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261116000024"
+      }
+    ]
+  }
+}

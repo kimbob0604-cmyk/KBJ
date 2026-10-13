@@ -9,6 +9,14 @@ legacy 가 다시 내보내 쓴다(묶음 H).
 - 실패는 예외로 올린다. 빈 리스트는 '그런 공시가 없었다'(013 포함)이고 조회 실패와 다르다.
 - 종목코드 → corp_code 를 못 찾으면 부르기 **전에** 실패한다(요청 0건).
 - 공시 링크는 공개 뷰어 주소(`dart.fss.or.kr/dsaf001`)다 — API 주소가 아니다.
+
+P4(묶음 F — docs/p4_design.md §1.3): 증분 피드(`filings.dart_feed`)가 저장·파싱 경로를
+고르는 **잘게 나눈 종류** `FEED_KINDS`·`feed_kind()` 를 더했다. 설계는 이 종류들을 `KINDS` 앞에
+넣으라 했지만 그러면 `kind_of` 의 결과가 바뀐다 — 승격 원본 시험(ET
+`test_dart_for.py::test_mapping` — 잠정실적 → earnings, 소유보고 → owner)이 깨지고 legacy board
+표시(다시 내보내 쓴다)가 바뀐다. 그래서 `KINDS`·`kind_of` 는 그대로 두고(반환 dict 키·값 모두 P2
+그대로), 피드는 `feed_kind()`(잘게 나눈 종류 먼저, 안 걸리면 `kind_of`)를 쓴다.
+`pub_filings.disclosure.kind` 에 들어가는 값이 `feed_kind()` 다.
 """
 
 from __future__ import annotations
@@ -28,6 +36,7 @@ from kbj.data.public.dart.client import (
 __all__ = [
     "ACTION_WINDOW",
     "CORP_ACTION",
+    "FEED_KINDS",
     "KINDS",
     "PUBLISHER",
     "STATUS_KO",
@@ -37,6 +46,7 @@ __all__ = [
     "decode_status",
     "describe_status",
     "disclosures_for",
+    "feed_kind",
     "kind_of",
     "list_disclosures",
     "stock_actions",
@@ -83,6 +93,63 @@ KINDS: Final[tuple[tuple[str, tuple[str, ...]], ...]] = (
 )
 
 
+# 피드 종류(P4) — `feed_kind()` 가 공백을 지운 제목에서 앞에서부터 찾는다. 안 걸리면
+# `kind_of()`(위 KINDS). 저장·파싱 경로를 고르는 데 쓴다(docs/p4_design.md §1.3·§4.1):
+#   pre_announce       결산실적공시예고 — 원문(예정일) [확인 필요 #30]
+#   prelim             영업(잠정)실적 — 원문(SD classify_disclosure_type:58 순서). 자회사 잠정실적도
+#                      prelim(범위 subsidiary — 알림 대상 아님). '실적등에대한전망'은 안 걸린다
+#                      (→ kind_of 의 earnings)
+#   overhang_exercise  전환청구권·신주인수권·교환청구권 행사 — 원문(구조화 API 없음 [확인 필요 #31])
+#   price_adjust       전환가액·행사가액·교환가액 조정 — 원문 [확인 필요 #31]
+#   overhang           CB·BW·EB 발행결정, 유상·무상·유무상증자결정 — 구조화 API 우선, 빈 칸은 원문
+#   buyback            자기주식 취득·처분 결정(신탁 계약은 종류만 — 구조화 데이터셋이 카탈로그에
+#                      없다)
+#   insider            임원ㆍ주요주주특정증권등소유상황보고서 — elestock(회사 보고 전체) + 원문
+#                      변동 사유
+#   major_holder       주식등의대량보유상황보고서 — majorstock
+#   periodic           사업·반기·분기보고서 — 파싱하지 않는다(fin.quarterly 가 재무를 받는다)
+FEED_KINDS: Final[tuple[tuple[str, tuple[str, ...]], ...]] = (
+    ("pre_announce", ("결산실적공시예고",)),
+    ("prelim", ("연결재무제표기준영업(잠정)", "영업(잠정)실적")),
+    ("overhang_exercise", ("전환청구권행사", "신주인수권행사", "교환청구권행사")),
+    (
+        "price_adjust",
+        (
+            "전환가액의조정",
+            "전환가액조정",
+            "행사가액의조정",
+            "행사가액조정",
+            "교환가액의조정",
+            "교환가액조정",
+        ),
+    ),
+    (
+        "overhang",
+        (
+            "전환사채권발행결정",
+            "전환사채발행결정",
+            "신주인수권부사채권발행결정",
+            "신주인수권부사채발행결정",
+            "교환사채권발행결정",
+            "교환사채발행결정",
+            "유무상증자결정",
+            "유상증자결정",
+            "무상증자결정",
+        ),
+    ),
+    (
+        "buyback",
+        ("자기주식취득결정", "자기주식처분결정", "자기주식취득신탁계약", "자기주식처분신탁계약"),
+    ),
+    (
+        "insider",
+        ("임원ㆍ주요주주특정증권등소유상황보고서", "임원·주요주주특정증권등소유상황보고서"),
+    ),
+    ("major_holder", ("주식등의대량보유상황보고서",)),
+    ("periodic", ("사업보고서", "반기보고서", "분기보고서")),
+)
+
+
 class DartJson(Protocol):
     """공시 함수가 쓰는 클라이언트 모양(`DartClient` 가 맞는다 — 시험은 가짜로 바꿔 끼운다)."""
 
@@ -106,6 +173,15 @@ def kind_of(title: str | None) -> str:
         if any(w in t for w in words):
             return kind
     return "other"
+
+
+def feed_kind(title: str | None) -> str:
+    """피드 종류(P4) — `FEED_KINDS`(공백을 지운 제목) 먼저, 안 걸리면 `kind_of`."""
+    t = (title or "").replace(" ", "")
+    for kind, words in FEED_KINDS:
+        if any(w in t for w in words):
+            return kind
+    return kind_of(title)
 
 
 def _ymd(d: object) -> str:

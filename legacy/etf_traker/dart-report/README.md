@@ -38,13 +38,12 @@ python run.py --stock 006110 --no-orders          # 수주 수집 생략 (빠름
 
 결과: `out/{회사명}_{종목코드}_재무리포트.xlsx`
 
-### 2. 웹 앱
+### 2. 웹 앱 — KBJ P4 에서 폐지
 
-```bash
-streamlit run app.py        # http://localhost:8501
-```
-
-사이드바에 종목코드를 넣고 버튼을 누르면 화면에서 차트를 보고 엑셀로 내려받습니다.
+Streamlit `app.py` 는 지웠습니다(KBJ 페이지 8 '리포트' 탭이 대신 — 같은 입력으로 만든 화면 블록 +
+엑셀 내려받기). 계산·엑셀의 정본은 `kbj.engines.financials`·`kbj.reports.dart_excel` 이고 이 폴더의
+`dartreport/*.py` 는 그것을 다시 내보냅니다(`MIGRATION.md`). 같은 CLI 는
+`uv run python -m kbj.reports.dart_excel --stock 006110` 입니다.
 
 ### 3. GitHub Actions
 

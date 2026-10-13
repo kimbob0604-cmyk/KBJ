@@ -351,3 +351,56 @@ def test_from_settings_uses_shared_limiter_and_budget() -> None:
     c.get_json("list.json", {})
     assert r.get("budget:dart:20261007") == b"1"
     assert r.keys("rl:dart:*") != []
+
+
+# ── P4 묶음 M(docs/p4_design.md §1.1): REPRT 는 kbj.core.fin_rows 하나, 백필 상한 ───────────────
+
+
+def test_reprt_is_the_core_object_reexported() -> None:
+    """엔진은 kbj.data 를 못 쓴다(계약 ⑨) — REPRT 정본은 kbj.core.fin_rows, client 는 같은 객체."""
+    from kbj.core import fin_rows
+    from kbj.data.public.dart import client as dart_client
+
+    assert dart_client.REPRT is fin_rows.REPRT
+    assert dict(fin_rows.REPRT) == {
+        "11013": ("1Q", 3), "11012": ("2Q", 6), "11014": ("3Q", 9), "11011": ("4Q", 12),
+    }  # fmt: skip
+
+
+def test_backfill_budget_is_counted_first_and_stops_before_the_shared_one() -> None:
+    """from_settings(backfill=True) — budget:dart:backfill:<날짜> 를 먼저 가져가고, 상한이면 공용
+    budget:dart 를 올리지 않는다(KrxClient 와 같은 순서)."""
+    from kbj.data.limits import load_limits
+
+    r = fakeredis.FakeRedis()
+    settings = Settings(_env_file=None, dart_api_key=SecretStr(KEY))  # pyright: ignore[reportCallIssue]
+    server = FakeServer(lambda req: _json({"status": "000", "list": []}))
+    clock = FakeClock(T0)
+    limits = load_limits()
+    assert limits.source("dart").backfill_cap == 8000
+    small = limits.model_copy(
+        update={
+            "sources": {
+                **limits.sources,
+                "dart": limits.source("dart").model_copy(update={"backfill_cap": 2}),
+            }
+        }
+    )
+    c = DartClient.from_settings(
+        settings, r, limits=small, clock=clock, transport=server.transport(), now=clock,
+        backfill=True,
+    )  # fmt: skip
+    c.get_json("list.json", {})
+    c.get_json("list.json", {})
+    with pytest.raises(BudgetExhausted):
+        c.get_json("list.json", {})
+    assert r.get("budget:dart:backfill:20261007") == b"2"
+    assert (
+        r.get("budget:dart:20261007") == b"2"
+    )  # 백필 상한에서 멈춘 시도는 공용 예산을 쓰지 않는다
+    assert len(server.requests) == 2
+    plain = DartClient.from_settings(
+        settings, r, clock=clock, transport=server.transport(), now=clock
+    )
+    plain.get_json("list.json", {})  # 백필이 아닌 클라이언트는 공용 예산만
+    assert r.get("budget:dart:20261007") == b"3"

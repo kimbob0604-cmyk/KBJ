@@ -9,6 +9,7 @@ import { panel } from '../ui/panel';
 import { type PageLoader, pageDef, pageLoaders, PAGES } from './pages';
 import { createPager, type Pager } from './pager';
 import { createScheduler } from './refresh';
+import { type Route, route as appRoute } from './route';
 import { createTopBar } from './shell';
 import type { AppContext, Cleanup, PageContext, RibbonModule } from './types';
 
@@ -28,6 +29,8 @@ export interface MountOptions {
   ribbon?: (() => Promise<RibbonModule>) | null;
   /** 스킨 저장소. 생략하면 브라우저 localStorage, null 이면 저장하지 않음 */
   storage?: Pick<Storage, 'getItem' | 'setItem'> | null;
+  /** 선택 종목 상태(P4 — app/route.ts). 생략하면 앱의 것(페이지 모듈이 import 하는 그 상태) */
+  route?: Route;
   win?: Window;
 }
 
@@ -118,12 +121,14 @@ export function mountApp(root: HTMLElement, o: MountOptions): AppHandle {
     pending.push(job);
   }
 
+  const route = o.route ?? appRoute;
   const pager = createPager({
     pages: PAGES,
     filled,
     container,
     sections,
     onShow: mountPage,
+    route,
     win,
   });
 
@@ -185,6 +190,8 @@ export function mountApp(root: HTMLElement, o: MountOptions): AppHandle {
           console.error('[kbj] 정리 오류', err);
         }
       }
+      // 선택 종목·구독을 비운다 — 다음 앱(다시 붙이기·시험)이 앞 앱의 종목을 물려받지 않게
+      route.reset();
       replace(root);
     },
   };

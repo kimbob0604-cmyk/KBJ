@@ -29,6 +29,8 @@ from dartreport.excel import build_workbook
 from dartreport.orders import fetch_orders, orders_table
 from dartreport.statements import fetch_periods, to_annual, to_quarterly
 
+_MAPPING = Path(__file__).resolve().parents[3] / "config" / "dart_report" / "mapping.yaml"
+
 
 def parse_args(argv=None):
     p = argparse.ArgumentParser(description="DART 재무 리포트 생성기")
@@ -38,7 +40,9 @@ def parse_args(argv=None):
     p.add_argument("--fs-div", default="CFS", choices=["CFS", "OFS"],
                    help="CFS=연결(기본), OFS=별도")
     p.add_argument("--out", default=None, help="출력 xlsx 경로")
-    p.add_argument("--mapping", default="config/mapping.yaml")
+    # KBJ P4: 매핑은 레포 설정 폴더로 옮겼다(config/dart_report/mapping.yaml — 이 폴더의
+    # config/mapping.yaml 은 그 파일을 가리키는 링크). 작업 디렉터리와 상관없이 같은 파일
+    p.add_argument("--mapping", default=str(_MAPPING))
     p.add_argument("--cache", default=".cache")
     p.add_argument("--no-orders", action="store_true", help="수주 공시 수집 생략 (빠름)")
     p.add_argument("--diagnose-costs", action="store_true",

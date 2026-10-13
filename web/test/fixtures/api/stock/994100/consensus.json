@@ -1,0 +1,417 @@
+{
+  "source": "KIS",
+  "as_of": "2026-11-16T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "KIS 추정 — 여러 증권사 평균(시장 컨센서스)인지 KIS 자체 추정인지 [확인 필요 #29]",
+    "출처 없음 — KIS 교체로 잃음: 분기 컨센서스·분기 어닝 서프라이즈·컨센서스 최고·최저"
+  ],
+  "generated_at": "2026-11-16T21:30:00+09:00",
+  "data": {
+    "applicable": true,
+    "na_reason": null,
+    "code": "994100",
+    "label": "KIS 추정",
+    "snap_date": "2026-11-16",
+    "fy": [
+      {
+        "fiscal_ym": "202412",
+        "fiscal_end": "2024-12-31",
+        "is_estimate": false,
+        "revenue": 13969800000000,
+        "op": 4644700000000,
+        "ni": 3403200000000,
+        "ni_owner": 3233000000000,
+        "eps": 10777.0,
+        "ebitda": null,
+        "quality": "ok"
+      },
+      {
+        "fiscal_ym": "202512",
+        "fiscal_end": "2025-12-31",
+        "is_estimate": false,
+        "revenue": 14371700000000,
+        "op": 4874400000000,
+        "ni": 3575000000000,
+        "ni_owner": 3396200000000,
+        "eps": 11321.0,
+        "ebitda": null,
+        "quality": "ok"
+      },
+      {
+        "fiscal_ym": "202612",
+        "fiscal_end": "2026-12-31",
+        "is_estimate": true,
+        "revenue": 15191500000000,
+        "op": 5157900000000,
+        "ni": 3777500000000,
+        "ni_owner": 3588600000000,
+        "eps": 11962.0,
+        "ebitda": null,
+        "quality": "ok"
+      },
+      {
+        "fiscal_ym": "202712",
+        "fiscal_end": "2027-12-31",
+        "is_estimate": true,
+        "revenue": 16741700000000,
+        "op": 5684200000000,
+        "ni": 4162900000000,
+        "ni_owner": 3954800000000,
+        "eps": 13183.0,
+        "ebitda": null,
+        "quality": "ok"
+      },
+      {
+        "fiscal_ym": "202812",
+        "fiscal_end": "2028-12-31",
+        "is_estimate": true,
+        "revenue": 18402400000000,
+        "op": 6248000000000,
+        "ni": 4575900000000,
+        "ni_owner": 4347100000000,
+        "eps": 14490.0,
+        "ebitda": null,
+        "quality": "ok"
+      }
+    ],
+    "ntm": {
+      "as_of": "2026-11-16",
+      "snap_date": "2026-11-16",
+      "fy1_ym": "202612",
+      "fy2_ym": "202712",
+      "weight": 0.1232876712328767,
+      "revenue": 16550579452054.793,
+      "op": 5619313698630.137,
+      "ni": 4115384931506.849,
+      "eps": 13032.465753424656,
+      "ebitda": null,
+      "quality": "ok"
+    },
+    "target": {
+      "as_of": "2026-11-16",
+      "mean": 80120.0,
+      "median": 79100.0,
+      "high": 85300.0,
+      "low": 75800.0,
+      "n_brokers": 5,
+      "window_days": 90,
+      "upside_pct": 25.187500000000007,
+      "quality": "ok"
+    },
+    "opinions": {
+      "buy": 5,
+      "hold": 0,
+      "sell": 0,
+      "unrated": 0,
+      "unknown": 0,
+      "n_brokers": 5,
+      "window_days": 90
+    },
+    "revisions": [
+      {
+        "as_of": "2026-11-16",
+        "metric": "eps",
+        "fiscal_ym": "202612",
+        "window_days": 7,
+        "current": 11962.0,
+        "baseline": 11968.0,
+        "baseline_date": "2026-11-09",
+        "pct": -0.0501336898395722,
+        "signal": "NEUTRAL",
+        "quality": "ok"
+      },
+      {
+        "as_of": "2026-11-16",
+        "metric": "eps",
+        "fiscal_ym": "202612",
+        "window_days": 30,
+        "current": 11962.0,
+        "baseline": 11847.0,
+        "baseline_date": "2026-10-16",
+        "pct": 0.9707098843589094,
+        "signal": "NEUTRAL",
+        "quality": "ok"
+      },
+      {
+        "as_of": "2026-11-16",
+        "metric": "eps",
+        "fiscal_ym": "202712",
+        "window_days": 7,
+        "current": 13183.0,
+        "baseline": 13162.0,
+        "baseline_date": "2026-11-09",
+        "pct": 0.15955022033125663,
+        "signal": "NEUTRAL",
+        "quality": "ok"
+      },
+      {
+        "as_of": "2026-11-16",
+        "metric": "eps",
+        "fiscal_ym": "202712",
+        "window_days": 30,
+        "current": 13183.0,
+        "baseline": 13023.0,
+        "baseline_date": "2026-10-16",
+        "pct": 1.2285955616985333,
+        "signal": "NEUTRAL",
+        "quality": "ok"
+      },
+      {
+        "as_of": "2026-11-16",
+        "metric": "ni",
+        "fiscal_ym": "202612",
+        "window_days": 7,
+        "current": 3777500000000.0,
+        "baseline": 3779500000000.0,
+        "baseline_date": "2026-11-09",
+        "pct": -0.052917052520174625,
+        "signal": "NEUTRAL",
+        "quality": "ok"
+      },
+      {
+        "as_of": "2026-11-16",
+        "metric": "ni",
+        "fiscal_ym": "202612",
+        "window_days": 30,
+        "current": 3777500000000.0,
+        "baseline": 3741200000000.0,
+        "baseline_date": "2026-10-16",
+        "pct": 0.9702769164973806,
+        "signal": "NEUTRAL",
+        "quality": "ok"
+      },
+      {
+        "as_of": "2026-11-16",
+        "metric": "ni",
+        "fiscal_ym": "202712",
+        "window_days": 7,
+        "current": 4162900000000.0,
+        "baseline": 4156300000000.0,
+        "baseline_date": "2026-11-09",
+        "pct": 0.1587950821644251,
+        "signal": "NEUTRAL",
+        "quality": "ok"
+      },
+      {
+        "as_of": "2026-11-16",
+        "metric": "ni",
+        "fiscal_ym": "202712",
+        "window_days": 30,
+        "current": 4162900000000.0,
+        "baseline": 4112400000000.0,
+        "baseline_date": "2026-10-16",
+        "pct": 1.227993385857407,
+        "signal": "NEUTRAL",
+        "quality": "ok"
+      },
+      {
+        "as_of": "2026-11-16",
+        "metric": "op",
+        "fiscal_ym": "202612",
+        "window_days": 7,
+        "current": 5157900000000.0,
+        "baseline": 5160600000000.0,
+        "baseline_date": "2026-11-09",
+        "pct": -0.05231949773282176,
+        "signal": "NEUTRAL",
+        "quality": "ok"
+      },
+      {
+        "as_of": "2026-11-16",
+        "metric": "op",
+        "fiscal_ym": "202612",
+        "window_days": 30,
+        "current": 5157900000000.0,
+        "baseline": 5108300000000.0,
+        "baseline_date": "2026-10-16",
+        "pct": 0.970968815457197,
+        "signal": "NEUTRAL",
+        "quality": "ok"
+      },
+      {
+        "as_of": "2026-11-16",
+        "metric": "op",
+        "fiscal_ym": "202712",
+        "window_days": 7,
+        "current": 5684200000000.0,
+        "baseline": 5675100000000.0,
+        "baseline_date": "2026-11-09",
+        "pct": 0.1603495973639231,
+        "signal": "NEUTRAL",
+        "quality": "ok"
+      },
+      {
+        "as_of": "2026-11-16",
+        "metric": "op",
+        "fiscal_ym": "202712",
+        "window_days": 30,
+        "current": 5684200000000.0,
+        "baseline": 5615200000000.0,
+        "baseline_date": "2026-10-16",
+        "pct": 1.228807522439094,
+        "signal": "NEUTRAL",
+        "quality": "ok"
+      },
+      {
+        "as_of": "2026-11-16",
+        "metric": "revenue",
+        "fiscal_ym": "202612",
+        "window_days": 7,
+        "current": 15191500000000.0,
+        "baseline": 15224300000000.0,
+        "baseline_date": "2026-11-09",
+        "pct": -0.2154450450923852,
+        "signal": "NEUTRAL",
+        "quality": "ok"
+      },
+      {
+        "as_of": "2026-11-16",
+        "metric": "revenue",
+        "fiscal_ym": "202612",
+        "window_days": 30,
+        "current": 15191500000000.0,
+        "baseline": 15153900000000.0,
+        "baseline_date": "2026-10-16",
+        "pct": 0.2481209457631369,
+        "signal": "NEUTRAL",
+        "quality": "ok"
+      },
+      {
+        "as_of": "2026-11-16",
+        "metric": "revenue",
+        "fiscal_ym": "202712",
+        "window_days": 7,
+        "current": 16741700000000.0,
+        "baseline": 16742000000000.0,
+        "baseline_date": "2026-11-09",
+        "pct": -0.0017919006092462072,
+        "signal": "NEUTRAL",
+        "quality": "ok"
+      },
+      {
+        "as_of": "2026-11-16",
+        "metric": "revenue",
+        "fiscal_ym": "202712",
+        "window_days": 30,
+        "current": 16741700000000.0,
+        "baseline": 16657800000000.0,
+        "baseline_date": "2026-10-16",
+        "pct": 0.5036679513501183,
+        "signal": "NEUTRAL",
+        "quality": "ok"
+      },
+      {
+        "as_of": "2026-11-16",
+        "metric": "target_mean",
+        "fiscal_ym": "000000",
+        "window_days": 7,
+        "current": 80120.0,
+        "baseline": 80120.0,
+        "baseline_date": "2026-11-09",
+        "pct": 0.0,
+        "signal": "NEUTRAL",
+        "quality": "ok"
+      },
+      {
+        "as_of": "2026-11-16",
+        "metric": "target_mean",
+        "fiscal_ym": "000000",
+        "window_days": 30,
+        "current": 80120.0,
+        "baseline": 76120.0,
+        "baseline_date": "2026-10-17",
+        "pct": 5.254860746190226,
+        "signal": "UP",
+        "quality": "ok"
+      }
+    ],
+    "recent": [
+      {
+        "broker": "시뮬투자증권",
+        "opinion_date": "2026-10-30",
+        "opinion": "매수",
+        "opinion_prev": "매수",
+        "target_price": 79100.0,
+        "quality": "ok"
+      },
+      {
+        "broker": "샘플증권",
+        "opinion_date": "2026-10-28",
+        "opinion": "매수",
+        "opinion_prev": "매수",
+        "target_price": 83700.0,
+        "quality": "ok"
+      },
+      {
+        "broker": "가상증권",
+        "opinion_date": "2026-10-28",
+        "opinion": "매수",
+        "opinion_prev": "매수",
+        "target_price": 75800.0,
+        "quality": "ok"
+      },
+      {
+        "broker": "모의증권",
+        "opinion_date": "2026-10-27",
+        "opinion": "매수",
+        "opinion_prev": "매수",
+        "target_price": 76700.0,
+        "quality": "ok"
+      },
+      {
+        "broker": "테스트금융투자",
+        "opinion_date": "2026-10-26",
+        "opinion": "매수",
+        "opinion_prev": "매수",
+        "target_price": 85300.0,
+        "quality": "ok"
+      },
+      {
+        "broker": "테스트금융투자",
+        "opinion_date": "2026-09-22",
+        "opinion": "매수",
+        "opinion_prev": "매수",
+        "target_price": 81600.0,
+        "quality": "ok"
+      },
+      {
+        "broker": "시뮬투자증권",
+        "opinion_date": "2026-09-22",
+        "opinion": "매수",
+        "opinion_prev": "매수",
+        "target_price": 75800.0,
+        "quality": "ok"
+      },
+      {
+        "broker": "가상증권",
+        "opinion_date": "2026-09-21",
+        "opinion": "매수",
+        "opinion_prev": "매수",
+        "target_price": 70800.0,
+        "quality": "ok"
+      },
+      {
+        "broker": "샘플증권",
+        "opinion_date": "2026-09-16",
+        "opinion": "매수",
+        "opinion_prev": "매수",
+        "target_price": 78600.0,
+        "quality": "ok"
+      },
+      {
+        "broker": "모의증권",
+        "opinion_date": "2026-09-16",
+        "opinion": "매수",
+        "opinion_prev": "매수",
+        "target_price": 73800.0,
+        "quality": "ok"
+      }
+    ],
+    "lost": [
+      "분기 컨센서스",
+      "분기 어닝 서프라이즈",
+      "컨센서스 최고·최저"
+    ]
+  }
+}
