@@ -32,6 +32,7 @@ from kbj.store.repos import (
     FilingsRepo,
     FinRepo,
     FlowsRepo,
+    IndexReviewRepo,
     JournalRepo,
     MacroPrivateRepo,
     MacroPublicRepo,
@@ -109,6 +110,10 @@ class ApiRepos(Protocol):
 
     @property
     def program(self) -> ProgramRepo: ...
+
+    # P5 2차 묶음 IDX(0018 — 지수 정기변경 예측, 로그인)
+    @property
+    def index_review(self) -> IndexReviewRepo: ...
 
 
 class NoData(Exception):

@@ -84,6 +84,9 @@ export function p4Response(url: string): Response {
   // P5 ETF(WRAP 고리): 페이지 8 '개요' 탭 '담은 ETF'(etf/holders/<코드>) — P4 합성 20종목 세계에는 ETF 구성 자료가
   // 없다 → 서버가 내는 404 no_data 그대로(값은 ETF 묶음 픽스처 etf/holders_*.json 이 p8_etf_holders 시험에서 본다)
   if (/^etf\/holders\/[0-9A-Z]{6}$/.test(path)) return json({ code: 'no_data', message: '아직 없음 — etf.collect 08:00' }, 404);
+  // P5 2차 IDX: 페이지 8 머리 지수 배지·페이지 5 캘린더 지수 줄 — P4 합성 세계에는 지수 예측이 없다 → 서버의 404 no_data
+  // 그대로(값은 test/pages/p10_index_review.test.ts 가 index_review 픽스처로 본다)
+  if (path === 'index-review' || path.startsWith('index-review/')) return json({ code: 'no_data', message: '아직 없음 — index.predict 17:20' }, 404);
   if (path === 'stock/search') return json(apiFixture('stock/search'));
   if (path === 'watchlist') return json(apiFixture('watchlist/main'));
   let m = /^filings\/([a-z_]+)$/.exec(path);

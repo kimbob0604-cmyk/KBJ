@@ -177,7 +177,7 @@ def test_p5_domains_and_modules() -> None:
 
     from tests.unit.api.make_web_fixtures import render_p5
 
-    assert P5_DOMAINS == ("macro", "etf", "us", "program")
+    assert P5_DOMAINS == ("macro", "etf", "us", "program", "index_review")
     for d in P5_DOMAINS:
         mod = importlib.import_module(f"tests.unit.api.web_fixtures_p5.{d}")
         assert mod.DOMAIN == d

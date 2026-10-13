@@ -63,6 +63,7 @@ from kbj.services.api.routes import (
     filings,
     flows,
     health,
+    index_review,
     macro,
     market,
     program,
@@ -228,6 +229,7 @@ def create_app(
     routers = (
         health, auth, market, board, flows, etf, stock, filings, watchlist,
         macro, program,  # P5(docs/p5_design.md §5 — 웨이브 1 FND)
+        index_review,  # P5 2차 묶음 IDX(docs/p5_index_rebalance_prompt.md §3-5)
         webhook,
     )  # fmt: skip
     for r in routers:

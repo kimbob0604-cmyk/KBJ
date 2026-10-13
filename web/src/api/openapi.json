@@ -4355,6 +4355,177 @@
         }
       }
     },
+    "/api/index-review": {
+      "get": {
+        "tags": [
+          "index-review"
+        ],
+        "summary": "Review",
+        "operationId": "review_api_index_review_get",
+        "parameters": [
+          {
+            "name": "index",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 40,
+                  "pattern": "^[a-z][a-z0-9_]*$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Index"
+            }
+          },
+          {
+            "name": "review",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Review"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_IndexReview_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/index-review/stock/{code}": {
+      "get": {
+        "tags": [
+          "index-review"
+        ],
+        "summary": "Stock",
+        "operationId": "stock_api_index_review_stock__code__get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-Z]{6}$",
+              "title": "Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_StockIndexBadges_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/telegram/webhook": {
       "post": {
         "tags": [
@@ -5326,6 +5497,220 @@
         ],
         "title": "CalendarRow"
       },
+      "CandidateRow": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "add",
+              "delete",
+              "borderline",
+              "keep"
+            ],
+            "title": "Verdict"
+          },
+          "member": {
+            "type": "boolean",
+            "title": "Member"
+          },
+          "mktcap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mktcap"
+          },
+          "ff_mcap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ff Mcap"
+          },
+          "fif": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fif"
+          },
+          "fif_how": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fif How"
+          },
+          "gap_mcap": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gap Mcap"
+          },
+          "gap_ff": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gap Ff"
+          },
+          "condition_met": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Condition Met"
+          },
+          "required_rise": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Required Rise"
+          },
+          "required_basis": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "mcap",
+                  "ff"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Required Basis"
+          },
+          "passive_won": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passive Won"
+          },
+          "adv_won": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adv Won"
+          },
+          "adv_multiple": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adv Multiple"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "verdict",
+          "member",
+          "mktcap",
+          "ff_mcap",
+          "fif",
+          "fif_how",
+          "gap_mcap",
+          "gap_ff",
+          "condition_met",
+          "required_rise",
+          "required_basis",
+          "passive_won",
+          "adv_won",
+          "adv_multiple",
+          "rank",
+          "reasons",
+          "quality"
+        ],
+        "title": "CandidateRow"
+      },
       "ChangeRow": {
         "properties": {
           "fund_id": {
@@ -6043,6 +6428,66 @@
           "csrf_token"
         ],
         "title": "CsrfResponse"
+      },
+      "CutoffInfo": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "model",
+              "user"
+            ],
+            "title": "Kind"
+          },
+          "won": {
+            "type": "integer",
+            "title": "Won"
+          },
+          "low_won": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Low Won"
+          },
+          "high_won": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "High Won"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind",
+          "won",
+          "low_won",
+          "high_won",
+          "method"
+        ],
+        "title": "CutoffInfo",
+        "description": "컷오프(원). kind model = 엔진 추정(구간 low~high), user = 사용자가 넣은 증권사 추정치."
       },
       "DayFlow": {
         "properties": {
@@ -7392,6 +7837,49 @@
         ],
         "title": "Envelope[Financials]"
       },
+      "Envelope_IndexReview_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/IndexReview"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[IndexReview]"
+      },
       "Envelope_InsiderRecent_": {
         "properties": {
           "source": {
@@ -8337,6 +8825,49 @@
           "data"
         ],
         "title": "Envelope[StockHeader]"
+      },
+      "Envelope_StockIndexBadges_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/StockIndexBadges"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[StockIndexBadges]"
       },
       "Envelope_StockSearch_": {
         "properties": {
@@ -9891,6 +10422,202 @@
           "commit"
         ],
         "title": "Health"
+      },
+      "IndexReview": {
+        "properties": {
+          "indexes": {
+            "items": {
+              "$ref": "#/components/schemas/IndexTab"
+            },
+            "type": "array",
+            "title": "Indexes"
+          },
+          "index_id": {
+            "type": "string",
+            "title": "Index Id"
+          },
+          "review": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReviewDates"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reviews": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewDates"
+            },
+            "type": "array",
+            "title": "Reviews"
+          },
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/IndexRunView"
+            },
+            "type": "array",
+            "title": "Runs"
+          },
+          "calendar": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewDates"
+            },
+            "type": "array",
+            "title": "Calendar"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "indexes",
+          "index_id",
+          "review",
+          "reviews",
+          "runs",
+          "calendar"
+        ],
+        "title": "IndexReview",
+        "description": "페이지 10 '지수 정기변경' 패널 + 페이지 5 캘린더 줄(calendar — 다가오는 일정 전부)."
+      },
+      "IndexRunView": {
+        "properties": {
+          "cutoff_kind": {
+            "type": "string",
+            "enum": [
+              "model",
+              "user"
+            ],
+            "title": "Cutoff Kind"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "no_constituents",
+              "no_data"
+            ],
+            "title": "Status"
+          },
+          "base_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Base Date"
+          },
+          "cutoff": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CutoffInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "n_members": {
+            "type": "integer",
+            "title": "N Members"
+          },
+          "n_add": {
+            "type": "integer",
+            "title": "N Add"
+          },
+          "n_delete": {
+            "type": "integer",
+            "title": "N Delete"
+          },
+          "n_borderline": {
+            "type": "integer",
+            "title": "N Borderline"
+          },
+          "aum_won": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aum Won"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "adds": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateRow"
+            },
+            "type": "array",
+            "title": "Adds"
+          },
+          "deletes": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateRow"
+            },
+            "type": "array",
+            "title": "Deletes"
+          },
+          "borderline": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateRow"
+            },
+            "type": "array",
+            "title": "Borderline"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "cutoff_kind",
+          "status",
+          "base_date",
+          "cutoff",
+          "n_members",
+          "n_add",
+          "n_delete",
+          "n_borderline",
+          "aum_won",
+          "notes",
+          "quality",
+          "adds",
+          "deletes",
+          "borderline"
+        ],
+        "title": "IndexRunView",
+        "description": "한 컷오프 종류의 예측. status no_constituents = 구성종목 목록 없음(후보를 내지 않는다)."
+      },
+      "IndexTab": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "order": {
+            "type": "integer",
+            "title": "Order"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "order"
+        ],
+        "title": "IndexTab"
       },
       "IndexTile": {
         "properties": {
@@ -13474,6 +14201,84 @@
         ],
         "title": "ReportView"
       },
+      "ReviewDates": {
+        "properties": {
+          "index_id": {
+            "type": "string",
+            "title": "Index Id"
+          },
+          "index_title": {
+            "type": "string",
+            "title": "Index Title"
+          },
+          "review_id": {
+            "type": "string",
+            "title": "Review Id"
+          },
+          "base_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Base Date"
+          },
+          "announce_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Announce Date"
+          },
+          "trade_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Trade Date"
+          },
+          "effective_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Effective Date"
+          },
+          "d_base": {
+            "type": "integer",
+            "title": "D Base"
+          },
+          "d_announce": {
+            "type": "integer",
+            "title": "D Announce"
+          },
+          "d_trade": {
+            "type": "integer",
+            "title": "D Trade"
+          },
+          "d_effective": {
+            "type": "integer",
+            "title": "D Effective"
+          },
+          "confirmed": {
+            "type": "boolean",
+            "title": "Confirmed"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "index_id",
+          "index_title",
+          "review_id",
+          "base_date",
+          "announce_date",
+          "trade_date",
+          "effective_date",
+          "d_base",
+          "d_announce",
+          "d_trade",
+          "d_effective",
+          "confirmed",
+          "quality"
+        ],
+        "title": "ReviewDates",
+        "description": "리뷰 일정 + 오늘 기준 D-day(음수 = 지났다). confirmed=False 면 '추정'."
+      },
       "RevisionView": {
         "properties": {
           "as_of": {
@@ -14867,6 +15672,94 @@
           "newhigh"
         ],
         "title": "StockHeader"
+      },
+      "StockIndexBadge": {
+        "properties": {
+          "index_id": {
+            "type": "string",
+            "title": "Index Id"
+          },
+          "index_title": {
+            "type": "string",
+            "title": "Index Title"
+          },
+          "review_id": {
+            "type": "string",
+            "title": "Review Id"
+          },
+          "cutoff_kind": {
+            "type": "string",
+            "enum": [
+              "model",
+              "user"
+            ],
+            "title": "Cutoff Kind"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "add",
+              "delete",
+              "borderline",
+              "keep"
+            ],
+            "title": "Verdict"
+          },
+          "required_rise": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Required Rise"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "index_id",
+          "index_title",
+          "review_id",
+          "cutoff_kind",
+          "verdict",
+          "required_rise",
+          "label",
+          "quality"
+        ],
+        "title": "StockIndexBadge",
+        "description": "페이지 8 머리 배지 한 줄 — 예 'MSCI Korea 편입 후보 · 필요 +12.4%'."
+      },
+      "StockIndexBadges": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "badges": {
+            "items": {
+              "$ref": "#/components/schemas/StockIndexBadge"
+            },
+            "type": "array",
+            "title": "Badges"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "badges"
+        ],
+        "title": "StockIndexBadges"
       },
       "StockSearch": {
         "properties": {

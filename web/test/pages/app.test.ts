@@ -81,7 +81,7 @@ describe('셸 + W2 모듈', () => {
     expect(hz.paths().every((u) => u.startsWith('./data/'))).toBe(true);
     expect(hz.paths().some((u) => u.includes('api'))).toBe(false);
     expect(root.querySelectorAll('#page-2 .panel.locked, #page-4 .panel.locked, #page-10 .panel.locked').length).toBe(
-      7 + 4 + 4 + 3, // + P5 페이지 10(ETF 맵·보유 탐색·액티브 동시 편입)
+      7 + 4 + 4 + 3 + 1, // + P5 페이지 10(ETF 맵·보유 탐색·액티브 동시 편입) + P5 2차 IDX(지수 정기변경)
     );
     expect(tv).toHaveBeenCalled();
     expect(root.querySelectorAll('.ribbon .chip.locked').length).toBeGreaterThan(0);

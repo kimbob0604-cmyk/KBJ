@@ -1,0 +1,32 @@
+{
+  "source": "KBJ(KRX·KIS 시세·DART 지분 — 추정)",
+  "as_of": "2026-10-30T15:30:00+09:00",
+  "quality": "estimated",
+  "notes": [],
+  "generated_at": "2026-10-30T17:30:00+09:00",
+  "data": {
+    "code": "993023",
+    "badges": [
+      {
+        "index_id": "msci_korea",
+        "index_title": "MSCI Korea",
+        "review_id": "2026-11",
+        "cutoff_kind": "model",
+        "verdict": "add",
+        "required_rise": -0.8756,
+        "label": "MSCI Korea 편입 후보 · 여유 -87.6%",
+        "quality": "estimated"
+      },
+      {
+        "index_id": "kospi200",
+        "index_title": "KOSPI200",
+        "review_id": "2026-12",
+        "cutoff_kind": "model",
+        "verdict": "add",
+        "required_rise": -0.9303,
+        "label": "KOSPI200 편입 후보 · 여유 -93.0%",
+        "quality": "estimated"
+      }
+    ]
+  }
+}

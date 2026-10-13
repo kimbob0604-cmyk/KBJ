@@ -42,6 +42,7 @@ describe('페이지 10 ETF — 로그인', () => {
       'etf/map?group=type&period=1M',
       'etf/premium?basis=nav',
       'etf/types?period=5',
+      'index-review', // P5 2차 IDX 지수 정기변경(test/pages/p10_index_review.test.ts 가 본다)
     ]);
 
     const fl = panelByTitle(root, 'ETF 자금 흐름');
@@ -228,7 +229,7 @@ describe('페이지 10 ETF — 공개', () => {
     const { ctx, root } = pageCtx(10, 'public', hz.source);
     await page.mount(ctx);
     expect(hz.calls).toHaveLength(0);
-    expect(root.querySelectorAll('.panel.locked')).toHaveLength(7); // P3 4 + P5 3(맵·보유 탐색·동시 편입)
+    expect(root.querySelectorAll('.panel.locked')).toHaveLength(8); // P3 4 + P5 3(맵·보유 탐색·동시 편입) + P5 2차 IDX 1(지수 정기변경)
     expect(text(panelByTitle(root, '구성종목 변동'))).toContain('운용사 구성종목');
   });
 });

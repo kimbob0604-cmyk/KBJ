@@ -4,6 +4,7 @@
 // - 로그인: 'macro/calendar'(API — 예상치(ForexFactory)가 붙은 행·FF 만의 행 포함, 예상치 열이 보인다).
 // - 공개: 공개 파일 'macro/calendar'(public.export — 공개 출처만, 예상치 칸 없음). 예상치 열을 그리지 않는다.
 // - 기간 '오늘'·'이번 주'·'전체'(파일 창 −7일~+30일)는 화면에서 거른다(다시 요청하지 않는다).
+// - extra(페이지 5 로그인만 — P5 2차 IDX): 지수 정기변경 일정 줄(./index_events)을 같은 표에 날짜순으로 섞는다.
 import type { components } from '../../api/types.gen';
 import type { Envelope } from '../../data/source';
 import { h } from '../../ui/dom';
@@ -29,6 +30,7 @@ const SOURCE_LABEL: Record<string, string> = {
   ecos: '한국은행',
   manual: '공식 일정',
   ff: 'ForexFactory(예상치)',
+  index: '지수 일정(추정 포함)',
 };
 
 /** 기간 거르기(KST 날짜, 끝 포함). 이번 주 = 오늘부터 6일 뒤까지 */
@@ -63,7 +65,10 @@ export function calendarColumns(login: boolean): Column<CalRow>[] {
   return cols;
 }
 
-export function createCalendar(c: Pick<P5Ctx, 'tier' | 'source' | 'now'>, span: Span = 6): Widget {
+/** 캘린더에 섞는 행(예: 지수 이벤트 — 로그인 모듈이 합친다). 받은 행에 섞어 돌려준다 — 실패해도 거부하지 않고 notes 로 */
+export type ExtraRows = (rows: readonly CalRow[]) => Promise<{ rows: CalRow[]; notes: readonly string[] }>;
+
+export function createCalendar(c: Pick<P5Ctx, 'tier' | 'source' | 'now'>, span: Span = 6, extra?: ExtraRows): Widget {
   const login = c.tier === 'login';
   const p = panel(c.tier, { title: CALENDAR_TITLE, tier: 'public', span });
   p.setDef(
@@ -92,7 +97,9 @@ export function createCalendar(c: Pick<P5Ctx, 'tier' | 'source' | 'now'>, span: 
     fill(
       p,
       async () => {
-        last = await c.source.get<S['EconCalendar']>('macro/calendar');
+        const env = await c.source.get<S['EconCalendar']>('macro/calendar');
+        const more = extra ? await extra(env.data.rows) : null;
+        last = more ? { ...env, data: { ...env.data, rows: more.rows }, notes: [...env.notes, ...more.notes] } : env;
         return last;
       },
       draw,

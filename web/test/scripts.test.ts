@@ -47,6 +47,7 @@ describe('check-bundle: 공개 번들', () => {
     'h["x-kbj-csrf"]=t',
     'env.KBJ_WEB_USER',
     'document.cookie.includes("__Host-kbj_session")',
+    'get("index-review",{index:i})', // P5 2차 IDX — 로그인 전용 API 이름
   ];
   it.each(bad)('찾는다: %s', (line) => {
     expect(scanText('a.js', line, PUBLIC_FORBIDDEN).length).toBeGreaterThan(0);

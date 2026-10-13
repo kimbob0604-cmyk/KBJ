@@ -52,6 +52,7 @@ describe('페이지 5 — 로그인', () => {
         'filings/insiders?days=7',
         'filings/overhang?days=7',
         'filings/schedule?days=14',
+        'index-review', // P5 2차 IDX — 캘린더 지수 이벤트 줄(로그인)
         'macro/calendar',
       ].sort(),
     );

@@ -35,6 +35,7 @@ def test_domains_cover_routes() -> None:
     assert set(DOMAIN_JOBS) == {
         "market", "board", "flows", "etf", "stock", "filings",
         "macro", "program", "flows_minute", "board_us",
+        "index_review",  # P5 2차 묶음 IDX
     }  # fmt: skip
 
 
@@ -46,7 +47,9 @@ def test_p4_domain_jobs_exist_in_registry() -> None:
 
     doc = yaml.safe_load((REPO_ROOT / "config" / "jobs.yaml").read_text(encoding="utf-8"))
     names = {j["name"] for j in doc["jobs"]}
-    for domain in ("stock", "filings", "macro", "program", "flows_minute", "board_us"):
+    for domain in (
+        "stock", "filings", "macro", "program", "flows_minute", "board_us", "index_review",
+    ):  # fmt: skip
         assert set(DOMAIN_JOBS[domain]) <= names, domain
 
 

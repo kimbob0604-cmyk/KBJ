@@ -73,6 +73,9 @@ DOMAIN_JOBS: Final[Mapping[str, tuple[str, ...]]] = {
                 "program.backfill"),
     "flows_minute": ("flows.market_minute", "market.close_collect"),
     "board_us": ("us.universe", "us.eod"),
+    # P5 2차 묶음 IDX — 지수 정기변경 예측(구성종목·컷오프는 CLI 가 직접 쓴다 — 다음 예측
+    # 실행 때 바뀐다)
+    "index_review": ("index.calendar", "index.predict"),
 }  # fmt: skip
 
 

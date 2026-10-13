@@ -1,0 +1,361 @@
+{
+  "source": "KBJ(KRX·KIS 시세·DART 지분 — 추정)",
+  "as_of": "2026-10-30T15:30:00+09:00",
+  "quality": "estimated",
+  "notes": [
+    "일정 추정 — 공표 일정표와 대조 전"
+  ],
+  "generated_at": "2026-10-30T17:30:00+09:00",
+  "data": {
+    "indexes": [
+      {
+        "id": "msci_korea",
+        "title": "MSCI Korea",
+        "order": 1
+      },
+      {
+        "id": "kospi200",
+        "title": "KOSPI200",
+        "order": 2
+      },
+      {
+        "id": "kosdaq150",
+        "title": "KOSDAQ150",
+        "order": 3
+      }
+    ],
+    "index_id": "kosdaq150",
+    "review": {
+      "index_id": "kosdaq150",
+      "index_title": "KOSDAQ150",
+      "review_id": "2026-12",
+      "base_date": "2026-10-30",
+      "announce_date": "2026-11-20",
+      "trade_date": "2026-12-10",
+      "effective_date": "2026-12-11",
+      "d_base": 0,
+      "d_announce": 21,
+      "d_trade": 41,
+      "d_effective": 42,
+      "confirmed": false,
+      "quality": "estimated"
+    },
+    "reviews": [
+      {
+        "index_id": "kosdaq150",
+        "index_title": "KOSDAQ150",
+        "review_id": "2026-12",
+        "base_date": "2026-10-30",
+        "announce_date": "2026-11-20",
+        "trade_date": "2026-12-10",
+        "effective_date": "2026-12-11",
+        "d_base": 0,
+        "d_announce": 21,
+        "d_trade": 41,
+        "d_effective": 42,
+        "confirmed": false,
+        "quality": "estimated"
+      }
+    ],
+    "runs": [
+      {
+        "cutoff_kind": "model",
+        "status": "ok",
+        "base_date": "2026-10-30",
+        "cutoff": {
+          "kind": "model",
+          "won": 1000377570000,
+          "low_won": null,
+          "high_won": 668782590000,
+          "method": "rank 27/33"
+        },
+        "n_members": 30,
+        "n_add": 5,
+        "n_delete": 5,
+        "n_borderline": 0,
+        "aum_won": 2000000000000,
+        "notes": [
+          "정원 30 부족 — 다음 순위 5종목을 채웠다",
+          "추종 자금: non_etf (추정)"
+        ],
+        "quality": "estimated",
+        "adds": [
+          {
+            "code": "993177",
+            "name": "합성177",
+            "verdict": "add",
+            "member": false,
+            "mktcap": 1000377570000,
+            "ff_mcap": 286808250000,
+            "fif": 0.286700000680743,
+            "fif_how": "estimate",
+            "gap_mcap": 0.0,
+            "gap_ff": null,
+            "condition_met": true,
+            "required_rise": 0.0,
+            "required_basis": "mcap",
+            "passive_won": 18393446488,
+            "adv_won": 3702733038,
+            "adv_multiple": 4.967532441370676,
+            "rank": 27,
+            "reasons": [
+              "정원 채움 — 다음 순위"
+            ],
+            "quality": "estimated"
+          },
+          {
+            "code": "993195",
+            "name": "합성195",
+            "verdict": "add",
+            "member": false,
+            "mktcap": 850110375000,
+            "ff_mcap": 134742495000,
+            "fif": 0.1585000006616788,
+            "fif_how": "estimate",
+            "gap_mcap": -0.15021048002905543,
+            "gap_ff": null,
+            "condition_met": false,
+            "required_rise": 0.1768,
+            "required_basis": "mcap",
+            "passive_won": 8641239823,
+            "adv_won": 6906419711,
+            "adv_multiple": 1.2511894997109596,
+            "rank": 30,
+            "reasons": [
+              "정원 채움 — 다음 순위"
+            ],
+            "quality": "estimated"
+          },
+          {
+            "code": "993234",
+            "name": "합성234",
+            "verdict": "add",
+            "member": false,
+            "mktcap": 815867025000,
+            "ff_mcap": 649674900000,
+            "fif": 0.7962999852825281,
+            "fif_how": "estimate",
+            "gap_mcap": -0.18444090564725477,
+            "gap_ff": null,
+            "condition_met": false,
+            "required_rise": 0.2262,
+            "required_basis": "mcap",
+            "passive_won": 41664633106,
+            "adv_won": 16112162930,
+            "adv_multiple": 2.5859118534869485,
+            "rank": 31,
+            "reasons": [
+              "정원 채움 — 다음 순위"
+            ],
+            "quality": "estimated"
+          },
+          {
+            "code": "993036",
+            "name": "합성036",
+            "verdict": "add",
+            "member": false,
+            "mktcap": 710393820000,
+            "ff_mcap": 319179930000,
+            "fif": 0.44929998124139087,
+            "fif_how": "estimate",
+            "gap_mcap": -0.28987430215973353,
+            "gap_ff": null,
+            "condition_met": false,
+            "required_rise": 0.4083,
+            "required_basis": "mcap",
+            "passive_won": 20469491246,
+            "adv_won": 9326041847,
+            "adv_multiple": 2.194874479636248,
+            "rank": 32,
+            "reasons": [
+              "정원 채움 — 다음 순위"
+            ],
+            "quality": "estimated"
+          },
+          {
+            "code": "993141",
+            "name": "합성141",
+            "verdict": "add",
+            "member": false,
+            "mktcap": 668782590000,
+            "ff_mcap": 72696660000,
+            "fif": 0.10869998873624985,
+            "fif_how": "estimate",
+            "gap_mcap": -0.33146982693744326,
+            "gap_ff": null,
+            "condition_met": false,
+            "required_rise": 0.4959,
+            "required_basis": "mcap",
+            "passive_won": 4662146663,
+            "adv_won": 5206495688,
+            "adv_multiple": 0.8954480983716893,
+            "rank": 33,
+            "reasons": [
+              "정원 채움 — 다음 순위"
+            ],
+            "quality": "estimated"
+          }
+        ],
+        "deletes": [
+          {
+            "code": "993105",
+            "name": "합성105",
+            "verdict": "delete",
+            "member": true,
+            "mktcap": 1108691850000,
+            "ff_mcap": 1026094350000,
+            "fif": 0.925500038626603,
+            "fif_how": "estimate",
+            "gap_mcap": 0.6577761840361305,
+            "gap_ff": null,
+            "condition_met": false,
+            "required_rise": -0.3967,
+            "required_basis": "mcap",
+            "passive_won": -65378866957,
+            "adv_won": 1584736882,
+            "adv_multiple": 41.25534509835431,
+            "rank": 23,
+            "reasons": [
+              "산업군 내 거래대금 순위 밖"
+            ],
+            "quality": "estimated"
+          },
+          {
+            "code": "993066",
+            "name": "합성066",
+            "verdict": "delete",
+            "member": true,
+            "mktcap": 943553730000,
+            "ff_mcap": 356946390000,
+            "fif": 0.37830001477499325,
+            "fif_how": "estimate",
+            "gap_mcap": 0.4108527107441598,
+            "gap_ff": null,
+            "condition_met": false,
+            "required_rise": -0.2912,
+            "required_basis": "mcap",
+            "passive_won": -22743279448,
+            "adv_won": 3594759921,
+            "adv_multiple": 6.326786752889248,
+            "rank": 28,
+            "reasons": [
+              "산업군 내 거래대금 순위 밖"
+            ],
+            "quality": "estimated"
+          },
+          {
+            "code": "993117",
+            "name": "합성117",
+            "verdict": "delete",
+            "member": true,
+            "mktcap": 501099925000,
+            "ff_mcap": 123821790000,
+            "fif": 0.2470999970714424,
+            "fif_how": "estimate",
+            "gap_mcap": -0.2507282149794001,
+            "gap_ff": null,
+            "condition_met": false,
+            "required_rise": 0.3347,
+            "required_basis": "mcap",
+            "passive_won": -7889458055,
+            "adv_won": 5179752563,
+            "adv_multiple": 1.5231341572869646,
+            "rank": 37,
+            "reasons": [],
+            "quality": "estimated"
+          },
+          {
+            "code": "993228",
+            "name": "합성228",
+            "verdict": "delete",
+            "member": true,
+            "mktcap": 399416190000,
+            "ff_mcap": 135322200000,
+            "fif": 0.33879998705110076,
+            "fif_how": "estimate",
+            "gap_mcap": -0.4027712503700194,
+            "gap_ff": null,
+            "condition_met": false,
+            "required_rise": 0.6745,
+            "required_basis": "mcap",
+            "passive_won": -8622220861,
+            "adv_won": 5627666137,
+            "adv_multiple": 1.5321130733594548,
+            "rank": 43,
+            "reasons": [],
+            "quality": "estimated"
+          },
+          {
+            "code": "993102",
+            "name": "합성102",
+            "verdict": "delete",
+            "member": true,
+            "mktcap": 288488304000,
+            "ff_mcap": 24175320000,
+            "fif": 0.08380000043259986,
+            "fif_how": "estimate",
+            "gap_mcap": -0.5686366416924818,
+            "gap_ff": null,
+            "condition_met": false,
+            "required_rise": 1.3183,
+            "required_basis": "mcap",
+            "passive_won": -1540360328,
+            "adv_won": 1586478842,
+            "adv_multiple": 0.970930268479433,
+            "rank": 54,
+            "reasons": [],
+            "quality": "estimated"
+          }
+        ],
+        "borderline": []
+      }
+    ],
+    "calendar": [
+      {
+        "index_id": "msci_korea",
+        "index_title": "MSCI Korea",
+        "review_id": "2026-11",
+        "base_date": "2026-10-30",
+        "announce_date": "2026-11-11",
+        "trade_date": "2026-11-30",
+        "effective_date": "2026-12-01",
+        "d_base": 0,
+        "d_announce": 12,
+        "d_trade": 31,
+        "d_effective": 32,
+        "confirmed": false,
+        "quality": "estimated"
+      },
+      {
+        "index_id": "kospi200",
+        "index_title": "KOSPI200",
+        "review_id": "2026-12",
+        "base_date": "2026-10-30",
+        "announce_date": "2026-11-20",
+        "trade_date": "2026-12-10",
+        "effective_date": "2026-12-11",
+        "d_base": 0,
+        "d_announce": 21,
+        "d_trade": 41,
+        "d_effective": 42,
+        "confirmed": false,
+        "quality": "estimated"
+      },
+      {
+        "index_id": "kosdaq150",
+        "index_title": "KOSDAQ150",
+        "review_id": "2026-12",
+        "base_date": "2026-10-30",
+        "announce_date": "2026-11-20",
+        "trade_date": "2026-12-10",
+        "effective_date": "2026-12-11",
+        "d_base": 0,
+        "d_announce": 21,
+        "d_trade": 41,
+        "d_effective": 42,
+        "confirmed": false,
+        "quality": "estimated"
+      }
+    ]
+  }
+}

@@ -58,7 +58,9 @@ P2 = [
     "0015_us_board.sql",
     "0016_market_stats.sql",
     "0017_program.sql",
-]  # 이름은 P2 시험 그대로 — 0001~0017 전부(P3 0007~0009, P4 0010~0013, P5 0014~0017 을 더했다)
+    "0018_index.sql",
+]  # 이름은 P2 시험 그대로 — 0001~0018 전부(P3 0007~0009, P4 0010~0013, P5 0014~0017,
+#   P5 2차 IDX 0018)
 GX_DAILY = {
     "prv_gex.raw_messages", "prv_gex.fut_ticks", "prv_gex.opt_ticks", "prv_gex.chain_snapshots",
     "prv_gex.fut_board", "prv_gex.investor_flow", "prv_gex.series_expiries",
@@ -551,3 +553,47 @@ def test_p5_us_artifact_names_and_gx_comment(dsn: str) -> None:
     assert names == [("artifact_name_p5_check",)]  # 0007 의 옛 이름 제약은 지워졌다
     note = _one(dsn, "SELECT obj_description('prv_gex.investor_flow'::regclass, 'pg_class')")
     assert "flows.market_minute" in note and "백만원" in note
+
+
+# ── P5 2차 묶음 IDX(0018 — 지수 정기변경 예측, 로그인 등급 prv_index) ──
+
+IDX_PRV = {
+    "prv_index.constituents", "prv_index.review_calendar", "prv_index.prediction_run",
+    "prv_index.predictions", "prv_index.passive_aum",
+}  # fmt: skip
+
+
+def test_idx_tables_exist_and_export_role_cannot_read(dsn: str) -> None:
+    rows = _rows(
+        dsn,
+        "SELECT table_schema || '.' || table_name FROM information_schema.tables "
+        "WHERE table_schema = 'prv_index'",
+    )
+    assert {r[0] for r in rows} == IDX_PRV
+    for table in sorted(IDX_PRV):
+        with pytest.raises(psycopg.errors.InsufficientPrivilege):
+            _as_export(dsn, f"SELECT 1 FROM {table} LIMIT 1")  # noqa: S608 — 상수 표 이름
+
+
+BAD_IDX_ROWS = (
+    # 목록 없음 실행은 후보를 낼 수 없다(지어내지 않음)
+    "INSERT INTO prv_index.prediction_run (index_id, review_id, base_date, cutoff_kind, status, "
+    "n_members, n_add, n_delete, n_borderline, data_as_of, source, quality, computed_at, "
+    "loaded_by) VALUES ('msci_korea', '2026-11', '2026-10-30', 'model', 'no_constituents', 0, 1, "
+    "0, 0, now(), 's', 'estimated', now(), 't')",
+    # 확인 전 일정은 quality ok 가 아니다
+    "INSERT INTO prv_index.review_calendar (index_id, review_id, index_title, display_order, "
+    "base_date, announce_date, trade_date, effective_date, confirmed, source, quality, "
+    "updated_at, loaded_by) VALUES ('msci_korea', '2026-11', 'MSCI Korea', 1, '2026-10-30', "
+    "'2026-11-11', '2026-11-30', '2026-12-01', false, 's', 'ok', now(), 't')",
+    # 구성종목 출처는 user·press·synthetic 만
+    "INSERT INTO prv_index.constituents (index_id, code, valid_from, source, quality, "
+    "received_at, loaded_by) VALUES ('msci_korea', '993001', '2026-06-01', 'msci', 'ok', now(), "
+    "'t')",
+)
+
+
+@pytest.mark.parametrize("stmt", BAD_IDX_ROWS)
+def test_idx_constraints(dsn: str, stmt: str) -> None:
+    with pytest.raises(psycopg.errors.CheckViolation), psycopg.connect(dsn) as c:
+        c.execute(stmt.encode())

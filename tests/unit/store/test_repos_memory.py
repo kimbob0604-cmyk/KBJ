@@ -28,7 +28,7 @@ def as_repos(m: MemoryRepos) -> Repos:
         market=m.market, flows=m.flows, board=m.board, etf=m.etf, filings=m.filings, fin=m.fin,
         consensus=m.consensus, journal=m.journal, macro=m.macro, macro_prv=m.macro_prv,
         market_stats=m.market_stats, us=m.us,
-        program=m.program,
+        program=m.program, index_review=m.index_review,
     )  # fmt: skip
 
 

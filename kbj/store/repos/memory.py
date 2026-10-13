@@ -62,6 +62,7 @@ from kbj.store.repos.flows import (
     minute_order,
     plan_investor_upsert,
 )
+from kbj.store.repos.index_review import MemoryIndexReviewRepo
 from kbj.store.repos.journal import MemoryJournalRepo
 from kbj.store.repos.macro import MemoryMacroPublicRepo
 from kbj.store.repos.macro_prv import MemoryMacroPrivateRepo
@@ -722,6 +723,8 @@ class MemoryRepos:
     market_stats: MemoryMarketStatsRepo = field(default_factory=MemoryMarketStatsRepo)
     us: MemoryUsRepo = field(default_factory=MemoryUsRepo)
     program: MemoryProgramRepo = field(default_factory=MemoryProgramRepo)
+    # P5 2차 묶음 IDX(0018 — 로그인)
+    index_review: MemoryIndexReviewRepo = field(default_factory=MemoryIndexReviewRepo)
 
     def public(self) -> MemoryPublicRepos:
         """같은 공개 저장소 객체(filings·fin·macro·market_stats)를 공개 작업 묶음으로

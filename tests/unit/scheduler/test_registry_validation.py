@@ -746,6 +746,9 @@ P5_JOBS = {
     "program.daily": "kbj.services.collectors.program:daily",
     "program.stock_sweep": "kbj.services.collectors.program:sweep",
     "program.backfill": "kbj.services.collectors.program:backfill",
+    # P5 2차 묶음 IDX(docs/p5_index_rebalance_prompt.md §3-4 — 외부 호출 없음, 켜기는 메인)
+    "index.calendar": "kbj.services.engine.index_review:calendar",
+    "index.predict": "kbj.services.engine.index_review:predict",
 }
 F2_JOBS = (
     "flows.market_minute", "program.intraday", "program.stock_scan", "program.daily",
@@ -765,10 +768,11 @@ def test_p5_jobs_are_registered_with_design_owners_and_wave3_enables() -> None:
         assert p5[name].owner == owner, name
     # 켜기는 웨이브 3(WRAP — ENABLED_BY_PHASE["P5"], D-P5-23)
     assert {n for n, j in p5.items() if j.enabled} == P5_ENABLED
-    # 꺼진 채 남는 작업은 노트에 막는 실측 번호(#39~#49)를 적는다 — 테마 강도는 사용자 별도 진행
+    # 꺼진 채 남는 작업은 노트에 막는 실측 번호(#39~#49, IDX #50~#54)를 적는다 — 테마 강도는 사용자
+    # 별도 진행
     for name, j in p5.items():
         if not j.enabled and name != "themes.monitor":
-            assert j.note and re.search(r"#(39|4\d)", j.note), name
+            assert j.note and re.search(r"#(39|4\d|5[0-4])", j.note), name
     assert "사용자가 따로" in (p5["themes.monitor"].note or "")
     # 계약 ⑨ — 엔진은 순수(저장소 금지): 처리기는 kbj.services·kbj.reports 에(D-P5-7)
     assert all(not o.startswith("kbj.engines.") for o in P5_JOBS.values())

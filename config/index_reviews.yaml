@@ -1,0 +1,217 @@
+# 패시브 지수 정기변경(편입·편출) 예측 설정 — 규칙의 모든 숫자·일정은 이 파일 한 곳(P5 2차 묶음 IDX).
+# 근거: docs/p5_index_rebalance_prompt.md §1·§3, docs/metrics.md §24. 해석기: kbj/config/index_reviews.py.
+#
+# 규칙
+# - 숫자는 전부 `{v: 값, src: 출처, checked: 확인일, verify: true|false}` 모양이다. verify: true = [확인 필요]
+#   (원문과 대조 전 기본값 — 화면·문서가 '추정'으로 보인다). 사용자가 원문으로 확인하면 v 를 고치고
+#   verify: false 로 바꾼다(코드는 그대로 — 엔진은 이 값만 읽는다).
+# - 날짜는 운용사·거래소가 공표한 일정표를 사람이 적는다(계산으로 추정하지 않는다). 공표 확인 전 날짜는
+#   confirmed: false — 일정 표(prv_index.review_calendar)에 quality=estimated 로 들어가고 화면이 '추정'으로 보인다.
+# - 현 구성종목 목록은 이 파일에 넣지 않는다(MSCI·KRX 자료 — 로그인 등급, DB prv_index.constituents 에만.
+#   `python -m kbj.services.engine.index_review load-constituents` 로 VM 에서 올린다). 레포에는 합성 목록만.
+# - 패시브 자금 규모(aum)는 사용자 입력 전 null — null 이면 예상 패시브 매매를 계산하지 않는다(지어내지 않음).
+version: 1
+
+# ── 대상 지수 ─────────────────────────────────────────────────────────────────────────────────────
+# family: msci(컷오프 배수 규칙 — kbj.engines.index_review.msci) · krx(시총 순위·완충 규칙 — .krx).
+# enabled: false = 2차(같은 틀 — 규칙 값을 확인한 뒤 켠다). order = 화면 탭 순서.
+indexes:
+  - id: msci_korea
+    title: "MSCI Korea"
+    family: msci
+    enabled: true
+    order: 1
+    markets: [KOSPI, KOSDAQ]
+  - id: kospi200
+    title: "KOSPI200"
+    family: krx
+    enabled: true
+    order: 2
+    markets: [KOSPI]
+  - id: kosdaq150
+    title: "KOSDAQ150"
+    family: krx
+    enabled: true
+    order: 3
+    markets: [KOSDAQ]
+  - id: ftse_korea
+    title: "FTSE Korea(GEIS)"
+    family: msci             # 같은 컷오프·배수 틀 — FTSE 규칙 값은 [확인 필요] 이라 꺼 둔다
+    enabled: false
+    order: 4
+    markets: [KOSPI, KOSDAQ]
+  - id: krx300
+    title: "KRX300"
+    family: krx
+    enabled: false
+    order: 5
+    markets: [KOSPI, KOSDAQ]
+
+# ── 유동비율(FIF) 반올림 — 리뷰 날짜로 규칙을 고른다 ─────────────────────────────────────────────
+# 리뷰의 announce 날짜 ≥ from 인 규칙 가운데 from 이 가장 늦은 것(from: null = 그 이전 전부).
+# band: raw > above(엄격히 큼 — 경계값 자체는 아래 띠 [확인 필요]) 인 첫 띠. mode: nearest(반올림 — 반은 올림)·
+# up(올림). buffer: 직전 FIF 가 있고 |raw − 직전| ≤ buffer 면 직전 값을 유지(null = 완충 없음).
+fif_rounding:
+  - id: msci_2026_05
+    from: 2026-05-01
+    src: "MSCI 2025-02 확정 발표(유동비율 반올림·완충 변경) — 2026-05 리뷰부터 적용(사용자 요약의 2025-05 와 다르다)"
+    checked: 2026-10-13
+    verify: true            # 띠 경계(25%·5% 포함 쪽)·완충 비교(≤ 인지 <)를 원문으로 [확인 필요]
+    bands:
+      - {above: 0.25, step: 0.025, buffer: 0.025, mode: nearest}
+      - {above: 0.05, step: 0.005, buffer: 0.005, mode: nearest}
+      - {above: 0.0, step: 0.001, buffer: 0.001, mode: nearest}
+  - id: msci_legacy
+    from: null
+    src: "MSCI GIMI 방법론(옛 규칙) — 15% 초과 5% 단위 올림, 이하 1% 단위 반올림"
+    checked: 2026-10-13
+    verify: true
+    bands:
+      - {above: 0.15, step: 0.05, buffer: null, mode: up}
+      - {above: 0.0, step: 0.01, buffer: null, mode: nearest}
+
+# ── 외국인 지분 한도(FOL) — FIF = min(FIF, 한도) [확인 필요: MSCI §FOL 의 여유분 조정까지는 옮기지 않았다] ──
+# 종목별 한도 표는 사용자가 확인해 적는다(통신·항공·방송 등). 비어 있으면 조정하지 않는다.
+fol:
+  src: "MSCI GIMI 방법론 — Foreign Ownership Limit 조정"
+  checked: 2026-10-13
+  verify: true
+  limits: []                # 예: - {code: "<6자리>", limit: 0.49, why: "전기통신사업법"}
+
+# ── 유동비율 추정(DART 지분 공시 — 구성종목 목록에 FIF 가 없을 때) ─────────────────────────────────
+# 비유동 = 자기주식 + 5% 대량보유 보고자(아래 이름 패턴에 맞는 재무적 투자자는 빼고)의 최근 보유 주식.
+# quality=estimated. 정부·연기금·임원 보유를 지수마다 어떻게 다루는지는 [확인 필요].
+fif_estimate:
+  src: "MSCI·KRX 유동주식 정의 요약 — 전략적 보유 제외"
+  checked: 2026-10-13
+  verify: true
+  financial_holder_patterns: ["국민연금", "자산운용", "투자신탁", "증권", "보험", "은행"]
+  top_n: 400                # 추정하는 시총 상위 종목 수(+ 구성종목 — 밖은 유동비율 없음 → 컷오프 추정에서 빠진다)
+
+# ── 업종(산업군) — DART 기업개황 업종코드(KSIC) 앞자리 → 산업군 [확인 필요: KRX 산업군 분류와 다르다] ──
+sectors:
+  src: "KSIC 대분류 앞 2자리 근사 — KRX 산업군 원문 대조 전"
+  checked: 2026-10-13
+  verify: true
+  default: "기타"
+  map:
+    "10": "필수소비재"
+    "11": "필수소비재"
+    "20": "소재"
+    "21": "헬스케어"
+    "24": "소재"
+    "26": "IT"
+    "27": "IT"
+    "28": "산업재"
+    "29": "산업재"
+    "30": "경기소비재"
+    "35": "유틸리티"
+    "41": "산업재"
+    "46": "경기소비재"
+    "58": "커뮤니케이션"
+    "61": "커뮤니케이션"
+    "62": "IT"
+    "64": "금융"
+    "65": "금융"
+    "66": "금융"
+
+# ── MSCI 형 규칙(컷오프 배수) ───────────────────────────────────────────────────────────────────
+# 컷오프(Interim Market Size-Segment Cutoff)는 MSCI 가 공표하지 않는다 → 시장 커버리지 방식으로 추정:
+# 전체 시총 내림차순으로 유동시총을 누적해 coverage 에 처음 닿는 종목의 전체 시총. 구간 = coverage_low·high.
+# 배수는 문서마다 다르다(옛 요약 2014: 1.8× · ½, 사용자 리포트: 1.5× · ½, 하나증권 표: 유동 ⅓) — 현행
+# GIMI 방법론(2026-03판) 원문과 대조 전 [확인 필요].
+msci:
+  msci_korea:
+    coverage: {v: 0.85, src: "MSCI GIMI — Standard 지수 유동시총 커버리지 85%", checked: 2026-10-13, verify: true}
+    coverage_low: {v: 0.80, src: "커버리지 허용 구간 ±5%p", checked: 2026-10-13, verify: true}
+    coverage_high: {v: 0.90, src: "커버리지 허용 구간 ±5%p", checked: 2026-10-13, verify: true}
+    add_mcap_mult: {v: 1.8, src: "MSCI 방법론 요약(2014) — 신규 편입 시총 ≥ 1.8 × 컷오프", checked: 2026-10-13, verify: true}
+    add_ff_mult: {v: 0.9, src: "MSCI 방법론 요약(2014) — 신규 편입 유동시총 ≥ 1.8 × ½ 컷오프", checked: 2026-10-13, verify: true}
+    keep_mcap_mult: {v: 0.6667, src: "MSCI 방법론 — 기존 구성종목 유지 시총 ≥ ⅔ × 컷오프", checked: 2026-10-13, verify: true}
+    keep_ff_mult: {v: 0.3333, src: "기존 구성종목 유지 유동시총 ≥ ⅔ × ½ 컷오프(하나증권 표의 ⅓)", checked: 2026-10-13, verify: true}
+    min_fif_add: {v: 0.15, src: "MSCI 방법론 — 신규 편입 최소 유동비율 15%", checked: 2026-10-13, verify: true}
+    borderline: {v: 0.10, src: "KBJ 표시 규칙 — 조건 괴리율이 ±10% 안이면 '경계'", checked: 2026-10-13, verify: false}
+    adv_days: {v: 20, src: "KBJ — 일평균 거래대금 창(거래일)", checked: 2026-10-13, verify: false}
+    aum_won: {v: null, src: "MSCI Korea 추종 패시브 자금(EM·ACWI 내 한국 비중 포함) — 사용자가 증권사 추정치를 넣는다", checked: 2026-10-13, verify: true}
+    exclude_flags: [halted, liquidation]
+    kinds: [common]
+  ftse_korea:
+    coverage: {v: 0.85, src: "FTSE GEIS 규칙 [확인 필요]", checked: 2026-10-13, verify: true}
+    coverage_low: {v: 0.80, src: "FTSE GEIS 규칙 [확인 필요]", checked: 2026-10-13, verify: true}
+    coverage_high: {v: 0.90, src: "FTSE GEIS 규칙 [확인 필요]", checked: 2026-10-13, verify: true}
+    add_mcap_mult: {v: 1.0, src: "FTSE GEIS 규칙 [확인 필요]", checked: 2026-10-13, verify: true}
+    add_ff_mult: {v: 0.5, src: "FTSE GEIS 규칙 [확인 필요]", checked: 2026-10-13, verify: true}
+    keep_mcap_mult: {v: 0.6667, src: "FTSE GEIS 규칙 [확인 필요]", checked: 2026-10-13, verify: true}
+    keep_ff_mult: {v: 0.3333, src: "FTSE GEIS 규칙 [확인 필요]", checked: 2026-10-13, verify: true}
+    min_fif_add: {v: 0.05, src: "FTSE GEIS 규칙 [확인 필요]", checked: 2026-10-13, verify: true}
+    borderline: {v: 0.10, src: "KBJ 표시 규칙", checked: 2026-10-13, verify: false}
+    adv_days: {v: 20, src: "KBJ — 일평균 거래대금 창(거래일)", checked: 2026-10-13, verify: false}
+    aum_won: {v: null, src: "FTSE Korea 추종 패시브 자금 — 사용자 입력", checked: 2026-10-13, verify: true}
+    exclude_flags: [halted, liquidation]
+    kinds: [common]
+
+# ── KRX 형 규칙(시총 순위·완충) — KRX 지수 산출 방법론 원문을 옮기기 전 근사 [확인 필요] ──────────────
+# 순위 = 기준일 전체 시총 내림차순(KRX 는 심사기간 일평균 시총 — [확인 필요]).
+# 신규: 순위 ≤ size × add_rank_ratio, 기존: 순위 ≤ size × keep_rank_ratio 면 유지.
+# 유동성: 산업군 안 일평균 거래대금 순위 백분위 ≤ liquidity_pct. 상장 min_listing_days 미만은 제외하되
+# 시총 순위 ≤ fast_entry_rank 면 특례(신규 상장 특례). 수를 size 에 맞춘다(넘치면 순위 낮은 신규를 '경계',
+# 모자라면 다음 순위 비구성종목을 채운다). 업종별 누적 시총 비중 규칙은 아직 옮기지 않았다 [확인 필요].
+# etf_index_patterns: P3 ETF 기초지수 이름에 이 문자열이 있으면 그 지수 추종 ETF(레버리지·인버스 제외).
+krx:
+  kospi200:
+    size: {v: 200, src: "KRX KOSPI200 — 구성종목 200", checked: 2026-10-13, verify: false}
+    add_rank_ratio: {v: 0.9, src: "KRX 방법론 — 신규 편입 순위 90% 이내 [확인 필요]", checked: 2026-10-13, verify: true}
+    keep_rank_ratio: {v: 1.1, src: "KRX 방법론 — 기존 종목 순위 110% 이내 유지 [확인 필요]", checked: 2026-10-13, verify: true}
+    liquidity_pct: {v: 0.85, src: "KRX 방법론 — 산업군 내 거래대금 순위 85% 이내 [확인 필요]", checked: 2026-10-13, verify: true}
+    min_listing_days: {v: 180, src: "KRX 방법론 — 상장 6개월 경과 [확인 필요]", checked: 2026-10-13, verify: true}
+    fast_entry_rank: {v: 50, src: "KRX 방법론 — 신규 상장 특례(시총 순위 50위 이내) [확인 필요]", checked: 2026-10-13, verify: true}
+    borderline: {v: 0.10, src: "KBJ 표시 규칙 — 순위 컷오프 괴리율 ±10% 안이면 '경계'", checked: 2026-10-13, verify: false}
+    adv_days: {v: 20, src: "KBJ — 일평균 거래대금 창(거래일)", checked: 2026-10-13, verify: false}
+    non_etf_aum_won: {v: null, src: "연기금 패시브 등 비ETF 추종 자금 — 사용자 입력", checked: 2026-10-13, verify: true}
+    etf_index_patterns: ["코스피 200", "코스피200", "KOSPI 200", "KOSPI200"]
+    exclude_flags: [managed, halted, liquidation]
+    kinds: [common]
+  kosdaq150:
+    size: {v: 150, src: "KRX KOSDAQ150 — 구성종목 150", checked: 2026-10-13, verify: false}
+    add_rank_ratio: {v: 0.9, src: "KRX 방법론 [확인 필요]", checked: 2026-10-13, verify: true}
+    keep_rank_ratio: {v: 1.1, src: "KRX 방법론 [확인 필요]", checked: 2026-10-13, verify: true}
+    liquidity_pct: {v: 0.85, src: "KRX 방법론 [확인 필요]", checked: 2026-10-13, verify: true}
+    min_listing_days: {v: 180, src: "KRX 방법론 [확인 필요]", checked: 2026-10-13, verify: true}
+    fast_entry_rank: {v: 30, src: "KRX 방법론 — 신규 상장 특례 [확인 필요]", checked: 2026-10-13, verify: true}
+    borderline: {v: 0.10, src: "KBJ 표시 규칙", checked: 2026-10-13, verify: false}
+    adv_days: {v: 20, src: "KBJ — 일평균 거래대금 창(거래일)", checked: 2026-10-13, verify: false}
+    non_etf_aum_won: {v: null, src: "비ETF 추종 자금 — 사용자 입력", checked: 2026-10-13, verify: true}
+    etf_index_patterns: ["코스닥 150", "코스닥150", "KOSDAQ 150", "KOSDAQ150"]
+    exclude_flags: [managed, halted, liquidation]
+    kinds: [common]
+  krx300:
+    size: {v: 300, src: "KRX300 — 구성종목 300 [확인 필요]", checked: 2026-10-13, verify: true}
+    add_rank_ratio: {v: 0.9, src: "KRX 방법론 [확인 필요]", checked: 2026-10-13, verify: true}
+    keep_rank_ratio: {v: 1.1, src: "KRX 방법론 [확인 필요]", checked: 2026-10-13, verify: true}
+    liquidity_pct: {v: 0.85, src: "KRX 방법론 [확인 필요]", checked: 2026-10-13, verify: true}
+    min_listing_days: {v: 180, src: "KRX 방법론 [확인 필요]", checked: 2026-10-13, verify: true}
+    fast_entry_rank: {v: 50, src: "KRX 방법론 [확인 필요]", checked: 2026-10-13, verify: true}
+    borderline: {v: 0.10, src: "KBJ 표시 규칙", checked: 2026-10-13, verify: false}
+    adv_days: {v: 20, src: "KBJ — 일평균 거래대금 창(거래일)", checked: 2026-10-13, verify: false}
+    non_etf_aum_won: {v: null, src: "비ETF 추종 자금 — 사용자 입력", checked: 2026-10-13, verify: true}
+    etf_index_patterns: ["KRX300", "KRX 300"]
+    exclude_flags: [managed, halted, liquidation]
+    kinds: [common]
+
+# ── 일정 — 공표 일정표를 사람이 적는다(계산 추정 금지) ──────────────────────────────────────────────
+# base = 기준일(시총·유동비율을 재는 날 — MSCI 는 리뷰 전월 마지막 10영업일 중 비공개 하루라 그 끝날을
+# 대용 [확인 필요], KRX 는 심사기준일). announce = 결과 발표일(KST — MSCI 는 그날 새벽 발표 → 한국 날짜는
+# 다음 날일 수 있다 [확인 필요]). trade = 패시브 매매일(효력일 직전 영업일 종가). effective = 효력일.
+# confirmed: false = 공표 일정표와 대조 전 — 화면이 '추정'으로 보인다.
+reviews:
+  msci_korea:
+    - {id: "2026-02", base: 2026-01-30, announce: 2026-02-11, trade: 2026-02-27, effective: 2026-03-02, confirmed: false}
+    - {id: "2026-05", base: 2026-04-30, announce: 2026-05-13, trade: 2026-05-29, effective: 2026-06-01, confirmed: false}
+    - {id: "2026-08", base: 2026-07-31, announce: 2026-08-12, trade: 2026-08-31, effective: 2026-09-01, confirmed: false}
+    - {id: "2026-11", base: 2026-10-30, announce: 2026-11-11, trade: 2026-11-30, effective: 2026-12-01, confirmed: false}
+  kospi200:
+    - {id: "2026-06", base: 2026-04-30, announce: 2026-05-22, trade: 2026-06-11, effective: 2026-06-12, confirmed: false}
+    - {id: "2026-12", base: 2026-10-30, announce: 2026-11-20, trade: 2026-12-10, effective: 2026-12-11, confirmed: false}
+  kosdaq150:
+    - {id: "2026-06", base: 2026-04-30, announce: 2026-05-22, trade: 2026-06-11, effective: 2026-06-12, confirmed: false}
+    - {id: "2026-12", base: 2026-10-30, announce: 2026-11-20, trade: 2026-12-10, effective: 2026-12-11, confirmed: false}

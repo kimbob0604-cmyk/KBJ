@@ -87,7 +87,9 @@ describe('로그인 API 소스', () => {
   it('경로 형식: 상위 경로·절대 URL·쿼리 섞기 금지', async () => {
     expect(API_PATH.test('market/summary')).toBe(true);
     expect(API_PATH.test('flows/stock/005930')).toBe(true);
-    for (const bad of ['../x', '/api/x', 'http://evil/x', 'market/summary?x=1', 'a//b', '']) {
+    expect(API_PATH.test('index-review')).toBe(true);
+    expect(API_PATH.test('index-review/stock/005930')).toBe(true);
+    for (const bad of ['../x', '/api/x', 'http://evil/x', 'market/summary?x=1', 'a//b', '', '-x', 'a-/b', 'a--b']) {
       expect(API_PATH.test(bad), bad).toBe(false);
     }
     const { fetch, calls } = fakeFetch(() => json(envelope(1)));

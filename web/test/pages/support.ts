@@ -10,6 +10,28 @@ import publicCalendar from './fixtures/public_calendar.json';
 import publicEvents from './fixtures/public_events.json';
 
 const API = import.meta.glob<unknown>('../fixtures/api/*.json', { eager: true, import: 'default' });
+const IDX = import.meta.glob<unknown>('../fixtures/api/index_review/*.json', { eager: true, import: 'default' });
+
+/** 지수 정기변경 픽스처(test/fixtures/api/index_review — tests/unit/api/web_fixtures_p5/index_review.py) */
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- 시험이 픽스처 모양을 적어 받는다
+export function idxFixture<T = Record<string, unknown>>(name: string): T {
+  const v = IDX[`../fixtures/api/index_review/${name}.json`];
+  if (v === undefined) throw new Error(`픽스처 없음: index_review/${name}`);
+  return structuredClone(v) as T;
+}
+
+/** '/api/index-review…' 기본 응답(P5 2차 IDX) — 페이지 5·8·10 시험이 따로 바꿔 끼우지 않으면 이것 */
+export function indexReviewDefault(url: string): unknown {
+  const [path = '', qs = ''] = url.replace(/^\/api\//, '').split('?');
+  if (path.startsWith('index-review/stock/')) {
+    const code = path.slice('index-review/stock/'.length);
+    return `../fixtures/api/index_review/stock_${code}.json` in IDX ? idxFixture(`stock_${code}`) : idxFixture('stock_none');
+  }
+  const q = new URLSearchParams(qs);
+  const index = q.get('index') ?? 'msci_korea';
+  if (index === 'msci_korea' && q.get('review') === '2026-05') return idxFixture('review_msci_2026-05');
+  return idxFixture(index === 'msci_korea' ? 'review_msci' : `review_${index}`);
+}
 
 /** 픽스처 이름(경로의 / 를 _ 로 — A 의 규칙)으로 꺼낸다. 깊은 복사라 시험이 고쳐도 다른 시험에 새지 않는다. */
 // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- 시험이 픽스처 모양을 적어 받는다
@@ -48,6 +70,7 @@ export function apiHarness(overrides: Record<string, Override> = {}): Harness {
     const o = overrides[name];
     if (isFn(o)) return o(url);
     if (o !== undefined) return json(o);
+    if (name.startsWith('index-review')) return json(indexReviewDefault(url));
     return json(fixture(name));
   });
   return {

@@ -17,6 +17,7 @@ import { centerLevel } from '../ui/svg';
 import { type Column, table } from '../ui/table';
 import { fill, filters, nameCell, REFRESH_MS } from './p1_market';
 import { mountP5, type P5Panels, TITLES as P5_TITLES } from './p10/index';
+import { INDEX_LOCK, INDEX_TITLE, type IndexReviewWidget, mountIndexReview } from './p10/index_review';
 
 // 공개 빌드에서는 P5 로그인 모듈(ETF 맵·보유 탐색·동시 편입)을 번들에서 빼고 같은 제목의 자물쇠 패널만 그린다
 // (p8_stock LOGIN_VALUE 와 같은 방식 — 공개 등급은 요청 없음, 공개 JS gzip 예산 60 KB. WRAP)
@@ -45,6 +46,15 @@ function lockedP5(ctx: PageContext): P5Panels {
   root.append(map.el, hold.el, cons.el);
   const done = Promise.resolve();
   return { map, hold, cons, refresh: () => done, ready: done };
+}
+
+// P5 2차(묶음 IDX) '지수 정기변경' — 구성종목·컷오프 추정이라 로그인 전용. 공개 빌드는 모듈을 빼고 자물쇠만(요청 없음)
+const LOGIN_INDEX = import.meta.env.MODE === 'public' ? null : mountIndexReview;
+
+function lockedIndex(ctx: PageContext): IndexReviewWidget {
+  const p = panel(ctx.tier, { title: INDEX_TITLE, tier: 'login', span: 12, lock: INDEX_LOCK });
+  ctx.root.append(p.el);
+  return { panel: p, load: () => Promise.resolve() };
 }
 
 type S = components['schemas'];
@@ -333,8 +343,9 @@ async function mount(ctx: PageContext): Promise<void> {
   root.append(pFlow.el, pType.el, pPrem.el, pHold.el);
   // P5 패널(ETF 맵·보유 탐색·액티브 동시 편입 — docs/p5_design.md §6). 공개판은 자물쇠만
   const p5 = LOGIN_P5 ? LOGIN_P5(ctx) : lockedP5(ctx);
+  const idx = LOGIN_INDEX ? LOGIN_INDEX(ctx) : lockedIndex(ctx);
   if (pFlow.locked || !LOGIN_ETF_P3) return; // 공개판: 자물쇠만, 요청 없음(공개 빌드는 아래 본문을 번들에서 뺀다)
-  await LOGIN_ETF_P3(ctx, { pFlow, pType, pPrem, pHold, p5 });
+  await LOGIN_ETF_P3(ctx, { pFlow, pType, pPrem, pHold, p5, idx });
 }
 
 // 로그인 본문 — 공개 빌드에서는 번들에서 뺀다(p8_stock LOGIN_VALUE 와 같은 방식, 공개 JS gzip 예산 60 KB — P5 WRAP).
@@ -345,10 +356,11 @@ interface EtfPanels {
   pPrem: Panel;
   pHold: Panel;
   p5: P5Panels;
+  idx: IndexReviewWidget;
 }
 const LOGIN_ETF_P3 = import.meta.env.MODE === 'public' ? null : mountLogin;
 
-async function mountLogin(ctx: PageContext, { pFlow, pType, pPrem, pHold, p5 }: EtfPanels): Promise<void> {
+async function mountLogin(ctx: PageContext, { pFlow, pType, pPrem, pHold, p5, idx }: EtfPanels): Promise<void> {
   const { root } = ctx;
 
   pFlow.setDef(
@@ -522,7 +534,7 @@ async function mountLogin(ctx: PageContext, { pFlow, pType, pPrem, pHold, p5 }: 
   );
   drawIssuerSelect();
 
-  await Promise.all([loadFlows(), loadTypes(), loadPremium(), loadChanges(), p5.ready]);
+  await Promise.all([loadFlows(), loadTypes(), loadPremium(), loadChanges(), p5.ready, idx.load()]);
   // 첫 불러오기 중에 앱이 내려갔으면(격자가 문서에서 빠짐) 주기 작업을 걸지 않는다
   if (root.isConnected) {
     ctx.every(REFRESH_MS, () => {
@@ -531,6 +543,7 @@ async function mountLogin(ctx: PageContext, { pFlow, pType, pPrem, pHold, p5 }: 
       void loadPremium();
       void loadChanges();
       void p5.refresh();
+      void idx.load();
     });
   }
 }

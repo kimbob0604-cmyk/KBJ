@@ -399,6 +399,11 @@
 | 47 | Nasdaq·Stooq (P5) | 약관(§10 Q6 — 사용자 결정: 켬, 본인 화면·텔레그램만), 스크리너 유니버스 크기·필드·**칸 단위**(시총·거래대금 달러), history **수정주가 여부**(`adjust_probe` 결과 — Stooq 행 `adjusted` 는 모름 None), **Stooq 폴백 빈도** — 막는 작업: — (`us.universe`·`us.eod` 켬 — ET 운영 확인). 값은 적지 않는다(칸·단위·코드·반영 시각만) |
 | 48 | 금융위 15094808·15094807·금투협 15094809 (P5) | 기술문서로 적은 P0 §3.1·§3.3 의 오퍼레이션·응답 칸을 실응답으로 확인(대소문자·띄어쓰기 경로 포함)·0016_market_stats 칸 이름 대조(금투협 열 이름·단위 — 지금 '원' 가정, cma 구분 항목 해시 접미사, 펀드 `ctg`·`tstMthdCtg` 값 목록), KRX 대조 허용(`reconcile.fsc_*`), **금융위 `idxNm` 표기**(코스피·코스닥·코스피 200)와 KRX 지수 코드(공백 뺀 이름) 일치 여부 — 막는 작업: `market_stats.kofia`·`market.fsc_daily`. 값은 적지 않는다(칸·단위·코드·반영 시각만) |
 | 49 | ForexFactory 주간 피드 (P5 — 사용자 결정 2026-10-13 Q3: 예상치를 쓴다, 로그인 등급) | `/ff_calendar_thisweek.json` 경로·칸 이름(`title`·`country`(통화)·`date`(시간대)·`impact`·`forecast`·`previous`)·예상치 문자열 접미사(`%`·`K`·`M`·`B`)·종일 일정 표기(00:00?)·갱신 주기·한도·약관, 제목 → 종류 대응(`KINDS`) — 막는 작업: `macro.morning_prv` 의 `FF:calendar`(어댑터는 켬 — `config/macro.yaml ff.enabled: true`, 작업은 #45·#46 과 함께 켠다). 값은 적지 않는다(칸·단위·코드·반영 시각만) |
+| 50 | MSCI GIMI 방법론 원문(2026-03판) (P5 2차 IDX — 원문 대조, 키 아님) | 신규 편입 시총·유동시총 배수(설정 `msci.msci_korea.add_mcap_mult`·`add_ff_mult`), 유지 배수(`keep_*`), 최소 유동비율, 커버리지 85% ± 구간, Interim Market Size-Segment Cutoff 정의, FIF 새 반올림 띠 경계(25%·5% 포함 쪽)·완충 비교(≤ / <)·옛 규칙, FOL 여유분 조정. 확인한 값은 `config/index_reviews.yaml` 의 v·verify:false 로(값은 여기 적지 않는다) |
+| 51 | MSCI·KRX 공표 일정표 (P5 2차 IDX) | 리뷰별 기준일(MSCI 가격 기준일은 비공개 — 대용 규칙)·발표일(KST 날짜 — 새벽 발표)·효력일·패시브 매매일. `config/index_reviews.yaml reviews` 의 `confirmed` 를 true 로 |
+| 52 | KRX 지수 산출 방법론(KOSPI200·KOSDAQ150·KRX300) (P5 2차 IDX) | 산업군 분류 코드·업종별 누적 시총 비중 규칙·거래대금 순위 기준·순위 완충(90/110%)·신규 상장 특례·심사기간 일평균 시총 여부·관리종목 제외 범위. 지수용 유동주식수가 KRX OpenAPI 에 있는지(칸 이름·단위) — 없으면 DART 추정 유지 [실측 필요] |
+| 53 | 패시브 추종 자금 (P5 2차 IDX — 사용자 입력) | MSCI Korea(EM·ACWI 내 한국 비중 포함) 추종 자금, KOSPI200·KOSDAQ150 비ETF 추종 자금(연기금 패시브 등) — 단위 원. `aum_won`·`non_etf_aum_won` 또는 `prv_index.passive_aum` user 행. ETF 기초지수 이름 패턴(`etf_index_patterns`)이 P3 `base_index` 실제 표기와 맞는지 |
+| 54 | 지수 구성종목 목록 형식 (P5 2차 IDX — 로그인 VM) | 사용자가 올리는 목록 파일의 열(code·name·fif — fif 가 소수/퍼센트 중 무엇인지)·인코딩. `load-constituents` 입력과 맞춘다. 목록은 레포에 넣지 않는다 |
 
 ---
 

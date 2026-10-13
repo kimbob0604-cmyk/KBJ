@@ -4,7 +4,7 @@
 //   node scripts/check-bundle.mjs                 # dist-public 과 dist-login 둘 다(둘 다 있어야 한다)
 //   node scripts/check-bundle.mjs dist-public     # 하나만
 //
-// 공개(dist-public): '/api'·'/telegram'·'auth/login'·'X-KBJ-CSRF'·'KBJ_'·'kbj_session' 문자열 0 — 하나라도 있으면 실패.
+// 공개(dist-public): '/api'·'/telegram'·'auth/login'·'X-KBJ-CSRF'·'KBJ_'·'kbj_session'·'index-review' 문자열 0 — 하나라도 있으면 실패.
 //   선택: 환경변수 KBJ_LOGIN_ORIGIN(로그인 VM 주소)을 주면 그 문자열도 0 이어야 한다(값은 출력하지 않는다).
 // 로그인(dist-login): TradingView 주소('tradingview.com'·'tradingview-widget.com'·'embed-widget-') 0(대소문자 무시).
 // 크기 예산(§6.9 [제안]): JS gzip 공개 ≤ 60 KB·로그인 ≤ 90 KB, CSS gzip ≤ 20 KB. 서비스 워커(sw.js)는 JS 합계에 넣지 않는다.
@@ -21,6 +21,7 @@ export const PUBLIC_FORBIDDEN = [
   { id: 'csrf_header', needle: 'x-kbj-csrf', why: 'CSRF 헤더 이름', ci: true },
   { id: 'env_name', needle: 'KBJ_', why: 'KBJ 환경변수 이름' },
   { id: 'session_cookie', needle: 'kbj_session', why: '세션 쿠키 이름', ci: true },
+  { id: 'index_review', needle: 'index-review', why: '지수 정기변경 API(로그인 전용 — 구성종목·컷오프 추정, P5 2차 IDX)' },
 ];
 
 export const LOGIN_FORBIDDEN = [

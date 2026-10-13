@@ -19,8 +19,9 @@ import {
 } from './source';
 
 export const API_BASE = '/api/';
-/** 경로 형식: 'market/summary', 'flows/stock/005930' — 상위 경로(..)·절대 URL 금지 */
-export const API_PATH = /^[a-z0-9_]+(?:\/[A-Za-z0-9_-]+)*$/;
+/** 경로 형식: 'market/summary', 'flows/stock/005930', 'index-review/stock/005930'(첫 마디 하이픈은 낱말 사이만 — P5 2차 IDX)
+ *  — 상위 경로(..)·절대 URL 금지 */
+export const API_PATH = /^[a-z0-9_]+(?:-[a-z0-9_]+)*(?:\/[A-Za-z0-9_-]+)*$/;
 /** 내려받기 경로(P4): API 경로 + 정해진 확장자 하나 — 'stock/005930/report.xlsx' */
 export const API_DOWNLOAD = /^[a-z0-9_]+(?:\/[A-Za-z0-9_-]+)*\.xlsx$/;
 

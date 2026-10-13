@@ -871,6 +871,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/index-review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Review */
+        get: operations["review_api_index_review_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/index-review/stock/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stock */
+        get: operations["stock_api_index_review_stock__code__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/telegram/webhook": {
         parameters: {
             query?: never;
@@ -1165,6 +1199,49 @@ export interface components {
             /** Forecast */
             forecast?: number | null;
         };
+        /** CandidateRow */
+        CandidateRow: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string | null;
+            /**
+             * Verdict
+             * @enum {string}
+             */
+            verdict: "add" | "delete" | "borderline" | "keep";
+            /** Member */
+            member: boolean;
+            /** Mktcap */
+            mktcap: number | null;
+            /** Ff Mcap */
+            ff_mcap: number | null;
+            /** Fif */
+            fif: number | null;
+            /** Fif How */
+            fif_how: string | null;
+            /** Gap Mcap */
+            gap_mcap: number | null;
+            /** Gap Ff */
+            gap_ff: number | null;
+            /** Condition Met */
+            condition_met: boolean | null;
+            /** Required Rise */
+            required_rise: number | null;
+            /** Required Basis */
+            required_basis: ("mcap" | "ff") | null;
+            /** Passive Won */
+            passive_won: number | null;
+            /** Adv Won */
+            adv_won: number | null;
+            /** Adv Multiple */
+            adv_multiple: number | null;
+            /** Rank */
+            rank: number | null;
+            /** Reasons */
+            reasons: string[];
+            quality: components["schemas"]["Quality"];
+        };
         /** ChangeRow */
         ChangeRow: {
             /** Fund Id */
@@ -1373,6 +1450,25 @@ export interface components {
         CsrfResponse: {
             /** Csrf Token */
             csrf_token: string;
+        };
+        /**
+         * CutoffInfo
+         * @description 컷오프(원). kind model = 엔진 추정(구간 low~high), user = 사용자가 넣은 증권사 추정치.
+         */
+        CutoffInfo: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "model" | "user";
+            /** Won */
+            won: number;
+            /** Low Won */
+            low_won: number | null;
+            /** High Won */
+            high_won: number | null;
+            /** Method */
+            method: string | null;
         };
         /** DayFlow */
         DayFlow: {
@@ -1925,6 +2021,25 @@ export interface components {
             generated_at: string;
             data: components["schemas"]["Financials"];
         };
+        /** Envelope[IndexReview] */
+        Envelope_IndexReview_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["IndexReview"];
+        };
         /** Envelope[InsiderRecent] */
         Envelope_InsiderRecent_: {
             /** Source */
@@ -2342,6 +2457,25 @@ export interface components {
              */
             generated_at: string;
             data: components["schemas"]["StockHeader"];
+        };
+        /** Envelope[StockIndexBadges] */
+        Envelope_StockIndexBadges_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["StockIndexBadges"];
         };
         /** Envelope[StockSearch] */
         Envelope_StockSearch_: {
@@ -2803,6 +2937,73 @@ export interface components {
             ok: boolean;
             /** Commit */
             commit: string | null;
+        };
+        /**
+         * IndexReview
+         * @description 페이지 10 '지수 정기변경' 패널 + 페이지 5 캘린더 줄(calendar — 다가오는 일정 전부).
+         */
+        IndexReview: {
+            /** Indexes */
+            indexes: components["schemas"]["IndexTab"][];
+            /** Index Id */
+            index_id: string;
+            review: components["schemas"]["ReviewDates"] | null;
+            /** Reviews */
+            reviews: components["schemas"]["ReviewDates"][];
+            /** Runs */
+            runs: components["schemas"]["IndexRunView"][];
+            /** Calendar */
+            calendar: components["schemas"]["ReviewDates"][];
+        };
+        /**
+         * IndexRunView
+         * @description 한 컷오프 종류의 예측. status no_constituents = 구성종목 목록 없음(후보를 내지 않는다).
+         */
+        IndexRunView: {
+            /**
+             * Cutoff Kind
+             * @enum {string}
+             */
+            cutoff_kind: "model" | "user";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "no_constituents" | "no_data";
+            /**
+             * Base Date
+             * Format: date
+             */
+            base_date: string;
+            cutoff: components["schemas"]["CutoffInfo"] | null;
+            /** N Members */
+            n_members: number;
+            /** N Add */
+            n_add: number;
+            /** N Delete */
+            n_delete: number;
+            /** N Borderline */
+            n_borderline: number;
+            /** Aum Won */
+            aum_won: number | null;
+            /** Notes */
+            notes: string[];
+            quality: components["schemas"]["Quality"];
+            /** Adds */
+            adds: components["schemas"]["CandidateRow"][];
+            /** Deletes */
+            deletes: components["schemas"]["CandidateRow"][];
+            /** Borderline */
+            borderline: components["schemas"]["CandidateRow"][];
+        };
+        /** IndexTab */
+        IndexTab: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Order */
+            order: number;
         };
         /** IndexTile */
         IndexTile: {
@@ -3847,6 +4048,49 @@ export interface components {
              */
             generated_at: string;
         };
+        /**
+         * ReviewDates
+         * @description 리뷰 일정 + 오늘 기준 D-day(음수 = 지났다). confirmed=False 면 '추정'.
+         */
+        ReviewDates: {
+            /** Index Id */
+            index_id: string;
+            /** Index Title */
+            index_title: string;
+            /** Review Id */
+            review_id: string;
+            /**
+             * Base Date
+             * Format: date
+             */
+            base_date: string;
+            /**
+             * Announce Date
+             * Format: date
+             */
+            announce_date: string;
+            /**
+             * Trade Date
+             * Format: date
+             */
+            trade_date: string;
+            /**
+             * Effective Date
+             * Format: date
+             */
+            effective_date: string;
+            /** D Base */
+            d_base: number;
+            /** D Announce */
+            d_announce: number;
+            /** D Trade */
+            d_trade: number;
+            /** D Effective */
+            d_effective: number;
+            /** Confirmed */
+            confirmed: boolean;
+            quality: components["schemas"]["Quality"];
+        };
         /** RevisionView */
         RevisionView: {
             /**
@@ -4213,6 +4457,40 @@ export interface components {
             /** Detail Tier */
             detail_tier: boolean;
             newhigh: components["schemas"]["NewHighBadges"] | null;
+        };
+        /**
+         * StockIndexBadge
+         * @description 페이지 8 머리 배지 한 줄 — 예 'MSCI Korea 편입 후보 · 필요 +12.4%'.
+         */
+        StockIndexBadge: {
+            /** Index Id */
+            index_id: string;
+            /** Index Title */
+            index_title: string;
+            /** Review Id */
+            review_id: string;
+            /**
+             * Cutoff Kind
+             * @enum {string}
+             */
+            cutoff_kind: "model" | "user";
+            /**
+             * Verdict
+             * @enum {string}
+             */
+            verdict: "add" | "delete" | "borderline" | "keep";
+            /** Required Rise */
+            required_rise: number | null;
+            /** Label */
+            label: string;
+            quality: components["schemas"]["Quality"];
+        };
+        /** StockIndexBadges */
+        StockIndexBadges: {
+            /** Code */
+            code: string;
+            /** Badges */
+            badges: components["schemas"]["StockIndexBadge"][];
         };
         /** StockSearch */
         StockSearch: {
@@ -7415,6 +7693,123 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_ProgramTop_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    review_api_index_review_get: {
+        parameters: {
+            query?: {
+                index?: string | null;
+                review?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_IndexReview_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    stock_api_index_review_stock__code__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_StockIndexBadges_"];
                 };
             };
             /** @description 세션 없음·만료 */

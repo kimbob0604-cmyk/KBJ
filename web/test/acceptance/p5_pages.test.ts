@@ -1,5 +1,6 @@
 // P5 완료 시험(docs/p5_design.md §0.3·§8.6 — 웨이브 3 WRAP): 셸 + 빌드가 찾은 실제 모듈로 페이지 1·2·5·6·9·10 이
 // 합성 데이터(p5_world 로 만든 웹 픽스처 — test/fixtures/api/{macro,program,etf,us}/** + P3·P4 픽스처)로 그려진다.
+// P5 2차 IDX: 페이지 10 지수 정기변경·페이지 5 캘린더 지수 줄 = test/fixtures/api/index_review/**(합성 index_world).
 // - 로그인: console.error 0, 오류 줄 0, DOM 글자에 NaN·undefined·Infinity 0, 390px 폭에서 가로 넘침 원인 0(고정 폭 SVG·
 //   390px 넘는 인라인 폭 없음 — jsdom 은 배치를 계산하지 않으므로 구성으로 본다), axe 심각 위반 0.
 // - 공개: 로그인 API 0회(공개 파일만), 로그인 패널은 자물쇠 — 공개 패널만 그린다.
@@ -12,7 +13,7 @@ import { createApiSource } from '../../src/data/api';
 import { macroFixture } from '../fixtures/api/macro/harness';
 import { apiPath, p4PublicHarness, p4Response, seriousA11y } from './support_p4';
 
-const P5 = import.meta.glob<unknown>('../fixtures/api/{program,etf,us}/*.json', { eager: true, import: 'default' });
+const P5 = import.meta.glob<unknown>('../fixtures/api/{program,etf,us,index_review}/*.json', { eager: true, import: 'default' });
 const PAGES = [1, 2, 5, 6, 9, 10] as const;
 const NOW = new Date('2026-11-17T07:30:00Z'); // 합성 세계 CLOCK(2026-11-17 16:30 KST)
 
@@ -41,6 +42,7 @@ function p5Response(url: string): Response {
   if (path.startsWith('etf/holders/')) return p5('etf/holders_none');
   if (path.startsWith('etf/fund/')) return p5('etf/fund_holdings_semi');
   if (path === 'board/us') return p5(q.get('basis') === 'high' ? 'us/board_high' : 'us/board_close');
+  if (path === 'index-review') return p5(`index_review/review_${q.get('index') ?? 'msci'}`.replace('review_msci_korea', 'review_msci'));
   return p4Response(url);
 }
 

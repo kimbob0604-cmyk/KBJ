@@ -1,0 +1,1607 @@
+{
+ "base": "2026-10-30",
+ "reviews": {
+  "kosdaq150:2026-12": {
+   "cutoff": 1000377570000,
+   "n_members": 30,
+   "rows": [
+    {
+     "code": "993198",
+     "fif": 0.7778000007762684,
+     "gap_ff": null,
+     "gap_mcap": 9.6557813653612,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.9061
+    },
+    {
+     "code": "993189",
+     "fif": 0.44149999467805934,
+     "gap_ff": null,
+     "gap_mcap": 8.134722952342404,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.8905
+    },
+    {
+     "code": "993027",
+     "fif": 0.14170000179511716,
+     "gap_ff": null,
+     "gap_mcap": 4.762392020402325,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.8264
+    },
+    {
+     "code": "993081",
+     "fif": 0.11050000060934938,
+     "gap_ff": null,
+     "gap_mcap": 4.094200325998319,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.8036
+    },
+    {
+     "code": "993075",
+     "fif": 0.5392999983674989,
+     "gap_ff": null,
+     "gap_mcap": 4.0691143260771785,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.8027
+    },
+    {
+     "code": "993048",
+     "fif": 0.6816999996239244,
+     "gap_ff": null,
+     "gap_mcap": 3.5902232368219993,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.7821
+    },
+    {
+     "code": "993090",
+     "fif": 0.7731000056843669,
+     "gap_ff": null,
+     "gap_mcap": 3.214008920298,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.7626
+    },
+    {
+     "code": "993087",
+     "fif": 0.20869998566642517,
+     "gap_ff": null,
+     "gap_mcap": 2.2899385508824324,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.696
+    },
+    {
+     "code": "993039",
+     "fif": 0.9416999903043747,
+     "gap_ff": null,
+     "gap_mcap": 2.084775016347241,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.6758
+    },
+    {
+     "code": "993147",
+     "fif": 0.5648999713682418,
+     "gap_ff": null,
+     "gap_mcap": 2.0597822530039247,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.6731
+    },
+    {
+     "code": "993174",
+     "fif": 0.9428000010958408,
+     "gap_ff": null,
+     "gap_mcap": 1.726233446059055,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.6331
+    },
+    {
+     "code": "993072",
+     "fif": 0.16039999455503665,
+     "gap_ff": null,
+     "gap_mcap": 1.4962263521243877,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.5993
+    },
+    {
+     "code": "993135",
+     "fif": 0.8061999968955093,
+     "gap_ff": null,
+     "gap_mcap": 1.4823847014318958,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.5971
+    },
+    {
+     "code": "993120",
+     "fif": 0.3071000023559921,
+     "gap_ff": null,
+     "gap_mcap": 1.3099090004720368,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.567
+    },
+    {
+     "code": "993240",
+     "fif": 0.7059000076680774,
+     "gap_ff": null,
+     "gap_mcap": 1.231743876586261,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.5519
+    },
+    {
+     "code": "993213",
+     "fif": 0.12550000010070642,
+     "gap_ff": null,
+     "gap_mcap": 1.0786721137582245,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.5189
+    },
+    {
+     "code": "993180",
+     "fif": 0.8798999983078867,
+     "gap_ff": null,
+     "gap_mcap": 0.99751520894107,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.4993
+    },
+    {
+     "code": "993201",
+     "fif": 0.6207999962981761,
+     "gap_ff": null,
+     "gap_mcap": 0.9543441583908456,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.4883
+    },
+    {
+     "code": "993108",
+     "fif": 0.4618999800339364,
+     "gap_ff": null,
+     "gap_mcap": 0.9040728168476994,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.4748
+    },
+    {
+     "code": "993171",
+     "fif": 0.47040000004629556,
+     "gap_ff": null,
+     "gap_mcap": 0.8603640025976155,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.4624
+    },
+    {
+     "code": "993150",
+     "fif": 0.6978999925254548,
+     "gap_ff": null,
+     "gap_mcap": 0.8484267062035811,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.4589
+    },
+    {
+     "code": "993183",
+     "fif": 0.23470001792494338,
+     "gap_ff": null,
+     "gap_mcap": 0.7204862495000057,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.4187
+    },
+    {
+     "code": "993105",
+     "fif": 0.925500038626603,
+     "gap_ff": null,
+     "gap_mcap": 0.6577761840361305,
+     "member": true,
+     "outcome": "delete",
+     "passive_won": -65378866957,
+     "required_rise": -0.3967
+    },
+    {
+     "code": "993168",
+     "fif": 0.2820999980988467,
+     "gap_ff": null,
+     "gap_mcap": 0.6445683940426739,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.3919
+    },
+    {
+     "code": "993009",
+     "fif": 0.9264000012036612,
+     "gap_ff": null,
+     "gap_mcap": 0.5702103803270357,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.3631
+    },
+    {
+     "code": "993162",
+     "fif": 0.2925000069807843,
+     "gap_ff": null,
+     "gap_mcap": 0.5261446174907155,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.3447
+    },
+    {
+     "code": "993177",
+     "fif": 0.286700000680743,
+     "gap_ff": null,
+     "gap_mcap": 0.0,
+     "member": false,
+     "outcome": "add",
+     "passive_won": 18393446488,
+     "required_rise": 0.0
+    },
+    {
+     "code": "993066",
+     "fif": 0.37830001477499325,
+     "gap_ff": null,
+     "gap_mcap": 0.4108527107441598,
+     "member": true,
+     "outcome": "delete",
+     "passive_won": -22743279448,
+     "required_rise": -0.2912
+    },
+    {
+     "code": "993195",
+     "fif": 0.1585000006616788,
+     "gap_ff": null,
+     "gap_mcap": -0.15021048002905543,
+     "member": false,
+     "outcome": "add",
+     "passive_won": 8641239823,
+     "required_rise": 0.1768
+    },
+    {
+     "code": "993234",
+     "fif": 0.7962999852825281,
+     "gap_ff": null,
+     "gap_mcap": -0.18444090564725477,
+     "member": false,
+     "outcome": "add",
+     "passive_won": 41664633106,
+     "required_rise": 0.2262
+    },
+    {
+     "code": "993036",
+     "fif": 0.44929998124139087,
+     "gap_ff": null,
+     "gap_mcap": -0.28987430215973353,
+     "member": false,
+     "outcome": "add",
+     "passive_won": 20469491246,
+     "required_rise": 0.4083
+    },
+    {
+     "code": "993141",
+     "fif": 0.10869998873624985,
+     "gap_ff": null,
+     "gap_mcap": -0.33146982693744326,
+     "member": false,
+     "outcome": "add",
+     "passive_won": 4662146663,
+     "required_rise": 0.4959
+    },
+    {
+     "code": "993117",
+     "fif": 0.2470999970714424,
+     "gap_ff": null,
+     "gap_mcap": -0.2507282149794001,
+     "member": true,
+     "outcome": "delete",
+     "passive_won": -7889458055,
+     "required_rise": 0.3347
+    },
+    {
+     "code": "993228",
+     "fif": 0.33879998705110076,
+     "gap_ff": null,
+     "gap_mcap": -0.4027712503700194,
+     "member": true,
+     "outcome": "delete",
+     "passive_won": -8622220861,
+     "required_rise": 0.6745
+    },
+    {
+     "code": "993102",
+     "fif": 0.08380000043259986,
+     "gap_ff": null,
+     "gap_mcap": -0.5686366416924818,
+     "member": true,
+     "outcome": "delete",
+     "passive_won": -1540360328,
+     "required_rise": 1.3183
+    }
+   ],
+   "status": "ok"
+  },
+  "kospi200:2026-12": {
+   "cutoff": 1741498680000,
+   "n_members": 60,
+   "rows": [
+    {
+     "code": "993023",
+     "fif": 0.34500000138000003,
+     "gap_ff": null,
+     "gap_mcap": 13.3554515355705,
+     "member": false,
+     "outcome": "add",
+     "passive_won": 314055603478,
+     "required_rise": -0.9303
+    },
+    {
+     "code": "993010",
+     "fif": 0.5317999999195622,
+     "gap_ff": null,
+     "gap_mcap": 12.690068592471476,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.9269
+    },
+    {
+     "code": "993188",
+     "fif": 0.4528999978059236,
+     "gap_ff": null,
+     "gap_mcap": 10.35130134428858,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.9119
+    },
+    {
+     "code": "993218",
+     "fif": 0.39400000508155686,
+     "gap_ff": null,
+     "gap_mcap": 8.84286464500691,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.8984
+    },
+    {
+     "code": "993026",
+     "fif": 0.7945999983123864,
+     "gap_ff": null,
+     "gap_mcap": 7.641295315398996,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.8842
+    },
+    {
+     "code": "993170",
+     "fif": 0.11800000035272325,
+     "gap_ff": null,
+     "gap_mcap": 5.769178084577171,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.8522
+    },
+    {
+     "code": "993127",
+     "fif": 0.7541000049349175,
+     "gap_ff": null,
+     "gap_mcap": 5.164623578194626,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.8377
+    },
+    {
+     "code": "993140",
+     "fif": 0.11160000016195766,
+     "gap_ff": null,
+     "gap_mcap": 4.320824346623229,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.812
+    },
+    {
+     "code": "993079",
+     "fif": 0.09969999985245787,
+     "gap_ff": null,
+     "gap_mcap": 4.036202517558004,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.8014
+    },
+    {
+     "code": "993239",
+     "fif": 0.18010000428998807,
+     "gap_ff": null,
+     "gap_mcap": 3.651614947651387,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.785
+    },
+    {
+     "code": "993034",
+     "fif": 0.2307999994514455,
+     "gap_ff": null,
+     "gap_mcap": 3.2085282877522983,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.7623
+    },
+    {
+     "code": "993131",
+     "fif": 0.6575000004554866,
+     "gap_ff": null,
+     "gap_mcap": 3.1122339306640154,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.7568
+    },
+    {
+     "code": "993184",
+     "fif": 0.6353000001458542,
+     "gap_ff": null,
+     "gap_mcap": 3.1042830399021524,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.7563
+    },
+    {
+     "code": "993128",
+     "fif": 0.7815000019347669,
+     "gap_ff": null,
+     "gap_mcap": 3.0798927204109905,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.7548
+    },
+    {
+     "code": "993007",
+     "fif": 0.5085000001245988,
+     "gap_ff": null,
+     "gap_mcap": 2.5517027216510026,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.7184
+    },
+    {
+     "code": "993041",
+     "fif": 0.582400001387896,
+     "gap_ff": null,
+     "gap_mcap": 2.4999921969244494,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.7142
+    },
+    {
+     "code": "993112",
+     "fif": 0.8233999968127833,
+     "gap_ff": null,
+     "gap_mcap": 2.4711940934336605,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.7119
+    },
+    {
+     "code": "993062",
+     "fif": 0.14650000135319186,
+     "gap_ff": null,
+     "gap_mcap": 2.338775211807086,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.7004
+    },
+    {
+     "code": "993101",
+     "fif": 0.6187000008184171,
+     "gap_ff": null,
+     "gap_mcap": 2.3172799307720853,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.6985
+    },
+    {
+     "code": "993233",
+     "fif": 0.9333000004915932,
+     "gap_ff": null,
+     "gap_mcap": 2.3168260069376716,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.6985
+    },
+    {
+     "code": "993073",
+     "fif": 0.6036999999029851,
+     "gap_ff": null,
+     "gap_mcap": 1.9137305442252812,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.6567
+    },
+    {
+     "code": "993047",
+     "fif": 0.14189999743274967,
+     "gap_ff": null,
+     "gap_mcap": 1.8101650696070153,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.6441
+    },
+    {
+     "code": "993194",
+     "fif": 0.5799999917617294,
+     "gap_ff": null,
+     "gap_mcap": 1.7483286289700273,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.6361
+    },
+    {
+     "code": "993025",
+     "fif": 0.34909998134836745,
+     "gap_ff": null,
+     "gap_mcap": 1.6932333787142588,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.6286
+    },
+    {
+     "code": "993193",
+     "fif": 0.776499996415056,
+     "gap_ff": null,
+     "gap_mcap": 1.4186307281583106,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.5865
+    },
+    {
+     "code": "993058",
+     "fif": 0.5228000013407715,
+     "gap_ff": null,
+     "gap_mcap": 1.3752193042959795,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.5789
+    },
+    {
+     "code": "993019",
+     "fif": 0.4246000010536883,
+     "gap_ff": null,
+     "gap_mcap": 1.2034792800330456,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.5461
+    },
+    {
+     "code": "993224",
+     "fif": 0.3611000006503774,
+     "gap_ff": null,
+     "gap_mcap": 1.1810763057029097,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.5415
+    },
+    {
+     "code": "993176",
+     "fif": 0.4314999874644421,
+     "gap_ff": null,
+     "gap_mcap": 1.1304714945519796,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.5306
+    },
+    {
+     "code": "993209",
+     "fif": 0.4999000021511165,
+     "gap_ff": null,
+     "gap_mcap": 1.1242276962063074,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.5292
+    },
+    {
+     "code": "993217",
+     "fif": 0.2783999875247279,
+     "gap_ff": null,
+     "gap_mcap": 0.8545062903327514,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.4607
+    },
+    {
+     "code": "993197",
+     "fif": 0.7762000009448891,
+     "gap_ff": null,
+     "gap_mcap": 0.8263436260078225,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.4524
+    },
+    {
+     "code": "993190",
+     "fif": 0.8093000020595948,
+     "gap_ff": null,
+     "gap_mcap": 0.8058778775328226,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.4462
+    },
+    {
+     "code": "993212",
+     "fif": 0.9480000051344425,
+     "gap_ff": null,
+     "gap_mcap": 0.7959603558149758,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.4431
+    },
+    {
+     "code": "993149",
+     "fif": 0.8738999994288398,
+     "gap_ff": null,
+     "gap_mcap": 0.795265698214768,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.4429
+    },
+    {
+     "code": "993124",
+     "fif": 0.19700000019284783,
+     "gap_ff": null,
+     "gap_mcap": 0.7077223706309147,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.4144
+    },
+    {
+     "code": "993181",
+     "fif": 0.7459000063174667,
+     "gap_ff": null,
+     "gap_mcap": 0.7072627075256862,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.4142
+    },
+    {
+     "code": "993076",
+     "fif": 0.7392000017703446,
+     "gap_ff": null,
+     "gap_mcap": 0.4261189655337551,
+     "member": false,
+     "outcome": "add",
+     "passive_won": 66847982902,
+     "required_rise": -0.2987
+    },
+    {
+     "code": "993071",
+     "fif": 0.5714000003425316,
+     "gap_ff": null,
+     "gap_mcap": 0.6284732945190393,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.3859
+    },
+    {
+     "code": "993032",
+     "fif": 0.7195000209768979,
+     "gap_ff": null,
+     "gap_mcap": 0.2502997418292617,
+     "member": false,
+     "outcome": "borderline",
+     "passive_won": 56401253229,
+     "required_rise": -0.2001
+    },
+    {
+     "code": "993130",
+     "fif": 0.6477999726056517,
+     "gap_ff": null,
+     "gap_mcap": 0.4892057509774181,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.3285
+    },
+    {
+     "code": "993139",
+     "fif": 0.6282000050046251,
+     "gap_ff": null,
+     "gap_mcap": 0.4888434873802471,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.3283
+    },
+    {
+     "code": "993134",
+     "fif": 0.8442000027676857,
+     "gap_ff": null,
+     "gap_mcap": 0.22367150459166585,
+     "member": false,
+     "outcome": "borderline",
+     "passive_won": 64658847981,
+     "required_rise": -0.1827
+    },
+    {
+     "code": "993100",
+     "fif": 0.675600016001091,
+     "gap_ff": null,
+     "gap_mcap": 0.445868321513125,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.3083
+    },
+    {
+     "code": "993107",
+     "fif": 0.90689999987395,
+     "gap_ff": null,
+     "gap_mcap": 0.417933026308897,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.2947
+    },
+    {
+     "code": "993074",
+     "fif": 0.09030000050067014,
+     "gap_ff": null,
+     "gap_mcap": 0.41751478132217307,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.2945
+    },
+    {
+     "code": "993164",
+     "fif": 0.6257999997180831,
+     "gap_ff": null,
+     "gap_mcap": 0.39208455467280423,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.2816
+    },
+    {
+     "code": "993136",
+     "fif": 0.1159999975401679,
+     "gap_ff": null,
+     "gap_mcap": 0.37899842990840354,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.2748
+    },
+    {
+     "code": "993086",
+     "fif": 0.7722000039173926,
+     "gap_ff": null,
+     "gap_mcap": 0.36086388884751674,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.2651
+    },
+    {
+     "code": "993067",
+     "fif": 0.6296999919288507,
+     "gap_ff": null,
+     "gap_mcap": 0.3108100717085147,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.2371
+    },
+    {
+     "code": "993104",
+     "fif": 0.38339999873847047,
+     "gap_ff": null,
+     "gap_mcap": 0.2974510417009119,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.2292
+    },
+    {
+     "code": "993230",
+     "fif": 0.4955000011262278,
+     "gap_ff": null,
+     "gap_mcap": 0.28847176623321086,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.2238
+    },
+    {
+     "code": "993148",
+     "fif": 0.5679000140172705,
+     "gap_ff": null,
+     "gap_mcap": 0.273115103601749,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.2145
+    },
+    {
+     "code": "993221",
+     "fif": 0.10579999406028835,
+     "gap_ff": null,
+     "gap_mcap": 0.19485147023734087,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.163
+    },
+    {
+     "code": "993065",
+     "fif": 0.4389000108576758,
+     "gap_ff": null,
+     "gap_mcap": 0.18767122049298163,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.158
+    },
+    {
+     "code": "993097",
+     "fif": 0.5588000084161147,
+     "gap_ff": null,
+     "gap_mcap": 0.1250147468042155,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.1111
+    },
+    {
+     "code": "993035",
+     "fif": 0.7092999543352123,
+     "gap_ff": null,
+     "gap_mcap": 0.10522589197716135,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.0952
+    },
+    {
+     "code": "993085",
+     "fif": 0.3689999986721425,
+     "gap_ff": null,
+     "gap_mcap": 0.1005731169283674,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.0913
+    },
+    {
+     "code": "993226",
+     "fif": 0.5800000010695309,
+     "gap_ff": null,
+     "gap_mcap": 0.09055194185267482,
+     "member": true,
+     "outcome": "borderline",
+     "passive_won": -36002861841,
+     "required_rise": -0.083
+    },
+    {
+     "code": "993206",
+     "fif": 0.23980000241713492,
+     "gap_ff": null,
+     "gap_mcap": 0.08930522197459036,
+     "member": true,
+     "outcome": "borderline",
+     "passive_won": -14868304365,
+     "required_rise": -0.0819
+    },
+    {
+     "code": "993143",
+     "fif": 0.5673000015538852,
+     "gap_ff": null,
+     "gap_mcap": 0.07714132770437178,
+     "member": true,
+     "outcome": "borderline",
+     "passive_won": -34781487222,
+     "required_rise": -0.0716
+    },
+    {
+     "code": "993166",
+     "fif": 0.864099998922147,
+     "gap_ff": null,
+     "gap_mcap": 0.07258350619824919,
+     "member": true,
+     "outcome": "borderline",
+     "passive_won": -52754291283,
+     "required_rise": -0.0676
+    },
+    {
+     "code": "993145",
+     "fif": 0.834600001451078,
+     "gap_ff": null,
+     "gap_mcap": -0.17066575489310332,
+     "member": true,
+     "outcome": "delete",
+     "passive_won": -39397680509,
+     "required_rise": 0.2058
+    },
+    {
+     "code": "993161",
+     "fif": 0.14720000376532477,
+     "gap_ff": null,
+     "gap_mcap": -0.22156997896541122,
+     "member": true,
+     "outcome": "delete",
+     "passive_won": -6522139324,
+     "required_rise": 0.2847
+    }
+   ],
+   "status": "ok"
+  },
+  "msci_korea:2026-11": {
+   "cutoff": 1208756510000,
+   "n_members": 46,
+   "rows": [
+    {
+     "code": "993023",
+     "fif": 0.35,
+     "gap_ff": 7.043160142594254,
+     "gap_mcap": 10.49022877513465,
+     "member": false,
+     "outcome": "add",
+     "passive_won": 1959999696478,
+     "required_rise": -0.8756
+    },
+    {
+     "code": "993010",
+     "fif": 0.525,
+     "gap_ff": 25.001596535793055,
+     "gap_mcap": 23.75971094410944,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.9596
+    },
+    {
+     "code": "993188",
+     "fif": 0.475,
+     "gap_ff": 18.506275344677046,
+     "gap_mcap": 19.529841631226414,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.9487
+    },
+    {
+     "code": "993218",
+     "fif": 0.375,
+     "gap_ff": 12.353277311274198,
+     "gap_mcap": 16.80169922642944,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.9251
+    },
+    {
+     "code": "993026",
+     "fif": 0.8,
+     "gap_ff": 24.00943738621536,
+     "gap_mcap": 14.62855384885552,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.936
+    },
+    {
+     "code": "993170",
+     "fif": 0.12,
+     "gap_ff": 1.9386798382070545,
+     "gap_mcap": 11.242662742793001,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.6597
+    },
+    {
+     "code": "993127",
+     "fif": 0.775,
+     "gap_ff": 16.283964001484915,
+     "gap_mcap": 10.149271959037382,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.9103
+    },
+    {
+     "code": "993140",
+     "fif": 0.11,
+     "gap_ff": 1.1174184588545906,
+     "gap_mcap": 8.623185736207304,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.5277
+    },
+    {
+     "code": "993079",
+     "fif": 0.1,
+     "gap_ff": 0.8219576309166943,
+     "gap_mcap": 8.108421754680279,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.4511
+    },
+    {
+     "code": "993198",
+     "fif": 0.8,
+     "gap_ff": 13.15096664199569,
+     "gap_mcap": 7.843027564453959,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.8869
+    },
+    {
+     "code": "993239",
+     "fif": 0.18,
+     "gap_ff": 2.0290842309741546,
+     "gap_mcap": 7.412860808490289,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.6698
+    },
+    {
+     "code": "993034",
+     "fif": 0.23,
+     "gap_ff": 2.501814802870413,
+     "gap_mcap": 6.611499036765827,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.7144
+    },
+    {
+     "code": "993189",
+     "fif": 0.45,
+     "gap_ff": 5.823680956330744,
+     "gap_mcap": 6.580730505958159,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.8534
+    },
+    {
+     "code": "993131",
+     "fif": 0.675,
+     "gap_ff": 9.041918043759557,
+     "gap_mcap": 6.437342097306379,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.8655
+    },
+    {
+     "code": "993184",
+     "fif": 0.625,
+     "gap_ff": 8.280094696749812,
+     "gap_mcap": 6.422962201714024,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.8652
+    },
+    {
+     "code": "993128",
+     "fif": 0.8,
+     "gap_ff": 10.807931312307339,
+     "gap_mcap": 6.378850131978468,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.8644
+    },
+    {
+     "code": "993007",
+     "fif": 0.49,
+     "gap_ff": 5.296044308009109,
+     "gap_mcap": 5.423571376102938,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.8411
+    },
+    {
+     "code": "993041",
+     "fif": 0.575,
+     "gap_ff": 6.280647560804958,
+     "gap_mcap": 5.330048276759099,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.842
+    },
+    {
+     "code": "993112",
+     "fif": 0.8,
+     "gap_ff": 9.046249800122855,
+     "gap_mcap": 5.2779643362474635,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.8407
+    },
+    {
+     "code": "993062",
+     "fif": 0.145,
+     "gap_ff": 0.751419861114863,
+     "gap_mcap": 5.038472969898924,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.429
+    },
+    {
+     "code": "993101",
+     "fif": 0.625,
+     "gap_ff": 6.5006210814170675,
+     "gap_mcap": 4.99959683560536,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.8333
+    },
+    {
+     "code": "993233",
+     "fif": 0.95,
+     "gap_ff": 10.399383982395157,
+     "gap_mcap": 4.998775873836265,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.8332
+    },
+    {
+     "code": "993073",
+     "fif": 0.6,
+     "gap_ff": 5.324638750302394,
+     "gap_mcap": 4.269741751601889,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.8102
+    },
+    {
+     "code": "993047",
+     "fif": 0.14,
+     "gap_ff": 0.42329510078243315,
+     "gap_mcap": 4.082434347112484,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.2974
+    },
+    {
+     "code": "993194",
+     "fif": 0.575,
+     "gap_ff": 1.1172122511808988,
+     "gap_mcap": 0.8410541314616512,
+     "member": false,
+     "outcome": "add",
+     "passive_won": 515933451047,
+     "required_rise": -0.4568
+    },
+    {
+     "code": "993025",
+     "fif": 0.35,
+     "gap_ff": 2.410178564460435,
+     "gap_mcap": 3.8709529475011806,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.7067
+    },
+    {
+     "code": "993027",
+     "fif": 0.14,
+     "gap_ff": 0.3391883270691515,
+     "gap_mcap": 3.782098067369648,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.2532
+    },
+    {
+     "code": "993193",
+     "fif": 0.775,
+     "gap_ff": 5.781196922751296,
+     "gap_mcap": 3.3743095445608504,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.7713
+    },
+    {
+     "code": "993058",
+     "fif": 0.525,
+     "gap_ff": 0.6706709054249478,
+     "gap_mcap": 0.5911151480237599,
+     "member": false,
+     "outcome": "add",
+     "passive_won": 407117900116,
+     "required_rise": -0.3715
+    },
+    {
+     "code": "993081",
+     "fif": 0.11,
+     "gap_ff": -0.06979317083798821,
+     "gap_mcap": 3.2275786596083633,
+     "member": true,
+     "outcome": "borderline",
+     "passive_won": -93505904635,
+     "required_rise": 0.0751
+    },
+    {
+     "code": "993075",
+     "fif": 0.525,
+     "gap_ff": 3.4177609164038607,
+     "gap_mcap": 3.206760271807572,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.7622
+    },
+    {
+     "code": "993019",
+     "fif": 0.425,
+     "gap_ff": 2.387918767764559,
+     "gap_mcap": 2.9851889474794286,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.7048
+    },
+    {
+     "code": "993224",
+     "fif": 0.35,
+     "gap_ff": 1.76168405008831,
+     "gap_mcap": 2.9446711688462734,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.6379
+    },
+    {
+     "code": "993176",
+     "fif": 0.425,
+     "gap_ff": 0.21308867862891592,
+     "gap_mcap": 0.42716315132813637,
+     "member": false,
+     "outcome": "add",
+     "passive_won": 295611849045,
+     "required_rise": -0.1756
+    },
+    {
+     "code": "993209",
+     "fif": 0.5,
+     "gap_ff": 2.842431720542,
+     "gap_mcap": 2.841855384600716,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.7397
+    },
+    {
+     "code": "993048",
+     "fif": 0.675,
+     "gap_ff": 4.143377481149097,
+     "gap_mcap": 2.8093377874817236,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.7374
+    },
+    {
+     "code": "993090",
+     "fif": 0.75,
+     "gap_ff": 4.246474098387356,
+     "gap_mcap": 2.4971247777461243,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.714
+    },
+    {
+     "code": "993217",
+     "fif": 0.3,
+     "gap_ff": 1.0127259828064599,
+     "gap_mcap": 2.354040148339548,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.5031
+    },
+    {
+     "code": "993197",
+     "fif": 0.775,
+     "gap_ff": 4.120581506049587,
+     "gap_mcap": 2.3031054562749165,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.6972
+    },
+    {
+     "code": "993190",
+     "fif": 0.8,
+     "gap_ff": 4.226530057921444,
+     "gap_mcap": 2.266091323506107,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.6938
+    },
+    {
+     "code": "993212",
+     "fif": 0.95,
+     "gap_ff": 5.172419557212745,
+     "gap_mcap": 2.2481546002999977,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.6921
+    },
+    {
+     "code": "993149",
+     "fif": 0.875,
+     "gap_ff": 4.682924333580967,
+     "gap_mcap": 2.2468982500289894,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.692
+    },
+    {
+     "code": "993124",
+     "fif": 0.195,
+     "gap_ff": 0.2047223474296075,
+     "gap_mcap": 2.0885683284934844,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.1699
+    },
+    {
+     "code": "993181",
+     "fif": 0.725,
+     "gap_ff": 3.4778902807338676,
+     "gap_mcap": 2.087736986740866,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.6761
+    },
+    {
+     "code": "993076",
+     "fif": 0.725,
+     "gap_ff": 3.4693335942469843,
+     "gap_mcap": 2.081836708776671,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.6755
+    },
+    {
+     "code": "993071",
+     "fif": 0.575,
+     "gap_ff": 2.3875333007869526,
+     "gap_mcap": 1.945239301040925,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.6604
+    },
+    {
+     "code": "993032",
+     "fif": 0.725,
+     "gap_ff": 0.4510887067183889,
+     "gap_mcap": 0.0007508322195785595,
+     "member": false,
+     "outcome": "borderline",
+     "passive_won": 349489530613,
+     "required_rise": -0.0007
+    },
+    {
+     "code": "993130",
+     "fif": 0.65,
+     "gap_ff": 0.296868534204075,
+     "gap_mcap": -0.002408819843019225,
+     "member": false,
+     "outcome": "borderline",
+     "passive_won": 312733352154,
+     "required_rise": 0.0025
+    },
+    {
+     "code": "993139",
+     "fif": 0.65,
+     "gap_ff": 2.5010433622364436,
+     "gap_mcap": 1.692706332298939,
+     "member": true,
+     "outcome": "keep",
+     "passive_won": null,
+     "required_rise": -0.6286
+    },
+    {
+     "code": "993134",
+     "fif": 0.85,
+     "gap_ff": 0.665043509603656,
+     "gap_mcap": -0.020562641409614137,
+     "member": false,
+     "outcome": "borderline",
+     "passive_won": 400332139970,
+     "required_rise": 0.021
+    },
+    {
+     "code": "993100",
+     "fif": 0.675,
+     "gap_ff": 0.3075563291071748,
+     "gap_mcap": -0.031439756216907574,
+     "member": false,
+     "outcome": "borderline",
+     "passive_won": 315283574271,
+     "required_rise": 0.0325
+    },
+    {
+     "code": "993107",
+     "fif": 0.9,
+     "gap_ff": 0.7097244382162624,
+     "gap_mcap": -0.05015308987985421,
+     "member": false,
+     "outcome": "borderline",
+     "passive_won": 410927779018,
+     "required_rise": 0.0529
+    },
+    {
+     "code": "993039",
+     "fif": 0.95,
+     "gap_ff": 0.8015682669070658,
+     "gap_mcap": -0.051806175312070636,
+     "member": false,
+     "outcome": "borderline",
+     "passive_won": 432683827202,
+     "required_rise": 0.0547
+    },
+    {
+     "code": "993147",
+     "fif": 0.575,
+     "gap_ff": 0.08158832170426118,
+     "gap_mcap": -0.0594884159093381,
+     "member": false,
+     "outcome": "borderline",
+     "passive_won": 261271726853,
+     "required_rise": 0.0633
+    },
+    {
+     "code": "993164",
+     "fif": 0.625,
+     "gap_ff": 0.16566437584503912,
+     "gap_mcap": -0.06746849932396871,
+     "member": false,
+     "outcome": "borderline",
+     "passive_won": 281390892784,
+     "required_rise": 0.0724
+    },
+    {
+     "code": "993136",
+     "fif": 0.115,
+     "gap_ff": -0.42628434635431806,
+     "gap_mcap": 1.49404174174038,
+     "member": true,
+     "outcome": "delete",
+     "passive_won": -57670831385,
+     "required_rise": 0.7431
+    },
+    {
+     "code": "993086",
+     "fif": 0.775,
+     "gap_ff": 0.4130069056118948,
+     "gap_mcap": -0.08838264154071306,
+     "member": false,
+     "outcome": "borderline",
+     "passive_won": 340421741624,
+     "required_rise": 0.097
+    },
+    {
+     "code": "993072",
+     "fif": 0.16,
+     "gap_ff": -0.3369981115676651,
+     "gap_mcap": 1.0715701347541737,
+     "member": true,
+     "outcome": "delete",
+     "passive_won": -66646029044,
+     "required_rise": 0.5083
+    },
+    {
+     "code": "993046",
+     "fif": null,
+     "gap_ff": null,
+     "gap_mcap": null,
+     "member": true,
+     "outcome": "delete",
+     "passive_won": null,
+     "required_rise": null
+    }
+   ],
+   "status": "ok"
+  }
+ },
+ "seed": 20261113
+}

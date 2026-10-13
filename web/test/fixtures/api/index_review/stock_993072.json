@@ -1,0 +1,22 @@
+{
+  "source": "KBJ(KRX·KIS 시세·DART 지분 — 추정)",
+  "as_of": "2026-10-30T15:30:00+09:00",
+  "quality": "estimated",
+  "notes": [],
+  "generated_at": "2026-10-30T17:30:00+09:00",
+  "data": {
+    "code": "993072",
+    "badges": [
+      {
+        "index_id": "msci_korea",
+        "index_title": "MSCI Korea",
+        "review_id": "2026-11",
+        "cutoff_kind": "model",
+        "verdict": "delete",
+        "required_rise": 0.5083,
+        "label": "MSCI Korea 편출 후보 · 유지에 필요 +50.8%",
+        "quality": "estimated"
+      }
+    ]
+  }
+}

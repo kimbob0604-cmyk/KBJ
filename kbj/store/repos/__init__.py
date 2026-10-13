@@ -16,6 +16,8 @@
   저장소는 사용자가 따로 진행해 P5 에서 뺐다. 공개·로그인을 **모듈로** 나눴다(계약 ⑭ — 공개 작업은
   로그인 모듈을 import 하지 않는다). `flows` 에 장중 투자자 1분(prv_gex.investor_flow — F2 만 쓴다),
   `etf` 에 보유 탐색, `board` 에 미국 산출(market='US').
+- P5 2차 묶음 IDX(docs/p5_index_rebalance_prompt.md §3-3): 로그인 `index_review`(0018 prv_index.* —
+  구성종목·리뷰 일정·편입/편출 예측·패시브 규모).
 
 - 행 모양은 `kbj.core.rows`(엔진과 공유). 이 패키지는 `kbj.core`·psycopg 만 쓴다(계약 ⑦).
 - Postgres 구현은 연결 공장(`ConnFactory`)을 받아 부를 때마다 짧게 연다. 서비스는
@@ -35,6 +37,7 @@ from kbj.store.repos.etf import EtfRepo, PgEtfRepo
 from kbj.store.repos.filings import FilingsRepo, PgFilingsRepo
 from kbj.store.repos.fin import FinRepo, PgFinRepo
 from kbj.store.repos.flows import FlowsRepo, PgFlowsRepo, RevisionReport
+from kbj.store.repos.index_review import IndexReviewRepo, PgIndexReviewRepo
 from kbj.store.repos.journal import JournalRepo, PgJournalRepo
 from kbj.store.repos.macro import MacroPublicRepo, PgMacroPublicRepo
 from kbj.store.repos.macro_prv import MacroPrivateRepo, PgMacroPrivateRepo
@@ -54,6 +57,7 @@ __all__ = [
     "FilingsRepo",
     "FinRepo",
     "FlowsRepo",
+    "IndexReviewRepo",
     "JournalRepo",
     "MacroPrivateRepo",
     "MacroPublicRepo",
@@ -88,6 +92,8 @@ class Repos:
     market_stats: MarketStatsRepo
     us: UsRepo
     program: ProgramRepo
+    # P5 2차 묶음 IDX(0018 — 로그인)
+    index_review: IndexReviewRepo
 
     def public(self) -> PublicRepos:
         """같은 공개 저장소(filings·fin·macro·market_stats)를 공개 작업 묶음으로."""
@@ -112,4 +118,5 @@ def pg_repos(conn_factory: ConnFactory) -> Repos:
         market_stats=PgMarketStatsRepo(conn_factory),
         us=PgUsRepo(conn_factory),
         program=PgProgramRepo(conn_factory),
+        index_review=PgIndexReviewRepo(conn_factory),
     )

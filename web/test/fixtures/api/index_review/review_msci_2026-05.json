@@ -1,0 +1,124 @@
+{
+  "source": "KBJ(KRX·KIS 시세·DART 지분 — 추정)",
+  "as_of": "2026-10-30T00:00:00+09:00",
+  "quality": "estimated",
+  "notes": [
+    "예측 없음 — index.predict 17:20(장 마감 뒤)"
+  ],
+  "generated_at": "2026-10-30T17:30:00+09:00",
+  "data": {
+    "indexes": [
+      {
+        "id": "msci_korea",
+        "title": "MSCI Korea",
+        "order": 1
+      },
+      {
+        "id": "kospi200",
+        "title": "KOSPI200",
+        "order": 2
+      },
+      {
+        "id": "kosdaq150",
+        "title": "KOSDAQ150",
+        "order": 3
+      }
+    ],
+    "index_id": "msci_korea",
+    "review": {
+      "index_id": "msci_korea",
+      "index_title": "MSCI Korea",
+      "review_id": "2026-05",
+      "base_date": "2026-04-30",
+      "announce_date": "2026-05-13",
+      "trade_date": "2026-05-29",
+      "effective_date": "2026-06-01",
+      "d_base": -183,
+      "d_announce": -170,
+      "d_trade": -154,
+      "d_effective": -151,
+      "confirmed": true,
+      "quality": "ok"
+    },
+    "reviews": [
+      {
+        "index_id": "msci_korea",
+        "index_title": "MSCI Korea",
+        "review_id": "2026-05",
+        "base_date": "2026-04-30",
+        "announce_date": "2026-05-13",
+        "trade_date": "2026-05-29",
+        "effective_date": "2026-06-01",
+        "d_base": -183,
+        "d_announce": -170,
+        "d_trade": -154,
+        "d_effective": -151,
+        "confirmed": true,
+        "quality": "ok"
+      },
+      {
+        "index_id": "msci_korea",
+        "index_title": "MSCI Korea",
+        "review_id": "2026-11",
+        "base_date": "2026-10-30",
+        "announce_date": "2026-11-11",
+        "trade_date": "2026-11-30",
+        "effective_date": "2026-12-01",
+        "d_base": 0,
+        "d_announce": 12,
+        "d_trade": 31,
+        "d_effective": 32,
+        "confirmed": false,
+        "quality": "estimated"
+      }
+    ],
+    "runs": [],
+    "calendar": [
+      {
+        "index_id": "msci_korea",
+        "index_title": "MSCI Korea",
+        "review_id": "2026-11",
+        "base_date": "2026-10-30",
+        "announce_date": "2026-11-11",
+        "trade_date": "2026-11-30",
+        "effective_date": "2026-12-01",
+        "d_base": 0,
+        "d_announce": 12,
+        "d_trade": 31,
+        "d_effective": 32,
+        "confirmed": false,
+        "quality": "estimated"
+      },
+      {
+        "index_id": "kospi200",
+        "index_title": "KOSPI200",
+        "review_id": "2026-12",
+        "base_date": "2026-10-30",
+        "announce_date": "2026-11-20",
+        "trade_date": "2026-12-10",
+        "effective_date": "2026-12-11",
+        "d_base": 0,
+        "d_announce": 21,
+        "d_trade": 41,
+        "d_effective": 42,
+        "confirmed": false,
+        "quality": "estimated"
+      },
+      {
+        "index_id": "kosdaq150",
+        "index_title": "KOSDAQ150",
+        "review_id": "2026-12",
+        "base_date": "2026-10-30",
+        "announce_date": "2026-11-20",
+        "trade_date": "2026-12-10",
+        "effective_date": "2026-12-11",
+        "d_base": 0,
+        "d_announce": 21,
+        "d_trade": 41,
+        "d_effective": 42,
+        "confirmed": false,
+        "quality": "estimated"
+      }
+    ]
+  }
+}

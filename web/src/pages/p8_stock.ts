@@ -33,6 +33,7 @@ import { mount as mountEtfHolders, TITLE as ETF_HOLDERS_TITLE } from './p8/etf_h
 import { mount as mountFilings } from './p8/filings';
 import { mount as mountFinancials } from './p8/financials';
 import { KIND_TAG, loadHeader, loadPublicHeader } from './p8/header';
+import { loadIndexBadges } from './p8/index_badges';
 import { mount as mountInsiders } from './p8/insiders';
 import { mount as mountOverhang } from './p8/overhang';
 import { mount as mountOverview } from './p8/overview';
@@ -67,6 +68,8 @@ const LOGIN_VALUE: readonly TabMount[] | null =
  * 패널만 그린다(LOGIN_VALUE 와 같은 방식 — 공개 등급은 요청 없음). 고리는 WRAP(docs/p5_design.md §1.8 4).
  */
 const LOGIN_ETF: readonly TabMount[] | null = import.meta.env.MODE === 'public' ? null : [mountEtfHolders];
+/** P5 2차(IDX) 머리 배지 한 줄(지수 편입·편출 후보) — 로그인 전용 API 라 공개 빌드는 모듈을 뺀다(LOGIN_VALUE 와 같은 방식) */
+const LOGIN_INDEX_BADGES = import.meta.env.MODE === 'public' ? null : loadIndexBadges;
 
 function lockedEtf(t: TabCtx, el: HTMLElement): Promise<void> {
   tabGrid(el, mkPanel(t, { title: ETF_HOLDERS_TITLE, tier: 'login', span: 12, lock: 'etf_issuers' }));
@@ -292,6 +295,9 @@ async function mount(ctx: PageContext): Promise<() => void> {
         clear(area);
         currentTabs = null;
       }
+      // 머리를 그린 뒤 지수 배지 한 줄(로그인만 — 머리가 실패해도 배지는 따로)
+      if (known && my === gen && tier === 'login' && LOGIN_INDEX_BADGES) return LOGIN_INDEX_BADGES(pHead, t);
+      return undefined;
     });
     pending.push(head, tb.settled());
   };
