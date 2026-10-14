@@ -1,6 +1,6 @@
 # ADR 0003 — legacy/ 의 범위: 린트·타입검사 제외, 프로젝트별 시험 루트 분리 (2026-10-06)
 
-상태: 확정(P1). 근거: `docs/PLAN.md` §2(교살자 패턴)·§8 P1, `docs/conflict_map.md` §3.1·§3.4, ADR 0001 U3.
+상태: **대체됨 — [0038](0038-legacy-removal.md)**(2026-10-14 P9 WRAP — legacy/ 를 비웠다). 원래 상태: 확정(P1). 근거: `docs/PLAN.md` §2(교살자 패턴)·§8 P1, `docs/conflict_map.md` §3.1·§3.4, ADR 0001 U3.
 구현: `pyproject.toml`(`[tool.ruff]`·`[tool.pyright]`·`[tool.pytest.ini_options]`·`[tool.importlinter]`), `.gitignore`.
 
 ## 1. 맥락

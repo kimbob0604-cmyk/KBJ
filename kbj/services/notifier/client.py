@@ -1,4 +1,4 @@
-"""알림 넣기 — kbj 작업용 `notify*` 와 legacy 발송 7벌을 대신하는 공용 shim(설계 §1.6·§5.9).
+"""알림 넣기 — kbj 작업용 `notify*`(설계 §1.6).
 
 어디서 부르든 하는 일은 하나다: 정책으로 중복 키를 만들어 대기열(`notify:outbox`)에 넣는다.
 텔레그램은 부르지 않는다(보내는 것은 notifier 서비스 하나 — U1). 그래서 봇 토큰이 필요 없다.
@@ -6,13 +6,9 @@
 - kbj 작업: `notify(text, kind=…, source=…)` → `NotifyTicket(ok, id, reason, duplicate)`.
   발송 꺼짐(`KBJ_NOTIFY_ENABLED=false`, 기본)이어도 넣는다 — notifier 가 정책·중복 판정까지 하고
   `suppressed` 로 기록한다(§5.5). 이때 ticket 은 `ok=True, reason="suppressed"`.
-- legacy shim: `legacy_send(text, source=…, parse_mode=…, kind=None, numbered=False)` →
-  `(ok, 사유)`(ET 식). 꺼짐이면 `(False, "발송 꺼짐(KBJ_NOTIFY_ENABLED=false) — 기록만")` — SD
-  `send_telegram` 의 `TELEGRAM_ENABLED` 꺼짐 반환(False)과 같은 뜻. `parse_mode=None` 은 평문이다
-  (기본값으로 바꾸지 않는다 — ET 미국장 브리프).
-- kind 를 안 넘긴 legacy 호출은 호출 스택을 거슬러 올라가며 `config/notify.yaml legacy_kinds` 에
-  있는 함수 이름을 찾는다(전환 기간 한정 [제안]). 없으면 `legacy_default_kind`.
-- 실패는 삼키지 않는다: Redis 가 없거나 설정이 틀리면 ticket `ok=False`·shim `(False, 사유)` 로
+- P9(LEGACY): legacy 발송 7벌을 대신하던 shim(`legacy_send*`·`legacy_kinds` 프레임 찾기)은 ET·SD 를
+  지우며 같이 지웠다(docs/p9_design.md 'LEGACY 구현 기록').
+- 실패는 삼키지 않는다: Redis 가 없거나 설정이 틀리면 ticket `ok=False` + 사유로
   돌려주고 경고 로그를 남긴다. 사유에 키·토큰이 실리지 않게 가린다.
 - 기본 클라이언트는 환경(`KBJ_REDIS_URL`·`KBJ_NOTIFY_ENABLED`)으로 한 번 만든다. 시험·시뮬레이션은
   `set_default_client()` 로 바꿔 끼운다.
@@ -23,13 +19,11 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-import sys
 import threading
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
-from types import FrameType
 from typing import Any, Final
 
 from redis import Redis
@@ -46,7 +40,6 @@ from kbj.services.notifier.policy import (
     dedup_key,
     default_as_of,
     load_notify_config,
-    sha16,
 )
 from kbj.services.notifier.telegram_api import Attachment
 from kbj.services.runtime.heartbeat import Heartbeat, connect_redis
@@ -55,10 +48,8 @@ from kbj.store.redis_keys import NOTIFY_WEBHOOK_INFO, heartbeat_key
 log = logging.getLogger(__name__)
 
 POLICY: Final = "policy"  # parse_mode 를 정책(notify.yaml)에서 가져오라는 표시
-DISABLED_REASON: Final = "발송 꺼짐(KBJ_NOTIFY_ENABLED=false) — 기록만"
 SUPPRESSED: Final = "suppressed"
 NOTIFIER_SERVICE: Final = "notifier"
-_FRAME_DEPTH: Final = 12  # legacy 함수 이름을 찾을 때 거슬러 올라갈 프레임 수
 
 
 def _digest_text(text: str) -> str:
@@ -74,21 +65,6 @@ def _digest_files(caption: str, atts: Sequence[Attachment]) -> str:
 
 def _clean_reason(e: BaseException) -> str:
     return mask_text(f"{type(e).__name__}: {e}")[:300]
-
-
-def _legacy_origin(source: str, fn: str | None, part: str, content: str) -> str:
-    """legacy 발송의 '부른 곳' — 하루 1회(`daily`) 규칙에서 무엇을 한 번으로 셀지(정책 `origin`).
-
-    - `legacy_kinds` 로 찾은 함수(fn): 그 함수는 한 번 돌 때 한 통을 보낸다(SD 아침·마감 등 — 표에
-      올린 14개를 확인했다) → 함수마다 하루 1회.
-    - kind 를 넘긴 호출(fn 없음): ETF 리포트 여러 통(ET `tracker.send_report`)·수급 종목별
-      차트(ET flow `run` → `send_report`)처럼 한 번 돌 때 여러 통을 보낸다 → 내용 해시를 붙여 다른
-      내용은 모두 가고 같은 내용의 되풀이(재실행)만 막는다. 붙이지 않으면 둘째 통부터 duplicate 로
-      빠지는데 legacy 는 `(True, '중복 …')` 을 받아 보낸 줄 안다(조용한 유실).
-    """
-    if fn is not None:
-        return f"{source}.{fn}.{part}"
-    return f"{source}.-.{part}-{sha16(content)[:8]}"
 
 
 @dataclass
@@ -125,7 +101,6 @@ class NotifyClient:
         chat: str | None,
         thread_id: int | None,
         numbered: bool,
-        origin: str | None,
     ) -> NotifyTicket:
         if not source or not source.strip():
             return NotifyTicket(False, None, "source(부른 곳)가 비었다")
@@ -137,9 +112,7 @@ class NotifyClient:
         if size > cap:
             return NotifyTicket(False, None, f"첨부가 {size:,}바이트 — 상한 {cap:,}바이트 초과")
         body_sha = _digest_files(caption, atts) if atts else _digest_text(text or "")
-        gate, log_key = dedup_key(
-            policy, as_of=day, subject=subject, body_sha256=body_sha, now=now, origin=origin
-        )
+        gate, log_key = dedup_key(policy, as_of=day, subject=subject, body_sha256=body_sha, now=now)
         msg = OutboundMessage(
             kind=policy.kind,
             source=source.strip(),
@@ -221,7 +194,6 @@ class NotifyClient:
             chat=chat,
             thread_id=thread_id,
             numbered=numbered,
-            origin=None,
         )
 
     def notify_document(
@@ -236,7 +208,6 @@ class NotifyClient:
         silent: bool | None = None,
         chat: str | None = None,
         thread_id: int | None = None,
-        origin: str | None = None,
     ) -> NotifyTicket:
         """파일 한 개 첨부. 없는 파일은 실패(ET — 없는 것을 보냈다고 적지 않는다)."""
         try:
@@ -264,7 +235,6 @@ class NotifyClient:
             chat=chat,
             thread_id=thread_id,
             numbered=False,
-            origin=origin,
         )
 
     def notify_media(
@@ -279,7 +249,6 @@ class NotifyClient:
         silent: bool | None = None,
         chat: str | None = None,
         thread_id: int | None = None,
-        origin: str | None = None,
     ) -> NotifyTicket:
         """사진 여러 장(10장씩 묶어 보낸다). 없는 그림이 하나라도 있으면 실패(ET flow)."""
         try:
@@ -310,124 +279,7 @@ class NotifyClient:
             chat=chat,
             thread_id=thread_id,
             numbered=False,
-            origin=origin,
         )
-
-    # ── legacy shim ──────────────────────────────────────────────────────────────────
-    def legacy_kind(self, kind: str | None, frame: FrameType | None) -> tuple[str, str | None]:
-        """(종류, 찾은 legacy 함수 이름). kind 를 넘겼으면 그대로."""
-        if kind is not None:
-            return kind, None
-        f = frame
-        for _ in range(_FRAME_DEPTH):
-            if f is None:
-                break
-            name = f.f_code.co_name
-            if f.f_globals.get("__name__") != __name__ and name in self.config.legacy_kinds:
-                return self.config.legacy_kinds[name], name
-            f = f.f_back
-        return self.config.legacy_default_kind, None
-
-    def _legacy_result(self, ticket: NotifyTicket) -> tuple[bool, str]:
-        if not ticket.ok:
-            return False, ticket.reason
-        if not self.enabled:
-            return False, DISABLED_REASON
-        if ticket.duplicate:
-            return True, f"{'쿨다운' if ticket.reason == 'cooldown' else '중복'} — 이미 넣은 알림"
-        return True, f"대기열에 넣음({ticket.id})"
-
-    def legacy_send(
-        self,
-        text: str,
-        *,
-        source: str,
-        parse_mode: str | None = "HTML",
-        kind: str | None = None,
-        numbered: bool = False,
-        silent: bool = False,
-        frame: FrameType | None = None,
-    ) -> tuple[bool, str]:
-        """legacy `send_telegram`·`send`·`send_telegram_message` 대체. 반환 `(ok, 사유)`."""
-        try:
-            k, fn = self.legacy_kind(kind, frame if frame is not None else sys._getframe(1))
-            pol = self._policy(k)
-            if not (text or "").strip():
-                return False, "본문이 비어 있다. 보낼 것이 없다"
-            ticket = self._enqueue(
-                pol,
-                source=source,
-                text=text,
-                caption="",
-                document=None,
-                media=(),
-                as_of=None,
-                subject=None,
-                parse_mode=parse_mode,
-                silent=silent,
-                chat=None,
-                thread_id=None,
-                numbered=numbered,
-                origin=_legacy_origin(source, fn, "text", text),
-            )
-        except Exception as e:  # legacy 서버를 멈추지 않는다 — 사유는 돌려주고 로그로 남긴다
-            log.warning("legacy_send 실패: %s", type(e).__name__)
-            return False, _clean_reason(e)
-        return self._legacy_result(ticket)
-
-    def legacy_send_document(
-        self,
-        path: str | Path,
-        caption: str = "",
-        *,
-        source: str,
-        kind: str | None = None,
-        silent: bool = False,
-        frame: FrameType | None = None,
-    ) -> tuple[bool, str]:
-        """legacy `send_document` 대체. 반환 `(ok, 사유)`."""
-        try:
-            k, fn = self.legacy_kind(kind, frame if frame is not None else sys._getframe(1))
-            name = Path(path).name
-            ticket = self.notify_document(
-                path,
-                caption,
-                kind=k,
-                source=source,
-                silent=silent,
-                origin=f"{source}.{fn or '-'}.doc-{sha16(name)[:8]}",
-            )
-        except Exception as e:
-            log.warning("legacy_send_document 실패: %s", type(e).__name__)
-            return False, _clean_reason(e)
-        return self._legacy_result(ticket)
-
-    def legacy_send_media(
-        self,
-        paths: Sequence[str | Path],
-        caption: str = "",
-        *,
-        source: str,
-        kind: str | None = None,
-        silent: bool = False,
-        frame: FrameType | None = None,
-    ) -> tuple[bool, str]:
-        """legacy `send_photos`(sendMediaGroup) 대체. 반환 `(ok, 사유)`."""
-        try:
-            k, fn = self.legacy_kind(kind, frame if frame is not None else sys._getframe(1))
-            names = "\0".join(Path(p).name for p in paths)
-            ticket = self.notify_media(
-                paths,
-                caption,
-                kind=k,
-                source=source,
-                silent=silent,
-                origin=_legacy_origin(source, fn, "media", f"{caption}\0{names}"),
-            )
-        except Exception as e:
-            log.warning("legacy_send_media 실패: %s", type(e).__name__)
-            return False, _clean_reason(e)
-        return self._legacy_result(ticket)
 
 
 # ── 웹훅·notifier 상태(읽기만 — getWebhookInfo 는 notifier 가 10분마다 부른다) ──────────────────
@@ -575,62 +427,6 @@ def notify_media(
     )
 
 
-def legacy_send(
-    text: str,
-    *,
-    source: str,
-    parse_mode: str | None = "HTML",
-    kind: str | None = None,
-    numbered: bool = False,
-    silent: bool = False,
-) -> tuple[bool, str]:
-    """legacy 발송 shim(§5.9). 반환 `(ok, 사유)` — SD 는 `[0]` 만 쓴다."""
-    c, why = _client_or_reason()
-    if c is None:
-        return False, why
-    return c.legacy_send(
-        text,
-        source=source,
-        parse_mode=parse_mode,
-        kind=kind,
-        numbered=numbered,
-        silent=silent,
-        frame=sys._getframe(1),
-    )
-
-
-def legacy_send_document(
-    path: str | Path,
-    caption: str = "",
-    *,
-    source: str,
-    kind: str | None = None,
-    silent: bool = False,
-) -> tuple[bool, str]:
-    c, why = _client_or_reason()
-    if c is None:
-        return False, why
-    return c.legacy_send_document(
-        path, caption, source=source, kind=kind, silent=silent, frame=sys._getframe(1)
-    )
-
-
-def legacy_send_media(
-    paths: Sequence[str | Path],
-    caption: str = "",
-    *,
-    source: str,
-    kind: str | None = None,
-    silent: bool = False,
-) -> tuple[bool, str]:
-    c, why = _client_or_reason()
-    if c is None:
-        return False, why
-    return c.legacy_send_media(
-        paths, caption, source=source, kind=kind, silent=silent, frame=sys._getframe(1)
-    )
-
-
 def webhook_status() -> dict[str, Any]:
     """웹훅·notifier 상태 dict(`ok`·`reason` 포함). Redis 를 못 읽으면 `ok=False` + 사유."""
     try:
@@ -643,14 +439,10 @@ def webhook_status() -> dict[str, Any]:
 
 
 __all__ = [
-    "DISABLED_REASON",
     "POLICY",
     "NotifyClient",
     "NotifyTicket",
     "default_client",
-    "legacy_send",
-    "legacy_send_document",
-    "legacy_send_media",
     "notify",
     "notify_document",
     "notify_media",

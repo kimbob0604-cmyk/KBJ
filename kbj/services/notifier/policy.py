@@ -11,7 +11,7 @@
 
 | 규칙(`dedup`) | 문지기 키 | 수명 |
 |---|---|---|
-| `daily` 하루 1회 | `{kind}:{as_of:%Y%m%d}`(+`:{subject}`)(+`:{origin}`) | 36시간 |
+| `daily` 하루 1회 | `{kind}:{as_of:%Y%m%d}`(+`:{subject}`) | 36시간 |
 | `cooldown` | `{kind}:{subject}` — **미끄러지는 창**(마지막 발송부터 `cooldown_s`) | `cooldown_s` |
 | `subject` 대상별 1회 | `{kind}:{subject}` | 30일 |
 | `body` 그 밖 | `{kind}:{as_of:%Y%m%d}:{sha256(본문)[:16]}` | 24시간 |
@@ -20,12 +20,10 @@
   (10:59·11:01)에서 2분 만에 두 번 나간다. 그래서 문지기는 `{kind}:{subject}`(수명 `cooldown_s`)로
   두고, `floor` 붙은 키는 발송 기록의 유일 키(`log_key`)로만 쓴다 — 두 번 받아들인 시각은 늘
   `cooldown_s` 이상 떨어져 있으므로 기록 키가 겹치지 않는다.
-- subject 가 없으면(`cooldown`·`subject` 규칙) 본문 해시를 대상으로 본다 — legacy 처럼 대상을 모르는
-  호출이 서로 다른 알림을 한 쿨다운에 묶어 버리지 않게(SD `_alert_cooldown_ok` 와 같은 뜻).
-- `origin`(legacy shim 이 넣는 '부른 곳') — 전환 기간에 legacy 의 여러 함수가 같은 종류로 매겨져도
-  (§5.9 `legacy_kinds`) 함수마다 하루 1회로 센다. kind 를 넘긴 legacy 호출(한 번에 여러 통 — ETF
-  리포트·수급 종목별 차트)은 origin 에 내용 해시가 붙어 같은 내용의 되풀이만 막는다(client
-  `_legacy_origin`). kbj 작업은 origin 없이 부른다 → 종류당 하루 1회(U2).
+- subject 가 없으면(`cooldown`·`subject` 규칙) 본문 해시를 대상으로 본다 — 대상을 모르는 호출이
+  서로 다른 알림을 한 쿨다운에 묶어 버리지 않게(SD `_alert_cooldown_ok` 와 같은 뜻).
+- P9(LEGACY): legacy 발송 shim 의 '부른 곳'(`origin`)·`legacy_kinds`·`legacy_default_kind` 는
+  ET·SD 를 지우며 같이 지웠다 — 모든 발송이 kbj 작업이라 `daily` 는 종류(+대상)당 하루 1회(U2).
 - 키 조각에는 공백이 없다(Redis 키 규칙 — `kbj.store.redis_keys`). chat id 는 키에 넣지 않는다.
 """
 
@@ -57,7 +55,6 @@ ParseMode = Literal["HTML", "Markdown", "MarkdownV2"]
 PARSE_MODES: Final[tuple[str, ...]] = ("HTML", "Markdown", "MarkdownV2")
 
 _KIND = re.compile(r"[a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+")
-_FUNC = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 _SPACE = re.compile(r"\s+")
 
 
@@ -202,8 +199,6 @@ class NotifyConfig(BaseModel):
     version: Literal[1]
     topics: dict[Topic, int | None]
     kinds: dict[str, KindPolicy]
-    legacy_kinds: dict[str, str] = Field(default_factory=dict[str, str])
-    legacy_default_kind: str
     delivery: Delivery = Delivery()
     inbox: InboxConfig = InboxConfig()
 
@@ -217,13 +212,6 @@ class NotifyConfig(BaseModel):
         for name, pol in self.kinds.items():
             if name != pol.kind:
                 raise ValueError(f"kinds.{name}: kind 값이 키와 다르다({pol.kind})")
-        for fn, kind in self.legacy_kinds.items():
-            if not _FUNC.fullmatch(fn):
-                raise ValueError(f"legacy_kinds: 함수 이름이 아니다: {fn!r}")
-            if kind not in self.kinds:
-                raise ValueError(f"legacy_kinds.{fn}: 모르는 종류 {kind!r}")
-        if self.legacy_default_kind not in self.kinds:
-            raise ValueError(f"legacy_default_kind: 모르는 종류 {self.legacy_default_kind!r}")
         return self
 
     def policy(self, kind: str) -> KindPolicy:
@@ -294,7 +282,6 @@ def dedup_key(
     subject: str | None,
     body_sha256: str,
     now: datetime,
-    origin: str | None = None,
 ) -> tuple[str, str]:
     """(문지기 키, 발송 기록 키). 둘은 `cooldown` 에서만 다르다(머리말 표).
 
@@ -311,8 +298,6 @@ def dedup_key(
         parts = [kind, day]
         if subj is not None:
             parts.append(subj)
-        if origin:
-            parts.append(key_part(origin))
         key = ":".join(parts)
         return key, key
     if policy.dedup == "body":

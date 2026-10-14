@@ -1,7 +1,8 @@
 """KRX 공표 지연 변형 — 10-02 분이 08:00 이 아니라 08:20 에 나온다(설계 §10.5).
 
-창 2026-10-06 07:50 ~ 10:30 KST. `krx.daily`(08:05, 10분마다 10:00 까지)와 legacy GX 의 KRX 파생
-단계가 08:05·08:15 에 빈 응답을 받고 08:25 에 받는다. 성공 수집은 키마다 1회, 일 예산은
+창 2026-10-06 07:50 ~ 10:30 KST. `krx.daily`(08:05, 10분마다 10:00 까지)와 등록부
+`gex.krx_derivatives`(P9 — 옛 GX KRX 파생 단계)가 08:05·08:15 에 빈 응답을 받고 08:25 에 받는다.
+성공 수집은 키마다 1회, 일 예산은
 3 × 엔드포인트 수(빈 응답도 센다 — kbj/data/budget.py). P7 `krx.vkospi`(08:10, 10분마다 —
 운영 등록부에서는 꺼짐 #P7-1, 하네스는 꺼진 작업도 시뮬레이션 처리기로 돌린다 — 하네스 머리말)는
 08:10 빈 응답·08:20 성공으로 2번.
@@ -28,7 +29,7 @@ def late() -> SimDay:
             hours=2 + 40 / 60,
             krx_publish_time=time(8, 20),
             ws=False,
-            legacy_calls=False,
+            reader_calls=False,
         )
     )
     try:
@@ -73,13 +74,15 @@ def test_keys_collected_once_and_budget_counts_empty_answers(late: SimDay) -> No
 
 
 def test_gx_derivatives_follow_the_same_rule(late: SimDay) -> None:
-    gx = [
-        (r.at.astimezone(KST).strftime("%H:%M"), r.status)
-        for r in late.external_runs
-        if r.job == "gex.krx_derivatives"
+    """P9 WRAP: GX KRX 파생은 등록부 gex.krx_derivatives(runner kbj) — krx.daily 와 같은 재시도."""
+    runs = late.runs_of("gex.krx_derivatives")
+    assert [
+        (r.started_at.astimezone(KST).strftime("%H:%M"), r.attempt, r.status)
+        for r in runs
+        if r.status != "running" and r.started_at is not None
+    ] == [
+        ("08:05", 1, "failed"),  # 공표 전(not_ready) — 재시도 예약
+        ("08:15", 2, "failed"),
+        ("08:25", 3, "ok"),
     ]
-    assert gx == [
-        ("08:05", "not_ready"),
-        ("08:15", "not_ready"),
-        ("08:25", "ok"),
-    ]
+    assert [r.detail.get("result") for r in runs if r.status == "failed"] == ["not_ready"] * 2

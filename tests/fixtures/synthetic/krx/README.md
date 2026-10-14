@@ -6,7 +6,7 @@ KRX OpenAPI 와 금융위 주식·지수 시세(공공누리 4유형, 원천 KRX
 
 | 파일 | 내용 | 생성기 | 쓰는 시험 |
 |---|---|---|---|
-| `opt_daily.json`·`fut_daily.json` | KRX 파생 일별(`drv/opt_bydd_trd`·`fut_bydd_trd`) 응답 행 모양 | legacy GX `scripts/make_synthetic_fixtures.py`(시드 `kbj-p1-gexlab-synthetic-v1`) — 그 출력(`legacy/gexlab/tests/fixtures/krx/`)과 **바이트까지 같은 복사본** | `tests/unit/data/private/test_krx_models.py`·`test_krx_client.py`(GX 승격) |
+| `opt_daily.json`·`fut_daily.json` | KRX 파생 일별(`drv/opt_bydd_trd`·`fut_bydd_trd`) 응답 행 모양 | `tests/fixtures/synthetic/gex/make_synthetic_fixtures.py`(P9 GXI 가 GX 에서 옮김 — 시드 `kbj-p1-gexlab-synthetic-v1`) 출력과 **바이트까지 같다** | `tests/unit/data/private/test_krx_models.py`·`test_krx_client.py`(GX 승격) |
 | `stock_daily.json` | 주식 일별(`sto/stk_bydd_trd`·`ksq_bydd_trd`) 두 거래일 | `make_synthetic.py`(시드 `kbj-p2-krx-synthetic-v1`) | `test_krx_cash_models.py`·`test_krx_stocks.py` |
 | `etf_daily.json` | ETF 일별(`etp/etf_bydd_trd`) 두 거래일 — 순자산 = 좌수 × NAV, 둘째 날 신규 상장 | 같음 | `test_krx_cash_models.py` |
 | `etn_daily.json`·`index_daily.json`·`base_info.json` | ETN·지수·종목기본정보 | 같음 | 같음 |

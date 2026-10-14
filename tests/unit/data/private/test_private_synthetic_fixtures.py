@@ -1,7 +1,8 @@
 """로그인 등급 합성 fixture(tests/fixtures/synthetic/krx) — 합성 표시·생성기 출력과 같음.
 
 KRX·금융위 시세 원본은 레포에 넣지 않는다(CLAUDE.md §2). 커밋된 JSON 이 시드 고정 생성기의 출력과
-같은지, 파생 2종은 legacy GX 생성기 출력과 바이트까지 같은지 본다.
+같은지, 파생 2종은 GX 생성기(P9 에 tests/fixtures/synthetic/gex 로 옮김) 출력과 바이트까지
+같은지 본다.
 """
 
 from __future__ import annotations
@@ -14,7 +15,6 @@ import pytest
 from tests.fixtures.synthetic.krx import make_synthetic
 
 FIX = Path(__file__).resolve().parents[3] / "fixtures" / "synthetic" / "krx"
-GX_FIX = Path(__file__).resolve().parents[4] / "legacy" / "gexlab" / "tests" / "fixtures" / "krx"
 
 
 def test_every_json_is_marked_synthetic() -> None:
@@ -41,11 +41,12 @@ def test_generator_check_mode_passes_and_is_deterministic() -> None:
 
 
 @pytest.mark.parametrize("name", ["opt_daily.json", "fut_daily.json"])
-def test_derivative_copies_match_the_legacy_gx_generator_output(name: str) -> None:
-    original = GX_FIX / name
-    if not original.exists():
-        pytest.skip("legacy GX fixture 가 없다(P9 정리 뒤) — GX 생성기 KRX 부분을 옮긴 뒤 바꾼다")
-    assert (FIX / name).read_bytes() == original.read_bytes()
+def test_derivative_copies_match_the_gx_generator_output(name: str) -> None:
+    """파생 2종은 GX 생성기(P9 에 KBJ 로 옮김 — tests/fixtures/synthetic/gex/
+    make_synthetic_fixtures.py) 출력과 바이트까지 같다."""
+    from tests.fixtures.synthetic.gex import make_synthetic_fixtures
+
+    assert (FIX / name).read_text(encoding="utf-8") == make_synthetic_fixtures.outputs()[FIX / name]
 
 
 def test_synthetic_isin_check_digit() -> None:

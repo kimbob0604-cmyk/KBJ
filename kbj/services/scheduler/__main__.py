@@ -42,6 +42,7 @@ from kbj.core.calendar import TradingCalendar, load_override, us_calendar
 from kbj.core.time import KST, utcnow
 from kbj.data.catalog import all_datasets
 from kbj.data.limits import load_limits
+from kbj.services.ops.source import PgOpsSource
 from kbj.services.runtime.health import ServiceHealthSink
 from kbj.services.runtime.heartbeat import Heartbeater, connect_redis
 from kbj.services.runtime.log import log_event, setup_logging
@@ -132,6 +133,8 @@ def _build(settings: Settings, *, inline: bool = False) -> tuple[Any, Any, Any, 
             # P4(D-P4-25 ②): event 데이터 키(접수번호·회사 단위)는 처리기가 실행기와 같은
             # 선점 저장소로 직접 claim → complete/fail 한다(실행기는 event 키를 미리 잡지 않는다)
             "claims": claims,
+            # P9 WRAP(ADR 0037 §3): ops.watchdog 가 지금 끊긴 서비스를 ops.health_events 에 남긴다
+            "ops_gaps": PgOpsSource(connect_fn),
         },
     )
     svc = SchedulerService(redis, runner, kr, PgSessionLogStore(connect_fn), health=health)

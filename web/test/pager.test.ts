@@ -1,7 +1,7 @@
 // 탭·해시·←/→·미니맵, 13페이지 등록 (§6.8 pager.test) + P4 종목 해시 #/p/8/<코드> (p4_design §1.2·§6.5)
 import { describe, expect, it, vi } from 'vitest';
 import { mountApp } from '../src/app/app';
-import { pageLoaders, PAGES, P3_PAGES, P4_PAGES, P5_PAGES, P6_PAGES, P7_PAGES, P8_PAGES } from '../src/app/pages';
+import { pageLoaders, PAGES, P3_PAGES, P4_PAGES, P5_PAGES, P6_PAGES, P7_PAGES, P8_PAGES, P9_PAGES } from '../src/app/pages';
 import { formatHash, HASH_RE, isMostlyVisible, parseHash, parseRoute } from '../src/app/pager';
 import { createRoute, route as appRoute } from '../src/app/route';
 import type { DataSource } from '../src/data/source';
@@ -28,7 +28,8 @@ describe('페이지 등록부', () => {
     expect(P5_PAGES).toEqual([6]);
     expect(P6_PAGES).toEqual([7]); // P6 수출입(docs/p6_design.md §6)
     expect(P7_PAGES).toEqual([3]); // P7 진단(docs/p7_design.md §6)
-    expect(P8_PAGES).toEqual([11, 12]); // P8 알림·규칙·백테스트·저널(docs/p8_design.md §6 — 13 은 자리표시)
+    expect(P8_PAGES).toEqual([11, 12]); // P8 알림·규칙·백테스트·저널(docs/p8_design.md §6)
+    expect(P9_PAGES).toEqual([13]); // P9 운영 최소판(docs/p9_design.md §6, ADR 0037)
     // DATA_TIERS §2: 7 은 공개 표시, 1·3·5·6·8 은 공개·로그인 섞임(D-P4-15·p5_design §6·p7_design D-P7-12), 나머지는 로그인
     expect(PAGES.filter((p) => p.tier === 'public').map((p) => p.n)).toEqual([7]);
     expect(PAGES.filter((p) => p.tier === 'mixed').map((p) => p.n)).toEqual([1, 3, 5, 6, 8]);
@@ -68,15 +69,16 @@ describe('페이지 등록부', () => {
     expect([...m.keys()].sort((a, b) => a - b)).toEqual([1, 3, 5, 6, 7, 8, 10, 11, 12]);
   });
 
-  it('빌드 glob 이 페이지 3·5·8·6·7·11·12 진입 파일도 찾는다(p{1,2,3,4,5,6,7,8,10,11,12}_*.ts — 9·13 은 자리표시)', async () => {
+  it('빌드 glob 이 페이지 3·5·8·6·7·11·12·13 진입 파일도 찾는다(p{1,2,3,4,5,6,7,8,10,11,12,13}_*.ts — 9 는 자리표시)', async () => {
     const src = (await import('../src/app/pages.ts?raw')).default;
-    expect(src).toContain("'../pages/p{1,2,3,4,5,6,7,8,10,11,12}_*.ts'");
+    expect(src).toContain("'../pages/p{1,2,3,4,5,6,7,8,10,11,12,13}_*.ts'");
   });
 
-  it('P8 페이지 11·12 문구: 개인 기능 — 로그인 전부(자물쇠 personal), 13 운영은 자리표시 그대로', () => {
-    for (const n of [11, 12, 13]) {
+  it('P8 페이지 11·12 문구: 개인 기능 — 로그인 전부(자물쇠 personal), 13 운영은 P9(같은 자물쇠)', () => {
+    for (const n of [11, 12]) {
       expect(PAGES.find((p) => p.n === n)).toMatchObject({ phase: 'P8', tier: 'login', lock: 'personal' });
     }
+    expect(PAGES.find((p) => p.n === 13)).toMatchObject({ phase: 'P9', tier: 'login', lock: 'personal' });
     const plan = (n: number) => PAGES.find((p) => p.n === n)?.plan ?? '';
     for (const w of ['규칙', '편집기', '발송 이력', '알림 후 성과', '16:00']) expect(plan(11)).toContain(w);
     for (const w of ['백테스트 대 실제', '분석 일지', '포트폴리오', '상관관계', '추천 성과']) expect(plan(12)).toContain(w);

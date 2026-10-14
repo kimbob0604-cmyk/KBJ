@@ -41,7 +41,7 @@ def _break(sim: SimDay) -> None:
 def broken() -> Iterator[SimDay]:
     sim = SimDay(
         SimOptions(
-            start=at(11, 17, 8, 50), hours=1.5, p5=True, ws=False, legacy_calls=False,
+            start=at(11, 17, 8, 50), hours=1.5, p5=True, ws=False, reader_calls=False,
             prepare=(_break,),
         )
     )  # fmt: skip

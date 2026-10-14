@@ -2,6 +2,11 @@
 
 docs/p3_design.md §4.1 '골든 비교 방법'·§8.1, D-P3-10(골든 먼저 → 이식 → 비교 → shim).
 
+**재생성 불가(P9 LEGACY, 2026-10-14)**: legacy/etf_traker 를 레포에서 지웠다 — 이 트리에서는
+돌지 않는다(legacy 폴더가 없으면 종료 코드 2). 다시 만들 일이 생기면 커밋 f6aeebd(legacy 를 지우기
+직전 — 태그 legacy-final 은 사용자가 GitHub 에서 달 수 있다)를 `git worktree` 로 꺼내 거기서
+돌린다. 골든 값·비교 시험(`tests/golden/test_board_golden*.py`)은 그대로다.
+
 쓰는 법(레포 루트, shim 전 legacy 엔진이 있을 때만 의미가 있다)::
 
     uv run python tests/golden/board/make_golden.py --seed 20260826 --days 30 --stocks 300
@@ -470,6 +475,13 @@ def main(argv: list[str] | None = None) -> int:
         help="legacy 엔진이 이미 kbj shim 이어도 돌린다(시험용 — 골든 폴더에는 쓰지 말 것)",
     )
     a = ap.parse_args(argv)
+    if not (LEGACY_ET / "board" / "engine" / "build.py").is_file():
+        print(
+            "legacy/etf_traker 가 없다(P9 LEGACY 에 지웠다) — 재생성 불가. 커밋 f6aeebd 를 "
+            "git worktree 로 꺼내 거기서 돌린다(머리말).",
+            file=sys.stderr,
+        )
+        return 2
     shim = "compute_day" in (LEGACY_ET / "board" / "engine" / "build.py").read_text(
         encoding="utf-8"
     )

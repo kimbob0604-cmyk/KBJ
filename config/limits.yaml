@@ -26,7 +26,6 @@ kis:
                                 # 부르지 않는다(D-P7-5, flows.market_minute 의 market_minute 를 쓴다)
     command_reply: P2           # 텔레그램 명령 /가격 (KIS:quote_on_demand)
     close_collect: P3           # 장마감 수집 market.close_collect
-    legacy_bridge: P3           # legacy 논리 URL 브리지 기본값(헤더 x-kbj-priority 로 바꿈)
     backfill: P4                # 백필
     minute_load: P4             # 분봉 적재
     # P5 F2(docs/p5_design.md §3.4, R5) — 분 수집이 10분 슬롯·스캔보다 먼저

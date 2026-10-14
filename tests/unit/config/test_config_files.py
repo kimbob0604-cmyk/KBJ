@@ -82,7 +82,8 @@ def test_repo_config_skeletons() -> None:
     assert d["tz"] == "Asia/Seoul" and d["enabled"] is False and d["deadline_min"] == 120
     assert d["retry"] == {"max": 3, "backoff_s": [60, 300, 900]}
     notify = load_yaml_mapping("notify.yaml", settings=s)
-    assert notify["version"] == 1 and {"topics", "kinds", "legacy_kinds"} <= set(notify)
+    assert notify["version"] == 1 and {"topics", "kinds"} <= set(notify)
+    assert "legacy_kinds" not in notify  # P9(LEGACY) — shim 과 함께 지웠다
     limits = load_yaml_mapping("limits.yaml", settings=s)
     assert limits["version"] == 1
 

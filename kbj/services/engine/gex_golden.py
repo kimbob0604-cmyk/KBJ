@@ -18,9 +18,8 @@ GX `scripts/make_golden.py` 의 core·chain-subset 갈래. 순수 부분(비교�
 - chain-subset: 전체 체인 스냅샷에서 작은 fixture 를 자른다(고른 행·필드만 — 비밀이 끼어들 자리가
   없다). 커밋된 두 fixture 가 이 규칙의 고정점이다(`tests/golden/gex/test_chain_subset.py`)
 
-fixture 생성기는 아직 legacy GX `scripts/make_synthetic_fixtures.py`(시드 고정 — 합성)다. legacy GX
-의 남은 도구·시험이 같은 바이트의 사본(`legacy/gexlab/tests/fixtures/validation/`)을 읽는다 — 두
-사본이 같은지는 legacy 다리 시험이 본다.
+fixture 생성기는 `tests/fixtures/synthetic/gex/make_synthetic_fixtures.py`(P9 GXI 가 GX 에서 옮김 —
+시드 고정 합성)다. 옛 GX 사본(`legacy/gexlab/tests/fixtures/validation/`)은 P9 WRAP 에 지웠다.
 """
 
 from __future__ import annotations

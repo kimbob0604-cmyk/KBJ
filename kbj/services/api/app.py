@@ -70,6 +70,7 @@ from kbj.services.api.routes import (
     journal,
     macro,
     market,
+    ops,
     portfolio,
     program,
     rules,
@@ -240,6 +241,7 @@ def create_app(
         trade,  # P6(docs/p6_design.md §5 — 웨이브 1 FND)
         gex, diag,  # P7(docs/p7_design.md §5 — 웨이브 1 FND-B)
         rules, backtest, journal, portfolio,  # P8(docs/p8_design.md §5 — 웨이브 1 FND)
+        ops,  # P9 묶음 OPS(docs/p9_design.md §6.2 — 페이지 13 최소판)
         webhook,
     )  # fmt: skip
     for r in routers:

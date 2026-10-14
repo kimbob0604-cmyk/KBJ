@@ -319,9 +319,38 @@ kbj/
     ④ SD 옛 발송 이력 미이관 사용자 확인 ⑤ `pct_rank` 두 구현 합치기(P9) ⑥ board 스윙·SD 차트 지표·일지 helper 모듈(P9 legacy 비우기).
 
 
-**P9 — 포트폴리오 마감 (3~4일)**
+**P9 — 포트폴리오 마감 (3~4일)** — 코드 완료(2026-10-14, 웨이브 3 WRAP — 데모 compose 실제 기동·도커 통합·운영 1주는 메인·사용자)
 - 데모 모드(fixture), README·아키텍처 그림·GIF, ADR, `legacy/` 비우기, 운영 1주 무중단
 - **완료 기준:** `docker compose up` 한 줄로 데모가 뜬다. 공개 산출물에 원시세와 키가 없는지 검사하는 스크립트가 통과한다.
+- **결과(2026-10-14, 웨이브 3 WRAP — 설계 `docs/p9_design.md`(끝 'WRAP 구현 기록'), ADR 0034~0038 확정, 0003·0007 대체됨 — 0038):**
+  - 사용자 결정(§11 — 전부 기본값): legacy 지움(지우기 직전 = 커밋 `f6aeebd` — 태그 `legacy-final` 은 사용자가 GitHub 에서 달
+    수 있다), GX 수집 이식(켜기는 사용자 전환 때 — 그 전까지 `enabled: false`), 데모 계정 고정 `demo`/`kbj-demo-only`, GIF 1·정지 4,
+    페이지 13 최소판, 1주 기준(끊김 >10분 0·켜진 작업 최종 실패 0·브리핑 매일 1통), Pages 는 운영 1주 뒤, 공개 체험판 없음.
+  - 완료 증명 ① 데모: `docker compose -f docker-compose.demo.yml up --build` 한 줄(서비스 하나 — 메모리 저장소 + fakeredis,
+    합성 세계, 외부 호출 0 시험 `tests/unit/demo/test_demo_offline.py`). CI 잡 `demo (compose)` = 띄우기 → `scripts/demo_smoke.py`
+    (health → 데모 계정 → 페이지 1·2·3·4·6·7·10·11·12·13 대표 API 200, 5·8 404 허용) → 내리기. 로컬 `bash scripts/demo.sh --shots`:
+    페이지 1~13(9 자리표시 제외) 패널 오류 0·콘솔 오류·실패 요청 0, 페이지 13 패널 3. **실제 compose 기동(이미지 크기·arm64·
+    기동 시간)은 메인 실측 — probe #74.**
+  - 완료 증명 ② 공개 산출물 검사: `uv run python scripts/check_public_outputs.py` 통과(① 레포 — 공개 안전 + fixture 출처 표식
+    ② 공개 사이트 — 공개 데이터·번들 비밀 형태·로그인 출처·시세 칸 ③ 데모 미디어 ④ 데모 이미지 입력), 위반 사례 시험
+    `tests/test_public_outputs.py`. CI `public-outputs` 가 `public-safety` 를 대신한다(ADR 0035).
+  - legacy 비우기(ADR 0038): ET·SD(LEGACY)·GX(WRAP) 삭제 — `git ls-files legacy` 0. 다리(브리지·notifier shim·`legacy_kinds`)
+    삭제, `legacy` 의존성 그룹 삭제(lock 122 → 73 패키지, 남은 버전 변화 0), CI legacy·gexlab-integration 잡과 `test_legacy.sh`
+    삭제, 직접 호출 검사 **모든 그룹 목표 0**(기준선 머리말만), import-linter **18 kept**(② 삭제). 이식 기록 `docs/migration/`.
+    시험: GX 단위 397 승격(GXI)·통합 9 승격(WRAP) — 나머지 폐지 사유는 `docs/migration/gexlab.md` 'P9'·'P9 WRAP'.
+  - GX 수집 이식(ADR 0036): `kbj/services/gex_poller`·처리기(분봉·무결측·KRX 파생·마스터·개장 확인)·`gex_report nogap|shadow`·
+    0022(COMMENT). 서비스 `gex.poller`·작업 일곱 꺼짐(`ENABLED_BY_PHASE["P9"] = ∅`). 하루 운영 sim 은 GX 흉내 대신 등록부 작업.
+  - 운영(ADR 0037): `python -m kbj.services.ops check|week`, 페이지 13(보기 전용 표 셋 — 데모에도 실음), 런북 `docs/runbook.md`,
+    워치독 5분·매일 24시간 + 끊김 기록(`ops.health_events heartbeat_gap` — 1주 판정 ① 입력).
+  - README 처음부터(데모 한 줄·GIF·13 페이지·mermaid·공개/로그인·품질·사용자 할 일), `docs/architecture.md`(그림 둘·계약 표),
+    `docs/adr/README.md`(0001~0038 목록·상태·대체 관계).
+  - 시험 수(수집): 전체 **8,705**(FND 8,177) — 단위 8,441·sim 127·통합 137·legacy 0, 웹 vitest 658. 번들: 공개 JS gzip 79,727 B
+    (예산 88 KB)·로그인 123,458 B(131 KB).
+  - 운영 1주 무중단: **[사용자]** — VM·키·GX 전환(런북 ④) 뒤 `ops week` 결과(통과/실패·개수만)를 이 줄에 적는다.
+  - 남은 것: ① [메인] 데모 compose 실제 기동(#74)·도커 통합(`pytest -m integration` — 새 `test_gex_ingest_pg` 9 포함)·CI 녹색
+    ② [사용자] VM 운영·GX → KBJ 전환(#68~#70)·1주 판정(#71~#73) ③ [사용자] Pages 켜기(운영 1주 뒤 — 런북 ⑦) ④ [사용자, 선택]
+    커밋 `f6aeebd` 에 태그 `legacy-final` ⑤ 실측 체크리스트 #1~#67 미완(키 수령 뒤) ⑥ 테마·밸류체인(페이지 9 — 사용자 별도)
+    ⑦ 엔진 쓰기 디스크 스풀 공용화(P7 ⑦).
 
 ---
 

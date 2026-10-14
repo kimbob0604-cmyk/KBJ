@@ -37,7 +37,7 @@ def _run(day: date) -> SimDay:
             hours=hours,
             p3=True,
             prepare=(seed_watch_etfs(KR.prev_trading_day(day)),),
-            legacy_calls=False,
+            reader_calls=False,
         )
     )
     return sim.run()

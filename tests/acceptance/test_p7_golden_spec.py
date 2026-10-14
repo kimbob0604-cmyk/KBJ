@@ -3,7 +3,8 @@
 
 - 수: 골든(코어 22·체인 부분집합 14·raw 32 — 같아야 한다)과 명세(GX 단위 13파일 1,457 + 부호 9 =
   `tests/unit/core/gex` 1,466, 속성 46 — 이 수 이상)를 `pytest --collect-only` 로 센다. 옮긴 수는
-  `legacy/gexlab/MIGRATION.md` 'P7' 표와 같다(FND-C 1,548 = 1,466 + 46 + 36). 엔진 승격 146 + 새 3,
+  `docs/migration/gexlab.md`(P9 WRAP — 옛 legacy/gexlab/MIGRATION.md) 'P7' 표와 같다
+  (FND-C 1,548 = 1,466 + 46 + 36). 엔진 승격 146 + 새 3,
   진단 명세 87 + 속성 5 도 같은 방식으로 아래쪽 한계를 둔다.
 - 녹색: 골든 비교 시험 셋을 실제로 돌리고(허용오차 `TOLERANCES` 그대로 — 넓히지 않는다), 골든 CLI
   (`gex_golden core`·`recorder.golden raw-parse`)가 재생성 없이 기존 파일과 같다며 종료 0.
@@ -66,7 +67,7 @@ def test_fnd_c_moved_count_matches_migration() -> None:
     total = sum(_collected(p) for p in ("tests/unit/core/gex", "tests/property/gex"))
     total += 22 + 14
     assert total >= 1548
-    text = (ROOT / "legacy" / "gexlab" / "MIGRATION.md").read_text(encoding="utf-8")
+    text = (ROOT / "docs" / "migration" / "gexlab.md").read_text(encoding="utf-8")
     assert "FND-C 소계 | **1,548**" in text
 
 

@@ -2,7 +2,8 @@
 
 조립은 진입점과 같은 `build_service` 로 한다. 텔레그램·oEmbed 자리에 세는 transport 를 끼우고, 그
 밖의 실제 HTTP 전송은 `no_real_http` 가 막는다(시도하면 시험이 깨진다). 넣은 것: 본문·첨부·사진
-묶음 알림, legacy shim 발송, 웹훅으로 받은 명령·X 링크(oEmbed 대상)·일반 메시지, 웹훅 점검 주기.
+묶음 알림(legacy shim 은 P9 에 지웠다), 웹훅으로 받은 명령·X 링크(oEmbed 대상)·일반 메시지,
+웹훅 점검 주기.
 기대: 텔레그램·oEmbed 요청 0, 발송 기록은 모두 `suppressed`, 인박스는 '못 채움'(text_via null —
 지어내지 않음), 명령 응답도 `suppressed`.
 """
@@ -64,7 +65,7 @@ def test_disabled_mode_makes_zero_http_calls(
     assert svc.router is not None
     client = svc.router.client
 
-    # 보낼 것: 본문·첨부·사진, legacy shim
+    # 보낼 것: 본문·첨부·사진(legacy shim 은 P9 에 지웠다)
     doc = tmp_path / "rankings.xlsx"
     doc.write_bytes(b"xlsx")
     png = tmp_path / "c.png"
@@ -74,7 +75,6 @@ def test_disabled_mode_makes_zero_http_calls(
     ).reason == ("suppressed")
     client.notify_document(doc, "엑셀", kind="board.files", source="et.board.files")
     client.notify_media([png], "차트", kind="flows.report", source="et.flow")
-    assert client.legacy_send("SD 알림", source="sd.send_telegram")[0] is False
 
     # 받은 것: 명령·X 링크(URL 뿐 → 켜짐이면 oEmbed 대상)·일반 메시지
     hook = WebhookHandler(SecretStr(SECRET), redis, now=clock)
@@ -102,7 +102,6 @@ def test_disabled_mode_makes_zero_http_calls(
         ("brief.morning", "suppressed"),
         ("board.files", "suppressed"),
         ("flows.report", "suppressed"),
-        ("legacy.other", "suppressed"),
         ("cmd.reply", "suppressed"),
     }
     items = [it for it, _ in inbox.items()]

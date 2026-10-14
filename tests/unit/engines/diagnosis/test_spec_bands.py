@@ -11,6 +11,7 @@ from kbj.core.quality import Quality
 from kbj.engines.diagnosis.bands import (
     pct_rank,
     pct_state,
+    quantize,
     sigma_state,
     state_score,
     worst,
@@ -40,6 +41,33 @@ def test_d0_pct_rank_requires_today_in_window() -> None:
         pct_rank([D(1), D(2)], D(3))
     with pytest.raises(ValueError, match="빈 창"):
         pct_rank([], D(1))
+    with pytest.raises(ValueError, match="그날 포함"):  # n = 1 이어도 창에 없으면 오류
+        pct_rank([D(1)], D(2))
+
+
+def _decimal_pct_rank(window: list[Decimal], x: Decimal) -> Decimal:
+    """P9 전 진단 구현(Decimal 직접 계산) — D-P9-11 로 정본 호출로 바꾼 뒤 같은 값인지 대조용."""
+    n = len(window)
+    if n == 1:
+        return D(50)
+    less = sum(1 for v in window if v < x)
+    equal = sum(1 for v in window if v == x)
+    rank = D(less) + D(equal + 1) / 2
+    return quantize((rank - 1) / D(n - 1) * 100)
+
+
+@pytest.mark.parametrize("n", [1, 2, 3, 7, 9, 17, 81, 252, 401, 756, 2001])
+def test_d0_pct_rank_matches_decimal_reference_on_every_rank(n: int) -> None:
+    """D-P9-11: 정본(float) 호출 + 양자화가 옛 Decimal 계산과 모든 순위·동점에서 같다 — 반올림
+    경계(…5)가 생기는 창 길이(401·2001 등)와 표현까지(`str`) 본다."""
+    window = [D(i // 2) for i in range(n)]  # 둘씩 동점
+    for x in sorted(set(window)):
+        got, want = pct_rank(window, x), _decimal_pct_rank(window, x)
+        assert (got, str(got)) == (want, str(want)), (n, x)
+    window = [D(i) / 7 for i in range(n)]  # 동점 없음, 무리수 비 아닌 소수
+    for x in window:
+        got, want = pct_rank(window, x), _decimal_pct_rank(window, x)
+        assert (got, str(got)) == (want, str(want)), (n, x)
 
 
 @pytest.mark.parametrize(

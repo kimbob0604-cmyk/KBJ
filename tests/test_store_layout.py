@@ -190,14 +190,16 @@ def test_app_urls_point_inside_compose_with_required_passwords() -> None:
     assert "state" in _compose()["volumes"]
 
 
-def test_dockerfile_keeps_secrets_and_legacy_out() -> None:
+def test_dockerfile_keeps_secrets_and_tests_out() -> None:
+    """P9 WRAP: legacy/ 를 비워 .dockerignore 의 legacy 줄도 지웠다(ADR 0038) — 비밀·시험 그대로."""
     docker = (ROOT / "Dockerfile").read_text(encoding="utf-8")
     ignore = (ROOT / ".dockerignore").read_text(encoding="utf-8").splitlines()
-    assert {".env", ".env.*", "!.env.example", "legacy", "tests", "state"} <= set(ignore)
+    assert {".env", ".env.*", "!.env.example", "tests", "state"} <= set(ignore)
+    assert "legacy" not in ignore
     copies = [ln.split()[1:-1] for ln in docker.splitlines() if ln.startswith("COPY ")]
     flat = {c for group in copies for c in group}
     assert flat & {".", ".env", "legacy", "tests"} == set()
-    assert "uv sync --frozen --no-dev" in docker  # 런타임 의존성만(dev·legacy 그룹 없음)
+    assert "uv sync --frozen --no-dev" in docker  # 런타임 의존성만(dev·demo 그룹 없음)
     assert "postgresql-client" in docker  # ops.nightly pg_dump
     assert "\nUSER kbj" in docker
     assert "ENV TZ=UTC" in docker
@@ -239,7 +241,6 @@ P2_FILES = (
     "0005_alerts_inbox.sql",
     "0006_gex.sql",
 )
-GX_MIGRATIONS = ROOT / "legacy" / "gexlab" / "db" / "migrations"
 _CONSTRAINT = re.compile(r"(CHECK|UNIQUE|PRIMARY KEY|CONSTRAINT|FOREIGN KEY)\b")
 
 
@@ -368,15 +369,63 @@ def test_data_claim_key_is_unique_only_while_claimed_or_done() -> None:
     assert m, "부분 유일 인덱스(§6.5)"
 
 
+# GEXLAB 001~004 적용 뒤의 표·열(004 의 ADD COLUMN flag 포함). P9 WRAP 이 legacy/gexlab 을 지우기
+# 전에 원본 마이그레이션에서 그대로 옮겼다 — 지우기 전 이 시험이 GX 파일에서 읽던 값과 같다(원본은
+# 커밋 f6aeebd — legacy 를 지우기 직전, 태그 legacy-final 은 사용자가 GitHub 에서 달 수 있다)
+GX_TABLES: dict[str, list[str]] = {
+    "raw_messages": ["ts", "trade_date", "session", "source", "tr_id", "key", "payload",
+        "payload_text", "lossy", "digest"],
+    "fut_ticks": ["ts", "trade_date", "session", "received_at", "tr_id", "code", "seq", "price",
+        "qty", "cum_vol", "cum_value", "cum_buy_qty", "cum_sell_qty", "oi", "oi_chg", "bid", "ask"],
+    "opt_ticks": ["ts", "trade_date", "session", "received_at", "tr_id", "code", "seq", "mrkt_cls",
+        "expiry", "strike", "cp", "price", "qty", "cum_vol", "cum_value", "cum_buy_qty",
+        "cum_sell_qty", "oi", "oi_chg", "bid", "ask", "delta", "gamma", "vega", "theta", "rho",
+        "iv"],
+    "chain_snapshots": ["ts", "trade_date", "session", "mrkt_cls", "expiry", "strike", "cp",
+        "source", "code", "last", "bid", "ask", "oi", "oi_chg", "volume", "iv_kis", "delta",
+        "gamma", "theta", "vega", "rho", "quality"],
+    "fut_board": ["ts", "trade_date", "session", "market", "code", "source", "name", "price",
+        "bid", "ask", "volume", "oi", "remaining_days", "quality"],
+    "investor_flow": ["ts", "trade_date", "session", "market_code", "sector_code", "investor",
+        "sell_qty", "buy_qty", "net_qty", "sell_value", "buy_value", "net_value", "quality"],
+    "series_expiries": ["ts", "trade_date", "session", "mrkt_cls", "expiry", "source",
+        "last_trade_date", "calendar_date", "matches", "code", "quality"],
+    "minute_bars": ["ts", "trade_date", "session", "received_at", "code", "market", "open", "high",
+        "low", "close", "volume", "cum_value"],
+    "krx_fut_daily": ["trade_date", "session", "isu_cd", "ts", "isu_nm", "prod_nm", "family",
+        "expiry", "open", "high", "low", "close", "cmp_prev", "setl_prc", "spot_prc", "acc_trdvol",
+        "acc_trdval", "acc_opnint_qty"],
+    "krx_opt_daily": ["trade_date", "session", "isu_cd", "ts", "isu_nm", "prod_nm", "family",
+        "expiry", "expiry_token", "strike", "cp", "open", "high", "low", "close", "cmp_prev",
+        "imp_volt", "nxtdd_bas_prc", "acc_trdvol", "acc_trdval", "acc_opnint_qty"],
+    "master_snapshots": ["trade_date", "session", "code", "ts", "kind", "isin", "name", "cp",
+        "strike", "atm_cls", "family", "series", "expiry_token", "expiry", "underlying"],
+    "session_log": ["ts", "trade_date", "session", "service", "kind", "state", "prev_state",
+        "detail", "digest"],
+    "health_events": ["ts", "trade_date", "session", "service", "kind", "level", "message",
+        "detail", "digest"],
+    "collection_gaps": ["start_ts", "stream", "end_ts", "trade_date", "session", "expected",
+        "received", "detected_at", "detail"],
+    "quarantine": ["ts", "trade_date", "session", "source", "tr_id", "key", "payload", "lossy",
+        "error", "digest"],
+    "collection_reports": ["trade_date", "session", "stream", "evaluated_at", "span_start",
+        "span_end", "required", "status", "expected", "received", "gaps", "max_gap_s", "detail"],
+    "levels": ["ts", "trade_date", "session", "scope", "name", "value", "detail", "quality",
+        "reasons", "flag"],
+    "metrics": ["ts", "trade_date", "session", "metric", "scope", "key", "value", "payload",
+        "quality", "flag"],
+    "strike_gex": ["ts", "trade_date", "session", "mrkt_cls", "expiry", "strike", "gex_call",
+        "gex_put", "gex", "forward", "excluded_oi_ratio", "quality"],
+    "option_iv": ["ts", "trade_date", "session", "mrkt_cls", "expiry", "strike", "cp",
+        "quote_source", "price", "price_kind", "prev_session", "oi", "iv", "source", "rescaled",
+        "t_kis", "reason", "excluded", "delta", "gamma", "forward", "t_years", "quality"],
+    "oi_changes": ["ts", "trade_date", "session", "mrkt_cls", "expiry", "strike", "cp", "oi",
+        "prev_ts", "prev_oi", "change", "outlier", "quality", "flag"],
+}  # fmt: skip
+
+
 def _gx_tables() -> dict[str, list[str]]:
-    """GEXLAB 001~004 적용 뒤의 표·열(004 의 ADD COLUMN flag 포함)."""
-    out: dict[str, list[str]] = {}
-    for p in sorted(GX_MIGRATIONS.glob("*.sql")):
-        body = "\n".join(line.split("--", 1)[0] for line in p.read_text("utf-8").splitlines())
-        out.update(_tables(body))
-        for table, col in re.findall(r"ALTER TABLE (\w+) ADD COLUMN (\w+)", body):
-            out[table].append(col)
-    return out
+    return {k: list(v) for k, v in GX_TABLES.items()}
 
 
 def test_gx_tables_keep_their_names_and_columns() -> None:
@@ -403,10 +452,18 @@ def test_market_investor_intraday_is_a_view_over_gx_investor_flow() -> None:
 # ── P3 마이그레이션 0007~0009 (docs/p3_design.md §3.4, D-P3-6) ──────────────────────────────
 
 P3_FILES = ("0007_board.sql", "0008_market_flows_p3.sql", "0009_etf.sql")
-ET_BOARD_DB = ROOT / "legacy" / "etf_traker" / "board" / "engine" / "db.py"
+# ET board/engine/db.py 의 sqlite DDL 열(P9 LEGACY 가 legacy/etf_traker 를 지우기 전에 원본에서
+# 그대로 옮겼다 — 지우기 전 원본 DDL 에서 읽던 값과 같다. 원본은 커밋 f6aeebd(legacy 를 지우기
+# 직전 — 태그 legacy-final 은 사용자가 GitHub 에서 달 수 있다)). 시험이 쓰는 세 표만
+ET_BOARD_TABLES: dict[str, list[str]] = {
+    "alltime": ["code", "hi", "hi_date", "cl", "cl_date", "prev_hi", "prev_cl", "first_date",
+                "last_date", "n_days", "suspect", "suspect_date", "suspect_note", "updated_at"],
+    "label": ["code", "asof", "basis", "kind", "rank", "asof"],
+    "split_check": ["code", "jump_date", "verdict", "note", "updated_at"],
+}  # fmt: skip
 # ET etf_tracker_v9/tracker.py 의 sqlite DDL 열(P5 WRAP 이 tracker.py 를 지우기 전에
 # 원본에서 그대로 옮겼다 —
-# `_et_sqlite_tables` 가 원본에서 읽던 값과 같다. ETF 리포트는 kbj etf.report 가 대체)
+# 그때 원본 DDL 에서 읽던 값과 같다. ETF 리포트는 kbj etf.report 가 대체)
 ET_TRACKER_TABLES: dict[str, list[str]] = {
     "fund": ["fund_id", "issuer", "fund_key", "ticker", "name", "theme", "is_active", "mktcap",
              "depth", "track", "empty_streak"],
@@ -431,24 +488,6 @@ def _all_p3_tables() -> dict[str, list[str]]:
     for name in P3_FILES:
         found.update(_tables(_body(name)))
     return found
-
-
-def _et_sqlite_tables(path: Path) -> dict[str, list[str]]:
-    """ET 원본의 DDL 문자열(sqlite)에서 표 열 이름."""
-    text = path.read_text(encoding="utf-8")
-    out: dict[str, list[str]] = {}
-    for m in re.finditer(r"CREATE TABLE IF NOT EXISTS (\w+)\s*\((.*?)\);", text, flags=re.S):
-        body = "\n".join(line.split("--", 1)[0] for line in m.group(2).splitlines())
-        cols = []
-        for part in body.split(","):
-            s = part.strip()
-            if not s or s.startswith(("PRIMARY", "UNIQUE")) or s[0].isdigit() or "(" in s[:1]:
-                continue
-            word = s.split()[0]
-            if word.isidentifier() and not word.isupper():
-                cols.append(word)
-        out[m.group(1)] = cols
-    return out
 
 
 def test_p3_migration_files_follow_p2_in_order() -> None:
@@ -528,7 +567,7 @@ def test_p3_quality_and_venue_checks_match_0003() -> None:
 
 def test_p3_board_tables_keep_et_columns() -> None:
     """ET board/engine/db.py 의 alltime·label·split_check 열을 그대로 옮겼다(+ KBJ 열)."""
-    et = _et_sqlite_tables(ET_BOARD_DB)
+    et = ET_BOARD_TABLES
     kbj = _all_p3_tables()
     renamed = {"asof": "trade_date"}  # ET 의 날짜 열 이름 → KBJ 공통 이름
     for table in ("alltime", "label", "split_check"):

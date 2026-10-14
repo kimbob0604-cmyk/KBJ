@@ -19,8 +19,9 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
-from typing import Final, Literal
+from typing import Final, Literal, cast
 
+from kbj.core.indicators import pct_rank as core_pct_rank
 from kbj.core.p7_rows import DiagState
 from kbj.core.quality import Quality
 
@@ -37,7 +38,6 @@ __all__ = [
 
 RiskOn = Literal["high", "low", "none"]
 _Q_ORDER: Final = {Quality.OK: 0, Quality.STALE: 1, Quality.ESTIMATED: 2, Quality.INVALID: 3}
-_HUNDRED: Final = Decimal(100)
 _HIGH: Final[frozenset[str]] = frozenset({"high", "extreme_high", "wide"})
 _LOW: Final[frozenset[str]] = frozenset({"low", "extreme_low", "narrow"})
 
@@ -67,18 +67,22 @@ def quantize(x: Decimal, places: str = "0.01") -> Decimal:
 
 
 def pct_rank(window: Sequence[Decimal], x: Decimal) -> Decimal:
-    """창(x 를 포함해야 한다) 안 x 의 백분위(0~100, 동점 평균 순위)."""
-    n = len(window)
-    if n == 0:
+    """창(x 를 포함해야 한다) 안 x 의 백분위(0~100, 동점 평균 순위) — 소수 둘째(ROUND_HALF_UP).
+
+    D-P9-11(ADR 0031 [제안] → P9 LEGACY): 계산은 정본 `kbj.core.indicators.pct_rank` 하나다. 여기는
+    진단 쪽 약속만 더한다 — x 가 창에 없으면 n = 1 이어도 오류, n = 1 은 `Decimal(50)`(양자화 전
+    모양 그대로), 그 밖은 Decimal 양자화. 비교는 Decimal 그대로 넘겨 정확하고(정본은 `<`·`==` 와
+    순위 산술만 한다), 정본의 float 비율은 9자리로 반올림한 뒤 양자화한다 — 비율 50k/m 은 창
+    m + 1 ≤ 100,001 이면 반올림 경계(…5)에서 1/(2000m) ≥ 5e-9 떨어져 있어 Decimal 직접 계산과 같다.
+    """
+    if not window:
         raise ValueError("빈 창")
-    less = sum(1 for v in window if v < x)
-    equal = sum(1 for v in window if v == x)
-    if equal == 0:
+    if x not in window:
         raise ValueError("창에 x 가 없다(그날 포함)")
-    if n == 1:
+    if len(window) == 1:
         return Decimal(50)
-    rank = Decimal(less) + Decimal(equal + 1) / 2  # 1부터
-    return quantize((rank - 1) / Decimal(n - 1) * _HUNDRED)
+    p = core_pct_rank(cast("Sequence[float]", window), cast("float", x))
+    return quantize(Decimal(repr(round(p, 9))))
 
 
 def pct_state(p: Decimal, bands: Sequence[int]) -> DiagState:

@@ -65,7 +65,7 @@ REGULAR_MINUTES = 391  # 09:00~15:30
 
 def options(**kw: object) -> SimOptions:
     base: dict[str, object] = dict(
-        start=START, hours=24, p5=True, enable=ENABLE, ws=False, legacy_calls=False,
+        start=START, hours=24, p5=True, enable=ENABLE, ws=False, reader_calls=False,
         notify_enabled=True,
     )  # fmt: skip
     base.update(kw)

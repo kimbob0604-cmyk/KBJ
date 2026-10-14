@@ -1,10 +1,10 @@
 """KIS REST 파생상품 응답 pydantic 모델 — GX `data/kis/models.py` 이식(P7 ING,
 docs/p7_design.md §1.4).
 
-GX docs/phase1_design.md §2·§8, GX docs/probe_results.md #11~#17. legacy poller·scheduler 분봉은
-`legacy/gexlab/data/kis/models.py`(다시 내보내기 shim)로 계속 쓴다. TR 번호(`TR_*`)는 GX
-`scripts/probe_common.py` 와 같은 값 — raw 골든(`kbj.services.recorder.golden`)이 TR → 모델 표에
-쓴다.
+GX docs/phase1_design.md §2·§8, GX docs/probe_results.md #11~#17. P9 GXI 뒤로 poller·분봉 작업도
+KBJ(`kbj.services.gex_poller`·`collectors.gex_minutes`)가 이 모듈을 쓴다(legacy shim 은 P9 WRAP 에
+지움). TR 번호(`TR_*`)는 GX `scripts/probe_common.py` 와 같은 값 — raw 골든
+(`kbj.services.recorder.golden`)이 TR → 모델 표에 쓴다.
 
 KIS 는 모든 값을 문자열로 준다. 여기서 한 번만 타입을 입힌다.
 

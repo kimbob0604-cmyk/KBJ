@@ -15,7 +15,7 @@
 # - KIS 거래소 구분(venues)은 config/markets.yaml kis.venues 와 같아야 한다(D-P3-9 — 기본 [KRX]).
 #   collects 에 venues 를 적지 않으면 실행기가 카탈로그의 KRX·NXT·TOTAL 키를 모두 잡고, 처리기는 부르지 않은
 #   키를 done 으로 돌려준다(선점 장부 오염). 두 값이 같은지는 등록부 시험이 검사한다.
-# - runner: external = legacy GX 가 돌린다(P7 까지). KBJ 는 실행하지 않고 데이터 키만 등록한다(D-P2-5).
+# - runner: external = legacy GX 가 돌린다(P7·P8 — P9 GXI 이식 뒤 없음). KBJ 는 실행하지 않고 데이터 키만 등록한다(D-P2-5).
 # - absorbs 의 문자열은 tests/unit/scheduler/legacy_jobs.txt 의 줄 이름이다(inventory (c) — 줄마다
 #   absorbs·retired 에 정확히 한 번). 그 밖의 문자열(코드 위치)은 근거 메모다.
 # - 아침 브리핑·마감 요약은 하루 1회씩(U2): notify.kind brief.morning·brief.closing 을 보내는 작업은 각 1개.
@@ -41,6 +41,10 @@
 #   서비스로 남고 KBJ DB 에 search_path=prv_gex,ops 로 붙는다(§10 Q1 — 이식은 P9). 장중 GEX 알림은 gex.alert
 #   (정규장 09:00~15:30, 쿨다운 10분) 하나 — 마감 뒤 새 발송 없음(ADR 0018, §10 Q5). 서비스의 쓰기 표는
 #   ServiceSpec writes 칸(WRAP 이 더함 — 작업과 같은 형식·마이그레이션·쓰기 주인 하나 검사).
+# - P9(docs/p9_design.md §7.2 GXI, ADR 0036): GX 수집 경로를 KBJ 로 옮겼다 — 서비스 gex.poller(kbj.services.gex_poller,
+#   하트비트 gex-poller), 작업 gex.day_minutes·gex.night_minutes(분봉 + 무결측)·gex.krx_derivatives·kis.master·
+#   kis.master_night·gex.open_check_day·gex.open_check_night(runner kbj, phase P9). runner external 은 이제 없다.
+#   전부 enabled: false 로 두고 켬 여부는 WRAP 이 정한다(§9 R2 — GX → KBJ 전환 순서는 런북 ④).
 version: 1
 
 defaults:
@@ -60,13 +64,16 @@ services:
      absorbs: ["GX:scheduler:session_state"],
      note: "세션 상태 발행(session:state·session.events·ops.session_log) + 이 등록부 실행기"}
   - name: gex.poller
-    owner: "legacy:gexlab/services/poller"
-    runner: external
-    phase: P7
+    owner: kbj.services.gex_poller
+    phase: P9
+    heartbeat_s: 60
+    heartbeat_key: gex-poller           # 프로세스 SERVICE 이름(compose healthcheck 와 같다)
+    enabled: false              # P9 GXI(D-P9-7) — 켜기는 WRAP(§9 R2 — GX → KBJ 전환 순서, 런북 ④)
+    writes: [prv_gex.chain_snapshots, prv_gex.fut_board, prv_gex.series_expiries]
     collects:
       - {source: KIS, dataset: option_chain_live, as_of: minute}
     absorbs: ["GX:poller"]
-    note: "P7 — 투자자별 폴링 삭제(D-P7-5): KIS:market_investor_intraday 는 flows.market_minute 이 유일하게 쓰고(ADR 0019) poller 는 부르지 않는다. 전광판·체인·선물·최종거래일만(prv_gex.chain_snapshots·fut_board·series_expiries 쓰기 주인). legacy 외부 서비스로 남고 KBJ DB(search_path=prv_gex,ops) — P7, 이식은 P9(§10 Q1)"
+    note: "P9 GXI — GX services/poller 이식(ADR 0036). 전광판·체인·선물·최종거래일만(투자자별 폴링은 옮기지 않았다 — D-P7-5, KIS:market_investor_intraday 는 flows.market_minute 하나, ADR 0019). KIS 는 kbj.data.private.kis + 앱키 리미터, 토큰은 auth 가 둔 것을 읽기만(ADR 0004). 쓰기 실패는 디스크 스풀(spool_dir/gex-poller). ops.quarantine·health_events 는 덧붙이기 사건 기록(주인 규칙 밖)"
   - name: gex.ws_gateway
     owner: kbj.services.ws_gateway
     phase: P7
@@ -197,15 +204,16 @@ jobs:
     note: "꺼짐(WRAP) — 막는 실측 #45·#46·#49 (FF 어댑터는 켬 — 사용자 결정 Q3, config/macro.yaml ff.enabled)(docs/probe_results.md §7), 키 수령·확인 뒤 켬. 로그인 모듈(D-P5-7). Yahoo 12종(SD _MACRO_TICKERS)·FRED 저작권 시리즈(D-P5-6). FF:calendar 는 config/macro.yaml ff.enabled: false(§10 Q3 — 사용자 결정 전)면 부르지 않고 키를 skipped 로. Yahoo [실측 필요 #46]"
 
   - name: gex.night_minutes
-    phase: P7
-    runner: external
-    owner: "legacy:gexlab/services/scheduler/minute.py:MinuteDaily"
-    schedule: {state_enter: [IDLE], when: after_night_session}
+    phase: P9
+    enabled: false              # P9 GXI — 켜기는 WRAP(§9 R2)
+    owner: "kbj.services.collectors.gex_minutes:run_night"
+    schedule: {cron: "10 6 * * 1-5", when: trading_day}
+    retry: {every_s: 300, until: "08:00"}     # GX MinuteDaily — 5분 뒤 다시, 창 끝 08:00
     collects:
       - {source: KIS, dataset: fut_minute_night, as_of: trade_date}
-    writes: [prv_gex.minute_bars]
-    absorbs: ["GX:scheduler:minute_night", "GX:scheduler:gap_night", "GX:scheduler:open_check_night"]
-    note: "GX 규칙 그대로 — IDLE 06:10~08:00 야간(CM) 분봉·무결측, 18:03 야간 개장 확인. KBJ DB(search_path) — P7(§10 Q1 — 이식은 P9)"
+    writes: [prv_gex.minute_bars, ops.collection_gaps, ops.collection_reports]
+    absorbs: ["GX:scheduler:minute_night", "GX:scheduler:gap_night"]
+    note: "GX 규칙 그대로 — 거래일 T 06:10~08:00 에 T 로 귀속되는 밤(prev_trading_day(T) 의 밤, 열렸을 때만 — 금요일 밤은 월요일 06:10, 닫힌 밤은 skipped) 야간(CM) 분봉 + 무결측 판정(ops.collection_gaps). 트리거는 cron(state_enter IDLE·after_night_session 은 월요일에 금요일 밤을 놓친다). P9 GXI(ADR 0036)"
 
   - name: etf.collect
     phase: P3                 # D-P3-12 — P5 에서 당겼다(페이지 10 구성종목 변동)
@@ -220,15 +228,26 @@ jobs:
     note: "운용사 9곳 어댑터마다 격리(한 운용사 실패가 다른 운용사를 멈추지 않는다), 끝에 구성종목 변동 분석. ETF 리포트 발송(notify etf.report)은 P5"
 
   - name: kis.master
-    phase: P7
-    runner: external
-    owner: "legacy:gexlab/services/scheduler/service.py:Scheduler"
-    schedule: {state_enter: [PRE_DAY, PRE_NIGHT], when: trading_day}
+    phase: P9
+    enabled: false              # P9 GXI — 켜기는 WRAP(§9 R2)
+    owner: "kbj.services.collectors.kis_master:run"
+    schedule: {state_enter: [PRE_DAY], when: trading_day}
+    retry: {every_s: 60, until: "08:45"}      # GX _master_step — 실패하면 60초 뒤 다시
     collects:
       - {source: KIS, dataset: fo_master, as_of: trade_date}
     writes: [prv_gex.master_snapshots]
     absorbs: ["GX:scheduler:master"]
-    note: "GX _master_step — 실패하면 60초 뒤 다시(GX 규칙). KBJ DB(search_path) — P7(§10 Q1 — 이식은 P9)"
+    note: "P9 GXI(ADR 0036) — 받은 zip → prv_gex.master_snapshots(그날 day 태그) + Redis kis:master·kis:master:sha(poller·ws-gateway·분봉 작업이 읽는다). 내려받기·파싱 실패·옵션 없는 마스터면 Redis 를 건드리지 않고(직전 마스터) 실패 → 재시도. 야간은 kis.master_night. ⚠ state_enter 는 기동 때 발화하지 않는다 — 장중 재기동 뒤 kis:master 가 없으면 python -m kbj.services.scheduler run-once kis.master(런북)"
+
+  - name: kis.master_night
+    phase: P9
+    enabled: false              # P9 GXI — 켜기는 WRAP(§9 R2)
+    owner: "kbj.services.collectors.kis_master:run_night"
+    schedule: {state_enter: [PRE_NIGHT], when: night_session}
+    retry: {every_s: 60, until: "18:00"}
+    as_of: run_date
+    writes: [prv_gex.master_snapshots]
+    note: "P9 GXI — GX _master_step 의 PRE_NIGHT 갱신(그 밤 = 다음 거래일 night 태그). 데이터 키 KIS:fo_master(trade_date)는 주간 kis.master 하나가 잡는다(같은 키 한 곳만 — §6.5), 이 실행은 키 없이 갱신만"
 
   - name: krx.daily
     phase: P3
@@ -269,9 +288,9 @@ jobs:
     note: "D-P3-8 — 전 거래일 보드를 KRX 확정 일봉으로 다시 계산해 덮는다(quality ok). 바뀐 라벨 목록은 artifact.payload.confirm·실행 detail"
 
   - name: gex.krx_derivatives
-    phase: P7
-    runner: external
-    owner: "legacy:gexlab/services/scheduler/krx.py:KrxDaily"
+    phase: P9
+    enabled: false              # P9 GXI — 켜기는 WRAP(§9 R2)
+    owner: "kbj.services.collectors.gex_krx:run"
     schedule: {cron: "5 8 * * 1-5", when: trading_day}
     retry: {every_s: 600, until: "10:00"}
     collects:
@@ -280,7 +299,27 @@ jobs:
     budget: krx
     writes: [prv_gex.krx_fut_daily, prv_gex.krx_opt_daily]
     absorbs: ["GX:scheduler:krx_daily"]
-    note: "KBJ DB(search_path) — P7(§10 Q1 — 이식은 P9)"
+    note: "P9 GXI(ADR 0036) — GX KrxDaily: 전 거래일 코스피200 계열 선물·옵션 일별(야간 IMP_VOLT 는 NULL) + 그날 마스터 ⊇ KRX 대조(health master_krx_mismatch). 공표 전이면 not_ready(10분 재시도, 10:00 까지). 호출은 KrxClient 의 krx:calls 일 예산 하나로 센다"
+
+  - name: gex.open_check_day
+    phase: P9
+    enabled: false              # P9 GXI — 켜기는 WRAP(§9 R2)
+    owner: "kbj.services.collectors.gex_open_check:run_day"
+    schedule: {cron: "49 8 * * 1-5", when: trading_day}
+    retry: {every_s: 60, until: "15:45"}      # GX OpenCheck — 실패하면 1분 뒤 다시, 세션 끝 전까지
+    as_of: trade_date
+    absorbs: ["GX:scheduler:open_check_day"]
+    note: "P9 GXI — GX OpenCheck: 개장 + 3분 + 15초 뒤 [08:45, 08:48) 선물 체결(prv_gex.fut_ticks) 수를 센다. 0건이면 health calendar_mismatch + ops.session_log(덧붙이기 사건 — 주인 규칙 밖). 쓰기 표 없음(읽기만)"
+
+  - name: gex.open_check_night
+    phase: P9
+    enabled: false              # P9 GXI — 켜기는 WRAP(§9 R2)
+    owner: "kbj.services.collectors.gex_open_check:run_night"
+    schedule: {cron: "4 18 * * 1-5", when: night_session}
+    retry: {every_s: 60, until: "23:59"}
+    as_of: run_date
+    absorbs: ["GX:scheduler:open_check_night"]
+    note: "P9 GXI — 야간 개장 [18:00, 18:03) 선물 체결 확인(그 밤이 열리는 날만). 0건이면 calendar_mismatch"
 
   - name: etf.report
     phase: P5
@@ -666,15 +705,16 @@ jobs:
     note: "ADR 0001 Q1 결정 전 기본값(KIS 당일 마감, 다음 날 KRX 대조). 장중 잠정 행을 덮어쓰고 차이를 prv_flows.investor_revision 에(D-P3-7). 거래소 구분은 config/markets.yaml kis.venues(기본 KRX — D-P3-9)마다 데이터 키"
 
   - name: gex.day_minutes
-    phase: P7
-    runner: external
-    owner: "legacy:gexlab/services/scheduler/minute.py:MinuteDaily"
-    schedule: {state_enter: [POST_DAY], when: trading_day}
+    phase: P9
+    enabled: false              # P9 GXI — 켜기는 WRAP(§9 R2)
+    owner: "kbj.services.collectors.gex_minutes:run_day"
+    schedule: {cron: "0 16 * * 1-5", when: trading_day}
+    retry: {every_s: 300, until: "17:50"}     # GX MinuteDaily — 5분 뒤 다시, 창 끝 17:50
     collects:
       - {source: KIS, dataset: fut_minute_day, as_of: trade_date}
-    writes: [prv_gex.minute_bars]
-    absorbs: ["GX:scheduler:minute_day", "GX:scheduler:gap_day", "GX:scheduler:open_check_day"]
-    note: "GX 규칙 그대로 — POST_DAY 16:00~17:50 주간(F) 분봉·무결측, 08:48 개장 확인. KBJ DB(search_path) — P7(§10 Q1 — 이식은 P9)"
+    writes: [prv_gex.minute_bars, ops.collection_gaps, ops.collection_reports]
+    absorbs: ["GX:scheduler:minute_day", "GX:scheduler:gap_day"]
+    note: "GX 규칙 그대로 — 16:00~17:50 주간(F) 근월물 분봉(근월물은 Redis kis:master) + 무결측 판정(ops.collection_gaps·collection_reports — 판정 교체 한 트랜잭션). 발송 없음. P9 GXI(ADR 0036)"
 
   # 장 끝난 뒤 텔레그램은 전부 16:00(ADR 0018 — 사용자 결정 2026-10-08, 원본 SD·ET 와 같다). 16:00 에
   # 발화해 굳은 의존(market.close_collect — 15:35 시작, 약 24분)을 기다리고, 발송 작업은 같은 16:00 의
@@ -867,13 +907,13 @@ jobs:
     phase: P2
     enabled: true
     owner: "kbj.services.collectors.ops_watchdog:run"
-    schedule: {cron: "0,30 8-20 * * 1-5", when: trading_day}
+    schedule: {cron: "*/5 * * * *", when: always}   # P9 WRAP(ADR 0037 §3) — 5분·매일 24시간
     retry: {max: 0}
     deadline_min: 10
     as_of: minute
     notify: {kind: ops.watchdog}
     absorbs: ["SD:data_watchdog", "ET:daily.yml 실패 curl(#37)", "GX health"]
-    note: "마감 지난 실행·하트비트 끊긴 서비스·실패 작업 → ops.watchdog 알림"
+    note: "마감 지난 실행·하트비트 끊긴 서비스·실패 작업 → ops.watchdog 알림(같은 공백 30분 — notify.yaml cooldown). P9: 지금 끊긴 상시 서비스를 ops.health_events heartbeat_gap 으로 남긴다(1주 판정 ① 입력 — 5분 간격이면 10분 넘는 끊김을 놓치지 않는다)"
 
   - name: market.backfill
     phase: P3
@@ -995,7 +1035,7 @@ retired:
   - {legacy: "ET:xdigest.yml:send", reason: "구루 X 다이제스트 완전 제외(사용자 결정 2026-10-13 Q4)"}
   - {legacy: "GX:plan:brief_1200", reason: "U2 — 아침·마감 브리핑 하루 1회씩만"}
   # P8(docs/p8_design.md §0.4 — WRAP). 발굴 신규 진입 알림은 사용자 결정(2026-10-13)으로 폐지, SD HTTP 라우트 넷은
-  # SPA 페이지 12 + 로그인 API 가 대체(SD 함수는 지웠다 — legacy/stock_dashboard/MIGRATION.md 'P8')
+  # SPA 페이지 12 + 로그인 API 가 대체(SD 함수는 지웠다 — docs/migration/stock_dashboard.md 'P8')
   - {legacy: "SD:alert_discovery_new_entries", reason: "발굴 신규 진입(#14) — 생성기 없음, 같은 뜻은 사용자 규칙으로(사용자 결정 2026-10-13)"}
   - {legacy: "SD:http:/api/backtest", reason: "SPA 페이지 12 백테스트 + 로그인 API /api/backtest/* 가 대체(P8)"}
   - {legacy: "SD:http:/api/journal/*", reason: "SPA 페이지 12 저널 + 로그인 API /api/journal/* 가 대체(P8)"}

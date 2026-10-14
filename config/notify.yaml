@@ -1,9 +1,9 @@
 # 알림 발송 규칙 — 해석기는 kbj/services/notifier/policy.py 하나(모르는 키는 오류).
-# 근거: docs/p2_design.md §5.2(종류·토픽)·§5.3(중복 키·쿨다운)·§5.5(발송 꺼짐)·§5.9(legacy_kinds), U2.
+# 근거: docs/p2_design.md §5.2(종류·토픽)·§5.3(중복 키·쿨다운)·§5.5(발송 꺼짐), U2.
 # 채팅 id 는 비밀 취급이라 여기 두지 않는다(KBJ_TELEGRAM_CHAT_ID). 발송 스위치는 KBJ_NOTIFY_ENABLED(기본 false).
 #
 # dedup(중복 방지 규칙) — 키는 Redis notify:dedup:<키>(SET NX) + ops.notify_log.dedup_key(UNIQUE):
-#   daily     하루 1회   {kind}:{as_of YYYYMMDD}[:{subject}][:{legacy 부른 곳}]   36시간
+#   daily     하루 1회   {kind}:{as_of YYYYMMDD}[:{subject}]   36시간
 #   cooldown  쿨다운     {kind}:{subject 또는 본문 해시} — 마지막 발송부터 cooldown_s   cooldown_s
 #   subject   대상별 1회 {kind}:{subject 또는 본문 해시}                             30일
 #   body      그 밖      {kind}:{as_of}:{sha256(본문) 16자}                           24시간
@@ -122,36 +122,8 @@ kinds:
     ttl_s: 172800
     note: "§5.7. 같은 업데이트에 두 번 답하지 않는다(48시간 — tg:update 와 같다). #21"
 
-  # ── 전환 기간 — legacy 가 kind 없이 부르고 legacy_kinds 에도 없는 발송 ─────────────────
-  legacy.other:
-    topic: ops
-    dedup: body
-    note: "부른 곳(source)이 발송 기록에 남는다. P3~P5 에 메시지를 kbj 작업으로 옮기며 0 으로 줄인다"
-
-# kind 를 넘기지 않는 legacy 발송의 '부른 함수 이름 → 종류'(§5.9 — 전환 기간 한정).
-# shim 이 호출 스택을 거슬러 올라가며 처음 만나는 이름을 쓴다. 없으면 legacy_default_kind.
-# 같은 종류라도 함수마다 하루 1회로 센다(origin) — 본문 합치기는 P3(마감)·P5(아침).
-# kind 를 넘긴 legacy 호출(ET ETF 리포트 여러 통·수급 종목별 차트)은 내용마다 센다 — 같은 내용의 재실행만 막는다.
-legacy_kinds:
-  # SD server.py (inventory d-1 #)
-  alert_watchlist_price: alert.rule              # #6 (P8 WRAP — SD 함수 삭제, kbj rules.intraday. 줄은 P9 legacy 비우기까지)
-  alert_morning_briefing: brief.morning          # #3
-  alert_overnight_prediction: brief.morning      # #4
-  send_us_market_summary_telegram: brief.morning # #5
-  alert_closing_summary: brief.closing           # #8
-  send_market_summary_telegram: brief.closing    # #9 (send_closing_market_summary 가 부른다)
-  send_closing_market_summary: brief.closing     # #9
-  alert_revision_signals: alert.revision         # #10
-  alert_flow_signals: flows.report               # #11
-  check_alert_rules: alert.rule                  # #12 (P8 WRAP — SD 함수 삭제, kbj rules.intraday·rules.close)
-  _check_trailing_stops: alert.rule              # #13 (P8 WRAP — SD 함수 삭제, DSL trail_from_peak 조건)
-  # #14 alert_discovery_new_entries — P8 WRAP 폐지(사용자 결정 2026-10-13, jobs.yaml retired). SD 함수도 지웠다
-  _scheduled_universe_sync: ops.universe         # #17
-  _watchdog_notify: ops.watchdog                 # #18 (SD 워치독은 돌지 않는다 — 전환 안전망)
-  # ET — kind 를 넘기지 않는 발송(묶음 H 요청)
-  cmd_us_send: board.us                          # #29 미국장 브리프 본문(발송 대역 시험이 옛 호출 모양을 고정)
-  send_text: flows.report                        # #40 수급 리포트 '대상 없음' 한 줄(monitor/flow/telegram.py)
-legacy_default_kind: legacy.other
+# P9(LEGACY): 전환 기간의 legacy 발송 종류(legacy.other)·legacy_kinds·legacy_default_kind 는 ET·SD 를
+# 지우며 같이 지웠다 — 모든 발송은 kbj 작업이 kind 를 넘긴다(docs/p9_design.md 'LEGACY 구현 기록').
 
 delivery:
   max_attempts: 3              # 네트워크·5xx·429 초과는 재시도, 그 밖 4xx 는 바로 failed

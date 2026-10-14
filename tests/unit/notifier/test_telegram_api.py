@@ -8,9 +8,9 @@
   'TELEGRAM_BOT_TOKEN' 을 담는다는 단언은 그대로 성립한다. ET 의 `T._cred` 바꿔치기(환경에
   자격이 있어도 같은 결과)는 필요 없다 — 토큰은 생성자로만 받는다.
 - `TestCheckDestination` 3개: `requests.get` 바꿔치기 → httpx MockTransport(FakeTelegram).
-- `TestPlainTextMode` 2개: ET 보드 발송 함수(기본 parse_mode='Markdown')가 shim 을 거쳐 notifier 가
-  보내는 길 전체로 본다(묶음 H 가 ET `send` 를 `legacy_send(..., parse_mode=parse_mode)` 로 바꾼다 —
-  `et_send` 가 그 모양). 평문(None)이 기본값(HTML)으로 바뀌지 않는 것이 핵심이다.
+- `TestPlainTextMode` 2개: ET 보드 발송 함수(기본 parse_mode='Markdown') 모양이 notifier 가
+  보내는 길 전체로 본다(`et_send` — P9 에 legacy shim 을 지워 `notify(parse_mode=…)` 로 넣는다).
+  평문(None)이 기본값으로 바뀌지 않는 것이 핵심이다.
 - `SendDocumentTest` 2개(test_send_files.py): 없는 파일·자격증명 없음.
 
 새로: 429 retry_after 재시도·초과, 오류 문구에 토큰 없음, 사진 묶음·캡션, 이어 보내기, 토픽 thread.
@@ -133,7 +133,7 @@ def test_메시지를_보내지_않는다() -> None:
 def _capture(
     config: NotifyConfig, redis: object, clock: FakeClock, **kw: object
 ) -> tuple[bool, dict[str, object]]:
-    """ET 보드 `send` 가 shim 으로 바뀐 모양(묶음 H) → notifier 가 보낸 sendMessage 본문."""
+    """ET 보드 `send` 모양(P9 — shim 대신 `notify`) → notifier 가 보낸 sendMessage 본문."""
     tg = FakeTelegram()
     settings = make_settings(notify_enabled=True)
     outbox = Outbox(redis, now=clock)  # pyright: ignore[reportArgumentType]
@@ -146,9 +146,10 @@ def _capture(
         silent: bool = False,
         parse_mode: str | None = "Markdown",
     ) -> tuple[bool, str]:
-        return client.legacy_send(
-            text, source="et.board", parse_mode=parse_mode, kind="board.rankings", silent=silent
+        t = client.notify(
+            text, kind="board.rankings", source="et.board", parse_mode=parse_mode, silent=silent
         )
+        return t.ok, t.reason
 
     ok, _why = et_send("본문 **굵게** — 대시", token="t", chat_id="c", **kw)  # pyright: ignore[reportArgumentType]
     svc = NotifierService(

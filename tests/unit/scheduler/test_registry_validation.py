@@ -29,6 +29,7 @@ from kbj.data.limits import load_limits
 from kbj.services.notifier.policy import load_notify_config
 from kbj.services.scheduler.__main__ import main as cli_main
 from kbj.services.scheduler.__main__ import validate_file
+from kbj.services.scheduler.handlers import resolve
 from kbj.services.scheduler.registry import (
     Registry,
     RegistryError,
@@ -92,6 +93,10 @@ P7_ENABLED = {"diag.public", "diag.daily", "gex.alert"}
 # (사용자 요청 2026-10-14 — ADR 0031 §6: TR 칸·가집계 회차·순위 목록은 공식 KIS 예제로 확인, 남은
 # 확인 #65·#66 은 장중 하루 실측)
 P8_ENABLED = {"rules.close", "rules.outcome", "rules.backtest_nightly", "rules.intraday"}
+# P9(docs/p9_design.md §11 Q2 — WRAP): GX 수집 작업 일곱(gex.day_minutes·gex.night_minutes·
+# gex.krx_derivatives·kis.master·kis.master_night·gex.open_check_day·gex.open_check_night)과 서비스
+# gex.poller 는 꺼진 채 — 옛 GX 와 동시 실행 금지(§9 R2), 켜기는 사용자가 런북 ④ 전환 때
+P9_ENABLED: set[str] = set()
 # 단계별 켜진 작업(웨이브 3 묶음이 P3~P7 을 켰다). 새 단계가 작업을 켜면 이 표에 한 줄 더한다.
 ENABLED_BY_PHASE = {
     "P2": P2_ENABLED,
@@ -101,6 +106,7 @@ ENABLED_BY_PHASE = {
     "P6": P6_ENABLED,
     "P7": P7_ENABLED,
     "P8": P8_ENABLED,
+    "P9": P9_ENABLED,
 }
 
 
@@ -215,10 +221,12 @@ def test_every_post_close_telegram_fires_at_1600() -> None:  # ADR 0018
     for name in senders:
         spec = REG.by_name(name)
         assert spec.schedule.cron == "0 16 * * 1-5" and spec.schedule.when == "trading_day", name
-    # 그대로 두는 것: 아침 브리핑·장중 규칙·공시 사건 알림·운영 감시(장중부터 30분마다)
+    # 그대로 두는 것: 아침 브리핑·장중 규칙·공시 사건 알림. 운영 감시는 P9 WRAP(ADR 0037 §3)부터
+    # 5분마다 매일 24시간(1주 판정 ① 끊김 >10분의 해상도)
     assert REG.by_name("brief.morning").schedule.cron == "10 8 * * *"
     assert REG.by_name("filings.dart_feed").schedule.cron == "* 7-19 * * 1-5"
-    assert REG.by_name("ops.watchdog").schedule.cron == "0,30 8-20 * * 1-5"
+    assert REG.by_name("ops.watchdog").schedule.cron == "*/5 * * * *"
+    assert REG.by_name("ops.watchdog").schedule.when == "always"
     assert REG.by_name("brief.closing").schedule.catch_up_until == "20:30"
 
 
@@ -339,6 +347,19 @@ def test_soft_wait_shape(change: dict[str, Any], match: str) -> None:  # ADR 001
         Registry.parse(data)
 
 
+def p7_external(spec: dict[str, Any]) -> dict[str, Any]:
+    """P7 의 GX 외부 작업 모양(runner external·legacy owner·state_enter·꺼짐)으로 바꾼다(P9 GXI 가
+    옮기기 전 — 외부 작업 규칙 시험용)."""
+    spec.update(
+        runner="external",
+        owner="legacy:gexlab/services/scheduler/service.py:Scheduler",
+        enabled=False,
+        schedule={"state_enter": ["POST_DAY"], "when": "trading_day"},
+    )
+    spec.pop("retry", None)
+    return spec
+
+
 def test_soft_wait_rules() -> None:  # ADR 0018 — 실행기는 진행 중인 실행만 기다린다
     errs = mutated(lambda d: job(d, "board.daily")["schedule"].update(cron="10 16 * * 1-5"))
     assert any("brief.closing" in e and "늦다" in e for e in errs)
@@ -347,6 +368,9 @@ def test_soft_wait_rules() -> None:  # ADR 0018 — 실행기는 진행 중인 �
     assert any("brief.closing" in e and "마감 120분" in e for e in errs)
 
     def external(d: dict[str, Any]) -> None:
+        # P9 GXI 가 gex.day_minutes 를 kbj 작업(cron 16:00)으로 옮겼다 — P7 의 외부 작업 모양으로
+        # 되돌려 같은 규칙(외부·state_enter 작업은 무른 의존으로 기다릴 수 없다)을 본다
+        p7_external(job(d, "gex.day_minutes"))
         job(d, "brief.closing")["depends_on"].append(
             {"job": "gex.day_minutes", "hard": False, "wait_min": 10}
         )
@@ -424,9 +448,10 @@ def test_enabled_owner_must_import_and_external_must_be_off() -> None:  # §6.6-
         )
     )
     assert any("trade.customs_tenday" in e and "처리기를 부를 수 없다" in e for e in errs)
-    errs = mutated(lambda d: job(d, "kis.master").update(enabled=True))
+    # P9 GXI 뒤 runner external 작업이 없다 — kis.master 를 P7 외부 작업 모양으로 되돌려 본다
+    errs = mutated(lambda d: p7_external(job(d, "kis.master")).update(enabled=True))
     assert any("kis.master" in e and "enabled: false" in e for e in errs)
-    errs = mutated(lambda d: job(d, "kis.master").update(owner="kbj.x:y"))
+    errs = mutated(lambda d: p7_external(job(d, "kis.master")).update(owner="kbj.x:y"))
     assert any("legacy:" in e for e in errs)
 
 
@@ -1097,11 +1122,64 @@ def test_p7_jobs_and_services_are_registered_with_design_owners() -> None:
     assert beats == {"gex.engine": ENGINE, "gex.ws_gateway": WS, "gex.recorder": RECORDER}
     assert all(services[n].beat_name == n for n in ("auth", "notifier", "scheduler"))
     assert {j.name for j in REG.jobs if j.phase == "P7" and j.enabled} == P7_ENABLED
-    # GX 수집 경로는 legacy 외부 서비스로 남는다(§10 Q1)
-    assert services["gex.poller"].runner == "external"
-    for name in ("gex.day_minutes", "gex.night_minutes", "gex.krx_derivatives", "kis.master"):
-        assert REG.by_name(name).runner == "external", name
-        assert "search_path" in (REG.by_name(name).note or ""), name
+    # GX 수집 경로는 P7 에 legacy 외부 서비스로 남았고 P9 GXI 가 KBJ 로 옮겼다
+    # (test_p9_gex_ingest_is_registered_with_kbj_owners_and_off)
+
+
+P9_GXI_JOBS = {
+    "gex.day_minutes": "kbj.services.collectors.gex_minutes:run_day",
+    "gex.night_minutes": "kbj.services.collectors.gex_minutes:run_night",
+    "gex.krx_derivatives": "kbj.services.collectors.gex_krx:run",
+    "kis.master": "kbj.services.collectors.kis_master:run",
+    "kis.master_night": "kbj.services.collectors.kis_master:run_night",
+    "gex.open_check_day": "kbj.services.collectors.gex_open_check:run_day",
+    "gex.open_check_night": "kbj.services.collectors.gex_open_check:run_night",
+}
+P9_GXI_WRITES = {
+    "gex.day_minutes": {"prv_gex.minute_bars", "ops.collection_gaps", "ops.collection_reports"},
+    "gex.night_minutes": {"prv_gex.minute_bars", "ops.collection_gaps", "ops.collection_reports"},
+    "gex.krx_derivatives": {"prv_gex.krx_fut_daily", "prv_gex.krx_opt_daily"},
+    "kis.master": {"prv_gex.master_snapshots"},
+    "kis.master_night": {"prv_gex.master_snapshots"},
+    "gex.open_check_day": set(),
+    "gex.open_check_night": set(),
+}
+
+
+def test_p9_gex_ingest_is_registered_with_kbj_owners_and_off() -> None:
+    """P9 GXI(docs/p9_design.md §7.2 GXI-4): 다섯 줄 runner external → kbj owner·phase P9, 서비스
+    gex.poller(하트비트 gex-poller). 전부 enabled: false — 켬 여부는 WRAP(§9 R2)."""
+    from kbj.services.gex_poller.service import HEARTBEAT
+
+    for name, owner in P9_GXI_JOBS.items():
+        j = REG.by_name(name)
+        assert (j.owner, j.runner, j.phase, j.enabled) == (owner, "kbj", "P9", False), name
+        assert set(j.writes) == P9_GXI_WRITES[name], name
+        handler = resolve(owner)  # 처리기가 import 된다(켜지 않아도)
+        assert callable(handler), name
+    poller = next(s for s in REG.services if s.name == "gex.poller")
+    assert (poller.owner, poller.runner, poller.phase, poller.enabled) == (
+        "kbj.services.gex_poller",
+        "kbj",
+        "P9",
+        False,
+    )
+    assert poller.beat_name == HEARTBEAT == "gex-poller" and poller.heartbeat_s == 60
+    assert set(poller.writes) == {
+        "prv_gex.chain_snapshots",
+        "prv_gex.fut_board",
+        "prv_gex.series_expiries",
+    }
+    # 작업마다 owner 하나(실행기·시뮬레이션이 owner 로 처리기를 고른다)
+    owners = [j.owner for j in REG.jobs]
+    assert len(owners) == len(set(owners))
+    # runner external 은 더는 없다(legacy GX 가 돌리는 것이 없다)
+    assert not [o.name for o in (*REG.jobs, *REG.services) if o.runner == "external"]
+    # 같은 데이터 키는 한 곳만 — 야간 마스터 갱신은 키 없이(주간 kis.master 가 fo_master 를 잡는다)
+    assert not REG.by_name("kis.master_night").collects
+    # 개장 확인은 분봉 작업에서 떼어 냈다(GX open_check — 08:48·18:03)
+    assert REG.by_name("gex.open_check_day").absorbs == ("GX:scheduler:open_check_day",)
+    assert REG.by_name("gex.open_check_night").absorbs == ("GX:scheduler:open_check_night",)
 
 
 def test_p7_diag_tables_have_one_owner_each() -> None:

@@ -49,7 +49,7 @@ def day() -> Iterator[SimDay]:
     sim = SimDay(
         SimOptions(
             start=START, hours=24, p5=True, p7=True, enable=ENABLE, ws=False,
-            legacy_calls=False, notify_enabled=True,
+            reader_calls=False, notify_enabled=True,
         )
     )  # fmt: skip
     try:

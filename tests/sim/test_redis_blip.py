@@ -32,7 +32,7 @@ DOWN = (at(10, 6, 12), at(10, 6, 12, 1))
 @pytest.fixture(scope="module")
 def blip() -> SimDay:
     sim = SimDay(
-        SimOptions(start=at(10, 6, 11, 30), hours=1, redis_down=DOWN, ws=False, legacy_calls=False)
+        SimOptions(start=at(10, 6, 11, 30), hours=1, redis_down=DOWN, ws=False, reader_calls=False)
     )
     try:
         return sim.run()

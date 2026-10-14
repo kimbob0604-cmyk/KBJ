@@ -222,3 +222,19 @@ class TestExclude:
 
 def test_repo_allow_list_is_well_formed() -> None:
     cps.load_allow(ROOT / "scripts" / "public_safety_allow.txt")
+
+
+def test_umbrella_reuses_this_scan_not_a_copy() -> None:
+    """P9 우산(check_public_outputs ①)은 이 모듈의 scan·허용 목록을 import 해서 부른다.
+
+    규칙을 두 벌 두지 않는다.
+
+    우산에 비밀 형태 규칙을 따로 두지 않았는지 — 같은 SECRET_SHAPES 를 쓰고, 이 모듈 RULES 의 이름이
+    우산 발견의 detail 로 그대로 나온다."""
+    import check_public_outputs as cpo
+
+    assert cpo.SECRET_SHAPES is SECRET_SHAPES
+    safety = cpo._load_safety()  # pyright: ignore[reportPrivateUsage]
+    assert safety.RULES == cps.RULES and safety.MAX_BYTES == cps.MAX_BYTES
+    text = (ROOT / "scripts" / "check_public_outputs.py").read_text(encoding="utf-8")
+    assert "safety.scan(" in text and 're.compile(r"\\b[0-9]{8,10}:' not in text

@@ -1,0 +1,13 @@
+# docs/media — README 미디어(합성 데이터 데모 화면 — 종목 이름·숫자는 전부 합성).
+# 만든 도구: scripts/make_demo_gif.py (docs/p9_design.md §4.3).
+# 검사: scripts/check_public_outputs.py ③(media).
+command: bash scripts/demo.sh --gif docs/media --no-build
+commit: f6aeebd
+world: tests/unit/api/api_world.build_world(scale_market) + p5_world(매크로 — 데모 날짜로 옮김)·p6_world·p7_world·p8_world (전부 합성 — scripts/demo_server.py)
+seed: api_world=20261007 p5=20261113 p6=20261211 p7=20261201 p8=20261102
+server_clock: 2026-09-15T18:00+09:00
+file: kbj_demo.gif | GIF 960×600 9장 × 1.6초 | 973,148 B
+file: kbj_demo_p1_market.png | PNG 1280×800 (장면 01_p1_market.png) | 99,487 B
+file: kbj_demo_p3_gex.png | PNG 1262×740 (장면 04_p3_gex.png) | 70,702 B
+file: kbj_demo_p4_flows.png | PNG 1280×800 (장면 05_p4_flows.png) | 221,365 B
+file: kbj_demo_p8_stock.png | PNG 1280×800 (장면 06_p8_stock.png) | 101,492 B

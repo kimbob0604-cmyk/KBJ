@@ -608,3 +608,77 @@ def test_p7_diag_subdir_caps_and_login_keys() -> None:
         '"generated_at":"2026-10-13T00:00:00+00:00","data":{"verdict":"x"}}'
     )
     assert any("로그인 판정 키" in p for p in check_payload("diag/summary.json", text))
+
+
+# ── P9 원시세 칸(docs/p9_design.md §3.2 price_fields, ADR 0035) ──
+
+
+def test_p9_price_fields_reject_raw_price_keys_anywhere() -> None:
+    """공개 JSON 어디에도 원시세 키가 없어야 한다 — 평평한 파일·하위 폴더 모두.
+
+    옛 trade/stock 규칙(D-P6-4)의 일반화."""
+    from kbj.services.public_export.manifest import PRICE_KEYS, price_problems
+
+    assert {"close", "open", "high", "low", "price", "volume", "turnover", "mktcap", "nav",
+            "net_value", "chg_pct"} == PRICE_KEYS  # fmt: skip
+    for key in sorted(PRICE_KEYS):
+        doc = _env(source="DART", data={"rows": [{"code": "Q00001", key: 12345}]})
+        got = check_payload("events.json", json.dumps(doc))
+        assert f"events.json: 시세 칸($.data.rows[0].{key})" in got, key
+        assert not any("12345" in p for p in got)  # 값은 싣지 않는다
+    assert price_problems("trade/flash.json", {"data": {"turnover": 1}}) == [
+        "trade/flash.json: 시세 칸($.data.turnover)"
+    ]
+    assert price_problems("macro/rates.json", {"data": {"series": [{"value": 3.1}]}}) == []
+
+
+def test_p9_price_field_allow_needs_file_key_and_shape() -> None:
+    from kbj.services.public_export.manifest import PRICE_FIELD_ALLOW, price_problems
+
+    assert all(len(why) >= 4 for _f, _k, _kind, why in PRICE_FIELD_ALLOW)  # 사유 필수
+    assert {kind for _f, _k, kind, _w in PRICE_FIELD_ALLOW} <= {"hhmm", "number"}
+    ok = {"data": {"session": {"open": "09:00", "close": "15:30"}, "days": [{"open": None}]}}
+    assert price_problems("calendar.json", ok) == []
+    assert price_problems("calendar.json", {"data": {"open": 2650.5}}) == [
+        "calendar.json: 시세 칸 예외의 값 모양이 다르다($.data.open — hhmm)"
+    ]
+    assert price_problems("calendar.json", {"data": {"nav": 1}}) == [
+        "calendar.json: 시세 칸($.data.nav)"
+    ]
+    assert price_problems("overhang_recent.json", {"data": {"rows": [{"price": 5000.0}]}}) == []
+    assert price_problems("overhang_recent.json", {"data": {"rows": [{"price": "5천"}]}}) != []
+    assert price_problems("events.json", {"data": {"open": "09:00"}}) == [
+        "events.json: 시세 칸($.data.open)"
+    ]
+
+
+def test_p9_price_fields_match_js() -> None:
+    """merge-public-data.mjs 의 PRICE_KEYS·PRICE_FIELD_ALLOW·priceProblems 가 이 모듈과 같다."""
+    from kbj.services.public_export.manifest import PRICE_FIELD_ALLOW, PRICE_KEYS, price_problems
+
+    cases: list[tuple[str, object]] = [
+        ("calendar.json", {"data": {"session": {"open": "09:00", "close": 1}}}),
+        ("overhang_recent.json", {"data": {"rows": [{"price": 1.5, "volume": 2}]}}),
+        ("trade/stock/000660.json", {"data": {"monthly": [{"close": 1, "chg_pct": 2}]}}),
+        ("diag/summary.json", {"data": {"nav": None, "net_value": 3}}),
+    ]
+    script = (
+        "import * as m from './web/scripts/merge-public-data.mjs';\n"
+        f"const cases = {json.dumps(cases)};\n"
+        "console.log(JSON.stringify({keys: [...m.PRICE_KEYS].sort(), allow: m.PRICE_FIELD_ALLOW,"
+        " got: cases.map(([n, v]) => m.priceProblems(n, v))}));\n"
+    )
+    assert NODE is not None
+    p = subprocess.run(  # noqa: S603
+        [NODE, "--input-type=module", "-e", script],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=True,
+    )
+    js = json.loads(p.stdout)
+    assert js["keys"] == sorted(PRICE_KEYS)
+    assert [tuple(r) for r in js["allow"]] == list(PRICE_FIELD_ALLOW)
+    assert js["got"] == [price_problems(n, v) for n, v in cases]
+    assert all(js["got"])  # 네 경우 모두 무언가를 잡는다(빈 비교로 통과하지 않게)

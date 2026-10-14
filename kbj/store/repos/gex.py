@@ -90,8 +90,16 @@ class GxTable:
         for ident in (self.schema, self.name, *self.columns):
             if not _IDENT.fullmatch(ident):
                 raise ValueError(f"식별자는 소문자 snake_case 상수만: {ident!r}")
+        if len(set(self.columns)) != len(self.columns):
+            raise ValueError(f"{self.name}: 열이 겹친다")
         if not set(self.key) <= set(self.columns) or not self.key:
             raise ValueError(f"{self.name}: 키 열은 열 목록 안에")
+        # GX data/store.py `Table` 검증 그대로(P9 GXI — 승격한 test_store_sql 이 찾았다)
+        if not self.jsonb <= set(self.columns):
+            raise ValueError(f"{self.name}: jsonb 열은 열 목록 안에")
+        keep = self.keep_if_null
+        if keep is not None and (not self.upsert or keep not in self.update_columns):
+            raise ValueError(f"{self.name}: keep_if_null 은 upsert 표의 키 밖 열")
 
     @property
     def qualified(self) -> str:

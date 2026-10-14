@@ -74,18 +74,6 @@ def test_topic_threads_are_unset_until_the_supergroup_exists(config: NotifyConfi
     assert all(config.thread_for(t) is None for t in Topic)
 
 
-def test_legacy_kinds_map_sd_senders(config: NotifyConfig) -> None:
-    lk = config.legacy_kinds
-    assert lk["alert_morning_briefing"] == "brief.morning"  # #3
-    assert lk["send_closing_market_summary"] == "brief.closing"  # #9
-    assert lk["check_alert_rules"] == "alert.rule"  # #12
-    assert lk["_watchdog_notify"] == "ops.watchdog"  # #18
-    assert lk["cmd_us_send"] == "board.us"  # ET #29
-    assert lk["send_text"] == "flows.report"  # ET #40
-    assert config.legacy_default_kind == "legacy.other"
-    assert set(lk.values()) <= set(config.kinds)
-
-
 def test_unknown_kind_is_an_error(config: NotifyConfig) -> None:
     with pytest.raises(UnknownKind, match=r"notify\.yaml"):
         config.policy("brief.lunch")
@@ -98,8 +86,7 @@ def _minimal(**over: Any) -> dict[str, Any]:
     data: dict[str, Any] = {
         "version": 1,
         "topics": {"market": None, "newhigh": None, "alert": None, "ops": None},
-        "kinds": {"legacy.other": {"topic": "ops", "dedup": "body"}},
-        "legacy_default_kind": "legacy.other",
+        "kinds": {"ops.other": {"topic": "ops", "dedup": "body"}},
     }
     data.update(over)
     return data
@@ -113,15 +100,13 @@ def test_minimal_config_parses() -> None:
 @pytest.mark.parametrize(
     "bad",
     [
-        {"kinds": {"legacy.other": {"topic": "ops", "dedup": "body", "typo": 1}}},
-        {"kinds": {"legacy.other": {"topic": "ops", "dedup": "cooldown"}}},
-        {"kinds": {"legacy.other": {"topic": "ops", "dedup": "body", "cooldown_s": 60}}},
+        {"kinds": {"ops.other": {"topic": "ops", "dedup": "body", "typo": 1}}},
+        {"kinds": {"ops.other": {"topic": "ops", "dedup": "cooldown"}}},
+        {"kinds": {"ops.other": {"topic": "ops", "dedup": "body", "cooldown_s": 60}}},
         {"kinds": {"Legacy": {"topic": "ops", "dedup": "body"}}},
-        {"legacy_kinds": {"alert_x": "no.such"}},
-        {"legacy_kinds": {"not a name": "legacy.other"}},
+        {"legacy_kinds": {"alert_x": "ops.other"}},  # P9 에 지운 키 — 이제 모르는 키
         {"topics": {"market": None}},
         {"topics": {"market": 1, "newhigh": 2, "alert": 3, "ops": 4, "reply": 5}},
-        {"legacy_default_kind": "no.such"},
         {"version": 2},
         {"surprise": True},
     ],
@@ -134,7 +119,7 @@ def test_bad_config_is_refused(bad: dict[str, Any]) -> None:
 def test_catch_up_time_read_as_minutes_by_yaml_is_accepted() -> None:
     """YAML 1.1 은 따옴표 없는 20:30 을 60진수(1230)로 읽는다."""
     kinds = {
-        "legacy.other": {"topic": "ops", "dedup": "body"},
+        "ops.other": {"topic": "ops", "dedup": "body"},
         "brief.closing": {"topic": "market", "dedup": "daily", "catch_up_until": 1230},
     }
     cfg = parse_notify_config(_minimal(kinds=kinds))
@@ -157,13 +142,6 @@ def test_daily_key_and_ttl() -> None:
     gate, _ = dedup_key(p, as_of=D, subject="kr", body_sha256=BODY, now=AT)
     assert gate == "x.y:20261006:kr"
     assert p.gate_ttl_s() == DAILY_TTL_S == 36 * 3600
-
-
-def test_daily_key_counts_each_legacy_origin_once() -> None:
-    p = _pol(dedup="daily")
-    a, _ = dedup_key(p, as_of=D, subject=None, body_sha256=BODY, now=AT, origin="sd.f1.text")
-    b, _ = dedup_key(p, as_of=D, subject=None, body_sha256=BODY, now=AT, origin="sd.f2.text")
-    assert a != b and a.startswith("x.y:20261006:")
 
 
 def test_body_key_hashes_the_body() -> None:

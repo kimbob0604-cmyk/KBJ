@@ -1,0 +1,31 @@
+# KBJ 데모 — 합성 데이터만(키·DB·외부 호출 없음). docs/adr/0034
+#   docker compose -f docker-compose.demo.yml up --build   → http://127.0.0.1:8765/ (demo / README 의 비밀번호)
+#
+# - 운영 compose(docker-compose.yml)와 따로다: 이름 kbj-demo, 서비스 하나, 볼륨·네트워크·.env 없음(env_file 없음 —
+#   기본값이 있는 변수만 쓰므로 .env 가 없어도 뜬다). 운영 compose·운영 이미지에는 데모 계정이 없다.
+# - 데모 비밀번호 기본값은 README 에 적은 고정 데모값이다(합성 데이터 전용 — 운영 로그인과 섞지 않는다).
+# - 포트는 호스트 루프백(127.0.0.1)에만. 컨테이너 안 서버만 0.0.0.0 에 묶는다(KBJ_DEMO_CONTAINER=1 일 때만 허용).
+# - 시험: tests/unit/demo/test_demo_compose.py · scripts/check_public_outputs.py ④
+name: kbj-demo
+services:
+  demo:
+    build:
+      context: .
+      dockerfile: Dockerfile.demo
+    image: kbj-demo:local
+    ports:
+      - "127.0.0.1:8765:8765"
+    environment:
+      KBJ_DEMO_CONTAINER: "1"
+      KBJ_DEMO_PASSWORD: ${KBJ_DEMO_PASSWORD:-kbj-demo-only}
+      KBJ_DEMO_AT: ${KBJ_DEMO_AT:-close}
+    command: ["python", "scripts/demo_server.py", "--bind", "0.0.0.0", "--port", "8765"]
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8765/api/health', timeout=5)"]
+      interval: 10s
+      timeout: 6s
+      retries: 30
+      start_period: 120s

@@ -1,0 +1,75 @@
+{
+  "source": "KBJ 운영 기록",
+  "as_of": "2026-10-16T21:00:00+09:00",
+  "quality": "ok",
+  "notes": [],
+  "generated_at": "2026-10-16T21:00:00+09:00",
+  "data": {
+    "level": "FAIL",
+    "since": "2026-10-15T21:00:00+09:00",
+    "services": [
+      {
+        "name": "auth",
+        "heartbeat_s": 180,
+        "age_s": 5,
+        "level": "OK"
+      },
+      {
+        "name": "notifier",
+        "heartbeat_s": 60,
+        "age_s": 75,
+        "level": "WARN"
+      },
+      {
+        "name": "gex.engine",
+        "heartbeat_s": 60,
+        "age_s": 900,
+        "level": "FAIL"
+      }
+    ],
+    "items": [
+      {
+        "key": "heartbeat_now",
+        "title": "하트비트(지금)",
+        "level": "FAIL",
+        "value": "켜진 서비스 3 중 기준 밖 2",
+        "verdict": true
+      },
+      {
+        "key": "heartbeat_gaps",
+        "title": "하트비트 끊김 >10분(기록)",
+        "level": "OK",
+        "value": "0건",
+        "verdict": true
+      },
+      {
+        "key": "jobs",
+        "title": "켜진 작업 최종 실패",
+        "level": "OK",
+        "value": "최종 4·실패 0·마감 초과 0·재시도 성공 1",
+        "verdict": true
+      },
+      {
+        "key": "briefs",
+        "title": "브리핑 거래일 1통",
+        "level": "OK",
+        "value": "확인 2건",
+        "verdict": true
+      },
+      {
+        "key": "collection",
+        "title": "수집 결측·격리(참고)",
+        "level": "WARN",
+        "value": "결측 1·격리 0",
+        "verdict": false
+      },
+      {
+        "key": "backup",
+        "title": "마지막 야간 백업(참고)",
+        "level": "OK",
+        "value": "2026-10-16T03:02+09:00",
+        "verdict": false
+      }
+    ]
+  }
+}

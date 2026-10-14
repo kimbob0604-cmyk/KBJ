@@ -1,0 +1,43 @@
+# 데모 이미지(Dockerfile.demo) 빌드 문맥 — 허용 목록. 첫 줄 '*' 로 전부 빼고 필요한 것만 연다.
+# 바꾸면 tests/unit/demo/test_demo_image_inputs.py(데모가 import 하는 tests.* 가 모두 안에 있는지)와
+# scripts/check_public_outputs.py ④(.env*·legacy·state·*.key 를 열지 않는지)가 같이 본다.
+*
+!pyproject.toml
+!uv.lock
+!README.md
+!kbj/**
+!config/**
+!scripts/demo_server.py
+# 데모 합성 세계 — scripts/demo_server.py 가 import 하는 tests.* 모듈과 그 모듈이 읽는 합성 골든 1개
+!tests/fakes/__init__.py
+!tests/fakes/ws_server.py
+!tests/fixtures/synthetic/ledger_gen.py
+!tests/fixtures/synthetic/p4_world.py
+!tests/fixtures/synthetic/p5_world.py
+!tests/fixtures/synthetic/p6_world.py
+!tests/fixtures/synthetic/p7_world.py
+!tests/fixtures/synthetic/p8_world.py
+!tests/unit/api/api_world.py
+!tests/unit/api/web_fixtures_p6/**
+!tests/unit/api/web_fixtures_p7/**
+!tests/unit/api/web_fixtures_p8/**
+!tests/unit/engines/diagnosis/diag_seed.py
+!tests/unit/engines/gex/engine_inputs.py
+!tests/unit/services/rules_perf_seed.py
+!tests/unit/ops/ops_world.py
+!tests/golden/board/expected/day_29.json.gz
+# 로그인 SPA 소스(1단계가 새로 빌드한다 — 설치본·빌드 결과·시험은 넣지 않는다)
+!web/**
+web/node_modules
+web/dist-public
+web/dist-login
+web/test
+# 위에서 연 폴더 안이라도 다시 뺀다 — 비밀·실행 산출물·캐시
+**/.env
+**/.env.*
+**/*.key
+**/*.pem
+**/*token*.json
+**/__pycache__
+legacy
+state

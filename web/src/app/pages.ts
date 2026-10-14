@@ -13,7 +13,7 @@ export interface PageDef {
   n: number;
   title: string;
   /** 이 페이지를 채우는 단계 */
-  phase: 'P3' | 'P4' | 'P5' | 'P6' | 'P7' | 'P8';
+  phase: 'P3' | 'P4' | 'P5' | 'P6' | 'P7' | 'P8' | 'P9';
   /**
    * 공개판에서 보이는 정도(DATA_TIERS §2): public = 빈 자리도 공개 표시, login = 자물쇠,
    * mixed = 공개 위젯과 로그인 위젯이 섞임(페이지 모듈이 패널마다 정한다)
@@ -89,15 +89,14 @@ export const PAGES: readonly PageDef[] = [
     lock: 'personal',
     plan: '규칙 백테스트·백테스트 대 실제·분석 일지·포트폴리오(평균 단가)·상관관계·추천 성과(이관분)',
   },
-  // 13 운영: P8 범위에서 뺐다(사용자 결정 2026-10-13 Q9 — 자리표시 그대로). 단계 칸은 자리표시 배지용으로 P8 을 두고
-  // 문구에 '단계 미정' 을 적는다(P8 WRAP)
+  // 13 운영: P9 최소판(docs/p9_design.md §6.2, §11 Q5 — 보기 전용 표 셋: 서비스 상태·오늘 작업·발송 기록). 로그인 전용
   {
     n: 13,
     title: '운영',
-    phase: 'P8',
+    phase: 'P9',
     tier: 'login',
     lock: 'personal',
-    plan: '데이터 신선도·작업 모니터·헬스·발송 기록 — P8 범위 밖(사용자 결정), 단계 미정',
+    plan: '서비스 하트비트·점검 항목·오늘 작업(마지막 시도)·발송 기록 — 보기 전용(1주 무중단 확인)',
   },
 ];
 
@@ -116,21 +115,21 @@ export const P6_PAGES: readonly number[] = PAGES.filter((p) => p.phase === 'P6')
 /** P7 위젯 페이지 — 3 진단(docs/p7_design.md §6, mixed: 공공지표 진단·이벤트만 공개) */
 export const P7_PAGES: readonly number[] = PAGES.filter((p) => p.phase === 'P7').map((p) => p.n);
 
-/**
- * P8 위젯 페이지 — 11 알림·규칙·12 백테스트·저널(docs/p8_design.md §6, 개인 기능 — 로그인 전부, 공개판은 자물쇠).
- * 13 운영은 단계 표기만 P8 이고 위젯이 없다(사용자 결정 2026-10-13 Q9 — 자리표시 그대로, 문구 '단계 미정' — WRAP).
- */
-export const P8_PAGES: readonly number[] = PAGES.filter((p) => p.phase === 'P8' && p.n !== 13).map((p) => p.n);
+/** P8 위젯 페이지 — 11 알림·규칙·12 백테스트·저널(docs/p8_design.md §6, 개인 기능 — 로그인 전부, 공개판은 자물쇠). */
+export const P8_PAGES: readonly number[] = PAGES.filter((p) => p.phase === 'P8').map((p) => p.n);
+
+/** P9 위젯 페이지 — 13 운영 최소판(docs/p9_design.md §6.2 — 로그인 전용, 공개판은 자물쇠·요청 0) */
+export const P9_PAGES: readonly number[] = PAGES.filter((p) => p.phase === 'P9').map((p) => p.n);
 
 export type PageLoader = () => Promise<PageModule>;
 
 /**
  * 위젯 모듈 찾기 — `src/pages/p1_market.ts` 같은 파일. 빌드 때 정해지므로 없는 파일은 빈 목록이다.
  * 페이지마다 따로 불러온다(처음 보일 때). 번호는 위젯이 있는 단계의 페이지만(P3 1·2·4·10 + P4 5·8 + P5 6 + P6 7 + P7 3 +
- * P8 11·12) — 하위
+ * P8 11·12 + P9 13) — 하위
  * 폴더(`src/pages/p8/*.ts`)는 이 glob 에 걸리지 않는다(진입 파일이 import).
  */
-const FOUND = import.meta.glob<PageModule>('../pages/p{1,2,3,4,5,6,7,8,10,11,12}_*.ts', { import: 'default' });
+const FOUND = import.meta.glob<PageModule>('../pages/p{1,2,3,4,5,6,7,8,10,11,12,13}_*.ts', { import: 'default' });
 
 export function pageLoaders(found: Record<string, () => Promise<PageModule>> = FOUND): Map<number, PageLoader> {
   const out = new Map<number, PageLoader>();

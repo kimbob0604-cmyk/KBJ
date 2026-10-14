@@ -1,7 +1,0 @@
-.cache/
-out/*.xlsx
-out/*.pdf
-.~lock.*#
-__pycache__/
-*.pyc
-.env

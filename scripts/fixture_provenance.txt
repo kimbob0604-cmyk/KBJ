@@ -1,0 +1,35 @@
+# 시험 데이터 파일 출처 목록 — scripts/check_public_outputs.py ①(repo) 의 fixture_provenance 규칙
+# (docs/p9_design.md §3.2, ADR 0035).
+#
+# tests/**·web/test/** 의 데이터 파일(.json·.jsonl·.csv·.yaml·.yml·.xml·.gz)은 경로에 `synthetic` 이 있거나
+# 이 목록의 한 줄에 걸려야 한다. 새 fixture 를 더하면서 출처를 안 적으면 검사가 실패한다 — 실데이터
+# (KIS·KRX·금융위·ECOS·운용사 원자료 등)가 공개 레포에 몰래 들어오는 길을 막는 장치다.
+#
+# 형식: 경로 패턴 | 출처 | 사유
+# - 경로 패턴: 레포 루트 기준 posix. fnmatch(`*` 는 `/` 도 넘는다 — 폴더 단위로 좁게 쓴다).
+# - 출처: `synthetic:<생성기 경로>`(레포에 있는 파일이어야 한다 — 검사가 본다) 또는
+#         `synthetic:hand-written`(손으로 쓴 모양 예시 — 숫자·이름이 합성) 또는 `public:<공개 출처>`.
+# - 사유: 필수(4자 이상). 무엇으로 만들었고 왜 실데이터가 아닌지.
+web/test/fixtures/api/* | synthetic:tests/unit/api/make_web_fixtures.py | 합성 세계(api_world·p4~p8_world·index_world — 고정 시드)를 메모리 저장소에 올린 API 응답. test_web_fixtures_are_fresh 가 지금 코드 출력과 같은지 본다
+web/test/fixtures/public/manifest_p4.json | synthetic:tests/unit/public_export/pub_rows.py | 합성 P4 세계(가짜 종목 Q0000N)로 공개 내보내기가 만든 manifest
+web/test/fixtures/public/corp_index.json | synthetic:tests/unit/public_export/pub_rows.py | 합성 P4 세계 공개 내보내기 산출
+web/test/fixtures/public/filings_feed.json | synthetic:tests/unit/public_export/pub_rows.py | 합성 P4 세계 공개 내보내기 산출
+web/test/fixtures/public/earnings_prelim.json | synthetic:tests/unit/public_export/pub_rows.py | 합성 P4 세계 공개 내보내기 산출
+web/test/fixtures/public/earnings_schedule.json | synthetic:tests/unit/public_export/pub_rows.py | 합성 P4 세계 공개 내보내기 산출
+web/test/fixtures/public/overhang_recent.json | synthetic:tests/unit/public_export/pub_rows.py | 합성 P4 세계 공개 내보내기 산출
+web/test/fixtures/public/insider_recent.json | synthetic:tests/unit/public_export/pub_rows.py | 합성 P4 세계 공개 내보내기 산출
+web/test/fixtures/public/fin/* | synthetic:tests/unit/public_export/pub_rows.py | 합성 P4 세계 종목 재무 공개 파일(가짜 종목 Q0000N)
+web/test/fixtures/public/reports/* | synthetic:tests/unit/public_export/pub_rows.py | 합성 P4 세계 dart-report 공개 파일(가짜 종목 Q00001)
+web/test/fixtures/public/manifest.json | synthetic:hand-written | P3 공개 manifest 모양 예시(calendar·events 두 파일 — 값은 코드 계산·예시)
+web/test/fixtures/public/calendar.json | synthetic:hand-written | 거래 캘린더 모양 예시(notes 에 '시험용 예시 — 모양만')
+web/test/fixtures/public/events.json | synthetic:hand-written | 이벤트 캘린더 모양 예시(notes 에 '시험용 예시')
+web/test/pages/fixtures/public_calendar.json | synthetic:hand-written | 페이지 시험용 공개 캘린더 모양 예시
+web/test/pages/fixtures/public_events.json | synthetic:hand-written | 페이지 시험용 공개 이벤트 모양 예시
+tests/golden/board/META.json | synthetic:tests/golden/board_golden.py | 신고가 골든 메타(합성 300종목·시드 20260826)
+tests/golden/board/inputs/* | synthetic:tests/golden/board_golden.py | 신고가 골든 입력 — 합성 시장(시드 20260826, 300종목×30일)
+tests/golden/board/expected/* | synthetic:tests/golden/board_golden.py | 신고가 골든 기대 산출 — 합성 입력을 엔진에 돌린 결과(ADR 0017 재캡처)
+tests/golden/dart_report/META.json | synthetic:tests/golden/dart_report/make_golden.py | dart-report 골든 메타(사례 이름·체크섬)
+tests/golden/dart_report/inputs/* | synthetic:tests/golden/dart_report/make_golden.py | G1 빌더 8사례 입력 — 고정 합성 값(난수 없음)
+tests/golden/dart_report/builder/* | synthetic:tests/golden/dart_report/make_golden.py | G1 기대 산출 — 합성 입력을 legacy 엔진으로 캡처
+tests/golden/dart_report/pipeline/* | synthetic:tests/golden/dart_report/make_golden.py | G2 파이프라인 기대 산출 — 합성 P4 세계 입력
+tests/golden/index_review/expect.json | synthetic:tests/fixtures/synthetic/index_world.py | 지수 정기변경 골든 — 합성 지수 세계(시드 20261113)의 손계산 기대값

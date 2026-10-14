@@ -69,7 +69,6 @@ def test_kis_priorities_follow_the_design_table() -> None:
     assert kis.priority("gex_board") is Priority.P1
     assert kis.priority("command_reply") is Priority.P2
     assert kis.priority("close_collect") is Priority.P3
-    assert kis.priority("legacy_bridge") is Priority.P3
     assert kis.priority("backfill") is Priority.P4
     assert kis.priority("모르는 역할") is Priority.P2  # default_priority
 

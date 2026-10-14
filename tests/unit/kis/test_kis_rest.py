@@ -7,18 +7,14 @@ GX 와 다른 점:
   `test_token_file_is_private`(:113)·`test_unreachable_redis_url_falls_back_to_file_cache` (:235) —
   토큰 파일 캐시가 없다(토큰은 Redis 에만, 설계 §1.2).
 - `settings()` 에서 `kis_token_cache_path` 를 뺐다(그 설정이 없다).
-- 분봉 파라미터 대조 시험은 GX probe(`legacy/gexlab/scripts/probe_minute_history.py`)를 GX 루트에서
-  하위 프로세스로 불러 같은 값을 받는다(`_probe_fetch_resp`) — KBJ 시험이 legacy 를 import 하지
-  않게(GX 의 `scripts`·`config` 패키지 이름이 KBJ 와 겹친다).
+- 분봉 파라미터 대조 시험은 GX probe(`legacy/gexlab/scripts/probe_minute_history.py`)가 받은 인자와
+  같은지 본다 — P9 GXI 에 그 값을 시험 안 상수로 동결했다(`_PROBE_RUNS` — 커밋 f6aeebd 에서 GX 루트
+  하위 프로세스로 받은 값). 예전 하위 프로세스 호출은 legacy 가 없어지면 조용히 건너뛰었다.
 새로: provider 없이 만들면 TypeError(K7 — 기본 발급 경로 없음).
 """
 
 from __future__ import annotations
 
-import functools
-import json
-import subprocess
-import sys
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -46,7 +42,6 @@ TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.FAKE.TOKEN"
 P_PRICE = "/uapi/domestic-futureoption/v1/quotations/inquire-price"
 TR_PRICE = "FHMIF10000000"
 PARAMS = {"FID_COND_MRKT_DIV_CODE": "F", "FID_INPUT_ISCD": "A01612"}
-GX_ROOT = Path(__file__).resolve().parents[3] / "legacy" / "gexlab"
 
 
 def settings(tmp_path: Path) -> Settings:
@@ -256,31 +251,6 @@ def test_client_without_a_token_provider_is_a_type_error() -> None:
 
 # ── 분봉 요청 도우미 ──
 
-_PROBE_SCRIPT = """
-import json, sys
-from datetime import date
-sys.path.insert(0, ".")
-from data.kis.rest import KisResponse
-from scripts import probe_minute_history
-from scripts.probe_common import P_MINUTE, TR_MINUTE
-
-class Ctx:  # probe `Ctx.call` 이 받은 인자를 남긴다
-    def __init__(self):
-        self.findings = {}
-        self.seen = []
-
-    def call(self, path, tr_id, params, **_):
-        self.seen.append([path, tr_id, dict(params)])
-        return KisResponse(200, {"rt_cd": "0", "output2": []}, 0.0)
-
-out = []
-for market, day, hour in json.loads(sys.argv[1]):
-    ctx = Ctx()
-    probe_minute_history.fetch_resp(ctx, "A01612", date.fromisoformat(day), hour, market)
-    out.append(ctx.seen)
-print(json.dumps({"seen": out, "consts": [P_MINUTE, TR_MINUTE]}))
-"""
-
 _MINUTE_CASES: tuple[tuple[str, date, str], ...] = (
     ("F", date(2026, 9, 28), "160000"),  # 주간 — probe DAY_END F
     ("CM", date(2026, 9, 22), "235959"),  # 야간 — #17 첫 실측 입력
@@ -288,20 +258,34 @@ _MINUTE_CASES: tuple[tuple[str, date, str], ...] = (
 )
 
 
-@functools.cache
+_P = "/uapi/domestic-futureoption/v1/quotations/inquire-time-fuopchartprice"
+_FIXED = {"FID_INPUT_ISCD": "A01612", "FID_HOUR_CLS_CODE": "60", "FID_PW_DATA_INCU_YN": "Y",
+          "FID_FAKE_TICK_INCU_YN": "N"}  # fmt: skip
+
+
+def _seen(market: str, day: str, hour: str) -> list[list[Any]]:
+    params = {"FID_COND_MRKT_DIV_CODE": market, **_FIXED,
+              "FID_INPUT_DATE_1": day, "FID_INPUT_HOUR_1": hour}  # fmt: skip
+    return [[_P, "FHKIF03020200", params]]
+
+
+# GX probe(`legacy/gexlab/scripts/probe_minute_history.py` `fetch_resp`)를 GX 루트에서 부른 결과를
+# 동결했다(P9 GXI — legacy 를 지우기 직전 커밋 f6aeebd 에서 하위 프로세스로 한 번 받은 값, 파라미터
+# 순서까지 그대로). 예전에는 시험마다 하위 프로세스로 불렀다 — legacy 가 없어지면 조용히 건너뛰어
+# 지므로 값을 시험 안 상수로 옮겼다(단언은 그대로).
+_PROBE_RUNS: dict[str, Any] = {
+    "seen": [
+        _seen("F", "20260928", "160000"),
+        _seen("CM", "20260922", "235959"),
+        _seen("CM", "20260928", "300000"),
+    ],
+    "consts": [_P, "FHKIF03020200"],
+}
+
+
 def _probe_runs() -> dict[str, Any]:
-    """GX probe 의 `fetch_resp` 를 GX 루트에서 하위 프로세스로 부른 결과(세 경우 한 번에)."""
-    cases = json.dumps([[m, d.isoformat(), h] for m, d, h in _MINUTE_CASES])
-    proc = subprocess.run(  # noqa: S603 — 이 레포의 파이썬으로 고정 문자열 스크립트를 돌린다
-        [sys.executable, "-c", _PROBE_SCRIPT, cases],
-        cwd=GX_ROOT,
-        capture_output=True,
-        text=True,
-        timeout=120,
-        check=False,
-    )
-    assert proc.returncode == 0, proc.stderr[-2000:]
-    return json.loads(proc.stdout)
+    """GX probe `fetch_resp` 가 받은 인자(위 동결 값)."""
+    return _PROBE_RUNS
 
 
 def _probe_fetch_resp(market: str, day: date, hour: str) -> list[tuple[str, str, dict[str, str]]]:
@@ -309,10 +293,6 @@ def _probe_fetch_resp(market: str, day: date, hour: str) -> list[tuple[str, str,
     return [(p, t, dict(q)) for p, t, q in seen]
 
 
-@pytest.mark.skipif(
-    not (GX_ROOT / "scripts" / "probe_minute_history.py").exists(),
-    reason="legacy GX probe 가 없다(P9 정리 뒤) — 이 대조는 그때 지운다",
-)
 @pytest.mark.parametrize(("market", "day", "hour"), _MINUTE_CASES)
 def test_minute_chart_params_are_the_ones_the_probe_measured_with(
     market: str, day: date, hour: str

@@ -1,6 +1,6 @@
 # 공시·재무·컨센서스·밸류에이션 튜닝값 — 숫자는 이 한 곳(docs/p4_design.md §3.7, CLAUDE.md "기본값은 [확인 필요]").
 # 해석기 kbj/config/fin.py 하나(모르는 키는 오류). 비밀 아님(docs/secrets.md: 튜닝값은 환경변수가 아니라 config/*.yaml).
-# 근거 줄 번호: SD = legacy/stock_dashboard/. 메인 결정(2026-10-08 — 설계 §10 채택)을 사용자가 나중에 바꾸려면
+# 근거 줄 번호: SD = legacy/stock_dashboard/(P9 에 지웠다 — 커밋 f6aeebd). 메인 결정(2026-10-08 — 설계 §10 채택)을 사용자가 나중에 바꾸려면
 # 이 파일의 값을 고친다(코드는 그대로).
 version: 1
 

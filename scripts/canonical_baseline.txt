@@ -3,7 +3,7 @@
 # 형식: 그룹 | 경로 | 건수(줄) | 정리 단계·사유
 # - 줄어들기만 한다. 기준선에 없는 파일의 위반·건수 증가는 실패. 건수가 줄면 같은 커밋에서 기준선도 줄인다
 #   (`uv run python scripts/check_canonical.py --update-baseline` — 줄이는 방향으로만 다시 쓴다).
-# - 목표 0 그룹(kis_oauth·kis_rest·kis_master·krx_api·dart)과 kbj/ 경로는 여기에 둘 수 없다.
+# - 목표 0 그룹(P9 LEGACY 뒤 krx_scrape 를 뺀 전부 — `--list`)과 kbj/ 경로는 여기에 둘 수 없다.
 # - 2026-10-07 P2 묶음 I 가 처음 고정: legacy 의 KIS 토큰·REST·마스터·KRX·DART·텔레그램 0건.
 #   남은 것은 웹소켓(P7)·공공데이터포털(P3)·네이버(P3~P5)·KRX 스크랩(P3).
 # - 2026-10-07 P3 묶음 S(docs/p3_design.md §1.10·D-P3-18): 파일 단위로 떼어낼 수 있는 대체 완료분만 지웠다 —
@@ -33,38 +33,11 @@
 #   (kbj rules.*·페이지 11·12) SD 백테스트 RSI(_bt_calc_rsi) 1 이 빠진 10 에서 시작한다. 남은 SD 차트 지표(_calc_rsi_macd·
 #   _calc_adx·_calc_bollinger)는 SD 차트 API 가 아직 부르고, board 스윙 엔진(signals·backtest·systems)은 SWG 를 하지
 #   않아(사용자 결정 2026-10-13) P9 legacy 비우기에서 지운다. 다른 그룹 건수 변화 없음.
-datago | legacy/etf_traker/board/ingest/datago.py | 1 | P4~P8(P3 S 이월) — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import — 그 기능 대체 때 삭제
-krx_scrape | legacy/etf_traker/board/ingest/flows.py | 2 | P4~P8(P3 S 이월) — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import — 그 기능 대체 때 삭제
-krx_scrape | legacy/etf_traker/board/ingest/pipeline.py | 1 | P4~P8(P3 S 이월) — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import — 그 기능 대체 때 삭제
-krx_scrape | legacy/etf_traker/flowlab/naver.py | 1 | P8(P3 S 이월) — flowlab flows·verify·selftest 가 import — 이벤트 스터디 대체 때 삭제
-krx_scrape | legacy/stock_dashboard/data_fetcher.py | 12 | P5(P4 S 이월 — D-P4-19·R14) — 남은 SD 마감 시황·워치독·피어·뉴스·옵션(server.py)과 SD 검사 스크립트가 쓴다. 그 기능 대체 때
-krx_scrape | legacy/stock_dashboard/data_freshness.py | 1 | P5(P4 S 이월 — D-P4-19·R14) — 남은 SD 마감 시황·워치독·피어·뉴스·옵션(server.py)과 SD 검사 스크립트가 쓴다. 그 기능 대체 때
-krx_scrape | legacy/stock_dashboard/krx_api.py | 1 | P5(P4 S 이월 — D-P4-19·R14) — 남은 SD 마감 시황·워치독·피어·뉴스·옵션(server.py)과 SD 검사 스크립트가 쓴다. 그 기능 대체 때
-krx_scrape | legacy/stock_dashboard/ohlcv_autofill.py | 8 | P5(P4 S 이월 — D-P4-19·R14) — 남은 SD 마감 시황·워치독·피어·뉴스·옵션(server.py)과 SD 검사 스크립트가 쓴다. 그 기능 대체 때
-krx_scrape | legacy/stock_dashboard/server.py | 29 | P5(P4 S 이월 — D-P4-19·R14) — 남은 SD 마감 시황·워치독·피어·뉴스·옵션(server.py)과 SD 검사 스크립트가 쓴다. 그 기능 대체 때
-krx_scrape | pyproject.toml | 2 | D8 — legacy 의존성 그룹의 pykrx 줄·주석: legacy 그룹을 지울 때 함께
-naver | legacy/etf_traker/board/config/settings.yaml | 1 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
-naver | legacy/etf_traker/board/ingest/flows.py | 6 | P4~P8(P3 S 이월) — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import — 그 기능 대체 때 삭제
-naver | legacy/etf_traker/board/ingest/funds.py | 2 | P4~P8(P3 S 이월) — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import — 그 기능 대체 때 삭제
-naver | legacy/etf_traker/board/ingest/naver.py | 15 | P4~P8(P3 S 이월) — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import — 그 기능 대체 때 삭제
-naver | legacy/etf_traker/board/ingest/news.py | 1 | P4·P5 — 공시 트리거·뉴스(docs/p3_design.md §1.10) — 네이버 검색 API, 그 기능 대체 때
-naver | legacy/etf_traker/board/ingest/pipeline.py | 1 | P4~P8(P3 S 이월) — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import — 그 기능 대체 때 삭제
-naver | legacy/etf_traker/board/ingest/stockflows.py | 1 | P4~P8(P3 S 이월) — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import — 그 기능 대체 때 삭제
-naver | legacy/etf_traker/board/ingest/triggers.py | 2 | P4·P5 — 공시 트리거·뉴스(docs/p3_design.md §1.10) — 네이버 검색 API, 그 기능 대체 때
-naver | legacy/etf_traker/board/web/app.js | 1 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
-naver | legacy/etf_traker/board/web/render.py | 1 | P3~P5 — U4: ET 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
-naver | legacy/etf_traker/etf_tracker_v9/market.py | 3 | P5(P3 S 이월) — tracker·live_update(ETF 리포트)가 import — 리포트를 kbj etf_daily 로 바꿀 때 삭제
-naver | legacy/etf_traker/flowlab/config.py | 3 | P8(P3 S 이월) — flowlab flows·verify·selftest 가 import — 이벤트 스터디 대체 때 삭제
-naver | legacy/etf_traker/flowlab/naver.py | 4 | P8(P3 S 이월) — flowlab flows·verify·selftest 가 import — 이벤트 스터디 대체 때 삭제
-naver | legacy/etf_traker/flowlab/tests.py | 1 | P8(P3 S 이월) — flowlab flows·verify·selftest 가 import — 이벤트 스터디 대체 때 삭제
-naver | legacy/stock_dashboard/agents/pipeline.py | 1 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
-naver | legacy/stock_dashboard/data_fetcher.py | 1 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
-naver | legacy/stock_dashboard/ohlcv_autofill.py | 2 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
-naver | legacy/stock_dashboard/scripts/validate_valuechain_external.py | 1 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
-naver | legacy/stock_dashboard/server.py | 14 | P5(P4 S 이월 — R14) — 마감 시황·워치독(검사 스크립트가 본다)·피어 유니버스·뉴스·ETF 시세가 쓴다. U4: 기능별로 KRX·KIS 로 교체
-naver | legacy/stock_dashboard/theme_crawler.py | 3 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
-naver | legacy/stock_dashboard/valuechain.py | 1 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
-ta_indicators | legacy/etf_traker/board/engine/backtest.py | 1 | P9 — board 스윙 엔진(사용자 결정 2026-10-13 SWG 없음) — legacy 비우기 때 삭제
-ta_indicators | legacy/etf_traker/board/engine/signals.py | 1 | P9 — board 스윙 엔진(사용자 결정 2026-10-13 SWG 없음) — legacy 비우기 때 삭제
-ta_indicators | legacy/etf_traker/board/engine/systems.py | 4 | P9 — board 스윙 엔진(사용자 결정 2026-10-13 SWG 없음) — legacy 비우기 때 삭제
-ta_indicators | legacy/stock_dashboard/server.py | 4 | P9 — SD 차트 API 지표(_calc_rsi_macd·_calc_adx·_calc_bollinger) — 차트 API 대체(legacy 비우기) 때 삭제
+# - 2026-10-14 P9 LEGACY(docs/p9_design.md §7.2·'LEGACY 구현 기록'): legacy/etf_traker·legacy/stock_dashboard 를 지웠다(커밋
+#   f6aeebd 가 지우기 직전 — 태그 legacy-final 은 사용자가 GitHub 에서 달 수 있다). ET 21줄·SD 13줄 삭제 — naver 65 → 0,
+#   krx_scrape 57 → 2, ta_indicators 10 → 0, datago 1 → 0. telegram·ecos·datago·kosis·naver·etf_issuers·ta_indicators 를
+#   목표 0 으로 바꿨다. 남은 1줄(pyproject.toml legacy 그룹의 스크랩 라이브러리)은 WRAP 이 legacy 그룹과 함께 지우고
+#   krx_scrape 도 목표 0 으로 — 그 뒤 이 파일은 머리말만 남는다.
+# - 2026-10-14 P9 WRAP(ADR 0038): legacy/gexlab 과 pyproject.toml legacy 의존성 그룹을 지웠다 — 남은 1줄(krx_scrape
+#   pyproject.toml)을 지우고 krx_scrape 도 목표 0 으로. 이제 모든 그룹이 목표 0 이고 이 파일은 머리말만 남는다
+#   (기준선 장치는 scripts/check_canonical.py 에 남는다 — 새 줄은 더할 수 없고 줄어들기만 한다).

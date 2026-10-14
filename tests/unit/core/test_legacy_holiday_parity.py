@@ -9,14 +9,14 @@ SD `server.py:_KR_HOLIDAYS_2026`:17971(f46178c)·`_is_kr_holiday`:17987·
    다르다는 것(방향까지)을 고정하고,
 3. 바꾼 뒤의 호환 함수가 그 다섯 날에 정본 값을 낸다는 것을 고정한다.
 
-고정 사본은 legacy 소스에 그 집합이 남아 있는 동안 소스와 같은지도 본다(H 가 지우면 사본이 기준).
+고정 사본이 기준이다. P9 LEGACY 가 legacy/stock_dashboard 를 지우며 '소스와 사본이 같은지' 보던
+시험(`test_frozen_copy_matches_legacy_source_while_it_exists` — 소스가 없으면 skip)을 지웠다. 소스는
+커밋 f6aeebd(legacy 를 지우기 직전 — 태그 legacy-final 은 사용자가 GitHub 에서 달 수 있다)에 있다.
 """
 
 from __future__ import annotations
 
-import ast
 from datetime import date, datetime, time, timedelta
-from pathlib import Path
 
 import pytest
 
@@ -24,8 +24,6 @@ from kbj.core.calendar import KST, TradingCalendar
 from kbj.core.calendar_compat import is_kr_holiday, is_kr_regular_hours, next_trading_open
 
 D = date
-REPO_ROOT = Path(__file__).resolve().parents[3]
-SD_SERVER = REPO_ROOT / "legacy" / "stock_dashboard" / "server.py"
 
 # SD `server.py:_KR_HOLIDAYS_2026`:17971 (f46178c) 고정 사본 — 손대지 않는다
 SD_KR_HOLIDAYS_2026 = frozenset(
@@ -149,23 +147,3 @@ def test_sd_rule_and_canonical_agree_elsewhere_in_2026() -> None:
     for d in _days(2026):
         if d not in EXPECTED_DIFF:
             assert sd_is_kr_holiday(_at(d)) is is_kr_holiday(d), d
-
-
-def _sd_holiday_literal(source: str) -> frozenset[str] | None:
-    for node in ast.walk(ast.parse(source)):
-        if isinstance(node, ast.Assign) and any(
-            isinstance(t, ast.Name) and t.id == "_KR_HOLIDAYS_2026" for t in node.targets
-        ):
-            value = ast.literal_eval(node.value)
-            assert isinstance(value, set)
-            return frozenset(str(x) for x in value)  # pyright: ignore[reportUnknownVariableType]
-    return None
-
-
-def test_frozen_copy_matches_legacy_source_while_it_exists() -> None:
-    if not SD_SERVER.exists():
-        pytest.skip("legacy/stock_dashboard 가 없다(legacy 정리 뒤) — 고정 사본이 기준")
-    found = _sd_holiday_literal(SD_SERVER.read_text(encoding="utf-8"))
-    if found is None:
-        pytest.skip("SD 하드코딩이 지워졌다(묶음 H 재배선 뒤) — 고정 사본이 기준")
-    assert found == SD_KR_HOLIDAYS_2026

@@ -1,0 +1,14 @@
+{
+  "source": "KBJ 운영 기록",
+  "as_of": "2026-10-16T21:00:00+09:00",
+  "quality": "ok",
+  "notes": [],
+  "generated_at": "2026-10-16T21:00:00+09:00",
+  "data": {
+    "date": "2026-10-20",
+    "total": 0,
+    "failed": 0,
+    "retried_ok": 0,
+    "rows": []
+  }
+}

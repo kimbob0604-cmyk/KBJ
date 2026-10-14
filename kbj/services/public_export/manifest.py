@@ -30,10 +30,16 @@
   원천은 관세청(DATAGO)·DART. 이름 규칙은 `SUBDIR_JSON_RE` 하나(`merge-public-data.mjs`·
   `static.ts` 와 같은 정규식 — 시험). 상한은 `DIR_CAPS["trade"]`·`FILE_CAPS`(평평한 파일)·
   `PREFIX_CAPS`(코드 파일 — `file_cap`). 내용 검사(`trade_problems`):
-  `origin: local`(VM 관심종목 매핑 — D-P6-14) 0, `trade/stock/` 에 시세 칸(close·price …) 0.
+  `origin: local`(VM 관심종목 매핑 — D-P6-14) 0. 옛 `trade/stock/` 시세 칸 규칙은 P9 에서 아래
+  `price_problems` 의 한 사례가 됐다.
 - **P7 공개 파일(docs/p7_design.md §7)**: 하위 폴더 `diag/` — `diag/<소문자>.json`(summary·history·
   events — 공공지표 진단·매크로 위험 게이지·이벤트, `pub_diag` 만). 상한은 `DIR_CAPS["diag"]`·
   `FILE_CAPS`. 내용 검사(`diag_problems`): 로그인 판정 키(`fear_greed`·`verdict`·`gex*`) 0.
+- **원시세 칸(P9 — docs/p9_design.md §3.2 `price_fields`, ADR 0035)**: 공개 JSON 어디에도 키
+  `PRICE_KEYS`(close·open·high·low·price·volume·turnover·mktcap·nav·net_value·chg_pct)가 없어야 한다
+  (로그인 등급 출처의 가격·거래량·거래대금·시총·NAV·수급 값이 공개로 새는 길을 키 이름으로 막는다).
+  예외는 `PRICE_FIELD_ALLOW`(파일·키·값 모양·사유 — 공개 출처 근거가 있는 것만)뿐이고
+  `merge-public-data.mjs` 의 같은 표와 한 벌이다(시험).
 - 문제 목록에는 값이 아니라 파일 이름·JSON 경로·규칙만 담는다.
 """
 
@@ -61,6 +67,8 @@ __all__ = [
     "NAME_RE",
     "P5_FLAT_NAMES",
     "PREFIX_CAPS",
+    "PRICE_FIELD_ALLOW",
+    "PRICE_KEYS",
     "PUBLIC_FORBIDDEN",
     "QUALITIES",
     "SCHEMA_VERSION",
@@ -85,6 +93,7 @@ __all__ = [
     "listed_paths",
     "login_source_paths",
     "non_dart_source_paths",
+    "price_problems",
     "read_manifest",
     "sha256_bytes",
     "sha256_text",
@@ -151,8 +160,32 @@ PREFIX_CAPS: Final[dict[str, int]] = {
 }
 # 공개 diag/ 파일에 없어야 하는 로그인 판정 키(국장 공포탐욕·종합 판정·GEX — docs/p7_design.md §7)
 _DIAG_LOGIN_KEYS: Final = frozenset({"fear_greed", "verdict"})
-# 공개 trade/stock/ 파일에 없어야 하는 시세 칸(로그인 등급 — D-P6-4)
-_TRADE_PRICE_KEYS: Final = frozenset({"close", "price", "chg_pct", "mktcap", "open", "high", "low"})
+# 원시세 칸 — 공개 JSON 어디에도 없어야 하는 키(P9 price_fields — 옛 trade/stock 규칙 D-P6-4
+# 를 넓혔다).
+# web/scripts/merge-public-data.mjs PRICE_KEYS 와 같다(시험)
+PRICE_KEYS: Final = frozenset({
+    "close", "open", "high", "low", "price", "volume", "turnover", "mktcap", "nav", "net_value",
+    "chg_pct",
+})  # fmt: skip
+# 예외 — (파일 이름, 키, 값 모양, 사유). 값 모양: "hhmm" = None 또는 'HH:MM' 글자, "number" = None
+# 또는 수. 공개 출처 근거가 있는 것만 — 더하려면 ADR 0035 의 절차(출처·사유)를 따른다.
+# web/scripts/merge-public-data.mjs PRICE_FIELD_ALLOW 와 같다(시험)
+PRICE_FIELD_ALLOW: Final[tuple[tuple[str, str, str, str], ...]] = (
+    ("calendar.json", "open", "hhmm", "장 시작 시각(HH:MM) — 가격 아님(KBJ 거래 캘린더 코드 계산)"),
+    (
+        "calendar.json",
+        "close",
+        "hhmm",
+        "장 마감 시각(HH:MM) — 가격 아님(KBJ 거래 캘린더 코드 계산)",
+    ),
+    (
+        "overhang_recent.json",
+        "price",
+        "number",
+        "DART 주요사항보고서의 전환·행사·발행가액(공개 출처)",
+    ),
+)
+_HHMM: Final = re.compile(r"\d{2}:\d{2}")
 Quality = Literal["ok", "stale", "estimated", "invalid"]
 QUALITIES: Final[tuple[Quality, ...]] = ("ok", "stale", "estimated", "invalid")
 _Q_RANK: Final[dict[str, int]] = {"ok": 0, "stale": 1, "estimated": 2, "invalid": 3}
@@ -223,11 +256,36 @@ def trade_problems(name: str, raw: object) -> list[str]:
         f"{name}: 로그인 전용 매핑(origin local — {p})"
         for p in _key_paths(raw, lambda k, x: k == "origin" and x == "local")  # pyright: ignore[reportUnknownLambdaType]
     ]
-    if name.startswith("trade/stock"):
-        out += [
-            f"{name}: 시세 칸({p})"
-            for p in _key_paths(raw, lambda k, _x: k in _TRADE_PRICE_KEYS)  # pyright: ignore[reportUnknownLambdaType]
-        ]
+    return out
+
+
+def _price_shape_ok(kind: str, x: object) -> bool:
+    if x is None:
+        return True
+    if kind == "hhmm":
+        return isinstance(x, str) and bool(_HHMM.fullmatch(x))
+    return isinstance(x, int | float) and not isinstance(x, bool)
+
+
+def price_problems(name: str, raw: object) -> list[str]:
+    """원시세 칸 검사(P9 price_fields) — `PRICE_KEYS` 키 0, 예외는 `PRICE_FIELD_ALLOW` 의 (파일·키)
+    이고 값 모양까지 맞아야 한다(예: 캘린더의 open·close 는 'HH:MM' 글자만)."""
+    allow = {(f, k): kind for f, k, kind, _why in PRICE_FIELD_ALLOW}
+    out: list[str] = []
+    for p in _key_paths(raw, lambda k, _x: k in PRICE_KEYS):  # pyright: ignore[reportUnknownLambdaType]
+        key = p.rsplit(".", 1)[1]
+        kind = allow.get((name, key))
+        if kind is None:
+            out.append(f"{name}: 시세 칸({p})")
+    for f, k, kind, _why in PRICE_FIELD_ALLOW:
+        if f != name:
+            continue
+
+        def wrong(kk: str, x: object, k: str = k, kind: str = kind) -> bool:
+            return kk == k and not _price_shape_ok(kind, x)
+
+        bad = _key_paths(raw, wrong)
+        out += [f"{name}: 시세 칸 예외의 값 모양이 다르다({p} — {kind})" for p in bad]
     return out
 
 
@@ -497,6 +555,7 @@ def check_payload(name: str, text: str) -> list[str]:
             problems.append(f"{name}: 로그인 등급 스키마 이름('{_LOGIN_SCHEMA_TEXT}' 규칙)")
     problems += trade_problems(name, raw)
     problems += diag_problems(name, raw)
+    problems += price_problems(name, raw)
     if not isinstance(raw, dict):
         return [*problems, f"{name}: 봉투가 아님(최상위가 객체가 아님)"]
     env: dict[str, Any] = raw  # pyright: ignore[reportUnknownVariableType]

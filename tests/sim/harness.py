@@ -8,8 +8,8 @@
 | auth | `AuthService.step` 30초마다(유일한 발급자, `KBJ_SERVICE=auth`) | 한다 |
 | scheduler | `SchedulerService.step`(세션 상태 + 등록부 실행기) | 안 한다 |
 | notifier | `NotifierService.step`(outbox → 가짜 텔레그램, 꺼짐이면 suppressed) | — |
-| gx | legacy GX external 단계 흉내(마스터·KRX 파생·분봉·poller·ws) | 안 한다 |
-| legacy | legacy SD·ET 가 브리지(`kbj.data.legacy_bridge`)로 부르는 KIS 조회 | 안 한다 |
+| gx | GEX 상시 서비스 흉내(`gex.poller` 체인·`gex.ws_gateway` 구독) | 안 한다 |
+| reader | 다른 KBJ 읽기 프로세스(읽기 전용 토큰 단건 현재가 — P9 전 'legacy' 자리) | 안 한다 |
 
 - 시계: `FakeClock` 하나(리미터·auth·스케줄러·notifier·가짜 서버가 모두 본다). 보폭은 30초
   (세션 전이 ±2분은 1초). cron 은 분 경계에 서고 실행기가 `(지난 tick, now]` 의 발화를 다
@@ -22,8 +22,10 @@
   ForexFactory·Anthropic·ETF 운용사)는 부른 것만 기록한다(`offline_calls`).
 - 알림은 아침·마감 브리핑과 하루 1회 리포트(`SIM_NOTIFY_KINDS`)만 보낸다. `alert.*` 는
   사건이 있어야 나가는데 시뮬레이션에는 사건이 없다.
-- external 작업은 실행기가 돌리지 않는다(D-P2-5). gx 프로세스가 같은 데이터 키를 같은 선점
-  저장소에 잡고 같은 리미터·같은 토큰 읽기로 부른다.
+- external 작업은 실행기가 돌리지 않는다(D-P2-5) — P9 GXI 뒤로 external 작업은 없다. GX 마스터·
+  분봉·KRX 파생은 등록부 작업(runner kbj — 운영 등록부에서는 꺼짐, 하네스는 꺼진 작업도 시뮬레이션
+  처리기로 돌린다)이고, gx 프로세스는 상시 서비스(poller·ws) 흉내만 같은 데이터 키·같은 선점
+  저장소·같은 리미터·같은 토큰 읽기로 부른다.
 - DB 는 메모리(`MemoryClaimStore`·`MemoryRunLog`·`MemoryNotifyLogStore`) — 재기동해도
   남는다(DB 처럼).
 - 창 시작 전 새벽에 끝났어야 할 켜진 작업(03:00 `ops.nightly`·03:05 `filings.corp_code`)은
@@ -119,7 +121,6 @@ from kbj.core.calendar import (
 )
 from kbj.core.fin_rows import WatchItem
 from kbj.core.gex.records import ExpiryRecord
-from kbj.data import legacy_bridge
 from kbj.data.budget import DailyBudget, krx_budget
 from kbj.data.catalog import all_datasets
 from kbj.data.datago import DatagoTransport
@@ -138,6 +139,7 @@ from kbj.data.private.kis.consensus import (
     params_opinion,
 )
 from kbj.data.private.kis.credentials import KisCredentials
+from kbj.data.private.kis.errors import TokenUnavailable
 from kbj.data.private.kis.investors_minute import TR_MARKET_MINUTE, params_market_minute
 from kbj.data.private.kis.master import download_fo_master, parse_master_zip
 from kbj.data.private.kis.program import INVESTOR_MARKET as PROGRAM_INVESTOR_MARKET
@@ -265,6 +267,12 @@ ETF_CODE: Final = "990990"  # 합성 ETF
 FUT_CODE: Final = (
     "A01612"  # 합성 마스터의 선물 코드(tests/fixtures/synthetic/kis/master_lines.json)
 )
+
+
+# P9 WRAP: GX 수집 작업(runner kbj)의 시뮬레이션 처리기 — 분봉 데이터셋 → KIS 시장 구분(GX 그대로:
+# 주간 F·야간 CM), 키 없이 마스터만 받는 작업
+GX_MINUTE_MARKET: Final = {"fut_minute_day": "F", "fut_minute_night": "CM"}
+KEYLESS_MASTER_JOBS: Final = frozenset({"kis.master_night"})
 
 
 # P7 GEX 엔진 사이클의 합성 체인 — 월물 202612(최종거래일 12-10 둘째 목요일), 행사가 범위는
@@ -507,7 +515,7 @@ class SimOptions:
     krx_publish_time: dtime = dtime(8, 0)  # KRX D+1 공표(conflict_map E1)
     seed_runs: bool = True
     ws: bool = True
-    legacy_calls: bool = True
+    reader_calls: bool = True  # 'reader' 가 거래일 10:30 에 단건 조회 한 번(P9 전 legacy_calls)
     redis_down: tuple[datetime, datetime] | None = None
     restarts: tuple[datetime, ...] = ()
     hooks: tuple[tuple[datetime, Callable[[SimDay], None]], ...] = ()
@@ -590,7 +598,7 @@ class SimDay:
         self.kis_requests: list[tuple[str, DataKey, str]] = []  # (작업, 키, 대상) — 성공 조회
         self.external_runs: list[ExternalRun] = []
         self.ws_results: list[tuple[datetime, dict[str, Any], dict[str, Any]]] = []
-        self.legacy_results: list[tuple[datetime, int, str | None]] = []
+        self.reader_results: list[tuple[datetime, int, str | None]] = []
         self.session_events: list[dict[str, Any]] = []
         self.auth_statuses: list[AuthStatus] = []
         self.restarted_at: list[datetime] = []
@@ -636,7 +644,7 @@ class SimDay:
         self._notifier_setup()
         self._scheduler_setup()
         self._gx_setup()
-        self._legacy_setup()
+        self._reader_setup()
         self._observer = self._redis().pubsub(ignore_subscribe_messages=True)
         self._observer.subscribe(SESSION_EVENTS)
         self._hooks = sorted(opts.hooks, key=lambda h: h[0])
@@ -684,35 +692,53 @@ class SimDay:
             d += timedelta(days=1)
 
     def _seed_runs(self) -> None:
-        """창 시작 전 그날 새벽에 끝났어야 할 켜진 cron 작업 기록(DB 에 이미 있는 것처럼)."""
+        """창 시작 전 그날 새벽에 끝났어야 할 켜진 cron 작업 기록(DB 에 이미 있는 것처럼).
+
+        마지막 예정 시각 하나 + 그 앞 `GRACE_MIN` 분 안의 예정 시각들(P9 WRAP — 워치독이 5분마다·
+        매일 24시간 돌아 첫 tick 에 `now − GRACE_MIN` 발화를 본다 — 창 앞 발화도 끝난 것으로)."""
         before = self.start - timedelta(seconds=1)
         for job in self.registry.enabled_jobs():
             spec = job.schedule.cron_spec()
             if spec is None:
                 continue
-            due = spec.prev_at_or_before(before.astimezone(job.schedule.zone))
-            if due is None or due.date() != self.start.astimezone(job.schedule.zone).date():
-                continue
-            if not holds(
-                job.schedule.when, due.date(), self.kr, self.us, month_days=job.schedule.month_days
-            ):
-                continue
-            try:
-                as_of = resolve_as_of(job.run_as_of(), due, self.kr, self.us)
-            except AsOfUnavailable:
-                continue
-            self.runs.record(
-                RunRecord(
-                    make_run_id(job.name, as_of, 1),
-                    job.name,
-                    as_of,
-                    1,
-                    "ok",
-                    due,
-                    due,
-                    {"seeded": True},
-                )
+            zone = job.schedule.zone
+            day = self.start.astimezone(zone).date()
+            floor = (before - timedelta(minutes=ops_watchdog.GRACE_MIN + 1)).astimezone(zone)
+            seen: set[str] = set()
+            cursor = before.astimezone(zone)
+            while True:
+                due = spec.prev_at_or_before(cursor)
+                if due is None or due.date() != day:
+                    break
+                self._seed_one(job, due, seen)
+                if due <= floor:
+                    break
+                cursor = due - timedelta(minutes=1)
+
+    def _seed_one(self, job: JobSpec, due: datetime, seen: set[str]) -> None:
+        if not holds(
+            job.schedule.when, due.date(), self.kr, self.us, month_days=job.schedule.month_days
+        ):
+            return
+        try:
+            as_of = resolve_as_of(job.run_as_of(), due, self.kr, self.us)
+        except AsOfUnavailable:
+            return
+        if as_of in seen:
+            return
+        seen.add(as_of)
+        self.runs.record(
+            RunRecord(
+                make_run_id(job.name, as_of, 1),
+                job.name,
+                as_of,
+                1,
+                "ok",
+                due,
+                due,
+                {"seeded": True},
             )
+        )
 
     # auth ─────────────────────────────────────────────────────────────────────────────
     def _auth_setup(self) -> None:
@@ -1115,6 +1141,12 @@ class SimDay:
         def run(ctx: JobContext) -> JobResult:
             got: list[DataKey] = []
             errors: list[str] = []
+            if job.name in KEYLESS_MASTER_JOBS:
+                # 키 없는 마스터 갱신(kis.master_night — 데이터 키는 주간 kis.master 하나)
+                try:
+                    self._download_master("scheduler")
+                except Exception as e:
+                    errors.append(f"master: {type(e).__name__}")
             for key in ctx.keys:
                 try:
                     if self._fetch(job, key, ctx):
@@ -1161,6 +1193,23 @@ class SimDay:
         raise SimUnsupported(key.label())
 
     def _fetch_kis(self, job: str, key: DataKey, client: KisRestClient) -> bool:
+        if key.dataset == "fo_master":
+            # P9 WRAP: GX 흉내(_gx_master) 대신 등록부 kis.master — 배포 zip 한 번(앱키 리미터 밖)
+            self._download_master("scheduler")
+            return True
+        if key.dataset in GX_MINUTE_MARKET:
+            # P9 WRAP: GX 흉내(_gx_minutes) 대신 등록부 gex.day_minutes·gex.night_minutes — 분봉 1쪽
+            d = date.fromisoformat(key.as_of[:10])
+            resp = client.get(
+                MINUTE_PATH,
+                MINUTE_TR,
+                minute_chart_params(GX_MINUTE_MARKET[key.dataset], FUT_CODE, d, "154500"),
+                priority=Priority.P4,
+            )
+            if not resp.ok:
+                raise RuntimeError(f"KIS {MINUTE_TR} {resp.msg_cd}")
+            self.kis_requests.append((job, key, FUT_CODE))
+            return True
         spec = KIS_SPECS.get(key.dataset)
         if spec is None:
             self.unsupported.append(key.label())
@@ -1252,7 +1301,7 @@ class SimDay:
         )
         return bool(rows)
 
-    # gx(legacy GX external 단계 흉내) ───────────────────────────────────────────────────
+    # gx(GEX 상시 서비스 흉내 — poller·ws) ───────────────────────────────────────────────────
     def _gx_setup(self) -> None:
         s = self.settings("gx")
         r = self._redis()
@@ -1271,8 +1320,6 @@ class SimDay:
             clock=self.clock.monotonic,
             now=self.clock.now,
         )
-        self._gx_state: State | None = None
-        self._gx_krx_due: dict[str, datetime] = {}  # as_of → 다음 시도 시각
         self._gx_poll_done: set[str] = set()
         self._gx_ws_done: set[tuple[date, str]] = set()
         # P7: KBJ GEX 상시 서비스(등록부 services 의 켜진 gex.*) — 하트비트는 프로세스 이름으로
@@ -1349,21 +1396,10 @@ class SimDay:
         local = now.astimezone(KST)
         d = local.date()
         trading = self.kr.is_trading_day(d)
-        prev, cur = self._gx_state, info.state
-        self._gx_state = cur
-        if prev is not None and prev != cur:
-            if cur in (State.PRE_DAY, State.PRE_NIGHT) and trading:
-                # GX 는 세션마다 마스터를 받는다. 야간 세션의 귀속 거래일은 다음 거래일(GX state_at)
-                as_of = d if cur == State.PRE_DAY else self.kr.next_trading_day(d)
-                self._gx_master(now, as_of.isoformat())
-            if cur == State.POST_DAY and trading:
-                self._gx_minutes(now, "gex.day_minutes", "fut_minute_day", "F", d)
-            if cur == State.IDLE and prev == State.NIGHT and info.trade_date is None:
-                # 야간 세션은 다음 거래일 귀속(GX state_at) — 06:00 에 끝난 그 세션의 거래일
-                night_day = d if trading else self.kr.next_trading_day(d)
-                self._gx_minutes(now, "gex.night_minutes", "fut_minute_night", "CM", night_day)
-        if trading and local.time() >= dtime(8, 5):
-            self._gx_krx_derivatives(now, d)
+        cur = info.state
+        # P9 WRAP: 마스터·분봉·KRX 파생은 등록부 작업(kis.master·kis.master_night·gex.day_minutes·
+        # gex.night_minutes·gex.krx_derivatives — runner kbj)이 실행기로 돈다. 여기는 상시 서비스
+        # gex.poller(체인 회차)·gex.ws_gateway(구독) 흉내만 남는다
         if cur in (State.DAY, State.NIGHT) and local.minute % 10 == 0:
             self._gx_poll(now)
             self._gex_cycle(now)
@@ -1375,85 +1411,14 @@ class SimDay:
                     self._gx_ws_done.add((d, label))
                     self._gx_ws(now)
 
-    def _gx_master(self, now: datetime, as_of: str) -> None:
-        key = self.catalog["KIS:fo_master"].key(as_of)
-        if not self._gx_claim("kis.master", key, now):
-            self.external_runs.append(ExternalRun("kis.master", as_of, now, "duplicate"))
-            return
-        rid = make_run_id("kis.master", as_of, 1)
-        try:
-            rows = parse_master_zip(
-                download_fo_master(
-                    transport=self.kis.master_transport("gx"), clock=self.clock.monotonic
-                )
+    def _download_master(self, consumer: str) -> int:
+        """F/O 마스터 zip 한 번(배포 경로 — 앱키 리미터·토큰 밖, GX _master_step 과 같다)."""
+        rows = parse_master_zip(
+            download_fo_master(
+                transport=self.kis.master_transport(consumer), clock=self.clock.monotonic
             )
-        except Exception as e:
-            self.claims.fail(key, rid, type(e).__name__, now)
-            self.external_runs.append(ExternalRun("kis.master", as_of, now, "failed", str(e)))
-            return
-        self.claims.complete(key, rid, len(rows), self.clock.now())
-        self.external_runs.append(ExternalRun("kis.master", as_of, now, "ok"))
-
-    def _gx_minutes(self, now: datetime, job: str, dataset: str, market: str, d: date) -> None:
-        key = self.catalog[f"KIS:{dataset}"].key(d.isoformat())
-        if not self._gx_claim(job, key, now):
-            self.external_runs.append(ExternalRun(job, key.as_of, now, "duplicate"))
-            return
-        rid = make_run_id(job, key.as_of, 1)
-        try:
-            resp = self.gx_kis.get(
-                MINUTE_PATH,
-                MINUTE_TR,
-                minute_chart_params(market, FUT_CODE, d, "154500"),
-                priority=Priority.P4,
-            )
-            why = "" if resp.ok else resp.msg_cd
-        except Exception as e:  # 리미터(Redis)·토큰 없음 — 그 단계만 실패(GX 도 다음 진입에 다시)
-            why = type(e).__name__
-        if why:
-            self.claims.fail(key, rid, why, self.clock.now())
-            self.external_runs.append(ExternalRun(job, key.as_of, now, "failed", why))
-            return
-        self.claims.complete(key, rid, None, self.clock.now())
-        self.external_runs.append(ExternalRun(job, key.as_of, now, "ok"))
-
-    def _gx_krx_derivatives(self, now: datetime, d: date) -> None:
-        """GX KrxDaily 흉내 — 08:05 부터 10분마다 10:00 까지(공표 전이면 다시)."""
-        as_of = self.kr.prev_trading_day(d).isoformat()
-        due = self._gx_krx_due.get(as_of, kst(d, dtime(8, 5)))
-        if now < due or now.astimezone(KST).time() > dtime(10, 0):
-            return
-        keys = [
-            self.catalog[f"KRX:{ds}"].key(as_of, v)
-            for ds in ("drv/fut_bydd_trd", "drv/opt_bydd_trd")
-            for v in self.catalog[f"KRX:{ds}"].venues or (None,)
-        ]
-        live = [k for k in keys if (row := self.claims.live(k)) is None or row.status != "done"]
-        if not live:
-            self._gx_krx_due[as_of] = datetime.max.replace(tzinfo=KST)
-            return
-        rid = make_run_id("gex.krx_derivatives", as_of, 1)
-        pending = False
-        for k in live:
-            if not self._gx_claim("gex.krx_derivatives", k, now):
-                self.external_runs.append(
-                    ExternalRun("gex.krx_derivatives", as_of, now, "duplicate")
-                )
-                continue
-            try:
-                rows = self.gx_krx.daily("/" + k.dataset, date.fromisoformat(as_of))
-            except Exception as e:  # 그 시도만 실패 — 쥔 키는 다음 시도가 이어 쓴다
-                rows = []
-                self.external_runs.append(
-                    ExternalRun("gex.krx_derivatives", as_of, now, "failed", type(e).__name__)
-                )
-            if rows:
-                self.claims.complete(k, rid, len(rows), self.clock.now())
-            else:
-                pending = True  # 같은 작업이 쥔 채로 다음 시도에 이어 쓴다
-        status = "not_ready" if pending else "ok"
-        self.external_runs.append(ExternalRun("gex.krx_derivatives", as_of, now, status))
-        self._gx_krx_due[as_of] = now + timedelta(minutes=10)
+        )
+        return len(rows)
 
     def _gx_poll(self, now: datetime) -> None:
         """GX poller 흉내 — 세션 중 10분마다 한 번(실제는 초 단위 — 리미터 P1).
@@ -1510,49 +1475,50 @@ class SimDay:
         self.claims.complete(key, make_run_id("gex.ws_gateway", minute, 1), None, self.clock.now())
         self.external_runs.append(ExternalRun("gex.ws_gateway", minute, now, "ok"))
 
-    # legacy(SD·ET 가 브리지로 부르는 KIS) ─────────────────────────────────────────────
-    def _legacy_setup(self) -> None:
-        s = self.settings("legacy")
+    # reader(다른 KBJ 읽기 프로세스) ─────────────────────────────────────────────────────
+    # P9 LEGACY: ET·SD 와 함께 legacy 브리지(kbj.data.legacy_bridge)를 지웠다. 그 자리('legacy'
+    # 소비자 — 발급하지 않는 두 번째 프로세스가 토큰을 메모리에 쥐고 KIS 를 부른다)는 거절 신고·
+    # 발급자 하나 시험에 필요해 같은 일을 하는 KBJ 읽기 클라이언트(make_client — 리더 +
+    # 리미터)로 둔다.
+    def _reader_setup(self) -> None:
+        s = self.settings("reader")
         r = self._redis()
         creds = KisCredentials.from_settings(s)
-        legacy_bridge.reset()
-        legacy_bridge.configure(
-            settings=s,
-            redis=r,
-            now=self.clock.now,
-            kis=make_client(
-                self.kis, creds, r, consumer="legacy", clock=self.clock, now=self.clock.now
-            ),
-            master=lambda: download_fo_master(transport=self.kis.master_transport("legacy")),
+        self.reader_kis = make_client(
+            self.kis, creds, r, consumer="reader", clock=self.clock, now=self.clock.now
         )
-        self._legacy_done: set[date] = set()
+        self._reader_done: set[date] = set()
 
-    def _legacy_tick(self, now: datetime) -> None:
-        if not self.opts.legacy_calls:
+    def _reader_tick(self, now: datetime) -> None:
+        if not self.opts.reader_calls:
             return
         local = now.astimezone(KST)
         d = local.date()
-        if d in self._legacy_done or not self.kr.is_trading_day(d) or local.time() < dtime(10, 30):
+        if d in self._reader_done or not self.kr.is_trading_day(d) or local.time() < dtime(10, 30):
             return
-        self._legacy_done.add(d)
-        self.legacy_quote()
+        self._reader_done.add(d)
+        self.reader_quote()
 
-    def legacy_quote(self) -> int:
-        """legacy SD `kis_api` 모양의 현재가 조회 한 번(브리지). HTTP 상태를 돌려준다."""
+    def reader_quote(self) -> int:
+        """현재가 조회 한 번(읽기 전용 토큰). HTTP 상태를 돌려준다 — 토큰이 없으면 503(옛 브리지와
+        같은 '토큰 없음' 봉투 값)."""
         now = self.clock.now()
-        token = legacy_bridge.access_token_or_none()
-        # 호출자가 옛 토큰·앱키를 실어도 브리지가 버리고 KBJ 값을 넣는다
-        resp = legacy_bridge.get(
-            "kis:" + TRS["FHKST01010100"],
-            params={"FID_COND_MRKT_DIV_CODE": "J", "FID_INPUT_ISCD": SYMBOLS[0]},
-            headers={
-                "tr_id": "FHKST01010100",
-                "authorization": "Bearer legacy-stale-token",
-                "appkey": "legacy-old-appkey",
-            },
-        )
-        self.legacy_results.append((now, resp.status_code, token))
-        return resp.status_code
+        try:
+            token: str | None = self.reader_kis.token_provider.get()
+        except TokenUnavailable:
+            token = None
+        try:
+            resp = self.reader_kis.get(
+                TRS["FHKST01010100"],
+                "FHKST01010100",
+                {"FID_COND_MRKT_DIV_CODE": "J", "FID_INPUT_ISCD": SYMBOLS[0]},
+                priority=Priority.P3,
+            )
+            status = resp.status
+        except TokenUnavailable:
+            status = 503
+        self.reader_results.append((now, status, token))
+        return status
 
     # ── 진행 ─────────────────────────────────────────────────────────────────────────────
     def _transitions(self, d: date) -> list[datetime]:
@@ -1613,13 +1579,27 @@ class SimDay:
                 hb.beat()
         if self.gex_engine is not None:
             self.gex_engine.tick()  # 곁일 + 하트비트(실제 엔진)
-        self._legacy_tick(self.clock.now())
+        self._reader_tick(self.clock.now())
         self.notifier.step()
         self.notifier_hb.beat()
         self._drain_events()
 
+    def _prebeat(self) -> None:
+        """창 앞에서 이미 돌던 상시 프로세스처럼 하트비트를 한 번 남긴다(P9 WRAP — ops.watchdog 이
+        5분마다·매일 24시간 돌아 창 첫 tick 에도 발화한다. 그때 아직 한 번도 뛰지 않은 프로세스를
+        끊김으로 보지 않게). 끊김 시험(재기동·Redis 끊김)은 창 안에서 생기므로 영향이 없다."""
+        if self.redis_server.connected is False:
+            return
+        self.auth_hb.beat()
+        self.sched_hb.beat()
+        for hb in self.gex_hbs.values():
+            hb.beat()
+        self.notifier_hb.beat()
+
     def run(self) -> SimDay:
         t0 = time.monotonic()
+        if self.ticks == 0:
+            self._prebeat()
         while True:
             now = self.clock.now()
             if now >= self.end:
@@ -1638,7 +1618,6 @@ class SimDay:
             return
         self._closed = True
         set_default_client(None)
-        legacy_bridge.reset()
         if self.ws is not None:
             self.ws.stop()
         self.auth_http.close()

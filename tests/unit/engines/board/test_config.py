@@ -85,13 +85,15 @@ def test_원본을_바꿔도_설정은_그대로다() -> None:
     assert cfg.to_dict() == BoardConfig.from_mapping(copy.deepcopy(_raw())).to_dict()
 
 
+# ET `board/config/settings.yaml` 의 최상위 절 — P9 LEGACY 가 ET 를 지우기 전 그 파일에서 동결(커밋
+# f6aeebd — legacy 를 지우기 직전, 태그 legacy-final 은 사용자가 GitHub 에서 달 수 있다)
+LEGACY_ET_SETTINGS_SECTIONS = frozenset(
+    {"financials", "inbox", "meta", "news", "triggers", "writer"}
+)
+
+
 def test_숫자는_한_곳이다_legacy_settings_에는_엔진_절이_없다() -> None:
-    legacy = yaml.safe_load(
-        (REPO / "legacy" / "etf_traker" / "board" / "config" / "settings.yaml").read_text(
-            encoding="utf-8"
-        )
-    )
-    assert not (set(legacy) & (set(SECTIONS) - {"service"}))
+    assert not (LEGACY_ET_SETTINGS_SECTIONS & (set(SECTIONS) - {"service"}))
 
 
 def test_자체_사전을_읽는다() -> None:

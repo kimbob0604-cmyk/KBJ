@@ -26,10 +26,10 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Final
+from typing import Any, ClassVar, Final
 
 import psycopg
 
@@ -106,7 +106,12 @@ def service_health_row(ev: HealthEvent, tagger: Tagger | None = None) -> Row:
 
 class SpooledGexStore:
     """`prv_gex.raw_messages`·`fut_ticks`·`opt_ticks`·`ops.session_log`·`ops.health_events` 쓰기 +
-    디스크 스풀. 묶음 단위로 잠근다(작업 스레드 여럿이 써도 차례로)."""
+    디스크 스풀. 묶음 단위로 잠근다(작업 스레드 여럿이 써도 차례로).
+
+    재적재가 아는 표는 `tables_by_name` — GX 수집 싱크(`kbj.services.gex_poller.store`, P9 GXI)가
+    하위 클래스에서 수집 표를 더한다(스풀 코드 한 벌)."""
+
+    tables_by_name: ClassVar[Mapping[str, GxTable]] = _BY_NAME
 
     def __init__(
         self,
@@ -312,7 +317,7 @@ class SpooledGexStore:
         sp = self._need_spool()
 
         def write(b: SpooledBatch) -> None:
-            table = _BY_NAME.get(b.table)
+            table = self.tables_by_name.get(b.table)
             if table is None or table.columns != b.columns:
                 raise StoreError(f"{b.table}: 표·열 정의가 스풀과 다르다")
             try:

@@ -122,7 +122,7 @@ def test_topic_thread_from_config(config: NotifyConfig) -> None:
 
 def test_long_body_is_split_and_numbered(on: Rig) -> None:
     body = "\n".join("종목 줄 " + "가" * 60 for _ in range(200))
-    on.client.legacy_send(body, source="sd.send_telegram_long", numbered=True, kind="ops.universe")
+    on.client.notify(body, kind="ops.universe", source="sd.send_telegram_long", numbered=True)
     on.svc.drain_once()
     texts = [d["text"] for d in on.tg.sent()]
     n = len(texts)

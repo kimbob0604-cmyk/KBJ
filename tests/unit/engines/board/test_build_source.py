@@ -11,26 +11,18 @@ legacy `engine/build.py` 는 이제 sqlite 를 읽어 `kbj.engines.board.build.c
   `DB.log_step` → `steps.append` 를 보고, legacy shim 이 그것을 run_log 에 쓰는지를 함께 본다.
 - `test_build_passes_the_cleared_set`: `DB.split_cleared(conn)` 은 읽는 쪽에 있다 — legacy shim 과
   kbj 서비스(`repos.board.split_cleared()`) 둘 다를 본다.
+- P9 LEGACY: ET 를 지우며 legacy shim(`legacy/etf_traker/board/engine/build.py`)을 읽던 단언 둘을
+  kbj 쪽 단언으로 바꿨다 — run_log 기록은 서비스의 `n_diagnostics`, cleared 는 서비스 단언만 남김.
 """
 
 from __future__ import annotations
 
 import inspect
 import unittest
-from pathlib import Path
 
 from kbj.engines.board import build as B
 from kbj.engines.board import rankings as R
 from kbj.services.engine import board as SVC
-
-LEGACY_BUILD = (
-    Path(__file__).resolve().parents[4] / "legacy" / "etf_traker" / "board" / "engine" / "build.py"
-)
-
-
-def _legacy_build_source() -> str:
-    """legacy shim 의 소스를 글자로만 읽는다(import 하지 않는다 — kbj 는 legacy 를 모른다)."""
-    return LEGACY_BUILD.read_text(encoding="utf-8")
 
 
 class ProvenanceTest(unittest.TestCase):
@@ -76,8 +68,9 @@ class NothingIsSwallowed(unittest.TestCase):
         src = inspect.getsource(B)
         i = src.index("for note in consistency_notes(rows, cfg):")
         self.assertIn("steps.append", src[i : i + 400])
-        # 읽는 쪽이 그 단계를 run_log 에 쓴다(legacy shim)
-        self.assertIn("DB.log_step(conn, asof, step, False, note)", _legacy_build_source())
+        # 읽는 쪽(kbj 서비스)이 진단 수를 실행 detail 에 남긴다. P9 전에는 legacy shim 이
+        # `DB.log_step(conn, asof, step, False, note)` 로 run_log 에 썼다(ET 와 함께 지움)
+        self.assertIn("n_diagnostics=len(day.diagnostics)", inspect.getsource(SVC))
 
 
 class TurnoverToggle(unittest.TestCase):
@@ -95,5 +88,4 @@ class ClearedEvaluationTest(unittest.TestCase):
     def test_build_passes_the_cleared_set(self) -> None:
         src = inspect.getsource(B)
         self.assertIn("split_cleared=code in cleared", src)
-        self.assertIn("DB.split_cleared(conn)", _legacy_build_source())
         self.assertIn("repos.board.split_cleared()", inspect.getsource(SVC))

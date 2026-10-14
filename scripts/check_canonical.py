@@ -11,10 +11,11 @@ KIS 토큰 발급은 auth 한 곳, KIS·KRX·DART 호출은 kbj 어댑터, 텔�
 — 가짜 오류 문구에 호스트가 들어간다), 이 스크립트 자신(패턴은 조각을 이어 만든다).
 
 규칙
-- 호스트 그룹(``--list`` 로 본다). 목표 0 그룹(kis_oauth·kis_rest·kis_master·krx_api·dart·fnguide·
-  kis_ws)은 허용 위치 밖 어디서든 한 줄이라도 있으면 실패한다. 기준선 그룹(telegram·ecos·datago·
-  kosis·naver·etf_issuers·krx_scrape)은 ``kbj/`` 에서는 허용 위치 밖이면 실패, 그
-  밖(legacy 등)은 ``scripts/canonical_baseline.txt`` 와 견준다.
+- 호스트 그룹(``--list`` 로 본다). P9 WRAP(legacy/ 비움, ADR 0038) 뒤로 **모든 그룹이 목표 0** —
+  허용 위치 밖 어디서든 한 줄이라도 있으면 실패한다. 기준선 장치(``Group.zero=False`` 인 그룹을
+  ``scripts/canonical_baseline.txt`` 와 견주는 것)는 남겨 두지만 지금 기준선 그룹은 없고
+  기준선 파일은 머리말만이다(P9 LEGACY 가 telegram·ecos·datago·kosis·naver·etf_issuers·
+  ta_indicators 를, WRAP 이 legacy 의존성 그룹과 함께 krx_scrape 를 목표 0 으로 바꿨다).
 - 기준선은 줄어들기만 한다: 기준선에 없는 파일의 위반, 건수 증가, 건수가 줄었는데
   기준선을 안 줄임, 목표 0 그룹·kbj 경로가 기준선에 있음 — 모두 실패.
   ``--update-baseline`` 은 줄이는 방향으로만 다시 쓴다.
@@ -103,7 +104,7 @@ GROUPS: dict[str, Group] = {
             re.compile(_dots("openapi(?:vts)?", "koreainvestment", "com")),
             ("kbj/data/private/kis/*",),
             True,
-            "KIS REST 호스트 — kbj.data.private.kis(브리지 kis:)로",
+            "KIS REST 호스트 — kbj.data.private.kis로",
             "P2",
         ),
         Group(
@@ -111,7 +112,7 @@ GROUPS: dict[str, Group] = {
             re.compile(_dots("download", "dws", "co", "kr")),
             ("kbj/data/private/kis/*",),
             True,
-            "KIS 마스터 배포 호스트 — kbj.data.private.kis.master(브리지 kis-master:)로",
+            "KIS 마스터 배포 호스트 — kbj.data.private.kis.master로",
             "P2",
         ),
         Group(
@@ -119,7 +120,7 @@ GROUPS: dict[str, Group] = {
             re.compile(_dots("data-dbg", "krx", "co", "kr")),
             ("kbj/data/private/krx/*",),
             True,
-            "KRX OPEN API 호스트 — kbj.data.private.krx(브리지 krx:)로",
+            "KRX OPEN API 호스트 — kbj.data.private.krx로",
             "P2",
         ),
         Group(
@@ -127,14 +128,14 @@ GROUPS: dict[str, Group] = {
             re.compile("https?://" + _dots("opendart", "fss", "or", "kr")),
             ("kbj/data/public/dart/*",),
             True,
-            "DART OpenAPI 주소 — kbj.data.public.dart(브리지 dart:)로",
+            "DART OpenAPI 주소 — kbj.data.public.dart로",
             "P2",
         ),
         Group(
             "telegram",
             re.compile(_dots("api", "telegram", "org")),
             ("kbj/services/notifier/telegram_api.py",),
-            False,
+            True,
             "텔레그램 Bot API 호스트 — notifier(kbj.services.notifier.client)로",
             "P2~P5",
         ),
@@ -142,7 +143,7 @@ GROUPS: dict[str, Group] = {
             "ecos",
             re.compile(_dots("ecos", "bok", "or", "kr")),
             ("kbj/data/public/ecos/*",),
-            False,
+            True,
             "ECOS 호스트 — kbj.data.public.ecos 로",
             "P5",
         ),
@@ -155,7 +156,7 @@ GROUPS: dict[str, Group] = {
                 "kbj/data/public/fsc_kofia_stats/*",
                 "kbj/data/private/fsc_*/*",
             ),
-            False,
+            True,
             "공공데이터포털 호스트 — kbj.data.datago 로",
             "P3~P6",
         ),
@@ -163,7 +164,7 @@ GROUPS: dict[str, Group] = {
             "kosis",
             re.compile(_dots("kosis", "kr") + "/openapi"),
             ("kbj/data/public/kosis/*",),
-            False,
+            True,
             "KOSIS OpenAPI 주소 — kbj.data.public.kosis 로",
             "P5",
         ),
@@ -190,7 +191,7 @@ GROUPS: dict[str, Group] = {
                 + _dots("navercomp", "wisereport", "co", "kr")
             ),
             (),
-            False,
+            True,
             "네이버 금융 호출 — 어댑터를 만들지 않는다(U4), 기능별로 KRX·KIS 로 교체",
             "P3~P5",
         ),
@@ -214,7 +215,7 @@ GROUPS: dict[str, Group] = {
                 + ")"
             ),
             ("kbj/data/private/etf_issuers/*",),
-            False,
+            True,
             "ETF 운용사 9곳 호스트(구성종목 PDF) — kbj.data.private.etf_issuers 로(P3 묶음 E3·S)",
             "P3~P5",
         ),
@@ -242,18 +243,19 @@ GROUPS: dict[str, Group] = {
                 r"(?:_arr|_dense|_macd)?\s*\("
             ),
             ("kbj/core/indicators.py",),
-            False,
+            True,
             "기술 지표 계산 함수 정의 — kbj.core.indicators 하나"
-            "(P8 — legacy SD 차트·board 스윙은 P9 legacy 비우기)",
+            "(P9 LEGACY — SD 차트·board 스윙을 지워 목표 0)",
             "P8~P9",
         ),
         Group(
             "krx_scrape",
             re.compile(r"(?<![-\w])" + _dots("data", "krx", "co", "kr") + r"|\bpy" + r"krx\b"),
             (),
-            False,
-            "KRX 웹 스크랩·스크랩 라이브러리 — KRX OPEN API(krx.daily)로",
-            "P3",
+            True,
+            "KRX 웹 스크랩·스크랩 라이브러리 — KRX OPEN API(krx.daily)로"
+            "(P9 WRAP — legacy 의존성 그룹을 지워 목표 0)",
+            "P3~P9",
         ),
     )
 }
@@ -265,22 +267,18 @@ AST_RULES: dict[str, str] = {
     ),
     "legacy_private_name": "legacy 가 kbj 의 비공개 이름(_로 시작)을 가져온다 — 공개 API 만",
     "legacy_kbj_module": (
-        "legacy 가 허용 목록 밖 kbj 모듈을 import 한다 — 브리지·shim·다시 내보내기 자리만"
+        "legacy 가 허용 목록 밖 kbj 모듈을 import 한다 — shim·다시 내보내기 자리만"
     ),
     "legacy_unparsable": (
         "legacy .py 를 파싱하지 못해 import 규칙을 볼 수 없다 — 문법을 고치거나 파일을 지운다"
     ),
 }
 AUTH_MODULE = "kbj.services.auth"
-# legacy 가 import 할 수 있는 kbj 모듈(접두사 — 하위 모듈·이름 포함). §9.5 목록 + 묶음 H 요청
-# (notifier.format: ET `_split` 다시 내보내기, notifier.store·store.db: ET tg_inbox
-# `_default_store` 의 지연 import — notifier 에 기본 저장소 helper 가 생기면 뒤의 둘은 뺀다)
+# legacy 가 import 할 수 있는 kbj 모듈(접두사 — 하위 모듈·이름 포함). §9.5 목록.
+# P9 LEGACY(docs/p9_design.md 'LEGACY 구현 기록'): ET·SD 를 지우며 그 shim 만 쓰던 줄(브리지
+# kbj.data.legacy_bridge·notifier client/inbox/format/store·engines.board/etf/financials/us·
+# etf_issuers·config.markets·reports.dart_excel·nasdaq/stooq/yahoo)을 뺐다 — 남은 legacy 는 GX 뿐.
 LEGACY_KBJ_ALLOW: tuple[str, ...] = (
-    "kbj.data.legacy_bridge",
-    "kbj.services.notifier.client",
-    "kbj.services.notifier.inbox",
-    "kbj.services.notifier.format",
-    "kbj.services.notifier.store",
     "kbj.core",
     "kbj.config.settings",
     "kbj.data.private.kis.token",
@@ -297,29 +295,6 @@ LEGACY_KBJ_ALLOW: tuple[str, ...] = (
     "kbj.services.runtime",
     "kbj.store.spool",
     "kbj.store.db",
-    # P3 묶음 E1(docs/p3_design.md §1.3·D-P3-10): ET board/engine/* 가 kbj 신고가 엔진을
-    # 다시 내보내는 shim 이 되었다(공개 이름만 — 비공개 이름은 kbj 쪽 공개 별칭).
-    # 웨이브 3 묶음 S 확정
-    "kbj.engines.board",
-    # P3 묶음 E3(docs/p3_design.md §1.5·D-P3-12·13): ET etf_tracker_v9 의 themes·tracker(fund_pairs·
-    # analyze)·collectors·adapters/* 가 kbj ETF 엔진·운용사 어댑터를 쓰는 shim, tracker 의 기준값은
-    # config/markets.yaml(옛 환경변수 QTY_FLOOR·ACTION_PP 대체). 웨이브 3 묶음 S 확정 —
-    # tracker 의 추적 대상 판정(네이버 탭 대신 kbj.engines.etf.types.etf_type)도 이 허용으로 쓴다
-    "kbj.engines.etf",
-    "kbj.data.private.etf_issuers",
-    "kbj.config.markets",
-    # P4 묶음 R(docs/p4_design.md §1.5·D-P4-6 ④): DR dartreport/{statements,costs,bridge,
-    # orders,excel}.py 가 kbj 재무 엔진·엑셀 빌더를 다시 내보내는 shim(같은 객체 — tests_bridge.py
-    # 가 확인), run.py 는 매핑 기본 경로만 config/dart_report/mapping.yaml. 웨이브 3 묶음 S 확정
-    "kbj.engines.financials",
-    "kbj.reports.dart_excel",
-    # P5 묶음 US(docs/p5_design.md §1.6·§1.9): ET board/us/{engine,sectors,brief,build} 가 kbj 미국
-    # 엔진을 다시 내보내는 shim, us/sources 는 kbj Nasdaq·Stooq·Yahoo 클라이언트로 잇는 얇은 함수
-    # (비공개 이름 `_num`·`_is_fund` 는 kbj 공개 `num`·`is_fund` 의 별칭). 웨이브 3 WRAP 확정
-    "kbj.engines.us",
-    "kbj.data.private.nasdaq",
-    "kbj.data.private.stooq",
-    "kbj.data.private.yahoo",
     # P7 묶음 FND-C(docs/p7_design.md §1.2): GX scripts/make_golden.py 가 core·chain-subset
     # 골든 이름을 KBJ CLI 에서 다시 내보내고(모드도 넘김), scripts/validate_greeks.py 가 스냅샷
     # 입력 모델을 kbj.engines.gex.snapshot 에서 다시 내보낸다(KIS 그릭스 필드가 있어 core 가 아닌

@@ -9,7 +9,7 @@
 # - 앱 서비스(P2 — 묶음 I)는 profile `app` 이다: `docker compose up -d` 는 지금처럼 db·redis 만,
 #   `docker compose --profile app up -d --build` 는 migrate → auth·scheduler·notifier 까지 띄운다.
 #   이미지는 레포 루트 Dockerfile 하나(런타임 의존성만, 비밀 없음 — 로그인 SPA 빌드 결과 포함).
-#   P7 에 GEX 상시 프로세스 ws-gateway·recorder·gex-engine 을 더했다(아래). P3 수집·엔진 작업(krx.daily·close_collect·장중·board·etf·public.export)은
+#   P7 에 GEX 상시 프로세스 ws-gateway·recorder·gex-engine 을, P9(GXI)에 gex-poller 를 더했다(아래). P3 수집·엔진 작업(krx.daily·close_collect·장중·board·etf·public.export)은
 #   별도 컨테이너가 아니라 scheduler 의 작업 등록부가 돌린다.
 # - P3(묶음 S — docs/p3_design.md §1.9·D-P3-3·§5.4): 서비스 `api`(로그인 API·텔레그램 웹훅 수신·로그인 SPA
 #   정적 파일을 같은 출처로 — FastAPI + uvicorn 한 프로세스). **호스트 네트워크**로 띄워 호스트 루프백
@@ -283,6 +283,41 @@ services:
         condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "python", "-m", "kbj.services.runtime.healthcheck", "engine", "60"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # P9 GXI(docs/p9_design.md §7.2 GXI-5, ADR 0036) — GX services/poller 이식. 옵션 체인·선물 전광판·최종거래일
+  # REST 수집(등록부 서비스 gex.poller — 하트비트 gex-poller). KIS REST 를 부르므로 앱키·시크릿은 scheduler 와
+  # 같은 이름(요청 헤더에 필요 — ADR 0004 기준). 토큰은 auth 가 Redis 에 둔 것을 읽기만(발급은 auth 하나).
+  # 마스터는 kis.master 작업이 둔 Redis kis:master. 쓰기 실패는 /data/spool/gex-poller 디스크 큐.
+  # 등록부에서 꺼져 있다(enabled: false — 켜기와 GX 쪽 끄기 순서는 WRAP·런북 ④). compose 는 띄울 수 있게만 둔다.
+  gex-poller:
+    <<: *app
+    command: ["python", "-m", "kbj.services.gex_poller"]
+    environment:
+      TZ: UTC
+      KBJ_SERVICE: gex-poller
+      KBJ_REDIS_URL: *redis_url
+      KBJ_DATABASE_URL: *database_url
+      KBJ_KIS_APP_KEY: ${KBJ_KIS_APP_KEY:-}
+      KBJ_KIS_APP_SECRET: ${KBJ_KIS_APP_SECRET:-}
+      KBJ_KIS_ENV: ${KBJ_KIS_ENV:-real}
+      KBJ_SPOOL_DIR: /data/spool
+    volumes:
+      - state:/data
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      auth:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-m", "kbj.services.runtime.healthcheck", "gex-poller", "60"]
       interval: 30s
       timeout: 10s
       retries: 3

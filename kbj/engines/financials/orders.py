@@ -10,7 +10,7 @@ KBJ 정본(docs/p4_design.md §1.5·§4.6) — ET `dart-report/dartreport/orders
 legacy 동작은 그대로다(D-P4-8): 머리말·DR CLAUDE.md 는 '정정공시는 rcept_no 가 큰 쪽만'이라
 하지만 코드는 정정을 거르지 않는다 — 원본과 정정이 두 행으로 남고 수주 합계에 둘 다 더해진다
 (엑셀 주석 '정정공시는 별도 행으로 남습니다'). 골든이 이 동작을 고정한다 — 고치려면 새 골든 세트
-+ ADR(목록은 `legacy/etf_traker/dart-report/MIGRATION.md`).
++ ADR(목록은 `docs/migration/etf_traker_dart_report.md`).
 """
 
 from __future__ import annotations

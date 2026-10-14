@@ -8,7 +8,7 @@
    `flows.intraday` 는 새 토큰으로 회복한다. `rules.intraday`(재시도 0)는 같은 회차
    `flows.intraday` 를 무른 의존 `wait_min: 5` 로 기다리므로(docs/p8_design.md — 장중 수급 라이브)
    그 회복 뒤 14:01 에 새 토큰으로 돌아 ok 다.
-2. 14:05~14:11 scheduler(P5 매분 F2 작업이 14:05:00 에 먼저)·legacy 의 조회가 계속
+2. 14:05~14:11 scheduler(P5 매분 F2 작업이 14:05:00 에 먼저)·reader(P9 전 legacy)의 조회가 계속
    거절된다(새 토큰 발급 10분 안) → auth 는
    **다시 발급하지 않고** critical `token_rejected_after_issue` 한 번. 두 프로세스가 거듭
    신고해도 추가 발급 0. 그 뒤 scheduler 리더는 그 토큰을 쓰지 않으므로 장중 회차가
@@ -44,12 +44,13 @@ def _storm(sim: SimDay) -> None:
         1000,
         start=at(10, 6, 14, 5),
         until=at(10, 6, 14, 11),
-        consumers=["scheduler", "legacy"],
+        consumers=["scheduler", "reader"],
     )
 
 
-def _legacy_quote(sim: SimDay) -> None:
-    sim.legacy_quote()  # 다른 프로세스(브리지)도 새 토큰으로 거절당하고 신고한다
+def _reader_quote(sim: SimDay) -> None:
+    # 다른 프로세스(읽기 전용 — P9 전 legacy 브리지)도 새 토큰으로 거절당하고 신고한다
+    sim.reader_quote()
 
 
 @pytest.fixture(scope="module")
@@ -59,11 +60,11 @@ def rejected() -> SimDay:
             start=at(10, 6, 13),
             hours=1.5,
             ws=False,
-            legacy_calls=False,
+            reader_calls=False,
             hooks=(
                 (at(10, 6, 13, 59), _once),
                 (at(10, 6, 14, 4), _storm),
-                (at(10, 6, 14, 5, 10), _legacy_quote),
+                (at(10, 6, 14, 5, 10), _reader_quote),
             ),
         )
     )
@@ -96,11 +97,11 @@ def test_rejection_storm_after_issue_is_closed_without_reissue(rejected: SimDay)
         ("scheduler", first.value),  # 14:00 한 번
         # P5: 장중 투자자 1분(flows.market_minute — 켬, ADR 0019·D-P5-21)은 scheduler 가 매분
         # 부른다 → 폭주 첫 거절은 14:05:00 scheduler. 그 뒤 scheduler 리더는 이 토큰을 다시 쓰지
-        # 않으므로(14:10 장중 회차는 TokenUnavailable) 남은 거절은 legacy 뿐
+        # 않으므로(14:10 장중 회차는 TokenUnavailable) 남은 거절은 reader 뿐
         ("scheduler", second.value),  # 14:05:00
-        ("legacy", second.value),  # 14:05:10 훅
+        ("reader", second.value),  # 14:05:10 훅
     ]
-    assert [s for _, s, _ in rejected.legacy_results] == [503]  # 브리지는 503 봉투(토큰 없음)
+    assert [s for _, s, _ in rejected.reader_results] == [503]  # 토큰 없음(TokenUnavailable)
 
 
 def test_only_auth_issues(rejected: SimDay) -> None:
@@ -137,9 +138,9 @@ def test_failed_slots_are_recorded_and_keys_not_duplicated(rejected: SimDay) -> 
 def test_stale_token_report_does_not_mask_current_rejection(
     simulate: Callable[[SimOptions], SimDay],
 ) -> None:
-    """legacy 브리지가 13:30 에 첫 토큰을 메모리에 쥔 채, 14:00:30 재발급 뒤 14:40(발급 40분 뒤 —
-    가드 밖)에 scheduler(새 토큰)와 legacy(지난 토큰)가 함께 거절당한다. auth 는 새 토큰을 다시
-    발급하거나 적어도 알려야 한다."""
+    """reader 프로세스(P9 전 legacy 브리지)가 13:30 에 첫 토큰을 메모리에 쥔 채, 14:00:30 재발급
+    뒤 14:40(발급 40분 뒤 — 가드 밖)에 scheduler(새 토큰)와 reader(지난 토큰)가 함께 거절당한다.
+    auth 는 새 토큰을 다시 발급하거나 적어도 알려야 한다."""
 
     def storm(sim: SimDay) -> None:
         sim.kis.inject(
@@ -147,7 +148,7 @@ def test_stale_token_report_does_not_mask_current_rejection(
             1000,
             start=at(10, 6, 14, 40),
             until=at(10, 6, 14, 41),
-            consumers=["scheduler", "legacy"],
+            consumers=["scheduler", "reader"],
         )
 
     sim = simulate(
@@ -155,12 +156,12 @@ def test_stale_token_report_does_not_mask_current_rejection(
             start=at(10, 6, 13),
             hours=1.75,
             ws=False,
-            legacy_calls=False,
+            reader_calls=False,
             hooks=(
-                (at(10, 6, 13, 30), _legacy_quote),  # legacy 리더가 첫 토큰을 메모리에
+                (at(10, 6, 13, 30), _reader_quote),  # reader 리더가 첫 토큰을 메모리에
                 (at(10, 6, 13, 59), _once),
                 (at(10, 6, 14, 39), storm),
-                (at(10, 6, 14, 40, 10), _legacy_quote),  # scheduler(14:40:00) 신고 뒤
+                (at(10, 6, 14, 40, 10), _reader_quote),  # scheduler(14:40:00) 신고 뒤
             ),
         )
     )

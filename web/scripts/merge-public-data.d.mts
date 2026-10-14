@@ -8,14 +8,21 @@ export const FILE_CAPS: Record<string, number>;
 export const PREFIX_CAPS: Record<string, number>;
 export function fileCap(name: string): number | undefined;
 export function tradeProblems(name: string, parsed: unknown): string[];
+export function priceProblems(name: string, parsed: unknown): string[];
+export const PRICE_KEYS: Set<string>;
+export const PRICE_FIELD_ALLOW: [string, string, "hhmm" | "number", string][];
 export function diagProblems(name: string, parsed: unknown): string[];
 export const SUBDIR_JSON_RE: RegExp;
 export const SUBDIR_XLSX_RE: RegExp;
 export const DART_ONLY: Set<string>;
 export const QUALITIES: string[];
 export const LOGIN_SOURCES: RegExp;
-export function manifestEntries(manifest: unknown): ({ name: string } & Record<string, unknown>)[];
-export function manifestDirs(manifest: unknown): ({ name: string } & Record<string, unknown>)[];
+export function manifestEntries(
+  manifest: unknown,
+): ({ name: string } & Record<string, unknown>)[];
+export function manifestDirs(
+  manifest: unknown,
+): ({ name: string } & Record<string, unknown>)[];
 export function loginSourcePaths(v: unknown, path?: string): string[];
 export function nonDartSourcePaths(v: unknown, path?: string): string[];
 export function watchTracePaths(v: unknown, path?: string): string[];
@@ -25,4 +32,6 @@ export function planMerge(
   manifest: unknown,
   files: Record<string, string | Uint8Array>,
 ): { copy: string[]; errors: string[]; ignored: string[] };
-export function readDataDir(srcAbs: string): Record<string, string | Uint8Array>;
+export function readDataDir(
+  srcAbs: string,
+): Record<string, string | Uint8Array>;

@@ -23,8 +23,8 @@ KRX OpenAPI 카탈로그·금융위 V1 문서 기준이라 그 자체가 [실측
   같다(교차검증 시험용)
 - `fsc_index_price.json` — 금융위 지수시세 `item` 두 거래일(코스피·코스닥)
 
-opt_daily.json·fut_daily.json 은 여기서 만들지 않는다 — legacy GX 생성기
-(`legacy/gexlab/scripts/make_synthetic_fixtures.py`)의 출력 복사본이다(README.md).
+opt_daily.json·fut_daily.json 은 여기서 만들지 않는다 — GX 생성기(P9 GXI 가 옮김 —
+`tests/fixtures/synthetic/gex/make_synthetic_fixtures.py`)의 출력이다(README.md).
 """
 
 from __future__ import annotations

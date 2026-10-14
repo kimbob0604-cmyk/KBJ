@@ -1,6 +1,10 @@
 """.gitignore — 코드 패키지는 무시되지 않고, 산출물·비밀·토큰 캐시는 무시된다(ADR 0003 §2-5).
 
 `git check-ignore --no-index` 로 경로 규칙만 본다(파일이 실제로 있을 필요 없음).
+
+P9 WRAP(ADR 0038): legacy/ 를 비워 legacy/** 경로 사례 17개를 지웠다(그 산출물 규칙도
+.gitignore 에서 지웠다 — 지킬 대상이 없다). 비밀·토큰·루트 산출물·관심종목 사례는 그대로,
+하위 폴더 .env 사례 1개(legacy/gexlab/.env 자리)를 더했다.
 """
 
 from __future__ import annotations
@@ -16,13 +20,8 @@ KEPT = [
     "kbj/data/public/x.py",
     "kbj/data/private/x.py",
     "kbj/store/migrations/0001_schemas.sql",
-    "legacy/gexlab/data/kis/x.py",
-    "legacy/gexlab/tests/golden/raw/synthetic.jsonl",
-    "legacy/gexlab/tests/fixtures/kis/synthetic.json",
-    "legacy/stock_dashboard/data/valuechain_map.json",
     "fixtures/synthetic/a.json",
     ".env.example",
-    "legacy/gexlab/.env.example",
     # P4 — 합성 관심종목·API 시험 fixture 는 막지 않는다
     "tests/fixtures/synthetic/p4_world.py",
     "tests/fixtures/synthetic/p4_expect.yaml",
@@ -33,7 +32,7 @@ KEPT = [
 IGNORED = [
     ".env",
     ".env.local",
-    "legacy/gexlab/.env",
+    "sub/.env",
     "id.key",
     "secrets/a.txt",
     "cache/kis_token.json",
@@ -44,17 +43,6 @@ IGNORED = [
     "raw/x.json",
     "probe_out/x.json",
     "fixtures/real/x.json",
-    "legacy/gexlab/tests/fixtures/real/x.json",
-    "legacy/gexlab/state/spool/x",
-    "legacy/etf_traker/board/state/xdigest/x.json",
-    "legacy/etf_traker/board/state_us/x.json",
-    "legacy/etf_traker/board/state_us/20260828/x.json",
-    "legacy/gexlab/.hypothesis/examples/x",
-    "legacy/etf_traker/monitor/bok/cache/x.json",
-    "legacy/etf_traker/dart-report/.cache/corp.json",
-    "legacy/etf_traker/dart-report/out/a.xlsx",
-    "legacy/etf_traker/flowlab/ci-out/x.csv",
-    "legacy/stock_dashboard/db/dashboard.db",
     "x.sqlite",
     "x.parquet",
     "x.xlsx",
@@ -62,7 +50,6 @@ IGNORED = [
     "cache/server_watchlist.json",
     "server_watchlist.json",
     "backup/server_watchlist.json",
-    "legacy/stock_dashboard/cache/server_watchlist.json",
     "watchlist.json",
     "my_watchlist.csv",
 ]

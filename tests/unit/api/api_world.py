@@ -286,7 +286,7 @@ def populate(
     board_quality: Quality = Quality.ESTIMATED,
     intraday: bool = True,
 ) -> tuple[date, datetime]:
-    """합성 시장을 저장소에 채운다 — 메모리 저장소(시험)·Pg 저장소(`scripts/demo_p3_server.py --db`)
+    """합성 시장을 저장소에 채운다 — 메모리 저장소(시험)·Pg 저장소(`scripts/demo_server.py --db`)
     둘 다 같은 메서드라 같은 데이터가 들어간다. 반환: (다음 거래일, 장중 슬롯)."""
     last = m.last_day
     after_close = kst(last, 18, 0)
@@ -308,7 +308,7 @@ def build_world(
     transform: Callable[[SyntheticMarket], SyntheticMarket] | None = None,
     **settings_kw: Any,
 ) -> World:
-    """`transform`: 합성 시장을 채우기 전에 바꾼다(데모 금액 규모 — scripts/demo_p3_server.py)."""
+    """`transform`: 합성 시장을 채우기 전에 바꾼다(데모 금액 규모 — scripts/demo_server.py)."""
     m = generate(seed)
     if transform is not None:
         m = transform(m)

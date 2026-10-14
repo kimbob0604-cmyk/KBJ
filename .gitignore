@@ -1,8 +1,8 @@
-# KBJ .gitignore — docs/DATA_TIERS.md §4, docs/adr/0003-legacy-scope.md
+# KBJ .gitignore — docs/DATA_TIERS.md §4, docs/adr/0038-legacy-removal.md(0003 대체)
 #
 # 규칙: 산출물 디렉터리는 '/' 로 시작하게(루트 앵커) 쓴다. 앵커 없는 'data/'·'state/' 는 같은 이름의
-# 코드 패키지(kbj/data/, legacy/gexlab/data/)까지 무시한다. legacy 산출물은 legacy/**/<이름>/ 으로 따로 쓴다.
-# 확인: git check-ignore -v kbj/data/public/x.py legacy/gexlab/data/kis/x.py  (둘 다 무시되면 안 된다)
+# 코드 패키지(kbj/data/)까지 무시한다. legacy/ 는 P9 WRAP 에 비웠다(그 산출물 줄도 지웠다).
+# 확인: git check-ignore -v kbj/data/public/x.py  (무시되면 안 된다)
 
 # ── 비밀·토큰 캐시 — 절대 커밋하지 않는다 (CLAUDE.md 절대 규칙 5) ──────────────────────
 .env
@@ -26,18 +26,6 @@ kis_token.json
 /runs/
 /raw/
 **/fixtures/real/
-
-# ── legacy 런타임 산출물 (원본 프로젝트가 실행 중에 만드는 것) ─────────────────────────────
-# raw/ 는 루트 앵커만 둔다 — legacy/gexlab/tests/golden/raw/ 는 시험 골든이라 무시하면 안 된다
-legacy/**/state/
-legacy/**/state_us/
-legacy/**/cache/
-legacy/**/.cache/
-legacy/**/out/
-legacy/**/ci-out/
-legacy/**/probe_out/
-legacy/**/runs/
-legacy/**/data_store/
 
 # ── 개인 데이터 — 관심종목 파일은 레포에 넣지 않는다(docs/p4_design.md D-P4-13·U-P4-5) ──────────────
 # SD cache/server_watchlist.json 은 /cache/ 가 이미 막는다. 다른 자리·이름으로 복사해 온 경우를 막는다

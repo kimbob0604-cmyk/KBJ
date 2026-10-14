@@ -1,0 +1,53 @@
+# KBJ 데모 이미지 — 합성 데이터만(키·DB·외부 호출 없음). docker-compose.demo.yml 이 쓴다(docs/adr/0034).
+#
+# - 운영 이미지(Dockerfile)와 다른 이미지다: 운영 이미지에는 시험 코드·데모 서버·데모 계정이 들어가지 않고,
+#   이 이미지에는 운영 서비스 진입점을 쓰지 않는다(명령은 scripts/demo_server.py 하나).
+# - 빌드 문맥은 허용 목록(Dockerfile.demo.dockerignore — 첫 줄 '*')이 정한다: kbj·config·데모 서버·데모가
+#   import 하는 합성 세계 모듈(tests/** 의 일부 — tests/unit/demo/test_demo_image_inputs.py 가 목록을 묶는다)·
+#   web 소스뿐. .env*·legacy·state·*.key 는 들어올 수 없다(scripts/check_public_outputs.py ④).
+# - 비밀 없음: 데모 비밀번호는 compose 가 환경변수로 넣는 고정 데모값(합성 데이터 전용 — README).
+# ── 1단계: 로그인 SPA(앱 Dockerfile 과 같은 node 단계 — 설치 스크립트는 돌리지 않는다) ──
+FROM node:22-bookworm-slim AS web
+WORKDIR /web
+COPY web/package.json web/package-lock.json ./
+RUN npm ci --ignore-scripts --no-audit --no-fund
+COPY web/ ./
+RUN npm run build:login
+
+# ── 2단계: 데모 서버(python) ──
+FROM python:3.12-slim-trixie
+
+# tzdata: KST 변환(zoneinfo). 글꼴은 넣지 않는다 — 데모 API 경로는 matplotlib 차트를 그리지 않는다
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends tzdata \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=ghcr.io/astral-sh/uv:0.8 /uv /uvx /bin/
+
+ENV TZ=UTC \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PYTHON_DOWNLOADS=never \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+COPY pyproject.toml uv.lock README.md ./
+# 런타임 + demo 그룹(fakeredis[lua])만 — dev(pytest 등)·legacy 그룹은 넣지 않는다. 해석은 루트 uv.lock 하나
+RUN uv sync --frozen --no-dev --group demo --no-install-project
+COPY kbj ./kbj
+COPY config ./config
+RUN uv sync --frozen --no-dev --group demo
+# 합성 세계 모듈(허용 목록이 고른 파일만 들어온다 — __init__ 이 없는 이름공간 그대로)
+COPY tests ./tests
+COPY scripts/demo_server.py ./scripts/demo_server.py
+COPY --from=web /web/dist-login ./web/dist-login
+
+RUN useradd --system --uid 10001 --home-dir /app kbj
+ENV PATH="/app/.venv/bin:${PATH}" \
+    PYTHONPATH=/app \
+    KBJ_CONFIG_DIR=/app/config \
+    KBJ_DEMO_CONTAINER=1
+USER kbj
+EXPOSE 8765
+
+CMD ["python", "scripts/demo_server.py", "--bind", "0.0.0.0", "--port", "8765"]

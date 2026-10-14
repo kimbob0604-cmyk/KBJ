@@ -2,7 +2,7 @@
 
 | 모듈 | 하는 일 |
 |---|---|
-| `client` | 넣기 — 작업용 `notify*`, legacy 7벌 대신 `legacy_send*`, `webhook_status` |
+| `client` | 넣기 — 작업용 `notify*`, `webhook_status`(legacy shim 은 P9 에 지웠다) |
 | `policy` | `config/notify.yaml` 해석 — 토픽·종류·중복 키·쿨다운·캐치업 |
 | `outbox` | Redis 대기열 `notify:outbox` + 중복 문지기 `notify:dedup:<키>` |
 | `service`·`__main__` | 소비·발송(꺼짐 기본 → `suppressed`)·기록·받은 업데이트·웹훅 점검 |

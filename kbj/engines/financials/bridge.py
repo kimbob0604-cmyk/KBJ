@@ -11,7 +11,7 @@ KBJ 정본(docs/p4_design.md §1.5·§4.6) — ET `dart-report/dartreport/bridge
 
 legacy 동작은 버그까지 그대로다(D-P4-8 — 골든 G1·G2 가 고정): `negative_keywords` 의 '손' 이
 '당기손익-공정가치측정…평가이익' 에도 걸려 이익이 음수로 들어가고, 법인세 수익(음수)도 `-abs` 로
-비용 단계가 된다 — 목록은 `legacy/etf_traker/dart-report/MIGRATION.md`.
+비용 단계가 된다 — 목록은 `docs/migration/etf_traker_dart_report.md`.
 """
 
 from __future__ import annotations

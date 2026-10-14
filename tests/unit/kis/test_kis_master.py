@@ -1,6 +1,7 @@
 """KIS 지수선물옵션 마스터 파서 — 마스터 줄 형식 그대로인 합성 줄
 (tests/fixtures/synthetic/kis/master_lines.json — 생성기
-`legacy/gexlab/scripts/make_synthetic_fixtures.py`, 옵션 코드·표준코드는 합성 규칙)로 고정.
+`tests/fixtures/synthetic/gex/make_synthetic_fixtures.py`(GX 생성기 — P9 에 옮김), 옵션 코드·
+표준코드는 합성 규칙)로 고정.
 
 GEXLAB `tests/unit/test_kis_master.py` 17개를 그대로 옮겼다(import 경로와 fixture 폴더만 바꿈 — 합성
 fixture 는 `tests/fixtures/synthetic/kis/` 의 복사본). 새로: 복사본이 생성기 출력과 같고 합성 표시가
@@ -9,6 +10,7 @@ fixture 는 `tests/fixtures/synthetic/kis/` 의 복사본). 새로: 복사본이
 
 from __future__ import annotations
 
+import functools
 import io
 import json
 import zipfile
@@ -32,7 +34,13 @@ from kbj.data.private.kis.master import (
 
 ROOT = Path(__file__).resolve().parents[3]
 FIX = ROOT / "tests" / "fixtures" / "synthetic" / "kis"
-GX_FIX = ROOT / "legacy" / "gexlab" / "tests" / "fixtures" / "kis"
+
+
+@functools.cache
+def _generated() -> dict[Path, str]:
+    from tests.fixtures.synthetic.gex import make_synthetic_fixtures
+
+    return make_synthetic_fixtures.outputs()
 
 
 def lines() -> list[str]:
@@ -238,10 +246,8 @@ def test_master_text_from_zip_keeps_the_text_and_refuses_non_zip() -> None:
     "name", ["master_lines.json", "callput_202610.json", "callput_wkm_260904.json"]
 )
 def test_synthetic_fixtures_match_the_generator_output(name: str) -> None:
-    """복사본은 합성 표시를 달고 있고, legacy GX 의 생성기 출력과 바이트까지 같다."""
+    """복사본은 합성 표시를 달고 있고, GX 생성기(P9 에 KBJ 로 옮김 —
+    tests/fixtures/synthetic/gex/make_synthetic_fixtures.py) 출력과 바이트까지 같다."""
     data = (FIX / name).read_bytes()
     assert json.loads(data)["_source"].startswith("SYNTHETIC")
-    original = GX_FIX / name
-    if not original.exists():
-        pytest.skip("legacy GX fixture 가 없다(P9 정리 뒤) — 생성기를 옮긴 뒤 이 대조를 바꾼다")
-    assert data == original.read_bytes()
+    assert data.decode("utf-8") == _generated()[FIX / name]

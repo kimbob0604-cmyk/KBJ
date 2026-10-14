@@ -578,3 +578,420 @@ GXI 는 `tests/sim/**` 를 고치지 않는다(LEGACY 와 겹침) — sim 반영
 - Q9 페이지 9용 옛 코드도 지운다.
 - Q10 KBJ 에 대체가 없는 옛 기능(§1.3)은 버린다.
 - §9 R1 대안: GXI 가 웨이브 안에 끝나지 않으면 GXI 만 떼어 다음으로 넘기고, `legacy/gexlab` 은 남긴 채 나머지(데모·검사·ET/SD 비우기·문서)로 P9 완료 기준을 먼저 채운다.
+
+---
+
+## FND 구현 기록 (2026-10-14 — 웨이브 1, 위 본문의 번호·자리를 실제 값으로)
+
+**설계서 뒤에 바뀐 사실(본문·§11 보다 우선)**: 태그 `legacy-final` 은 이 세션에서 푸시가 막혀 만들지 못했다. 문서·머리말에는
+'태그 `legacy-final`' 대신 **'커밋 `f6aeebd`(legacy 를 지우기 직전 — 태그 `legacy-final` 은 사용자가 GitHub 에서 달 수 있다)'**
+라고 적는다(LEGACY 의 `docs/migration/*.md` 머리말, WRAP 의 `CLAUDE.md` §3·ADR 0038·PLAN 도 같다). `f6aeebd` 의 legacy 내용은
+`c55dfa0` 과 같다(이 설계서만 더한 커밋).
+
+### 1. 의존성 그룹 `demo`
+
+- `pyproject.toml [dependency-groups]` 에 `demo = ["fakeredis[lua]>=2.39"]`(dev 다음, legacy 앞). `uv lock` 차이는 `uv.lock`
+  4줄(`[package.dev-dependencies] demo`·`[package.metadata.requires-dev] demo`)뿐 — 패키지 122개·버전 변화 0, 다른 그룹 해석 그대로.
+  `uv lock --check` 통과.
+- 데모 이미지가 쓸 해석: `uv export --frozen --no-dev --group demo` 의 시험·개발 패키지는 `fakeredis 2.39.0`·`lupa 2.8`·`redis 8.1.0`
+  뿐(pytest·hypothesis 없음). `Dockerfile.demo` 는 `uv sync --frozen --no-dev --group demo`(DEMO).
+- ⚠ 로컬 주의: `uv sync --frozen --group demo`(§7.4 FND 명령)는 기본 그룹(dev)+demo 만 남기고 **legacy 그룹 패키지를 .venv 에서
+  지운다** — 같은 작업 트리에서 `test_legacy.sh` 를 돌리는 묶음(GXI·LEGACY)은 먼저 `uv sync --all-groups`. FND 는 확인 뒤 되돌려 두었다.
+
+### 2. 기준선 실측 (HEAD `f6aeebd` + FND 변경, 2026-10-14)
+
+**kbj pytest — 수집 수(`--collect-only`, 실행 아님)**
+
+| 선택 | 시험 | 파일 |
+|---|---|---|
+| 전체 | 8,177 | 476 |
+| `-m "not sim and not integration and not legacy"`(CI `test (kbj)`) | 7,925 | 450 |
+| `-m sim` | 121 | 17 |
+| `-m "sim and not slow"` | 119 | 16 |
+| `-m slow` | 2 | 1 |
+| `-m integration` | 128 | 7 |
+| `-m legacy` | 3 | 2 |
+
+(7,925 + 121 + 128 + 3 = 8,177 — 마커가 겹치는 시험 없음.) 웨이브 2·3 은 이 수에서 늘고 준 것을 파일·사유로 적는다(§7.5).
+
+**`scripts/test_legacy.sh` 부분별** — `all` 은 돌리지 않았다(메인이 마지막에). pytest·unittest 부분은 수집 수, 나머지는 해당 부분만 실행.
+
+| 부분 | 실측 | 스크립트 기준 |
+|---|---|---|
+| gexlab (`-m "not network and not integration"`) | 수집 760 / 34 파일 | 760 |
+| gexlab-integration (`-m "integration and not network"`) | 수집 39 / 11 파일 | 39(Docker 요구 시 38) |
+| board (`unittest discover -s board/tests`) | 수집 1,040(로더 오류 0) | 최소 실행 1,039 |
+| kr (`monitor/kr`, `test_*.py`) | 수집 94(로더 오류 0) | 94 |
+| flowlab selftest | 실행 44/44 통과 | 44 |
+| dart-report · dart-report-bridge | 실행 `quarters= 14 annual= 4 bridge steps= 9` · `bridge ok: 5 modules` | 같음 |
+| etf_tracker_v9 | 실행 모듈 8개 import | 8 |
+| stock_dashboard | 실행 13 통과 | 13 |
+
+**`check_canonical`**: 파일 892개, 실패 0. 목표 0 그룹(kis_oauth·kis_rest·kis_master·krx_api·dart·kis_ws·fnguide·legacy_* 넷) 전부 0.
+기준선 그룹(kbj 위반 0): `naver` 65 · `krx_scrape` 57 · `ta_indicators` 10 · `datago` 1 · `telegram`·`ecos`·`kosis`·`etf_issuers` 0.
+`scripts/canonical_baseline.txt` 는 **35줄**(ET 21 + SD 13 + `pyproject.toml` pykrx 1 — 그룹별 naver 21·krx_scrape 9·ta_indicators 4·
+datago 1). 본문 §7.6 의 '36줄(ET·SD 35 + pykrx 1)' 은 이 실측으로 고친다 — LEGACY 뒤 1줄(pykrx), WRAP 뒤 0줄.
+
+**import-linter**: `Contracts: 19 kept, 0 broken`(PLAN P8 과 같다). WRAP 이 ② 를 지우면 18.
+
+**번들(`npm run build:public`·`build:login` 뒤 `node scripts/check-bundle.mjs`)**: 공개 JS gzip **79,281 B**(예산 88 KB)·CSS 3,896 B,
+로그인 JS gzip **121,323 B**(예산 131 KB)·CSS 3,896 B, 금지 문자열·예산 위반 0. 페이지 13(OPS)은 로그인 번들에 더해진다 — 남은 여유 약 9.7 KB.
+
+### 3. 번호 확정
+
+| 종류 | 번호 | 주인(초안 → 확정) |
+|---|---|---|
+| ADR | **0034** 데모 모드 · **0035** 공개 산출물 검사 | DEMO → WRAP |
+| ADR | **0036** GX 수집 경로 KBJ 이식 | GXI → WRAP |
+| ADR | **0037** 운영 점검·1주 무중단 기준·페이지 13 최소판 | OPS → WRAP |
+| ADR | **0038** legacy 비우기(커밋 `f6aeebd` — 위 '바뀐 사실') | LEGACY → WRAP |
+| ADR | 0039 부터 | 웨이브 2 에 더 필요하면 메인에 requests(번호 겹침 방지) |
+| probe | **#68~#70** GXI(예: 전환 뒤 첫 거래일 분봉 무결측·poller 하트비트·KRX 파생 일별 지연) | GXI 초안 → WRAP |
+| probe | **#71~#73** OPS(예: VM 매일 점검·1주 판정 실측) | OPS 초안 → WRAP |
+| probe | **#74** DEMO(필요할 때만 — 예: compose 데모 첫 기동 시간) | DEMO 초안 → WRAP |
+| probe | #75 부터 | WRAP |
+
+- 묶음은 probe 줄을 **자기 절(이 문서 'GXI/OPS/DEMO 구현 기록')에 초안**으로 적고, `docs/probe_results.md` 표에는 WRAP 이 넣는다
+  (§7.3 — `probe_results.md` 는 WRAP 소유). 받은 범위를 다 쓰지 않으면 빈 번호는 WRAP 이 당겨 매긴다.
+- 마이그레이션은 본문 그대로 0022(GXI, 필요할 때만). ADR 0020 결번 그대로.
+
+## GXI 구현 기록 (2026-10-14 — 웨이브 2, 묶음 GXI)
+
+본문 §7.2 GXI 를 실제 값으로. ADR 0036(초안), `legacy/gexlab/MIGRATION.md` 'P9'. 기준 커밋 f6aeebd(legacy 를 지우기
+직전 — 태그 legacy-final 은 사용자가 GitHub 에서 달 수 있다).
+
+**만든 것**
+- `kbj/services/gex_poller/`(config·context·endpoints·planner·quality·ready·sink·collector·service·store·`__main__`) —
+  투자자별 없음. `store.py:GexIngestStore` = P7 `SpooledGexStore` 상속(스풀 한 벌) + 수집 표 쓰기 + `PgGexIngestRepo` 읽기.
+- `kbj/store/repos/gex_ingest.py`(수집 표 7 + ops 3 — 표 정의·행 함수·읽기·`replace_gap_report` 한 트랜잭션).
+  `kbj/store/repos/gex.py` `GxTable` 에 GX 검증(열 중복·jsonb ⊆ 열·keep_if_null 은 upsert 비키 열) 복원.
+- 처리기 `kbj/services/collectors/gex_{minutes,gap_daily,gaps,open_check,krx,master_check,resources}.py`·`kis_master.py`.
+- `python -m kbj.services.engine.gex_report {nogap,shadow}`(패키지 — 본문 §7.3 의 `gex_report.py` 한 파일 대신 하위 명령 둘).
+- 마이그레이션 `0022_gex_ingest.sql` — COMMENT ON 만(§9.1).
+- 생성기 `tests/fixtures/synthetic/gex/make_synthetic_fixtures.py`(기본 비교만 — 지금 fixture 와 전부 같다).
+
+**등록부(`config/jobs.yaml`) — 전부 `enabled: false`, phase P9, runner kbj**: 서비스 `gex.poller`(heartbeat_key
+`gex-poller`, writes chain_snapshots·fut_board·series_expiries), 작업 `gex.day_minutes`(cron 16:00, 5분 재시도 ~17:50)·
+`gex.night_minutes`(cron 06:10 거래일 — `after_night_session` 은 월요일에 금요일 밤을 놓쳐서 바꿈, ~08:00)·
+`gex.krx_derivatives`(08:05, 10분 ~10:00)·`kis.master`(PRE_DAY, 60초 ~08:45)·새 `kis.master_night`(PRE_NIGHT, 키 없음)·
+새 `gex.open_check_day`(08:49)·`gex.open_check_night`(18:04, night_session). 개장 확인 absorbs 를 분봉 작업에서 옮김.
+작업마다 owner 하나(`run_day`·`run_night` — 시뮬레이션 harness 가 owner 겹침을 거절한다).
+
+**결정·차이(본문 대비)**
+- GX `Scheduler` 클래스는 옮기지 않았다 — 구동 클래스를 처리기가 한 step 씩(`inline_submit`), 재시도는 등록부.
+- 작업은 스풀 없이(`spool=False`) — 실패 = 작업 실패 → 재시도. poller 만 스풀(`/data/spool/gex-poller`).
+- KRX: `KrxClient` 가 `krx:calls` 를 세므로 작업 쪽 `KrxCallBudget(None, 10_000)` 은 프로세스 셈만(이중 계산 방지).
+- fixture `git mv` 대신: KBJ 에 이미 바이트까지 같은 사본(`tests/fixtures/synthetic/{kis,krx}`·`gex/validation`)이 있고
+  남은 GX 시험 277 이 GX 사본을 읽어 GX 쪽은 그대로 두었다(폴더 삭제는 WRAP). 생성기는 옮기고 GX 사본도 남김(같은 이유).
+- `kbj/services/recorder/store.py`(P7 ING 소유) 한 곳: `SpooledGexStore.tables_by_name` ClassVar(재생 때 표 찾기를 하위
+  클래스가 넓히게) — 동작 그대로.
+
+**시험 수**: GX unit 483 → 승격 397 + 폐지 86(사유 MIGRATION P9.3), `test_legacy.sh gexlab` 760 → **277**(실측),
+integration 39 그대로. KBJ `tests/unit/gex_ingest` 427(승격 397 + 새 30), 등록부 +1, `test_owner_compat` −1(GX 하위
+프로세스 — 사유 기록), `test_kis_rest` 의 GX 프로브 대조는 f6aeebd 값으로 고정(skip 없음).
+
+**남긴 것 → WRAP**: 켜기(§9 R2), `tests/sim` GX 흉내 단계(`_gx_*`)를 등록부 작업으로(지금은 겹쳐 `test_krx_late` 의 KRX
+파생 호출 수가 3 → 5), GX 에 남긴 수집 시험(`test_scheduler_service` 23·`test_full_day_harness` 3·통합 `test_full_day`·
+`test_store`·`test_scheduler_*`·`test_spool_db`·`test_nogap_report`·`test_shadow_report`)의 KBJ 통합 시험 대체, probe #61·#62
+명령 갱신, 런북 `run-once kis.master`(state_enter 는 기동 때 발화하지 않는다).
+
+**probe 초안(#68~#70 — 표는 WRAP)**
+| # | 무엇 | 언제 | 통과 |
+|---|---|---|---|
+| 68 | 전환 뒤 첫 거래일 주간·야간 분봉 무결측 — `python -m kbj.services.engine.gex_report nogap --days 1 --need 1` | 런북 ④ 다음 거래일 | 종료 코드 0, `ops.collection_reports` 스트림별 `ok`(GX 운영 때와 같은 모양) |
+| 69 | `gex-poller` 하트비트·체인 주기·KIS 한도 — `ops.health_events`·하트비트 나이·429 수 | 전환 첫 주 | 하트비트 끊김 0(>120초), 429 0, 체인 스냅샷 분당 수가 GX 와 같은 자릿수 |
+| 70 | KRX 파생 일별 지연 — `gex.krx_derivatives` 첫 ok 시각 분포·`krx:calls` 합 | 전환 첫 주 5거래일 | 10:00 전 ok 5/5, `krx:calls` 상한 안 |
+
+## DEMO 구현 기록 (2026-10-14 — 웨이브 2, 묶음 DEMO)
+
+머리 사실: legacy 를 지우기 직전 커밋은 **커밋 `f6aeebd`(legacy 를 지우기 직전 — 태그 `legacy-final` 은 사용자가 GitHub
+에서 달 수 있다)**(FND 기록 머리와 같다). 본문(§2·§3·§4.3)과 다르게 한 것·실측만 적는다.
+
+### 1. 데모(§2)
+
+- 이름 정리(`git mv`): `scripts/demo_p3_server.py → demo_server.py`, `demo_p3.sh → demo.sh`, `demo_p3_shots.mjs →
+  demo_shots.mjs`, `tests/test_demo_p3.py → tests/test_demo.py`(단언 그대로 — import 경로만). 옛 설계서·PLAN 의 옛
+  이름은 기록이라 고치지 않았다. `tests/unit/api/api_world.py` 는 docstring 두 줄(옛 데모 이름)만.
+- `demo_server.py`: `--bind`(기본 127.0.0.1, `0.0.0.0` 은 `KBJ_DEMO_CONTAINER=1` 일 때만, 그 밖 주소 종료 2)·`--at`
+  기본값을 `KBJ_DEMO_AT` 에서(잘못된 값 종료 2)·비밀번호 12자 하한 그대로·첫 줄 'KBJ 데모'. 함수로 나눔:
+  `parse_args`·`build_demo_world`·`demo_settings`(시험이 부른다).
+- **Origin 실측(§2.1 [확인 필요])**: `public_base_url=http://127.0.0.1:8765` 이면 `localhost` 로 연 브라우저는 로그인
+  POST 부터 403(`origin_mismatch` — 로그인도 Origin 을 본다). 데모 설정은 `public_base_url=None` 으로 바꿨다 → Origin 을
+  요청 자신의 출처(Host)와 비교 — 두 주소 모두 로그인·쓰기 가능, 다른 출처는 403 그대로(`test_demo_offline.py`).
+- **페이지 6 [제안 → 실행]**: p5 세계(시계 2026-11-17 화)를 데모 마지막 거래일(2026-09-15 화)로 옮겨 싣는다 — 일별·시각은
+  −63일(9주, 요일 그대로 — 7의 배수가 아니면 멈춤), 월별 period·공표 시각은 −2개월(공표일 5일 그대로), 캘린더 제목의
+  'N월'도 −2. 분기·연 period 는 p5 에 없고 나오면 ValueError(조용히 어긋나지 않게).
+- **p7 진단 입력 미래 값(앞 단계부터 있던 것)**: p7 세계는 2026-12-10 까지라 `seed_public` 이 데모 시계(09-15) 뒤의
+  국고채 3년·회사채 AA-·신용잔고·예탁금까지 저장소에 넣고 있었다(진단 처리기는 그날까지만 돌아 화면 판정은 맞았지만
+  띠·페이지 6 이 미래 값을 볼 수 있었다). 이제 `published_at ≤ 데모 시계` 인 점만 싣는다. 같은 시리즈(KTB3Y·AA3Y)와
+  금투협 통계는 p5 매크로가 덮지 않는다(두 합성 세계를 한 시리즈에 섞지 않음 — 진단 이력이 p7 값으로 계산됐다).
+  적재 순서 p7 → p6 매크로.
+- 데모 compose·Dockerfile.demo·dockerignore 는 본문 §2.2·§2.4 대로, 다른 점: healthcheck `start_period 120s`(합성 세계
+  적재 실측 약 120초 — 진단 이력·GEX 사이클·백테스트를 실제 처리기로 돈다), `timeout 6s`. `fonts-nanum` 은 넣지 않았다
+  (데모 API 경로에 matplotlib 없음 — `grep`), `tzdata` 만. 이미지에 들어가는 `tests.*` 는 import 추적 실측 18모듈
+  (api_world·p4~p8_world·ledger_gen·web_fixtures_p6/p7/p8·diag_seed·engine_inputs·rules_perf_seed·fakes.ws_server) +
+  합성 골든 1개(`tests/golden/board/expected/day_29.json.gz` — 열린 파일 감사 훅으로 실측). 정적 추적 시험이 묶는다.
+- `demo.sh`: `--compose`(떠 있는 데모 compose 에 대고 — 비밀번호 기본 고정 데모값, 서버 시계는 `docker compose logs` 의
+  첫 줄에서), `--gif DIR`. 서버 대기 120초 → 240초(적재가 늘었다). `--gif` 의 장면 폴더는 끝나면 지운다.
+- `demo_shots.mjs`: 페이지 6 추가(기본 모드 11페이지 — 실측 콘솔 오류·실패 요청 0, 패널 오류 0), `--gif` 모드(1280×800·
+  reducedMotion·장면 9 — 페이지 3 은 전체 + 'GEX 프로필·GEX 레벨' 두 패널 16:10 확대, 페이지 8 은 기본 필터 스크리너 첫
+  종목 상세). 장면마다 스크롤을 맨 위로(확대 장면 뒤 빈 화면이 찍히던 것 — 실측으로 잡음).
+
+### 2. 공개 산출물 검사(§3)
+
+- `scripts/check_public_outputs.py` 네 단계(본문대로). 다른 점: ② 번들 JS 에는 `LOGIN_SOURCES` 를 쓰지 않는다 — 실측
+  `web/dist-public` JS 20개 중 8개가 화면 문구로 'KRX·KIS·consensus·etf_issuers·Yahoo' 를 담는다(오탐). JSON 은 source
+  칸만(기존 `login_source_paths`). ② 기본(사이트 없음)은 `public_export build --no-db`(파일 3개) + 공개 모양 웹 픽스처
+  37개(`web/test/fixtures/**/public/**`)를 같은 규칙으로 — `--no-db` 만으로는 P4~P7 공개 파일 모양을 못 보기 때문.
+  ③ 은 Pillow 로 PNG 글자 청크·GIF 프레임 주석을 읽는다. ④ 는 dockerignore 를 moby 규칙(마지막 일치·부모 경로 일치·
+  `**`)으로 해석해 `.env`·legacy·state·`*.key`·`*.pem`·토큰 캐시 표본 11개가 빌드 문맥 밖인지 본다.
+- **`price_fields` 전수(§3.2 [확인 필요])**: 공개 출력 코드와 공개 모양 픽스처 37개를 다 보니 해당 키는 둘뿐 —
+  `calendar.json` 의 `open`·`close`(장 시각 'HH:MM') · `overhang_recent.json` 의 `price`(DART 전환·행사가액). 공공지표
+  진단(diag/)·매크로(macro/)·수출입(trade/)에는 없다. 예외는 허용 목록 파일 대신 **코드 표 `PRICE_FIELD_ALLOW`**
+  (파일·키·값 모양·사유)로 `manifest.py`·`merge-public-data.mjs` 두 곳에 두고 대조 시험으로 묶었다 — 운영 이미지에
+  `scripts/` 가 없어 VM 의 `public_export check` 가 파일을 못 읽기 때문(ADR 0035 §2-3). 키 목록은 본문 10개 + 옛
+  trade/stock 규칙의 `chg_pct`(약하게 하지 않으려고) = 11개. `trade_problems` 의 시세 칸 부분은 `price_problems` 로
+  옮겼고 메시지('시세 칸(…)')는 같다 — 기존 시험 그대로 녹색.
+- **`fixture_provenance` 실측**: `synthetic` 밖 데이터 파일 526개(본문 추정 527 — 웹 픽스처 444·골든 82), 목록 23줄
+  (`web/test/fixtures/api/*` 1줄이 427개). `.yml` 도 데이터 확장자에 넣었다. 생성기 경로가 없는 줄·아무 파일에도 안
+  걸리는 줄도 실패(묵은 줄).
+- 실측: `uv run python scripts/check_public_outputs.py` 통과(repo·site·media·demo 발견 0, 약 17초).
+
+### 3. GIF·미디어(§4.3)
+
+- `bash scripts/demo.sh --gif docs/media --no-build` → `docs/media/kbj_demo.gif` **973,148 B**(960×600·9장×1.6초·무한 반복) +
+  정지 화면 4장 `kbj_demo_{p1_market,p3_gex,p4_flows,p8_stock}.png`(99~221 KB) + `MANIFEST.txt`(명령·커밋 `f6aeebd`·합성
+  세계·시드 다섯·서버 시계 2026-09-15T18:00+09:00). 페이지 13 없이 — WRAP 이 같은 명령으로 다시 찍는다(정지 화면 이름은
+  `demo_shots.mjs GIF_STILLS`). `make_demo_gif.py` 는 빈 장면(색 8개 이하)도 실패로 거른다.
+- 화면에 '13 운영' 탭 단추가 이미 보인다(OPS 작업 중인 자리표시) — WRAP 다시 찍기 때 내용이 찬다.
+
+### 4. 시험 수 (수집 — `--collect-only`)
+
+| 파일 | 전 | 후 | 비고 |
+|---|---|---|---|
+| tests/test_demo_p3.py → tests/test_demo.py | 2 | 2 | 이름만 |
+| tests/test_public_safety.py | 46 | 47 | + 우산이 이 모듈을 import 하는지 |
+| tests/unit/public_export/test_manifest.py | 94 | 97 | + price_fields 셋(파이썬·예외·JS 대조) |
+| tests/test_public_outputs.py | — | 21 | 새로(단계별 위반 → 1, 깨끗한 트리 → 0, 레포 자신 통과) |
+| tests/unit/demo/* (5파일) | — | 43 | offline 10·server_args 12·compose 11·image_inputs 4·make_demo_gif 6 |
+| web/test/scripts.test.ts | 33 | 36 | + priceProblems 셋 |
+
+지운 시험 0, 건너뛰는 시험: `test_compose_config_is_valid`(docker 없을 때만). `test_demo_offline.py` 는 합성 세계 적재로
+약 2분 걸린다(모듈에서 한 번).
+
+### 5. probe 초안(#74 — WRAP 이 probe_results.md 에)
+
+| # | 확인 | 방법 | 상태 |
+|---|---|---|---|
+| 74 | 데모 compose 첫 기동 — 이미지 빌드 시간·이미지 크기·healthcheck 통과까지 시간(적재 약 2분 기대)·arm64(Apple Silicon) 빌드 | `docker compose -f docker-compose.demo.yml up -d --build` 뒤 `docker image ls kbj-demo`·`docker compose ps` | 메인 실측 대기 |
+
+## OPS 구현 기록 (2026-10-14 — 웨이브 2, 묶음 OPS)
+
+본문 §6.2·§6.3 과 §11 Q5·Q6 대로. 결정 문서는 ADR 0037(초안 — `docs/adr/0037-ops-check-week-page13.md`), 런북
+`docs/runbook.md`(①~⑩). 태그 `legacy-final` 대신 커밋 f6aeebd(legacy 를 지우기 직전 — 태그 `legacy-final` 은 사용자가
+GitHub 에서 달 수 있다)를 기준으로 쓴다(이 묶음 문서에는 태그를 적지 않았다).
+
+### 1. 만든 것
+
+| 경로 | 내용 |
+|---|---|
+| `kbj/services/ops/source.py` | 읽기 원천 `OpsSource`(job_run·notify_log·health_events `heartbeat_gap`·collection_gaps·quarantine·표 크기·DB 크기) — `PgOpsSource`·`MemoryOpsSource`. 기대값 `load_expect(config/jobs.yaml)`(등록부 모듈은 계약 ⑩ 때문에 API 가 import 못 함 — 필요한 칸만 직접, 시험이 등록부와 대조). 끊김 기록 쓰기 `record_heartbeat_gaps` |
+| `kbj/services/ops/check.py` | 판정 — `run_check`(지금 하트비트 + 최근 기록 OK/WARN/FAIL)·`run_week`(7일 일자별 + 통과/실패/판정 불가)·`outages`(관측 → 끊김 묶기)·`job_outcomes`(작업·as_of 마다 마지막 시도)·`brief_counts` |
+| `kbj/services/ops/__main__.py` | `python -m kbj.services.ops check [--since 24h] [--json]`·`week [--end] [--json]`, 종료 코드 0/1/2, 오류 문장 가림(형태 + DSN 사용자·비밀번호 칸) |
+| `kbj/services/api/{models,readers,routes}/ops.py` + `app.py` 등록(import 한 줄·라우터 한 줄) | `GET /api/ops/status`·`/api/ops/jobs?date=`·`/api/ops/notify?date=` — 로그인 전용·읽기만·15초 캐시 + ETag. 운영 원천은 `app.state.kbj_ops`(시험·데모가 넣는다) 또는 `KBJ_DATABASE_URL` 로 한 번 만든다. 없으면 404 `no_data`. **`models/ops.py` 는 §7.3 표에 없던 새 파일**(다른 묶음과 겹치지 않음) |
+| `web/src/api/openapi.json`·`types.gen.ts` | 재생성(`OpsStatus`·`OpsJobs`·`OpsNotify` …) |
+| `web/src/pages/p13_ops.ts`·`p13/ops.ts`·`app/pages.ts` | 페이지 13 최소판 — ① 서비스 상태(span-12) ② 오늘 작업(span-6) ③ 발송 기록(span-6), 1분마다 다시 읽기, 404 `.msg`·그 밖 `.msg.err`. 13 → `phase: 'P9'`, `P9_PAGES`, 빌드 glob 에 13 |
+| 시험 | `tests/unit/ops/{ops_world,test_check}.py`(29), `tests/unit/api/test_routes_ops.py`(11) + `web_fixtures_p13/ops.py`(픽스처 6개 `web/test/fixtures/api/ops_*.json` — `uv run python -m tests.unit.api.web_fixtures_p13.ops`), `tests/sim/test_ops_week.py`(6 — 운영 등록부 cron·when 으로 7일 기록을 만들고 끊김 15분·최종 실패·자정 넘는 끊김 변형이 그날 '실패', 7분 끊김·재시도 성공은 통과), `web/test/pages/p13_ops.test.ts`(10) |
+
+### 2. 본문과 다른 점
+
+- **판정 기준은 §11 Q6 셋만**(끊김 >10분 0·켜진 작업 최종 실패 0·거래일 아침·마감 브리핑 1통씩). 본문 §6.1 ④(결측·
+  격리)·⑤(백업·공개 내보내기)는 `check` 의 참고(WARN) 항목으로만 보이고 종료 코드·1주 판정에 넣지 않았다. 백업 실패는
+  `ops.nightly` 가 켜진 작업이라 ② 에 이미 걸린다.
+- **하트비트 끊김 기록**: Redis 하트비트는 마지막 값 하나라 지난 끊김을 모른다 → `ops.health_events` kind
+  `heartbeat_gap`(detail `age_s`) 관측으로 남기고 판정이 끊긴 시작(ts − age)으로 묶는다(ADR 0037 §2-3). **쓰는 쪽(워치독)
+  연결은 WRAP 요청** — 그 전에는 끊김 기록이 비어 있다(런북 ⑩·ADR §3 에 적음).
+- 페이지 13 진입 모듈은 공개 빌드에도 들어간다(p11 방식 — 자물쇠 껍데기 446 B gzip, 본문·`/api/ops` 문자열 0).
+
+### 3. 실측(2026-10-14)
+
+- 번들: 로그인 JS gzip **123,458 B**(예산 131 KB, FND 121,323 → +2,135 B), 공개 JS gzip **79,727 B**(예산 88 KB, FND 79,281 →
+  +446 B — 진입 껍데기), CSS 3,896 B. `check-bundle.mjs` 금지 문자열·예산 위반 0.
+- 시험 수(수집): `tests/unit/ops` 29 + `test_routes_ops.py` 11 = **40**(새), sim `test_ops_week.py` **6**(새), 웹
+  `p13_ops.test.ts` **10**(새). 지운 시험 0.
+
+### 4. probe 초안(#71~#73 — WRAP 이 probe_results.md 에)
+
+| # | 확인 | 방법 | 통과 |
+|---|---|---|---|
+| 71 | VM 첫 `ops check` — 표 크기·DB 크기 쿼리가 Timescale 에서 도는지(`hypertable_size`·청크 제외)와 걸리는 시간 | `docker compose --profile app exec api python -m kbj.services.ops check --json` | 종료 코드 0·1(2 아님), 상위 10 에 하이퍼테이블이 청크 합으로 보임, 5초 안 |
+| 72 | 매일 점검 7일 — 장 시작 전·마감 뒤 `check` 결과 레벨 | 런북 ⑤ | 하루 2회 기록, FAIL 은 원인 메모 |
+| 73 | 1주 판정 — `ops week --end <마지막 날>` | 런북 ⑩ | 종료 코드 0(통과) — 결과는 통과/실패·개수만 PLAN P9 결과에 |
+
+## LEGACY 구현 기록 (2026-10-14 — 웨이브 2, 묶음 LEGACY)
+
+머리 사실: legacy 를 지우기 직전 커밋은 **커밋 `f6aeebd`(legacy 를 지우기 직전 — 태그 `legacy-final` 은 사용자가 GitHub
+에서 달 수 있다)**. ADR 0038 초안. 본문(§1.2·§7.2 LEGACY·§7.6)과 다르게 한 것·실측만 적는다.
+
+### 1. 지운 것·옮긴 것
+
+- `git rm -r legacy/etf_traker legacy/stock_dashboard`(276 + 62 파일). `git ls-files legacy` 는 `legacy/gexlab/**` 만.
+- `MIGRATION.md` **넷**(본문 셋 + dart-report — `kbj/engines/financials/{bridge,orders}.py` 주석이 가리켜서)을
+  `docs/migration/{etf_traker,etf_traker_board,etf_traker_dart_report,stock_dashboard}.md` 로 `git mv`, 머리말(원래
+  위치·커밋 f6aeebd)과 `etf_traker.md`·`stock_dashboard.md` 끝에 'P9' 절(부분별 시험 수·폐지 사유). 주석 두 줄 경로 갱신.
+- 다리: `kbj/data/legacy_bridge.py`·`tests/unit/data/test_legacy_bridge.py`(16) 삭제, `config/limits.yaml` 역할
+  `legacy_bridge` 한 줄·`tests/unit/data/test_limits.py` 단언 한 줄 삭제, `pyproject.toml` 계약 ⑯ 금지 목록 한 줄 삭제.
+- notifier: `client.py` 에서 `legacy_send*`·`legacy_kind`(프레임 찾기)·`_legacy_origin`·`DISABLED_REASON`·모듈 함수
+  셋 삭제, `notify_document/media` 의 `origin` 인자 삭제. `policy.py` 에서 `legacy_kinds`·`legacy_default_kind`·검증·
+  `dedup_key(origin=)` 삭제(모든 발송이 kbj 작업 — `daily` 는 종류(+대상)당 하루 1회). `config/notify.yaml` 의 종류
+  `legacy.other`·`legacy_kinds`·`legacy_default_kind` 삭제.
+- `scripts/test_legacy.sh`: gexlab 두 부분만(GXI 가 바꾼 기준 277 은 그대로). 지운 부분 이름(board·kr·flowlab·
+  dart-report·etf_tracker_v9·stock_dashboard·etf-rest·etf)을 부르면 조용히 0개를 돌리지 않고 FAIL.
+- `.github/workflows/ci.yml`: legacy 매트릭스 `[gexlab]`, `pytest -m legacy` 단계 삭제, canonical '목표 0 그룹' 단계는
+  krx_scrape 를 뺀 14 그룹.
+- 남은 ignore 파일(`legacy/etf_traker/board/state_us/*`·`__pycache__` 40개 — 추적 안 됨)도 지워 폴더가 남지 않게 했다.
+
+### 2. legacy 파일을 읽던 kbj 시험 — 조용한 skip 0 (지우기 전에 찾음)
+
+| 시험 | 지우기 전 | 처리 |
+|---|---|---|
+| `tests/unit/core/test_legacy_holiday_parity.py` `test_frozen_copy_matches_legacy_source_while_it_exists` | SD server.py 없으면 **skip** | 삭제(사유: 고정 사본이 기준 — 다섯 날 차이 시험 14 는 그대로). 본문은 파일 전체 삭제였지만 kbj 휴장 호환 시험이라 남김 |
+| `tests/unit/engines/board/test_build_source.py` 단언 2(legacy shim 소스) | 파일 없으면 실패 | kbj 쪽 단언으로(`n_diagnostics=len(day.diagnostics)` — 서비스가 진단 수를 실행 detail 에), cleared 는 서비스 단언만 |
+| `tests/unit/engines/board/test_config.py` ET settings.yaml 절 | 실패 | 최상위 절 6개를 시험 안 상수로 동결 |
+| `tests/test_store_layout.py` ET board `db.py` DDL | 실패 | alltime·label·split_check 열을 상수 `ET_BOARD_TABLES` 로 동결(지우기 전 원본에서 읽은 값) |
+| `tests/sim/test_brief_once.py` SD server.py 읽기 + shim 이중 접수 | 실패 | `test_second_submit_same_day_is_duplicate` — 08:10 발송 뒤 kbj `notify` 이중 접수 2건 duplicate·발송 1통 |
+| `tests/unit/notifier/test_client_shim.py` 정적 검사(SD·ET 발송 함수) | 실패 | 삭제(대상 파일 없음) |
+| `tests/golden/board/make_golden.py` | legacy 엔진 import | 재생성 불가 표시(머리말·META `regenerate`), legacy 폴더가 없으면 종료 코드 2(조용히 빈 골든 안 만듦) |
+| `test_kis_rest`·`test_owner_compat`(GX 부분) | — | GXI 몫(GXI 기록) |
+
+### 3. 시험 수 (수집 — `--collect-only`, 같은 경로 묶음 전후)
+
+notifier·data·core·engines/{board,etf,diagnosis}·reports·golden·config·`test_check_canonical`·`test_store_layout`·
+`test_gitignore`·`test_import_contracts`: **3,926 → 3,914(−12)**.
+
+| 파일 | 전 → 후 | 사유 |
+|---|---|---|
+| `tests/unit/data/test_legacy_bridge.py` | 16 → 0 | 브리지 삭제 |
+| `tests/unit/engines/etf/test_legacy_shim.py`·`tests/unit/reports/test_legacy_shim.py`(마커 legacy) | 1 + 2 → 0 | ET shim 삭제 — kbj `-m legacy` 3 → **0** |
+| `tests/unit/notifier/test_client_shim.py` → `test_client.py`(`git mv`) | 19 → 13 | shim 전용 6 폐지(반환 모양 2·여러 통 origin 1·프레임 종류 1·정적 검사 2), 공통 경로 7 은 `notify*` 로 같은 단언 |
+| `tests/unit/notifier/test_policy.py` | 30 → 26 | `legacy_kinds` 표 1·origin 키 1 폐지, 잘못된 설정 사례 3 → 1('legacy_kinds' 는 이제 모르는 키) |
+| `tests/unit/core/test_legacy_holiday_parity.py` | 15 → 14 | 위 §2 |
+| `tests/unit/engines/diagnosis/test_spec_bands.py` | 28 → 39 | D-P9-11 대조 +11(창 11가지) |
+| `tests/test_check_canonical.py` | 71 → 78 | 목표 0 매개변수 7 → 14, 새 그룹 목표 시험 +1, AST 우회 +2, 허용 사례 −3 |
+
+sim: 수집 수 그대로(`test_one_day` 24·`test_token_rejected` 5·`test_brief_once` 5). harness 의 'legacy' 소비자(브리지)는
+같은 자리의 KBJ 읽기 프로세스 **'reader'**(`make_client` — 리더 + 리미터, P3 우선순위)로 바꿨다 — '발급은 auth 하나'·거절
+신고(stale 토큰) 시험을 약하게 하지 않으려고. `SimOptions.legacy_calls` → `reader_calls`(sim 10 파일 키워드 이름만).
+지운 `scripts/test_legacy.sh` 부분: board 1,039·kr 94·flowlab 44·dart-report 스모크·etf_tracker_v9 8·stock_dashboard 13 —
+승격 0, 폐지 전부(§1.3·§7.5).
+
+### 4. 직접 호출 검사(§7.6)
+
+- `canonical_baseline.txt` 35줄 → **1줄**(ET 21·SD 13 삭제, `pyproject.toml` krx_scrape 1 — 건수 2 남음). naver 65 → 0,
+  krx_scrape 57 → 2, ta_indicators 10 → 0, datago 1 → 0.
+- 목표 0 그룹: 기존 7 + telegram·ecos·datago·kosis·naver·etf_issuers·ta_indicators = **14**. 본문 '모든 그룹 목표 0' 과 다른
+  점: **krx_scrape 는 기준선 그대로** — `pyproject.toml` legacy 그룹 pykrx 줄이 남아 있어 목표 0 이면 실패한다. WRAP 이
+  legacy 그룹을 지울 때 함께 목표 0(`check_canonical.py` GROUPS 의 False 한 곳 + `test_every_group_but_krx_scrape_is_zero`)
+  — 그러면 CI 두 단계를 하나로.
+- AST 허용 목록에서 ET·SD shim 만 쓰던 줄(브리지·notifier client/inbox/format/store·engines.board/etf/financials/us·
+  etf_issuers·config.markets·reports.dart_excel·nasdaq/stooq/yahoo) 삭제 — GX 가 import 하는 kbj 모듈은 하나도 빠지지 않음
+  (grep 확인). 실측: 파일 732개, 실패 0.
+
+### 5. D-P9-11 `pct_rank`
+
+`kbj.engines.diagnosis.bands.pct_rank` = 정본 `kbj.core.indicators.pct_rank` 호출 + Decimal 양자화. 진단 쪽 약속(창에 없으면
+n = 1 이어도 오류, n = 1 은 `Decimal(50)`)만 남김. 비교는 Decimal 그대로(정본은 `<`·`==` 만), float 비율은 9자리 반올림
+뒤 ROUND_HALF_UP — 창 ≤ 100,001 에서 옛 Decimal 계산과 값·표현이 같다(새 대조 시험 — 반올림 경계가 생기는 401·2001 포함).
+진단 명세·속성·골든 녹색.
+
+### 6. 남긴 것 → 다른 묶음·WRAP
+
+- `config/jobs.yaml:1038`(GXI 소유)·`config/board.yaml:8`·`config/fin.yaml:3`·`kbj/data/private/{nasdaq,yahoo}`·
+  `kbj/engines/us` 주석의 `legacy/etf_traker`·`legacy/stock_dashboard` 경로는 출처 기록이라 두었다(커밋 f6aeebd 기준) —
+  WRAP 이 문구를 '커밋 f6aeebd' 로 고칠지 판단.
+- `README.md:50`(test_legacy.sh 부분 이름 — WRAP), `tests/test_gitignore.py`·`.gitignore` 의 ET·SD 줄(WRAP), import-linter ②
+  (WRAP — kept 19 그대로), `pyproject.toml` legacy 그룹·pykrx(WRAP), ADR 0003·0007 '대체됨 — 0038'(WRAP).
+- sim 실패 8(LEGACY 와 무관 — 아래 기록): GXI 의 `config/jobs.yaml` GX 작업 줄(runner kbj)과 harness `_gx_*` 흉내 단계가
+  같은 키를 겹쳐 잡는다(`test_one_day` 5·`test_one_day_p4` 1·`p5` 1·`p7` 1 — `claims.refused` fo_master·day_minutes,
+  `gex.night_minutes` SimUnsupported, KRX `/drv/` 소비자 scheduler). GXI 기록 '남긴 것 → WRAP' 의 sim 반영 몫.
+
+### 7. 완료 명령(§7.4 LEGACY) 실측
+
+`git ls-files legacy`(gexlab 밖) 0 · LEGACY pytest 묶음 통과(건너뜀 1 = DART 실데이터 골든, 원래부터) · `check_canonical`
+통과 · `scheduler validate` 통과 · `uv sync --all-groups`(변화 없음) + `test_legacy.sh gexlab` 277 통과 · sim
+`-k "one_day or token_rejected or brief_once"` — LEGACY 가 고친 시험(reader·token_rejected 5·brief_once 5)은 통과, 실패 8 은
+위 §6(GX 작업 겹침). 공통: ruff·format·pyright 0·lint-imports 19 kept·public_safety 통과.
+
+## WRAP 구현 기록 (2026-10-14 — 웨이브 3, 묶음 WRAP)
+
+머리 사실: legacy 를 지우기 직전 상태는 **커밋 `f6aeebd`**(legacy 를 지우기 직전 — 태그 `legacy-final` 은 사용자가 GitHub
+에서 달 수 있다). 본문 §7.2 WRAP 과 다르게 한 것·실측만 적는다.
+
+### 1. GX 판단 — `legacy/gexlab` 지움
+
+GXI 는 problems 에 '못 끝냄' 을 적지 않았다(남긴 것은 WRAP 몫으로 넘긴 sim·통합 대체). §11 R1 대안은 쓰지 않고 폴더를 지웠다
+(`MIGRATION.md` → `docs/migration/gexlab.md`, 'P9 WRAP' 절에 시험 갈래). `git ls-files legacy` = 0. GX 작업 일곱·`gex.poller` 는
+`enabled: false` 그대로(§11 Q2), `ENABLED_BY_PHASE["P9"] = ∅`.
+
+### 2. requests 처리
+
+| 요청(묶음) | 처리 |
+|---|---|
+| GXI·LEGACY: sim GX 흉내 겹침(실패 8) | harness `_gx_master`·`_gx_minutes`·`_gx_krx_derivatives` 삭제 — 등록부 작업이 실행기로 돈다. 시뮬레이션 처리기에 `KIS:fo_master`(배포 zip)·`fut_minute_day/night`(분봉 1쪽)·키 없는 `kis.master_night` 마스터. `test_one_day`(GX 절을 등록부 기록 단언으로·KRX 소비자 scheduler 하나)·`test_krx_late`(`runs_of("gex.krx_derivatives")` 08:05·08:15 not_ready → 08:25 ok) 갱신 |
+| GXI: KBJ 통합 대체 | `tests/integration/test_gex_ingest_pg.py` 9 항목(KRX 적재 멱등·poller 왕복 4·분봉·마스터·리포트 교체·nogap) — Docker 미실행(메인 몫) |
+| GXI: probe #61·#62 명령·#68~#70 | `docs/probe_results.md` |
+| GXI: 런북 `run-once kis.master` | 런북 ④-5 에 이미 있음 + ④-8(장중 재기동) 더함, ④-2 옛 GX 위치(원본 GEXLAB 레포·커밋 f6aeebd) |
+| GXI: ci.yml 주석 'gexlab 760' | legacy 잡째 지움 |
+| GXI: 생성기 경로 문구 | `tests/fixtures/synthetic/{kis,krx,gex}/README.md`·`krx/make_synthetic.py`·`kbj/services/engine/gex_golden.py`·`kis/derivatives.py` |
+| DEMO: README | 처음부터(§4.1 골격 — 데모 한 줄·계정·GIF·정지 화면 4장·13 페이지·mermaid·공개/로그인·품질·ADR·사용자 할 일) |
+| DEMO: CI public-outputs·demo(compose) | `public-safety` → `public-outputs`, 새 잡 `demo (compose)` + `scripts/demo_smoke.py`(로컬 데모 서버에 대고 15 경로 통과 확인) |
+| DEMO·OPS: 데모에 페이지 13 | `demo_server.attach_ops`·`demo_app`(합성 1주 운영 기록 — 데모 시계 뒤 기록 제외), `Dockerfile.demo.dockerignore` 에 `ops_world.py`, `demo_shots.mjs` 에 13. `bash scripts/demo.sh --shots` — 페이지 13 패널 3·오류 0, 전체 콘솔 오류·실패 요청 0 |
+| DEMO: ADR 0034·0035 | 확정(WRAP 메모) |
+| OPS: 웹 시험 3건 | `pager.test.ts`(glob·P9_PAGES·13 은 P9)·`app.test.ts`(모듈 목록에 P9). 전체 vitest 52 파일 658 통과(동시 부하 시간 초과 재현 없음) |
+| OPS: 워치독 끊김 기록·5분·24시간 | `ops_watchdog.run` 이 자원 `ops_gaps`(운영 `PgOpsSource` — scheduler `__main__`)로 `record_heartbeat_gaps`, 실패는 알림 뒤 `failed`. cron `*/5 * * * *`·`when: always`. 시험: 워치독 단위 +2, 등록부·실행기 기대값, sim(창 앞 하트비트 1회·창 앞 `GRACE_MIN` 안 발화 씨앗, 워치독 288회) |
+| OPS: ADR 0037·probe #71~#73·PLAN | 확정·표·결과 줄 |
+| LEGACY: krx_scrape 목표 0·기준선 | 모든 그룹 목표 0, 기준선 머리말만, 기준선 장치 시험은 시험 안에서만 그룹을 기준선으로(monkeypatch), CI canonical 한 단계 |
+| LEGACY: legacy 경로 문구 | README(새로 씀)·`.gitignore`·`test_gitignore`(사례 17 삭제·1 추가)·`config/{board,fin,jobs}.yaml`·`kbj/data/private/{nasdaq,yahoo}`·`kbj/engines/us` — '커밋 f6aeebd' 덧붙임(마이그레이션 SQL 0006 주석은 이미 적용된 파일이라 그대로) |
+| LEGACY: ADR 0038·0003·0007 | 0038 확정, 0003·0007 '대체됨 — 0038', `docs/adr/README.md` 새로 |
+| LEGACY: SimOptions.reader_calls | `test_ops_week` 는 쓰지 않음(확인) |
+| FND: `uv sync --all-groups` | legacy 그룹이 없어져 해당 없음 |
+
+### 3. legacy 정리(§7.6)
+
+- `pyproject.toml`: legacy 그룹·ruff/pyright 제외·마커 `legacy`·계약 ② 삭제 → `uv lock`(122 → 73 패키지, 남은 버전 변화 0),
+  import-linter **18 kept**. `.dockerignore`·`.gitignore` legacy 줄 삭제. `scripts/test_legacy.sh` 삭제.
+- CI: lint·test(kbj)(`-m "not sim and not integration"`)·kbj-integration(+ junit 주석 — `ci_junit_annotations.py` 살림)·
+  canonical(한 단계)·sim·web·public-outputs·demo(compose).
+- `tests/test_store_layout.py`: GX 표·열 대조를 GX 001~004 에서 읽던 값의 시험 안 상수로(21 표 — 값 같음), dockerignore 단언
+  (`legacy` 없음). `tests/acceptance/test_p7_golden_spec.py`: `docs/migration/gexlab.md` 를 읽음.
+
+### 4. 시험 수 (수집 — `--collect-only`, FND 기준선 대비)
+
+| 선택 | FND | WRAP | 차이 |
+|---|---|---|---|
+| 전체 | 8,177 | **8,705** | +528 |
+| `-m "not sim and not integration"`(CI test) | 7,925 | **8,441** | +516(GXI 승격 397 + 새 30·등록부 +1, DEMO·OPS 새 시험, LEGACY 삭제·WRAP ±) |
+| `-m sim` | 121 | **127** | +6(OPS `test_ops_week`) |
+| `-m integration` | 128 | **137** | +9(WRAP `test_gex_ingest_pg`) |
+| `-m legacy` | 3 | **0** | −3(LEGACY — 다리 시험 2 파일) |
+| legacy 스크립트 | gexlab 760·통합 39·ET/SD 1,200여 | **0** | 폐지·승격 사유는 `docs/migration/*.md` 'P9' |
+| 웹 vitest | — | **658**(52 파일) | |
+
+WRAP 이 지운 kbj 항목: 계약 ② 위반 사례 1(계약이 없어짐), `test_every_group_but_krx_scrape_is_zero` 1 → `test_every_group_is_zero`
++ `test_real_baseline_file_has_no_entries`(+1), `test_gitignore` 매개변수 17(legacy 경로 — 대상 없음) 삭제 + 1. 새: 워치독 2,
+README 링크 4, 데모 offline 경로 3(페이지 13), 통합 9.
+
+### 5. 완료 명령 실측(§7.4 WRAP — 도커·통합·sim 전체 밖)
+
+ruff check·format --check·pyright 0·lint-imports 18 kept·check_canonical 통과(모든 그룹 0)·check_public_safety 통과·
+check_public_outputs 통과(repo·site·media·demo)·`uv lock --check`·`scheduler validate`·`api openapi --check`·
+`build_public_site.sh --dry-run`·web lint·typecheck·vitest 658·build:public(JS gzip 79,727 B)·build:login(123,458 B)·
+check-bundle 위반 0·gen:types --check — 전부 통과. 단위 전체·sim 전체 결과는 아래 §6.
+
+### 6. 단위 전체·sim(`-m "sim and not slow"`) 실측
+
+- 단위 전체 `pytest -m "not sim and not integration"`: **8,411 통과·건너뜀 1·xfail 29**(= 수집 8,441, 36분 52초 — 단일
+  프로세스). 건너뜀 1 은 DART 실데이터 골든(원래부터 — 키 없는 환경).
+- sim `-m "sim and not slow"`: **125 통과**(test_one_day*·krx_late·holiday·notify_on·redis_blip·restart·ops_week 등 전부). 16:00
+  기대값 그대로.
+- 도커 통합·sim slow·데모 compose 실제 기동은 돌리지 않았다(메인 몫).

@@ -65,7 +65,7 @@ def _options(start: datetime, hours: float, **kw: Any) -> SimOptions:
         p4=True,
         enable=ENABLE,
         ws=False,  # 웹소켓·legacy 조회는 P2 시뮬레이션이 본다 — 이 창은 P4 작업
-        legacy_calls=False,
+        reader_calls=False,
         notify_enabled=True,
         **kw,
     )

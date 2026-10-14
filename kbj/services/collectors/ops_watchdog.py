@@ -27,6 +27,7 @@ from typing import Any, Final
 import psycopg
 
 from kbj.core.calendar import TradingCalendar
+from kbj.services.ops.source import GapWriter, ServiceExpect, record_heartbeat_gaps
 from kbj.services.scheduler.claims import RunLog, RunRecord
 from kbj.services.scheduler.conditions import AsOfUnavailable, holds, resolve_as_of
 from kbj.services.scheduler.handlers import JobContext, JobResult
@@ -168,6 +169,20 @@ def run(ctx: JobContext) -> JobResult:
         hb = _redis_age
     problems = find_problems(registry, runs, running_fn(), hb, kr, us, ctx.now)
     failed: list[str] = []
+    # P9 WRAP(ADR 0037 §3): 지금 끊긴 상시 서비스를 ops.health_events 'heartbeat_gap' 으로 남긴다 —
+    # 1주 판정 ①(끊김 >10분)의 입력. 자원 ops_gaps(쓰기 — 운영은 PgOpsSource)가 없으면 남기지 않는다
+    gaps: GapWriter | None = ctx.resources.get("ops_gaps")
+    gap_error = ""
+    if gaps is not None:
+        expect = [
+            ServiceExpect(s.name, s.beat_name, s.heartbeat_s)
+            for s in registry.services
+            if s.enabled and s.heartbeat_s is not None
+        ]
+        try:
+            record_heartbeat_gaps(expect, hb, ctx.now, gaps)
+        except StoreError as e:  # 알림은 그대로 보내고 실행은 실패로 남긴다(삼키지 않는다)
+            gap_error = f"하트비트 끊김 기록 실패: {e.cause or type(e).__name__}"
     for p in problems:
         ticket = notify(p.text, kind=KIND, source=SOURCE, subject=p.subject)
         if not getattr(ticket, "ok", False):
@@ -175,4 +190,6 @@ def run(ctx: JobContext) -> JobResult:
     detail: dict[str, Any] = {"problems": len(problems)}
     if failed:
         return JobResult("failed", detail={**detail, "reason": f"알림을 넣지 못했다: {failed[0]}"})
+    if gap_error:
+        return JobResult("failed", detail={**detail, "reason": gap_error})
     return JobResult("ok", detail=detail)

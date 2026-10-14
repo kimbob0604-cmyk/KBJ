@@ -7,7 +7,7 @@ requires-python = ">=3.12,<3.13"
 # 신규 kbj/ 코드에 필요한 것만. 버전 하한은 P0 통합 해석(docs/conflict_map.md §3.3)과 맞춘다.
 # P2(docs/p2_design.md §11.2 S0)에서 더한 것:
 # - exchange-calendars: 거래 캘린더 XKRX·XNYS(kbj.core.calendar — 지연 import). pandas 는 이 의존성으로
-#   들어오고 단일 lock 이 2.3.3 으로 묶는다(legacy 그룹 `pandas<3.0`, conflict_map §3.3)
+#   들어온다(P9 WRAP 에 legacy 그룹을 지워 pandas 상한 묶음도 없어졌다)
 # - defusedxml: 공공데이터포털·DART corpCode.xml XML 파싱(외부 XML 은 표준 xml 로 열지 않는다)
 # P3(docs/p3_design.md §1.1·D-P3-3, 묶음 M — 웨이브 2 가 쓸 의존성을 한 번에):
 # - fastapi·uvicorn(extras 없음): 로그인 API·텔레그램 웹훅 수신·로그인 SPA 정적 파일을 한 프로세스로(compose
@@ -16,7 +16,7 @@ requires-python = ">=3.12,<3.13"
 # P4(docs/p4_design.md §1.1·D-P4-20, 묶음 M — 웨이브 2 가 쓸 의존성을 한 번에):
 # - openpyxl: dart-report 엑셀 빌더 승격(kbj.reports.dart_excel — 묶음 R)
 # - beautifulsoup4: DART 공시 원문·주석 표 파싱(표준 html.parser — DR 3곳 그대로, lxml 불필요)
-#   둘 다 legacy 그룹과 같은 하한(단일 lock — 같은 버전으로 묶인다)
+#   (하한은 옛 legacy 그룹과 같게 잡았다 — 그룹은 P9 WRAP 에 지웠다)
 dependencies = [
     "beautifulsoup4>=4.12",
     "defusedxml>=0.7.1",
@@ -54,36 +54,11 @@ dev = [
     "types-pyyaml>=6.0.12",
     # 하루 운영 시뮬레이션의 가짜 KIS 웹소켓 서버(tests/fakes/ws_server.py)의 websockets 는 P7 부터 런타임
 ]
-# legacy 세 프로젝트(legacy/gexlab·etf_traker·stock_dashboard)를 루트 .venv 하나로 돌리는 의존성.
-# 이식 보고들의 python_deps 를 합쳤다(docs/conflict_map.md §3.3, /tmp/p0test/resolve/union.txt 해석과 같은 범위).
-# 루트 uv.lock 이 정본이다 — legacy/gexlab/uv.lock 은 원본 기록으로만 남는다(legacy/gexlab/MIGRATION.md).
-# legacy 를 비우는 단계(PLAN D8)에서 이 그룹도 지운다.
-legacy = [
-    # gexlab (실행) — exchange-calendars 는 P2, vollib·websockets 는 P7 부터 런타임 의존성(위 dependencies)
-    # gexlab (개발 — 자기 pyright·pre-commit 설정용). pandas-stubs 는 P2 부터 dev 그룹(위)
-    "pre-commit>=3.7",
-    # 공통 — pandas 는 pykrx 가 <3.0 을 요구해 2.3 대로 묶는다(GX 는 2.3.3 에서 통과 확인, E2)
-    "pandas>=2.3.3,<3.0",
-    "numpy>=2.0",
-    "requests>=2.31",
-    "lxml>=5.0",
-    "beautifulsoup4>=4.12",
-    # etf_traker (board·monitor·flowlab·dart-report·etf_tracker_v9)
-    "anthropic>=0.40.0",
-    "openpyxl>=3.1",
-    # matplotlib 은 P5 부터 런타임 의존성(위 dependencies — D-P5-16)
-    "fonttools>=4.40",
-    "playwright>=1.40",
-    # stock_dashboard (requirements.txt). 누락분이던 aiohttp·tenacity(dart_collector.py)는 P4 묶음 S 가 그 모듈과 함께
-    # 지웠다. etf_traker 의 streamlit(dart-report app.py)도 P4 에 app.py 삭제(D-P4-6)와 함께 지웠다
-    "flask>=3.0",
-    "pykrx>=1.0.51",
-    "apscheduler>=3.10",
-    "gunicorn>=21.2",
-    "yfinance>=0.2.40",
-    "flask-socketio>=5.3",
-    "simple-websocket>=1.0",
-]
+# 데모 이미지(Dockerfile.demo — `uv sync --frozen --no-dev --group demo`)만 쓰는 의존성(P9 D-P9-3, ADR 0034).
+# 데모 서버는 메모리 저장소 + fakeredis(세션·로그인 잠금) 한 프로세스다. 운영 이미지는 이 그룹을 넣지 않는다.
+demo = ["fakeredis[lua]>=2.39"]
+# P9 WRAP(ADR 0038): legacy/ 를 비우며 legacy 의존성 그룹(스크랩·flask·pre-commit 등)을 지웠다 — 원본은
+# 커밋 f6aeebd(legacy 를 지우기 직전 — 태그 legacy-final 은 사용자가 GitHub 에서 달 수 있다).
 
 [build-system]
 requires = ["uv_build>=0.8.17,<0.9"]
@@ -93,13 +68,13 @@ build-backend = "uv_build"
 module-name = "kbj"
 module-root = ""
 
-# ── ruff — 규칙은 GEXLAB pyproject 와 같다. 대상은 kbj/·tests/·scripts/ 만(legacy 제외 — ADR 0003) ──
+# ── ruff — 규칙은 GEXLAB pyproject 와 같다. 대상은 kbj/·tests/·scripts/ 만 ──
 [tool.ruff]
 line-length = 100
 target-version = "py312"
 src = [".", "scripts"]
 include = ["kbj/**/*.py", "tests/**/*.py", "scripts/**/*.py"]
-extend-exclude = ["legacy", "docs"]
+extend-exclude = ["docs"]
 force-exclude = true
 
 [tool.ruff.lint]
@@ -110,12 +85,12 @@ ignore = ["RUF001", "RUF002", "RUF003"]
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "S105", "S106"]
 
-# ── pyright — 대상은 kbj/·tests/·scripts/ 만(legacy 제외 — ADR 0003) ─────────────────────────
+# ── pyright — 대상은 kbj/·tests/·scripts/ 만 ─────────────────────────────────────────────
 [tool.pyright]
 pythonVersion = "3.12"
 typeCheckingMode = "standard"
 include = ["kbj", "tests", "scripts"]
-exclude = ["legacy", "**/__pycache__", ".venv"]
+exclude = ["**/__pycache__", ".venv"]
 strict = ["kbj/core"]
 extraPaths = ["scripts"]
 venvPath = "."
@@ -135,7 +110,6 @@ markers = [
     "network: 외부 API 를 실제로 부르는 시험 (CI 기본 제외 — 키가 있는 운영 환경에서만)",
     "sim: 하루 운영 시뮬레이션(가짜 시계·가짜 서버 — tests/sim)",
     "slow: 오래 걸리는 시뮬레이션(장중 하루 판 — CI sim 잡은 -m \"sim and not slow\", P3 묶음 S)",
-    "legacy: legacy 의존성 그룹(requests 등)이 있어야 도는 다리 시험 — CI 는 dev 만 설치한 test (kbj) 잡에서 빼고 legacy (etf-rest) 잡에서 돌린다",
 ]
 
 # ── import-linter — 구조로 막는 의존 규칙 (DATA_TIERS §3, ADR 0002·0003) ─────────────────────
@@ -149,11 +123,8 @@ type = "forbidden"
 source_modules = ["kbj.data.public"]
 forbidden_modules = ["kbj.data.private"]
 
-[[tool.importlinter.contracts]]
-name = "② kbj 는 legacy 를 import 하지 않는다"
-type = "forbidden"
-source_modules = ["kbj"]
-forbidden_modules = ["legacy"]
+# ② kbj 는 legacy 를 import 하지 않는다 — P9 WRAP(ADR 0038)에 legacy/ 를 비워 지웠다(대상 모듈 없음).
+# 선언한 의존성만 쓰는지는 tests/test_import_contracts.py 가 계속 본다. 번호는 다시 매기지 않는다
 
 [[tool.importlinter.contracts]]
 name = "③ kbj.core 는 순수 계산 — 어댑터·서비스·저장소와 I/O 라이브러리를 import 하지 않는다"
@@ -364,7 +335,6 @@ forbidden_modules = [
     "kbj.data.private",
     "kbj.data.http",
     "kbj.data.catalog",
-    "kbj.data.legacy_bridge",
     "kbj.services.collectors",
     "kbj.services.api",
 ]

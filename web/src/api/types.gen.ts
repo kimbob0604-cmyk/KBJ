@@ -1578,6 +1578,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ops/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Status */
+        get: operations["status_api_ops_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ops/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Jobs */
+        get: operations["jobs_api_ops_jobs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ops/notify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Notify */
+        get: operations["notify_api_ops_notify_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/telegram/webhook": {
         parameters: {
             query?: never;
@@ -3819,6 +3870,63 @@ export interface components {
             generated_at: string;
             data: components["schemas"]["MarketSummary"];
         };
+        /** Envelope[OpsJobs] */
+        Envelope_OpsJobs_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["OpsJobs"];
+        };
+        /** Envelope[OpsNotify] */
+        Envelope_OpsNotify_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["OpsNotify"];
+        };
+        /** Envelope[OpsStatus] */
+        Envelope_OpsStatus_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["OpsStatus"];
+        };
         /** Envelope[OverhangRecent] */
         Envelope_OverhangRecent_: {
             /** Source */
@@ -5870,6 +5978,118 @@ export interface components {
             /** Target Price */
             target_price: number | null;
             quality: components["schemas"]["Quality"];
+        };
+        /** OpsCheckItem */
+        OpsCheckItem: {
+            /** Key */
+            key: string;
+            /** Title */
+            title: string;
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "OK" | "WARN" | "FAIL";
+            /** Value */
+            value: string;
+            /** Verdict */
+            verdict: boolean;
+        };
+        /** OpsJobRow */
+        OpsJobRow: {
+            /** Job */
+            job: string;
+            /** As Of */
+            as_of: string;
+            /** Attempts */
+            attempts: number;
+            /** Status */
+            status: string;
+            /** Started At */
+            started_at: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /** Retried Ok */
+            retried_ok: boolean;
+        };
+        /** OpsJobs */
+        OpsJobs: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Total */
+            total: number;
+            /** Failed */
+            failed: number;
+            /** Retried Ok */
+            retried_ok: number;
+            /** Rows */
+            rows: components["schemas"]["OpsJobRow"][];
+        };
+        /** OpsNotify */
+        OpsNotify: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Sent */
+            sent: number;
+            /** Failed */
+            failed: number;
+            /** Rows */
+            rows: components["schemas"]["OpsNotifyRow"][];
+        };
+        /** OpsNotifyRow */
+        OpsNotifyRow: {
+            /** Kind */
+            kind: string;
+            /** Status */
+            status: string;
+            /**
+             * Requested At
+             * Format: date-time
+             */
+            requested_at: string;
+            /** Sent At */
+            sent_at: string | null;
+            /** Parts */
+            parts: number | null;
+            /** Reason */
+            reason: string | null;
+        };
+        /** OpsService */
+        OpsService: {
+            /** Name */
+            name: string;
+            /** Heartbeat S */
+            heartbeat_s: number;
+            /** Age S */
+            age_s: number | null;
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "OK" | "WARN" | "FAIL";
+        };
+        /** OpsStatus */
+        OpsStatus: {
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "OK" | "WARN" | "FAIL";
+            /**
+             * Since
+             * Format: date-time
+             */
+            since: string;
+            /** Services */
+            services: components["schemas"]["OpsService"][];
+            /** Items */
+            items: components["schemas"]["OpsCheckItem"][];
         };
         /** Overhang */
         Overhang: {
@@ -14070,6 +14290,178 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_Correlation_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    status_api_ops_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_OpsStatus_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    jobs_api_ops_jobs_get: {
+        parameters: {
+            query?: {
+                date?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_OpsJobs_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    notify_api_ops_notify_get: {
+        parameters: {
+            query?: {
+                date?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_OpsNotify_"];
                 };
             };
             /** @description 세션 없음·만료 */

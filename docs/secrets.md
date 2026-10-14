@@ -125,7 +125,7 @@ KIS REST 는 **모든 요청 헤더에** `appkey`·`appsecret` 을 요구한다(
 
 | 무엇 | 어디에 |
 |---|---|
-| `KBJ_KIS_APP_KEY`·`KBJ_KIS_APP_SECRET`·`KBJ_KIS_ENV` 주입 | KIS REST 를 부르는 프로세스: `auth`, scheduler 실행기·collectors, legacy 브리지를 쓰는 legacy 실행, legacy GX poller(P9 까지). P7 부터 KBJ `ws-gateway` 에는 `KBJ_KIS_APP_KEY`·`KBJ_KIS_ENV` 만(접속키 캐시 이름 — 시크릿 없음, 접속키는 auth 가 발급해 Redis 에 둔다). **그 밖 서비스(notifier·api·migrate 등)에는 넣지 않는다**(compose — 묶음 I) |
+| `KBJ_KIS_APP_KEY`·`KBJ_KIS_APP_SECRET`·`KBJ_KIS_ENV` 주입 | KIS REST 를 부르는 프로세스: `auth`, scheduler 실행기·collectors(P9 부터 GEX 분봉·마스터 작업 포함), KBJ `gex-poller`(P9 GXI — legacy GX poller 를 옮긴 것, scheduler 와 같은 세 이름), legacy 브리지를 쓰는 legacy 실행. P7 부터 KBJ `ws-gateway` 에는 `KBJ_KIS_APP_KEY`·`KBJ_KIS_ENV` 만(접속키 캐시 이름 — 시크릿 없음, 접속키는 auth 가 발급해 Redis 에 둔다). **그 밖 서비스(notifier·api·migrate 등)에는 넣지 않는다**(compose — 묶음 I) |
 | 접근토큰·웹소켓 접속키 **발급** | `services.auth` 한 곳. 나머지는 Redis `kis:token`·`kis:ws_key` 를 읽기만 한다 |
 | 발급 차단 세 겹 | ① 발급 클래스는 `kbj/services/auth/issuer.py` 에만, import-linter 계약으로 auth 밖 import 금지 ② `oauth2/tokenP`·`oauth2/Approval` 문자열 검사(`scripts/check_canonical.py`) ③ 런타임 가드 — `KBJ_SERVICE` 가 `auth` 가 아니면 발급자 생성 거부 |
 | 웹소켓 연결 코드 | P7 부터 KBJ `kbj.services.ws_gateway`(호스트는 `endpoints.py` 한 곳 — `check_canonical` `kis_ws` 목표 0, import-linter ⑲). 접속키 발급은 auth 만 |
@@ -161,4 +161,12 @@ KIS REST 는 **모든 요청 헤더에** `appkey`·`appsecret` 을 요구한다(
   않고 출력하지 않는다. 이관이 끝나면 셸에서 지운다.
 - legacy GX 의 `DB_SEARCH_PATH`(값 `prv_gex,ops` — 비밀 아님)는 GX poller·scheduler 가 KBJ DB 에 붙을 때만(ADR 0029 §3-7)
   [확인 필요 — 운영 VM 의 실제 이름, probe #64].
+
+## P9 GXI (docs/p9_design.md §7.2 GXI-5, ADR 0036)
+
+- 새 비밀 이름 **없음**. compose 서비스 `gex-poller`(profile app)는 `KBJ_REDIS_URL`·`KBJ_DATABASE_URL`·`KBJ_SPOOL_DIR` 과
+  KIS REST 헤더용 `KBJ_KIS_APP_KEY`·`KBJ_KIS_APP_SECRET`·`KBJ_KIS_ENV`(scheduler 와 같은 이름 — 위 §4). 토큰은 auth 가
+  Redis 에 둔 것을 읽기만 한다(발급 없음). 텔레그램·DART·KRX 키는 넣지 않는다(`tests/unit/gex_ingest/test_compose_poller.py`).
+- GEX 분봉·KRX 파생·마스터·개장 확인 작업은 scheduler 안에서 돈다 — scheduler 의 기존 KIS·KRX 이름을 쓴다(새 주입 없음).
+- GX → KBJ 전환이 끝나면(런북 ④) legacy GX 의 `DB_SEARCH_PATH` 는 쓰지 않는다(GX poller·scheduler 정지).
 

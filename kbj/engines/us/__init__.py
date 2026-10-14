@@ -1,7 +1,7 @@
 """미국장 신고가 엔진(로그인 산출 — Nasdaq·Stooq·Yahoo). docs/p5_design.md §1.6·§4.6·metrics §23.
 
 승격 원본 `legacy/etf_traker/board/us/{engine,sectors,brief,build}.py`(본문 그대로 — 252봉, ADR 0001
-Q10). 모듈:
+Q10. 원본은 P9 에 지움 — 커밋 f6aeebd). 모듈:
 
 - `engine` — 종목 판정(신고가·신저가·연속·첫 진입)과 집계(섹터·시총 구간·대형주·대장·요약)
 - `board`  — 조립(②·③ 추이 포함) → us_summary 한 덩어리

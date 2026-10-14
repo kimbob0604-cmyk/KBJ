@@ -12,6 +12,7 @@ from kbj.services.collectors import ops_watchdog as wd
 from kbj.services.scheduler.claims import MemoryRunLog, RunRecord
 from kbj.services.scheduler.handlers import JobContext
 from kbj.services.scheduler.registry import Registry
+from kbj.store.db import StoreError
 
 REG = Registry.load(Path(__file__).resolve().parents[3] / "config" / "jobs.yaml")
 KR = TradingCalendar.default()
@@ -83,14 +84,20 @@ def seeded_runs() -> MemoryRunLog:
     # 16:00 이라 10:30 기준 끝났어야 할 실행이 없다
     for job in ("rules.outcome", "rules.backtest_nightly"):
         runs.record(RunRecord(f"{job}:2026-10-02:1", job, "2026-10-02", 1, "ok"))
+    # P9 WRAP: 워치독 자신은 5분마다(마감 10분) — 10:30 기준 끝났어야 할 마지막 발화는 10:20
     runs.record(
-        RunRecord("ops.watchdog:2026-10-06T10:00:1", "ops.watchdog", "2026-10-06T10:00", 1, "ok")
+        RunRecord("ops.watchdog:2026-10-06T10:20:1", "ops.watchdog", "2026-10-06T10:20", 1, "ok")
     )
     return runs
 
 
 def ctx(
-    notes: Notes, runs: MemoryRunLog, *, running: list[RunRecord] | None = None, hb: Any = healthy
+    notes: Notes,
+    runs: MemoryRunLog,
+    *,
+    running: list[RunRecord] | None = None,
+    hb: Any = healthy,
+    extra: dict[str, Any] | None = None,
 ) -> JobContext:
     return JobContext(
         "ops.watchdog",
@@ -106,6 +113,7 @@ def ctx(
             "notify": notes,
             "running": lambda: running or [],
             "heartbeat_age": hb,
+            **(extra or {}),
         },
     )
 
@@ -145,14 +153,16 @@ def test_finds_dead_heartbeat_missed_run_and_overdue_running() -> None:
 
 
 def test_holiday_has_no_missed_trading_day_runs() -> None:
-    hol = datetime(2026, 10, 5, 12, 0, tzinfo=KST)  # 대체공휴일 — ops.watchdog 은 거래일만
+    hol = datetime(2026, 10, 5, 12, 0, tzinfo=KST)  # 대체공휴일
     runs = MemoryRunLog()
     # public.export(P3)는 when: always — 휴장일에도 05:30 에 돈다(그 기록은 있어야 한다)
     # P6 trade.map_load(07:35)도 when: always
     for job in ("ops.nightly", "filings.corp_code", "public.export", "trade.map_load"):
         runs.record(RunRecord(f"{job}:2026-10-05:1", job, "2026-10-05", 1, "ok"))
-    # P4 공시·재무 작업도 when: always — DART 는 거래소 휴장일에도 접수한다 [확인 필요 #28]
+    # P4 공시·재무 작업도 when: always — DART 는 거래소 휴장일에도 접수한다 [확인 필요 #28].
+    # P9 WRAP: ops.watchdog 자신도 when: always(5분마다) — 휴장일에도 돈다
     for job, hhmm in (
+        ("ops.watchdog", "11:50"),
         ("filings.dart_feed", "11:50"),
         ("earnings.alerts", "11:50"),
         ("fin.quarterly", "11:30"),
@@ -170,6 +180,45 @@ def test_notify_failure_fails_the_job() -> None:
     runs.records.pop("filings.corp_code:2026-10-06:1")
     result = wd.run(ctx(Notes(ok=False), runs))
     assert result.status == "failed" and "Redis 없음" in result.detail["reason"]
+
+
+class GapSink:
+    def __init__(self, fail: bool = False) -> None:
+        self.events: list[Any] = []
+        self.fail = fail
+
+    def write_gaps(self, events: Any) -> int:
+        if self.fail:
+            raise StoreError("하트비트 끊김 기록 실패: OperationalError", cause="OperationalError")
+        self.events.extend(events)
+        return len(events)
+
+
+def test_dead_heartbeats_are_recorded_as_gap_events() -> None:
+    """P9 WRAP(ADR 0037 §3): 자원 ops_gaps 가 있으면 지금 끊긴 켜진 상시 서비스를 남긴다 —
+    1주 판정 ①(끊김 >10분)의 입력. 기준은 등록부 heartbeat_s, 이름은 등록부 이름."""
+
+    def hb(service: str, now: datetime) -> float | None:
+        return None if service == "auth" else 400.0 if service == "notifier" else 5.0
+
+    sink = GapSink()
+    result = wd.run(ctx(Notes(), seeded_runs(), hb=hb, extra={"ops_gaps": sink}))
+    assert result.status == "ok"
+    assert sorted((e.service, e.age_s) for e in sink.events) == [
+        ("auth", None),
+        ("notifier", 400.0),
+    ]
+    assert {e.ts for e in sink.events} == {NOW}
+
+
+def test_gap_write_failure_fails_the_job_after_notifying() -> None:
+    def hb(service: str, now: datetime) -> float | None:
+        return None if service == "auth" else 5.0
+
+    notes = Notes()
+    result = wd.run(ctx(notes, seeded_runs(), hb=hb, extra={"ops_gaps": GapSink(fail=True)}))
+    assert [n["subject"] for n in notes.sent] == ["heartbeat:auth"]  # 알림은 그대로
+    assert result.status == "failed" and "OperationalError" in result.detail["reason"]
 
 
 def test_heartbeat_is_read_under_the_process_name() -> None:

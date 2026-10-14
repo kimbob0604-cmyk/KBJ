@@ -1,6 +1,6 @@
 # ADR 0007 — legacy 논리 URL 브리지와 직접 호출 금지 검사의 기준선 정책 (2026-10-07)
 
-상태: 확정(P2 — 묶음 H·I 구현이 근거, `docs/p2_design.md` §3.7·§9, D-P2-6, 메인 결정 D2·D6, PLAN §8 P2 완료 기준
+상태: **대체됨 — [0038](0038-legacy-removal.md)**(2026-10-14 P9 WRAP — legacy/ 를 비웠다). 원래 상태: 확정(P2 — 묶음 H·I 구현이 근거, `docs/p2_design.md` §3.7·§9, D-P2-6, 메인 결정 D2·D6, PLAN §8 P2 완료 기준
 "legacy 가 KIS·KRX·DART 를 직접 부르면 실패").
 구현: `kbj/data/legacy_bridge.py`(+ `tests/unit/data/test_legacy_bridge.py`, 프로젝트별 다리 시험 3개) ·
 `scripts/check_canonical.py`·`scripts/canonical_baseline.txt`(+ `tests/test_check_canonical.py`) · import-linter

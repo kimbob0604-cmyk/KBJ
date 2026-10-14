@@ -1,0 +1,46 @@
+{
+  "source": "KBJ 운영 기록",
+  "as_of": "2026-10-16T21:00:00+09:00",
+  "quality": "ok",
+  "notes": [],
+  "generated_at": "2026-10-16T21:00:00+09:00",
+  "data": {
+    "date": "2026-10-16",
+    "sent": 3,
+    "failed": 1,
+    "rows": [
+      {
+        "kind": "brief.morning",
+        "status": "sent",
+        "requested_at": "2026-10-16T08:11:00+09:00",
+        "sent_at": "2026-10-16T08:11:03+09:00",
+        "parts": 2,
+        "reason": null
+      },
+      {
+        "kind": "alert.rule",
+        "status": "sent",
+        "requested_at": "2026-10-16T10:31:00+09:00",
+        "sent_at": "2026-10-16T10:31:00+09:00",
+        "parts": null,
+        "reason": null
+      },
+      {
+        "kind": "alert.rule",
+        "status": "failed",
+        "requested_at": "2026-10-16T13:05:00+09:00",
+        "sent_at": null,
+        "parts": 1,
+        "reason": "telegram 429 — 재시도 한도"
+      },
+      {
+        "kind": "brief.closing",
+        "status": "sent",
+        "requested_at": "2026-10-16T16:02:00+09:00",
+        "sent_at": "2026-10-16T16:02:03+09:00",
+        "parts": 2,
+        "reason": null
+      }
+    ]
+  }
+}

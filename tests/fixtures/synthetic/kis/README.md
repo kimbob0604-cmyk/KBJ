@@ -14,13 +14,12 @@ DATA_TIERS §4, ADR 0001 U3). 이 폴더의 JSON 은 모두 **고정 시드 생�
 | `p5_flows_program.json` | P5 F2 TR 6개(장중 투자자 1분 `FHPTJ04030000`·프로그램 시장 일별·장중·투자자 당일·종목 장중·일별 — TR id·경로는 `kbj/data/private/kis/datasets.py`, 모양은 `kbj.data.private.kis.{investors_minute,program}` 상수 표, 전부 [확인 필요 #39~#41]) 응답 — 생성기 `p5_make.py`(가짜 KIS 서버 — 합성 세계 `p5_world` 시드 20261113) | `tests/unit/kis/test_parse_{investors_minute,program}.py`(P5 묶음 F2) |
 | `p4_consensus.json` | P4 컨센서스 TR 2개(종목추정실적·종목투자의견 — TR id·경로는 `kbj/data/private/kis/datasets.py:CONSENSUS_TRS`, 모양은 `kbj.data.private.kis.consensus` 상수 표, 전부 [확인 필요 #29]) 응답 11건 — 생성기 `make_p4.py`(가짜 KIS 서버 `consensus_output` — 합성 20종목 세계 `p4_world` 시드 20261007 의 의미값·세계 밖은 sha256 고정 시드) | `tests/unit/kis/test_parse_consensus.py`(P4 묶음 K) |
 
-- 생성기: `legacy/gexlab/scripts/make_synthetic_fixtures.py`(시드 `kbj-p1-gexlab-synthetic-v1`, fixture 마다
-  `random.Random(f"{SEED}:{이름}")`). P1 이식 때 GEXLAB 실측 fixture 를 바꾼 것이다(`legacy/gexlab/MIGRATION.md` §2).
-- 이 폴더의 파일은 생성기 출력(`legacy/gexlab/tests/fixtures/kis/` 의 같은 이름 파일)과 **바이트까지 같은
-  복사본**이다(P2 묶음 A, 2026-10-07). 다시 만들 때: `cd legacy/gexlab && uv run python -m
-  scripts.make_synthetic_fixtures --write` 뒤 같은 파일을 여기로 복사한다. 같은지는
-  `tests/unit/kis/test_kis_master.py::test_synthetic_fixtures_match_the_generator_output` 가 본다
-  (legacy 가 지워지면 그 시험은 건너뛴다 — 그때 생성기를 `tests/fixtures/synthetic/` 로 옮긴다).
+- 생성기: `tests/fixtures/synthetic/gex/make_synthetic_fixtures.py`(P9 GXI 가 GX `scripts/` 에서 옮김 — 시드
+  `kbj-p1-gexlab-synthetic-v1`, fixture 마다 `random.Random(f"{SEED}:{이름}")`). P1 이식 때 GEXLAB 실측
+  fixture 를 바꾼 것이다(`docs/migration/gexlab.md` §2).
+- 이 폴더의 파일은 생성기 출력과 **바이트까지 같다**. 다시 만든 값이 같은지:
+  `uv run python tests/fixtures/synthetic/gex/make_synthetic_fixtures.py`(기본 — 비교만). 시험
+  `tests/unit/kis/test_kis_master.py`·`tests/unit/data/private/test_private_synthetic_fixtures.py` 가 같은지 본다.
 - 모든 JSON 은 머리 칸 `_source` 가 `SYNTHETIC` 으로 시작한다(같은 시험이 확인).
 - 하루 운영 시뮬레이션의 가짜 KIS 서버가 쓰는 합성 응답(묶음 I)도 이 폴더에 둔다.
 - `p3_responses.json` 은 `uv run python tests/fixtures/synthetic/kis/make_p3.py --write` 로 다시 만든다. 커밋본이

@@ -29,7 +29,7 @@ pytestmark = pytest.mark.sim
 START = at(10, 6, 5)
 DAY = date(2026, 10, 6)
 PREV = "2026-10-02"
-NON_AUTH = ("scheduler", "gx", "legacy")
+NON_AUTH = ("scheduler", "gx", "reader")  # P9: legacy 브리지 → reader(harness)
 
 
 @pytest.fixture(scope="module")
@@ -139,8 +139,8 @@ def test_krx_each_endpoint_and_day_requested_once(day: SimDay) -> None:
     # 시뮬레이션 처리기로 돌린다 — 하네스 머리말)
     assert len(req) == 13 and set(req.values()) == {1}
     assert {b for _, b in req} == {"20261002"}
-    assert {s.consumer for s in day.krx.seen if s.endpoint.startswith("/drv/")} == {"gx"}
-    assert {s.consumer for s in day.krx.seen if not s.endpoint.startswith("/drv/")} == {"scheduler"}
+    # P9 WRAP: KRX 파생(/drv/)도 등록부 gex.krx_derivatives(runner kbj) — 옛 GX 흉내(gx) 자리
+    assert {s.consumer for s in day.krx.seen} == {"scheduler"}
 
 
 def test_dart_list_polled_once_per_minute_0700_to_1959(day: SimDay) -> None:
@@ -242,7 +242,8 @@ def test_enabled_jobs_ran_with_real_handlers(day: SimDay) -> None:
     assert corp.status == "ok" and corp.detail.get("rows") == day.dart.corps
     assert day.corp_store.count() == day.dart.corps
     watch = [r for (job, _), r in final.items() if job == "ops.watchdog"]
-    assert len(watch) == 26  # 08:00~20:30 30분마다(cron '0,30 8-20')
+    # P9 WRAP(ADR 0037 §3): 5분마다·매일 24시간(cron '*/5 * * * *') — 24시간 창에 288회
+    assert len(watch) == 24 * 12
     assert all(r.detail.get("problems") == 0 for r in watch)
     assert day.notify_log.of("ops.watchdog") == []
 
@@ -269,15 +270,22 @@ def test_job_count_matches_the_registry_for_a_trading_day(day: SimDay) -> None:
     assert final[("krx.daily", PREV)].status == "ok"  # 실행 as_of = 수집 키 as_of(전 거래일)
 
 
-# ── 5. legacy GX·브리지 ─────────────────────────────────────────────────────────────────
-def test_external_steps_read_tokens_and_share_the_claim_ledger(day: SimDay) -> None:
+# ── 5. GX 수집(등록부 작업)·상시 서비스 흉내·reader ─────────────────────────────────────
+def test_gx_collect_jobs_run_on_the_registry_and_share_the_claim_ledger(day: SimDay) -> None:
+    """P9 WRAP(ADR 0036): 옛 GX external 단계(마스터·KRX 파생·분봉)는 등록부 작업(runner kbj)이다 —
+    실행기가 같은 선점 장부로 돌린다. 상시 서비스(poller·ws) 흉내만 external_runs 에 남는다."""
+    final = day.final_runs()
+    assert final[("kis.master", "2026-10-06")].status == "ok"  # PRE_DAY
+    assert [r.status for (job, _), r in final.items() if job == "kis.master_night"] == ["ok"]
+    assert final[("gex.krx_derivatives", PREV)].status == "ok"
+    assert final[("gex.day_minutes", "2026-10-06")].status == "ok"
+    # 마스터 zip 은 PRE_DAY(kis.master)·PRE_NIGHT(kis.master_night) 두 번, 같은 프로세스(scheduler)
+    assert [c for _, c in day.kis.master_downloads] == ["scheduler", "scheduler"]
     ext = Counter((r.job, r.status) for r in day.external_runs)
-    assert ext[("kis.master", "ok")] == 2  # PRE_DAY(10-06)·PRE_NIGHT(야간 귀속 10-07)
-    assert ext[("gex.krx_derivatives", "ok")] == 1
-    assert ext[("gex.day_minutes", "ok")] == 1
     assert ext[("gex.ws_gateway", "ok")] == 2
+    assert ext[("gex.poller", "ok")] > 0
+    assert {j for j, _ in ext} == {"gex.poller", "gex.ws_gateway"}
     assert not [r for r in day.external_runs if r.status != "ok"]
-    assert len(day.kis.master_downloads) == 2
 
 
 def test_ws_gateway_subscribes_with_auth_issued_approval_keys(day: SimDay) -> None:
@@ -293,10 +301,12 @@ def test_ws_gateway_subscribes_with_auth_issued_approval_keys(day: SimDay) -> No
     assert day.ws.errors == []
 
 
-def test_legacy_bridge_reads_the_token_without_issuing(day: SimDay) -> None:
-    assert [(s, tok) for _, s, tok in day.legacy_results] == [(200, day.kis.tokens()[0].value)]
-    legacy = day.kis.gets("legacy")
-    assert len(legacy) == 1 and legacy[0].bearer == day.kis.tokens()[0].value
+def test_reader_process_reads_the_token_without_issuing(day: SimDay) -> None:
+    """P9: 옛 legacy 브리지 시험 — 브리지는 ET·SD 와 함께 지웠고 같은 자리(발급하지 않는 두 번째
+    프로세스)를 harness 'reader' 가 맡는다. 호출자 헤더를 갈아 끼우던 브리지 단언은 없어졌다."""
+    assert [(s, tok) for _, s, tok in day.reader_results] == [(200, day.kis.tokens()[0].value)]
+    reader = day.kis.gets("reader")
+    assert len(reader) == 1 and reader[0].bearer == day.kis.tokens()[0].value
 
 
 def test_health_has_only_routine_refresh_events(day: SimDay) -> None:

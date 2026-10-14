@@ -728,7 +728,8 @@ def test_real_registry_one_day_runs_only_enabled_jobs() -> None:
     assert ran.count("earnings.alerts") == 14 * 12  # 07:00~20:55 5분마다
     assert ran.count("fin.quarterly") == 15 * 2  # 07:00~21:30 30분마다
     assert ran.count("filings.derive") == 15 * 2  # 07:10~21:40 — 10·40분
-    assert ran.count("ops.watchdog") == 26  # 08:00~20:30 30분마다
+    # P9 WRAP(ADR 0037 §3): 5분마다 매일 24시간 — 창 00:00~다음 날 00:00 양 끝 포함
+    assert ran.count("ops.watchdog") == 24 * 12 + 1
     # equity {start: open, end: close, every_min: 10} — 09:00~15:30 양 끝 포함 40 슬롯
     assert ran.count("flows.intraday") == ran.count("market.intraday") == 40
     statuses = {(r.job, r.status, r.detail.get("reason")) for r in rig.runs.records.values()}

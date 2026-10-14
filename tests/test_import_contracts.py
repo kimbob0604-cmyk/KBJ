@@ -1,5 +1,8 @@
 """import 규칙 — import-linter 계약이 실제로 위반을 잡는지, kbj 가 legacy 를 못 쓰는지.
 
+P9 WRAP(ADR 0038): legacy/ 를 비워 계약 ②(kbj → legacy 금지)와 그 위반 사례 1개를 지웠다(대상 모듈이
+없다). kbj 가 선언하지 않은 최상위 이름을 끌어오면 아래 1번 시험이 그대로 잡는다.
+
 1. kbj/ 의 모든 import 는 kbj 자신·표준 라이브러리·선언한 런타임 의존성뿐이다. legacy 의 최상위 이름
    (`core`·`db`·`board`·`server` …)은 legacy 폴더가 sys.path 에 올라와야만 import 되는데, 이 시험은
    이름 목록을 따로 들지 않고 '허용된 것만'을 본다 — legacy 를 어떤 이름으로든 끌어오면 실패한다.
@@ -86,7 +89,8 @@ def test_kbj_imports_only_kbj_stdlib_and_declared_deps() -> None:
     ("module", "violation", "contract"),
     [
         ("kbj/data/public/_leak.py", "import kbj.data.private\n", "①"),
-        ("kbj/engines/_leak.py", "import legacy.gexlab\n", "②"),
+        # ② kbj 는 legacy 를 import 하지 않는다 — P9 WRAP(ADR 0038)에 legacy/ 를 비워 계약을 지웠다.
+        #    같은 일은 위 '선언한 의존성만' 시험이 한다(legacy 를 어떤 이름으로든 끌어오면 실패)
         ("kbj/core/_leak.py", "from kbj.services import notifier\n", "③"),
         ("kbj/core/_io.py", "import httpx\n", "③"),
         # ④ — 발급자 클래스는 kbj/services/auth/issuer.py 에만(메인 결정 D1).
@@ -213,7 +217,8 @@ def test_contract_catches_violation(
 
 def test_fifteen_contracts_are_declared() -> None:
     """P3 묶음 S — 계약 ⑧~⑩, P4 묶음 S — ⑪~⑬, P5 WRAP — ⑭·⑯, P6 WRAP — ⑰, P7 WRAP — ⑱·⑲,
-    P8 WRAP — ⑳ 이 실제로 들어 있다(이름 첫 글자 기호로). ⑮ 는 테마 사전 작업 몫으로 비어 있다."""
+    P8 WRAP — ⑳ 이 실제로 들어 있다(이름 첫 글자 기호로). ⑮ 는 테마 사전 작업 몫으로 비어 있다.
+    ② 는 P9 WRAP(ADR 0038)에 legacy/ 와 함께 지웠다 — 번호는 다시 매기지 않는다(kept 19 → 18)."""
     text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     names = [
         line.split("=", 1)[1].strip().strip('"')
@@ -221,4 +226,4 @@ def test_fifteen_contracts_are_declared() -> None:
         if line.startswith("name = ")
         and line.split("=", 1)[1].strip().strip('"')[:1] in "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳"
     ]
-    assert [n[0] for n in names] == list("①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑯⑰⑱⑲⑳")
+    assert [n[0] for n in names] == list("①③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑯⑰⑱⑲⑳")

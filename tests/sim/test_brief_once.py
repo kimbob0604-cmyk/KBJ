@@ -5,9 +5,9 @@
 
 1. 재기동: 08:12 scheduler 재기동 — 08:10 에 이미 보낸 아침 브리핑을 다시 보내지 않는다.
 2. 캐치업: scheduler 가 08:10 을 놓치고 08:30 에 뜬다 — 캐치업 시한(09:00) 안이라 한 번 보낸다.
-3. legacy shim 이중 접수: SD `alert_morning_briefing`(notify.yaml legacy_kinds →
-   brief.morning)이 같은
-   날 한 번 더 넣으면 `duplicate`(중복) — 텔레그램 수신은 그대로 1통.
+3. 같은 날 이중 접수: 08:10 에 보낸 뒤 같은 종류를 다시 넣으면 `duplicate`(중복) — 텔레그램 수신은
+   그대로 1통. (P9 전에는 legacy shim — SD `alert_morning_briefing` 이 notify.yaml legacy_kinds 로
+   넣는 경로 — 를 봤다. shim 은 ET·SD 와 함께 지웠고 넣는 길은 kbj `notify` 하나다.)
 4. 국내 휴장 + 간밤 미국 거래일(2026-10-09 금 한글날, 미국 10-08 목 거래): 아침 1통(kr_or_after_us),
    마감 요약·수급 리포트 0(거래일 작업).
 5. 둘 다 휴장(2026-10-05 월 — 국내 휴장, 간밤 미국 일요일): 브리핑 0(tests/sim/test_holiday.py 도
@@ -25,9 +25,9 @@ from datetime import datetime
 
 import pytest
 
-from kbj.services.notifier.client import legacy_send
+from kbj.services.notifier.client import NotifyTicket, notify
 from tests.sim.conftest import at
-from tests.sim.harness import ROOT, SimDay, SimOptions
+from tests.sim.harness import SimDay, SimOptions
 
 pytestmark = pytest.mark.sim
 
@@ -36,7 +36,7 @@ BRIEFS = ("brief.morning", "brief.closing")
 
 def _sim(start: datetime, hours: float, **kw: object) -> SimDay:
     opts: dict[str, object] = dict(
-        start=start, hours=hours, notify_enabled=True, ws=False, legacy_calls=False
+        start=start, hours=hours, notify_enabled=True, ws=False, reader_calls=False
     )
     opts.update(kw)
     return SimDay(SimOptions(**opts)).run()  # type: ignore[arg-type]
@@ -85,37 +85,30 @@ def test_catch_up_before_0900_sends_once() -> None:
         sim.close()
 
 
-# ── 3. legacy shim 이중 접수 ──────────────────────────────────────────────────────────────
-def alert_morning_briefing() -> tuple[bool, str]:
-    """SD 함수 이름 그대로(notify.yaml legacy_kinds 가 프레임 이름으로 종류를 찾는다)."""
-    return legacy_send("<b>legacy 아침 브리핑</b>", source="SD:server.py")
-
-
-def test_legacy_shim_second_submit_is_duplicate() -> None:
-    """전환 기간 shim: 같은 legacy 함수가 같은 날 두 번 넣으면 둘째는 duplicate(ADR 0005 — legacy
-    함수마다 하루 1회). SD 아침 계열 함수는 P5 WRAP 에 server.py 에서 지웠다(아래 확인) — 운영에서
-    아침 브리핑을 보내는 길은 brief.morning 하나다."""
-    got: list[tuple[bool, str]] = []
+# ── 3. 같은 날 이중 접수 ───────────────────────────────────────────────────────────────────
+def test_second_submit_same_day_is_duplicate() -> None:
+    """08:10 아침 브리핑을 보낸 뒤 08:30 에 같은 종류를 두 번 더 넣는다 — 둘 다 duplicate(U2 —
+    종류당 하루 1회), 텔레그램 수신은 1통. P9 LEGACY: 옛 시험
+    (`test_legacy_shim_second_submit_is_duplicate`)은 legacy shim·SD server.py 를 봤다 — 둘 다
+    지웠다."""
+    got: list[NotifyTicket] = []
 
     def twice(_s: SimDay) -> None:
-        got.extend([alert_morning_briefing(), alert_morning_briefing()])
+        got.extend(
+            notify("<b>아침 브리핑 다시</b>", kind="brief.morning", source="sim.extra")
+            for _ in range(2)
+        )
 
     sim = _sim(at(11, 17, 5), 5, hooks=((at(11, 17, 8, 30), twice),))
     try:
-        assert [ok for ok, _ in got] == [True, True]
-        assert "대기열" in got[0][1] and "중복" in got[1][1], got
-        mine = "brief.morning:20261117"  # kbj 작업 키(origin 없음 — 종류당 하루 1회)
+        assert [(t.ok, t.duplicate) for t in got] == [(True, True), (True, True)], got
         rows = [r for r in sim.notify_log.rows if r.kind == "brief.morning"]
-        legacy = sorted(r.status for r in rows if r.dedup_key != mine)
-        assert legacy.count("sent") == 1 and len(legacy) <= 2, legacy  # 둘째는 발송 없음
-        assert [r.status for r in rows if r.dedup_key == mine] == ["sent"]  # kbj 경로 1통
+        assert Counter(r.status for r in rows) == {"sent": 1, "duplicate": 2}
+        # 중복 기록 키는 '<문지기 키>#duplicate#<id>' — 문지기 키는 하나(종류당 하루 1회)
+        assert {(r.dedup_key or "").split("#")[0] for r in rows} == {"brief.morning:20261117"}
+        assert _sent(sim)["brief.morning"] == 1
     finally:
         sim.close()
-    server = ROOT / "legacy" / "stock_dashboard" / "server.py"
-    text = server.read_text(encoding="utf-8")
-    for fn in ("alert_morning_briefing", "alert_overnight_prediction",
-               "send_us_market_summary_telegram"):  # fmt: skip
-        assert f"def {fn}(" not in text, fn
 
 
 # ── 4·5. 휴장 ─────────────────────────────────────────────────────────────────────────────

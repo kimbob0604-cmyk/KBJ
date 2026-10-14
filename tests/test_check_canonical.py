@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import subprocess
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -91,7 +92,7 @@ def test_etf_issuer_hosts_all_nine_and_only_inside_the_adapter_package() -> None
     g = cc.GROUPS["etf_issuers"]
     assert all(g.pattern.search(f"https://{h}/x") for h in hosts)
     assert not g.pattern.search("https://www.samsung.com")  # 비슷한 이름은 아니다
-    assert g.allowed == ("kbj/data/private/etf_issuers/*",) and not g.zero
+    assert g.allowed == ("kbj/data/private/etf_issuers/*",) and g.zero  # P9 LEGACY — 목표 0
 
 
 def test_dart_needs_scheme_and_krx_scrape_skips_dbg_host() -> None:
@@ -126,9 +127,22 @@ def test_script_itself_has_no_whole_host_strings() -> None:
 
 
 # ── 목표 0 그룹 ───────────────────────────────────────────────────────────────────────────
-@pytest.mark.parametrize(
-    "group", ["kis_oauth", "kis_rest", "kis_master", "krx_api", "dart", "fnguide", "kis_ws"]
-)
+# P9 LEGACY: ET·SD 를 지워 telegram·ecos·datago·kosis·naver·etf_issuers·ta_indicators 도 목표 0.
+# P9 WRAP: legacy 의존성 그룹(pykrx)을 지워 krx_scrape 도 목표 0 — 모든 그룹이 목표 0
+ZERO_GROUPS = list(cc.GROUPS)
+
+
+def test_every_group_is_zero() -> None:
+    assert [g.name for g in cc.GROUPS.values() if not g.zero] == []
+
+
+def test_real_baseline_file_has_no_entries() -> None:
+    """P9 WRAP: 기준선 파일은 머리말(주석)만 — 줄이 다시 생기면 이 시험이 먼저 잡는다."""
+    text = (ROOT / "scripts" / "canonical_baseline.txt").read_text(encoding="utf-8")
+    assert [ln for ln in text.splitlines() if ln.strip() and not ln.startswith("#")] == []
+
+
+@pytest.mark.parametrize("group", ZERO_GROUPS)
 def test_zero_group_in_legacy_fails(
     tmp_path: Path, capsys: pytest.CaptureFixture[str], group: str
 ) -> None:
@@ -194,81 +208,99 @@ def test_kbj_inside_allowed_location_passes(
     assert "통과" in out
 
 
+@pytest.mark.usefixtures("scrape_baselined")
 def test_kbj_path_cannot_be_baselined(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    root = git_repo(tmp_path, {"kbj/engines/n.py": f"N = '{NAVER}'\n"})
-    code, out = run(root, capsys, baseline="naver | kbj/engines/n.py | 1 | P3 — 나중에\n")
+    root = git_repo(tmp_path, {"kbj/engines/n.py": f"N = '{SAMPLES['krx_scrape']}'\n"})
+    code, out = run(root, capsys, baseline="krx_scrape | kbj/engines/n.py | 1 | P3 — 나중에\n")
     assert code == 1
     assert "kbj/ 경로는 기준선에 둘 수 없다" in out
 
 
 # ── 기준선 ───────────────────────────────────────────────────────────────────────────────
-def _naver_lines(n: int) -> str:
-    return "".join(f"U{i} = '{NAVER}'\n" for i in range(n))
+# P9 WRAP 뒤로 기준선 그룹이 없다(모두 목표 0). 기준선 장치(줄어들기만·형식 검사)는 남아 있어
+# 그 규칙은 krx_scrape 를 이 시험 안에서만 기준선 그룹으로 바꿔(monkeypatch) 본다 — GROUPS 는 그대로
+SCRAPE = SAMPLES["krx_scrape"]
 
 
+@pytest.fixture
+def scrape_baselined(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setitem(cc.GROUPS, "krx_scrape", replace(cc.GROUPS["krx_scrape"], zero=False))
+
+
+def _scrape_lines(n: int) -> str:
+    return "".join(f"U{i} = '{SCRAPE}'\n" for i in range(n))
+
+
+@pytest.mark.usefixtures("scrape_baselined")
 def test_baseline_exact_count_passes(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    root = git_repo(tmp_path, {"legacy/sd/news.py": _naver_lines(3)})
-    code, out = run(root, capsys, baseline="naver | legacy/sd/news.py | 3 | P3 — KRX 로 교체\n")
+    root = git_repo(tmp_path, {"legacy/sd/news.py": _scrape_lines(3)})
+    code, out = run(root, capsys, baseline="krx_scrape | legacy/sd/news.py | 3 | P3 — API 로\n")
     assert code == 0, out
 
 
+@pytest.mark.usefixtures("scrape_baselined")
 def test_new_file_not_in_baseline_fails(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     root = git_repo(
-        tmp_path, {"legacy/sd/news.py": _naver_lines(1), "legacy/sd/new.py": _naver_lines(1)}
+        tmp_path, {"legacy/sd/news.py": _scrape_lines(1), "legacy/sd/new.py": _scrape_lines(1)}
     )
-    code, out = run(root, capsys, baseline="naver | legacy/sd/news.py | 1 | P3 — KRX 로 교체\n")
+    code, out = run(root, capsys, baseline="krx_scrape | legacy/sd/news.py | 1 | P3 — API 로\n")
     assert code == 1
-    assert "legacy/sd/new.py:1: naver" in out
+    assert "legacy/sd/new.py:1: krx_scrape" in out
     assert "기준선에 없는 파일" in out
 
 
+@pytest.mark.usefixtures("scrape_baselined")
 def test_baseline_increase_fails(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    root = git_repo(tmp_path, {"legacy/sd/news.py": _naver_lines(4)})
-    code, out = run(root, capsys, baseline="naver | legacy/sd/news.py | 3 | P3 — KRX 로 교체\n")
+    root = git_repo(tmp_path, {"legacy/sd/news.py": _scrape_lines(4)})
+    code, out = run(root, capsys, baseline="krx_scrape | legacy/sd/news.py | 3 | P3 — API 로\n")
     assert code == 1
     assert "기준선 3건보다 늘었다(지금 4건)" in out
 
 
+@pytest.mark.usefixtures("scrape_baselined")
 def test_baseline_decrease_without_update_fails(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    root = git_repo(tmp_path, {"legacy/sd/news.py": _naver_lines(1)})
-    code, out = run(root, capsys, baseline="naver | legacy/sd/news.py | 3 | P3 — KRX 로 교체\n")
+    root = git_repo(tmp_path, {"legacy/sd/news.py": _scrape_lines(1)})
+    code, out = run(root, capsys, baseline="krx_scrape | legacy/sd/news.py | 3 | P3 — API 로\n")
     assert code == 1
     assert "3건에서 1건으로 줄었다" in out
 
 
+@pytest.mark.usefixtures("scrape_baselined")
 def test_baseline_entry_for_cleaned_file_fails(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     root = git_repo(tmp_path, {"legacy/sd/news.py": "x = 1\n"})
-    code, out = run(root, capsys, baseline="naver | legacy/sd/news.py | 2 | P3 — KRX 로 교체\n")
+    code, out = run(root, capsys, baseline="krx_scrape | legacy/sd/news.py | 2 | P3 — API 로\n")
     assert code == 1
     assert "2건에서 0건으로 줄었다" in out
 
 
+@pytest.mark.usefixtures("scrape_baselined")
 def test_update_baseline_only_shrinks(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    root = git_repo(tmp_path, {"legacy/sd/a.py": _naver_lines(1), "legacy/sd/b.py": "x = 1\n"})
+    root = git_repo(tmp_path, {"legacy/sd/a.py": _scrape_lines(1), "legacy/sd/b.py": "x = 1\n"})
     base = (
         "# 머리말은 남는다\n"
-        "naver | legacy/sd/a.py | 3 | P3 — KRX 로 교체\n"
-        "naver | legacy/sd/b.py | 2 | P3 — KRX 로 교체\n"
+        "krx_scrape | legacy/sd/a.py | 3 | P3 — API 로\n"
+        "krx_scrape | legacy/sd/b.py | 2 | P3 — API 로\n"
     )
     code, out = run(root, capsys, "--update-baseline", baseline=base)
     assert code == 0, out
     text = (root / "scripts" / "canonical_baseline.txt").read_text(encoding="utf-8")
-    assert text == "# 머리말은 남는다\nnaver | legacy/sd/a.py | 1 | P3 — KRX 로 교체\n"
+    assert text == "# 머리말은 남는다\nkrx_scrape | legacy/sd/a.py | 1 | P3 — API 로\n"
     code, out = run(root, capsys)
     assert code == 0, out
 
 
+@pytest.mark.usefixtures("scrape_baselined")
 def test_update_baseline_refuses_to_grow(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     root = git_repo(
-        tmp_path, {"legacy/sd/a.py": _naver_lines(5), "legacy/sd/new.py": _naver_lines(1)}
+        tmp_path, {"legacy/sd/a.py": _scrape_lines(5), "legacy/sd/new.py": _scrape_lines(1)}
     )
-    base = "naver | legacy/sd/a.py | 3 | P3 — KRX 로 교체\n"
+    base = "krx_scrape | legacy/sd/a.py | 3 | P3 — API 로\n"
     code, out = run(root, capsys, "--update-baseline", baseline=base)
     assert code == 1
     assert "기준선 갱신 거부" in out
@@ -279,14 +311,15 @@ def test_update_baseline_refuses_to_grow(
 @pytest.mark.parametrize(
     ("line", "msg"),
     [
-        ("naver | legacy/a.py | 1 |", "사유가 없다"),
-        ("naver | legacy/a.py | 1", "네 칸"),
+        ("krx_scrape | legacy/a.py | 1 |", "사유가 없다"),
+        ("krx_scrape | legacy/a.py | 1", "네 칸"),
         ("nope | legacy/a.py | 1 | P3 — 사유", "모르는 그룹"),
-        ("naver | legacy/a.py | 0 | P3 — 사유", "1 이상"),
-        ("naver | legacy/*.py | 1 | P3 — 사유", "패턴 금지"),
-        ("naver | /abs/a.py | 1 | P3 — 사유", "상대 posix"),
+        ("krx_scrape | legacy/a.py | 0 | P3 — 사유", "1 이상"),
+        ("krx_scrape | legacy/*.py | 1 | P3 — 사유", "패턴 금지"),
+        ("krx_scrape | /abs/a.py | 1 | P3 — 사유", "상대 posix"),
     ],
 )
+@pytest.mark.usefixtures("scrape_baselined")
 def test_baseline_format_errors_exit_2(
     tmp_path: Path, capsys: pytest.CaptureFixture[str], line: str, msg: str
 ) -> None:
@@ -296,9 +329,10 @@ def test_baseline_format_errors_exit_2(
     assert msg in out
 
 
+@pytest.mark.usefixtures("scrape_baselined")
 def test_duplicate_baseline_line_exit_2(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    root = git_repo(tmp_path, {"legacy/a.py": _naver_lines(1)})
-    line = "naver | legacy/a.py | 1 | P3 — 사유\n"
+    root = git_repo(tmp_path, {"legacy/a.py": _scrape_lines(1)})
+    line = "krx_scrape | legacy/a.py | 1 | P3 — 사유\n"
     code, out = run(root, capsys, baseline=line + line)
     assert code == 2
     assert "두 번" in out
@@ -347,7 +381,7 @@ def test_output_never_prints_matched_string(
         tmp_path,
         {
             "legacy/sd/kis.py": f"URL = '{secretish}'\n",
-            "legacy/sd/news.py": _naver_lines(2),
+            "legacy/sd/news.py": _scrape_lines(2),
         },
     )
     code, out = run(root, capsys)
@@ -358,9 +392,9 @@ def test_output_never_prints_matched_string(
 
 def test_groups_option_limits_scope(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     root = git_repo(
-        tmp_path, {"legacy/sd/news.py": _naver_lines(1), "legacy/sd/k.py": f"{KIS_REST}\n"}
+        tmp_path, {"legacy/sd/news.py": _scrape_lines(1), "legacy/sd/k.py": f"{KIS_REST}\n"}
     )
-    code, out = run(root, capsys, "--groups", "naver")
+    code, out = run(root, capsys, "--groups", "krx_scrape")
     assert code == 1
     assert "kis_rest" not in out
     code, out = run(root, capsys, "--groups", "dart,krx_api")
@@ -408,6 +442,9 @@ def test_list_option(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None
         ("from kbj.data.private import kis\n", "legacy_kbj_module"),
         ("import kbj.data.private.kis.errors\n", "legacy_kbj_module"),
         ("from kbj.services.notifier.telegram_api import TelegramApi\n", "legacy_kbj_module"),
+        # P9 LEGACY: ET·SD shim 이 쓰던 허용(브리지·notifier client·board 엔진)을 뺐다
+        ("from kbj.services.notifier.client import notify\n", "legacy_kbj_module"),
+        ("from kbj.engines.board import build\n", "legacy_kbj_module"),
     ],
 )
 def test_ast_rules_catch_bypass(
@@ -422,9 +459,6 @@ def test_ast_rules_catch_bypass(
 @pytest.mark.parametrize(
     "source",
     [
-        "from kbj.data import legacy_bridge as requests\n",
-        "from kbj.data.legacy_bridge import session\n",
-        "from kbj.services.notifier.client import legacy_send, webhook_status\n",
         "from kbj.core.calendar import *\n",
         "from kbj.core.time import now_kst as _kbj_now_kst\n",  # 별칭이 _ 인 것은 괜찮다
         "from kbj.data.private.kis.token import reader as _kbj_reader\n",
@@ -461,8 +495,8 @@ def test_getattr_with_public_name_is_allowed(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     src = (
-        "from kbj.data import legacy_bridge as rq\n"
-        "get = getattr(rq, 'get')\n"
+        "from kbj.data.private.kis import token as rq\n"
+        "get = getattr(rq, 'reader')\n"
         "_cache = {}\nv = getattr(_cache, '_x', None)\n"  # kbj 에 묶이지 않은 이름은 상관없다
     )
     root = git_repo(tmp_path, {"legacy/sd/mod.py": src})
@@ -489,7 +523,8 @@ def test_ast_rules_skip_legacy_tests_and_kbj(
 # ── 실제 레포 ─────────────────────────────────────────────────────────────────────────────
 def test_real_baseline_parses_and_has_no_zero_group_or_kbj_path() -> None:
     base = cc.load_baseline(ROOT / "scripts" / "canonical_baseline.txt")
-    assert base.entries
+    # P9 WRAP: 모든 그룹이 목표 0 — 기준선은 머리말만(파싱은 되고 줄은 0)
+    assert base.header and base.entries == {}
     for e in base.entries.values():
         assert not cc.GROUPS[e.group].zero
         assert cc.area(e.path) != "kbj"
@@ -514,7 +549,7 @@ def test_ta_indicators_only_in_core_indicators() -> None:
     (P9 legacy 비우기). 지표를 부르는 줄·DSL 변환 도우미(이름 뒤에 다른 말이 붙은 것)·
     속성 접근은 걸리지 않는다."""
     g = cc.GROUPS["ta_indicators"]
-    assert not g.zero and g.allowed == ("kbj/core/indicators.py",)
+    assert g.zero and g.allowed == ("kbj/core/indicators.py",)  # P9 LEGACY — 목표 0
     for src in (
         "def rsi(close, n=14):",
         "def _ema(data, span):",

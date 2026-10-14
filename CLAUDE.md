@@ -20,7 +20,7 @@
 ## 3. 정본 (중복 금지 — docs/PLAN.md §2)
 KIS 토큰은 auth 서비스 한 곳에서만 발급(1분 1회 제한)하고 나머지는 읽기만 한다. 앱키당 레이트리미터 하나(초당 4건).
 거래 캘린더는 GEXLAB `core.calendar`, 신고가는 board 엔진, 텔레그램은 notifier 하나, 스케줄은 작업 등록부 하나, DB 는 Postgres+Timescale 하나.
-같은 일을 하는 코드를 두 벌 만들지 않는다. 옮겨 온 원본은 `kbj/legacy/<프로젝트>/` 에 두고 정본으로 갈아 끼운 뒤 지운다.
+같은 일을 하는 코드를 두 벌 만들지 않는다. 옮겨 온 원본(`legacy/`)은 정본으로 갈아 끼운 뒤 P9 에 비웠다 — 커밋 `f6aeebd`(legacy 를 지우기 직전 — 태그 `legacy-final` 은 사용자가 GitHub 에서 달 수 있다), 이식 기록은 `docs/migration/`.
 
 ## 4. 작업 방식
 - 단계(Phase)마다 완료 기준을 채운 뒤 다음으로 넘어간다.

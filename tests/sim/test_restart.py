@@ -25,7 +25,7 @@ def restarted() -> SimDay:
             start=at(10, 6, 15),
             hours=2,
             ws=False,
-            legacy_calls=False,
+            reader_calls=False,
             restarts=(at(10, 6, 15, 50), at(10, 6, 16, 45)),
         )
     )

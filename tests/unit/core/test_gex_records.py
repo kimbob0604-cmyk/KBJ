@@ -1,7 +1,8 @@
 """`kbj.core.gex.records`(GX 레코드 모델 이동 — P7 FND-B)·`kbj.services.runtime.{bus,chain_feed}`.
 
 모델만 옮겼으니 GX 와 같은 검증을 하는지, 코어가 어댑터 대신 둔 표(시장분류·투자자 12종)가 정본과
-같은지 본다. GX 원래 시험은 legacy 에서 shim 으로 그대로 돈다(`scripts/test_legacy.sh gexlab`).
+같은지 본다. GX 원래 시험은 P9 까지 legacy 에서 shim 으로 돌았다(P9 WRAP 에 legacy/gexlab 과
+함께 지움 — `docs/migration/gexlab.md`).
 """
 
 from __future__ import annotations
