@@ -65,7 +65,8 @@ jobs:
   test-kbj:
     name: test (kbj)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # P8 까지 시험이 늘어 15분(P7 13분 42초)을 넘겼다 — 다른 무거운 잡과 같은 30분
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
