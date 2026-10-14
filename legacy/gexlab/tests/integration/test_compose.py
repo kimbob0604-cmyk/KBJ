@@ -110,6 +110,8 @@ def stack(tmp_path: Path) -> Iterator[Stack]:
         "KBJ_REDIS_URL=redis://redis:6379/0\nKBJ_SPOOL_DIR=/app/state/spool\n",
         encoding="utf-8",
     )
+    # start_period 는 운영 값(60s) 그대로 — 그 안에서는 첫 하트비트가 뜨는 즉시 healthy 라 기다림이
+    # 늘지 않고, 느린 러너에서 engine 기동(첫 하트비트)이 5초를 넘겨 unhealthy 로 끝나는 일을 막는다
     (tmp_path / "override.yml").write_text(
         f"""services:
   migrate:
@@ -123,14 +125,14 @@ def stack(tmp_path: Path) -> Iterator[Stack]:
     pull_policy: never
     healthcheck:
       interval: 2s
-      start_period: 5s
+      start_period: 60s
   engine:
     build: !reset null
     image: {tag}
     pull_policy: never
     healthcheck:
       interval: 2s
-      start_period: 5s
+      start_period: 60s
 """,
         encoding="utf-8",
     )
