@@ -101,8 +101,13 @@ def stack(tmp_path: Path) -> Iterator[Stack]:
     shutil.copy(COMPOSE, tmp_path / "docker-compose.yml")
     (tmp_path / "config").mkdir()  # engine 이 읽기 전용으로 붙이는 기능 플래그 파일(설계 §4)
     shutil.copy(ROOT / "config" / "features.yaml", tmp_path / "config" / "features.yaml")
+    # KBJ P7(D-P7-4·ADR 0029 §3): recorder·engine 은 KBJ 서비스 shim 이라 KBJ_* 설정으로 뜨고
+    # KBJ 표(prv_gex·ops)에 쓴다 — 시험 DB 에 GX 마이그레이션(schema_migrations 004)과 KBJ
+    # 마이그레이션을 둘 다 적용한다(기록 표가 public·ops 의 schema_migrations 로 달라 겹치지 않는다)
+    dsn = f"postgresql://gexlab:{pw}@db:5432/gexlab"
     (tmp_path / ".env").write_text(
-        f"POSTGRES_PASSWORD={pw}\nDATABASE_URL=postgresql://gexlab:{pw}@db:5432/gexlab\n",
+        f"POSTGRES_PASSWORD={pw}\nDATABASE_URL={dsn}\nKBJ_DATABASE_URL={dsn}\n"
+        "KBJ_REDIS_URL=redis://redis:6379/0\nKBJ_SPOOL_DIR=/app/state/spool\n",
         encoding="utf-8",
     )
     (tmp_path / "override.yml").write_text(
@@ -111,6 +116,7 @@ def stack(tmp_path: Path) -> Iterator[Stack]:
     build: !reset null
     image: {tag}
     pull_policy: never
+    command: ["sh", "-c", "python -m db.migrate && python -m kbj.store.migrate"]
   recorder:
     build: !reset null
     image: {tag}
@@ -166,7 +172,7 @@ def test_stack_records_raw_messages_and_survives_a_db_outage(stack: Stack) -> No
     assert '"flags_loaded"' in stack.compose("logs", "--no-color", "engine").stdout
 
     def count() -> int:
-        out = stack.psql("SELECT count(*) FROM raw_messages")
+        out = stack.psql("SELECT count(*) FROM prv_gex.raw_messages")
         return int(out) if out.isdigit() else -1
 
     stack.wait(lambda: stack.publish(WS_RAW, _env(1)) == 1 or None, "recorder 구독", 30)
@@ -181,7 +187,9 @@ def test_stack_records_raw_messages_and_survives_a_db_outage(stack: Stack) -> No
     )
     assert stack.compose("start", "db", timeout=60).returncode == 0
     stack.wait(lambda: count() == 2, "스풀 재적재", 90)
-    kinds = stack.psql("SELECT string_agg(kind, ',' ORDER BY ts) FROM health_events")
+    kinds = stack.psql("SELECT string_agg(kind, ',' ORDER BY ts) FROM ops.health_events")
     assert "db_spooling" in kinds and "db_spool_replayed" in kinds
-    payloads = stack.psql("SELECT string_agg(payload_text, '|' ORDER BY ts) FROM raw_messages")
+    payloads = stack.psql(
+        "SELECT string_agg(payload_text, '|' ORDER BY ts) FROM prv_gex.raw_messages"
+    )
     assert "093001" in payloads and "093002" in payloads
