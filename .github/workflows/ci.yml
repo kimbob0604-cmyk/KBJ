@@ -189,7 +189,11 @@ jobs:
       - name: scripts/test_legacy.sh gexlab-integration
         env:
           KBJ_REQUIRE_DOCKER: "1"
+          PYTEST_ADDOPTS: --junitxml=${{ runner.temp }}/gx-it.xml
         run: uv run bash scripts/test_legacy.sh gexlab-integration
+      - name: 실패한 시험을 주석으로(로그 본문을 못 받는 곳에서도 원인이 보이게)
+        if: failure()
+        run: uv run python scripts/ci_junit_annotations.py "${{ runner.temp }}/gx-it.xml"
 
   web:
     # 프런트(web/ — 묶음 W·W2). node 22.13 이상(eslint 10). 설치 스크립트를 돌리지 않는다(npm ci
