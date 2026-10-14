@@ -15,6 +15,10 @@
   처리기로 돌려 이력을 만들며, GEX 는 실제 엔진(`EngineService`)이 합성 체인(월물 202610 — Black-76
   이론가)으로 데모 시계 그날 주간 사이클을 돈다(`_load_p7`). Pg 모드(`--db`)에서는 싣지 않는다 —
   페이지 3 은 '아직 없음' 안내.
+- 페이지 11·12(P8 — 규칙 알림·백테스트·저널): 합성 P8 세계(`tests/fixtures/synthetic/p8_world.py`
+  — 고정 시드)로 규칙 둘(E1·E8)을 만들고 `rules.outcome`·`rules.backtest_nightly` 를 실제 처리기로
+  돌린 규칙 저장소를 데모 저장소의 규칙 표로 끼우고(`backtest_api_world`), 일지·매매·추천은
+  페이지 12 웹 픽스처와 같은 합성 쓰기를 같은 API 로 넣는다(`_load_p8`). Pg 모드에서는 싣지 않는다.
 
     KBJ_DEMO_PASSWORD=... uv run python scripts/demo_p3_server.py --port 8765
 """
@@ -141,6 +145,30 @@ def _load_p7(world: Any) -> None:
         at += timedelta(minutes=10)
 
 
+def _load_p8(world: Any) -> None:
+    """페이지 11·12 — 합성 P8 세계(고정 시드, 실데이터 아님).
+
+    규칙 표(규칙·판·신호·성과·백테스트·일치 감시)는 웹 픽스처와 같은 세계(`backtest_api_world`
+    — 실제 처리기 rules.outcome·rules.backtest_nightly)의 규칙 저장소를 데모 저장소에 끼운다
+    (개인 쓰기 저장소는 같은 메모리 표를 다시 본다). 일지·매매·추천은 페이지 12 웹 픽스처의
+    합성 쓰기(`journal._seed` — 쓰기 API 를 그대로 거친다)를 데모 세계에 넣는다."""
+    from tests.unit.api.web_fixtures_p8 import journal as jr
+    from tests.unit.api.web_fixtures_p8.backtest import backtest_api_world
+
+    bt = backtest_api_world()
+    world.repos.rules = bt.repos.rules
+    world.repos.__post_init__()  # personal 이 새 규칙 표·기존 일지 표를 같이 보게(MemoryRepos 관례)
+    days = jr.add_market(world)
+    jr._seed(world, days)  # pyright: ignore[reportPrivateUsage] — 픽스처 합성 쓰기 그대로
+    # 픽스처는 일지 종목을 관심종목 main 에도 넣는다 — 데모의 다른 페이지(8 종목 상세의 첫 종목)가
+    # 바뀌지 않게 같은 쓰기 API 로 되돌린다(일지·매매·추천은 그대로)
+    c, h = jr._login(world)  # pyright: ignore[reportPrivateUsage]
+    for code in jr.CODES:
+        r = c.delete(f"/api/watchlist/main/{code}", headers=h)
+        if r.status_code != 200:
+            raise RuntimeError(f"관심종목 되돌리기 실패: HTTP {r.status_code}")
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="demo_p3_server")
     p.add_argument("--port", type=int, default=8765)
@@ -181,6 +209,7 @@ def main(argv: list[str] | None = None) -> int:
     overrides: dict[str, Any] = {}
     if not os.environ.get("KBJ_DEMO_DATABASE_URL", ""):
         _load_p7(world)  # 페이지 3 — 합성 P7 세계(진단 이력 + GEX 엔진 사이클)
+        _load_p8(world)  # 페이지 11·12 — 합성 P8 세계(규칙·신호·성과·백테스트 + 일지·매매)
     store = "메모리 저장소 + fakeredis"
     db_url = os.environ.get("KBJ_DEMO_DATABASE_URL", "")
     if db_url:

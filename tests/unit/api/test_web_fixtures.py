@@ -16,6 +16,7 @@ from tests.unit.api.test_routes_common import DATA_ROUTES
 from tests.unit.api.web_fixtures_p5 import DOMAINS as P5_DOMAINS
 from tests.unit.api.web_fixtures_p6 import DOMAINS as P6_DOMAINS
 from tests.unit.api.web_fixtures_p7 import DOMAINS as P7_DOMAINS
+from tests.unit.api.web_fixtures_p8 import DOMAINS as P8_DOMAINS
 
 
 def _base(path: str) -> str:
@@ -270,3 +271,43 @@ def test_p7_domains_and_modules(monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(gex, "render", lambda bad=bad: {bad: "{}"})
         with pytest.raises(ValueError, match="경로 형식"):
             mk.render_p7("gex")
+
+
+# ── P8(docs/p8_design.md §1.1 — 도메인별 모듈, rules·backtest·journal 폴더만) ──────────────────
+
+
+@pytest.mark.parametrize("domain", P8_DOMAINS)
+def test_p8_fixtures_are_fresh(domain: str) -> None:
+    """`web/test/fixtures/api/<도메인>/**` 가 그 도메인 모듈의 출력과 같다. 다르면
+    `uv run python -m tests.unit.api.make_web_fixtures --only <도메인>` 로 다시 만든다."""
+    from tests.unit.api.make_web_fixtures import p8_files_on_disk, render_p8
+
+    want = render_p8(domain)
+    assert set(want) == p8_files_on_disk(domain), f"{domain}: 픽스처 파일 목록이 낡았다"
+    for rel, text in want.items():
+        assert rel.startswith(f"{domain}/")
+        assert (OUT / rel).read_text(encoding="utf-8") == text, f"{rel} 이 낡았다"
+        json.loads(text)
+
+
+def test_p8_domains_and_modules(monkeypatch: pytest.MonkeyPatch) -> None:
+    import importlib
+
+    from tests.unit.api import make_web_fixtures as mk
+    from tests.unit.api.web_fixtures_p8 import rules
+
+    assert P8_DOMAINS == ("rules", "backtest", "journal")
+    for d in P8_DOMAINS:
+        assert importlib.import_module(f"tests.unit.api.web_fixtures_p8.{d}").DOMAIN == d
+    with pytest.raises(ValueError, match="모르는 P8 도메인"):
+        mk.render_p8("nope")
+    # P8 폴더는 P3~P7 폴더와 겹치지 않는다
+    taken = {
+        *P5_DOMAINS, *(f"trade_{d}" for d in P6_DOMAINS), *P7_DOMAINS, "stock", "filings",
+        "watchlist",
+    }  # fmt: skip
+    assert not set(P8_DOMAINS) & taken
+    for bad in ("../x.json", "/abs.json", "x.txt"):
+        monkeypatch.setattr(rules, "render", lambda bad=bad: {bad: "{}"})
+        with pytest.raises(ValueError, match="경로 형식"):
+            mk.render_p8("rules")

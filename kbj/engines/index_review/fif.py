@@ -1,19 +1,26 @@
 """유동비율(FIF) 반올림·완충·FOL 조정(metrics §24.2).
 
 규칙은 리뷰 날짜로 고른다(`IndexReviewsConfig.fif_rule_for`) — MSCI 새 규칙(2026-05 리뷰부터: > 25%
-2.5%
-단위, 5~25% 0.5%, < 5% 0.1%, 같은 폭 완충), 옛 규칙(> 15% 5% 단위 올림, 이하 1% 반올림).
-띠·폭·완충은
-설정 값. 계산은 십진(Decimal)으로 — 이진 소수 끝자리로 띠 경계를 잘못 넘지 않게.
+2.5% 단위, 5~25% 0.5%, < 5% 0.1%, 같은 폭 완충 — GIMI 2026-08판 App.VI·§3.1.7), 옛 규칙(> 15% 5%
+단위 올림, 이하 1% 반올림). 띠·폭·완충은 설정 값. 계산은 십진(Decimal)으로 — 이진 소수 끝자리로 띠
+경계를 잘못 넘지 않게.
+
+- 완충: 기존 구성종목의 변화가 단위 **미만**(|raw − 직전| < 폭)이면 직전 값 유지, 이상이면 반영.
+- 완충 예외(완충 없이 반영): 비구성종목(신규 편입·세그먼트 이동), FOL 이 묶어 생긴 FIF 변경.
+- FOL: FIF = min(외국인 가용 유동비율(반올림), FOL(설정 단위 0.1% 반올림)) × foreign room 계수
+  (`room_factor` — 신규·기존 표는 설정 `fol`).
 """
 
 from __future__ import annotations
 
 from decimal import ROUND_CEILING, ROUND_HALF_UP, Decimal
 
-from kbj.config.index_reviews import FifBand, FifRule
+from kbj.config.index_reviews import FifBand, FifRule, FolCfg
 
-__all__ = ["apply_fol", "band_of", "estimate_fif_raw", "resolve_fif", "round_fif"]
+__all__ = [
+    "apply_fol", "band_of", "estimate_fif_raw", "resolve_fif", "room_factor", "round_fif",
+    "round_fol",
+]  # fmt: skip
 
 _ONE = Decimal(1)
 
@@ -34,7 +41,8 @@ def band_of(raw: float, rule: FifRule) -> FifBand:
 def round_fif(raw: float, rule: FifRule, prev: float | None = None) -> tuple[float, str]:
     """(적용 유동비율, 어떻게) — 'buffer'(직전 값 유지) · 'rounded'.
 
-    완충: 직전 값이 있고 그 띠에 완충 폭이 있으며 |raw − 직전| ≤ 폭이면 직전 값을 그대로 쓴다."""
+    완충: 직전 값이 있고 그 띠에 완충 폭이 있으며 |raw − 직전| < 폭이면 직전 값을 그대로 쓴다(변화가
+    폭과 같거나 크면 반영 — GIMI §3.1.7). 비구성종목은 호출자가 prev 를 넘기지 않는다(완충 예외)."""
     if not 0 < raw <= 1:
         raise ValueError(f"유동비율은 0 < raw ≤ 1: {raw!r}")
     b = band_of(raw, rule)
@@ -42,7 +50,7 @@ def round_fif(raw: float, rule: FifRule, prev: float | None = None) -> tuple[flo
     if prev is not None and b.buffer is not None:
         if not 0 < prev <= 1:
             raise ValueError(f"직전 유동비율은 0 < prev ≤ 1: {prev!r}")
-        if abs(r - _d(prev)) <= _d(b.buffer):
+        if abs(r - _d(prev)) < _d(b.buffer):
             return prev, "buffer"
     step = _d(b.step)
     mode = ROUND_HALF_UP if b.mode == "nearest" else ROUND_CEILING
@@ -54,26 +62,85 @@ def round_fif(raw: float, rule: FifRule, prev: float | None = None) -> tuple[flo
     return float(out), "rounded"
 
 
+def round_fol(limit: float, step: float) -> float:
+    """FOL 을 step(설정 — 0.1%) 단위로 반올림(반은 올림). 0 이하로 내리지 않는다."""
+    if not 0 < limit <= 1:
+        raise ValueError(f"외국인 한도는 0 < limit ≤ 1: {limit!r}")
+    st = _d(step)
+    out = (_d(limit) / st).to_integral_value(rounding=ROUND_HALF_UP) * st
+    return float(max(out, st))
+
+
 def apply_fol(fif: float, limit: float | None) -> tuple[float, bool]:
-    """FOL 조정 — FIF = min(FIF, 외국인 한도). (값, 조정했나). 여유분 조정은 [확인 필요]."""
+    """FOL 조정 — FIF = min(FIF, 외국인 한도(반올림한 값)). (값, 조정했나)."""
     if limit is None or fif <= limit:
         return fif, False
     return limit, True
 
 
 def resolve_fif(
-    raw: float | None, prev: float | None, rule: FifRule, fol_limit: float | None
+    raw: float | None,
+    prev: float | None,
+    rule: FifRule,
+    fol_limit: float | None,
+    *,
+    member: bool = True,
+    fol_step: float | None = None,
 ) -> tuple[float | None, str | None]:
-    """종목의 적용 유동비율. raw 가 없으면 직전 값(목록의 FIF), 둘 다 없으면 None(지어내지
-    않는다)."""
+    """종목의 적용 유동비율(foreign room 계수 전). raw 가 없으면 직전 값(목록의 FIF), 둘 다 없으면
+    None(지어내지 않는다).
+
+    완충은 기존 구성종목(member)에만 — 비구성종목은 완충 없이 반올림 값. FOL(fol_step 단위로
+    반올림)이 반올림 값을 묶으면 FOL 로 인한 변경이라 완충 없이 FOL 값."""
+    limit = None if fol_limit is None else (
+        round_fol(fol_limit, fol_step) if fol_step is not None else fol_limit
+    )  # fmt: skip
     if raw is None or raw <= 0:
         if prev is None:
             return None, None
         fif, how = prev, "prev"
     else:
-        fif, how = round_fif(min(raw, 1.0), rule, prev)
-    fif, cut = apply_fol(fif, fol_limit)
+        r = min(raw, 1.0)
+        plain, _ = round_fif(r, rule)
+        if limit is not None and limit < plain:  # FOL 이 묶는다 — 완충 예외
+            return limit, "rounded+fol"
+        fif, how = round_fif(r, rule, prev if member else None)
+    fif, cut = apply_fol(fif, limit)
     return fif, (f"{how}+fol" if cut else how)
+
+
+def room_factor(
+    fol: FolCfg, limit: float | None, held: float | None, *, member: bool
+) -> tuple[float, bool, str | None]:
+    """foreign room 계수 — (계수, 편입 가능한가, 사유). 한도가 없으면 (1, 가능, None).
+
+    room = (FOL − 외국인 보유) ÷ FOL(FOL 은 설정 단위로 반올림). 신규: room ≥ room_full → 1,
+    room_min_add 이상 → room_add_factor, 미만 → 편입 불가. 기존: room < room_keep_floor →
+    room_keep_floor_factor, 그 사이는 room_keep_mid_factor(null 이면 조정 안 함 — [확인 필요]).
+    외국인 보유를 모르면 계수를 적용하지 않는다(사유)."""
+    if limit is None:
+        return 1.0, True, None
+    if held is None:
+        return 1.0, True, "외국인 보유 자료 없음 — foreign room 계수 미적용"
+    if not 0 <= held <= 1:
+        raise ValueError(f"외국인 보유 비율은 0~1: {held!r}")
+    lim = _d(round_fol(limit, fol.val("limit_step")))
+    room = max(Decimal(0), (lim - _d(held)) / lim)
+    tag = f"외국인 여유 {float(room):.2%}"
+    if room >= _d(fol.val("room_full")):
+        return 1.0, True, None
+    if not member:
+        if room < _d(fol.val("room_min_add")):
+            return 1.0, False, f"{tag} < {fol.val('room_min_add'):.0%} — 신규 편입 불가"
+        f = fol.val("room_add_factor")
+        return f, True, f"{tag} — 신규 조정계수 {f:g}"
+    if room < _d(fol.val("room_keep_floor")):
+        f = fol.val("room_keep_floor_factor")
+        return f, True, f"{tag} — 기존 조정계수 {f:g}"
+    mid = fol.room_keep_mid_factor.v
+    if mid is None:
+        return 1.0, True, f"{tag} — 기존 종목 중간 단계 계수 [확인 필요](조정 안 함)"
+    return float(mid), True, f"{tag} — 기존 조정계수 {float(mid):g}"
 
 
 def estimate_fif_raw(

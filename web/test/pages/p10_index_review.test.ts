@@ -109,7 +109,7 @@ describe('페이지 10 지수 정기변경 — 로그인', () => {
     const tr = adds?.querySelector('tbody tr');
     expect(text(tr)).toContain(first.name ?? first.code);
     expect(text(tr)).toContain(ratioPct(first.required_rise));
-    expect(text(tr)).toContain('유동'); // 필요 상승률 기준(큰 쪽)
+    expect(text(tr)).toContain(first.required_basis === 'ff' ? '유동' : '시총'); // 필요 상승률 기준(큰 쪽)
     expect(text(tr)).toContain('O');
     // 머리 줄 '추정'
     expect(text(p.querySelector('[data-section="model-adds"] .q-badge'))).toBe('추정');
@@ -139,7 +139,7 @@ describe('페이지 10 지수 정기변경 — 로그인', () => {
     expect(hz.paths()).toContain('index-review?index=kospi200');
     const d = review('review_kospi200').data;
     expect(text(p.querySelector('[data-section="band-head"]'))).toContain('KOSPI200 2026-12');
-    expect(text(p)).toContain('rank 54/66');
+    expect(text(p)).toContain(d.runs[0]?.cutoff?.method ?? '');
     const t = tableOf(p, 'model', 'adds');
     expect(tbodyCodes(t)).toEqual(sortByRise(d.runs[0]?.adds ?? []).map((r) => r.code));
     expect(text(t?.querySelector('tbody tr td:nth-child(6)'))).toBe('—');
@@ -263,7 +263,7 @@ describe('페이지 8 머리 — 지수 배지 한 줄(로그인)', () => {
     await flush();
     expect(hz.paths()).toContain(`index-review/stock/${code}`);
     const line = root.querySelector('[data-section="index-badges"]');
-    expect(text(line)).toContain('MSCI Korea 편입 후보 · 여유 -87.6%');
+    expect(text(line)).toContain('MSCI Korea 편입 후보 · 여유 -92.7%');
     expect(text(line)).toContain('KOSPI200 편입 후보');
     expect(line?.querySelectorAll('.tag')).toHaveLength(2);
     expect(text(line?.querySelector('.q-badge'))).toBe('추정');

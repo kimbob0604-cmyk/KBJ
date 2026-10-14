@@ -41,7 +41,9 @@ from kbj.store.repos import (
     MacroPublicRepo,
     MarketRepo,
     MarketStatsRepo,
+    PersonalRepo,
     ProgramRepo,
+    RulesRepo,
     TradeRepo,
     UsRepo,
 )
@@ -133,6 +135,14 @@ class ApiRepos(Protocol):
 
     @property
     def diag_pub(self) -> DiagPublicRepo: ...
+
+    # P8 묶음 FND(0021 prv_alerts·prv_journal — 로그인). 규칙·신호·성과·백테스트 읽기는 rules,
+    # 일지·매매·추천 읽기는 journal. 개인 기록 쓰기는 personal(쓰기 모듈 하나가 부른다 — D-P8-15)
+    @property
+    def rules(self) -> RulesRepo: ...
+
+    @property
+    def personal(self) -> PersonalRepo: ...
 
 
 class NoData(Exception):

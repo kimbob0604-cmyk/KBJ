@@ -28,6 +28,11 @@
 #   사전 통합을 사용자가 따로 진행해(2026-10-13 Q1) 남긴다.
 # - 2026-10-13 P7 WRAP(docs/p7_design.md §1.7-5): GX ws_gateway·recorder·data/kis/ws 를 kbj 로 옮기고 legacy 는
 #   shim(묶음 ING) — kis_ws 4 → 0, 그룹을 목표 0 으로 바꿨다(kbj 안은 kbj/services/ws_gateway/* 만). 새 그룹 없음.
+# - 2026-10-14 P8 WRAP(docs/p8_design.md §1.6-5·§1.7·D-P8-22 ②): 새 그룹 ta_indicators(기술 지표 계산 함수 정의 — kbj 안은
+#   kbj/core/indicators.py 하나). SD server.py 규칙 알림·트레일링·백테스트·상관·추천 성과·매매/분석 일지 라우트를 지워
+#   (kbj rules.*·페이지 11·12) SD 백테스트 RSI(_bt_calc_rsi) 1 이 빠진 10 에서 시작한다. 남은 SD 차트 지표(_calc_rsi_macd·
+#   _calc_adx·_calc_bollinger)는 SD 차트 API 가 아직 부르고, board 스윙 엔진(signals·backtest·systems)은 SWG 를 하지
+#   않아(사용자 결정 2026-10-13) P9 legacy 비우기에서 지운다. 다른 그룹 건수 변화 없음.
 datago | legacy/etf_traker/board/ingest/datago.py | 1 | P4~P8(P3 S 이월) — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import — 그 기능 대체 때 삭제
 krx_scrape | legacy/etf_traker/board/ingest/flows.py | 2 | P4~P8(P3 S 이월) — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import — 그 기능 대체 때 삭제
 krx_scrape | legacy/etf_traker/board/ingest/pipeline.py | 1 | P4~P8(P3 S 이월) — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import — 그 기능 대체 때 삭제
@@ -59,3 +64,7 @@ naver | legacy/stock_dashboard/scripts/validate_valuechain_external.py | 1 | P3~
 naver | legacy/stock_dashboard/server.py | 14 | P5(P4 S 이월 — R14) — 마감 시황·워치독(검사 스크립트가 본다)·피어 유니버스·뉴스·ETF 시세가 쓴다. U4: 기능별로 KRX·KIS 로 교체
 naver | legacy/stock_dashboard/theme_crawler.py | 3 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
 naver | legacy/stock_dashboard/valuechain.py | 1 | P3~P5 — U4: SD 기능별로 KRX·KIS 로 교체(네이버 어댑터는 만들지 않는다)
+ta_indicators | legacy/etf_traker/board/engine/backtest.py | 1 | P9 — board 스윙 엔진(사용자 결정 2026-10-13 SWG 없음) — legacy 비우기 때 삭제
+ta_indicators | legacy/etf_traker/board/engine/signals.py | 1 | P9 — board 스윙 엔진(사용자 결정 2026-10-13 SWG 없음) — legacy 비우기 때 삭제
+ta_indicators | legacy/etf_traker/board/engine/systems.py | 4 | P9 — board 스윙 엔진(사용자 결정 2026-10-13 SWG 없음) — legacy 비우기 때 삭제
+ta_indicators | legacy/stock_dashboard/server.py | 4 | P9 — SD 차트 API 지표(_calc_rsi_macd·_calc_adx·_calc_bollinger) — 차트 API 대체(legacy 비우기) 때 삭제

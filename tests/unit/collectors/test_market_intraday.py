@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 
 import pytest
@@ -84,8 +84,14 @@ def test_flows_slot_rows_complete_and_stamped_with_the_slot() -> None:
     snaps = repos.market.snapshots(DAY, source="kis.prelim")
     assert len(snaps) == 2 * RANK_ROWS
     assert all(s.turnover_is_estimate for s in snaps)
-    # KIS 호출: 가집계 4 + 순위 2 + ETF 3, 우선순위 P2·대기 30초
-    assert kis.count() == 4 + 2 + len(ETF_CODES)
+    # KIS 호출: 가집계 8(시장 2 × 외국인·기관 × 순매수·순매도 상위 — 공식 예제상 순위 목록) + 순위 2
+    # + ETF 3, 우선순위 P2·대기 30초
+    assert kis.count() == 8 + 2 + len(ETF_CODES)
+    sides = [(c[1]["FID_INPUT_ISCD"], c[1]["FID_ETC_CLS_CODE"], c[1]["FID_RANK_SORT_CLS_CODE"])
+             for c in kis.calls if c[0] == "FHPTJ04400000"]  # fmt: skip
+    assert sorted(sides) == sorted(
+        (m, w, s) for m in ("0001", "1001") for w in ("1", "2") for s in ("0", "1")
+    )
     assert {(c[2], c[3]) for c in kis.calls} == {
         (market_intraday.PRIORITY, market_intraday.TIMEOUT_S)
     }
@@ -210,8 +216,6 @@ def _registry_job(name: str) -> Any:
 def test_runner_retries_the_failed_key_inside_the_slot_and_every_key_is_done_once() -> None:
     """등록부의 retry {max 2, 20·40초}·deadline 9분 그대로 — 10:00 슬롯 ETF 500 1회 → 슬롯 안
     완료, 데이터 키마다 done 1회(결측 0), 다른 키는 다시 잡지 않는다."""
-    from datetime import timedelta
-
     from kbj.core.calendar import us_calendar
     from kbj.data.catalog import all_datasets
     from kbj.services.runtime.health import MemoryHealthSink
@@ -256,5 +260,27 @@ def test_runner_retries_the_failed_key_inside_the_slot_and_every_key_is_done_onc
     ts = kst(2026, 10, 7, 10, 0)
     assert len(repos.etf.quotes(ts, ts + timedelta(minutes=10))) == len(ETF_CODES)
     # 재시도는 실패한 키만 — 가집계·순위는 슬롯에서 한 번씩만 불렀다
-    assert kis.count("FHPTJ04400000") == 4
+    assert kis.count("FHPTJ04400000") == 8  # 시장 2 × 구분 2 × 순매수·순매도
     assert kis.count("FHPST01710000") == 2
+
+
+def test_sell_list_codes_are_merged_without_a_rank() -> None:
+    """순매도 상위 목록에만 있는 종목도 이력에 들어간다 — rank 는 순매수 순위만(순매도는 None)."""
+
+    def hook(tr: str, params: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
+        if tr != "FHPTJ04400000":
+            return body
+        if params["FID_RANK_SORT_CLS_CODE"] == "0":
+            buy = dict(body["output"][0], frgn_ntby_tr_pbmn="700", orgn_ntby_tr_pbmn="400")
+            return {**body, "output": [buy]}
+        sell = dict(body["output"][-1], frgn_ntby_tr_pbmn="-500", orgn_ntby_tr_pbmn="-300")
+        return {**body, "output": [sell]}
+
+    repos, _server, clock, kis = setup(hook)
+    res = run_flows(repos, kis, flow_keys(slot(11, 30))[:1], clock)
+    assert res.status == "ok", res.detail
+    ts = kst(2026, 10, 7, 11, 30)
+    inv = repos.flows.intraday(ts, ts + timedelta(minutes=10))
+    neg = [q for q in inv if q.net_value is not None and q.net_value < 0]
+    assert neg and all(q.rank is None for q in neg)
+    assert all(q.rank == 1 for q in inv if q.net_value is not None and q.net_value >= 0)

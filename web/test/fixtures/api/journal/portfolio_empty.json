@@ -1,0 +1,16 @@
+{
+  "source": "KBJ",
+  "as_of": "2026-09-15T18:00:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "아직 없음 — 매매 기록 없음(페이지 12 에서 입력)"
+  ],
+  "generated_at": "2026-09-15T18:00:00+09:00",
+  "data": {
+    "positions": [],
+    "realized_total": 0,
+    "unrealized_total": 0,
+    "monthly": [],
+    "trades_n": 0
+  }
+}

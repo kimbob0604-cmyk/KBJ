@@ -3,6 +3,7 @@
 // 종목은 '공시 재무 없음', 리포트는 데모 종목만(reports/<코드> + 엑셀 링크), 검색은 corp_index.json.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { route } from '../../src/app/route';
+import { DataError, type DataSource, type Params } from '../../src/data/source';
 import { NO_PUB_FIN } from '../../src/pages/p8/common';
 import page, { corpRows, settled, TABS, type TabId } from '../../src/pages/p8_stock';
 import { forbiddenHits, p4PageCtx, p4PublicHarness, publicFixture } from '../acceptance/support_p4';
@@ -174,5 +175,25 @@ describe('페이지 8 — 공개판', () => {
     expect(m.get('Q00003')).toEqual({ code: 'Q00003', name: '합성홀딩스', market: 'KONEX', acc_mt: null, fin: true, report: false });
     expect(corpRows(null).size).toBe(0);
     expect(corpRows({ columns: 'x', rows: [] }).size).toBe(0);
+  });
+});
+
+describe('페이지 8 — 공개판 실패와 아직 없음 구분', () => {
+  it('공개 재무 파일 500 은 오류 줄(.msg.err), 파일 없음(404)은 안내(.msg)', async () => {
+    route.setCode('Q00001');
+    const hz = p4PublicHarness();
+    const get = hz.source.get.bind(hz.source);
+    const source: DataSource = {
+      ...hz.source,
+      get: <T>(key: string, params?: Params) =>
+        key === 'fin/Q00001' ? Promise.reject(new DataError('HTTP 500', 500, null)) : get<T>(key, params),
+    };
+    const { ctx, root } = p4PageCtx(8, 'public', source, { tradingview: vi.fn(() => () => undefined) });
+    await page.mount(ctx);
+    await openTab(root, 'fin');
+    for (const t of ['분기·연간 재무', '재무 비율', '부문 매출']) {
+      expect(panelByTitle(root, t).querySelector('.msg.err'), t).not.toBeNull();
+    }
+    expect(panelByTitle(root, '핵심 지표').querySelector('.msg.err')).not.toBeNull();
   });
 });

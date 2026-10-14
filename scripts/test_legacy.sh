@@ -237,6 +237,8 @@ run_part() {
             # 리비전·네이버 리서치 함수를 지웠지만 그 코드에는 원본 시험이 없었다(옮긴 원본 시험 0 — kbj 쪽은 새로
             # 썼다). 검사 스크립트 10개가 떼어 쓰는 함수(마감 시황·신고가·워치독·ETF 표시)는 남겼다(R14 — 다리
             # 시험은 지운 모듈이 다시 생기지 않는지도 본다). 근거: legacy/stock_dashboard/MIGRATION.md 'P4'
+            # P8(WRAP) 13 그대로: 규칙 알림·트레일링·백테스트·상관·추천 성과·매매/분석 일지 라우트를 지웠지만 원본 시험이
+            # 없었다(검사 스크립트 10개가 떼어 쓰지 않는 함수만). 근거: legacy/stock_dashboard/MIGRATION.md 'P8'
             part_pytest stock_dashboard "$SD" 13 -c /dev/null --rootdir "$SD" -q tests
             ;;
         *)

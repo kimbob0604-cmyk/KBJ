@@ -1,6 +1,6 @@
 # KBJ P8 설계서 — 규칙 알림·백테스트·저널 (페이지 11·12)
 
-- 작성: 2026-10-13. 상태: **설계(구현 전)**. 구현은 **IDX(P5 2차)·P6·P7 이 커밋된 뒤** 시작한다(이 문서를 쓰는 동안 IDX 는 빌드 중, P6·P7 은 설계 중). 대상 단계: `docs/PLAN.md` §4 페이지 11·12, §8 P8 — "규칙 DSL(JSON 스키마), 평가 엔진(장중 10분·마감), 쿨다운, 근거 메시지, **알림 후 성과 통계** / 백테스트(같은 지표 함수), 저널·포트폴리오, 페이지 11·12". 출처 요구는 `legacy/stock_dashboard/REBUILD_BRIEF.md` §4(재활용 자산)·§6(규칙 엔진 목표·스키마 초안).
+- 작성: 2026-10-13. 상태: **구현 완료**(2026-10-14 — 웨이브 1 FND·웨이브 2 EVL·BKT·JNL·웨이브 3 WRAP, SWG 없음 — 맨 끝 'WRAP 구현 기록'). 처음 상태: 설계(구현 전). 구현은 **IDX(P5 2차)·P6·P7 이 커밋된 뒤** 시작한다(이 문서를 쓰는 동안 IDX 는 빌드 중, P6·P7 은 설계 중). 대상 단계: `docs/PLAN.md` §4 페이지 11·12, §8 P8 — "규칙 DSL(JSON 스키마), 평가 엔진(장중 10분·마감), 쿨다운, 근거 메시지, **알림 후 성과 통계** / 백테스트(같은 지표 함수), 저널·포트폴리오, 페이지 11·12". 출처 요구는 `legacy/stock_dashboard/REBUILD_BRIEF.md` §4(재활용 자산)·§6(규칙 엔진 목표·스키마 초안).
 - 기준 문서: 계획 `docs/PLAN.md` §2·§4·§8, 등급 `docs/DATA_TIERS.md`(정본 — **페이지 11·12·13 = 개인 기능, 전부 로그인**, §2:57), 지표 `docs/metrics.md`(P8 지표는 부록 A 를 FND 가 **P7 다음 절 번호**로 옮긴다), P4·P5 설계 `docs/p4_design.md`·`docs/p5_design.md`(구조·관례), ADR 0005(notifier outbox·중복 키·쿨다운), 0006(등록부·선점), 0007(legacy 기준선), 0008(로그인 API·CSRF), 0016(관심종목), 0017(신고가 3축), **0018(마감 뒤 텔레그램은 전부 16:00)**, 0023 §2-8(US btsearch 는 P8 로), 작업 등록부 `config/jobs.yaml`.
 - 원본 위치: 이 레포 `legacy/` 를 직접 열어 확인했다(작업 트리 HEAD `138da8f` + IDX 미커밋 변경). 표기 `ET:` = `legacy/etf_traker/`, `SD:` = `legacy/stock_dashboard/`. kbj 쪽은 레포 경로 그대로. 줄 번호는 이 날짜의 작업 트리 기준 — P6·P7 이 SD `server.py` 를 고치면 FND 가 다시 확인한다.
 - 표기: **[추정]** = 코드로 끝까지 확인하지 못함, **[확인 필요]** = 기본값으로 정한 것, **[실측 필요]** = 키를 받은 뒤 실제 응답으로 확인, **[결정 필요]** = 사용자가 정할 것, **[제안]** = 이 설계의 권고, ⚠ = 충돌·위험.
@@ -40,7 +40,7 @@
 | D-P8-10 | **쿨다운 = 엔진 상태기 + notifier 문지기 두 겹**: 규칙의 `cooldown_min`(기본 1,440 = 24시간 [제안], 하한 60)은 엔진이 신호 표로 판정하고(백테스트도 같은 상태기), notifier `alert.rule`(cooldown 3600, subject `<rule_id>:<code>`)은 안전망. 장중·마감 모드가 같은 쿨다운을 나눠 쓴다 | ADR 0005 §2.2(미끄러지는 창). SD 의 하루 1회·60분 규칙을 둘 다 품는다 |
 | D-P8-11 | **근거 메시지 = 템플릿**(LLM 없음 — CLAUDE §1-3): 조건마다 ✔/✖, 지표 이름·파라미터·현재값·기준값·크로스면 전/후 값, 수급은 기준일, 시세는 출처·시각·quality(장중 = `estimated`), 규칙 이름·판·쿨다운, 페이지 8 링크(`KBJ_PUBLIC_BASE_URL` + `#/8/<코드>` — 로그인 화면). 4,096자 초과는 notifier 가 나눈다 | 절대 규칙 1(source·as_of·quality), REBUILD_BRIEF §6.1-4 |
 | D-P8-12 | **알림 후 성과 = `rules.outcome`(평일 08:30, KRX 확정 일봉 뒤)**: 신호마다 기간 1·3·5·10·20 거래일 [제안]의 수익률·지수 대비 초과(코스피·코스닥 — 시장별)·최대 유리/불리 폭(MFE/MAE)을 `prv_alerts.signal_outcome` 에 쌓는다. 진입가 = 장중 신호는 그 슬롯 현재가, 마감 신호는 그날 종가. 통계(표본 수·승률·평균·중앙·사분위·초과)는 읽을 때 순수 함수로 | 완료 기준 "성과 표가 자동으로 쌓인다". 확정 일봉(D+1 08:05)으로 계산해 잠정값 성과를 남기지 않는다 |
-| D-P8-13 | **백테스트 = 같은 평가기 + 고정 시간 규칙**: 마감 신호는 d 일 종가까지로 판정, **d+1 시가 체결**(board `backtest.py` 머리말의 미래참조 규칙 그대로), 장중 신호는 신호 슬롯 가격 체결. 보유 N일·손절·익절·비용(수수료·거래세 — `config/rules.yaml`, 값 [확인 필요])·생존편향 주의 문구. 체결·비용·통계 원시 함수는 `kbj/engines/backtest/{costs,stats}.py`(FND — board `backtest.stats`:236 승격) 하나를 BKT·SWG 가 같이 쓴다 | 같은 일 두 벌 금지. 원작 board 의 시점 규칙을 그대로 |
+| D-P8-13 | **백테스트 = 같은 평가기 + 고정 시간 규칙**: 마감 신호는 d 일 종가까지로 판정, **d+1 시가 체결**(board `backtest.py` 머리말의 미래참조 규칙 그대로), 장중 신호는 신호 슬롯 가격 체결. 보유 N일·손절·익절·비용(수수료·거래세 — `config/rules.yaml`, 거래세 0.20% 는 2026 세율로 확인)·생존편향 주의 문구. 체결·비용·통계 원시 함수는 `kbj/engines/backtest/{costs,stats}.py`(FND — board `backtest.stats`:236 승격) 하나를 BKT·SWG 가 같이 쓴다 | 같은 일 두 벌 금지. 원작 board 의 시점 규칙을 그대로 |
 | D-P8-14 | **일치 감시(운영 중 증명)**: `rules.backtest_nightly` 가 켜진 규칙을 최근 20 거래일에 다시 백테스트해 실시간 신호와 비교하고 `prv_alerts.match_check` 에 적는다. 차이마다 사유 `data_revised`(입력 지문 `input_fp` 가 다름 — KIS 잠정 → KRX 확정 등) / `logic`(지문이 같은데 결과가 다름 — 버그, health 오류). 같은 실행이 3년 백테스트 요약을 `backtest_run` 에 남겨 페이지 12 '백테스트 대 실제' 가 읽는다 | 완료 기준을 합성 세계에서 한 번이 아니라 운영 내내 지킨다 |
 | D-P8-15 | **표 하나에 쓰는 주체 하나**(§3.3 표): 장중·마감 신호를 한 표에 두 작업이 쓰지 않도록 `prv_alerts.signal_intraday`(쓰기 `rules.intraday`)·`signal_close`(쓰기 `rules.close`) 로 나누고 읽기는 뷰 `prv_alerts.signal`. 개인 기록 표(규칙·일지·매매)는 **쓰기 모듈 하나**(`kbj.services.personal.rules`·`.journal`, 기존 `kbj.services.watchlist`)를 API 라우트와 CLI 가 같이 부른다 | 사용자 규칙 '표마다 쓰는 쪽 하나' |
 | D-P8-16 | **개인 쓰기 API(처음)**: 상태를 바꾸는 요청은 전부 `require_session` + `require_csrf`(Origin·`X-KBJ-CSRF`), 본문 64 KiB 상한, pydantic 검증(422 는 위치·종류만 — 입력값 없음), 규칙 수정은 **새 판**(`rule_version` 은 바꾸지 않는다 — 과거 신호가 어느 판에서 났는지 남는다), 삭제는 보관(`archived_at`) | ADR 0008 §5·§6. 성과 통계가 판별로 나뉘어야 한다 |
@@ -109,7 +109,7 @@
 | `kbj/core/indicators.py`(새) | 부록 A 의 함수 전부 — 입력 `Sequence[float \| None]`, 출력 같은 길이 리스트(워밍업·결측은 `None`, 0 으로 채우지 않는다). 순수 Python(numpy 없음 — board 와 같은 부동소수 순서) | K | `tests/unit/core/test_indicators.py`(손계산 표 + board 원본 함수와 같은 입력 같은 값 — legacy 를 import 하지 않고 원본 값 표를 고정), `tests/property/test_indicator_props.py`(창 밖 불변·SMA 선형성·RSI 0~100·볼린저 상하 대칭·EMA 상수열 고정점) |
 | `kbj/engines/rules/{__init__,dsl,frame,evaluate,cooldown}.py`(새) | `dsl`: pydantic v1 모델(§4.1)·검증(깊이·개수·지표/연산자 목록·모드별 허용)·`dsl_hash`(정규화 JSON sha256)·JSON 스키마 생성. `frame`: 일봉·수급 원장 + (장중이면) 부분 봉 → 지표 배열 묶음(anchor·split_guard·결측 사유). `evaluate`: (규칙, 프레임, 칸) → `Verdict(ok, conds[…값·기준·전 값], skipped_reason)`. `cooldown`: (이전 신호들, 시점) → 허락/막힘 | K | `tests/unit/engines/rules/test_{dsl,frame,evaluate,cooldown}.py`, `tests/property/test_rules_eval_props.py`(AND/OR 드모르간·조건 순서 무관·미래 칸을 바꿔도 과거 판정 불변 = 미래참조 없음) |
 | `kbj/engines/backtest/{__init__,costs,stats}.py`(새) | 체결가·수수료·거래세·슬리피지, 거래 통계(승률·평균·중앙·PF·MDD·연환산) — board `backtest.py:stats`:236 승격(같은 단언 시험 일부) | K | `tests/unit/engines/backtest/test_{costs,stats}.py` |
-| `config/rules.yaml`·`kbj/config/rules_cfg.py`(새 — 모르는 키 오류) | anchor_date, horizons `[1,3,5,10,20]`, cooldown 기본·하한, intraday_max_codes 60, DSL 상한, 지수 매핑(KOSPI·KOSDAQ), 비용(fee_bps·tax_pct [확인 필요])·즉석 백테스트 상한, 일치 감시 창 20, 보존(watch_quote_slot 2년 [제안]) | K | `tests/unit/config/test_rules_cfg.py` |
+| `config/rules.yaml`·`kbj/config/rules_cfg.py`(새 — 모르는 키 오류) | anchor_date, horizons `[1,3,5,10,20]`, cooldown 기본·하한, intraday_max_codes 60, DSL 상한, 지수 매핑(KOSPI·KOSDAQ), 비용(fee_bps·tax_pct — 거래세 2026 세율 확인)·즉석 백테스트 상한, 일치 감시 창 20, 보존(watch_quote_slot 2년 [제안]) | K | `tests/unit/config/test_rules_cfg.py` |
 | `config/rule_examples.yaml`(새) | 예시 10개(§4.1.4) — 편집기 '예시 불러오기' 와 완료 시험이 같은 파일 | K | DSL 검증 통과 시험 |
 | `config/schemas/rule_v1.schema.json`·`web/src/api/rule.schema.json`(생성 전용) | `python -m kbj.engines.rules.dsl schema --write` | K | `--check` |
 | `docs/metrics.md` P7 다음 절(부록 A 를 옮김) | CLAUDE §4 "먼저 쓰고 구현" | K | 문서 |
@@ -334,7 +334,7 @@ API(읽기) ← 신호·성과·백테스트·일지·포트폴리오 / API(쓰�
 
 ### 3.5 설정 파일 (FND — 숫자·목록은 한 곳)
 
-`config/rules.yaml`: `anchor_date`, `horizons`, `cooldown_min {default: 1440, floor: 60}`, `intraday_max_codes: 60`, `dsl {max_depth: 3, max_conditions: 12}`, `index {KOSPI: "1001", KOSDAQ: "2001"}` [확인 필요 — 원장 지수 코드], `costs {fee_bps: 1.5, sell_tax_pct: 0.20, slippage_bps: 0}` [확인 필요 — 거래세율은 시행 연도 기준], `adhoc {max_codes: 100, max_years: 5, timeout_s: 20, cache_ttl_s: 3600}`, `match {window_days: 20}`, `retention {watch_quote_slot_days: 730}`.
+`config/rules.yaml`: `anchor_date`, `horizons`, `cooldown_min {default: 1440, floor: 60}`, `intraday_max_codes: 60`, `dsl {max_depth: 3, max_conditions: 12}`, `index {KOSPI: "1001", KOSDAQ: "2001"}` [확인 필요 — 원장 지수 코드], `costs {fee_bps: 1.5, sell_tax_pct: 0.20, slippage_bps: 0}`(거래세 0.20% = 2026-01-01 양도분부터 KOSPI 0.05%+농특세 0.15%, KOSDAQ 0.20% — 증권거래세법 시행령 §5. KONEX 0.10% 는 유니버스 밖이라 단일값), `adhoc {max_codes: 100, max_years: 5, timeout_s: 20, cache_ttl_s: 3600}`, `match {window_days: 20}`, `retention {watch_quote_slot_days: 730}`.
 
 ---
 
@@ -578,7 +578,7 @@ KIS 현재가 10:20 estimated · 일봉 KRX 10-12 ok · 상세 <로그인 주소
 | Q2 | 장중 평가 대상 상한(KIS 호출 = 상한 × 40/일) | 60종목(관심 main ∪ 보유 ∪ 규칙 코드) |
 | Q3 | 규칙 기본 쿨다운 | 24시간(하한 60분) |
 | Q4 | 성과 기간과 비교 지수 | 1·3·5·10·20 거래일, 시장별 코스피·코스닥 |
-| Q5 | 백테스트 비용(수수료·거래세·슬리피지) | 수수료 0.015% 양쪽, 매도 거래세 0.20% [확인 필요], 슬리피지 0 |
+| Q5 | 백테스트 비용(수수료·거래세·슬리피지) | 수수료 0.015% 양쪽, 매도 거래세 0.20%(2026 세율 — 시행령 §5 확인), 슬리피지 0 |
 | Q6 | 포트폴리오를 KIS 잔고와 연동할지(계좌번호·잔고 조회 — 주문은 아님) | 연동 안 함 — 직접 입력·CSV, 평균 단가 |
 | Q7 | SD 개인 데이터(알림 규칙·분석 일지·매매 저널·추천 이력·`server_portfolio.json`)를 VM 에 올려 이관할지 | 올리면 이관(레포에는 넣지 않음), `alert_history` 는 이관 안 함 |
 | Q8 | board 스윙 시그널을 매일 16:00 텔레그램·페이지 12 패널로 낼지 | P8 은 수동 CLI 만(지금 legacy 와 같음) |
@@ -624,4 +624,53 @@ KIS 현재가 10:20 estimated · 일봉 KRX 10-12 ok · 상세 <로그인 주소
 - **스윙 신호는 없앤다**: 묶음 **SWG 를 하지 않는다**. board 스윙 엔진(`board/engine/{signals,backtest,search,systems}`)·US btsearch 를 KBJ 로 옮기지 않고,
   `kbj/engines/swing/**`·`kbj/services/engine/swing.py`·스윙 CLI·`config/signals.yaml` 이동·관련 시험 승격도 만들지 않는다. legacy 의 해당 코드·시험은 P9 'legacy 비우기' 에서 정리한다.
   DSL 백테스트(BKT)는 그대로 — 지표는 `kbj.core.indicators` 하나. 웨이브 2 묶음은 EVL·BKT·JNL 셋.
-- 나머지 열린 질문(마감 알림 16:00 한 통·장중 상한 60종목·쿨다운 24시간·성과 1/3/5/10/20일·비용 수수료 0.015%·매도세 0.20%[확인 필요]·KIS 잔고 동기화 안 함·SD 자료는 올라오면 이관·페이지 13 제외·3년 백필·SD 발굴 알림 폐지)은 기본값 그대로.
+- 나머지 열린 질문(마감 알림 16:00 한 통·장중 상한 60종목·쿨다운 24시간·성과 1/3/5/10/20일·비용 수수료 0.015%·매도세 0.20%(2026 세율 확인)·KIS 잔고 동기화 안 함·SD 자료는 올라오면 이관·페이지 13 제외·3년 백필·SD 발굴 알림 폐지)은 기본값 그대로.
+
+## FND 구현 기록 (2026-10-14 — 웨이브 1, 위 본문의 번호·자리를 실제 값으로)
+
+- **실제 번호**: 마이그레이션 `0021_rules_journal.sql`(본문 `NNNN`), 지표 `docs/metrics.md` §30(부록 A — 마지막 절 D 다음),
+  probe 체크리스트 #65(`#P8-1` FHKST01010100 장중 칸)·#66(`#P8-2` 가집계 대상 범위 — 사용자 결정 장중 수급)·
+  #67(`#P8-3` 비교 지수 코드). ADR 은 0031 부터(초안은 웨이브 2 — A=EVL·B=BKT·D=JNL, C(SWG)는 없음).
+  import-linter 계약·`ta_indicators` 그룹·`test_no_orders.py` 는 WRAP.
+- **SWG 없음**(사용자 결정): `kbj/engines/swing/**`·스윙 CLI·`config/signals.yaml` 이동·board 시험 승격을 만들지 않았다.
+  `kbj/engines/backtest/{costs,stats}.py` 는 DSL 백테스트(BKT)·성과(BKT) 공용 — board `backtest.stats` 의 단언 1개를 같은
+  입력으로 고정(`tests/unit/engines/backtest/test_stats.py`), board 를 import 하지 않는다.
+- **장중 수급 라이브**(사용자 결정): 프레임이 `partial_flow`(가집계 잠정 원장 행)를 받는다. 없으면 수급 조건은 '판단 불가'
+  (`no_live_flow` — 3값 논리, 평가 상태 `unknown`, 발송 없음, 기록 `skipped`). `rules.intraday` 는 같은 회차
+  `flows.intraday`(가집계 쓰기 주인)를 무른 의존 `wait_min: 5` 로 기다린다(등록부). 시장 수급 지표는 DSL 에 없다.
+- **쿨다운이 세는 상태** = `sent`·`suppressed`·`dry`(백테스트·발송 꺼짐도 상태기를 같이 쓰게 — `ALLOWED_SIGNAL_STATUSES`).
+  경계 포함(정확히 `cooldown_min` 뒤면 허락) — 마감 신호는 하루 간격(24시간)이라 기본 쿨다운에 막히지 않는다.
+- **분할 의심 창**: 의심 칸 s 부터 `split_window`(기본 260) 칸 동안 `split_suspect`(s 이전 칸은 영향 없음 — 시점 규칙).
+  판정은 board `split_guard`(정본, `config/board.yaml integrity.split_guard_ratio`)를 이웃 유효 종가 쌍마다 부른다.
+- **신호 멱등**: 표 키는 `signal_id`, 같은 (규칙·판·종목·평가 시각)은 UNIQUE — 저장소는 그 키로 upsert 하고 `signal_id` 는
+  처음 값을 지킨다.
+- **API**: 쓰기는 전부 `kbj.services.api.writes.WriteSession`(세션 → CSRF·Origin 403 → 본문 64 KiB 413), 웨이브 1 은 501.
+  POST 인 즉석 백테스트·규칙 검증도 같은 문지기. 규칙·일지·포트폴리오 읽기는 응답 캐시 없이(`fresh_json` — 쓰기 모듈이 DB
+  에 바로 쓴다), 신호·성과는 캐시 영역 `rules`, 백테스트는 `backtest`.
+- **화면 칸**(레이아웃 요구 — 차트는 반폭 이하): 페이지 11 = 규칙(12)·편집기(6)·발송 이력(6)·알림 후 성과(6)·성과 분포(6),
+  페이지 12 = 백테스트(6)·누적 곡선(6)·백테스트 대 실제(12)·분석 일지(6)·포트폴리오·수익률 저널(6)·상관관계(6)·추천 성과(6).
+  진입 파일이 패널을 만들고 하위 모듈 `fill*(ctx, panel)` 이 본문을 그린다(공개 빌드는 하위 모듈을 번들에서 뺀다 —
+  공개 청크 p11 548 B·p12 681 B, 공개 JS gzip 82,378 B ≤ 88 KB).
+
+## WRAP 구현 기록 (2026-10-14 — 웨이브 3, §1.6 — SWG 제외)
+
+- **작업 켜기**: `rules.close`·`rules.outcome`·`rules.backtest_nightly` 켬(`ENABLED_BY_PHASE["P8"]`). `rules.intraday` 는 #65(장중
+  칸·반영 지연)·#66(가집계 대상 범위) 실측 전까지 **꺼진 채** — 실데이터로 확인 안 된 수집 작업은 꺼 둔다(§1.6-1 의 [제안]
+  '켠다' 를 따르지 않았다 — P7 `krx.vkospi` 와 같은 기준). `retired` 에 SD 발굴 신규 진입 알림(#14 — 사용자 결정 폐지)·SD HTTP
+  라우트 넷(§0.4). `config/notify.yaml legacy_kinds` #14 지움, #6·#12·#13 은 함수 삭제 표시(P9 에 줄 정리).
+- **16:00**: ADR 0018 보충 — 16:00 발송 넷(`rules.close` 더함). 하루 sim 의 16:00 기대값은 그대로(`alert.rule_close` 는 sim 대역
+  발송 종류가 아니고, 규칙이 없는 세계라 0통).
+- **검사**: import-linter 계약 ⑳(`kbj.services.personal` → 원천·수집기·발송·API·작업 처리기 금지, 엔진 셋은 ⑨ 사례로 확인),
+  `check_canonical` 새 그룹 `ta_indicators`(kbj 안 `kbj/core/indicators.py` 하나, legacy 기준선 10 — SD 4·board 6, P9 비우기),
+  `tests/unit/test_no_orders.py`(주문 TR·경로 0, `live_trading` 기본 false·읽는 곳 없음), `test_public_writers`(P8 작업은 prv_ 만).
+- **요청 처리**: `/시그널` notifier 연결, 입력 고르기 하나(`rules_input.frame_inputs`), 로그인 데이터 소스 쓰기 채널(CSRF),
+  페이지 11·12 패널의 LockedError 를 '.msg' 안내로, `personal --help` 가 DB 없이, metrics §30.5(저널 정의), ADR 0031~0033 확정.
+- **공개 번들**: 페이지 3 로그인 패널 본문(판정 띠·시장 진단·GEX)을 `LOGIN_MOUNTS` 로 공개 번들에서 뺐다 — 공개 JS gzip
+  83,501 → 79,276 B(예산 88 KB 그대로), 로그인 121,256 B → 예산 131 KB(ADR 0025 갱신).
+- **완료 시험**: `tests/acceptance/test_rules_parity.py`(①~⑤ — 마감 7 × 60일·장중 3 × 5일 × 40슬롯 실제 처리기 = 백테스트,
+  KRX 정정 → data_revised·logic 0, 분할 종목 0), `tests/sim/test_rules_days.py` + 틀 `tests/sim/p8.py`(합성 세계 마지막 25 거래일
+  — 설계서의 11~12월 창 대신, 추석 휴장 포함), `web/test/acceptance/p11_p12_pages.test.ts`, 데모(`scripts/demo_p3.sh --shots` —
+  페이지 11·12, 합성 P8 세계).
+- **legacy**: SD `server.py` 함수 37 삭제(15,539 → 14,216줄 — `legacy/stock_dashboard/MIGRATION.md` 'P8'). 설계서가 지우라 한
+  `analysis_journal_api.py`·`analysis_journal_helper.py`·`review_validator.py`·`valuechain.py` 는 남은 검증·밸류체인 라우트가 import 해
+  남겼다(테마 사전 통합 때). 검사 래퍼 13 그대로.

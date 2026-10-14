@@ -6,6 +6,9 @@
   로
   '추정'을 보인다(절대 규칙 2). 모르는 키는 오류(`extra="forbid"`).
 - 유동비율 반올림 규칙은 리뷰 날짜로 고른다(`fif_rule_for`) — 새 규칙(2026-05 리뷰부터)·옛 규칙.
+- MSCI 편입 배수는 GIMI 2026-08판 §3.1.5·§3.1.6(정기 리뷰): 비구성종목 1.0×·하위 세그먼트 이동
+  1.5×·유동 0.5×, 유동비율 < min_fif_add 종목은 유동 0.9×(신규)·0.6×(유지). Light Rebalancing
+  (1.8×·0.9×)은 `light_rebalance`(기본 꺼짐). FOL 은 한도 0.1% 반올림 + foreign room 계수(`FolCfg`).
 - 일정은 사람이 적은 공표 일정표다(계산 추정 금지). `confirmed=False` 면 일정 표에 estimated 로
   들어간다.
 - 구성종목 목록은 여기 없다(로그인 등급 — DB `prv_index.constituents`).
@@ -27,9 +30,11 @@ __all__ = [
     "INDEX_REVIEWS_FILE",
     "FifBand",
     "FifRule",
+    "FolCfg",
     "IndexCfg",
     "IndexReviewsConfig",
     "KrxRules",
+    "LightRebalance",
     "MsciRules",
     "Param",
     "ReviewCfg",
@@ -115,10 +120,45 @@ class FolLimit(_Model):
 
 
 class FolCfg(_Model):
+    """외국인 지분 한도(FOL) — GIMI 2026-08판 §2.3.6.2·§3.1.2.6·§3.1.6.3·App.VI.
+
+    FIF = min(외국인 가용 유동비율(반올림), FOL(limit_step 단위 반올림)) × foreign room 계수.
+    room = (FOL − 외국인 보유) ÷ FOL. 신규: room ≥ room_full → 1, room_min_add ≤ room < room_full →
+    room_add_factor, room < room_min_add → 편입 불가. 기존: room < room_keep_floor →
+    room_keep_floor_factor, room_keep_floor ≤ room < room_full → room_keep_mid_factor(원문 표가 직전
+    계수별 단계라 옮기지 못함 — null = 조정하지 않음 [확인 필요])."""
+
     src: str
     checked: date
     verify: bool
+    limit_step: Param
+    room_full: Param
+    room_min_add: Param
+    room_add_factor: Param
+    room_keep_floor: Param
+    room_keep_floor_factor: Param
+    room_keep_mid_factor: Param
     limits: tuple[FolLimit, ...] = ()
+
+    @model_validator(mode="after")
+    def _check(self) -> FolCfg:
+        for n in ("limit_step", "room_full", "room_min_add", "room_add_factor",
+                  "room_keep_floor", "room_keep_floor_factor"):  # fmt: skip
+            v = getattr(self, n).v
+            if v is None or not 0 < v <= 1:
+                raise ValueError(f"fol.{n}: 0 < 값 ≤ 1")
+        if not self.val("room_keep_floor") <= self.val("room_min_add") <= self.val("room_full"):
+            raise ValueError("fol: room_keep_floor ≤ room_min_add ≤ room_full")
+        mid = self.room_keep_mid_factor.v
+        if mid is not None and not 0 < mid <= 1:
+            raise ValueError("fol.room_keep_mid_factor: 0 < 값 ≤ 1 또는 null")
+        return self
+
+    def val(self, name: str) -> float:
+        v = getattr(self, name).v
+        if v is None:
+            raise ValueError(f"fol.{name}: 값이 없다")
+        return float(v)
 
     def limit_of(self, code: str) -> float | None:
         for x in self.limits:
@@ -149,17 +189,34 @@ class SectorCfg(_Model):
         return self.map.get(induty_code[:2], self.default)
 
 
+class LightRebalance(_Model):
+    """Light Rebalancing(시장 스트레스 때 MSCI 공지 — GIMI App.VIII) 편입 배수. 기본 꺼짐."""
+
+    enabled: bool = False
+    add_mcap_mult: Param
+    add_ff_mult: Param
+
+
 class MsciRules(_Model):
-    """컷오프 배수 규칙(MSCI·FTSE 형)."""
+    """컷오프 배수 규칙(MSCI·FTSE 형).
+
+    비구성종목 편입 시총 배수: 하위 세그먼트(Small Cap) 구성종목이면 add_mcap_mult_migrate, IMI 밖
+    (새로 투자 가능해진 종목)이면 add_mcap_mult_new, 모르면 segment_default 쪽. 유동비율 <
+    min_fif_add 종목은 유동 배수 low_fif_ff_mult_add·_keep(없으면 신규 편입 불가 — 옛 처리)."""
 
     coverage: Param
     coverage_low: Param
     coverage_high: Param
-    add_mcap_mult: Param
+    add_mcap_mult_new: Param
+    add_mcap_mult_migrate: Param
     add_ff_mult: Param
     keep_mcap_mult: Param
     keep_ff_mult: Param
     min_fif_add: Param
+    low_fif_ff_mult_add: Param | None = None
+    low_fif_ff_mult_keep: Param | None = None
+    segment_default: Literal["new", "migrate"] = "migrate"
+    light_rebalance: LightRebalance | None = None
     borderline: Param
     adv_days: Param
     aum_won: Param
@@ -169,8 +226,9 @@ class MsciRules(_Model):
     @model_validator(mode="after")
     def _check(self) -> MsciRules:
         need = (
-            "coverage", "coverage_low", "coverage_high", "add_mcap_mult", "add_ff_mult",
-            "keep_mcap_mult", "keep_ff_mult", "min_fif_add", "borderline", "adv_days",
+            "coverage", "coverage_low", "coverage_high", "add_mcap_mult_new",
+            "add_mcap_mult_migrate", "add_ff_mult", "keep_mcap_mult", "keep_ff_mult",
+            "min_fif_add", "borderline", "adv_days",
         )  # fmt: skip
         for n in need:
             if getattr(self, n).v is None:
@@ -178,7 +236,17 @@ class MsciRules(_Model):
         lo, mid, hi = self.val("coverage_low"), self.val("coverage"), self.val("coverage_high")
         if not 0 < lo <= mid <= hi < 1:
             raise ValueError("커버리지는 0 < low ≤ coverage ≤ high < 1")
+        if (self.low_fif_ff_mult_add is None) != (self.low_fif_ff_mult_keep is None):
+            raise ValueError("low_fif_ff_mult_add·_keep 은 같이 두거나 같이 뺀다")
+        lr = self.light_rebalance
+        if lr is not None and (lr.add_mcap_mult.v is None or lr.add_ff_mult.v is None):
+            raise ValueError("light_rebalance: 배수 값이 없다")
         return self
+
+    def opt(self, name: str) -> float | None:
+        """선택 배수(없거나 null 이면 None)."""
+        p = getattr(self, name)
+        return None if p is None or p.v is None else float(p.v)
 
     def val(self, name: str) -> float:
         v = getattr(self, name).v
@@ -199,6 +267,9 @@ class KrxRules(_Model):
     borderline: Param
     adv_days: Param
     non_etf_aum_won: Param
+    # 산업군 안 누적 시총 비중 문턱(신규 편입 — 없으면 규칙 없음), 심사기간 평균 시총 창(거래일)
+    sector_cum_mcap: Param | None = None
+    mcap_avg_days: Param | None = None
     etf_index_patterns: tuple[str, ...] = ()
     exclude_flags: tuple[str, ...] = ()
     kinds: tuple[str, ...] = ("common",)
@@ -212,6 +283,12 @@ class KrxRules(_Model):
         add, keep = self.val("add_rank_ratio"), self.val("keep_rank_ratio")
         if not 0 < add <= 1 <= keep:
             raise ValueError("순위 완충은 0 < add_rank_ratio ≤ 1 ≤ keep_rank_ratio")
+        cum = self.opt("sector_cum_mcap")
+        if cum is not None and not 0 < cum <= 1:
+            raise ValueError("sector_cum_mcap 은 0 < 값 ≤ 1")
+        days = self.opt("mcap_avg_days")
+        if days is not None and days < 1:
+            raise ValueError("mcap_avg_days 는 1 이상")
         return self
 
     def val(self, name: str) -> float:
@@ -219,6 +296,10 @@ class KrxRules(_Model):
         if v is None:
             raise ValueError(f"{name}: 값이 없다")
         return float(v)
+
+    def opt(self, name: str) -> float | None:
+        p = getattr(self, name)
+        return None if p is None or p.v is None else float(p.v)
 
 
 class ReviewCfg(_Model):
@@ -335,6 +416,9 @@ class IndexReviewsConfig(_Model):
             for field_name, value in rules:
                 if isinstance(value, Param) and value.verify:
                     out.append(f"{name}.{field_name}")
+        for field_name, value in self.fol:
+            if isinstance(value, Param) and value.verify:
+                out.append(f"fol.{field_name}")
         out += [f"fif_rounding.{r.id}" for r in self.fif_rounding if r.verify]
         return out
 

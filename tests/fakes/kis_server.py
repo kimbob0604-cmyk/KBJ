@@ -29,6 +29,12 @@ GEX 체인·분봉 세부(전광판 행사가·야간 시각 표기)는 P7 승�
   — 전부 [확인 필요 #39~#41]). 값은 고정 시드 + **그날 09:00 부터 지난 분 수**(`f2_output`) — 1분
   수집이 부를 때마다 누적이 늘어난다. 검산 ①②④ 가 정확히 맞고, 09:00 전은 값이 모두 0(장전),
   15:30 뒤는 마지막 누적 그대로(tests/unit/fakes/test_kis_server_p5.py).
+- **P8 장중 슬롯 시세(묶음 EVL)**: `FakeKisServer(quotes=world)` 로 합성 P8 세계
+  (tests/fixtures/synthetic/p8_world.py — `slots_for(code, 날짜)`)를 주면 세계 종목의
+  FHKST01010100 은
+  지금 시각(가짜 시계) 이하 마지막 슬롯의 시가·고가·저가·현재가·누적 거래량·등락률을 싣는다
+  (`slot_quote_body` — 장중 재생 백테스트가 같은 값을 읽는다). 세계 밖 종목은 고정 시드 합성
+  (tests/unit/fakes/test_kis_server_p8.py).
 - **오류 주입** `inject(msg_cd, count=1, *, start=None, until=None, tr_id=None, consumers=None)`:
   `EGW00201`(초당 한도)·`EGW00123`(토큰 거절)·`EGW00133`(발급 1분 1회 — POST)·`HTTP500`. 시각은 가짜
   시계 기준, consumers 를 주면 그 프로세스의 요청만.
@@ -61,6 +67,7 @@ from redis import Redis
 
 from kbj.core.fin_rows import ConsensusRow, OpinionRow
 from kbj.core.p5_rows import MINUTE_INVESTORS
+from kbj.core.rules_rows import QuoteSlot
 from kbj.data.private.kis.consensus import (
     AMOUNT_UNIT_KRW,
     COLUMNS,
@@ -295,6 +302,49 @@ class ConsensusWorld(Protocol):
     def consensus_rows(self, code: str, snap_date: date | None = None) -> list[ConsensusRow]: ...
 
     def opinion_rows(self, code: str, *, upto: date | None = None) -> list[OpinionRow]: ...
+
+
+class QuoteWorld(Protocol):
+    """P8 장중 슬롯 시세 세계 — tests/fixtures/synthetic/p8_world.P8World 가 이 모양(묶음 EVL)."""
+
+    def slots_for(self, code: str, d: date) -> list[QuoteSlot]: ...
+
+
+def _plain_num(x: float | int | None) -> str:
+    if x is None:
+        return ""
+    if isinstance(x, float) and x.is_integer():
+        return str(int(x))
+    return repr(x) if isinstance(x, float) else str(x)
+
+
+def slot_quote_body(slot: QuoteSlot) -> dict[str, Any]:
+    """슬롯 시세(QuoteSlot) → FHKST01010100 응답 본문(`quotes.parse_quote`·`bar_from_quote` 가 읽는
+    칸). 못 받은 칸은 비운다(0 으로 채우지 않는다). 정지면 temp_stop_yn=Y."""
+    halted = "halted" in slot.flags
+    out: dict[str, Any] = {
+        "stck_shrn_iscd": slot.code,
+        "hts_kor_isnm": f"합성{slot.code[-2:]}",
+        "stck_prpr": _plain_num(slot.price),
+        "stck_oprc": _plain_num(slot.open),
+        "stck_hgpr": _plain_num(slot.high),
+        "stck_lwpr": _plain_num(slot.low),
+        "prdy_ctrt": _plain_num(slot.change_pct),
+        "acml_vol": _plain_num(slot.volume),
+        "iscd_stat_cls_code": "58" if halted else "55",
+        "mang_issu_cls_code": "Y" if "managed" in slot.flags else "N",
+        "temp_stop_yn": "Y" if halted else "N",
+        "sltr_yn": "Y" if "liquidation" in slot.flags else "N",
+    }
+    if slot.turnover is not None:
+        out["acml_tr_pbmn"] = str(slot.turnover)
+    return out
+
+
+def world_slot(world: QuoteWorld, code: str, local: datetime) -> QuoteSlot | None:
+    """그 시각(KST)에 보이는 슬롯 — 시각 이하의 마지막 슬롯(장 전·세계 밖 종목이면 None)."""
+    got = [s for s in world.slots_for(code, local.date()) if s.slot_ts <= local]
+    return max(got, key=lambda s: s.slot_ts) if got else None
 
 
 def _amount(v: int | None) -> str:
@@ -787,9 +837,11 @@ class FakeKisServer:
         app_secret: str = APP_SECRET,
         token_life: timedelta = TOKEN_LIFE,
         consensus: ConsensusWorld | None = None,
+        quotes: QuoteWorld | None = None,
     ) -> None:
         self._now = now
         self.consensus = consensus  # P4 컨센서스 TR 의 의미값 세계(없으면 고정 시드 합성만)
+        self.quotes = quotes  # P8 장중 슬롯 시세 세계(FHKST01010100 — 세계 종목만, 없으면 합성)
         self.app_key = app_key
         self.app_secret = app_secret
         self.token_life = token_life
@@ -968,6 +1020,10 @@ class FakeKisServer:
             return reply(200, f2_output(tr_id, params, day, f"{local:%H%M}"))
         if tr_id in CONSENSUS_TR_IDS:
             return reply(200, consensus_output(tr_id, params, day, self.consensus))
+        if tr_id == "FHKST01010100" and self.quotes is not None:  # P8 — 세계의 슬롯 시세
+            hit = world_slot(self.quotes, params.get("FID_INPUT_ISCD", ""), local)
+            if hit is not None:
+                return reply(200, {**OK_MSG, "output": slot_quote_body(hit)})
         return reply(200, synthetic_output(tr_id, params, day, slot))
 
     # ── 조회(시험) ───────────────────────────────────────────────────────────────────

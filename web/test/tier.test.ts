@@ -11,6 +11,8 @@ import { AuthRequiredError, hrefOf, LockedError, reportXlsxKey } from '../src/da
 import { createStaticSource } from '../src/data/static';
 import p6 from '../src/pages/p6_macro';
 import p7 from '../src/pages/p7_trade';
+import p11, { P11_SECTIONS } from '../src/pages/p11_rules';
+import p12, { P12_SECTIONS } from '../src/pages/p12_journal';
 import { panel } from '../src/ui/panel';
 import calendar from './fixtures/public/calendar.json';
 import { appRoot, envelope, fakeFetch, fakeLoaders, fixedClock, json, memoryStorage } from './helpers';
@@ -317,3 +319,50 @@ describe('P6 페이지 7 수출입 — 공개 전부(탭 6, 자물쇠 없음), �
     });
   }
 });
+
+describe('P8 페이지 11·12 — 개인 기능(로그인 전부), 공개판은 자물쇠만·요청 0, 웨이브 1 껍데기는 준비 중(P8)', () => {
+  const loaders = () =>
+    new Map([
+      [11, () => Promise.resolve(p11)],
+      [12, () => Promise.resolve(p12)],
+    ]);
+  const counts: Record<number, number> = { 11: P11_SECTIONS.length, 12: P12_SECTIONS.length };
+
+  for (const tier of ['public', 'login'] as const) {
+    it(`${tier}: 패널 수 고정·${tier === 'public' ? '전부 자물쇠' : '자물쇠 0·.msg 안내(오류 아님)'}·/api 요청 0`, async () => {
+      const root = appRoot();
+      const { fetch, calls } = fakeFetch(() => json({}, 404));
+      const opts = { fetch, now: fixedClock(), loaders: loaders(), ribbon: null };
+      const app =
+        tier === 'public'
+          ? bootPublic(root, opts)
+          : mountApp(root, {
+              tier: 'login',
+              source: createStaticSource({ fetch }),
+              now: fixedClock(),
+              loaders: loaders(),
+              ribbon: null,
+              storage: null,
+            });
+      for (const n of [11, 12]) app.pager.go(n, { smooth: false });
+      await app.settled();
+      for (const n of [11, 12]) {
+        const sec = root.querySelector(`#page-${n}`);
+        const panels = sec?.querySelectorAll('.panel') ?? [];
+        expect(panels, `페이지 ${n}`).toHaveLength(counts[n] ?? -1);
+        const locked = sec?.querySelectorAll('.panel.locked') ?? [];
+        if (tier === 'public') {
+          expect(locked).toHaveLength(counts[n] ?? -1);
+          expect(sec?.querySelector('.lockmsg')?.textContent).toContain('개인 기능');
+        } else {
+          expect(locked).toHaveLength(0);
+          expect(sec?.querySelectorAll('.panel .msg:not(.err)')).toHaveLength(counts[n] ?? -1);
+          expect(sec?.querySelector('.panel .msg.err')).toBeNull();
+        }
+      }
+      expect(calls.filter((c) => c.url.includes('/api'))).toHaveLength(0);
+      app.destroy();
+    });
+  }
+});
+

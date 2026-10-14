@@ -4,6 +4,8 @@
 //   52주 = 달력 364일, 역사적 = 상장 이후). 창을 못 채운 축은 '—'. 60일·252일 표기는 쓰지 않는다.
 // - 거래정지: 상태 배지 + 시세 칸 stale('정지 — 마지막 거래 YYYY-MM-DD').
 // - 공개: 이름·코드·시장·결산월은 DART(corp_index·fin/<코드>.json), 시세 자리는 TradingView 위젯, 신고가는 자물쇠.
+// - 관심종목 별 토글(P8 묶음 JNL — docs/p8_design.md §6): 로그인 머리에서 데이터 소스에 쓰기 채널(`put`·`del` —
+//   로그인 CSRF)이 있을 때만 단추를 그린다(없으면 '관심' 배지만 — 요청 없음). 목록은 main 하나.
 import { DataError, type Envelope } from '../../data/source';
 import { append, h } from '../../ui/dom';
 import { DASH, joEok, kstDate, pct, signClass } from '../../ui/fmt';
@@ -43,8 +45,59 @@ function badges(d: Header): HTMLElement[] {
   return out;
 }
 
+/** 관심종목 쓰기 채널(데이터 소스의 선택 기능 — 없으면 null) */
+export interface WatchWriter {
+  put<T>(key: string, body?: unknown): Promise<Envelope<T>>;
+  del<T>(key: string): Promise<Envelope<T>>;
+}
+
+export function watchWriter(source: unknown): WatchWriter | null {
+  const s = source as Partial<WatchWriter> | null | undefined;
+  return typeof s?.put === 'function' && typeof s.del === 'function' ? (s as WatchWriter) : null;
+}
+
+export const STAR_ON = '★ 관심';
+export const STAR_OFF = '☆ 관심 추가';
+
+/**
+ * 별 단추 — 누르면 main 목록에 더하거나 뺀다. 실패는 단추 옆 한 줄(사유만). 실패 줄 자리는 평소 숨긴 '.msg' 이고 실패한
+ * 때만 '.msg.err' 다 — 빈 오류 줄을 미리 두면 데이터가 없는 종목(일봉만)에서도 패널에 오류 줄이 있는 것으로 보인다.
+ */
+export function watchStar(code: string, on: boolean, w: WatchWriter): HTMLElement {
+  let state = on;
+  const note = h('span', { class: 'msg', attrs: { role: 'status', hidden: true } });
+  const say = (text: string): void => {
+    note.textContent = text;
+    note.hidden = text === '';
+    note.classList.toggle('err', text !== '');
+  };
+  const btn = h('button', { class: 'btn star', attrs: { type: 'button', 'aria-pressed': on ? 'true' : 'false' } });
+  const paint = (): void => {
+    btn.textContent = state ? STAR_ON : STAR_OFF;
+    btn.setAttribute('aria-pressed', state ? 'true' : 'false');
+  };
+  paint();
+  btn.addEventListener('click', () => {
+    const key = `watchlist/main/${code}`;
+    btn.disabled = true;
+    say('');
+    (state ? w.del(key) : w.put(key)).then(
+      () => {
+        state = !state;
+        paint();
+        btn.disabled = false;
+      },
+      (err: unknown) => {
+        say(err instanceof Error ? err.message : '관심종목 바꾸기 실패');
+        btn.disabled = false;
+      },
+    );
+  });
+  return h('span', { class: 'watch-star' }, btn, note);
+}
+
 /** 로그인 머리 그리기 — 머리 정보를 돌려준다(다른 패널이 우선주·보통주를 알 때) */
-export function drawHeader(p: Panel, env: Envelope<Header>, t: Pick<TabCtx, 'open'>): void {
+export function drawHeader(p: Panel, env: Envelope<Header>, t: Pick<TabCtx, 'open'> & { source?: unknown }): void {
   const d = env.data;
   const last = d.last;
   const nh = d.newhigh;
@@ -76,6 +129,7 @@ export function drawHeader(p: Panel, env: Envelope<Header>, t: Pick<TabCtx, 'ope
   ];
   const isPref = d.kind === 'pref' && d.common_code && d.common_code !== d.code;
   const common = d.common_code;
+  const w = watchWriter(t.source);
   append(p.body, [
     h(
       'p',
@@ -85,6 +139,7 @@ export function drawHeader(p: Panel, env: Envelope<Header>, t: Pick<TabCtx, 'ope
       h('small', null, d.code),
       ' ',
       badges(d),
+      w ? watchStar(d.code, d.is_watch, w) : '',
     ),
     priceNote ? h('p', { class: 'msg warn', data: { stale: 'true' } }, priceNote) : null,
     kv(items),

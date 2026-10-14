@@ -2,15 +2,18 @@
 
 창 2026-10-06 13:00 ~ 14:30 KST(빈 Redis — 13:00 에 첫 발급).
 
-1. 14:00 scheduler 의 첫 KIS 조회가 한 번 거절된다 → 읽는 쪽은 신고만(`kis:token:rejected`),
-   auth 가 다음 step(14:00:30)에 **한 번** 다시 발급한다(warning `token_rejected`). 그
-   회차(14:00 장중 작업)는 실패로 기록된다(재시도 0 — 거절한 토큰을 그 리더는 다시 쓰지
-   않는다).
+1. 14:00 scheduler 의 첫 KIS 조회(`flows.intraday` 가집계)가 한 번 거절된다 → 읽는 쪽은
+   신고만(`kis:token:rejected`), auth 가 다음 step(14:00:30)에 **한 번** 다시 발급한다(warning
+   `token_rejected`). 거절당한 14:00 1차 시도들은 실패로 기록되고, 슬롯 안 재시도가 있는
+   `flows.intraday` 는 새 토큰으로 회복한다. `rules.intraday`(재시도 0)는 같은 회차
+   `flows.intraday` 를 무른 의존 `wait_min: 5` 로 기다리므로(docs/p8_design.md — 장중 수급 라이브)
+   그 회복 뒤 14:01 에 새 토큰으로 돌아 ok 다.
 2. 14:05~14:11 scheduler(P5 매분 F2 작업이 14:05:00 에 먼저)·legacy 의 조회가 계속
    거절된다(새 토큰 발급 10분 안) → auth 는
    **다시 발급하지 않고** critical `token_rejected_after_issue` 한 번. 두 프로세스가 거듭
    신고해도 추가 발급 0. 그 뒤 scheduler 리더는 그 토큰을 쓰지 않으므로 장중 회차가
-   실패한다 — 사람이 볼 critical 이 남는다.
+   실패한다(14:10 `flows.intraday` 가 재시도까지 실패한 뒤 그것을 기다린 `rules.intraday` 도
+   실패) — 사람이 볼 critical 이 남는다.
 
 마지막 시험은 지난 토큰을 아직 메모리에 쥔 다른 프로세스의 늦은 거절 신고가 현재 토큰의 신고를
 덮어쓰지 않는지 본다(처음에는 `xfail strict` 로 고정했던 결함 — 최종 점검에서 `RedisTokenCache.
@@ -108,16 +111,27 @@ def test_only_auth_issues(rejected: SimDay) -> None:
 def test_failed_slots_are_recorded_and_keys_not_duplicated(rejected: SimDay) -> None:
     final = rejected.final_runs()
     assert final[("flows.intraday", "2026-10-06T13:50")].status == "ok"
-    # 재시도 0 인 rules.intraday 는 14:00 한 번 거절로 실패. flows.intraday 는 P3 부터 슬롯 안
-    # 재시도(20·40초 — D-P3-14)라 auth 가 14:00:30 에 다시 발급한 토큰으로 같은 슬롯에 회복한다
-    assert final[("rules.intraday", "2026-10-06T14:00")].status == "failed"
-    assert final[("flows.intraday", "2026-10-06T14:00")].status == "ok"
+    # 14:00 거절은 flows.intraday 1차 시도가 받는다. flows.intraday 는 P3 부터 슬롯 안 재시도
+    # (20·40초 — D-P3-14)라 auth 가 14:00:30 에 다시 발급한 토큰으로 같은 슬롯에 회복하고,
+    # 재시도 0 인 rules.intraday 는 그 회차 flows.intraday 를 무른 의존(wait_min 5 — 장중 수급
+    # 라이브)으로 기다렸다가 새 토큰으로 돈다 — 거절을 삼킨 것이 아니라 거절 뒤에 처음 돌았다
+    flows_ok = final[("flows.intraday", "2026-10-06T14:00")]
+    rules_1400 = final[("rules.intraday", "2026-10-06T14:00")]
+    assert flows_ok.status == "ok" and rules_1400.status == "ok"
+    assert rules_1400.attempt == 1 and rules_1400.started_at is not None
+    assert flows_ok.started_at is not None and rules_1400.started_at >= flows_ok.started_at
+    assert rules_1400.started_at >= at(10, 6, 14, 0, 30)  # 재발급 뒤
+    key = ("flows.intraday", "2026-10-06T14:00", 1)
+    first_try = [r for r in rejected.runs.records.values() if (r.job, r.as_of, r.attempt) == key]
+    assert [r.status for r in first_try] == ["failed"]  # 거절은 기록됐다
     for slot in ("14:10", "14:20"):  # 14:20 은 거절한 토큰을 다시 쓰지 않아 실패
         assert final[("flows.intraday", f"2026-10-06T{slot}")].status == "failed", slot
+        # 기다린 rules.intraday 도 거절한 토큰을 쓰지 않아 실패(삼키지 않는다)
+        assert final[("rules.intraday", f"2026-10-06T{slot}")].status == "failed", slot
     assert max(rejected.done_keys().values()) == 1
     assert rejected.claims.refused == []
     alerts = {r.subject for r in rejected.notify_log.of("ops.job_failed")}
-    assert {"rules.intraday:2026-10-06T14:00", "flows.intraday:2026-10-06T14:10"} <= alerts
+    assert {"rules.intraday:2026-10-06T14:10", "flows.intraday:2026-10-06T14:10"} <= alerts
 
 
 def test_stale_token_report_does_not_mask_current_rejection(

@@ -1,0 +1,84 @@
+# 규칙 예시 10개(docs/p8_design.md §4.1.4) — 비밀 아님(P8 묶음 FND). 편집기 '예시 불러오기'(GET
+# /api/rules/examples)와 완료 시험(tests/acceptance/test_rules_parity.py — WRAP)이 같은 파일을 읽는다.
+# 검사: kbj.engines.rules.dsl.load_examples(모양 + 의미 검사 — 하나라도 틀리면 전부 거절).
+# 마감 7(E1~E7)·장중 3(E8~E10). 장중 수급(E10 의 연속 순매수)은 KIS 가집계 잠정 — 없으면 판단 불가(발송 없음).
+examples:
+  E1:
+    v: 1
+    name: RSI 과매도
+    universe: {watchlist: main}
+    mode: close
+    when: {all: [{ind: rsi, p: {n: 14}, op: "<", value: 30}]}
+  E2:
+    v: 1
+    name: MACD 골든크로스
+    universe: {watchlist: main}
+    mode: close
+    when: {all: [{ind: macd, field: line, op: cross_above, ref: {ind: macd, field: signal}}]}
+  E3:
+    v: 1
+    name: 볼린저 하단 터치
+    universe: {watchlist: main}
+    mode: close
+    when: {all: [{ind: low, op: "<=", ref: {ind: bb, p: {n: 20, k: 2.0}, field: lower}}]}
+  E4:
+    v: 1
+    name: 20일선 돌파
+    universe: {watchlist: main}
+    mode: close
+    when: {all: [{ind: close, op: cross_above, ref: {ind: sma, p: {n: 20}}}]}
+  E5:
+    v: 1
+    name: 외국인 3일 연속
+    universe: {watchlist: main}
+    mode: close
+    when: {all: [{ind: foreign_streak, op: ">=", value: 3}]}
+  E6:
+    v: 1
+    name: 반도체 과매도 반등
+    universe: {watchlist: main}
+    mode: close
+    when:
+      all:
+        - {ind: rsi, p: {n: 14}, op: "<", value: 30}
+        - {ind: sma, p: {n: 5}, op: cross_above, ref: {ind: sma, p: {n: 20}}}
+        - {ind: foreign_streak, op: ">=", value: 3}
+  E7:
+    v: 1
+    name: 추세 강함
+    universe: {watchlist: main}
+    mode: close
+    when:
+      all:
+        - {ind: adx, p: {n: 14}, field: adx, op: ">", value: 25}
+        - {ind: adx, p: {n: 14}, field: pdi, op: ">", ref: {ind: adx, p: {n: 14}, field: mdi}}
+        - {ind: close, op: ">", ref: {ind: sma, p: {n: 60}}}
+  E8:
+    v: 1
+    name: 거래량 급증 양봉
+    universe: {watchlist: main}
+    mode: intraday
+    when:
+      all:
+        - {ind: vol_ratio, p: {n: 20}, op: ">=", value: 2}
+        - {ind: change_pct, op: ">", value: 0}
+  E9:
+    v: 1
+    name: 장중 급등
+    universe: {watchlist: main}
+    mode: intraday
+    when:
+      all:
+        - {ind: change_pct, op: ">=", value: 5}
+        - {ind: vol_ratio, p: {n: 20}, op: ">=", value: 1.5}
+  E10:
+    v: 1
+    name: 신고가 근접 쌍끌이
+    universe: {watchlist: main}
+    mode: intraday
+    when:
+      all:
+        - {ind: close, op: ">=", ref: {ind: high_n, p: {n: 250}, scale: 0.97}}
+        - any:
+            - {ind: foreign_streak, op: ">=", value: 1}
+            - {ind: inst_streak, op: ">=", value: 1}

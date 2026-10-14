@@ -17,6 +17,11 @@ docs/p3_design.md §1.2·§3.5, docs/metrics.md §2.
   보고 `KisEmpty`(ET :201~208). 다른 날짜의 '전부 0' 행도 사실이 아니라 버린다.
 - 가집계(FHPTJ04400000)는 증권사 **추정치** — source `kis.prelim`, quality estimated. 마감 확정
   (FHKST01010900, source `kis`)이 같은 키를 덮고 차이를 남긴다(D-P3-7 — 저장소가 한다).
+  공식 예제(koreainvestment/open-trading-api `foreign_institution_total`, 2026-10-14 확인):
+  HTS [0440] 화면의 **순위 목록**(순매수 상위 또는 순매도 상위 — 길이 N 은 문서에 없음
+  [실측 필요 #66])이고, 증권사 직원이 장중에 입력한 값을 단순 누계한 것이라 **하루 4회**만
+  바뀐다(회차 시각·고르기는 `kbj.engines.flows.prelim` — 장중 평가는 '확실히 들어온 가장 최근
+  회차' 값만 쓴다).
 - 금액 자릿수 대조(`unit_check`, ET kissrc): 금액 합이 수량 × 종가 합과 자릿수가 같아야 한다 (배수
   0.2~5). 단위를 잘못 알면 모든 금액이 10⁶ 배 틀리므로 수집 처리기가 쓰기 전에 본다.
 
@@ -30,7 +35,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import date, datetime
-from typing import Any, Final
+from typing import Any, Final, Literal
 
 from kbj.core.quality import Quality
 from kbj.core.rows import IntradayInvestor, Investor, InvestorDay
@@ -49,6 +54,7 @@ from kbj.data.private.kis.parse import (
 )
 
 __all__ = [
+    "INST_FOREIGN_SIDES",
     "INST_FOREIGN_WHO",
     "MARKET_FIELDS",
     "PRELIM_SOURCE",
@@ -109,8 +115,13 @@ INST_FOREIGN_FIELDS: Final[Mapping[Investor, Fields]] = {
     Investor.FOREIGN: Fields(("frgn_ntby_tr_pbmn",), ("frgn_ntby_qty",)),
     Investor.INSTITUTION: Fields(("orgn_ntby_tr_pbmn",), ("orgn_ntby_qty",)),
 }
-# 가집계 목록 구분(FID_ETC_CLS_CODE) — 1 외국인 · 2 기관 [추정 — 실측 필요 #23]
+# 가집계 목록 구분(FID_ETC_CLS_CODE) — 0 전체·1 외국인·2 기관계·3 기타(공식 예제, 2026-10-14)
 INST_FOREIGN_WHO: Final[Mapping[str, str]] = {"foreign": "1", "institution": "2"}
+# 가집계 순위 방향(FID_RANK_SORT_CLS_CODE) — 0 순매수 상위·1 순매도 상위(공식 예제, 2026-10-14).
+# 순매도 종목은 순매수 목록에 나오지 않으므로 장중은 둘 다 받는다(매도 쪽 조건·'판단 불가' 구분)
+Side = Literal["buy", "sell"]
+INST_FOREIGN_SIDES: Final[Mapping[Side, str]] = {"buy": "0", "sell": "1"}
+
 _THREE: Final = (Investor.INDIVIDUAL, Investor.FOREIGN, Investor.INSTITUTION)
 
 
@@ -142,18 +153,21 @@ def params_market_investor(market: str, day: date, venue: str = "KRX") -> dict[s
     }
 
 
-def params_inst_foreign(market: str, who: str, venue: str = "KRX") -> dict[str, str]:
-    """FHPTJ04400000 — ET ENDPOINTS['top_flows'] + 시장(0001·1001)·구분(외국인·기관)
-    [실측 필요 #23].
+def params_inst_foreign(
+    market: str, who: str, venue: str = "KRX", side: Side = "buy"
+) -> dict[str, str]:
+    """FHPTJ04400000 — ET ENDPOINTS['top_flows'] + 시장(0001·1001)·구분(외국인·기관)·방향.
 
-    정렬 0 = 순매수 상위, 금액/수량 구분 0 [추정]."""
+    공식 예제(2026-10-14 확인): `FID_DIV_CLS_CODE` 0 = **수량 정렬**·1 = 금액 정렬(ET 이 쓰던
+    0 을 그대로 둔다 — 응답에는 금액·수량 칸이 둘 다 온다), `FID_RANK_SORT_CLS_CODE` 0 = 순매수
+    상위·1 = 순매도 상위(`side`). 시장 코드는 공식 설명의 0000 전체·0001 코스피·1001 코스닥."""
     _krx_only(venue, "FHPTJ04400000")
     return {
         "FID_COND_MRKT_DIV_CODE": "V",
         "FID_COND_SCR_DIV_CODE": "16449",
         "FID_INPUT_ISCD": market,
         "FID_DIV_CLS_CODE": "0",
-        "FID_RANK_SORT_CLS_CODE": "0",
+        "FID_RANK_SORT_CLS_CODE": INST_FOREIGN_SIDES[side],
         "FID_ETC_CLS_CODE": INST_FOREIGN_WHO[who],
     }
 
@@ -264,8 +278,11 @@ def parse_inst_foreign_total(
     ts: datetime,
     venue: str = "KRX",
     source: str = PRELIM_SOURCE,
+    ranked: bool = True,
 ) -> list[IntradayInvestor]:
-    """FHPTJ04400000 `output` → 종목·구분마다 한 줄(추정치, quality estimated). rank = 목록 순서.
+    """FHPTJ04400000 `output` → 종목·구분마다 한 줄(추정치, quality estimated). rank = 목록 순서
+    (`ranked=False` 면 None — 순매도 목록: rank 는 '순매수 순위' 만 뜻한다, 화면 상위 목록이 그
+    순서다).
 
     빈 목록은 빈 결과(가집계 회차 전 — 실패 아님). 행이 있는데 코드·구분이 하나도 없으면 실패.
     """
@@ -285,7 +302,17 @@ def parse_inst_foreign_total(
             if amount is None and qty is None:
                 continue
             out.append(
-                IntradayInvestor(code, ts, inv, venue, amount, qty, i, source, Quality.ESTIMATED)
+                IntradayInvestor(
+                    code,
+                    ts,
+                    inv,
+                    venue,
+                    amount,
+                    qty,
+                    i if ranked else None,
+                    source,
+                    Quality.ESTIMATED,
+                )
             )
     if not coded:
         raise KisParseError(f"{what}: 종목코드가 한 행에도 없다 — 받은 키 {keys_of(rows)}")
@@ -303,11 +330,12 @@ _WHO_INVESTOR: Final[Mapping[str, Investor]] = {
 def merge_inst_foreign(
     lists: Sequence[tuple[str, Sequence[IntradayInvestor]]],
 ) -> list[IntradayInvestor]:
-    """가집계 목록(외국인 순위·기관 순위)을 (종목, 구분, 거래소) 한 줄로 합친다.
+    """가집계 목록(외국인·기관 — 순매수·순매도 목록)을 (종목, 구분, 거래소) 한 줄로 합친다.
 
     순위(rank)는 **그 구분의 목록에서의 순위**다 — 외국인 목록의 외국인 값, 기관 목록의 기관
     값이 먼저다. 다른 목록에서만 본 구분 값(외국인 목록에 실린 기관 값 등)은 그 자리가 비어 있을
-    때만 넣고 순위는 None(그 구분의 순위가 아니다).
+    때만 넣고 순위는 None(그 구분의 순위가 아니다). 같은 구분의 순매수·순매도 목록은 앞에 온 목록이
+    먼저다(부르는 쪽이 순매수 목록을 먼저 넘긴다).
     """
     primary: dict[tuple[str, Investor, str], IntradayInvestor] = {}
     secondary: dict[tuple[str, Investor, str], IntradayInvestor] = {}

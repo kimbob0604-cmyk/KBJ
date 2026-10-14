@@ -1,4 +1,4 @@
-"""마이그레이션 0001~0020 을 실제 TimescaleDB 에 적용(Docker).
+"""마이그레이션 0001~0021 을 실제 TimescaleDB 에 적용(Docker).
 
 근거: docs/p2_design.md §8.2·§8.8, docs/p3_design.md §3.4.
 
@@ -61,8 +61,9 @@ P2 = [
     "0018_index.sql",
     "0019_trade.sql",
     "0020_diag.sql",
-]  # 이름은 P2 시험 그대로 — 0001~0020 전부(P3 0007~0009, P4 0010~0013, P5 0014~0017,
-#   P5 2차 IDX 0018, P6 0019, P7 0020)
+    "0021_rules_journal.sql",
+]  # 이름은 P2 시험 그대로 — 0001~0021 전부(P3 0007~0009, P4 0010~0013, P5 0014~0017,
+#   P5 2차 IDX 0018, P6 0019, P7 0020, P8 0021)
 GX_DAILY = {
     "prv_gex.raw_messages", "prv_gex.fut_ticks", "prv_gex.opt_ticks", "prv_gex.chain_snapshots",
     "prv_gex.fut_board", "prv_gex.investor_flow", "prv_gex.series_expiries",
@@ -94,6 +95,8 @@ P5_INTRADAY = {
     "prv_flows.program_market_intraday": "90 days",
     "prv_flows.program_stock_intraday": "90 days",
 }
+# P8(0021): 관심종목 장중 시세 슬롯 — 7일 청크·730일 보존(백테스트·일치 감시가 읽는다)
+P8_INTRADAY = {"prv_alerts.watch_quote_slot": "730 days"}
 P3_TABLES = {
     "prv_board.alltime", "prv_board.label", "prv_board.split_check", "prv_board.stock_day",
     "prv_board.artifact", "prv_market.index_intraday", "prv_market.sector_intraday",
@@ -160,7 +163,8 @@ def test_hypertables_and_chunk_intervals(dsn: str) -> None:
         "JOIN timescaledb_information.dimensions d USING (hypertable_schema, hypertable_name)",
     )
     got = {name: (col, iv) for name, col, iv in ht}
-    assert set(got) == GX_DAILY | YEARLY | set(P3_INTRADAY) | set(P5_INTRADAY)
+    assert set(got) == GX_DAILY | YEARLY | set(P3_INTRADAY) | set(P5_INTRADAY) | set(P8_INTRADAY)
+    assert {got[t] for t in P8_INTRADAY} == {("slot_ts", timedelta(days=7))}
     assert {t: iv for t, (_, iv) in got.items() if t in YEARLY} == dict.fromkeys(
         YEARLY, timedelta(days=365)
     )
@@ -203,8 +207,8 @@ def test_p3_retention_policies(dsn: str) -> None:
         "SELECT hypertable_schema || '.' || hypertable_name, config->>'drop_after' "
         "FROM timescaledb_information.jobs WHERE proc_name = 'policy_retention'",
     )
-    # 보존 정책은 P3·P5 장중 이력 표에만(원본 녹화는 P7 — 0006 주석)
-    assert dict(rows) == P3_INTRADAY | P5_INTRADAY
+    # 보존 정책은 P3·P5·P8 장중 이력 표에만(원본 녹화는 P7 — 0006 주석)
+    assert dict(rows) == P3_INTRADAY | P5_INTRADAY | P8_INTRADAY
 
 
 def test_p3_tables_exist(dsn: str) -> None:
@@ -417,7 +421,9 @@ def test_p4_tables_exist(dsn: str) -> None:
         "WHERE table_schema IN ('pub_filings', 'pub_fin', 'prv_fin', 'prv_journal') "
         "OR table_name = 'share_class'",
     )
-    assert {r[0] for r in rows} == P4_PUB | P4_PRV | {"pub_filings.corp_code"}
+    # P8(0021)이 prv_journal 에 일지·매매·종목 기록 표를 더했다(P8 시험이 따로 본다)
+    p8_journal = {t for t in P8_TABLES if t.startswith("prv_journal.")}
+    assert {r[0] for r in rows} == P4_PUB | P4_PRV | {"pub_filings.corp_code"} | p8_journal
 
 
 def test_export_role_reads_p4_pub_tables_but_not_prv(dsn: str) -> None:
@@ -718,5 +724,65 @@ BAD_P7_ROWS = (
 
 @pytest.mark.parametrize("stmt", BAD_P7_ROWS)
 def test_p7_constraints(dsn: str, stmt: str) -> None:
+    with pytest.raises(psycopg.errors.CheckViolation), psycopg.connect(dsn) as c:
+        c.execute(stmt.encode())
+
+
+# ── P8 묶음 FND(0021 — 규칙 알림·백테스트·저널, 전부 로그인 — docs/p8_design.md §3.3) ──
+
+P8_TABLES = {
+    "prv_alerts.rule",
+    "prv_alerts.rule_version",
+    "prv_alerts.watch_quote_slot",
+    "prv_alerts.signal_intraday",
+    "prv_alerts.signal_close",
+    "prv_alerts.signal_outcome",
+    "prv_alerts.backtest_run",
+    "prv_alerts.backtest_signal",
+    "prv_alerts.match_check",
+    "prv_journal.analysis",
+    "prv_journal.trade",
+    "prv_journal.pick",
+}
+
+
+def test_p8_tables_exist_and_export_role_cannot_read(dsn: str) -> None:
+    rows = _rows(
+        dsn,
+        "SELECT table_schema || '.' || table_name FROM information_schema.tables "
+        "WHERE table_schema IN ('prv_alerts', 'prv_journal') AND table_type = 'BASE TABLE'",
+    )
+    assert P8_TABLES <= {r[0] for r in rows}
+    for table in sorted(P8_TABLES | {"prv_alerts.signal"}):
+        with pytest.raises(psycopg.errors.InsufficientPrivilege):
+            _as_export(dsn, f"SELECT 1 FROM {table} LIMIT 1")  # noqa: S608 — 상수 표 이름
+    hyper = _rows(
+        dsn,
+        "SELECT hypertable_schema || '.' || hypertable_name "
+        "FROM timescaledb_information.hypertables WHERE hypertable_schema = 'prv_alerts'",
+    )
+    assert {r[0] for r in hyper} == {"prv_alerts.watch_quote_slot"}
+
+
+BAD_P8_ROWS = (
+    # 규칙 id 형식(r_ + 소문자 영숫자 12자)
+    "INSERT INTO prv_alerts.rule (rule_id, name, current_version, enabled, source, created_at, "
+    "updated_at, loaded_by) VALUES ('r_bad', 'x', 1, false, 'api', now(), now(), 't')",
+    # 슬롯 현재가가 없으면 quality ok 일 수 없다
+    "INSERT INTO prv_alerts.watch_quote_slot (slot_ts, code, quality, source) "
+    "VALUES (now(), '005930', 'ok', 'KIS')",
+    # 성과는 값이 없으면 사유가 있어야 한다
+    "INSERT INTO prv_alerts.signal_outcome (signal_id, horizon, due_date, quality, computed_at, "
+    "source) VALUES ('si_01JBX0000000000000000000AB', 1, '2026-11-03', 'invalid', now(), 'KBJ')",
+    # 매매 수량은 양수, 쪽은 buy·sell 만
+    "INSERT INTO prv_journal.trade (code, side, trade_date, price, qty, fee, tax, source, "
+    "created_at) VALUES ('005930', 'short', '2026-11-02', 100, 1, 0, 0, 'api', now())",
+    "INSERT INTO prv_journal.trade (code, side, trade_date, price, qty, fee, tax, source, "
+    "created_at) VALUES ('005930', 'buy', '2026-11-02', 100, 0, 0, 0, 'api', now())",
+)
+
+
+@pytest.mark.parametrize("stmt", BAD_P8_ROWS)
+def test_p8_constraints(dsn: str, stmt: str) -> None:
     with pytest.raises(psycopg.errors.CheckViolation), psycopg.connect(dsn) as c:
         c.execute(stmt.encode())

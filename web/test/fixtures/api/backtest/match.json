@@ -1,0 +1,373 @@
+{
+  "source": "KBJ:rules.backtest_nightly",
+  "as_of": "2026-10-30T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "차이 사유: data_revised = 입력이 바뀜(KIS 잠정 → KRX 확정 등), logic = 같은 입력 다른 결과"
+  ],
+  "generated_at": "2026-10-30T16:00:00+09:00",
+  "data": {
+    "rows": [
+      {
+        "trade_date": "2026-10-30",
+        "rule_id": "r_0000000000e8",
+        "version": 1,
+        "live_n": 0,
+        "backtest_n": 0,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-30",
+        "rule_id": "r_0000000000e1",
+        "version": 1,
+        "live_n": 0,
+        "backtest_n": 0,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-29",
+        "rule_id": "r_0000000000e8",
+        "version": 1,
+        "live_n": 0,
+        "backtest_n": 0,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-29",
+        "rule_id": "r_0000000000e1",
+        "version": 1,
+        "live_n": 0,
+        "backtest_n": 0,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-28",
+        "rule_id": "r_0000000000e8",
+        "version": 1,
+        "live_n": 20,
+        "backtest_n": 20,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-28",
+        "rule_id": "r_0000000000e1",
+        "version": 1,
+        "live_n": 0,
+        "backtest_n": 0,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-27",
+        "rule_id": "r_0000000000e8",
+        "version": 1,
+        "live_n": 0,
+        "backtest_n": 0,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-27",
+        "rule_id": "r_0000000000e1",
+        "version": 1,
+        "live_n": 1,
+        "backtest_n": 1,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-26",
+        "rule_id": "r_0000000000e8",
+        "version": 1,
+        "live_n": 0,
+        "backtest_n": 0,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-26",
+        "rule_id": "r_0000000000e1",
+        "version": 1,
+        "live_n": 2,
+        "backtest_n": 2,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-23",
+        "rule_id": "r_0000000000e8",
+        "version": 1,
+        "live_n": 0,
+        "backtest_n": 0,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-23",
+        "rule_id": "r_0000000000e1",
+        "version": 1,
+        "live_n": 1,
+        "backtest_n": 1,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-22",
+        "rule_id": "r_0000000000e8",
+        "version": 1,
+        "live_n": 0,
+        "backtest_n": 0,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-22",
+        "rule_id": "r_0000000000e1",
+        "version": 1,
+        "live_n": 2,
+        "backtest_n": 2,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-21",
+        "rule_id": "r_0000000000e8",
+        "version": 1,
+        "live_n": 0,
+        "backtest_n": 0,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-21",
+        "rule_id": "r_0000000000e1",
+        "version": 1,
+        "live_n": 2,
+        "backtest_n": 2,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-20",
+        "rule_id": "r_0000000000e8",
+        "version": 1,
+        "live_n": 0,
+        "backtest_n": 0,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-20",
+        "rule_id": "r_0000000000e1",
+        "version": 1,
+        "live_n": 2,
+        "backtest_n": 2,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-19",
+        "rule_id": "r_0000000000e8",
+        "version": 1,
+        "live_n": 0,
+        "backtest_n": 0,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-19",
+        "rule_id": "r_0000000000e1",
+        "version": 1,
+        "live_n": 2,
+        "backtest_n": 2,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-16",
+        "rule_id": "r_0000000000e8",
+        "version": 1,
+        "live_n": 0,
+        "backtest_n": 0,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-16",
+        "rule_id": "r_0000000000e1",
+        "version": 1,
+        "live_n": 1,
+        "backtest_n": 1,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-15",
+        "rule_id": "r_0000000000e8",
+        "version": 1,
+        "live_n": 0,
+        "backtest_n": 0,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-15",
+        "rule_id": "r_0000000000e1",
+        "version": 1,
+        "live_n": 1,
+        "backtest_n": 1,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-14",
+        "rule_id": "r_0000000000e8",
+        "version": 1,
+        "live_n": 0,
+        "backtest_n": 0,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-14",
+        "rule_id": "r_0000000000e1",
+        "version": 1,
+        "live_n": 4,
+        "backtest_n": 4,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-13",
+        "rule_id": "r_0000000000e8",
+        "version": 1,
+        "live_n": 0,
+        "backtest_n": 0,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-13",
+        "rule_id": "r_0000000000e1",
+        "version": 1,
+        "live_n": 4,
+        "backtest_n": 4,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-12",
+        "rule_id": "r_0000000000e8",
+        "version": 1,
+        "live_n": 0,
+        "backtest_n": 0,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-12",
+        "rule_id": "r_0000000000e1",
+        "version": 1,
+        "live_n": 5,
+        "backtest_n": 5,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-08",
+        "rule_id": "r_0000000000e8",
+        "version": 1,
+        "live_n": 0,
+        "backtest_n": 0,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-08",
+        "rule_id": "r_0000000000e1",
+        "version": 1,
+        "live_n": 6,
+        "backtest_n": 6,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-07",
+        "rule_id": "r_0000000000e8",
+        "version": 1,
+        "live_n": 0,
+        "backtest_n": 0,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-07",
+        "rule_id": "r_0000000000e1",
+        "version": 1,
+        "live_n": 5,
+        "backtest_n": 5,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-06",
+        "rule_id": "r_0000000000e8",
+        "version": 1,
+        "live_n": 0,
+        "backtest_n": 0,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-06",
+        "rule_id": "r_0000000000e1",
+        "version": 1,
+        "live_n": 5,
+        "backtest_n": 5,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-02",
+        "rule_id": "r_0000000000e8",
+        "version": 1,
+        "live_n": 0,
+        "backtest_n": 0,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-02",
+        "rule_id": "r_0000000000e1",
+        "version": 1,
+        "live_n": 5,
+        "backtest_n": 5,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-01",
+        "rule_id": "r_0000000000e8",
+        "version": 1,
+        "live_n": 0,
+        "backtest_n": 0,
+        "logic_n": 0,
+        "diffs": []
+      },
+      {
+        "trade_date": "2026-10-01",
+        "rule_id": "r_0000000000e1",
+        "version": 1,
+        "live_n": 5,
+        "backtest_n": 5,
+        "logic_n": 0,
+        "diffs": []
+      }
+    ]
+  }
+}

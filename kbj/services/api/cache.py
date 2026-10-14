@@ -87,6 +87,11 @@ DOMAIN_JOBS: Final[Mapping[str, tuple[str, ...]]] = {
     # 과 알림 작업 중 늦은 것. 진단은 작업 셋(공개·로그인·VKOSPI).
     "gex": ("gex.alert",),
     "diag": ("diag.public", "diag.daily", "krx.vkospi"),
+    # P8(docs/p8_design.md §5 — 웨이브 1 FND). 신호·성과는 규칙 작업이 쓴다.
+    # 규칙·일지·매매·포트폴리오는
+    # 쓰기 모듈이 DB 에 바로 쓰므로 영역 없음(캐시 없이 — kbj.services.api.writes.fresh_json)
+    "rules": ("rules.intraday", "rules.close", "rules.outcome", "rules.backtest_nightly"),
+    "backtest": ("rules.outcome", "rules.backtest_nightly"),
 }  # fmt: skip
 # 작업 기록 말고 표의 최신 시각으로도 버전을 정하는 영역(상시 서비스가 쓰는 표 — 상수 SQL)
 DOMAIN_TS: Final[Mapping[str, str]] = {

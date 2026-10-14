@@ -63,3 +63,11 @@
   컨센 P3)대로 나눠 쓴다 — 몇 분 늘 수 있다 [확인 필요].
 - 화면: 보드가 아직 없으면 "아직 없음 — board.daily 16:00~16:05".
 - `docs/inventory.md`·`docs/conflict_map.md`(P0 목록)와 `legacy/` 사본의 옛 시각은 그때의 기록이라 고치지 않는다.
+
+## 보충
+
+- 보충(P8 WRAP, 2026-10-14): **16:00 발송 넷** — 위 셋(`brief.closing`·`flows.report`·`consensus.snapshot`)에 규칙 마감 묶음
+  `rules.close`(`alert.rule_close` — 하루 한 통, 0건이면 없음, 굳은 의존 `market.close_collect`)를 더한다. 등록부 시험
+  `POST_CLOSE_SENDERS` 가 넷·전부 `cron "0 16 * * 1-5"` 를 지킨다. 장중 규칙 알림(`rules.intraday` — `alert.rule`)은 사건 시점
+  발송이라 이 규칙 밖이다(정규장 10분 슬롯, 운영은 #65·#66 실측 전 꺼짐). 성과·백테스트(`rules.outcome` 08:30·
+  `rules.backtest_nightly` 08:45)는 발송하지 않는다.

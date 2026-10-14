@@ -77,8 +77,10 @@ from kbj.store.repos.market import (
     snap_rank,
 )
 from kbj.store.repos.market_stats import MemoryMarketStatsRepo
+from kbj.store.repos.personal import MemoryPersonalRepo
 from kbj.store.repos.program import MemoryProgramRepo
 from kbj.store.repos.public import MemoryPublicRepos
+from kbj.store.repos.rules import MemoryRulesRepo
 from kbj.store.repos.trade import MemoryTradeRepo
 from kbj.store.repos.us import MemoryUsRepo
 
@@ -735,6 +737,19 @@ class MemoryRepos:
     gex: MemoryGexRepo = field(default_factory=MemoryGexRepo)
     diag: MemoryDiagRepo = field(default_factory=MemoryDiagRepo)
     diag_pub: MemoryDiagPublicRepo = field(default_factory=MemoryDiagPublicRepo)
+    # P8 묶음 FND(0021 — 로그인). personal 은 rules(규칙·판)·journal(일지·매매·추천)과
+    # 같은 메모리 표에 쓴다(한 DB 처럼 — 쓰기는 personal, 읽기는 rules·journal)
+    rules: MemoryRulesRepo = field(default_factory=MemoryRulesRepo)
+    personal: MemoryPersonalRepo = field(init=False)
+
+    def __post_init__(self) -> None:
+        self.personal = MemoryPersonalRepo(
+            rule_t=self.rules.rule_t,
+            version_t=self.rules.version_t,
+            analyses=self.journal.analyses_d,
+            trades=self.journal.trades_d,
+            pick_t=self.journal.pick_t,
+        )
 
     def public(self) -> MemoryPublicRepos:
         """같은 공개 저장소 객체(filings·fin·macro·market_stats)를 공개 작업 묶음으로

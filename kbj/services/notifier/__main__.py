@@ -114,7 +114,9 @@ def cmd_run(settings: Settings) -> int:  # pragma: no cover — 진입점(실제
         )
         return 2
     from kbj.reports.gex.lines import command_reader
+    from kbj.services.engine.rules import command_reader as signals_reader
     from kbj.store.db import connect
+    from kbj.store.repos import pg_repos
     from kbj.store.repos.gex import PgGexRepo
 
     config = load_notify_config(settings=settings)
@@ -133,6 +135,8 @@ def cmd_run(settings: Settings) -> int:  # pragma: no cover — 진입점(실제
         now=utcnow,
         health=LogHealthSink(),
         gex=command_reader(PgGexRepo(gex_conn), utcnow),
+        # /시그널(P8 WRAP) — 오늘 신호 최신 10. 같은 짧은 연결 관례(저장소만 읽는다)
+        signals=signals_reader(pg_repos(gex_conn), utcnow),
     )
     if service.router is not None:
         set_default_client(service.router.client)  # 이 프로세스 안의 notify() 도 같은 대기열로

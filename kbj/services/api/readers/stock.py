@@ -9,8 +9,8 @@
 - 값은 저장소에서 읽고(수집·계산은 작업이 미리 했다) 엔진(순수)으로 읽을 때 계산할 것만 계산한다 —
   NTM·목표가 분포(`kbj.engines.consensus`), 수집 대상 규칙(`consensus_na`). 신고가 배지는 board
   산출을 읽기만 한다(D-P4-23 — 다시 계산하지 않는다, 3축 ADR 0017).
-- SMA 20·60·120(D-P4-21 — 차트 겹쳐 보기만)은 지표 정본(`kbj.core.indicators` — P8) 전까지 이 모듈의
-  `sma` 하나로 낸다(산술 평균, 창을 못 채운 칸은 None).
+- SMA 20·60·120(D-P4-21 — 차트 겹쳐 보기만)은 지표 정본 `kbj.core.indicators.sma`(P8 — D-P8-3)로
+  낸다(산술 평균, 창을 못 채웠거나 창 안에 None 이 있으면 None — 값은 P4 판과 같다).
 - 적용 불가는 200 + `applicable=false` + `na_reason`(사유 우선순위는 docs/metrics.md §11 — 계산하는
   작업(V·K)이 정해 저장한 사유를 그대로 싣는다). 작업이 행을 아직 쓰지 않았을 때만 회사 단위 사유
   (`currency_mismatch` — 재무 통화 ≠ KRW, `no_filings` — 정기보고서 없음)를 여기서 정한다.
@@ -35,6 +35,7 @@ from kbj.core.fin_rows import (
     ShareClass,
     ValuationDay,
 )
+from kbj.core.indicators import sma
 from kbj.core.quality import Quality
 from kbj.core.rows import Bar, Snap, UniverseRow
 from kbj.engines.consensus import LABEL as CONSENSUS_LABEL
@@ -578,23 +579,6 @@ def stock_header(ctx: ReadContext, code: str) -> Envelope[StockHeader]:
 
 
 # ── 차트 ──────────────────────────────────────────────────────────────────────────────
-
-
-def sma(values: Sequence[float | None], n: int) -> list[float | None]:
-    """단순 이동평균(산술) — 창 n 을 못 채웠거나 창 안에 None 이 있으면 None(D-P4-21)."""
-    if n < 1:
-        raise ValueError("창은 1 이상")
-    out: list[float | None] = []
-    for i in range(len(values)):
-        if i + 1 < n:
-            out.append(None)
-            continue
-        win = values[i + 1 - n : i + 1]
-        if any(v is None for v in win):
-            out.append(None)
-            continue
-        out.append(sum(cast(Sequence[float], win)) / n)
-    return out
 
 
 def stock_chart(ctx: ReadContext, code: str, *, days: int) -> Envelope[PriceChart]:

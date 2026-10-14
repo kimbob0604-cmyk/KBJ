@@ -11,6 +11,9 @@
   (로그인 등급 채팅 — `InboundRouter.command_chats`)에서만 받는다. 본문은
   `default_registry(gex=…)` 로 넘긴 읽기 함수(저장소만 읽는다 —
   `kbj.reports.gex.lines.command_reader`)가 만든다. 넘기지 않으면 '준비 중(P7)'.
+- `/시그널`(P8 EVL — docs/p8_design.md §1.2): 오늘 규칙 신호 최신 10(규칙·종목·시각). 본문은
+  `default_registry(signals=…)` 로 넘긴 읽기 함수(`kbj.services.engine.rules.command_reader` —
+  저장소만)가 만든다. 넘기지 않으면 '준비 중(P8)'.
 """
 
 from __future__ import annotations
@@ -143,8 +146,11 @@ class CommandRegistry:
             return Reply(f"⚠️ /{html.escape(cmd.name)} 처리 중 오류: {type(e).__name__}")
 
 
-def default_registry(*, gex: Callable[[], str] | None = None) -> CommandRegistry:
-    """§5.7 표 그대로. `/도움` 은 늘 동작하고, `/gex` 는 읽기 함수 `gex` 를 주면 동작한다(P7)."""
+def default_registry(
+    *, gex: Callable[[], str] | None = None, signals: Callable[[], str] | None = None
+) -> CommandRegistry:
+    """§5.7 표 그대로. `/도움` 은 늘 동작하고, `/gex` 는 읽기 함수 `gex` 를 주면 동작한다(P7).
+    `/시그널` 은 읽기 함수 `signals`(`kbj.services.engine.rules.command_reader` — P8)를 주면."""
     reg = CommandRegistry()
     reg.register("도움", ("help", "start", "명령"), summary="이 안내")
     reg.register("시황", ("summary",), phase="P3", summary="오늘 장마감 요약")
@@ -152,7 +158,7 @@ def default_registry(*, gex: Callable[[], str] | None = None) -> CommandRegistry
     reg.register("가격", ("시세", "price"), phase="P3", summary="현재가", usage="/가격 <종목>")
     reg.register("신고가", ("newhigh",), phase="P3", summary="오늘 52주·역사적 신고가")
     reg.register("gex", (), phase="P7", summary="최신 GEX 레벨")
-    reg.register("시그널", ("수급시그널", "signals"), phase="P8", summary="수급 시그널")
+    reg.register("시그널", ("수급시그널", "signals"), phase="P8", summary="오늘 규칙 신호")
 
     def _help(_: CommandContext) -> Reply:
         return Reply(reg.help_text())
@@ -165,4 +171,13 @@ def default_registry(*, gex: Callable[[], str] | None = None) -> CommandRegistry
             return Reply(read())
 
         reg.register("gex", (), _gex, phase="P7", summary="최신 GEX 레벨")
+    if signals is not None:
+        read_signals = signals
+
+        def _signals(_: CommandContext) -> Reply:
+            return Reply(read_signals())
+
+        reg.register(
+            "시그널", ("수급시그널", "signals"), _signals, phase="P8", summary="오늘 규칙 신호"
+        )
     return reg

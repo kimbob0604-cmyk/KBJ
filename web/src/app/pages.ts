@@ -73,10 +73,32 @@ export const PAGES: readonly PageDef[] = [
     lock: 'etf',
     plan: '순유입·투자자별·유형별·괴리율·구성종목 변동 (ETF 맵·보유 탐색·액티브 동시 편입은 P5)',
   },
-  { n: 11, title: '알림·규칙', phase: 'P8', tier: 'login', lock: 'personal', plan: '규칙 기반 기술적 알림·발송 이력·알림 후 성과' },
-  { n: 12, title: '백테스트·저널', phase: 'P8', tier: 'login', lock: 'personal', plan: '규칙·신호 백테스트, 분석 일지, 포트폴리오 저널' },
-  // 13 운영: PLAN §8 에 단계가 적혀 있지 않다 — P8 로 둔다 [확인 필요]
-  { n: 13, title: '운영', phase: 'P8', tier: 'login', lock: 'personal', plan: '데이터 신선도·작업 모니터·헬스·발송 기록' },
+  {
+    n: 11,
+    title: '알림·규칙',
+    phase: 'P8',
+    tier: 'login',
+    lock: 'personal',
+    plan: '규칙(DSL)·편집기·발송 이력(장중 사건 시점·마감 16:00 한 통)·알림 후 성과(1·3·5·10·20일)',
+  },
+  {
+    n: 12,
+    title: '백테스트·저널',
+    phase: 'P8',
+    tier: 'login',
+    lock: 'personal',
+    plan: '규칙 백테스트·백테스트 대 실제·분석 일지·포트폴리오(평균 단가)·상관관계·추천 성과(이관분)',
+  },
+  // 13 운영: P8 범위에서 뺐다(사용자 결정 2026-10-13 Q9 — 자리표시 그대로). 단계 칸은 자리표시 배지용으로 P8 을 두고
+  // 문구에 '단계 미정' 을 적는다(P8 WRAP)
+  {
+    n: 13,
+    title: '운영',
+    phase: 'P8',
+    tier: 'login',
+    lock: 'personal',
+    plan: '데이터 신선도·작업 모니터·헬스·발송 기록 — P8 범위 밖(사용자 결정), 단계 미정',
+  },
 ];
 
 /** P3 에 위젯이 들어온 페이지 */
@@ -94,14 +116,21 @@ export const P6_PAGES: readonly number[] = PAGES.filter((p) => p.phase === 'P6')
 /** P7 위젯 페이지 — 3 진단(docs/p7_design.md §6, mixed: 공공지표 진단·이벤트만 공개) */
 export const P7_PAGES: readonly number[] = PAGES.filter((p) => p.phase === 'P7').map((p) => p.n);
 
+/**
+ * P8 위젯 페이지 — 11 알림·규칙·12 백테스트·저널(docs/p8_design.md §6, 개인 기능 — 로그인 전부, 공개판은 자물쇠).
+ * 13 운영은 단계 표기만 P8 이고 위젯이 없다(사용자 결정 2026-10-13 Q9 — 자리표시 그대로, 문구 '단계 미정' — WRAP).
+ */
+export const P8_PAGES: readonly number[] = PAGES.filter((p) => p.phase === 'P8' && p.n !== 13).map((p) => p.n);
+
 export type PageLoader = () => Promise<PageModule>;
 
 /**
  * 위젯 모듈 찾기 — `src/pages/p1_market.ts` 같은 파일. 빌드 때 정해지므로 없는 파일은 빈 목록이다.
- * 페이지마다 따로 불러온다(처음 보일 때). 번호는 위젯이 있는 단계의 페이지만(P3 1·2·4·10 + P4 5·8 + P5 6 + P6 7) — 하위
+ * 페이지마다 따로 불러온다(처음 보일 때). 번호는 위젯이 있는 단계의 페이지만(P3 1·2·4·10 + P4 5·8 + P5 6 + P6 7 + P7 3 +
+ * P8 11·12) — 하위
  * 폴더(`src/pages/p8/*.ts`)는 이 glob 에 걸리지 않는다(진입 파일이 import).
  */
-const FOUND = import.meta.glob<PageModule>('../pages/p{1,2,3,4,5,6,7,8,10}_*.ts', { import: 'default' });
+const FOUND = import.meta.glob<PageModule>('../pages/p{1,2,3,4,5,6,7,8,10,11,12}_*.ts', { import: 'default' });
 
 export function pageLoaders(found: Record<string, () => Promise<PageModule>> = FOUND): Map<number, PageLoader> {
   const out = new Map<number, PageLoader>();

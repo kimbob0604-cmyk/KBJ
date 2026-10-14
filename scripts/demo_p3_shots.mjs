@@ -1,4 +1,4 @@
-// P3 데모 화면 확인 — 로그인 → 페이지 1·2·4·10 을 열어 스크린샷과 콘솔 오류를 모은다.
+// P3 데모 화면 확인 — 로그인 → 페이지 1·2·3·4·5·7·8·10·11·12 를 열어 스크린샷과 콘솔 오류를 모은다.
 // scripts/demo_p3.sh 가 부른다(합성 데이터 데모 서버가 떠 있어야 한다). 비밀번호는 환경변수로만 받는다.
 //
 //   KBJ_DEMO_URL=http://127.0.0.1:8765/ KBJ_DEMO_PASSWORD=... [KBJ_DEMO_NOW=<서버 시계 ISO>] \
@@ -6,7 +6,7 @@
 //
 // playwright 는 레포 의존성이 아니다(공개 레포 공급망 — web/package.json 에 넣지 않는다). 전역 설치본을
 // 찾는다(`npm root -g`/playwright, 또는 PLAYWRIGHT_MODULE). 없으면 종료 코드 3(데모 스크립트가 건너뜀).
-// 종료 코드: 0 = 화면 4개 모두 그려지고 콘솔 오류·실패 요청 0, 1 = 문제 있음(요약에 적는다).
+// 종료 코드: 0 = 화면 모두 그려지고 콘솔 오류·실패 요청 0, 1 = 문제 있음(요약에 적는다).
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -21,6 +21,8 @@ const PAGES = [
   { n: 8, name: 'p8_stock', title: '종목 상세' },
   { n: 7, name: 'p7_trade', title: '수출입' },
   { n: 10, name: 'p10_etf', title: 'ETF 수급' },
+  { n: 11, name: 'p11_rules', title: '규칙 알림' },
+  { n: 12, name: 'p12_journal', title: '백테스트·저널' },
 ];
 
 function loadPlaywright() {
@@ -132,6 +134,28 @@ try {
     if (stats.docWidth > stats.vw + 1) problems.push(`페이지 ${p.n}: 문서가 가로로 넘친다(${stats.docWidth}px > ${stats.vw}px)`);
     if (stats.errors.length) problems.push(`페이지 ${p.n} 패널 오류: ${stats.errors.join(' | ')}`);
     summary.push({ page: p.n, title: p.title, file, ...stats });
+    if (p.n === 8) {
+      // 일봉만 있는 종목(데모 시드 990001 — 일지 픽스처 종목: 재무·컨센서스·공시·수급이 없다)도 탭마다 패널 오류
+      // (.msg.err) 없이 안내(.msg — 404 no_data·빈 데이터)로 그려야 한다. 탭을 차례로 연다
+      await page.evaluate(() => {
+        window.location.hash = '#/p/8/990001';
+      });
+      await page.waitForTimeout(2000);
+      const tabNames = await page.locator('#page-8 [role="tab"]').allTextContents();
+      for (const [i, name] of tabNames.entries()) {
+        await page.locator('#page-8 [role="tab"]').nth(i).click();
+        await page.waitForTimeout(1500);
+        const file = join(outDir, `p8_daily_only_tab${i}.png`);
+        await page.screenshot({ path: file }); // 보이는 화면만 — 세로 전체 캡처는 가로 페이저를 1쪽으로 되돌린다
+        const st = await page.evaluate(() => ({
+          errors: [...document.querySelectorAll('#page-8 .msg.err')].map((e) => e.textContent?.trim() ?? ''),
+          notes: [...document.querySelectorAll('#page-8 .msg:not(.err):not([hidden])')].map((e) => e.textContent?.trim() ?? ''),
+        }));
+        if (st.errors.length) problems.push(`페이지 8 일봉만 있는 종목(990001) ${name} 탭 패널 오류: ${st.errors.join(' | ')}`);
+        summary.push({ page: 8, title: `종목 상세 990001(일봉만) ${name} 탭`, file, panels: null, ...st });
+      }
+      await page.locator('#page-8 [role="tab"]').first().click();
+    }
     if (p.n === 7) {
       // 페이지 7 수출입 — 탭 6개를 차례로 열어 탭마다 스크린샷·패널 오류·가로 넘침을 본다(첫 탭은 위에서 찍었다)
       const tabNames = await page.locator('#page-7 [role="tab"]').allTextContents();

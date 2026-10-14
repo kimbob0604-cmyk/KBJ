@@ -230,3 +230,31 @@ US 요약 빌드·`/api/us/*` 가 써서 이월. **테마·밸류체인**(`/api/
 
 검사 래퍼 **13 그대로**(`scripts/test_legacy.sh stock_dashboard`). 기준선: naver 67 → 65(server.py −1·ET render −1),
 krx_scrape 62 → 57(ET monitor/flow −5).
+
+## P8. 규칙 알림·백테스트·저널 대체 — WRAP(웨이브 3, 2026-10-14)
+
+근거: `docs/p8_design.md` §1.6-6·§1.7. P4·P5 와 같은 기준 — kbj 가 대체했고, 남는 코드가 지울 이름을 부르지 않으며(`ruff --select
+F821,F811` 0 유지), 검사 스크립트 10개가 떼어 쓰지 않는 함수만 지웠다(`grep` 으로 확인 — 검사 스크립트에 지운 이름 0).
+지운 자리에는 `# KBJ P8 삭제: <이름> — <대체>` 한 줄을 남겼다(`server.py` 15,539 → 14,216줄, 함수 37개).
+
+| 지운 것 | 대체 |
+|---|---|
+| `check_alert_rules`·`_check_trailing_stops`·`alert_watchlist_price` + `_startup` 등록 셋(`tg_custom_alerts`·`tg_trailing`·`tg_watchlist`), `_format_rule_label`·`_alert_cooldown_ok`·`_record_alert`(부르던 함수가 모두 지워짐) | kbj `rules.intraday`(장중 10분 — 운영은 #65·#66 실측 전 꺼짐)·`rules.close`(16:00 — ADR 0018), 트레일링은 DSL `trail_from_peak` 조건, 쿨다운은 규칙 상태기(ADR 0031) |
+| `alert_discovery_new_entries` + 발굴 끝의 호출 | 폐지(사용자 결정 2026-10-13 — `config/jobs.yaml` retired `SD:alert_discovery_new_entries`) |
+| `api_alerts_sync`·`api_alerts_list`(`/api/alerts/*` — 브라우저 규칙 동기화) | kbj 규칙 쓰기 모듈(`kbj.services.personal.rules` — `/api/rules`) |
+| `api_portfolio_sync`(`/api/portfolio/sync` — 트레일링용 포지션 파일) | kbj 페이지 12 포트폴리오(매매 기록 재생 — ADR 0033) |
+| `api_backtest`·`api_backtest_available_tags`·`_bt_calc_rsi`·`_bt_check_entry`·`_bt_check_stage2_entry`·`_bt_simulate_trade` | kbj 페이지 12 백테스트(DSL 규칙 — ADR 0032) |
+| `_compute_correlation`·`api_correlation`·`_load_server_portfolio_codes`·`_load_watchlist_codes` | kbj `/api/portfolio/correlation`(페이지 12 상관) |
+| `api_recommendation_performance`·`api_recommendation_migrate` | kbj `/api/journal/picks`(이관분 — `journal import-sd`) |
+| 매매 저널 `_init_trade_journal`(+ 부팅 호출)·`api_journal_add`·`_list`·`_summary`·`_delete` | kbj 페이지 12 저널(`/api/journal/trades`) |
+| 분석 일지 라우트 10(`api_analysis_journal_*` — `/api/journal/*`)·`/journal` 화면 경로 | kbj 페이지 12 분석 일지(`/api/journal/analysis*`) |
+
+**남긴 것**: 추천 이력 **저장**(`_init_recommendation_history`·`save_recommendation_snapshot`·`migrate_discover_to_recommendations`
+— SD 발굴이 남아 있다), SD 차트 지표(`_calc_rsi_macd`·`_calc_adx`·`_calc_bollinger` — 차트 API 가 부른다, 직접 호출 검사 새 그룹
+`ta_indicators` 기준선 4), `analysis_journal_api.py`·`analysis_journal_helper.py`·`review_validator.py`·`valuechain.py`(설계서는 지우라
+했지만 남은 검증 라우트 `api_verification_*`·밸류체인 라우트 `/api/valuechain2/*` 가 import 한다 — 테마·밸류체인은 사용자가 따로
+진행(2026-10-13 Q1), 그 대체 때 같이 지운다), `migrations/004·006·007`(SD DB 이관 근거), `config/notify.yaml legacy_kinds` #6·#12·#13 줄
+(전환 안전망 — 부르는 함수가 없어 쓰이지 않는다, P9 legacy 비우기에서 지운다. #14 는 폐지라 지웠다).
+
+검사 래퍼 **13 그대로**(`scripts/test_legacy.sh stock_dashboard` — 지운 함수에 원본 시험 없음). 직접 호출 기준선: 새 그룹
+`ta_indicators` SD 4(백테스트 RSI 1 은 지워져 빠짐), naver·krx_scrape 그대로.

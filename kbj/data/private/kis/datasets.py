@@ -171,7 +171,13 @@ DATASETS: Final[tuple[DatasetSpec, ...]] = (
             "FHPTJ04400000 장중 회차(같은 TR 이 장 마감 스냅 inst_foreign_top 과 쓰임이 달라 "
             "따로 둔다). 슬롯마다 prv_flows.investor_intraday(이력)에 쌓고, 일별 원장 "
             "prv_flows.stock_investor_daily 의 오늘 행(source 'kis.prelim')도 갱신한다. "
-            "가집계 갱신 주기·회차·상위 개수 [실측 필요]. 마감 뒤 확정치로 덮어쓴다(D-P3-7)"
+            "공식 예제(koreainvestment/open-trading-api foreign_institution_total, 2026-10-14 "
+            "확인): HTS [0440] 의 순위 목록(FID_RANK_SORT_CLS_CODE 0 순매수 상위·1 순매도 상위 — "
+            "슬롯마다 둘 다 받는다, FID_DIV_CLS_CODE 0 수량 정렬·1 금액 정렬)이고, 증권사 직원이 "
+            "장중에 입력한 값의 단순 누계라 하루 4회만 바뀐다(외국인 09:30·11:20·13:20·14:30, "
+            "기관 10:00·11:20·13:20·14:30, ±10분 — investors.PRELIM_ROUNDS). 목록 길이 N·금액 "
+            "단위·회차 실제 편차 [실측 필요 #66]. 목록에 없는 종목은 값이 없다(판단 불가). "
+            "마감 뒤 확정치로 덮어쓴다(D-P3-7)"
         ),
         venues=_SPLIT,
     ),
@@ -230,10 +236,12 @@ DATASETS: Final[tuple[DatasetSpec, ...]] = (
         "watch_quotes_intraday",
         published="장중 10분마다(09:00~15:30 KST)",
         as_of="slot10m",
-        store="",
+        store="prv_alerts.watch_quote_slot",
         notes=(
-            "FHKST01010100 관심종목 현재가 — 알림 규칙(rules.intraday, P8)이 평가에만 쓴다. "
-            "저장 여부는 P8 [확인 필요]"
+            "FHKST01010100 관심종목 현재가 — 규칙 장중 평가(rules.intraday, P8). "
+            "P8 저장 — 장중 재생용(D-P8-9: 시가·고가·저가·현재가·누적 거래량 → 부분 봉). "
+            "장중 칸 이름·단위 [실측 필요 — "
+            "probe_results §7 #P8-1, 파서는 P3 마감 수집과 같은 quotes.parse_quote]"
         ),
     ),
     _kis(

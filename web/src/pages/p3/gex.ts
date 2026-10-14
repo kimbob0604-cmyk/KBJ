@@ -220,12 +220,18 @@ async function drawExt(ctx: PageContext, p: Panel): Promise<void> {
 }
 
 /** ④ GEX 레벨(로그인) */
-export async function mountGex(ctx: PageContext): Promise<void> {
+/** ④ GEX 패널 셋(틀만 — 공개 빌드는 이 틀만 쓰고 본문 mountGex 는 번들에서 빠진다, P8 WRAP) */
+export function gexPanels(ctx: PageContext): { prof: Panel; lvls: Panel; ext: Panel } {
   const common = { tier: 'login' as const, lock: 'options', src: GEX_SOURCE };
   const prof = panel(ctx.tier, { ...common, title: TITLES.profile, span: 6, def: '막대 = 행사가별 GEX(원/1% — 콜 롱·풋 숏 naive 딜러), 세로선 = 현재가·Flip' });
   const lvls = panel(ctx.tier, { ...common, title: TITLES.levels, span: 6 });
   const ext = panel(ctx.tier, { ...common, title: TITLES.ext, span: 12, def: `확장 지표는 1주 섀도 운영 뒤 표시 — 그 전엔 '${SHADOW_TEXT}'` });
   ctx.root.append(prof.el, lvls.el, ext.el);
+  return { prof, lvls, ext };
+}
+
+export async function mountGex(ctx: PageContext): Promise<void> {
+  const { prof, lvls, ext } = gexPanels(ctx);
   if (lvls.locked) return; // 공개판 — 자물쇠만, 요청하지 않는다
 
   const levelCache = new Map<GexScope, Envelope<GexLevels>>();

@@ -8,8 +8,7 @@
 consensus.snapshot 은 꺼짐) · 13 P5 작업 행(docs/p5_design.md §0.4 — 웨이브 1 묶음 FND 가 확정,
 전부 꺼짐 —
 켜기는 WRAP): owner·collects·writes·as_of, F2 다섯 작업의 KIS 하루 호출 ≤ kis.daily_soft_cap, 16:00
-발송
-셋 유지, 휴장일 미실행, gex.poller 에 장중 투자자 1분 없음(ADR 0019).
+발송 셋 유지, 휴장일 미실행, gex.poller 에 장중 투자자 1분 없음(ADR 0019).
 """
 
 from __future__ import annotations
@@ -89,6 +88,10 @@ P6_ENABLED = {"trade.map_load", "trade.derive", "trade.stock_index"}
 # P7(docs/p7_design.md §1.7-1 — 웨이브 3 WRAP). 외부 호출이 없는 세 작업. krx.vkospi 는 VKOSPI 행·칸
 # 실측(#P7-1) 전까지 꺼진 채(D-P7-14). 서비스 gex.engine·ws_gateway·recorder 는 P7_SERVICES(아래)
 P7_ENABLED = {"diag.public", "diag.daily", "gex.alert"}
+# P8(docs/p8_design.md §1.6-1 — 웨이브 3 WRAP). 외부 호출이 없는 세 작업(원장만) + rules.intraday
+# (사용자 요청 2026-10-14 — ADR 0031 §6: TR 칸·가집계 회차·순위 목록은 공식 KIS 예제로 확인, 남은
+# 확인 #65·#66 은 장중 하루 실측)
+P8_ENABLED = {"rules.close", "rules.outcome", "rules.backtest_nightly", "rules.intraday"}
 # 단계별 켜진 작업(웨이브 3 묶음이 P3~P7 을 켰다). 새 단계가 작업을 켜면 이 표에 한 줄 더한다.
 ENABLED_BY_PHASE = {
     "P2": P2_ENABLED,
@@ -97,6 +100,7 @@ ENABLED_BY_PHASE = {
     "P5": P5_ENABLED,
     "P6": P6_ENABLED,
     "P7": P7_ENABLED,
+    "P8": P8_ENABLED,
 }
 
 
@@ -187,10 +191,13 @@ def test_u2_one_morning_and_one_closing_brief() -> None:  # §6.6-7
 
 
 # 장 마감 뒤 발송 작업(ADR 0018 — 사용자 결정 2026-10-08). 아침·장중·사건·운영 감시 발송은 그대로.
+# 15:30 이후 첫 발화 발송 작업 — 전부 16:00(ADR 0018). P8 이 마감 규칙 알림(rules.close)을 더해 넷
+# (D-P8-4 — ADR 0018 보충은 P8 WRAP)
 POST_CLOSE_SENDERS = {
     "brief.closing": "brief.closing",
     "flows.report": "flows.report",
     "consensus.snapshot": "alert.revision",
+    "rules.close": "alert.rule_close",
 }
 
 
@@ -1161,3 +1168,105 @@ def test_service_writes_are_checked_like_job_writes() -> None:
         "gex.ws_gateway: 표 prv_gex.fut_ticks 를 서비스 gex.engine 도 쓴다" in errs
     )
     assert "gex.engine: enabled 인데 표 prv_gex.no_such_table" in errs
+
+
+# ── P8(docs/p8_design.md §0.4·§3.2·§3.4 — 묶음 FND 가 모양 확정, 전부 꺼짐. 켜기는 WRAP) ──
+
+P8_JOBS = {
+    "rules.intraday": "kbj.services.engine.rules:intraday",
+    "rules.close": "kbj.services.engine.rules:close",
+    "rules.outcome": "kbj.services.engine.rules_perf:outcome",
+    "rules.backtest_nightly": "kbj.services.engine.rules_perf:nightly",
+}
+P8_WRITES = {
+    "rules.intraday": {"prv_alerts.watch_quote_slot", "prv_alerts.signal_intraday"},
+    "rules.close": {"prv_alerts.signal_close"},
+    "rules.outcome": {"prv_alerts.signal_outcome"},
+    "rules.backtest_nightly": {
+        "prv_alerts.backtest_run", "prv_alerts.backtest_signal", "prv_alerts.match_check",
+    },
+}  # fmt: skip
+# 장중 대상 상한(config/rules.yaml intraday_max_codes) × 슬롯 수 — §3.4
+RULES_INTRADAY_DAILY = 60 * 40
+# rules.intraday 를 켜며 가집계(flows.intraday — FHPTJ04400000)에 순매도 상위 목록을 더했다
+# (ADR 0031 §6): 시장 2 × 구분 2 × 40 슬롯 × 시도 3(재시도 2 — 최악). KIS_P3_P4_DAILY 는 순매수
+# 목록만 셌다
+INST_FOREIGN_SELL_DAILY = 2 * 2 * 40 * 3
+
+
+def test_p8_jobs_have_design_owners_and_all_four_are_enabled() -> None:
+    p8 = {j.name: j for j in REG.jobs if j.phase == "P8"}
+    assert {n: j.owner for n, j in p8.items()} == P8_JOBS
+    # 켜기는 웨이브 3 WRAP(ENABLED_BY_PHASE["P8"]) + rules.intraday 사용자 요청(2026-10-14 —
+    # ADR 0031 §6). 남은 확인(#65·#66 장중 하루 실측)은 등록부 노트에 적혀 있어야 한다
+    assert {n for n, j in p8.items() if j.enabled} == P8_ENABLED
+    assert ENABLED_BY_PHASE["P8"] == set(P8_JOBS)
+    note = REG.by_name("rules.intraday").note or ""
+    assert "#65" in note and "#66" in note and "실측" in note
+
+
+def test_p8_writes_one_owner_per_table() -> None:
+    from kbj.core.rules_rows import P8_TABLE_WRITERS
+
+    for name, tables in P8_WRITES.items():
+        assert set(REG.by_name(name).writes) == tables, name
+    writers: dict[str, list[str]] = {}
+    for j in REG.jobs:
+        for t in j.writes:
+            writers.setdefault(t, []).append(j.name)
+    for table, owner in P8_TABLE_WRITERS.items():
+        if "." in owner and not owner.startswith("kbj."):  # 작업이 쓰는 표
+            assert writers.get(table) == [owner], (table, writers.get(table))
+        else:  # 쓰기 모듈(API·CLI)이 쓰는 표 — 작업은 쓰지 않는다
+            assert table not in writers, table
+        assert table in TABLES, table
+
+
+def test_p8_schedules_and_dependencies_follow_the_design() -> None:
+    intraday = REG.by_name("rules.intraday")
+    eq = intraday.schedule.equity
+    assert eq is not None and (eq.start, eq.end, eq.every_min) == ("open", "close", 10)
+    assert intraday.deadline_min == 10 and intraday.retry.max == 0
+    assert [(c.source, c.dataset, c.as_of) for c in intraday.collects] == [
+        ("KIS", "watch_quotes_intraday", "slot10m")
+    ]
+    # 장중 수급은 flows.intraday 가 받은 가집계를 읽는다(사용자 결정 2026-10-13) — 무른 의존
+    deps = {d.job: d for d in intraday.depends_on}
+    assert not deps["flows.intraday"].hard and deps["flows.intraday"].wait_min == 5
+    assert intraday.notify is not None and intraday.notify.kind == "alert.rule"
+    close = REG.by_name("rules.close")
+    assert close.schedule.cron == "0 16 * * 1-5" and close.schedule.catch_up_until == "20:30"
+    assert [(d.job, d.hard) for d in close.depends_on] == [("market.close_collect", True)]
+    assert not close.collects and close.notify is not None
+    assert close.notify.kind == "alert.rule_close" and POLICIES["alert.rule_close"] == "daily"
+    outcome = REG.by_name("rules.outcome")
+    assert outcome.schedule.cron == "30 8 * * 1-5" and outcome.notify is None
+    assert [(d.job, d.hard) for d in outcome.depends_on] == [("krx.daily", True)]
+    nightly = REG.by_name("rules.backtest_nightly")
+    assert nightly.schedule.cron == "45 8 * * 1-5" and nightly.notify is None
+    assert [(d.job, d.hard) for d in nightly.depends_on] == [("rules.outcome", True)]
+    for name in P8_JOBS:
+        assert REG.by_name(name).schedule.when == "trading_day", name
+
+
+def test_p8_alert_rule_is_the_only_intraday_rule_sender() -> None:  # D-P8-4·10
+    for kind, sender in (("alert.rule", "rules.intraday"), ("alert.rule_close", "rules.close")):
+        senders = [j.name for j in REG.jobs if j.notify is not None and j.notify.kind == kind]
+        assert senders == [sender], kind
+    assert POLICIES["alert.rule"] == "cooldown"
+
+
+def test_p8_kis_daily_calls_fit_the_soft_cap() -> None:  # §3.4
+    from kbj.config.rules_cfg import load_rules_cfg
+
+    fires = REG.by_name("rules.intraday").schedule.fires_per_day()
+    assert load_rules_cfg().intraday_max_codes * fires <= RULES_INTRADAY_DAILY + 60
+    total = (
+        sum(_kis_daily_estimate().values())
+        + KIS_P3_P4_DAILY
+        + RULES_INTRADAY_DAILY
+        + INST_FOREIGN_SELL_DAILY
+    )
+    cap = load_limits().source("kis").daily_soft_cap
+    assert cap is not None and total <= cap, (total, cap)
+    assert load_limits().source("kis").priorities["rules_intraday"] == "P2"

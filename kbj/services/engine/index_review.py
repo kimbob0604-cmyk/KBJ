@@ -13,7 +13,9 @@ SQL 은
 - 계산 날짜 = min(as_of, 리뷰 기준일) — 기준일이 지나면 기준일 값으로 고정한다.
 - 그날 구성종목이 없으면 `no_constituents` 실행 한 줄만 쓴다(예측을 내지 않는다 — 지어내지 않음).
 - 그날 이하 마지막 스냅(원장 우선순위)이 없으면 `no_data`.
-- 입력: 시총·이름·시장·종류·상태(스냅), 상장일(유니버스), 일평균 거래대금(일봉 N일), 업종(DART
+- 입력: 시총·이름·시장·종류·상태(스냅), 상장일(유니버스), 일평균 거래대금(일봉 N일), KRX 형은
+  심사기간 평균 시총(일봉 평균 종가 × 기준일 주식 수 — 설정 mcap_avg_days, 없으면 엔진이 기준일
+  시총으로 대체), 업종(DART
   기업개황
   업종코드 → 설정 산업군), 유동비율(구성종목 목록 FIF = 직전 값, DART 자기주식·5% 대량보유 추정 =
   raw —
@@ -151,6 +153,20 @@ def _adv(repos: IndexRepos, day: date, n: int) -> dict[str, float]:
     return out
 
 
+def _avg_mcap(
+    repos: IndexRepos, day: date, n: int, shares: Mapping[str, int | None]
+) -> dict[str, int]:
+    """KRX 심사기간 일평균 시총 근사 = 최근 n 거래일 평균 종가 × 기준일 상장주식 수(주식 수 변화는
+    무시 — 추정). 창의 절반 미만만 종가가 있으면 빼고(엔진이 기준일 시총으로 대체) 넘긴다."""
+    out: dict[str, int] = {}
+    for code, bars in repos.market.series(None, day, n).items():
+        sh = shares.get(code)
+        closes = [b.close for b in bars if b.close is not None and b.date <= day]
+        if sh and len(closes) * 2 >= n:
+            out[code] = round(sum(closes) / len(closes) * sh)
+    return out
+
+
 def _fif_raw(
     repos: IndexRepos, corp: str | None, day: date, cfg: IndexReviewsConfig
 ) -> float | None:
@@ -188,6 +204,11 @@ def gather(
         notes.append(f"{day} 스냅 없음 — {snap_day} 값으로 계산")
     universe = {u.code: u for u in repos.market.universe(snap_day)}
     adv = _adv(repos, snap_day, adv_days)
+    avg_days = cfg.krx_rules(idx.id).opt("mcap_avg_days") if idx.family == "krx" else None
+    avg_cap = (
+        _avg_mcap(repos, snap_day, int(avg_days), {c: s.shares for c, s in snaps.items()})
+        if avg_days else {}
+    )  # fmt: skip
     corp_index = repos.filings.corp_index()
     member_fif = {m.code: m.fif for m in members}
     corp_of = {code: v[0] for code, v in corp_index.items()}
@@ -212,7 +233,7 @@ def gather(
             sector=cfg.sectors.sector_of(prof.induty_code if prof else None),
             listed_on=u.listed_on if u else None, mktcap=s.mktcap, adv_won=adv.get(s.code),
             fif_raw=raw, fif_prev=member_fif.get(s.code), fif_source="DART" if raw else None,
-            flags=s.status_flags, member=s.code in member_fif,
+            flags=s.status_flags, member=s.code in member_fif, mktcap_avg=avg_cap.get(s.code),
         ))  # fmt: skip
     missing = sorted(set(member_fif) - {s.code for s in stocks})
     for code in missing:  # 구성종목인데 스냅이 없다(거래정지·상장폐지?) — 시세 없음으로 넘긴다

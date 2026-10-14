@@ -1,5 +1,7 @@
 # 합성 세계 전용 지수 정기변경 설정 — 레포 시험·데모(실자료 아님). config/index_reviews.yaml 과 같은 모양,
 # 값은 시험이 기대하는 고정 숫자(사용자가 실제 설정을 고쳐도 골든이 흔들리지 않게 따로 둔다).
+# 2026-10-14: 공개 출처 점검(GIMI 2026-08판·삼성증권 2026-03-27)에 맞춰 MSCI 배수(1.0/1.5×·0.5×·low_fif)·
+# FOL room·KRX 산업군 순위·누적 시총 규칙으로 바꿨다(골든을 이 규칙으로 다시 만듦 — expect.json).
 # KRX 형 정원은 합성 시장(240종목) 크기에 맞춰 줄였다(kospi200 → 60, kosdaq150 → 30). 추종 자금은 합성 값.
 version: 1
 
@@ -40,14 +42,16 @@ indexes:
 
 # ── 유동비율(FIF) 반올림 — 리뷰 날짜로 규칙을 고른다 ─────────────────────────────────────────────
 # 리뷰의 announce 날짜 ≥ from 인 규칙 가운데 from 이 가장 늦은 것(from: null = 그 이전 전부).
-# band: raw > above(엄격히 큼 — 경계값 자체는 아래 띠 [확인 필요]) 인 첫 띠. mode: nearest(반올림 — 반은 올림)·
-# up(올림). buffer: 직전 FIF 가 있고 |raw − 직전| ≤ buffer 면 직전 값을 유지(null = 완충 없음).
+# band: raw > above(엄격히 큼 — 정확히 25% 는 0.5% 띠: 원문 "greater than 25%") 인 첫 띠. mode: nearest(반올림 —
+# 반은 올림: 동률 처리는 원문에 없다 [확인 필요])·up(올림). buffer: 기존 구성종목이고 직전 FIF 가 있으며
+# |raw − 직전| < buffer 면 직전 값을 유지(변화가 단위 이상이면 반영 — GIMI §3.1.7). null = 완충 없음.
+# 완충 예외(완충 없이 반영): 신규 편입·세그먼트 이동(비구성종목), FOL 변경으로 생긴 FIF 변경.
 fif_rounding:
   - id: msci_2026_05
     from: 2026-05-01
-    src: "MSCI 2025-02 확정 발표(유동비율 반올림·완충 변경) — 2026-05 리뷰부터 적용(사용자 요약의 2025-05 와 다르다)"
-    checked: 2026-10-13
-    verify: true            # 띠 경계(25%·5% 포함 쪽)·완충 비교(≤ 인지 <)를 원문으로 [확인 필요]
+    src: "GIMI 2026-08판 App.VI·§3.1.7 + MSCI 2026-01-27 공지(2026-05 리뷰부터 전면 적용)"
+    checked: 2026-10-14
+    verify: false           # 띠·단위·완충(<)·from 원문 확인. 정확히 5%·동률(반 단위) 처리만 원문에 없다
     bands:
       - {above: 0.25, step: 0.025, buffer: 0.025, mode: nearest}
       - {above: 0.05, step: 0.005, buffer: 0.005, mode: nearest}
@@ -61,12 +65,24 @@ fif_rounding:
       - {above: 0.15, step: 0.05, buffer: null, mode: up}
       - {above: 0.0, step: 0.01, buffer: null, mode: nearest}
 
-# ── 외국인 지분 한도(FOL) — FIF = min(FIF, 한도) [확인 필요: MSCI §FOL 의 여유분 조정까지는 옮기지 않았다] ──
+# ── 외국인 지분 한도(FOL) — GIMI 2026-08판 §2.3.6.2·§3.1.2.6·§3.1.6.3·App.VI ─────────────────────
+# FIF = min(외국인 가용 유동비율(위 반올림), FOL(limit_step 단위 반올림)) × foreign room 계수.
+# room = (FOL − 외국인 보유) ÷ FOL. 신규: room ≥ 25% → 1, 15~25% → 0.5, < 15% → 편입 불가.
+# 기존: room < 3.75% → 0.25. 그 사이(3.75~25%)는 원문 표가 직전 계수별 단계라 옮기지 못했다 [확인 필요 —
+# null = 조정하지 않음]. 기존 종목의 유동시총 요건은 계수를 곱하기 전 값으로 본다.
+# 외국인 보유 비율 자료가 없으면 room 계수는 적용하지 않는다(사유 — 추정).
 # 종목별 한도 표는 사용자가 확인해 적는다(통신·항공·방송 등). 비어 있으면 조정하지 않는다.
 fol:
-  src: "MSCI GIMI 방법론 — Foreign Ownership Limit 조정"
-  checked: 2026-10-13
-  verify: true
+  src: "GIMI 2026-08판 §2.3.6.2·§3.1.2.6·§3.1.6.3·App.VI — Foreign Ownership Limit·foreign room"
+  checked: 2026-10-14
+  verify: false
+  limit_step: {v: 0.001, src: "GIMI 2026-08판 App.VI — FOL 은 0.1% 단위 반올림", checked: 2026-10-14, verify: false}
+  room_full: {v: 0.25, src: "GIMI 2026-08판 §3.1.2.6 — foreign room ≥ 25% 면 조정 없음", checked: 2026-10-14, verify: false}
+  room_min_add: {v: 0.15, src: "GIMI 2026-08판 §3.1.2.6 — 신규 종목 room < 15% 편입 불가", checked: 2026-10-14, verify: false}
+  room_add_factor: {v: 0.5, src: "GIMI 2026-08판 §3.1.2.6 — 신규 종목 room 15~25% 조정계수 0.5", checked: 2026-10-14, verify: false}
+  room_keep_floor: {v: 0.0375, src: "GIMI 2026-08판 §3.1.6.3 — 기존 종목 room < 3.75%", checked: 2026-10-14, verify: false}
+  room_keep_floor_factor: {v: 0.25, src: "GIMI 2026-08판 §3.1.6.3 — 기존 종목 room < 3.75% 조정계수 0.25", checked: 2026-10-14, verify: false}
+  room_keep_mid_factor: {v: null, src: "GIMI 2026-08판 §3.1.6.3 표(직전 계수별 단계 — 원문 이미지라 옮기지 못함). null = 조정 안 함", checked: 2026-10-14, verify: true}
   limits:
     - {code: "993007", limit: 0.49, why: "합성 — FOL 시험"}
 
@@ -110,18 +126,31 @@ sectors:
 # ── MSCI 형 규칙(컷오프 배수) ───────────────────────────────────────────────────────────────────
 # 컷오프(Interim Market Size-Segment Cutoff)는 MSCI 가 공표하지 않는다 → 시장 커버리지 방식으로 추정:
 # 전체 시총 내림차순으로 유동시총을 누적해 coverage 에 처음 닿는 종목의 전체 시총. 구간 = coverage_low·high.
-# 배수는 문서마다 다르다(옛 요약 2014: 1.8× · ½, 사용자 리포트: 1.5× · ½, 하나증권 표: 유동 ⅓) — 현행
-# GIMI 방법론(2026-03판) 원문과 대조 전 [확인 필요].
+# (원문도 Interim Cutoff 를 리뷰 뒤 NOS·FIF 로 같은 방식으로 계산한다 — 각주 20. Global Minimum Size Range 로
+# 위아래를 자르는 단계는 없다 [확인 필요].)
+# 배수(GIMI 2026-08판 §3.1.5·§3.1.6 — 2023-02 부터 2·5·8·11월 리뷰 모두 Quarterly Comprehensive Review):
+# 비구성종목 시총 ≥ 1.0 × 컷오프, 하위 세그먼트(Small Cap) 구성종목의 이동은 upper buffer 1.5 ×, 신규 유동시총
+# ≥ 0.5 × 컷오프, 유지 ⅔·⅓. 유동비율 < 15% 종목은 유동시총 ≥ 0.9 ×(신규)·0.6 ×(유지). 비구성종목이 Small Cap
+# 구성종목인지 모르면 segment_default(migrate = 1.5 × — 보수적). 1.8 × · 0.9 × 는 Light Rebalancing(시장
+# 스트레스 때 MSCI 가 따로 공지)·거래기간 미달 신규에만 쓰인다 → light_rebalance(기본 꺼짐).
 msci:
   msci_korea:
-    coverage: {v: 0.85, src: "MSCI GIMI — Standard 지수 유동시총 커버리지 85%", checked: 2026-10-13, verify: true}
-    coverage_low: {v: 0.80, src: "커버리지 허용 구간 ±5%p", checked: 2026-10-13, verify: true}
-    coverage_high: {v: 0.90, src: "커버리지 허용 구간 ±5%p", checked: 2026-10-13, verify: true}
-    add_mcap_mult: {v: 1.8, src: "MSCI 방법론 요약(2014) — 신규 편입 시총 ≥ 1.8 × 컷오프", checked: 2026-10-13, verify: true}
-    add_ff_mult: {v: 0.9, src: "MSCI 방법론 요약(2014) — 신규 편입 유동시총 ≥ 1.8 × ½ 컷오프", checked: 2026-10-13, verify: true}
-    keep_mcap_mult: {v: 0.6667, src: "MSCI 방법론 — 기존 구성종목 유지 시총 ≥ ⅔ × 컷오프", checked: 2026-10-13, verify: true}
-    keep_ff_mult: {v: 0.3333, src: "기존 구성종목 유지 유동시총 ≥ ⅔ × ½ 컷오프(하나증권 표의 ⅓)", checked: 2026-10-13, verify: true}
-    min_fif_add: {v: 0.15, src: "MSCI 방법론 — 신규 편입 최소 유동비율 15%", checked: 2026-10-13, verify: true}
+    coverage: {v: 0.85, src: "GIMI 2026-08판 §2.3.1 — Standard 지수 유동시총 커버리지 85%", checked: 2026-10-14, verify: false}
+    coverage_low: {v: 0.80, src: "GIMI 2026-08판 §2.3.1 — 커버리지 85% ± 5%", checked: 2026-10-14, verify: false}
+    coverage_high: {v: 0.90, src: "GIMI 2026-08판 §2.3.1 — 커버리지 85% ± 5%", checked: 2026-10-14, verify: false}
+    add_mcap_mult_new: {v: 1.0, src: "GIMI 2026-08판 §3.1.5·§3.1.6 — 새로 투자 가능해진 비구성종목 시총 ≥ 컷오프", checked: 2026-10-14, verify: false}
+    add_mcap_mult_migrate: {v: 1.5, src: "GIMI 2026-08판 §3.1.5·§3.1.6 — 하위 세그먼트 upper buffer(컷오프 1.5배)", checked: 2026-10-14, verify: false}
+    add_ff_mult: {v: 0.5, src: "GIMI 2026-08판 §3.1.5·§3.1.6 — 신규 유동시총 ≥ 50% × 컷오프", checked: 2026-10-14, verify: false}
+    keep_mcap_mult: {v: 0.6667, src: "GIMI 2026-08판 §3.1.5·§3.1.6 — lower buffer(컷오프 ⅔)", checked: 2026-10-14, verify: false}
+    keep_ff_mult: {v: 0.3333, src: "GIMI 2026-08판 §3.1.5·§3.1.6 — 기존 유동시총 ≥ ⅔ × 50% 컷오프", checked: 2026-10-14, verify: false}
+    min_fif_add: {v: 0.15, src: "GIMI 2026-08판 §2.2.6 — 최소 유동비율 15%(아래는 low_fif 배수로 예외 편입)", checked: 2026-10-14, verify: false}
+    low_fif_ff_mult_add: {v: 0.9, src: "GIMI 2026-08판 §3.1.2.5·§2.3.6.1 — FIF<0.15 신규 유동시총 ≥ 1.8 × 50% 컷오프", checked: 2026-10-14, verify: false}
+    low_fif_ff_mult_keep: {v: 0.6, src: "GIMI 2026-08판 §3.1.6 — FIF<0.15 기존 유동시총 ≥ ⅔ × 1.8 × 50% 컷오프", checked: 2026-10-14, verify: false}
+    segment_default: migrate  # 비구성종목의 Small Cap 구성 여부를 모를 때(1.5 ×). 자료가 생기면 StockIn.lower_segment
+    light_rebalance:
+      enabled: false          # MSCI 가 Light Rebalancing 을 공지한 리뷰에만 true
+      add_mcap_mult: {v: 1.8, src: "GIMI 2026-08판 App.VIII — Light Rebalancing 비IMI 종목 시총 ≥ 1.8 × 컷오프", checked: 2026-10-14, verify: false}
+      add_ff_mult: {v: 0.9, src: "GIMI 2026-08판 App.VIII — Light Rebalancing 유동시총 ≥ 1.8 × 50% 컷오프", checked: 2026-10-14, verify: false}
     borderline: {v: 0.10, src: "KBJ 표시 규칙 — 조건 괴리율이 ±10% 안이면 '경계'", checked: 2026-10-13, verify: false}
     adv_days: {v: 20, src: "KBJ — 일평균 거래대금 창(거래일)", checked: 2026-10-13, verify: false}
     aum_won: {v: 30000000000000, src: "합성 — 30조", checked: 2026-10-13, verify: false}
@@ -131,7 +160,8 @@ msci:
     coverage: {v: 0.85, src: "FTSE GEIS 규칙 [확인 필요]", checked: 2026-10-13, verify: true}
     coverage_low: {v: 0.80, src: "FTSE GEIS 규칙 [확인 필요]", checked: 2026-10-13, verify: true}
     coverage_high: {v: 0.90, src: "FTSE GEIS 규칙 [확인 필요]", checked: 2026-10-13, verify: true}
-    add_mcap_mult: {v: 1.0, src: "FTSE GEIS 규칙 [확인 필요]", checked: 2026-10-13, verify: true}
+    add_mcap_mult_new: {v: 1.0, src: "FTSE GEIS 규칙 [확인 필요]", checked: 2026-10-13, verify: true}
+    add_mcap_mult_migrate: {v: 1.0, src: "FTSE GEIS 규칙 [확인 필요]", checked: 2026-10-13, verify: true}
     add_ff_mult: {v: 0.5, src: "FTSE GEIS 규칙 [확인 필요]", checked: 2026-10-13, verify: true}
     keep_mcap_mult: {v: 0.6667, src: "FTSE GEIS 규칙 [확인 필요]", checked: 2026-10-13, verify: true}
     keep_ff_mult: {v: 0.3333, src: "FTSE GEIS 규칙 [확인 필요]", checked: 2026-10-13, verify: true}
@@ -142,18 +172,25 @@ msci:
     exclude_flags: [halted, liquidation]
     kinds: [common]
 
-# ── KRX 형 규칙(시총 순위·완충) — KRX 지수 산출 방법론 원문을 옮기기 전 근사 [확인 필요] ──────────────
-# 순위 = 기준일 전체 시총 내림차순(KRX 는 심사기간 일평균 시총 — [확인 필요]).
-# 신규: 순위 ≤ size × add_rank_ratio, 기존: 순위 ≤ size × keep_rank_ratio 면 유지.
+# ── KRX 형 규칙(시총 순위·완충) — KRX 방법론 원문(index.krx.co.kr)은 직접 받지 못했다: 2차 자료 근사 ──────────
+# 심사 시총 = 심사기간(6개월 — 6월 변경은 전년 11~4월, 12월 변경은 5~10월) 일평균 시총. 평균을 못 내면 기준일
+# 시총으로 대체(추정). 산업군마다 심사 시총 내림차순으로
+# 신규: 산업군 안 순위 ÷ 산업군 구성종목 수 ≤ add_rank_ratio 이고 산업군 누적 시총 비중 sector_cum_mcap 이내
+#      (자기보다 큰 종목들의 비중 < 문턱 — 문턱에 처음 닿는 종목까지),
+# 기존: 산업군 안 순위 ÷ 산업군 구성종목 수 ≤ keep_rank_ratio 면 유지.
 # 유동성: 산업군 안 일평균 거래대금 순위 백분위 ≤ liquidity_pct. 상장 min_listing_days 미만은 제외하되
-# 시총 순위 ≤ fast_entry_rank 면 특례(신규 상장 특례). 수를 size 에 맞춘다(넘치면 순위 낮은 신규를 '경계',
-# 모자라면 다음 순위 비구성종목을 채운다). 업종별 누적 시총 비중 규칙은 아직 옮기지 않았다 [확인 필요].
+# 전체 시총 순위 ≤ fast_entry_rank 면 특례(신규 상장 특례). 수를 size 에 맞춘다(넘치면 순위 낮은 신규를 '경계',
+# 모자라면 다음 순위 비구성종목을 채운다). 예비종목 제도는 2026-11-02 개정으로 폐지(엔진에 없다).
+# 출처: 삼성증권 「6월 주가지수 정기변경 예상」 2026-03-27, 서울경제 2019-12-12(85%·상장 6개월).
+# 2026-11-02 개정 방법론 원문에서 85%/60%·90/110%·80/120% 가 바뀌었는지 대조 [확인 필요].
 # etf_index_patterns: P3 ETF 기초지수 이름에 이 문자열이 있으면 그 지수 추종 ETF(레버리지·인버스 제외).
 krx:
   kospi200:
     size: {v: 60, src: "합성 — 정원 축소", checked: 2026-10-13, verify: false}
-    add_rank_ratio: {v: 0.9, src: "KRX 방법론 — 신규 편입 순위 90% 이내 [확인 필요]", checked: 2026-10-13, verify: true}
-    keep_rank_ratio: {v: 1.1, src: "KRX 방법론 — 기존 종목 순위 110% 이내 유지 [확인 필요]", checked: 2026-10-13, verify: true}
+    add_rank_ratio: {v: 0.9, src: "삼성증권 2026-03-27 — 산업군 안 순위 90% 이내 [확인 필요]", checked: 2026-10-14, verify: true}
+    keep_rank_ratio: {v: 1.1, src: "삼성증권 2026-03-27 — 산업군 안 순위 110% 이내 [확인 필요]", checked: 2026-10-14, verify: true}
+    sector_cum_mcap: {v: 0.85, src: "삼성증권 2026-03-27 — 산업군 누적 시총 85% [확인 필요]", checked: 2026-10-14, verify: true}
+    mcap_avg_days: {v: 125, src: "심사기간 6개월 — 거래일 근사", checked: 2026-10-14, verify: true}
     liquidity_pct: {v: 0.85, src: "KRX 방법론 — 산업군 내 거래대금 순위 85% 이내 [확인 필요]", checked: 2026-10-13, verify: true}
     min_listing_days: {v: 180, src: "KRX 방법론 — 상장 6개월 경과 [확인 필요]", checked: 2026-10-13, verify: true}
     fast_entry_rank: {v: 50, src: "KRX 방법론 — 신규 상장 특례(시총 순위 50위 이내) [확인 필요]", checked: 2026-10-13, verify: true}
@@ -165,8 +202,10 @@ krx:
     kinds: [common]
   kosdaq150:
     size: {v: 30, src: "합성 — 정원 축소", checked: 2026-10-13, verify: false}
-    add_rank_ratio: {v: 0.9, src: "KRX 방법론 [확인 필요]", checked: 2026-10-13, verify: true}
-    keep_rank_ratio: {v: 1.1, src: "KRX 방법론 [확인 필요]", checked: 2026-10-13, verify: true}
+    add_rank_ratio: {v: 0.8, src: "삼성증권 2026-03-27 — 산업군 안 순위 80% 이내 [확인 필요]", checked: 2026-10-14, verify: true}
+    keep_rank_ratio: {v: 1.2, src: "삼성증권 2026-03-27 — 산업군 안 순위 120% 이내 [확인 필요]", checked: 2026-10-14, verify: true}
+    sector_cum_mcap: {v: 0.60, src: "삼성증권 2026-03-27 — 산업군 누적 시총 60% [확인 필요]", checked: 2026-10-14, verify: true}
+    mcap_avg_days: {v: 125, src: "심사기간 6개월 — 거래일 근사", checked: 2026-10-14, verify: true}
     liquidity_pct: {v: 0.85, src: "KRX 방법론 [확인 필요]", checked: 2026-10-13, verify: true}
     min_listing_days: {v: 180, src: "KRX 방법론 [확인 필요]", checked: 2026-10-13, verify: true}
     fast_entry_rank: {v: 30, src: "KRX 방법론 — 신규 상장 특례 [확인 필요]", checked: 2026-10-13, verify: true}

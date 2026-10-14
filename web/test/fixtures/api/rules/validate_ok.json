@@ -1,0 +1,703 @@
+{
+  "source": "KBJ:rules+원장",
+  "as_of": "2026-10-30T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "장중 규칙도 마감 원장으로 평가했다(부분 봉·장중 가집계 없음)"
+  ],
+  "generated_at": "2026-10-30T16:00:00+09:00",
+  "data": {
+    "ok": true,
+    "issues": [],
+    "dsl_hash": "840182828216b8a0adc8281dc55c2a5345b04e222fa9692ed7db7b86f058dd3e",
+    "normalized": {
+      "v": 1,
+      "name": "장중 급등",
+      "universe": {
+        "watchlist": "main"
+      },
+      "mode": "intraday",
+      "when": {
+        "all": [
+          {
+            "ind": "change_pct",
+            "p": {},
+            "op": ">=",
+            "value": 5.0
+          },
+          {
+            "ind": "vol_ratio",
+            "p": {
+              "n": 20
+            },
+            "op": ">=",
+            "value": 1.5
+          }
+        ]
+      },
+      "alert": {
+        "cooldown_min": 1440,
+        "priority": 2,
+        "silent": false
+      },
+      "track": true
+    },
+    "trial": [
+      {
+        "code": "Q80001",
+        "name": "합성01",
+        "trade_date": "2026-10-30",
+        "state": "false",
+        "skipped_reason": null,
+        "conds": [
+          {
+            "path": "/when/all/0",
+            "ind": "change_pct",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.24330025408696443,
+            "ref_value": 5.0,
+            "prev_value": null,
+            "prev_ref": 5.0,
+            "reason": null
+          },
+          {
+            "path": "/when/all/1",
+            "ind": "vol_ratio",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 1.0296826062200013,
+            "ref_value": 1.5,
+            "prev_value": null,
+            "prev_ref": 1.5,
+            "reason": null
+          }
+        ],
+        "quality": "ok"
+      },
+      {
+        "code": "Q80002",
+        "name": "합성02",
+        "trade_date": "2026-10-30",
+        "state": "skipped",
+        "skipped_reason": "split_suspect",
+        "conds": [],
+        "quality": "ok"
+      },
+      {
+        "code": "Q80003",
+        "name": "합성03",
+        "trade_date": "2026-10-30",
+        "state": "false",
+        "skipped_reason": null,
+        "conds": [
+          {
+            "path": "/when/all/0",
+            "ind": "change_pct",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.9303898339228178,
+            "ref_value": 5.0,
+            "prev_value": null,
+            "prev_ref": 5.0,
+            "reason": null
+          },
+          {
+            "path": "/when/all/1",
+            "ind": "vol_ratio",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.9968453703500011,
+            "ref_value": 1.5,
+            "prev_value": null,
+            "prev_ref": 1.5,
+            "reason": null
+          }
+        ],
+        "quality": "ok"
+      },
+      {
+        "code": "Q80004",
+        "name": "합성04",
+        "trade_date": "2026-10-30",
+        "state": "false",
+        "skipped_reason": null,
+        "conds": [
+          {
+            "path": "/when/all/0",
+            "ind": "change_pct",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.8786312563630938,
+            "ref_value": 5.0,
+            "prev_value": null,
+            "prev_ref": 5.0,
+            "reason": null
+          },
+          {
+            "path": "/when/all/1",
+            "ind": "vol_ratio",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.9273846119190572,
+            "ref_value": 1.5,
+            "prev_value": null,
+            "prev_ref": 1.5,
+            "reason": null
+          }
+        ],
+        "quality": "ok"
+      },
+      {
+        "code": "Q80005",
+        "name": "합성05",
+        "trade_date": "2026-10-30",
+        "state": "false",
+        "skipped_reason": null,
+        "conds": [
+          {
+            "path": "/when/all/0",
+            "ind": "change_pct",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": -0.9903125484762021,
+            "ref_value": 5.0,
+            "prev_value": null,
+            "prev_ref": 5.0,
+            "reason": null
+          },
+          {
+            "path": "/when/all/1",
+            "ind": "vol_ratio",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.8910437893095088,
+            "ref_value": 1.5,
+            "prev_value": null,
+            "prev_ref": 1.5,
+            "reason": null
+          }
+        ],
+        "quality": "ok"
+      },
+      {
+        "code": "Q80006",
+        "name": "합성06",
+        "trade_date": "2026-10-30",
+        "state": "false",
+        "skipped_reason": null,
+        "conds": [
+          {
+            "path": "/when/all/0",
+            "ind": "change_pct",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.6365801935311666,
+            "ref_value": 5.0,
+            "prev_value": null,
+            "prev_ref": 5.0,
+            "reason": null
+          },
+          {
+            "path": "/when/all/1",
+            "ind": "vol_ratio",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 1.0209439643487248,
+            "ref_value": 1.5,
+            "prev_value": null,
+            "prev_ref": 1.5,
+            "reason": null
+          }
+        ],
+        "quality": "ok"
+      },
+      {
+        "code": "Q80007",
+        "name": "합성07",
+        "trade_date": "2026-10-30",
+        "state": "false",
+        "skipped_reason": null,
+        "conds": [
+          {
+            "path": "/when/all/0",
+            "ind": "change_pct",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": -1.85102300467489,
+            "ref_value": 5.0,
+            "prev_value": null,
+            "prev_ref": 5.0,
+            "reason": null
+          },
+          {
+            "path": "/when/all/1",
+            "ind": "vol_ratio",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.9888191781912039,
+            "ref_value": 1.5,
+            "prev_value": null,
+            "prev_ref": 1.5,
+            "reason": null
+          }
+        ],
+        "quality": "ok"
+      },
+      {
+        "code": "Q80008",
+        "name": "합성08",
+        "trade_date": "2026-10-30",
+        "state": "false",
+        "skipped_reason": null,
+        "conds": [
+          {
+            "path": "/when/all/0",
+            "ind": "change_pct",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 2.265038486136395,
+            "ref_value": 5.0,
+            "prev_value": null,
+            "prev_ref": 5.0,
+            "reason": null
+          },
+          {
+            "path": "/when/all/1",
+            "ind": "vol_ratio",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.9194941777103744,
+            "ref_value": 1.5,
+            "prev_value": null,
+            "prev_ref": 1.5,
+            "reason": null
+          }
+        ],
+        "quality": "ok"
+      },
+      {
+        "code": "Q80009",
+        "name": "합성09",
+        "trade_date": "2026-10-30",
+        "state": "false",
+        "skipped_reason": null,
+        "conds": [
+          {
+            "path": "/when/all/0",
+            "ind": "change_pct",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": -0.1565924556920728,
+            "ref_value": 5.0,
+            "prev_value": null,
+            "prev_ref": 5.0,
+            "reason": null
+          },
+          {
+            "path": "/when/all/1",
+            "ind": "vol_ratio",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.9474768280123584,
+            "ref_value": 1.5,
+            "prev_value": null,
+            "prev_ref": 1.5,
+            "reason": null
+          }
+        ],
+        "quality": "ok"
+      },
+      {
+        "code": "Q80010",
+        "name": "합성10",
+        "trade_date": "2026-10-30",
+        "state": "false",
+        "skipped_reason": null,
+        "conds": [
+          {
+            "path": "/when/all/0",
+            "ind": "change_pct",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": -2.572567460065056,
+            "ref_value": 5.0,
+            "prev_value": null,
+            "prev_ref": 5.0,
+            "reason": null
+          },
+          {
+            "path": "/when/all/1",
+            "ind": "vol_ratio",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 1.0041494875742063,
+            "ref_value": 1.5,
+            "prev_value": null,
+            "prev_ref": 1.5,
+            "reason": null
+          }
+        ],
+        "quality": "ok"
+      },
+      {
+        "code": "Q80011",
+        "name": "합성11",
+        "trade_date": "2026-10-30",
+        "state": "false",
+        "skipped_reason": null,
+        "conds": [
+          {
+            "path": "/when/all/0",
+            "ind": "change_pct",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.6749199662669847,
+            "ref_value": 5.0,
+            "prev_value": null,
+            "prev_ref": 5.0,
+            "reason": null
+          },
+          {
+            "path": "/when/all/1",
+            "ind": "vol_ratio",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.9214316686389069,
+            "ref_value": 1.5,
+            "prev_value": null,
+            "prev_ref": 1.5,
+            "reason": null
+          }
+        ],
+        "quality": "ok"
+      },
+      {
+        "code": "Q80012",
+        "name": "합성12",
+        "trade_date": "2026-10-30",
+        "state": "false",
+        "skipped_reason": null,
+        "conds": [
+          {
+            "path": "/when/all/0",
+            "ind": "change_pct",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": -1.6619607206733722,
+            "ref_value": 5.0,
+            "prev_value": null,
+            "prev_ref": 5.0,
+            "reason": null
+          },
+          {
+            "path": "/when/all/1",
+            "ind": "vol_ratio",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.9777459444873993,
+            "ref_value": 1.5,
+            "prev_value": null,
+            "prev_ref": 1.5,
+            "reason": null
+          }
+        ],
+        "quality": "ok"
+      },
+      {
+        "code": "Q80013",
+        "name": "합성13",
+        "trade_date": "2026-10-30",
+        "state": "false",
+        "skipped_reason": null,
+        "conds": [
+          {
+            "path": "/when/all/0",
+            "ind": "change_pct",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 2.423834725606322,
+            "ref_value": 5.0,
+            "prev_value": null,
+            "prev_ref": 5.0,
+            "reason": null
+          },
+          {
+            "path": "/when/all/1",
+            "ind": "vol_ratio",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.9366440490000192,
+            "ref_value": 1.5,
+            "prev_value": null,
+            "prev_ref": 1.5,
+            "reason": null
+          }
+        ],
+        "quality": "ok"
+      },
+      {
+        "code": "Q80014",
+        "name": "합성14",
+        "trade_date": "2026-10-30",
+        "state": "false",
+        "skipped_reason": null,
+        "conds": [
+          {
+            "path": "/when/all/0",
+            "ind": "change_pct",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.8420275060613269,
+            "ref_value": 5.0,
+            "prev_value": null,
+            "prev_ref": 5.0,
+            "reason": null
+          },
+          {
+            "path": "/when/all/1",
+            "ind": "vol_ratio",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.979858891904781,
+            "ref_value": 1.5,
+            "prev_value": null,
+            "prev_ref": 1.5,
+            "reason": null
+          }
+        ],
+        "quality": "ok"
+      },
+      {
+        "code": "Q80015",
+        "name": "합성15",
+        "trade_date": "2026-10-30",
+        "state": "false",
+        "skipped_reason": null,
+        "conds": [
+          {
+            "path": "/when/all/0",
+            "ind": "change_pct",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.5926889053594842,
+            "ref_value": 5.0,
+            "prev_value": null,
+            "prev_ref": 5.0,
+            "reason": null
+          },
+          {
+            "path": "/when/all/1",
+            "ind": "vol_ratio",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.9395028876722371,
+            "ref_value": 1.5,
+            "prev_value": null,
+            "prev_ref": 1.5,
+            "reason": null
+          }
+        ],
+        "quality": "ok"
+      },
+      {
+        "code": "Q80016",
+        "name": "합성16",
+        "trade_date": "2026-10-30",
+        "state": "false",
+        "skipped_reason": null,
+        "conds": [
+          {
+            "path": "/when/all/0",
+            "ind": "change_pct",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.6685738293363164,
+            "ref_value": 5.0,
+            "prev_value": null,
+            "prev_ref": 5.0,
+            "reason": null
+          },
+          {
+            "path": "/when/all/1",
+            "ind": "vol_ratio",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.9836813535616201,
+            "ref_value": 1.5,
+            "prev_value": null,
+            "prev_ref": 1.5,
+            "reason": null
+          }
+        ],
+        "quality": "ok"
+      },
+      {
+        "code": "Q80017",
+        "name": "합성17",
+        "trade_date": "2026-10-30",
+        "state": "false",
+        "skipped_reason": null,
+        "conds": [
+          {
+            "path": "/when/all/0",
+            "ind": "change_pct",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": -2.1320458657063335,
+            "ref_value": 5.0,
+            "prev_value": null,
+            "prev_ref": 5.0,
+            "reason": null
+          },
+          {
+            "path": "/when/all/1",
+            "ind": "vol_ratio",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 1.0393719969692188,
+            "ref_value": 1.5,
+            "prev_value": null,
+            "prev_ref": 1.5,
+            "reason": null
+          }
+        ],
+        "quality": "ok"
+      },
+      {
+        "code": "Q80018",
+        "name": "합성18",
+        "trade_date": "2026-10-30",
+        "state": "false",
+        "skipped_reason": null,
+        "conds": [
+          {
+            "path": "/when/all/0",
+            "ind": "change_pct",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.600007896353838,
+            "ref_value": 5.0,
+            "prev_value": null,
+            "prev_ref": 5.0,
+            "reason": null
+          },
+          {
+            "path": "/when/all/1",
+            "ind": "vol_ratio",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.9275696272600298,
+            "ref_value": 1.5,
+            "prev_value": null,
+            "prev_ref": 1.5,
+            "reason": null
+          }
+        ],
+        "quality": "ok"
+      },
+      {
+        "code": "Q80019",
+        "name": "합성19",
+        "trade_date": "2026-10-30",
+        "state": "false",
+        "skipped_reason": null,
+        "conds": [
+          {
+            "path": "/when/all/0",
+            "ind": "change_pct",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": -2.806273914764479,
+            "ref_value": 5.0,
+            "prev_value": null,
+            "prev_ref": 5.0,
+            "reason": null
+          },
+          {
+            "path": "/when/all/1",
+            "ind": "vol_ratio",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 1.0465862743665935,
+            "ref_value": 1.5,
+            "prev_value": null,
+            "prev_ref": 1.5,
+            "reason": null
+          }
+        ],
+        "quality": "ok"
+      },
+      {
+        "code": "Q80020",
+        "name": "합성20",
+        "trade_date": "2026-10-30",
+        "state": "false",
+        "skipped_reason": null,
+        "conds": [
+          {
+            "path": "/when/all/0",
+            "ind": "change_pct",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 0.05652286013613228,
+            "ref_value": 5.0,
+            "prev_value": null,
+            "prev_ref": 5.0,
+            "reason": null
+          },
+          {
+            "path": "/when/all/1",
+            "ind": "vol_ratio",
+            "field": null,
+            "op": ">=",
+            "ok": false,
+            "value": 1.0487177590981176,
+            "ref_value": 1.5,
+            "prev_value": null,
+            "prev_ref": 1.5,
+            "reason": null
+          }
+        ],
+        "quality": "ok"
+      }
+    ]
+  }
+}

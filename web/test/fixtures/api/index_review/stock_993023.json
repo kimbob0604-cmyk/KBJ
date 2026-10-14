@@ -13,8 +13,8 @@
         "review_id": "2026-11",
         "cutoff_kind": "model",
         "verdict": "add",
-        "required_rise": -0.8756,
-        "label": "MSCI Korea 편입 후보 · 여유 -87.6%",
+        "required_rise": -0.9274,
+        "label": "MSCI Korea 편입 후보 · 여유 -92.7%",
         "quality": "estimated"
       },
       {
@@ -23,8 +23,8 @@
         "review_id": "2026-12",
         "cutoff_kind": "model",
         "verdict": "add",
-        "required_rise": -0.9303,
-        "label": "KOSPI200 편입 후보 · 여유 -93.0%",
+        "required_rise": -0.7929,
+        "label": "KOSPI200 편입 후보 · 여유 -79.3%",
         "quality": "estimated"
       }
     ]

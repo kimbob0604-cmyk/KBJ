@@ -298,6 +298,26 @@ kbj/
 - 규칙 DSL(JSON 스키마), 평가 엔진(장중 10분·마감), 쿨다운, 근거 메시지, **알림 후 성과 통계**
 - 백테스트(같은 지표 함수), 저널·포트폴리오, 페이지 11·12
 - **완료 기준:** 규칙 예시 10개가 백테스트와 실시간 평가에서 같은 신호를 낸다. 성과 표가 자동으로 쌓인다.
+- **결과(2026-10-14, 웨이브 3 WRAP — 설계 `docs/p8_design.md`, ADR 0031~0033 확정, 0018 보충(16:00 발송 넷), 0025 예산 갱신):**
+  - 사용자 결정(2026-10-13): 장중 수급 조건은 라이브(종목 가집계 10분 회차 estimated·시장 1분 누적 — 근거 '장중 잠정', 없으면 '판단
+    불가'·발송 없음, 마감은 확정치로 재판정), **SWG 없음**(스윙 엔진·btsearch 이전은 P9 legacy 비우기), 나머지 §10 기본값.
+  - 완료 증명 ① 일치: `tests/acceptance/test_rules_parity.py` — 합성 세계(80종목 × 320 거래일)에 예시 10개, 마감 7개 × 60일 실제
+    `rules.close` = `backtest(close)`(규칙·종목·날짜·허락/쿨다운 집합 같음, 진입가 1e-9·입력 지문 같음), 장중 3개 × 5일 × 40슬롯 실제
+    `rules.intraday`(가짜 KIS + 회차 가집계) = 저장 슬롯 재생, KRX 정정 → `data_revised`·`logic` 0, 분할 종목 허락 신호 0 — **14 통과**.
+  - 완료 증명 ② 성과 누적: `tests/sim/test_rules_days.py`(틀 `tests/sim/p8.py` — 실제 실행기·등록부 다섯 줄, 합성 세계 마지막 25
+    거래일·추석 휴장 포함): 아침마다 `signal_outcome` 행 수 = 손계산·단조 증가, 재실행 멱등, `/api/rules/stats` 표본 증가·한 칸 손계산
+    일치, 휴장일 실행 0, `alert.rule_close` 16:00~16:05 하루 한 통, 야간 일치 `logic` 0.
+  - 작업: `rules.close`·`rules.outcome`·`rules.backtest_nightly` 켬(`ENABLED_BY_PHASE["P8"]`), `rules.intraday` 는 #65·#66 실측 전 꺼짐 → 2026-10-14 사용자 요청으로 켬(ADR 0031 §6 — 남은 확인은 장중 하루 실측).
+    `retired` 에 SD 발굴 신규 진입 알림·SD 라우트 넷. 16:00 발송 넷(ADR 0018 보충). 하루 sim 16:00 기대값 그대로.
+  - 경계: import-linter **19 kept, 0 broken**(⑳ 개인 기록 쓰기 모듈), 직접 호출 검사 새 그룹 `ta_indicators`(kbj 안
+    `kbj/core/indicators.py` 하나, legacy 기준선 10), `tests/unit/test_no_orders.py`(주문 TR·경로 0), `test_public_writers`(P8 은 prv_ 만).
+  - 프런트: 페이지 11·12(로그인 전부 — 공개판 자물쇠·요청 0), 로그인 데이터 소스 쓰기 채널(CSRF), `web/test/acceptance/p11_p12_pages`.
+    공개 페이지 3 로그인 본문을 공개 번들에서 빼 공개 JS gzip 83,501 → **79,276 B**(예산 88 KB 그대로), 로그인 **121,256 B**(예산 131
+    KB — 실측 + 10%). 데모(`scripts/demo_p3.sh --shots`)에 페이지 11·12(합성 P8 세계) — 패널 5·7, 오류 0, 콘솔 오류·실패 요청 0.
+  - legacy: SD `server.py` 함수 37 삭제(15,539 → 14,216줄 — `legacy/stock_dashboard/MIGRATION.md` 'P8'), 검사 래퍼 13 그대로.
+  - 남은 것: ① #65·#66 실측 뒤 `rules.intraday` 켜기 ② #67 비교 지수 코드 ③ 매도세 0.20%·월 수익률 분모·매수 비용 원가 [확인 필요]
+    ④ SD 옛 발송 이력 미이관 사용자 확인 ⑤ `pct_rank` 두 구현 합치기(P9) ⑥ board 스윙·SD 차트 지표·일지 helper 모듈(P9 legacy 비우기).
+
 
 **P9 — 포트폴리오 마감 (3~4일)**
 - 데모 모드(fixture), README·아키텍처 그림·GIF, ADR, `legacy/` 비우기, 운영 1주 무중단

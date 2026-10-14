@@ -1,4 +1,4 @@
-"""DB 스키마 마이그레이션 0001~0020 과 docker-compose.yml 의 구조 검사(정적 — DB·데몬 없이).
+"""DB 스키마 마이그레이션 0001~0021 과 docker-compose.yml 의 구조 검사(정적 — DB·데몬 없이).
 
 ADR 0002: 공개 등급은 pub_*, 로그인 등급은 prv_*, 운영은 ops. kbj_public_export 는 pub_* 에만
 USAGE·SELECT. compose 는 비밀번호 기본값이 없고 포트는 127.0.0.1 에만 연다.
@@ -1176,3 +1176,75 @@ def test_p7_owner_comments_cover_every_gex_engine_table() -> None:
     # investor_flow 는 0017 이 적었다
     assert gx - {"prv_gex.investor_flow"} <= commented
     assert "prv_gex.investor_flow" not in commented
+
+
+# ── P8 마이그레이션 0021(docs/p8_design.md §3.3 — 규칙 알림·백테스트·저널, 전부 로그인) ──
+
+P8_FILE = "0021_rules_journal.sql"
+
+
+def test_p8_migration_is_0021_after_p7() -> None:
+    names = sorted(p.name for p in MIGRATIONS.glob("*.sql"))
+    assert names[names.index(P7_FILE) + 1] == P8_FILE
+
+
+def test_p8_statements_are_idempotent_and_never_alter_or_write() -> None:
+    body = _body(P8_FILE)
+    assert not re.search(r"CREATE (SCHEMA|TABLE|INDEX|EXTENSION)(?! IF NOT EXISTS)", body)
+    assert not re.search(r"CREATE VIEW", body)  # 뷰는 CREATE OR REPLACE
+    starts = {s.strip().split(maxsplit=1)[0].upper() for s in body.split(";") if s.strip()}
+    assert starts <= {"CREATE", "SELECT"}, starts
+    assert not re.search(r"\bALTER\b|\bDROP\b|\bINSERT\b|\bUPDATE\b|\bGRANT\b", body)
+    # 새 스키마 없음 — prv_alerts(0001)·prv_journal(0013)
+    assert "CREATE SCHEMA" not in body
+    assert "create_hypertable('prv_alerts.watch_quote_slot'" in body
+    assert re.search(
+        r"add_retention_policy\('prv_alerts.watch_quote_slot', INTERVAL '730 days'", body
+    )
+    assert "if_not_exists => TRUE" in body
+    assert "DEFAULT 0" not in body
+
+
+def test_p8_tables_match_rows_writers_and_tiers() -> None:
+    from kbj.core import rules_rows as rr
+
+    tables = _tables(_body(P8_FILE))
+    assert set(tables) == set(rr.P8_TABLE_WRITERS)
+    assert all(t.startswith(("prv_alerts.", "prv_journal.")) for t in tables)
+    earlier = (
+        set(_all_p2_tables()) | set(_all_p3_tables()) | set(_all_p4_tables())
+        | set(_all_p5_tables()) | set(_tables(_body(P6_FILE))) | set(_tables(_body(P7_FILE)))
+    )  # fmt: skip
+    assert not set(tables) & earlier
+    # 수치 행은 source·quality(절대 규칙 1)
+    for t in (
+        "prv_alerts.watch_quote_slot", "prv_alerts.signal_intraday", "prv_alerts.signal_close",
+        "prv_alerts.signal_outcome", "prv_alerts.backtest_run", "prv_alerts.match_check",
+    ):  # fmt: skip
+        assert {"source", "quality"} <= set(tables[t]), t
+    # 장중·마감 신호 표는 같은 모양(뷰 UNION ALL)
+    assert tables["prv_alerts.signal_intraday"] == tables["prv_alerts.signal_close"]
+    raw = (MIGRATIONS / P8_FILE).read_text(encoding="utf-8")
+    assert "CREATE OR REPLACE VIEW prv_alerts.signal AS" in raw
+    assert "kbj_public_export" not in _body(P8_FILE)
+
+
+def test_p8_enum_checks_match_rows() -> None:
+    from kbj.core import rules_rows as rr
+
+    body = _body(P8_FILE)
+
+    def values(col: str) -> set[str]:
+        found = re.findall(rf"\b{col}\s+text (?:NOT NULL )?CHECK \({col} IN \(([^)]*)\)\)", body)
+        assert found, col
+        return {v for f in found for v in re.findall(r"'([\w:]+)'", f)}
+
+    assert values("status") == set(rr.SIGNAL_STATUSES)
+    assert values("skip_reason") == set(rr.SKIP_REASONS)
+    assert values("reason") == set(rr.OUTCOME_REASONS)
+    assert values("mode") == set(rr.BACKTEST_MODES)
+    assert values("side") == set(rr.TRADE_SIDES)
+    sources = re.findall(r"\bsource\s+text NOT NULL CHECK \(source IN \(([^)]*)\)\)", body)
+    got = [set(re.findall(r"'([\w:]+)'", s)) for s in sources]
+    assert set(rr.RULE_SOURCES) in got and set(rr.JOURNAL_SOURCES) in got
+    assert body.count("OR quality <> 'ok')") >= 2

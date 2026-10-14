@@ -30,6 +30,7 @@ export async function bootLogin(root: HTMLElement, o: BootLoginOptions = {}): Pr
   function start(session: Session): void {
     const source = createApiSource({
       ...(fetch ? { fetch } : {}),
+      writeHeaders: () => auth.writeHeaders(),
       onUnauthorized: () => {
         if (app) showLogin('세션이 끝났습니다. 다시 로그인하세요.');
       },

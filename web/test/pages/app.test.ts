@@ -3,7 +3,7 @@
 import axe from 'axe-core';
 import { describe, expect, it, vi } from 'vitest';
 import { mountApp } from '../../src/app/app';
-import { P3_PAGES, P4_PAGES, P5_PAGES, P6_PAGES, P7_PAGES, pageLoaders } from '../../src/app/pages';
+import { P3_PAGES, P4_PAGES, P5_PAGES, P6_PAGES, P7_PAGES, P8_PAGES, pageLoaders } from '../../src/app/pages';
 import { appRoot, fixedClock } from '../helpers';
 import { apiHarness, publicHarness } from './support';
 
@@ -34,8 +34,8 @@ async function serious(root: Element): Promise<string[]> {
 }
 
 describe('셸 + W2 모듈', () => {
-  it('빌드가 페이지 1·2·4·10(P3)·5·8(P4)·6·9(P5 — 자리표시부터)·7(P6)·3(P7) 모듈을 모두 찾는다', () => {
-    const want = [...P3_PAGES, ...P4_PAGES, ...P5_PAGES, ...P6_PAGES, ...P7_PAGES].sort((a, b) => a - b);
+  it('빌드가 페이지 1·2·4·10(P3)·5·8(P4)·6·9(P5 — 자리표시부터)·7(P6)·3(P7)·11·12(P8) 모듈을 모두 찾는다', () => {
+    const want = [...P3_PAGES, ...P4_PAGES, ...P5_PAGES, ...P6_PAGES, ...P7_PAGES, ...P8_PAGES].sort((a, b) => a - b);
     expect([...pageLoaders().keys()].sort((a, b) => a - b)).toEqual(want);
   });
 

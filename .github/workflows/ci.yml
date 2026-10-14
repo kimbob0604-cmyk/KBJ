@@ -19,6 +19,10 @@ name: CI
 #   매트릭스의 etf-rest 에서 monitor/flow 를 뺐다(kbj/reports/flows 로 승격·삭제). import-linter 는 계약
 #   ①~⑭·⑯(⑮ 분류 사전은 테마 사전 작업 몫 — 사용자 별도 진행). 새 시험(sim test_one_day_p5·test_brief_once·
 #   test_intraday_minute, web test/acceptance/p5_pages)은 기존 잡이 모은다
+# - P8 WRAP(docs/p8_design.md §1.6-4): import-linter 계약 ⑳(개인 기록 쓰기 모듈), 직접 호출 검사 새 그룹
+#   ta_indicators. 새 시험(tests/acceptance/test_rules_parity·tests/unit/test_no_orders·sim test_rules_days —
+#   sim 잡이 `-m "sim and not slow"` 로 모은다, web test/acceptance/p11_p12_pages·test/api_write)은 기존 잡이 모은다.
+#   rules_days 만 다시 돌릴 때: `uv run pytest tests/sim -m sim -k rules_days`
 
 on:
   push:

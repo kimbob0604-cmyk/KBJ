@@ -13,11 +13,10 @@ import type { Panel } from '../../ui/panel';
 import { EST_LABEL, qValue } from '../../ui/quality';
 import { seg } from '../../ui/seg';
 import { type Column, table } from '../../ui/table';
-import { fill, filters } from '../p1_market';
+import { failed, fill, filters } from '../p1_market';
 import {
   col,
   comboChart,
-  errLine,
   HINT,
   mkPanel,
   moneyNum,
@@ -226,7 +225,7 @@ export async function mount(t: TabCtx, el: HTMLElement): Promise<void> {
     try {
       pub = await t.pub();
     } catch (err) {
-      for (const p of [pFin, pRatio, pSeg]) p.showMessage(errLine(err, HINT.public));
+      for (const p of [pFin, pRatio, pSeg]) failed(p, err, HINT.public); // 404 는 안내, 그 밖은 오류 줄
       return;
     }
     const d = pub?.data;

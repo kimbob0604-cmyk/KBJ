@@ -190,3 +190,31 @@ def test_checker_is_not_vacuous() -> None:
     assert violations('Q = "INSERT INTO prv_fin.scenario VALUES (1)"\n')
     # 표 이름 상수 예외는 그 상수 밖의 로그인 표 이름을 놓치지 않는다
     assert violations('DIAG_PRV_TABLES: Final = ("prv_diag.x",)\nQ = "SELECT 1 FROM prv_diag.y"\n')
+
+
+# ── P8 WRAP(docs/p8_design.md §1.6-5) — 규칙·백테스트·저널 작업·개인 기록 쓰기는 로그인만 ──
+P8_JOBS = ("rules.intraday", "rules.close", "rules.outcome", "rules.backtest_nightly")
+P8_SQL_MODULES = ("kbj.store.repos.rules", "kbj.store.repos.personal")
+P8_WRITER_MODULES = (
+    "kbj.services.engine.rules",
+    "kbj.services.engine.rules_perf",
+    "kbj.services.personal.rules",
+    "kbj.services.personal.journal",
+)
+
+
+def test_p8_jobs_write_prv_only_and_never_pub() -> None:
+    """P8 새 작업은 prv_ 표만 쓴다(공개 정적 사이트에 규칙·신호·성과가 나가지 않는다 — §7)."""
+    from kbj.services.scheduler.registry import Registry
+
+    reg = Registry.load(ROOT / "config" / "jobs.yaml")
+    for name in P8_JOBS:
+        writes = reg.by_name(name).writes
+        assert writes and all(t.startswith("prv_") for t in writes), (name, writes)
+
+
+def test_p8_sql_and_writers_name_no_public_schema() -> None:
+    """규칙·개인 기록 저장소와 그 쓰기 주체 모듈의 문자열에 공개 스키마(pub_) 이름이 없다."""
+    for mod in (*P8_SQL_MODULES, *P8_WRITER_MODULES):
+        text = _path(mod).read_text(encoding="utf-8")
+        assert "pub_" not in text, mod

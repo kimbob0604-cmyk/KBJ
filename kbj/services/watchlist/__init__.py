@@ -4,7 +4,12 @@
 관심종목은 개인 데이터다(`prv_journal.watchlist` — 로그인). 사용자가 VM 에 올린 파일(SD
 `cache/server_watchlist.json` — 브라우저 localStorage 를 쓴 `[{code, name, market, addedAt}]` — 또는
 CSV)을 읽어 그 목록을 **통째로 바꾼다**(`JournalRepo.replace_watchlist` — 한 트랜잭션, 파일이 정본).
-그 파일은 레포에 넣지 않는다(U-P4-5). 쓰기 API 는 P8.
+그 파일은 레포에 넣지 않는다(U-P4-5).
+
+P8(묶음 JNL — docs/p8_design.md §5, ADR 0033): 쓰기 API(`PUT·DELETE /api/watchlist/{list}/{code}`·
+`POST /api/watchlist/{list}/order`)도 이 모듈 하나를 부른다(`add`·`remove`·`reorder` — 출처 `api`).
+저장은 가져오기와 같은 `replace_watchlist`(그 목록을 읽어 고친 뒤 통째로 바꾼다 — 한 트랜잭션).
+`add` 는 알려진 코드만(유니버스·DART 상장사), 이미 있으면 그대로(멱등), 끝에 붙는다.
 
 - SD JSON 변환은 legacy 이관 매핑과 같은 함수(`kbj.store.legacy_import.transforms.sd_watchlist` — KR
   만, 앞자리 0 채움, 오프셋 있는 addedAt 만, 파일 순서 = 정렬 순서)를 쓴다(두 벌 금지).
@@ -20,7 +25,7 @@ from __future__ import annotations
 import csv
 import io
 from collections.abc import Iterable, Iterator, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from pathlib import Path
 from typing import Final, Literal, Protocol
@@ -34,6 +39,7 @@ from kbj.store.repos.journal import JournalRepo
 from kbj.store.repos.market import MarketRepo
 
 __all__ = [
+    "API_LOADED_BY",
     "FORMATS",
     "LOADED_BY",
     "Format",
@@ -41,6 +47,8 @@ __all__ = [
     "Reject",
     "WatchRepos",
     "WatchRow",
+    "WatchWriteError",
+    "add",
     "apply_plan",
     "describe",
     "known_codes",
@@ -48,10 +56,13 @@ __all__ = [
     "read_csv",
     "read_file",
     "read_sd_json",
+    "remove",
+    "reorder",
     "source_of",
 ]
 
 LOADED_BY: Final = "cli.watchlist"
+API_LOADED_BY: Final = "api.watchlist"
 FORMATS: Final = ("sd-json", "csv")
 MAX_ITEMS: Final = 32767  # sort smallint 상한(0013)
 Format = Literal["sd-json", "csv"]
@@ -244,3 +255,78 @@ def describe(plan: ImportPlan) -> Sequence[str]:
     for rj in plan.rejects:
         lines.append(f"  거절 {rj.line}행 {rj.value or '(빈 값)'} — {rj.reason}")
     return lines
+
+
+# ── 쓰기 API(P8) ──────────────────────────────────────────────────────────────────────
+
+
+class WatchWriteError(ValueError):
+    """쓰기 거절 — 사유 코드(`bad_code`·`unknown_code`·`not_in_list`·`bad_order`·`full`)만."""
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(reason)
+        self.reason = reason
+
+
+def _resorted(items: Sequence[WatchItem]) -> list[WatchItem]:
+    return [replace(it, sort=i) for i, it in enumerate(items)]
+
+
+def _write(repos: WatchRepos, list_name: str, items: Sequence[WatchItem], now: datetime) -> None:
+    repos.journal.replace_watchlist(list_name, _resorted(items), loaded_by=API_LOADED_BY, now=now)
+
+
+def add(
+    repos: WatchRepos,
+    list_name: str,
+    code: str,
+    *,
+    now: datetime,
+    note: str | None = None,
+    known: set[str] | None = None,
+) -> tuple[list[WatchItem], bool]:
+    """목록 끝에 더한다. 이미 있으면 바꾸지 않는다. (목록, 새로 더했나)."""
+    if not is_stock_code(code):
+        raise WatchWriteError("bad_code")
+    items = repos.journal.watchlist(list_name)
+    if any(it.code == code for it in items):
+        return items, False
+    k = known if known is not None else known_codes(repos, now)
+    if code not in k:
+        raise WatchWriteError("unknown_code")
+    if len(items) >= MAX_ITEMS:
+        raise WatchWriteError("full")
+    name = next((u.name for u in repos.market.universe(now.astimezone(KST).date())
+                 if u.code == code), None)  # fmt: skip
+    new = WatchItem(
+        list_name=list_name,
+        code=code,
+        name_at_add=name,
+        added_at=now,
+        sort=len(items),
+        note=note,
+        source="api",
+    )
+    _write(repos, list_name, [*items, new], now)
+    return repos.journal.watchlist(list_name), True
+
+
+def remove(repos: WatchRepos, list_name: str, code: str, *, now: datetime) -> list[WatchItem]:
+    items = repos.journal.watchlist(list_name)
+    kept = [it for it in items if it.code != code]
+    if len(kept) == len(items):
+        raise WatchWriteError("not_in_list")
+    _write(repos, list_name, kept, now)
+    return repos.journal.watchlist(list_name)
+
+
+def reorder(
+    repos: WatchRepos, list_name: str, codes: Sequence[str], *, now: datetime
+) -> list[WatchItem]:
+    """codes 가 목록의 종목을 정확히 한 번씩 담아야 한다(빠짐·더함·중복은 `bad_order`)."""
+    items = repos.journal.watchlist(list_name)
+    by_code = {it.code: it for it in items}
+    if len(codes) != len(set(codes)) or set(codes) != set(by_code):
+        raise WatchWriteError("bad_order")
+    _write(repos, list_name, [by_code[c] for c in codes], now)
+    return repos.journal.watchlist(list_name)

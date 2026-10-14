@@ -1,0 +1,89 @@
+{
+  "source": "KBJ:rules",
+  "as_of": "2026-10-21T16:00:00+09:00",
+  "quality": "ok",
+  "notes": [],
+  "generated_at": "2026-10-30T16:00:00+09:00",
+  "data": {
+    "rule": {
+      "rule_id": "r_t5yhtzwfoq7k",
+      "name": "RSI 과매도",
+      "mode": "close",
+      "enabled": true,
+      "archived": false,
+      "current_version": 2,
+      "cooldown_min": 1440,
+      "universe": {
+        "watchlist": "main"
+      },
+      "signals_30d": 2,
+      "last_signal_at": "2026-10-30T15:30:00+09:00",
+      "source": "example",
+      "updated_at": "2026-10-21T16:00:00+09:00"
+    },
+    "versions": [
+      {
+        "version": 1,
+        "dsl": {
+          "v": 1,
+          "name": "RSI 과매도",
+          "universe": {
+            "watchlist": "main"
+          },
+          "mode": "close",
+          "when": {
+            "all": [
+              {
+                "ind": "rsi",
+                "p": {
+                  "n": 14
+                },
+                "op": "<",
+                "value": 30.0
+              }
+            ]
+          },
+          "alert": {
+            "cooldown_min": 1440,
+            "priority": 2,
+            "silent": false
+          },
+          "track": true
+        },
+        "dsl_hash": "6b67f30c71de91bd2460694b5762d328b70118853b7853e94a7937a728f105bc",
+        "created_at": "2026-10-20T16:00:00+09:00"
+      },
+      {
+        "version": 2,
+        "dsl": {
+          "v": 1,
+          "name": "RSI 과매도",
+          "universe": {
+            "watchlist": "main"
+          },
+          "mode": "close",
+          "when": {
+            "all": [
+              {
+                "ind": "rsi",
+                "p": {
+                  "n": 14
+                },
+                "op": "<",
+                "value": 32.0
+              }
+            ]
+          },
+          "alert": {
+            "cooldown_min": 1440,
+            "priority": 2,
+            "silent": false
+          },
+          "track": true
+        },
+        "dsl_hash": "3abf03333d2e950df2add16a3e696a2715187db91f8895da08efdce557877581",
+        "created_at": "2026-10-21T16:00:00+09:00"
+      }
+    ]
+  }
+}

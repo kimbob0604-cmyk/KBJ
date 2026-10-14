@@ -3,7 +3,9 @@
 예시의 열: 종목 · 시가총액 · 유동시총 · 유동비율 · 시총 컷오프 괴리율 · 유동시총 컷오프 괴리율 ·
 조건 충족(O/X) · 필요 주가 상승률(시총 기준·유동 기준 중 큰 쪽) · 예상 패시브 매수(억) · 일평균
 거래대금 대비 배수.
-값은 합성이다(실제 종목·리포트 숫자 아님). 배수는 설정(1.8× · 0.9× — [확인 필요]).
+값은 합성이다(실제 종목·리포트 숫자 아님). 배수는 설정(GIMI 2026-08판 — 세그먼트를 모르는 비구성종목
+1.5× · 유동 0.5×). 2026-10-14 배수 변경으로 990902 의 유동비율을 0.31 → 0.27 로 바꿨다(새 유동 문턱
+0.5× 에서도 '유동 조건 미달' 예가 되게).
 """
 
 from __future__ import annotations
@@ -13,7 +15,7 @@ from datetime import date
 import pytest
 
 from kbj.config.index_reviews import load_index_reviews
-from kbj.engines.index_review.msci import predict_msci
+from kbj.engines.index_review.msci import multipliers, predict_msci
 from kbj.engines.index_review.types import StockIn
 
 CFG = load_index_reviews()
@@ -25,7 +27,7 @@ AUM = 40 * JO  # 합성 추종 자금 40조
 # (코드, 시총(조), 추정 유동비율, 일평균 거래대금(억)) — 합성
 ROWS = [
     ("990901", 6.20, 0.52, 450.0),
-    ("990902", 5.10, 0.31, 300.0),
+    ("990902", 5.10, 0.27, 300.0),
     ("990903", 4.70, 0.66, 200.0),
 ]
 
@@ -47,9 +49,10 @@ def test_columns_follow_the_formulas() -> None:
     rule = CFG.fif_rule_for(date(2026, 11, 11))
     res = predict_msci(_stocks(), RULES, rule, CFG.fol, cutoff_override=CUTOFF, aum_won=AUM)
     got = {o.code: o for o in res.stocks}
-    m_mult, f_mult = RULES.val("add_mcap_mult"), RULES.val("add_ff_mult")
     for code, cap, raw, adv in ROWS:
         o = got[code]
+        m_mult, f_mult = multipliers(next(s for s in _stocks() if s.code == code), o.fif, RULES)
+        assert (m_mult, f_mult) == (1.5, 0.5)
         fif = o.fif
         assert fif is not None
         ff = cap * JO * fif

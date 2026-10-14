@@ -1,0 +1,17 @@
+{
+  "status": 422,
+  "code": "invalid_rule",
+  "message": "규칙 검사 실패",
+  "detail": {
+    "issues": [
+      {
+        "pointer": "/when/all/0/ind",
+        "reason": "close_only"
+      },
+      {
+        "pointer": "/when/all/1/p/n",
+        "reason": "param_range"
+      }
+    ]
+  }
+}

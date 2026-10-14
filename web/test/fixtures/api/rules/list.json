@@ -1,0 +1,91 @@
+{
+  "source": "KBJ:rules",
+  "as_of": "2026-10-21T16:00:00+09:00",
+  "quality": "ok",
+  "notes": [],
+  "generated_at": "2026-10-30T16:00:00+09:00",
+  "data": {
+    "rules": [
+      {
+        "rule_id": "r_v5yhtzwfoq7k",
+        "name": "20일선 돌파",
+        "mode": "close",
+        "enabled": false,
+        "archived": false,
+        "current_version": 1,
+        "cooldown_min": 1440,
+        "universe": {
+          "watchlist": "main"
+        },
+        "signals_30d": 0,
+        "last_signal_at": null,
+        "source": "example",
+        "updated_at": "2026-10-20T16:00:00+09:00"
+      },
+      {
+        "rule_id": "r_t5yhtzwfoq7k",
+        "name": "RSI 과매도",
+        "mode": "close",
+        "enabled": true,
+        "archived": false,
+        "current_version": 2,
+        "cooldown_min": 1440,
+        "universe": {
+          "watchlist": "main"
+        },
+        "signals_30d": 2,
+        "last_signal_at": "2026-10-30T15:30:00+09:00",
+        "source": "example",
+        "updated_at": "2026-10-21T16:00:00+09:00"
+      },
+      {
+        "rule_id": "r_w5yhtzwfoq7k",
+        "name": "거래량 급증 양봉",
+        "mode": "intraday",
+        "enabled": true,
+        "archived": false,
+        "current_version": 1,
+        "cooldown_min": 1440,
+        "universe": {
+          "watchlist": "main"
+        },
+        "signals_30d": 1,
+        "last_signal_at": "2026-10-28T12:20:00+09:00",
+        "source": "example",
+        "updated_at": "2026-10-20T16:00:00+09:00"
+      },
+      {
+        "rule_id": "r_u5yhtzwfoq7k",
+        "name": "볼린저 하단 터치",
+        "mode": "close",
+        "enabled": false,
+        "archived": true,
+        "current_version": 1,
+        "cooldown_min": 1440,
+        "universe": {
+          "watchlist": "main"
+        },
+        "signals_30d": 0,
+        "last_signal_at": null,
+        "source": "example",
+        "updated_at": "2026-10-20T16:00:00+09:00"
+      },
+      {
+        "rule_id": "r_x5yhtzwfoq7k",
+        "name": "장중 급등",
+        "mode": "intraday",
+        "enabled": true,
+        "archived": false,
+        "current_version": 1,
+        "cooldown_min": 1440,
+        "universe": {
+          "watchlist": "main"
+        },
+        "signals_30d": 1,
+        "last_signal_at": "2026-10-28T12:20:00+09:00",
+        "source": "example",
+        "updated_at": "2026-10-20T16:00:00+09:00"
+      }
+    ]
+  }
+}

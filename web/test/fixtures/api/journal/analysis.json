@@ -1,0 +1,99 @@
+{
+  "source": "KBJ",
+  "as_of": "2026-09-15T18:00:00+09:00",
+  "quality": "ok",
+  "notes": [],
+  "generated_at": "2026-09-15T18:00:00+09:00",
+  "data": {
+    "items": [
+      {
+        "code": "990002",
+        "analyzed_on": "2026-09-14",
+        "chain_ids": [
+          null,
+          null,
+          null
+        ],
+        "price": null,
+        "ret_52w": null,
+        "fwd_per": null,
+        "band_pos": null,
+        "ev_ebitda": null,
+        "mktcap": null,
+        "opm": null,
+        "eps": {
+          "bear": null,
+          "base": null,
+          "bull": null
+        },
+        "per": {
+          "bear": null,
+          "base": null,
+          "bull": null
+        },
+        "tp": {
+          "bear": null,
+          "base": null,
+          "bull": null
+        },
+        "tp_source": null,
+        "conviction": null,
+        "memo": "수기 메모만",
+        "tags": [],
+        "conclusion": null,
+        "value_sources": {},
+        "id": 2,
+        "source": "api",
+        "updated_at": "2026-09-15T18:00:00+09:00"
+      },
+      {
+        "code": "990001",
+        "analyzed_on": "2026-09-09",
+        "chain_ids": [
+          null,
+          null,
+          null
+        ],
+        "price": 12000.0,
+        "ret_52w": 18.4,
+        "fwd_per": 11.2,
+        "band_pos": 35.0,
+        "ev_ebitda": null,
+        "mktcap": 1200000000000,
+        "opm": 14.5,
+        "eps": {
+          "bear": 900.0,
+          "base": 1100.0,
+          "bull": 1300.0
+        },
+        "per": {
+          "bear": 9.0,
+          "base": 11.0,
+          "bull": 13.0
+        },
+        "tp": {
+          "bear": 8100.0,
+          "base": 12100.0,
+          "bull": 16900.0
+        },
+        "tp_source": "kbj 시나리오 적정가",
+        "conviction": "중",
+        "memo": "합성 메모 — 수요 회복",
+        "tags": [
+          "합성",
+          "반도체"
+        ],
+        "conclusion": "보유",
+        "value_sources": {
+          "price": "kbj",
+          "fwd_per": "kbj",
+          "opm": "consensus",
+          "tp": "kbj"
+        },
+        "id": 1,
+        "source": "api",
+        "updated_at": "2026-09-15T18:00:00+09:00"
+      }
+    ]
+  }
+}

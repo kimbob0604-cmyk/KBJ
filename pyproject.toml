@@ -455,9 +455,27 @@ source_modules = [
     "kbj.services.public_export",
     "kbj.services.recorder",
     "kbj.services.runtime",
+    "kbj.services.personal",
     "kbj.services.scheduler",
     "kbj.services.watchlist",
 ]
 forbidden_modules = ["websockets"]
 # 직접 import 만 막는다 — recorder.golden 이 ws_gateway.service 를 지나 닿는 것은 연결 지점이 하나라는 뜻
 allow_indirect_imports = "True"
+
+# ── P8 WRAP(docs/p8_design.md D-P8-22 ①) — 개인 기록 쓰기 모듈은 화면·CLI·이관이 같이 부르는 DB 쓰기 주체다.
+# 외부 원천·수집기·발송·API 를 끌어오면 '쓰기 한 곳'이 외부 호출을 낳는다(간접 import 까지 막는다).
+# 규칙·백테스트·저널 엔진(kbj.engines.rules·backtest·journal)은 계약 ⑨(순수)에 든다(사례로 확인) ──
+[[tool.importlinter.contracts]]
+name = "⑳ 개인 기록 쓰기 모듈(kbj.services.personal)은 원천 어댑터·수집기·발송·API·작업 처리기를 import 하지 않는다"
+type = "forbidden"
+source_modules = ["kbj.services.personal"]
+forbidden_modules = [
+    "kbj.data.private",
+    "kbj.data.public",
+    "kbj.services.collectors",
+    "kbj.services.notifier",
+    "kbj.services.api",
+    "kbj.services.engine",
+    "httpx",
+]

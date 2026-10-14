@@ -34,6 +34,8 @@ kis:
     program_intraday: P2        # program.intraday(시장 프로그램 1분)
     program_scan: P3            # program.stock_scan(종목 프로그램 10분 — 거래대금 상위 N + 관심종목)
     program_sweep: P4           # program.stock_sweep(18:10 전 종목 훑기 — 이어 받기)
+    # P8(docs/p8_design.md §3.4) — 관심종목 ∪ 보유 ∪ 규칙 코드 ≤ 60 × 40 슬롯 = 하루 ≤ 2,400
+    rules_intraday: P2          # rules.intraday(관심종목 장중 10분 현재가 — FHKST01010100)
   # 하루 KIS 호출 합의 상한 [제안 30,000 — docs/p5_design.md §3.4]. 실행 중에는 막지 않는다(KIS 일 한도 미공표) —
   # 등록부 시험(tests/unit/scheduler/test_registry_validation.py)이 작업별 추정 호출 합이 이 값 이하인지 본다.
   daily_soft_cap: 30000

@@ -39,6 +39,7 @@ SAMPLES = {
     "etf_issuers": "https://www.samsung" + "fund.com/api/v1/fund/product/pdf",  # P3 묶음 S
     "krx_scrape": "http://data" + ".krx.co.kr/comm/bldAttendant/getJsonData.cmd",
     "fnguide": "https://comp" + ".fnguide.com/SVO2/ASP/SVD_Main.asp",  # P4 묶음 S(목표 0)
+    "ta_indicators": "def _calc_rsi_macd(closes: list) -> dict:",  # P8 WRAP(D-P8-22 ②)
 }
 
 
@@ -505,3 +506,31 @@ def test_real_repo_passes_with_baseline(capsys: pytest.CaptureFixture[str]) -> N
     code = cc.main([])
     out = capsys.readouterr().out
     assert code == 0, out
+
+
+def test_ta_indicators_only_in_core_indicators() -> None:
+    """P8 WRAP(docs/p8_design.md D-P8-22 ②) — 기술 지표 계산 함수 정의는 kbj 안에서
+    kbj/core/indicators.py 하나. legacy(SD 차트·board 스윙)는 줄어들기만 하는 기준선
+    (P9 legacy 비우기). 지표를 부르는 줄·DSL 변환 도우미(이름 뒤에 다른 말이 붙은 것)·
+    속성 접근은 걸리지 않는다."""
+    g = cc.GROUPS["ta_indicators"]
+    assert not g.zero and g.allowed == ("kbj/core/indicators.py",)
+    for src in (
+        "def rsi(close, n=14):",
+        "def _ema(data, span):",
+        "    def adx_arr(h, l, c, n=14):",
+        "def _bt_calc_rsi(closes, period=14):",
+        "def bollinger(close, n=20, k=2.0):",
+    ):
+        assert g.pattern.search(src), src
+    for src in (
+        "x = rsi(close, 14)",
+        "def _macd_cross_cond(op):",
+        "def schema(x):",
+        "def ema_signal_note():",
+        "ind.macd(close)",
+    ):
+        assert not g.pattern.search(src), src
+    hits = cc.scan_hosts("kbj/engines/rules/x.py", "def sma(x, n):\n", [g])
+    assert [h.group for h in hits] == ["ta_indicators"]
+    assert cc.scan_hosts("kbj/core/indicators.py", "def sma(x, n):\n", [g]) == []

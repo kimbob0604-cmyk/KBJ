@@ -14,8 +14,8 @@ import type { Panel } from '../../ui/panel';
 import { type StackSeries, stackBar } from '../../ui/stackbar';
 import { table } from '../../ui/table';
 import { type WaterfallStep, waterfall } from '../../ui/waterfall';
-import { fill } from '../p1_market';
-import { col, comboChart, DART_VIEWER, dartLink, eok1, errLine, HINT, mkPanel, NO_PUB_FIN, type S, tabGrid, type TabCtx, tag } from './common';
+import { failed, fill } from '../p1_market';
+import { col, comboChart, DART_VIEWER, dartLink, eok1, HINT, mkPanel, NO_PUB_FIN, type S, tabGrid, type TabCtx, tag } from './common';
 
 type Report = S['ReportView'];
 type Obj = Record<string, unknown>;
@@ -224,7 +224,7 @@ export async function mount(t: TabCtx, el: HTMLElement): Promise<void> {
       return;
     }
   } catch (err) {
-    p.showMessage(errLine(err, HINT.public));
+    failed(p, err, HINT.public); // 404 는 안내, 그 밖은 오류 줄
     return;
   }
   await fill(p, () => t.get<Report>(`reports/${t.code}`), draw, HINT.public);

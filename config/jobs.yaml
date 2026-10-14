@@ -521,17 +521,61 @@ jobs:
     absorbs: ["SD:mac-crontab:dart_collector", "ET:board/ingest/financials", "ET:dart-report 수집부"]
     note: "재무 2층(D-P4-5): 상세 대상(관심종목 ∪ 컨센서스 유니버스 ∪ 공개 데모)은 전체 재무제표(CFS→OFS), 나머지는 07:30 뒤 첫 실행의 주요계정 묶음. statement_raw → normalize(to_quarterly 하나) → quarterly·ratio, 적재한 공시는 disclosure.fin_loaded_at"
 
+  # ── P8 규칙 알림(docs/p8_design.md §0.4·§3.2 — 묶음 FND 가 모양, 웨이브 3 WRAP 이 셋을 켰다) ──────────
+  # 켠 것: rules.close·rules.outcome·rules.backtest_nightly(외부 호출 없음 — 원장만) + rules.intraday(사용자 요청
+  # 2026-10-14 — ADR 0031 §6). rules.intraday 의 TR 칸 이름·가집계 회차·순위 목록은 공식 KIS 예제로 확인했고, 남은
+  # 확인(#65 단위·반영 지연, #66 목록 길이·금액 단위·회차 편차)은 장중 하루 실측이다.
   - name: rules.intraday
     phase: P8
-    owner: "kbj.engines.rules:intraday"
+    enabled: true               # 사용자 요청(2026-10-14 — ADR 0031 §6). 남은 확인 #65·#66 = 장중 하루 실측
+    owner: "kbj.services.engine.rules:intraday"
     schedule: {equity: {start: open, end: close, every_min: 10}, when: trading_day}
     retry: {max: 0}
     deadline_min: 10
+    # 장중 수급(사용자 결정 2026-10-13): 종목 가집계(KIS:inst_foreign_intraday — 쓰기 주인 flows.intraday,
+    # prv_flows.investor_intraday)를 읽는다. 같은 회차 수집이 끝나기를 최대 5분 기다리고, 없으면 그 조건은
+    # '판단 불가'(발송 없음)
+    depends_on: [{job: flows.intraday, hard: false, wait_min: 5}]
     collects:
       - {source: KIS, dataset: watch_quotes_intraday, as_of: slot10m}
+    writes: [prv_alerts.watch_quote_slot, prv_alerts.signal_intraday]
     notify: {kind: alert.rule}
     absorbs: ["SD:tg_custom_alerts", "SD:tg_watchlist", "SD:tg_trailing", "SD:price_sync_intraday",
               "SD:stage2_realtime_kr"]
+    note: "D-P8-9·20 — 대상 = 관심종목 main ∪ 보유 ∪ 규칙 코드, 상한 60(config/rules.yaml intraday_max_codes — 넘으면 자르고 근거·health 에 '잘림'). 슬롯 시세를 저장해 장중 재생 백테스트가 같은 입력을 읽는다. 평가 = 전 거래일까지 확정 일봉 + 그 슬롯 부분 봉(FHKST01010100 실시간, quality estimated), 수급 조건은 가집계(FHPTJ04400000 순매수·순매도 상위 목록 — 공식 예제상 하루 4회 입력 외국인 09:30·11:20·13:20·14:30 / 기관 10:00·11:20·13:20·14:30 ±10분)의 확실히 들어온 가장 최근 회차 값만(근거 문구 '장중 잠정 13:20 회차', 회차 전·두 목록 밖 종목은 판단 불가 → 발송 없음). 사건 시점 발송(alert.rule — 쿨다운 상태기 + notifier 안전망). 남은 확인(장중 하루 실측): #65 FHKST01010100 단위·반영 지연, #66 목록 길이 N·금액 단위·회차 실제 편차"
+
+  - name: rules.close
+    phase: P8
+    enabled: true               # P8 WRAP — 원장만(KIS 호출 없음), 16:00 한 통(ADR 0018)
+    owner: "kbj.services.engine.rules:close"
+    schedule: {cron: "0 16 * * 1-5", when: trading_day, catch_up_until: "20:30"}
+    retry: {max: 0}
+    depends_on: [{job: market.close_collect, hard: true}]
+    writes: [prv_alerts.signal_close]
+    notify: {kind: alert.rule_close}
+    note: "D-P8-4 — 마감 규칙 평가(원장만 — KIS 호출 없음, 대상 상한 없음). 오늘 행은 KIS 마감 값(estimated 가능), 수급은 확정 원장으로 다시 판정(장중 잠정과 다르면 일치 감시가 data_revised). 발송은 16:00 한 통 묶음(alert.rule_close — ADR 0018, 0건이면 없음). SD 에 마감 규칙 평가가 없어 absorbs 없음"
+
+  - name: rules.outcome
+    phase: P8
+    enabled: true               # P8 WRAP — KRX 확정 일봉만(비교 지수 코드 #67 [확인 필요] — 없으면 초과수익 빈칸)
+    owner: "kbj.services.engine.rules_perf:outcome"
+    schedule: {cron: "30 8 * * 1-5", when: trading_day}
+    retry: {max: 2, backoff_s: [600, 1200]}
+    depends_on: [{job: krx.daily, hard: true}]
+    as_of: prev_trading_day
+    writes: [prv_alerts.signal_outcome]
+    note: "D-P8-12 — 알림 후 성과(기간 1·3·5·10·20 거래일 — config/rules.yaml horizons): KRX 확정 일봉(D+1 08:05)으로 ret·지수 초과·MFE·MAE. 정지·상폐·분할 의심은 사유를 적고 통계에서 뺀다. 발송 없음"
+
+  - name: rules.backtest_nightly
+    phase: P8
+    enabled: true               # P8 WRAP — 원장만, 발송 없음
+    owner: "kbj.services.engine.rules_perf:nightly"
+    schedule: {cron: "45 8 * * 1-5", when: trading_day}
+    retry: {max: 1, backoff_s: [900]}
+    depends_on: [{job: rules.outcome, hard: true}]
+    as_of: prev_trading_day
+    writes: [prv_alerts.backtest_run, prv_alerts.backtest_signal, prv_alerts.match_check]
+    note: "D-P8-14 — 켜진 규칙을 최근 20 거래일(match.window_days)에 다시 백테스트해 실시간 신호와 비교(입력 지문 같음 → logic = health 오류 → ops.watchdog, 다름 → data_revised), 3년(nightly.years) 요약을 backtest_run 에. 발송 없음"
 
   - name: flows.intraday
     phase: P3
@@ -950,4 +994,11 @@ retired:
   - {legacy: "ET:xdigest.yml:collect", reason: "구루 X 다이제스트 완전 제외(사용자 결정 2026-10-13 Q4 — P5·P8 모두 아님)"}
   - {legacy: "ET:xdigest.yml:send", reason: "구루 X 다이제스트 완전 제외(사용자 결정 2026-10-13 Q4)"}
   - {legacy: "GX:plan:brief_1200", reason: "U2 — 아침·마감 브리핑 하루 1회씩만"}
+  # P8(docs/p8_design.md §0.4 — WRAP). 발굴 신규 진입 알림은 사용자 결정(2026-10-13)으로 폐지, SD HTTP 라우트 넷은
+  # SPA 페이지 12 + 로그인 API 가 대체(SD 함수는 지웠다 — legacy/stock_dashboard/MIGRATION.md 'P8')
+  - {legacy: "SD:alert_discovery_new_entries", reason: "발굴 신규 진입(#14) — 생성기 없음, 같은 뜻은 사용자 규칙으로(사용자 결정 2026-10-13)"}
+  - {legacy: "SD:http:/api/backtest", reason: "SPA 페이지 12 백테스트 + 로그인 API /api/backtest/* 가 대체(P8)"}
+  - {legacy: "SD:http:/api/journal/*", reason: "SPA 페이지 12 저널 + 로그인 API /api/journal/* 가 대체(P8)"}
+  - {legacy: "SD:http:/api/correlation", reason: "SPA 페이지 12 상관관계 + 로그인 API /api/portfolio/correlation 이 대체(P8)"}
+  - {legacy: "SD:http:/api/recommendation/*", reason: "SPA 페이지 12 추천 성과 + 로그인 API /api/journal/picks 가 대체(P8)"}
   - {legacy: "EXT:kospi-dislocation", reason: "레포 밖 KIS 발급자(K10) — 전환일 사용자 작업(Q13), token_throttled health 로 감지"}

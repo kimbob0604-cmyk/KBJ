@@ -1,0 +1,440 @@
+{
+  "source": "KBJ:config/rule_examples.yaml",
+  "as_of": "2026-10-30T16:00:00+09:00",
+  "quality": "ok",
+  "notes": [],
+  "generated_at": "2026-10-30T16:00:00+09:00",
+  "data": {
+    "examples": [
+      {
+        "id": "E1",
+        "name": "RSI 과매도",
+        "mode": "close",
+        "dsl": {
+          "v": 1,
+          "name": "RSI 과매도",
+          "universe": {
+            "watchlist": "main"
+          },
+          "mode": "close",
+          "when": {
+            "all": [
+              {
+                "ind": "rsi",
+                "p": {
+                  "n": 14
+                },
+                "op": "<",
+                "value": 30.0
+              }
+            ]
+          },
+          "alert": {
+            "cooldown_min": 1440,
+            "priority": 2,
+            "silent": false
+          },
+          "track": true
+        },
+        "dsl_hash": "6b67f30c71de91bd2460694b5762d328b70118853b7853e94a7937a728f105bc"
+      },
+      {
+        "id": "E2",
+        "name": "MACD 골든크로스",
+        "mode": "close",
+        "dsl": {
+          "v": 1,
+          "name": "MACD 골든크로스",
+          "universe": {
+            "watchlist": "main"
+          },
+          "mode": "close",
+          "when": {
+            "all": [
+              {
+                "ind": "macd",
+                "p": {
+                  "fast": 12,
+                  "slow": 26,
+                  "signal": 9
+                },
+                "field": "line",
+                "op": "cross_above",
+                "ref": {
+                  "ind": "macd",
+                  "p": {
+                    "fast": 12,
+                    "slow": 26,
+                    "signal": 9
+                  },
+                  "field": "signal",
+                  "scale": 1.0
+                }
+              }
+            ]
+          },
+          "alert": {
+            "cooldown_min": 1440,
+            "priority": 2,
+            "silent": false
+          },
+          "track": true
+        },
+        "dsl_hash": "162d4e42fd7fef041e6b8f0bbb3f6b755f6ceeaae880dfebe9a1e3711c5df2dd"
+      },
+      {
+        "id": "E3",
+        "name": "볼린저 하단 터치",
+        "mode": "close",
+        "dsl": {
+          "v": 1,
+          "name": "볼린저 하단 터치",
+          "universe": {
+            "watchlist": "main"
+          },
+          "mode": "close",
+          "when": {
+            "all": [
+              {
+                "ind": "low",
+                "p": {},
+                "op": "<=",
+                "ref": {
+                  "ind": "bb",
+                  "p": {
+                    "n": 20,
+                    "k": 2.0
+                  },
+                  "field": "lower",
+                  "scale": 1.0
+                }
+              }
+            ]
+          },
+          "alert": {
+            "cooldown_min": 1440,
+            "priority": 2,
+            "silent": false
+          },
+          "track": true
+        },
+        "dsl_hash": "307a0fcc146153b013abba5b79e793cc3786fba4bba6a2e3e265a13049df4dc0"
+      },
+      {
+        "id": "E4",
+        "name": "20일선 돌파",
+        "mode": "close",
+        "dsl": {
+          "v": 1,
+          "name": "20일선 돌파",
+          "universe": {
+            "watchlist": "main"
+          },
+          "mode": "close",
+          "when": {
+            "all": [
+              {
+                "ind": "close",
+                "p": {},
+                "op": "cross_above",
+                "ref": {
+                  "ind": "sma",
+                  "p": {
+                    "n": 20
+                  },
+                  "scale": 1.0
+                }
+              }
+            ]
+          },
+          "alert": {
+            "cooldown_min": 1440,
+            "priority": 2,
+            "silent": false
+          },
+          "track": true
+        },
+        "dsl_hash": "b160c143351dd670859461191ab380e3e7d9a55993bf2b641950db08ea101e22"
+      },
+      {
+        "id": "E5",
+        "name": "외국인 3일 연속",
+        "mode": "close",
+        "dsl": {
+          "v": 1,
+          "name": "외국인 3일 연속",
+          "universe": {
+            "watchlist": "main"
+          },
+          "mode": "close",
+          "when": {
+            "all": [
+              {
+                "ind": "foreign_streak",
+                "p": {
+                  "side": "buy"
+                },
+                "op": ">=",
+                "value": 3.0
+              }
+            ]
+          },
+          "alert": {
+            "cooldown_min": 1440,
+            "priority": 2,
+            "silent": false
+          },
+          "track": true
+        },
+        "dsl_hash": "6654fcc34b481136082cba8ba82ef449706ad592d67a40c047dda349cec2782b"
+      },
+      {
+        "id": "E6",
+        "name": "반도체 과매도 반등",
+        "mode": "close",
+        "dsl": {
+          "v": 1,
+          "name": "반도체 과매도 반등",
+          "universe": {
+            "watchlist": "main"
+          },
+          "mode": "close",
+          "when": {
+            "all": [
+              {
+                "ind": "rsi",
+                "p": {
+                  "n": 14
+                },
+                "op": "<",
+                "value": 30.0
+              },
+              {
+                "ind": "sma",
+                "p": {
+                  "n": 5
+                },
+                "op": "cross_above",
+                "ref": {
+                  "ind": "sma",
+                  "p": {
+                    "n": 20
+                  },
+                  "scale": 1.0
+                }
+              },
+              {
+                "ind": "foreign_streak",
+                "p": {
+                  "side": "buy"
+                },
+                "op": ">=",
+                "value": 3.0
+              }
+            ]
+          },
+          "alert": {
+            "cooldown_min": 1440,
+            "priority": 2,
+            "silent": false
+          },
+          "track": true
+        },
+        "dsl_hash": "6a1cd3776856b8bdee256387af18d27e6fbbc807a147097f7ba18ce547a99094"
+      },
+      {
+        "id": "E7",
+        "name": "추세 강함",
+        "mode": "close",
+        "dsl": {
+          "v": 1,
+          "name": "추세 강함",
+          "universe": {
+            "watchlist": "main"
+          },
+          "mode": "close",
+          "when": {
+            "all": [
+              {
+                "ind": "adx",
+                "p": {
+                  "n": 14
+                },
+                "field": "adx",
+                "op": ">",
+                "value": 25.0
+              },
+              {
+                "ind": "adx",
+                "p": {
+                  "n": 14
+                },
+                "field": "pdi",
+                "op": ">",
+                "ref": {
+                  "ind": "adx",
+                  "p": {
+                    "n": 14
+                  },
+                  "field": "mdi",
+                  "scale": 1.0
+                }
+              },
+              {
+                "ind": "close",
+                "p": {},
+                "op": ">",
+                "ref": {
+                  "ind": "sma",
+                  "p": {
+                    "n": 60
+                  },
+                  "scale": 1.0
+                }
+              }
+            ]
+          },
+          "alert": {
+            "cooldown_min": 1440,
+            "priority": 2,
+            "silent": false
+          },
+          "track": true
+        },
+        "dsl_hash": "ba6cf5a8c392f81a93d2a5e7e2d51c4cef2d13d4cb8b74d4d2b622797a85804a"
+      },
+      {
+        "id": "E8",
+        "name": "거래량 급증 양봉",
+        "mode": "intraday",
+        "dsl": {
+          "v": 1,
+          "name": "거래량 급증 양봉",
+          "universe": {
+            "watchlist": "main"
+          },
+          "mode": "intraday",
+          "when": {
+            "all": [
+              {
+                "ind": "vol_ratio",
+                "p": {
+                  "n": 20
+                },
+                "op": ">=",
+                "value": 2.0
+              },
+              {
+                "ind": "change_pct",
+                "p": {},
+                "op": ">",
+                "value": 0.0
+              }
+            ]
+          },
+          "alert": {
+            "cooldown_min": 1440,
+            "priority": 2,
+            "silent": false
+          },
+          "track": true
+        },
+        "dsl_hash": "9e24297265a92a5278f6f28bb6ad0c4decc9c5d966dd82207fdf171eaeb2959e"
+      },
+      {
+        "id": "E9",
+        "name": "장중 급등",
+        "mode": "intraday",
+        "dsl": {
+          "v": 1,
+          "name": "장중 급등",
+          "universe": {
+            "watchlist": "main"
+          },
+          "mode": "intraday",
+          "when": {
+            "all": [
+              {
+                "ind": "change_pct",
+                "p": {},
+                "op": ">=",
+                "value": 5.0
+              },
+              {
+                "ind": "vol_ratio",
+                "p": {
+                  "n": 20
+                },
+                "op": ">=",
+                "value": 1.5
+              }
+            ]
+          },
+          "alert": {
+            "cooldown_min": 1440,
+            "priority": 2,
+            "silent": false
+          },
+          "track": true
+        },
+        "dsl_hash": "840182828216b8a0adc8281dc55c2a5345b04e222fa9692ed7db7b86f058dd3e"
+      },
+      {
+        "id": "E10",
+        "name": "신고가 근접 쌍끌이",
+        "mode": "intraday",
+        "dsl": {
+          "v": 1,
+          "name": "신고가 근접 쌍끌이",
+          "universe": {
+            "watchlist": "main"
+          },
+          "mode": "intraday",
+          "when": {
+            "all": [
+              {
+                "ind": "close",
+                "p": {},
+                "op": ">=",
+                "ref": {
+                  "ind": "high_n",
+                  "p": {
+                    "n": 250
+                  },
+                  "scale": 0.97
+                }
+              },
+              {
+                "any": [
+                  {
+                    "ind": "foreign_streak",
+                    "p": {
+                      "side": "buy"
+                    },
+                    "op": ">=",
+                    "value": 1.0
+                  },
+                  {
+                    "ind": "inst_streak",
+                    "p": {
+                      "side": "buy"
+                    },
+                    "op": ">=",
+                    "value": 1.0
+                  }
+                ]
+              }
+            ]
+          },
+          "alert": {
+            "cooldown_min": 1440,
+            "priority": 2,
+            "silent": false
+          },
+          "track": true
+        },
+        "dsl_hash": "711b7673fce7eca27d72ac68d29deb99a6d0dc0f953f17045046ad3da037580f"
+      }
+    ]
+  }
+}

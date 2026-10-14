@@ -24,6 +24,8 @@ export interface Auth {
   logout(): Promise<void>;
   /** 지금 들고 있는 CSRF 토큰(시험·상태 표시용 — 값을 화면에 그리지 않는다) */
   hasCsrf(): boolean;
+  /** 쓰기 요청 헤더(`X-KBJ-CSRF`) — 토큰이 없으면 null(P8 — api.ts 쓰기 채널만 부른다) */
+  writeHeaders(): Record<string, string> | null;
 }
 
 export interface AuthOptions {
@@ -104,6 +106,7 @@ export function createAuth(opts: AuthOptions = {}): Auth {
     },
 
     hasCsrf: () => csrf !== null,
+    writeHeaders: () => (csrf ? { [CSRF_HEADER]: csrf } : null),
   };
 }
 

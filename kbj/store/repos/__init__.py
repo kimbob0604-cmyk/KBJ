@@ -9,8 +9,7 @@
 - P4(docs/p4_design.md §1.1 — 묶음 M): `filings`(0010 pub_filings.*)·`fin`(0011 pub_fin.*)·
   `consensus`(0012 prv_fin.*·prv_market.share_class)·`journal`(0013 prv_journal.watchlist).
   **공개 작업은 이 패키지 이름을 import 하지 않는다**(계약 ⑬ — 여기서 consensus·journal 을
-  끌어온다).
-  공개 작업은 `kbj.store.repos.public`(`PublicRepos`) 또는 하위 모듈에서 직접 가져온다.
+  끌어온다). 공개 작업은 `kbj.store.repos.public`(`PublicRepos`) 또는 하위 모듈에서 직접 가져온다.
 - P5(docs/p5_design.md §1.1 — 묶음 FND): 공개 `macro`(0014 pub_macro)·`market_stats`(0016),
   로그인 `macro_prv`(0014 prv_macro)·`us`(0015 + daily_bar US)·`program`(0017). 분류 사전·테마 강도
   저장소는 사용자가 따로 진행해 P5 에서 뺐다. 공개·로그인을 **모듈로** 나눴다(계약 ⑭ — 공개 작업은
@@ -22,6 +21,10 @@
   차원·급등·104품목·종목↔HS 매핑·종목 수출 지수).
 - P7 묶음 FND-B(docs/p7_design.md §1.1): 로그인 `gex`(0006 prv_gex.* — GX 싱크 메서드 이름 그대로,
   D-P7-8)·`diag`(0020 prv_diag.*), 공개 `diag_pub`(0020 pub_diag.* — `kbj.store.repos.diag`).
+- P8 묶음 FND(docs/p8_design.md §1.1·§3.3): 로그인 `rules`(0021 prv_alerts — 장중
+  슬롯·신호·성과·백테스트·
+  일치 감시 쓰기 + 규칙 읽기)·`personal`(규칙·판·일지·매매·추천 쓰기 — 쓰기 모듈 하나, D-P8-15),
+  `journal` 에 일지·매매·추천 읽기.
 
 - 행 모양은 `kbj.core.rows`(엔진과 공유). 이 패키지는 `kbj.core`·psycopg 만 쓴다(계약 ⑦).
 - Postgres 구현은 연결 공장(`ConnFactory`)을 받아 부를 때마다 짧게 연다. 서비스는
@@ -51,8 +54,10 @@ from kbj.store.repos.macro_prv import MacroPrivateRepo, PgMacroPrivateRepo
 from kbj.store.repos.market import MarketRepo, PgMarketRepo
 from kbj.store.repos.market_stats import MarketStatsRepo, PgMarketStatsRepo
 from kbj.store.repos.memory import MemoryRepos, memory_repos
+from kbj.store.repos.personal import PersonalRepo, PgPersonalRepo
 from kbj.store.repos.program import PgProgramRepo, ProgramRepo
 from kbj.store.repos.public import PublicRepos
+from kbj.store.repos.rules import PgRulesRepo, RulesRepo
 from kbj.store.repos.trade import PgTradeRepo, TradeRepo
 from kbj.store.repos.us import PgUsRepo, UsRepo
 
@@ -75,10 +80,12 @@ __all__ = [
     "MarketRepo",
     "MarketStatsRepo",
     "MemoryRepos",
+    "PersonalRepo",
     "ProgramRepo",
     "PublicRepos",
     "Repos",
     "RevisionReport",
+    "RulesRepo",
     "TradeRepo",
     "UsRepo",
     "memory_repos",
@@ -112,6 +119,9 @@ class Repos:
     gex: GexRepo
     diag: DiagRepo
     diag_pub: DiagPublicRepo
+    # P8 묶음 FND(0021 — 로그인)
+    rules: RulesRepo
+    personal: PersonalRepo
 
     def public(self) -> PublicRepos:
         """같은 공개 저장소(filings·fin·macro·market_stats·diag)를 공개 작업 묶음으로."""
@@ -141,4 +151,6 @@ def pg_repos(conn_factory: ConnFactory) -> Repos:
         gex=PgGexRepo(conn_factory),
         diag=PgDiagRepo(conn_factory),
         diag_pub=PgDiagPublicRepo(conn_factory),
+        rules=PgRulesRepo(conn_factory),
+        personal=PgPersonalRepo(conn_factory),
     )

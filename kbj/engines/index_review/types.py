@@ -26,7 +26,12 @@ class StockIn:
     전 —
     DART 지분 공시 등), fif_prev = 지수 운용사가 직전에 적용한 유동비율(구성종목 목록에 있으면 —
     완충 기준),
-    member = 기준일 현 구성종목."""
+    member = 기준일 현 구성종목.
+
+    선택(자료가 있을 때만 — 없으면 None, 엔진이 사유·추정으로 표시):
+    lower_segment = 비구성종목이 하위 세그먼트(MSCI Small Cap) 구성종목인가(True → 이동 배수 1.5×,
+    False → IMI 밖 신규 1.0×), foreign_held = 외국인 보유 비율(FOL foreign room 계산),
+    mktcap_avg = KRX 심사기간 일평균 시총(원)."""
 
     code: str
     name: str | None
@@ -41,6 +46,9 @@ class StockIn:
     fif_source: str | None
     flags: tuple[str, ...] | None
     member: bool
+    lower_segment: bool | None = None
+    foreign_held: float | None = None
+    mktcap_avg: int | None = None
 
 
 @dataclass(frozen=True)

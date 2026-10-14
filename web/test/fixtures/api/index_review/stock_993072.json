@@ -16,6 +16,16 @@
         "required_rise": 0.5083,
         "label": "MSCI Korea 편출 후보 · 유지에 필요 +50.8%",
         "quality": "estimated"
+      },
+      {
+        "index_id": "kosdaq150",
+        "index_title": "KOSDAQ150",
+        "review_id": "2026-12",
+        "cutoff_kind": "model",
+        "verdict": "borderline",
+        "required_rise": 0.0,
+        "label": "KOSDAQ150 경계 · 여유 0.0%",
+        "quality": "estimated"
       }
     ]
   }

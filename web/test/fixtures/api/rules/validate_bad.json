@@ -1,0 +1,23 @@
+{
+  "source": "KBJ:rules",
+  "as_of": "2026-10-30T16:00:00+09:00",
+  "quality": "ok",
+  "notes": [],
+  "generated_at": "2026-10-30T16:00:00+09:00",
+  "data": {
+    "ok": false,
+    "issues": [
+      {
+        "pointer": "/when/all/0/ind",
+        "reason": "close_only"
+      },
+      {
+        "pointer": "/when/all/1/p/n",
+        "reason": "param_range"
+      }
+    ],
+    "dsl_hash": null,
+    "normalized": null,
+    "trial": []
+  }
+}

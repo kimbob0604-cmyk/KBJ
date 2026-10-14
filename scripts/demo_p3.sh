@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # P3 데모 — 합성 데이터만(키 불필요). 로그인 SPA 빌드 + 합성 데이터 API 서버를 띄우고,
-# --shots 면 Playwright(크로미움)로 로그인 → 페이지 1·2·3·4·5·7·8·10 스크린샷·콘솔 오류 검사를 한다
-# (페이지 3 은 합성 P7 세계 — 진단 이력·GEX 엔진 사이클, demo_p3_server._load_p7).
+# --shots 면 Playwright(크로미움)로 로그인 → 페이지 1·2·3·4·5·7·8·10·11·12 스크린샷·콘솔 오류 검사를 한다
+# (페이지 3 은 합성 P7 세계 — 진단 이력·GEX 엔진 사이클, demo_p3_server._load_p7. 페이지 11·12 는 합성 P8 세계 —
+# 규칙·신호·성과·백테스트·일지·매매, demo_p3_server._load_p8).
 #
 #   bash scripts/demo_p3.sh                       # 서버만(브라우저로 http://127.0.0.1:8765/ — 비밀번호는 화면에)
 #   bash scripts/demo_p3.sh --shots DIR           # 스크린샷 + 검사 후 종료(종료 코드 = 검사 결과)

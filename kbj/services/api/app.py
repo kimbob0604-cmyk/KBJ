@@ -58,6 +58,7 @@ from kbj.services.api.readers._common import (
 )
 from kbj.services.api.routes import (
     auth,
+    backtest,
     board,
     diag,
     etf,
@@ -66,9 +67,12 @@ from kbj.services.api.routes import (
     gex,
     health,
     index_review,
+    journal,
     macro,
     market,
+    portfolio,
     program,
+    rules,
     stock,
     trade,
     watchlist,
@@ -235,6 +239,7 @@ def create_app(
         index_review,  # P5 2차 묶음 IDX(docs/p5_index_rebalance_prompt.md §3-5)
         trade,  # P6(docs/p6_design.md §5 — 웨이브 1 FND)
         gex, diag,  # P7(docs/p7_design.md §5 — 웨이브 1 FND-B)
+        rules, backtest, journal, portfolio,  # P8(docs/p8_design.md §5 — 웨이브 1 FND)
         webhook,
     )  # fmt: skip
     for r in routers:

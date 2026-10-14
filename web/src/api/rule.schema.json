@@ -1,0 +1,429 @@
+{
+  "$defs": {
+    "Alert": {
+      "additionalProperties": false,
+      "properties": {
+        "cooldown_min": {
+          "anyOf": [
+            {
+              "maximum": 43200,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cooldown Min"
+        },
+        "priority": {
+          "default": 2,
+          "maximum": 3,
+          "minimum": 1,
+          "title": "Priority",
+          "type": "integer"
+        },
+        "silent": {
+          "default": false,
+          "title": "Silent",
+          "type": "boolean"
+        }
+      },
+      "title": "Alert",
+      "type": "object"
+    },
+    "AllGroup": {
+      "additionalProperties": false,
+      "properties": {
+        "all": {
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/AllGroup"
+              },
+              {
+                "$ref": "#/$defs/AnyGroup"
+              },
+              {
+                "$ref": "#/$defs/Cond"
+              }
+            ]
+          },
+          "minItems": 1,
+          "title": "All",
+          "type": "array"
+        }
+      },
+      "required": [
+        "all"
+      ],
+      "title": "AllGroup",
+      "type": "object"
+    },
+    "AnyGroup": {
+      "additionalProperties": false,
+      "properties": {
+        "any": {
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/AllGroup"
+              },
+              {
+                "$ref": "#/$defs/AnyGroup"
+              },
+              {
+                "$ref": "#/$defs/Cond"
+              }
+            ]
+          },
+          "minItems": 1,
+          "title": "Any",
+          "type": "array"
+        }
+      },
+      "required": [
+        "any"
+      ],
+      "title": "AnyGroup",
+      "type": "object"
+    },
+    "Cond": {
+      "additionalProperties": false,
+      "description": "조건(잎). `value`(수 또는 between 의 [lo, hi]) 또는 `ref` 하나 — turns_* 는 둘 다 없다.",
+      "properties": {
+        "field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Field"
+        },
+        "ind": {
+          "enum": [
+            "close",
+            "open",
+            "high",
+            "low",
+            "change_pct",
+            "sma",
+            "ema",
+            "rsi",
+            "macd",
+            "bb",
+            "bb_width_rank",
+            "adx",
+            "atr",
+            "vol_ratio",
+            "high_n",
+            "low_n",
+            "new_high",
+            "foreign_streak",
+            "inst_streak",
+            "foreign_sum",
+            "inst_sum",
+            "trail_from_peak"
+          ],
+          "title": "Ind",
+          "type": "string"
+        },
+        "op": {
+          "enum": [
+            "<",
+            "<=",
+            ">",
+            ">=",
+            "==",
+            "between",
+            "cross_above",
+            "cross_below",
+            "turns_positive",
+            "turns_negative"
+          ],
+          "title": "Op",
+          "type": "string"
+        },
+        "p": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "title": "P",
+          "type": "object"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Ref"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        }
+      },
+      "required": [
+        "ind",
+        "op"
+      ],
+      "title": "Cond",
+      "type": "object"
+    },
+    "Ref": {
+      "additionalProperties": false,
+      "description": "비교 대상 지표. `scale` 배(예 0.97)를 곱한 값과 비교한다.",
+      "properties": {
+        "field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Field"
+        },
+        "ind": {
+          "enum": [
+            "close",
+            "open",
+            "high",
+            "low",
+            "change_pct",
+            "sma",
+            "ema",
+            "rsi",
+            "macd",
+            "bb",
+            "bb_width_rank",
+            "adx",
+            "atr",
+            "vol_ratio",
+            "high_n",
+            "low_n",
+            "new_high",
+            "foreign_streak",
+            "inst_streak",
+            "foreign_sum",
+            "inst_sum",
+            "trail_from_peak"
+          ],
+          "title": "Ind",
+          "type": "string"
+        },
+        "p": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "title": "P",
+          "type": "object"
+        },
+        "scale": {
+          "default": 1.0,
+          "exclusiveMinimum": 0,
+          "maximum": 10,
+          "title": "Scale",
+          "type": "number"
+        }
+      },
+      "required": [
+        "ind"
+      ],
+      "title": "Ref",
+      "type": "object"
+    },
+    "UCodes": {
+      "additionalProperties": false,
+      "properties": {
+        "codes": {
+          "items": {
+            "pattern": "^[0-9A-Z]{6}$",
+            "type": "string"
+          },
+          "maxItems": 200,
+          "minItems": 1,
+          "title": "Codes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "codes"
+      ],
+      "title": "UCodes",
+      "type": "object"
+    },
+    "UMarket": {
+      "additionalProperties": false,
+      "properties": {
+        "market": {
+          "enum": [
+            "KOSPI",
+            "KOSDAQ",
+            "ALL"
+          ],
+          "title": "Market",
+          "type": "string"
+        }
+      },
+      "required": [
+        "market"
+      ],
+      "title": "UMarket",
+      "type": "object"
+    },
+    "UPortfolio": {
+      "additionalProperties": false,
+      "properties": {
+        "portfolio": {
+          "const": true,
+          "title": "Portfolio",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "portfolio"
+      ],
+      "title": "UPortfolio",
+      "type": "object"
+    },
+    "UWatchlist": {
+      "additionalProperties": false,
+      "properties": {
+        "watchlist": {
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "title": "Watchlist",
+          "type": "string"
+        }
+      },
+      "required": [
+        "watchlist"
+      ],
+      "title": "UWatchlist",
+      "type": "object"
+    }
+  },
+  "$id": "kbj:rule/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "KBJ 규칙 DSL v1 — 생성 전용(python -m kbj.engines.rules.dsl schema --write). 의미 검사(단위·모드·상한)는 서버 validate_rule.",
+  "properties": {
+    "alert": {
+      "$ref": "#/$defs/Alert"
+    },
+    "mode": {
+      "enum": [
+        "close",
+        "intraday",
+        "both"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "track": {
+      "default": true,
+      "title": "Track",
+      "type": "boolean"
+    },
+    "universe": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/UCodes"
+        },
+        {
+          "$ref": "#/$defs/UWatchlist"
+        },
+        {
+          "$ref": "#/$defs/UPortfolio"
+        },
+        {
+          "$ref": "#/$defs/UMarket"
+        }
+      ],
+      "title": "Universe"
+    },
+    "v": {
+      "const": 1,
+      "title": "V",
+      "type": "integer"
+    },
+    "when": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/AllGroup"
+        },
+        {
+          "$ref": "#/$defs/AnyGroup"
+        }
+      ],
+      "title": "When"
+    }
+  },
+  "required": [
+    "v",
+    "name",
+    "universe",
+    "mode",
+    "when"
+  ],
+  "title": "Rule",
+  "type": "object"
+}

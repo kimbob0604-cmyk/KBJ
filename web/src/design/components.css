@@ -851,3 +851,106 @@ svg text.warn {
 .profile svg text {
   font-size: 10px;
 }
+/* P8 공용 부품(ui/form·heatmap — docs/p8_design.md D-P8-23). 기존 토큰만(테마 5종), 좁은 폭은 줄바꿈 — 가로 넘침 없음 */
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: flex-end;
+  min-width: 0;
+}
+.form-field {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  max-width: 100%;
+  font-family: var(--kr);
+  font-size: 11px;
+  color: var(--dim);
+}
+.form-field input,
+.form-field select {
+  min-width: 0;
+  max-width: 100%;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fg);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 2px 4px;
+}
+.form-field input[aria-invalid='true'] {
+  border-color: var(--warn);
+}
+.form-err {
+  min-height: 1em;
+  font-size: 11px;
+  color: var(--warn);
+  overflow-wrap: anywhere;
+}
+.form-errors {
+  margin: 4px 0;
+}
+.toggle {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--dim);
+  background: transparent;
+  border: 1px solid var(--line);
+  padding: 2px 6px;
+  cursor: pointer;
+}
+.toggle[aria-checked='true'] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.rows-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.rows-item {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  padding: 2px 0;
+  border-bottom: 1px dashed var(--line);
+  min-width: 0;
+}
+.rows-add,
+.rows-del {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fg);
+  background: transparent;
+  border: 1px solid var(--line);
+  padding: 0 6px;
+  cursor: pointer;
+}
+.rows-add:disabled,
+.rows-del:disabled {
+  color: var(--dim);
+  cursor: default;
+}
+.heatmap {
+  min-width: 0;
+  max-width: 100%;
+}
+.heatmap svg text {
+  font-size: 9px;
+  fill: var(--dim);
+}
+.heatmap .heat-cell:focus rect {
+  stroke: var(--accent);
+}
+.heatmap-detail {
+  margin: 4px 0 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}

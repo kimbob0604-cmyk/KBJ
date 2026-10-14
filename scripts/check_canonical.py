@@ -233,6 +233,21 @@ GROUPS: dict[str, Group] = {
             "P4",
         ),
         Group(
+            "ta_indicators",
+            # 기술 지표 계산 함수 정의(RSI·MACD·볼린저·ADX·EMA·SMA·ATR). 이름 꼴
+            # `[_][calc_|bt_calc_]지표[_arr|_dense|_macd]`. 정본은 kbj.core.indicators 하나
+            # (docs/metrics.md §30 — D-P8-22 ②). 규칙 DSL·백테스트가 같은 함수를 쓴다
+            re.compile(
+                r"\bdef\s+_?(?:calc_|bt_calc_)?(?:rsi|macd|bollinger|adx|ema|sma|atr)"
+                r"(?:_arr|_dense|_macd)?\s*\("
+            ),
+            ("kbj/core/indicators.py",),
+            False,
+            "기술 지표 계산 함수 정의 — kbj.core.indicators 하나"
+            "(P8 — legacy SD 차트·board 스윙은 P9 legacy 비우기)",
+            "P8~P9",
+        ),
+        Group(
             "krx_scrape",
             re.compile(r"(?<![-\w])" + _dots("data", "krx", "co", "kr") + r"|\bpy" + r"krx\b"),
             (),

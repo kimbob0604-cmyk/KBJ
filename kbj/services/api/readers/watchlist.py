@@ -1,6 +1,7 @@
 """관심종목 reader — `prv_journal.watchlist`(로그인·개인 데이터, D-P4-13) + 종목마다 마지막 시세.
 
-목록은 가져오기 CLI(`python -m kbj.services.watchlist import`)만 쓴다(쓰기 API 는 P8). 공개판은
+목록은 가져오기 CLI(`python -m kbj.services.watchlist import`)와 쓰기 API(P8 — `PUT·DELETE
+/api/watchlist/{list}/{code}`·순서)가 쓴다(쓰기 주체는 `kbj.services.watchlist` 하나). 공개판은
 관심종목을 모른다. 목록이 비면 200 + 빈 목록(가져오기 안내는 notes) — 아직 넣지 않은 것이지 수집이
 늦은 것이 아니다.
 """
@@ -19,7 +20,8 @@ from kbj.services.api.readers.stock import Lookup, kind_of
 __all__ = ["IMPORT_HINT", "watchlist"]
 
 IMPORT_HINT: Final = (
-    "관심종목 없음 — python -m kbj.services.watchlist import --from sd-json <파일> 로 넣는다"
+    "관심종목 없음 — 종목 상세(페이지 8) 별 버튼 또는 "
+    "python -m kbj.services.watchlist import --from sd-json <파일> 로 넣는다"
 )
 
 

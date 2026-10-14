@@ -1,0 +1,75 @@
+{
+  "source": "KBJ",
+  "as_of": "2026-09-15T18:00:00+09:00",
+  "quality": "ok",
+  "notes": [],
+  "generated_at": "2026-09-15T18:00:00+09:00",
+  "data": {
+    "items": [
+      {
+        "id": 4,
+        "code": "990003",
+        "name_at_trade": null,
+        "side": "buy",
+        "trade_date": "2026-09-02",
+        "price": 30000.0,
+        "qty": 2,
+        "fee": 0.0,
+        "tax": 0.0,
+        "strategy": null,
+        "memo": null,
+        "signal_id": null,
+        "source": "api",
+        "created_at": "2026-09-15T18:00:00+09:00"
+      },
+      {
+        "id": 3,
+        "code": "990001",
+        "name_at_trade": null,
+        "side": "sell",
+        "trade_date": "2026-08-19",
+        "price": 11000.0,
+        "qty": 4,
+        "fee": 7.0,
+        "tax": 88.0,
+        "strategy": null,
+        "memo": "일부 익절",
+        "signal_id": null,
+        "source": "api",
+        "created_at": "2026-09-15T18:00:00+09:00"
+      },
+      {
+        "id": 2,
+        "code": "990002",
+        "name_at_trade": null,
+        "side": "buy",
+        "trade_date": "2026-07-15",
+        "price": 20000.0,
+        "qty": 5,
+        "fee": 15.0,
+        "tax": 0.0,
+        "strategy": null,
+        "memo": null,
+        "signal_id": null,
+        "source": "api",
+        "created_at": "2026-09-15T18:00:00+09:00"
+      },
+      {
+        "id": 1,
+        "code": "990001",
+        "name_at_trade": null,
+        "side": "buy",
+        "trade_date": "2026-06-24",
+        "price": 10000.0,
+        "qty": 10,
+        "fee": 15.0,
+        "tax": 0.0,
+        "strategy": "스윙",
+        "memo": null,
+        "signal_id": null,
+        "source": "api",
+        "created_at": "2026-09-15T18:00:00+09:00"
+      }
+    ]
+  }
+}

@@ -1,0 +1,43 @@
+# p8_world(시드 20261102)의 기대값 — tests/unit/fixtures/test_p8_world.py 가 생성기 출력과 맞춘다.
+# 합성 데이터의 기대값이다(실측 아님). 생성기를 고치면 이 파일도 같은 커밋에서 고친다(FND 담당 — 다른 묶음은 요청).
+_source: "SYNTHETIC — tests/fixtures/synthetic/p8_world.py(고정 시드 생성기)가 만든 합성 데이터의 기대값. 실측 아님"
+seed: 20261102
+clock: "2026-10-30T16:00:00+09:00"
+
+days: {n: 320, first: "2025-07-10", last: "2026-10-30"}
+
+counts:
+  codes: 80
+  watch: 20
+  # 80 × 320 − 거래정지 3(Q80003 칸 150~152) − 신규상장 전 250(Q80004)
+  bars: 25347
+  flows: 25347
+  slots: 4000            # 관심종목 20 × 마지막 5 거래일 × 40 슬롯
+  live: 3800             # Q80014(가집계 없음 — 판단 불가) 200 슬롯 빠짐
+  trades: 30
+  analyses: 5
+  index_bars: 640        # 지수 2 × 320
+
+special:
+  split: {code: Q80002, day: 200}
+  halted: {code: Q80003, from: 150, to: 152}
+  new_listing: {code: Q80004, day: 250}
+  pref: Q80005
+  no_live_flow: Q80014
+
+# 심은 칸(손으로 확인 — 생성기 머리말). 예시 규칙이 그 칸에서 참이어야 한다(장중은 슬롯 번호 0~39)
+planted:
+  - {rule: E1, code: Q80010, day: 300}
+  - {rule: E3, code: Q80010, day: 300}
+  - {rule: E4, code: Q80017, day: 305}
+  - {rule: E5, code: Q80013, day: 309}
+  - {rule: E6, code: Q80018, day: 296}
+  - {rule: E5, code: Q80013, day: 310}
+  - {rule: E8, code: Q80015, day: 317, slot: 20}
+  - {rule: E9, code: Q80015, day: 317, slot: 20}
+  - {rule: E10, code: Q80016, day: 318, slot: 30}
+
+# 엔진 스냅샷(회귀 감지 — 손 확인은 planted 칸): 관심종목 20 × 마지막 60 거래일 마감 평가에서 참인 칸 수,
+# 마지막 5 거래일 × 40 슬롯 장중 평가에서 참인 칸 수. 쿨다운 전(상태기는 완료 시험 — WRAP)
+signals_close_last60: {E1: 116, E2: 43, E3: 124, E4: 69, E5: 156, E6: 1, E7: 154}
+signals_intraday_last5: {E8: 20, E9: 20, E10: 310}

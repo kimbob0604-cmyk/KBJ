@@ -11,7 +11,7 @@ import { kv, type KvItem } from '../../ui/kv';
 import type { Panel } from '../../ui/panel';
 import { s, svgBox } from '../../ui/svg';
 import { table } from '../../ui/table';
-import { fill } from '../p1_market';
+import { failed, fill } from '../p1_market';
 import { drawDetail } from '../p4_flows';
 import {
   discColumns,
@@ -198,8 +198,8 @@ export async function mount(t: TabCtx, el: HTMLElement): Promise<void> {
       recent(pRecent, pubDiscRows(d), prelims, false);
       pRecent.setSource({ ...env, notes: [] });
     } catch (err) {
-      pCard.showMessage(errLine(err, HINT.public));
-      pRecent.showMessage(errLine(err, HINT.public));
+      failed(pCard, err, HINT.public);
+      failed(pRecent, err, HINT.public);
     }
     return;
   }

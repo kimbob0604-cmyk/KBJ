@@ -1,0 +1,60 @@
+{
+  "source": "KBJ",
+  "as_of": "2026-09-15T18:00:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "시세 없는 종목 3개(유니버스 밖이거나 수집 전)"
+  ],
+  "generated_at": "2026-09-15T18:00:00+09:00",
+  "data": {
+    "list_name": "main",
+    "n": 3,
+    "items": [
+      {
+        "code": "990001",
+        "name": "합성전자",
+        "sort": 0,
+        "added_at": "2026-09-15T18:00:00+09:00",
+        "note": null,
+        "source": "api",
+        "market": "KOSPI",
+        "kind": "common",
+        "date": null,
+        "close": null,
+        "chg_pct": null,
+        "mktcap": null,
+        "quality": null
+      },
+      {
+        "code": "990002",
+        "name": "합성화학",
+        "sort": 1,
+        "added_at": "2026-09-15T18:00:00+09:00",
+        "note": null,
+        "source": "api",
+        "market": "KOSPI",
+        "kind": "common",
+        "date": null,
+        "close": null,
+        "chg_pct": null,
+        "mktcap": null,
+        "quality": null
+      },
+      {
+        "code": "990003",
+        "name": "합성기계",
+        "sort": 2,
+        "added_at": "2026-09-15T18:00:00+09:00",
+        "note": null,
+        "source": "api",
+        "market": "KOSPI",
+        "kind": "common",
+        "date": null,
+        "close": null,
+        "chg_pct": null,
+        "mktcap": null,
+        "quality": null
+      }
+    ]
+  }
+}

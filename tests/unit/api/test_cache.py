@@ -38,6 +38,7 @@ def test_domains_cover_routes() -> None:
         "index_review",  # P5 2차 묶음 IDX
         "trade",  # P6 묶음 FND
         "gex", "diag",  # P7 묶음 FND-B
+        "rules", "backtest",  # P8 묶음 FND — 규칙·일지·포트폴리오(쓰기 모듈이 직접 씀)는 영역 없음
     }  # fmt: skip
 
 

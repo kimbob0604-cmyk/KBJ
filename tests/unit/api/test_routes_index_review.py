@@ -67,7 +67,7 @@ def test_tables_match_engine_and_are_sorted_by_required_rise() -> None:
 def test_krx_tab_and_review_param() -> None:
     d = get(index_api_world(), "/api/index-review?index=kospi200&review=2026-12")["data"]
     (run,) = d["runs"]
-    assert d["index_id"] == "kospi200" and run["cutoff"]["method"].startswith("rank")
+    assert d["index_id"] == "kospi200" and run["cutoff"]["method"].startswith("sector rank")
     assert all(r["gap_ff"] is None for r in run["adds"])  # KRX 형은 유동 조건 없음
     get(index_api_world(), "/api/index-review?index=kospi200&review=2030-01", 404)
     get(index_api_world(), "/api/index-review?index=nope", 404)

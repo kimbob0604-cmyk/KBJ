@@ -1,0 +1,227 @@
+{
+  "source": "KBJ:rules.backtest_nightly",
+  "as_of": "2026-10-30T15:30:00+09:00",
+  "quality": "estimated",
+  "notes": [
+    "표본 = 원장 보유 구간(상장폐지 종목은 원장에 있으면 포함 — 생존편향 주의)",
+    "비용 = 수수료 양쪽 + 매도 거래세[확인 필요] + 슬리피지(config/rules.yaml costs)",
+    "체결 = 마감 신호 d → d+1 시가, 장중 신호 → 슬롯 가격, 같은 날 손절·익절이면 손절"
+  ],
+  "generated_at": "2026-10-30T16:00:00+09:00",
+  "data": {
+    "runs": [
+      {
+        "run_id": "bt_01M650TX301NBAH2EJEM8GX03K",
+        "rule_id": "r_0000000000e8",
+        "version": 1,
+        "mode": "intraday_replay",
+        "start": "2023-10-28",
+        "end": "2026-10-30",
+        "summary": {
+          "trades": {
+            "n": 1,
+            "win_rate": 0.0,
+            "mean": -7.398079746587838,
+            "median": -7.398079746587838,
+            "p10": -7.398079746587838,
+            "p90": -7.398079746587838,
+            "profit_factor": 0.0,
+            "avg_bars": 3.0,
+            "mdd": -0.07398079746587838,
+            "total": -0.07398079746587838,
+            "annualized": -0.9984293501494886,
+            "reasons": {
+              "open_end": 1
+            }
+          },
+          "outcome": [
+            {
+              "horizon": 1,
+              "n": 1,
+              "excluded": 0,
+              "win_rate": 0.0,
+              "mean": -7.731501580143874,
+              "median": -7.731501580143874,
+              "q25": -7.731501580143874,
+              "q75": -7.731501580143874,
+              "excess_mean": -5.832677866399427,
+              "mfe_median": -7.5341197486085365,
+              "mae_median": -8.77419425110828,
+              "small": true
+            },
+            {
+              "horizon": 3,
+              "n": 0,
+              "excluded": 0,
+              "win_rate": null,
+              "mean": null,
+              "median": null,
+              "q25": null,
+              "q75": null,
+              "excess_mean": null,
+              "mfe_median": null,
+              "mae_median": null,
+              "small": true
+            },
+            {
+              "horizon": 5,
+              "n": 0,
+              "excluded": 0,
+              "win_rate": null,
+              "mean": null,
+              "median": null,
+              "q25": null,
+              "q75": null,
+              "excess_mean": null,
+              "mfe_median": null,
+              "mae_median": null,
+              "small": true
+            },
+            {
+              "horizon": 10,
+              "n": 0,
+              "excluded": 0,
+              "win_rate": null,
+              "mean": null,
+              "median": null,
+              "q25": null,
+              "q75": null,
+              "excess_mean": null,
+              "mfe_median": null,
+              "mae_median": null,
+              "small": true
+            },
+            {
+              "horizon": 20,
+              "n": 0,
+              "excluded": 0,
+              "win_rate": null,
+              "mean": null,
+              "median": null,
+              "q25": null,
+              "q75": null,
+              "excess_mean": null,
+              "mfe_median": null,
+              "mae_median": null,
+              "small": true
+            }
+          ],
+          "signals": 20,
+          "allowed": 1,
+          "evaluated": 4000,
+          "skipped": {
+            "split_suspect": 200
+          }
+        },
+        "created_at": "2026-10-30T08:45:00+09:00"
+      },
+      {
+        "run_id": "bt_01M650TX30RCR8BZY827EHFG8B",
+        "rule_id": "r_0000000000e1",
+        "version": 1,
+        "mode": "close",
+        "start": "2023-10-28",
+        "end": "2026-10-30",
+        "summary": {
+          "trades": {
+            "n": 317,
+            "win_rate": 50.78864353312302,
+            "mean": -0.1780618835972302,
+            "median": 0.0890020384145096,
+            "p10": -5.77257398009261,
+            "p90": 5.5335582564119745,
+            "profit_factor": 0.9114659999687247,
+            "avg_bars": 4.987381703470032,
+            "mdd": -0.9416735403194388,
+            "total": -0.7063282693923065,
+            "annualized": -0.1774144757829227,
+            "reasons": {
+              "hold": 314,
+              "open_end": 3
+            }
+          },
+          "outcome": [
+            {
+              "horizon": 1,
+              "n": 317,
+              "excluded": 0,
+              "win_rate": 49.52681388012618,
+              "mean": -0.16821530883922667,
+              "median": -0.031483466481063704,
+              "q25": -1.1668376485765908,
+              "q75": 1.1889175829068677,
+              "excess_mean": -0.21856485459824113,
+              "mfe_median": 0.9632221876136882,
+              "mae_median": -0.8271824381983595,
+              "small": false
+            },
+            {
+              "horizon": 3,
+              "n": 317,
+              "excluded": 0,
+              "win_rate": 53.94321766561514,
+              "mean": -0.1717106941819877,
+              "median": 0.27916957037910084,
+              "q25": -1.7892266470875162,
+              "q75": 1.9533592139283407,
+              "excess_mean": -0.3788422734810281,
+              "mfe_median": 1.8870817402816709,
+              "mae_median": -1.3714086122070923,
+              "small": false
+            },
+            {
+              "horizon": 5,
+              "n": 314,
+              "excluded": 0,
+              "win_rate": 55.4140127388535,
+              "mean": 0.027973697715828482,
+              "median": 0.4218882280281444,
+              "q25": -2.4327218829522463,
+              "q75": 3.0362191186980967,
+              "excess_mean": -0.37351388030900695,
+              "mfe_median": 2.5552320351329927,
+              "mae_median": -1.902344162709746,
+              "small": false
+            },
+            {
+              "horizon": 10,
+              "n": 305,
+              "excluded": 0,
+              "win_rate": 55.08196721311476,
+              "mean": 1.0357862664178163,
+              "median": 0.767369299503029,
+              "q25": -3.08848515613791,
+              "q75": 6.16460461236481,
+              "excess_mean": 0.14400428156325432,
+              "mfe_median": 4.38273198372614,
+              "mae_median": -2.9132174994703663,
+              "small": false
+            },
+            {
+              "horizon": 20,
+              "n": 264,
+              "excluded": 0,
+              "win_rate": 57.57575757575758,
+              "mean": 1.122204656925503,
+              "median": 1.624828870735251,
+              "q25": -5.116420293247156,
+              "q75": 7.973478618473334,
+              "excess_mean": -0.057523683968212835,
+              "mfe_median": 7.370209774510528,
+              "mae_median": -4.409695794234198,
+              "small": false
+            }
+          ],
+          "signals": 317,
+          "allowed": 317,
+          "evaluated": 6150,
+          "skipped": {
+            "halted": 3,
+            "split_suspect": 120
+          }
+        },
+        "created_at": "2026-10-30T08:45:00+09:00"
+      }
+    ]
+  }
+}

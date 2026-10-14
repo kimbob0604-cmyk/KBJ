@@ -12,6 +12,11 @@
   `prv_journal.watchlist`)만 옮긴다(`phase="P4"` — 사용자가 VM 에 올린 파일, 레포에 넣지 않는다).
   SD 공시·잠정실적·오버행·재무는 DART 로 다시 받고, 네이버·FnGuide 파생 컨센서스·밴드·서프라이즈는
   옮기지 않는다(`NEVER` — U-P4-2).
+- P8(docs/p8_design.md §1.5 — 묶음 JNL): SD 개인 기록(`analysis_journal`·`trade_journal`·
+  `recommendation_history`·`cache/alert_rules.json`·`cache/server_portfolio.json`)은 이 COPY 매핑이
+  아니라 `P8_SD` 경로로 옮긴다 — 일지·매매 표는 id 가 GENERATED 라 키 대조 COPY 가 맞지 않고, 규칙은
+  DSL 검사를 거쳐야 하므로 쓰기 모듈(`python -m kbj.services.personal journal import-sd`)이 넣는다.
+  읽기·변환은 `kbj.store.legacy_import.sd_p8`.
 """
 
 from __future__ import annotations
@@ -287,9 +292,15 @@ LATER: tuple[tuple[str, str, str], ...] = (
     ("ET alltime·label·lowlabel·split_check·state/<날짜>/*.json", "prv_board.*", "P3"),
     ("ET sector_map·knowledge/*.yaml", "pub_themes.*", "P5"),
     ("ETF fund·holding·etf_ticker·change_log·etf_meta·etf_aum", "prv_etf.*", "P5"),
-    ("SD alert_rules·alert_history(_v2)", "prv_alerts.rule·event", "P8"),
-    ("SD analysis_journal·recommendation_history·trade_journal", "prv_journal.*", "P8"),
     ("GX investor_flow 등 Postgres 표", "prv_gex.* (pg_dump --data-only)", "P7"),
+)
+
+# P8 — 쓰기 모듈 경로(sd_p8 읽기 → kbj.services.personal.journal import-sd). (원본, 대상, 단계)
+P8_SD: tuple[tuple[str, str, str], ...] = (
+    ("SD analysis_journal", "prv_journal.analysis(쓰기 모듈 — source import:sd)", "P8"),
+    ("SD trade_journal·cache/server_portfolio.json", "prv_journal.trade(쓰기 모듈)", "P8"),
+    ("SD recommendation_history", "prv_journal.pick(put_picks_legacy_import)", "P8"),
+    ("SD cache/alert_rules.json", "prv_alerts.rule·rule_version(규칙 쓰기 모듈 — DSL 변환)", "P8"),
 )
 
 # 이관하지 않는 것(§8.4): 캐시·네이버 출처·토큰 캐시. 토큰 캐시는 열지도 않는다(sources.py).
@@ -301,6 +312,8 @@ NEVER: tuple[str, ...] = (
     # P4(docs/p4_design.md §3.8 — 메인 결정 2026-10-08 채택)
     "SD disclosure_history·dart_disclosure_overhang·earnings_actual(DART 로 다시 받는다 — "
     "공시는 최근 30일, SD 보존 30일이라 잃는 것 없음)",
+    # P8(묶음 JNL) — 옛 발송 이력은 새 신호 표(규칙·판·근거·쿨다운 상태)와 뜻이 달라 옮기지 않는다
+    "SD alert_history·alert_history_v2(옛 발송 이력 — 신호 표와 뜻이 다르다 [확인 필요])",
     "SD financial_quarterly·ET state/financials.json(fin.backfill 로 DART 에서 다시 받는다)",
     "SD consensus_*·valuation_band·revision_alerts·earnings_surprise·earnings_alert_queue"
     "(네이버·FnGuide 파생 — U4·약관, 밴드는 네이버 주식 수 — U-P4-2)",

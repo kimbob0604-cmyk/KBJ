@@ -78,6 +78,11 @@ def seeded_runs() -> MemoryRunLog:
     # 매분(마지막 발화 하나). diag.daily 는 16:00 이라 10:30 기준 끝났어야 할 실행이 없다
     for job, as_of in (("diag.public", "2026-10-06"), ("gex.alert", "2026-10-06T10:30")):
         runs.record(RunRecord(f"{job}:{as_of}:1", job, as_of, 1, "ok"))
+    # P8(웨이브 3 WRAP 이 켰다 — docs/p8_design.md §1.6-1): rules.outcome 08:30·
+    # rules.backtest_nightly 08:45(as_of 전 거래일 10-02 — 10-05 는 휴장). rules.close 는
+    # 16:00 이라 10:30 기준 끝났어야 할 실행이 없다
+    for job in ("rules.outcome", "rules.backtest_nightly"):
+        runs.record(RunRecord(f"{job}:2026-10-02:1", job, "2026-10-02", 1, "ok"))
     runs.record(
         RunRecord("ops.watchdog:2026-10-06T10:00:1", "ops.watchdog", "2026-10-06T10:00", 1, "ok")
     )

@@ -47,9 +47,16 @@ def test_every_rule_number_is_a_sourced_param() -> None:
 
 def test_unverified_numbers_are_marked() -> None:
     unv = CFG.unverified()
-    for want in ("msci_korea.add_mcap_mult", "msci_korea.add_ff_mult", "msci_korea.keep_mcap_mult",
-                 "kospi200.keep_rank_ratio", "fif_rounding.msci_2026_05"):  # fmt: skip
+    # 2차 자료뿐인 KRX 값·원문 표를 못 옮긴 FOL 중간 단계는 [확인 필요]로 남는다
+    for want in ("kospi200.keep_rank_ratio", "kosdaq150.add_rank_ratio",
+                 "kospi200.sector_cum_mcap", "fol.room_keep_mid_factor",
+                 "fif_rounding.msci_legacy"):  # fmt: skip
         assert want in unv
+    # GIMI 2026-08판 원문으로 확인한 MSCI 배수·반올림 규칙은 해제(2026-10-14)
+    for done in ("msci_korea.add_mcap_mult_new", "msci_korea.add_mcap_mult_migrate",
+                 "msci_korea.add_ff_mult", "msci_korea.keep_mcap_mult",
+                 "msci_korea.low_fif_ff_mult_add", "fif_rounding.msci_2026_05"):  # fmt: skip
+        assert done not in unv
     # null(아직 모름)인 추종 자금은 지어내지 않는다
     assert CFG.msci_rules("msci_korea").aum_won.v is None
     assert CFG.krx_rules("kospi200").non_etf_aum_won.v is None
@@ -80,13 +87,35 @@ def test_bad_shapes_are_rejected(tmp_path: Path) -> None:
     with pytest.raises(ConfigFileError):
         parse_index_reviews(bad)
     bad = yaml.safe_load(yaml.safe_dump(RAW))
-    bad["msci"]["msci_korea"]["add_mcap_mult"]["unknown"] = 1
+    bad["msci"]["msci_korea"]["add_mcap_mult_new"]["unknown"] = 1
     with pytest.raises(ConfigFileError):
         parse_index_reviews(bad)
     bad = yaml.safe_load(yaml.safe_dump(RAW))
     del bad["krx"]["kospi200"]
     with pytest.raises(ConfigFileError):
         parse_index_reviews(bad)
+
+
+def test_gimi_2026_08_values() -> None:
+    m = CFG.msci_rules("msci_korea")
+    assert (m.val("add_mcap_mult_new"), m.val("add_mcap_mult_migrate"), m.val("add_ff_mult")) == (
+        1.0, 1.5, 0.5,
+    )  # fmt: skip
+    assert (m.val("keep_mcap_mult"), m.val("keep_ff_mult")) == (0.6667, 0.3333)
+    assert (m.opt("low_fif_ff_mult_add"), m.opt("low_fif_ff_mult_keep")) == (0.9, 0.6)
+    assert m.light_rebalance is not None and not m.light_rebalance.enabled
+    assert m.segment_default == "migrate"
+    k = CFG.krx_rules("kosdaq150")
+    assert (k.val("add_rank_ratio"), k.val("keep_rank_ratio"), k.opt("sector_cum_mcap")) == (
+        0.8, 1.2, 0.6,
+    )  # fmt: skip
+    assert CFG.krx_rules("kospi200").opt("sector_cum_mcap") == 0.85
+    assert CFG.fol.limits == ()  # 종목별 한도 표는 사용자가 확인해 채운다
+    msci = {r.id: (r.announce, r.confirmed) for r in CFG.reviews_of("msci_korea")}
+    assert msci["2026-08"] == (date(2026, 8, 13), True)  # KST(CET 08-12 밤)
+    assert msci["2026-11"] == (date(2026, 11, 12), True)
+    assert all(c for _, c in msci.values())
+    assert not any(r.confirmed for r in CFG.reviews_of("kospi200"))  # KRX 발표일은 추정
 
 
 def test_param_model() -> None:

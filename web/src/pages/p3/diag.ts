@@ -185,8 +185,8 @@ function historyChart(label: string, unit: string, pts: DiagHistory['points']): 
   }).el;
 }
 
-/** ① 판정 띠 — 종합 판정·국장 공포탐욕(gauge)·이벤트 꼬리표(로그인) */
-export async function mountVerdict(ctx: PageContext): Promise<void> {
+/** ① 판정 띠 패널 둘(틀만 — 공개 빌드는 이 틀만 쓰고 본문 mountVerdict 는 번들에서 빠진다, P8 WRAP) */
+export function verdictPanels(ctx: PageContext): { vp: Panel; fp: Panel } {
   const common = { tier: 'login' as const, lock: 'quote_based', span: 6 as const, src: DIAG_SOURCE };
   const vp = panel(ctx.tier, {
     ...common,
@@ -195,6 +195,12 @@ export async function mountVerdict(ctx: PageContext): Promise<void> {
   });
   const fp = panel(ctx.tier, { ...common, title: TITLES.fear, def: '다섯 성분 250거래일 백분위 평균(0~100) — 성분 4개 미만이면 값 없음' });
   ctx.root.append(vp.el, fp.el);
+  return { vp, fp };
+}
+
+/** ① 판정 띠 — 종합 판정·국장 공포탐욕(gauge)·이벤트 꼬리표(로그인) */
+export async function mountVerdict(ctx: PageContext): Promise<void> {
+  const { vp, fp } = verdictPanels(ctx);
   if (vp.locked) return; // 공개판 — 자물쇠만, 요청하지 않는다
   let env: Envelope<DiagSummary>;
   try {
@@ -295,11 +301,17 @@ export async function mountPublic(ctx: PageContext): Promise<void> {
 }
 
 /** ③ 시장 진단 — 지표 카드(로그인) + 250일 추이(반폭) */
-export async function mountMarket(ctx: PageContext): Promise<void> {
+/** ③ 시장 진단 패널 둘(틀만 — verdictPanels 와 같은 까닭) */
+export function marketPanels(ctx: PageContext): { p: Panel; hp: Panel } {
   const common = { tier: 'login' as const, lock: 'quote_based', span: 6 as const, src: DIAG_SOURCE };
   const p = panel(ctx.tier, { ...common, title: TITLES.market, def: '250거래일 백분위 다섯 칸 — 반도체 쏠림 극단 높음은 취약 꼬리표(점수 밖)' });
   const hp = panel(ctx.tier, { ...common, title: TITLES.marketHist });
   ctx.root.append(p.el, hp.el);
+  return { p, hp };
+}
+
+export async function mountMarket(ctx: PageContext): Promise<void> {
+  const { p, hp } = marketPanels(ctx);
   if (p.locked) return;
   let env: Envelope<DiagSummary>;
   try {

@@ -358,3 +358,49 @@ describe('페이지 8 — 탭 내용·필터(로그인)', () => {
     expect(hz.paths().every((p) => !p.startsWith('fin/') && !p.endsWith('.json'))).toBe(true);
   });
 });
+
+describe('페이지 8 — 일봉만 있는 종목(데모 시드 990001 같은 — 재무·컨센·공시·지분 없음)', () => {
+  // 머리·차트·수급만 있고 섹션 라우트는 전부 404 no_data. 데모 서버는 쓰기 채널(관심종목 별)이 있는 소스다
+  const SECTIONS = [
+    'valuation', 'financials', 'segments', 'overhang', 'insiders', 'consensus', 'disclosures', 'earnings', 'report',
+    'scenario',
+  ] as const; // prettier-ignore
+  const noData = (): Response => json({ code: 'no_data', message: '아직 없음 — 시험(일봉만)' }, 404);
+  const dailyOnly = (code: string): Record<string, P4Override> => {
+    const over: Record<string, P4Override> = { [`etf/holders/${code}`]: noData, [`trade/stock/${code}`]: noData };
+    for (const s of SECTIONS) over[`stock/${code}/${s}`] = noData;
+    return over;
+  };
+  async function mountWritable(code: string, over: Record<string, P4Override>, put: () => Promise<never>) {
+    route.setCode(code);
+    const hz = p4ApiHarness(over);
+    const source = { ...hz.source, put, del: put }; // 쓰기 채널이 있는 로그인 소스(데모 서버와 같은 모양)
+    const { ctx, root } = p4PageCtx(8, 'login', source);
+    await page.mount(ctx);
+    return root;
+  }
+
+  it('탭마다 안내(.msg)만 — 오류 줄(.msg.err)은 하나도 없다(빈 오류 줄 자리도 없음)', async () => {
+    const root = await mountWritable('994010', dailyOnly('994010'), () => Promise.reject(new Error('부르면 안 된다')));
+    expect(root.querySelector('.watch-star button')).not.toBeNull(); // 별(쓰기 채널)이 그려진 상태에서
+    for (const t of TABS) {
+      await openTab(root, t.id);
+      expect(root.querySelectorAll('.msg.err'), t.id).toHaveLength(0);
+    }
+    expect(root.querySelectorAll('.msg').length).toBeGreaterThan(0);
+    expect(text(root)).toContain('아직 없음 — 시험(일봉만)');
+    expect(text(panelByTitle(root, '가격 차트'))).not.toContain('아직 없음');
+  });
+
+  it('진짜 실패만 오류 줄 — 관심종목 별 쓰기 실패는 그때 .msg.err 로 사유를 보인다', async () => {
+    const root = await mountWritable('994010', dailyOnly('994010'), () => Promise.reject(new Error('HTTP 503')));
+    const note = root.querySelector('.watch-star .msg');
+    expect(note?.classList.contains('err')).toBe(false);
+    expect((note as HTMLElement | null)?.hidden).toBe(true);
+    click(root.querySelector('.watch-star button'));
+    await flush();
+    const err = root.querySelectorAll('.watch-star .msg.err');
+    expect(err).toHaveLength(1);
+    expect(text(err[0] ?? null)).toContain('HTTP 503');
+  });
+});

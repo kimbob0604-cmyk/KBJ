@@ -1,0 +1,54 @@
+{
+  "source": "KRX",
+  "as_of": "2026-09-15T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "밸류체인 칸은 사전 통합 전까지 빈칸",
+    "값은 초안 — 저장 전에 확인"
+  ],
+  "generated_at": "2026-09-15T18:00:00+09:00",
+  "data": {
+    "fields": {
+      "code": "990002",
+      "analyzed_on": "2026-09-15",
+      "chain_ids": [
+        null,
+        null,
+        null
+      ],
+      "price": 13760.0,
+      "ret_52w": -32.982661211766995,
+      "fwd_per": null,
+      "band_pos": null,
+      "ev_ebitda": null,
+      "mktcap": null,
+      "opm": null,
+      "eps": {
+        "bear": null,
+        "base": null,
+        "bull": null
+      },
+      "per": {
+        "bear": null,
+        "base": null,
+        "bull": null
+      },
+      "tp": {
+        "bear": null,
+        "base": null,
+        "bull": null
+      },
+      "tp_source": null,
+      "conviction": null,
+      "memo": null,
+      "tags": [],
+      "conclusion": null,
+      "value_sources": {
+        "price": "kbj",
+        "ret_52w": "kbj"
+      }
+    },
+    "as_of": "2026-09-15T15:30:00+09:00",
+    "quality": "ok"
+  }
+}

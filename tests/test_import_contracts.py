@@ -18,6 +18,8 @@
    ⑰ 은 P6 WRAP, ⑱·⑲ 는 P7 WRAP(docs/p7_design.md D-P7-20): ⑱ 공개 진단(engines.diagnosis.public·
    engine.diag_pub·public_export.diag_json)은 로그인 원천·저장소·GEX 를 모른다, ⑲ websockets 는
    kbj.services.ws_gateway 안에서만 직접 import 한다. GEX·진단 엔진은 ⑨ 에 든다(사례로 확인).
+   ⑳ 은 P8 WRAP(docs/p8_design.md D-P8-22 ①): 개인 기록 쓰기 모듈(kbj.services.personal)은 원천
+   어댑터·수집기·발송·API·작업 처리기를 모른다. 규칙·백테스트·저널 엔진은 ⑨ 에 든다(사례로 확인).
    ⑮(분류 사전)는 테마 사전 통합을 사용자가 따로 진행해(2026-10-13 Q1) 번호만 비워 둔다.
    위반 하나가 두 계약에 함께 걸리면(예: 엔진이 auth 를 import — ④·⑨) 둘 다 기대값에 적는다.
 """
@@ -167,6 +169,14 @@ def test_kbj_imports_only_kbj_stdlib_and_declared_deps() -> None:
         # D-P7-20 다 — GEX·진단 엔진도 계약 ⑨(순수)에 든다(새 계약 없이 확인)
         ("kbj/engines/gex/_io.py", "import psycopg\n", "⑨"),
         ("kbj/engines/diagnosis/_svc.py", "import kbj.store.repos.diag\n", "⑨"),
+        # ⑳ — 개인 기록 쓰기 모듈이 HTTP·API·작업 처리기를 끌어오면 실패(P8 WRAP, D-P8-22 ①)
+        ("kbj/services/personal/_leak.py", "import httpx\n", "⑳"),
+        ("kbj/services/personal/_api.py", "import kbj.services.api.writes\n", "⑳"),
+        ("kbj/services/personal/_job.py", "import kbj.services.engine.rules\n", "⑳"),
+        # D-P8-22 ① — 규칙·백테스트·저널 엔진도 계약 ⑨(순수)에 든다(새 계약 없이 확인)
+        ("kbj/engines/rules/_io.py", "import kbj.store.repos.rules\n", "⑨"),
+        ("kbj/engines/journal/_svc.py", "import kbj.services.personal\n", "⑨"),
+        ("kbj/engines/backtest/_db.py", "import psycopg\n", "⑨"),
     ],
 )
 def test_contract_catches_violation(
@@ -202,13 +212,13 @@ def test_contract_catches_violation(
 
 
 def test_fifteen_contracts_are_declared() -> None:
-    """P3 묶음 S — 계약 ⑧~⑩, P4 묶음 S — ⑪~⑬, P5 WRAP — ⑭·⑯, P6 WRAP — ⑰, P7 WRAP — ⑱·⑲ 가
-    실제로 들어 있다(이름 첫 글자 기호로). ⑮ 는 테마 사전 작업 몫으로 비어 있다."""
+    """P3 묶음 S — 계약 ⑧~⑩, P4 묶음 S — ⑪~⑬, P5 WRAP — ⑭·⑯, P6 WRAP — ⑰, P7 WRAP — ⑱·⑲,
+    P8 WRAP — ⑳ 이 실제로 들어 있다(이름 첫 글자 기호로). ⑮ 는 테마 사전 작업 몫으로 비어 있다."""
     text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     names = [
         line.split("=", 1)[1].strip().strip('"')
         for line in text.splitlines()
         if line.startswith("name = ")
-        and line.split("=", 1)[1].strip().strip('"')[:1] in "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲"
+        and line.split("=", 1)[1].strip().strip('"')[:1] in "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳"
     ]
-    assert [n[0] for n in names] == list("①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑯⑰⑱⑲")
+    assert [n[0] for n in names] == list("①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑯⑰⑱⑲⑳")

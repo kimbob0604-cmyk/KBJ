@@ -48,6 +48,9 @@ def test_p4_routes_are_declared(spec: dict[str, Any]) -> None:
         "/api/filings/insiders",
         "/api/filings/schedule",
         "/api/watchlist",
+        # P8 묶음 JNL — 관심종목 쓰기(test_routes_journal.py)
+        "/api/watchlist/{list_name}/{code}",
+        "/api/watchlist/{list_name}/order",
     }  # fmt: skip
     assert paths == want
 
@@ -55,6 +58,8 @@ def test_p4_routes_are_declared(spec: dict[str, Any]) -> None:
 def test_every_p4_data_route_returns_an_envelope(spec: dict[str, Any]) -> None:
     schemas = spec["components"]["schemas"]
     for path, ops in _p4_paths(spec).items():
+        if "get" not in ops:  # P8 관심종목 쓰기 경로(PUT·DELETE·POST — test_routes_journal.py)
+            continue
         resp = ops["get"]["responses"]
         assert "401" in resp and "404" in resp and "422" in resp, path
         if path.endswith(".xlsx"):

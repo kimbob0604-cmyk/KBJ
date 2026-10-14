@@ -627,10 +627,13 @@ def build_service(
     limiter_clock: Clock | None = None,
     sleep: Callable[[float], None] | None = None,
     gex: Callable[[], str] | None = None,
+    signals: Callable[[], str] | None = None,
 ) -> NotifierService:
     """설정으로 notifier 를 조립한다(진입점·시험·시뮬레이션이 같은 길을 쓴다).
 
     `gex` 는 `/gex` 읽기 함수(`kbj.reports.gex.lines.command_reader` — P7). 없으면 '준비 중(P7)'.
+    `signals` 는 `/시그널` 읽기 함수(`kbj.services.engine.rules.command_reader` — P8 WRAP).
+    없으면 '준비 중'.
 
     발송 꺼짐(`KBJ_NOTIFY_ENABLED=false`)이면 oEmbed 클라이언트를 만들지 않는다 — 외부 HTTP 0.
     텔레그램 리미터는 config/limits.yaml `telegram`(전체 `rl:telegram:<토큰 해시>`, 대화당
@@ -692,7 +695,7 @@ def build_service(
         else None
     )
     router = InboundRouter(
-        commands=default_registry(gex=gex),
+        commands=default_registry(gex=gex, signals=signals),
         client=client,
         command_chats=AllowList.of(_command_ids(settings)),
         inbox=inbox,

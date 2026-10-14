@@ -739,8 +739,7 @@ def index():
 # ============================================================
 @app.route("/verification")
 @app.route("/verification/<code>")
-@app.route("/journal")
-@app.route("/journal/<int:journal_id>")
+# KBJ P8 삭제: /journal 화면 경로 — kbj 페이지 12
 @app.route("/ops/<page>")
 def spa_route(**kwargs):  # noqa: ARG001  (kwargs 는 프론트가 읽음)
     return send_file(BASE_DIR / "index.html")
@@ -4123,291 +4122,22 @@ def api_volume_profile(code: str):
     return jsonify(result)
 
 
-@app.route("/api/portfolio/sync", methods=["POST"])
-def api_portfolio_sync():
-    """프론트 포트폴리오 → 서버 파일 동기화 (트레일링 스톱 체크용)."""
-    try:
-        data = request.get_json(force=True, silent=True) or {}
-    except Exception:
-        data = {}
-    positions = data.get("positions") or []
-    out = BASE_DIR / "cache" / "server_portfolio.json"
-    try:
-        out.parent.mkdir(exist_ok=True)
-        out.write_text(json.dumps({"positions": positions}, ensure_ascii=False),
-                        encoding="utf-8")
-    except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
-    return jsonify({"status": "ok", "count": len(positions)})
+# KBJ P8 삭제: api_portfolio_sync — kbj 페이지 12 포트폴리오(매매 기록 재생 — 서버 파일 동기화 없음, ADR 0033)
 
 
-def _check_trailing_stops():
-    """포트폴리오 포지션의 트레일링 스톱 갱신 + 트리거 체크. 장중 30분."""
-    pf_file = BASE_DIR / "cache" / "server_portfolio.json"
-    if not pf_file.exists():
-        return
-    try:
-        pf = json.loads(pf_file.read_text(encoding="utf-8"))
-    except Exception:
-        return
-    positions = pf.get("positions") or []
-    uni = _load_naver_universe()
-    stocks = (uni or {}).get("stocks") or {}
-    updated = False
-    today_str = now_kst().strftime("%Y-%m-%d")
-
-    for pos in positions:
-        tr = pos.get("trailing") or {}
-        if not tr.get("enabled"):
-            continue
-        code = pos.get("code", "")
-        market = pos.get("market", "kr")
-        buy_price = pos.get("buy_price") or 0
-
-        # 현재가
-        if market == "kr":
-            st = stocks.get(code) or {}
-            cur_price = st.get("close") or 0
-        else:
-            us_data = _fetch_us_market_data()
-            sym_map = {s["symbol"]: s for s in (us_data.get("all_stocks") or [])}
-            cur_price = (sym_map.get(code) or {}).get("price") or 0
-        if not cur_price:
-            continue
-
-        highest = max(tr.get("highest_since_entry") or buy_price, cur_price)
-        old_stop = tr.get("current_stop") or (buy_price * 0.97)
-
-        # 새 손절가 계산
-        trail_type = tr.get("type", "fixed_pct")
-        if trail_type == "fixed_pct":
-            pct = tr.get("fixed_pct") or 5
-            new_stop = highest * (1 - pct / 100)
-        elif trail_type == "atr":
-            # ATR 근사: 최근 change_pct 절대값의 평균 × buy_price
-            # 정확한 ATR은 chart OHLCV가 필요하지만 비용이 큼. 단순 근사.
-            mult = tr.get("atr_multiplier") or 2
-            new_stop = highest - (buy_price * 0.02 * mult)  # 2% × mult 근사
-        else:
-            new_stop = highest * 0.95  # chandelier 근사
-
-        new_stop = max(new_stop, buy_price * 0.93)  # 최대 -7% 손절
-        new_stop = max(new_stop, old_stop)           # 절대 내려가지 않음
-        new_stop = round(new_stop, 2)
-
-        if new_stop != old_stop:
-            tr["current_stop"] = new_stop
-            tr["highest_since_entry"] = round(highest, 2)
-            hist = tr.setdefault("stop_history", [])
-            if not hist or not hist[-1].get("date", "").startswith(today_str):
-                hist.append({"date": today_str, "stop": new_stop, "price": cur_price})
-                if len(hist) > 30:
-                    tr["stop_history"] = hist[-30:]
-            updated = True
-
-        # 트리거 체크
-        if cur_price <= new_stop and tr.get("alert_on_trigger", True):
-            last_alert = tr.get("last_alert_date", "")
-            if not last_alert.startswith(today_str):
-                flag = "🇺🇸" if market == "us" else "🇰🇷"
-                cur_sym = "$" if market == "us" else "₩"
-                pnl = (cur_price - buy_price) * (pos.get("quantity") or 0)
-                pnl_pct = ((cur_price / buy_price - 1) * 100) if buy_price else 0
-                sign = "+" if pnl >= 0 else ""
-                msg = (
-                    f"🛑 <b>트레일링 스톱 도달</b>\n"
-                    f"{flag} <b>{pos.get('name', code)}</b> ({code})\n\n"
-                    f"현재가: {cur_sym}{cur_price:,.0f}\n"
-                    f"손절가: {cur_sym}{new_stop:,.0f}\n"
-                    f"매수가: {cur_sym}{buy_price:,.0f}\n"
-                    f"예상 손익: {sign}{cur_sym}{pnl:,.0f} ({sign}{pnl_pct:.2f}%)\n\n"
-                    f"⚠️ 자동 청산 없음 — 수동 매도 필요"
-                )
-                send_telegram(msg)
-                tr["last_alert_date"] = now_kst().strftime("%Y-%m-%dT%H:%M:%S")
-                updated = True
-
-    if updated:
-        try:
-            pf_file.write_text(json.dumps(pf, ensure_ascii=False), encoding="utf-8")
-        except Exception:
-            pass
+# KBJ P8 삭제: _check_trailing_stops — kbj rules.intraday·rules.close(페이지 11 규칙 알림 — ADR 0031) — DSL trail_from_peak 조건
 
 
-@app.route("/api/alerts/sync", methods=["POST"])
-def api_alerts_sync():
-    """프론트 알림 규칙 → 서버 파일 동기화."""
-    try:
-        data = request.get_json(force=True, silent=True) or {}
-    except Exception:
-        data = {}
-    rules = data.get("rules") or []
-    out = BASE_DIR / "cache" / "alert_rules.json"
-    try:
-        out.parent.mkdir(exist_ok=True)
-        out.write_text(json.dumps({"rules": rules}, ensure_ascii=False), encoding="utf-8")
-    except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
-    return jsonify({"status": "ok", "count": len(rules)})
+# KBJ P8 삭제: api_alerts_sync — kbj 규칙 쓰기 모듈(kbj.services.personal.rules — /api/rules)
 
 
-@app.route("/api/alerts/list")
-def api_alerts_list():
-    f = BASE_DIR / "cache" / "alert_rules.json"
-    if not f.exists():
-        return jsonify({"rules": []})
-    try:
-        return Response(f.read_text(encoding="utf-8"),
-                        content_type="application/json; charset=utf-8")
-    except Exception:
-        return jsonify({"rules": []})
+# KBJ P8 삭제: api_alerts_list — kbj /api/rules
 
 
-def _format_rule_label(rtype: str, value) -> str:
-    m = {
-        "price_above":    f"₩{int(value or 0):,} 이상",
-        "price_below":    f"₩{int(value or 0):,} 이하",
-        "change_up":      f"당일 +{value}% 이상",
-        "change_down":    f"당일 {value}% 이하",
-        "rsi_oversold":   f"RSI {value or 30} 이하",
-        "rsi_overbought": f"RSI {value or 70} 이상",
-        "macd_golden":    "MACD 골든크로스",
-        "macd_dead":      "MACD 데드크로스",
-        "bb_upper":       "볼밴 상단 터치",
-        "bb_lower":       "볼밴 하단 터치",
-        "volume_spike":   f"거래량 {value or 2}배 이상",
-        "foreign_strong_buy": f"외국인 {int(value or 3)}일 연속 순매수",
-        "foreign_cum_buy":    f"외국인 5일 누적 {int(value or 100)}억 이상",
-    }
-    return m.get(rtype, rtype)
+# KBJ P8 삭제: _format_rule_label — check_alert_rules 전용 도우미(그 함수가 P8 에 지워져 부르는 곳 없음)
 
 
-def check_alert_rules():
-    """활성 알림 규칙 체크 — 10분 간격 스케줄러 호출."""
-    f = BASE_DIR / "cache" / "alert_rules.json"
-    if not f.exists():
-        return
-    try:
-        data = json.loads(f.read_text(encoding="utf-8"))
-    except Exception:
-        return
-    rules = data.get("rules") or []
-    if not rules:
-        return
-
-    today_str = now_kst().strftime("%Y-%m-%d")
-    uni = _load_naver_universe()
-    stocks = (uni or {}).get("stocks") or {}
-    updated = False
-
-    for rule in rules:
-        if not rule.get("enabled", True):
-            continue
-        if (rule.get("triggered_at") or "").startswith(today_str):
-            continue
-
-        code = rule.get("code", "")
-        market = rule.get("market", "kr")
-        rtype = rule.get("type", "")
-        value = rule.get("value")
-
-        triggered = False
-        detail = ""
-
-        try:
-            if market == "kr":
-                st = stocks.get(code) or {}
-                price = st.get("close") or 0
-                chg = st.get("change_pct") or 0
-            else:
-                us_data = _fetch_us_market_data()
-                sym_map = {s["symbol"]: s for s in (us_data.get("all_stocks") or [])}
-                st = sym_map.get(code, {})
-                price = st.get("price") or 0
-                chg = st.get("change_pct") or 0
-
-            if not price:
-                continue
-            cur = "$" if market == "us" else "₩"
-
-            if rtype == "price_above" and value and price >= value:
-                triggered = True
-                detail = f"현재가 {cur}{price:,}"
-            elif rtype == "price_below" and value and price <= value:
-                triggered = True
-                detail = f"현재가 {cur}{price:,}"
-            elif rtype == "change_up" and value and chg >= value:
-                triggered = True
-                detail = f"당일 +{chg}%"
-            elif rtype == "change_down" and value and chg <= value:
-                triggered = True
-                detail = f"당일 {chg}%"
-            elif rtype in ("rsi_oversold", "rsi_overbought", "macd_golden", "macd_dead"):
-                # 차트 캐시에서 RSI/MACD 읽기
-                chart_data = None
-                if market == "kr":
-                    chart_data = _call_api_internal(f"/api/chart/{code}") or {}
-                else:
-                    chart_data = _call_api_internal(f"/api/us/chart/{code}") or {}
-                rm = chart_data.get("rsi_macd") if isinstance(chart_data, dict) else None
-                if rm:
-                    rsi_vals = rm.get("rsi") or []
-                    rsi_cur = rsi_vals[-1] if rsi_vals else 50
-                    if rtype == "rsi_oversold" and rsi_cur <= (value or 30):
-                        triggered = True
-                        detail = f"RSI {rsi_cur}"
-                    elif rtype == "rsi_overbought" and rsi_cur >= (value or 70):
-                        triggered = True
-                        detail = f"RSI {rsi_cur}"
-                    macd_v = rm.get("macd") or []
-                    macd_s = rm.get("macd_signal") or []
-                    if len(macd_v) >= 2 and len(macd_s) >= 2:
-                        if rtype == "macd_golden" and macd_v[-2] <= macd_s[-2] and macd_v[-1] > macd_s[-1]:
-                            triggered = True
-                            detail = "MACD 골든크로스"
-                        elif rtype == "macd_dead" and macd_v[-2] >= macd_s[-2] and macd_v[-1] < macd_s[-1]:
-                            triggered = True
-                            detail = "MACD 데드크로스"
-            elif rtype in ("foreign_strong_buy", "foreign_cum_buy") and market == "kr":
-                flow_data = _call_api_internal(f"/api/flow/{code}") or {}
-                fv = (flow_data.get("foreign_value") or []) if not flow_data.get("error") else []
-                if fv:
-                    if rtype == "foreign_strong_buy":
-                        streak = 0
-                        for v in reversed(fv):
-                            if v > 0: streak += 1
-                            else: break
-                        threshold = int(value or 3)
-                        if streak >= threshold:
-                            triggered = True
-                            detail = f"외국인 {streak}일 연속 순매수"
-                    elif rtype == "foreign_cum_buy":
-                        cum5_eok = sum(fv[-5:]) / 1e8
-                        threshold = float(value or 100)
-                        if cum5_eok >= threshold:
-                            triggered = True
-                            detail = f"외국인 5일 누적 {cum5_eok:,.0f}억원"
-        except Exception as exc:
-            log.debug("alert eval %s %s: %s", code, rtype, exc)
-            continue
-
-        if triggered:
-            flag = "🇺🇸" if market == "us" else "🇰🇷"
-            msg = (f"🔔 <b>알림 트리거</b>\n"
-                   f"{flag} <b>{rule.get('name', code)}</b> ({code})\n"
-                   f"조건: {_format_rule_label(rtype, value)}\n"
-                   f"{detail}")
-            if rule.get("message"):
-                msg += f"\n메모: {rule['message']}"
-            send_telegram(msg)
-            rule["triggered_at"] = now_kst().strftime("%Y-%m-%dT%H:%M:%S")
-            updated = True
-
-    if updated:
-        try:
-            f.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-        except Exception:
-            pass
+# KBJ P8 삭제: check_alert_rules — kbj rules.intraday·rules.close(페이지 11 규칙 알림 — ADR 0031)
 
 
 # KBJ P2 삭제(설계 §5.10): api_telegram_test — #19 인증 없는 텔레그램 시험 발송 라우트
@@ -4590,183 +4320,17 @@ def _load_server_watchlist() -> list:
 
 
 # ── 알림 2: 종목 발굴 Stage 2 신규 진입 ──
-def _alert_cooldown_ok(code: str, alert_type: str, cooldown_min: int = 60) -> bool:
-    """쿨다운 체크: 최근 N분 내 같은 종목+타입 알림이 없으면 True."""
-    if not (_SQLITE_OK and USE_SQLITE):
-        return True
-    try:
-        with _get_db() as conn:
-            row = conn.execute(
-                "SELECT alerted_at FROM alert_history "
-                "WHERE code=? AND alert_type=? ORDER BY alerted_at DESC LIMIT 1",
-                (code, alert_type),
-            ).fetchone()
-            if not row:
-                return True
-            from datetime import datetime as _dt
-            last = _dt.fromisoformat(row[0])
-            elapsed = (now_kst().replace(tzinfo=None) - last).total_seconds() / 60
-            return elapsed >= cooldown_min
-    except Exception:
-        return True
+# KBJ P8 삭제: _alert_cooldown_ok — SD 알림 쿨다운(종목×종류 60분) — kbj 규칙 쿨다운 상태기(kbj.engines.rules.cooldown)
 
 
-def _record_alert(code: str, alert_type: str, detail: str = ""):
-    """알림 발송 이력 기록."""
-    if not (_SQLITE_OK and USE_SQLITE):
-        return
-    try:
-        with _get_db() as conn:
-            conn.execute(
-                "INSERT INTO alert_history (code, alert_type, detail, alerted_at) "
-                "VALUES (?, ?, ?, ?)",
-                (code, alert_type, detail, now_kst().strftime("%Y-%m-%d %H:%M:%S")),
-            )
-            # 7일 이전 이력 정리
-            conn.execute(
-                "DELETE FROM alert_history WHERE alerted_at < datetime('now', '-7 days')"
-            )
-            conn.commit()
-    except Exception:
-        pass
+# KBJ P8 삭제: _record_alert — SD 알림 기록 도우미(부르던 발굴·관심종목 알림이 P8 에 지워짐)
 
 
-def alert_discovery_new_entries(market: str = "kr"):
-    """Stage 2 완료 후 호출: 신규 진입 + 스코어 급상승 감지 → 텔레그램."""
-    try:
-        cur_file = BASE_DIR / "cache" / f"discover_{market}_stage2.json"
-        prev_file = BASE_DIR / "cache" / f"discover_{market}_stage2_prev.json"
-        if not cur_file.exists():
-            return
-        cur = json.loads(cur_file.read_text(encoding="utf-8"))
-        cur_items = cur.get("items") or []
-        cur_top = cur_items[:20]
-        cur_set = {it["code"] for it in cur_top}
-
-        # 이전 결과 로드
-        prev_items = []
-        if prev_file.exists():
-            try:
-                prev = json.loads(prev_file.read_text(encoding="utf-8"))
-                prev_items = prev.get("items") or []
-            except Exception:
-                pass
-        prev_top_set = {it["code"] for it in prev_items[:20]}
-        prev_score_map = {it["code"]: it.get("total_score", 0) for it in prev_items}
-
-        flag = "🇺🇸" if market == "us" else "🇰🇷"
-        cur_symbol = "$" if market == "us" else "₩"
-        msgs_sent = 0
-
-        # ── 1. 신규 진입 TOP 20 ──
-        new_codes = cur_set - prev_top_set
-        if new_codes:
-            alert_entries = []
-            for it in cur_top:
-                if it["code"] not in new_codes:
-                    continue
-                if not _alert_cooldown_ok(it["code"], "new_entry", 60):
-                    continue
-                alert_entries.append(it)
-
-            if alert_entries:
-                lines = [f"🔬 <b>{flag} 종목 발굴 TOP20 신규 진입</b>", ""]
-                for it in alert_entries[:5]:
-                    chg = it.get("change_pct") or 0
-                    sign = "+" if chg >= 0 else ""
-                    price = it.get("price") or 0
-                    lines.append(
-                        f"<b>{it['name']}</b> ({it['code']}) · "
-                        f"{it['total_score']}점 · {cur_symbol}{price:,.0f} ({sign}{chg}%)"
-                    )
-                    s = it.get("scores") or {}
-                    lines.append(
-                        f"   mom={s.get('momentum',0)} flow={s.get('flow',0)} "
-                        f"val={s.get('valuation',0)} tech={s.get('technical',0)} "
-                        f"sect={s.get('sector',0)}"
-                    )
-                    # 태그 상위 3개
-                    tags = (it.get("details") or {}).get("rsi_macd_tags") or []
-                    if tags:
-                        lines.append(f"   🏷 {', '.join(tags[:3])}")
-                    _record_alert(it["code"], "new_entry", f"top20 진입 {it['total_score']}점")
-                lines.append(f"\n⏰ {now_kst().strftime('%H:%M')}")
-                send_telegram("\n".join(lines))
-                msgs_sent += 1
-
-        # ── 2. 스코어 급상승 (±15점 이상) ──
-        if prev_score_map:
-            surges = []
-            for it in cur_items[:100]:  # 상위 100종목만 체크
-                prev_sc = prev_score_map.get(it["code"])
-                if prev_sc is None:
-                    continue
-                diff = it.get("total_score", 0) - prev_sc
-                if diff >= 15 and _alert_cooldown_ok(it["code"], "score_surge", 60):
-                    surges.append((it, diff, prev_sc))
-
-            if surges:
-                surges.sort(key=lambda x: -x[1])
-                lines = [f"📈 <b>{flag} 스코어 급상승</b>", ""]
-                for it, diff, prev_sc in surges[:5]:
-                    chg = it.get("change_pct") or 0
-                    sign = "+" if chg >= 0 else ""
-                    lines.append(
-                        f"<b>{it['name']}</b> ({it['code']}) "
-                        f"{prev_sc} → {it['total_score']} (<b>+{diff}</b>)"
-                    )
-                    lines.append(f"   {cur_symbol}{it.get('price',0):,.0f} ({sign}{chg}%)")
-                    tags = (it.get("details") or {}).get("rsi_macd_tags") or []
-                    if tags:
-                        lines.append(f"   🏷 {', '.join(tags[:3])}")
-                    _record_alert(it["code"], "score_surge", f"+{diff}점 ({prev_sc}→{it['total_score']})")
-                lines.append(f"\n⏰ {now_kst().strftime('%H:%M')}")
-                send_telegram("\n".join(lines))
-                msgs_sent += 1
-
-        # prev 저장 (다음 비교용)
-        import shutil
-        shutil.copy2(cur_file, prev_file)
-
-        if msgs_sent:
-            log.info("[발굴 알림] %s: 신규진입 %d + 급상승 %d → 메시지 %d건",
-                     market, len(new_codes), len(surges) if prev_score_map else 0, msgs_sent)
-    except Exception as exc:
-        log.warning("alert_discovery_new_entries: %s", exc)
+# KBJ P8 삭제: alert_discovery_new_entries — 폐지(사용자 결정 2026-10-13 — 발굴 신규 진입 알림, jobs.yaml retired)
 
 
 # ── 알림 3: 관심종목 급등/급락 (±5%) ──
-def alert_watchlist_price():
-    try:
-        watchlist = _load_server_watchlist()
-        if not watchlist:
-            return
-        uni = _load_naver_universe()
-        stocks = (uni or {}).get("stocks") or {}
-        alerts = []
-        for item in watchlist:
-            code = item.get("code") or ""
-            if (item.get("market") or "kr") != "kr":
-                continue
-            st = stocks.get(code)
-            if not st:
-                continue
-            chg = st.get("change_pct") or 0
-            if abs(chg) >= 5:
-                alerts.append({
-                    "code": code, "name": st.get("name", code),
-                    "price": st.get("close", 0), "chg": chg,
-                })
-        if alerts:
-            lines = ["⚠️ <b>관심종목 급등/급락</b>", ""]
-            for a in alerts:
-                emoji = "🔴" if a["chg"] >= 0 else "🟢"
-                sign = "+" if a["chg"] >= 0 else ""
-                lines.append(f"{emoji} <b>{a['name']}</b> ({a['code']})")
-                lines.append(f"   ₩{a['price']:,} ({sign}{a['chg']}%)")
-            send_telegram("\n".join(lines))
-    except Exception as exc:
-        log.warning("alert_watchlist_price: %s", exc)
+# KBJ P8 삭제: alert_watchlist_price — kbj rules.intraday·rules.close(페이지 11 규칙 알림 — ADR 0031) — 관심종목 가격 조건은 규칙으로
 
 
 # ── 알림 4: 관심종목 신규 리포트 ──
@@ -5213,7 +4777,7 @@ def _startup():
         try:
             _init_recommendation_history()
             migrate_discover_to_recommendations()
-            _init_trade_journal()
+            # KBJ P8 삭제: _init_trade_journal() — kbj prv_journal.trade(페이지 12)
         except Exception as exc:
             log.debug("[추천이력] init 실패: %s", exc)
 
@@ -5299,9 +4863,7 @@ def _startup():
         if os.getenv("TELEGRAM_BOT_TOKEN") and os.getenv("TELEGRAM_CHAT_ID"):
             # KBJ P5 삭제: 등록 alert_morning_briefing
             # KBJ P4 삭제: tg_revision_signals(alert_revision_signals) — kbj consensus.snapshot 의 alert.revision(16:00, ADR 0018)
-            _scheduler.add_job(alert_watchlist_price, "cron",
-                               day_of_week="mon-fri", hour="9-14", minute="0,30",
-                               id="tg_watchlist")
+            # KBJ P8 삭제: 등록 alert_watchlist_price(tg_watchlist) — kbj rules.intraday
             _scheduler.add_job(alert_new_reports, "cron",
                                day_of_week="mon-fri", hour=10, minute=0,
                                id="tg_reports")
@@ -5368,14 +4930,7 @@ def _startup():
             _scheduler.add_job(refresh_us_options_signal, "cron",
                                day_of_week="mon-fri", hour=22, minute=0,
                                id="refresh_options")
-            # 종목별 맞춤 알림 — 장중 10분 간격
-            _scheduler.add_job(check_alert_rules, "cron",
-                               day_of_week="mon-fri", hour="9-15", minute="*/10",
-                               id="tg_custom_alerts", max_instances=1)
-            # 트레일링 스톱 — 장중 30분 간격
-            _scheduler.add_job(_check_trailing_stops, "cron",
-                               day_of_week="mon-fri", hour="9-15", minute="0,30",
-                               id="tg_trailing", max_instances=1)
+            # KBJ P8 삭제: 등록 check_alert_rules(tg_custom_alerts)·_check_trailing_stops(tg_trailing) — kbj rules.intraday
             # 부팅 직후에도 한 번 본다. Render 가 잠들었다 깨어나는 순간이
             # 가장 확실한 기회다 — 그때 밀린 것이 있으면 바로 보낸다.
             # 백그라운드로 돌린다: 발송이 가격·수급 갱신을 먼저 하므로
@@ -9259,11 +8814,7 @@ def _run_stage2_kr() -> list | None:
     except Exception as exc:
         log.debug("[추천이력] kr 저장 실패: %s", exc)
 
-    # Phase 23: Stage 2 완료 시 텔레그램으로 신규 진입 종목 알림 (silent fail)
-    try:
-        alert_discovery_new_entries()
-    except Exception as exc:
-        log.debug("alert_discovery_new_entries failed: %s", exc)
+    # KBJ P8 삭제: alert_discovery_new_entries 호출 — 발굴 신규 진입 알림 폐지(사용자 결정 2026-10-13)
 
     return candidates
 
@@ -9625,476 +9176,35 @@ def api_agent_status():
 # 백테스트 엔진 (규칙 기반, OHLCV 기반)
 # ─────────────────────────────────────────────────────────────────────────
 
-def _bt_calc_rsi(closes: list, period: int = 14):
-    if len(closes) < period + 1:
-        return None
-    deltas = [closes[i] - closes[i - 1] for i in range(1, len(closes))]
-    recent = deltas[-period:]
-    gains = [d for d in recent if d > 0]
-    losses = [-d for d in recent if d < 0]
-    avg_gain = sum(gains) / period if gains else 0
-    avg_loss = sum(losses) / period if losses else 0.001
-    rs = avg_gain / avg_loss if avg_loss else 999
-    return 100 - 100 / (1 + rs)
+# KBJ P8 삭제: _bt_calc_rsi — kbj 페이지 12 백테스트(/api/backtest — DSL 규칙 백테스트, ADR 0032)
 
 
-def _bt_check_entry(ohlcv_slice, strategy, tags, tag_logic, min_score):
-    """과거 OHLCV로 진입 신호 판단."""
-    if len(ohlcv_slice) < 30:
-        return None
-    closes = [r["close"] for r in ohlcv_slice if r.get("close")]
-    volumes = [r["volume"] or 0 for r in ohlcv_slice]
-    if len(closes) < 30:
-        return None
-
-    rsi = _bt_calc_rsi(closes)
-    ma20 = sum(closes[-20:]) / 20
-    ma60 = sum(closes[-60:]) / 60 if len(closes) >= 60 else ma20
-    avg_vol = sum(volumes[-20:]) / 20 if volumes else 1
-    vol_ratio = volumes[-1] / avg_vol if avg_vol > 0 else 1
-    cur = closes[-1]
-    prev = closes[-2] if len(closes) > 1 else cur
-
-    tag_matches: set = set()
-    if cur > ma20 and prev <= ma20:
-        tag_matches.add("MA20돌파")
-    if rsi is not None and rsi < 30:
-        tag_matches.add("RSI과매도")
-    if rsi is not None and rsi > 70:
-        tag_matches.add("RSI과매수")
-    if vol_ratio >= 2:
-        tag_matches.add("거래량급증")
-    if cur > ma20 > ma60:
-        tag_matches.add("정배열")
-    if abs(cur - ma20) / ma20 < 0.02 and cur > ma20:
-        tag_matches.add("돌파임박")
-
-    if strategy == "tag" and tags:
-        if tag_logic == "AND":
-            if all(t in tag_matches for t in tags):
-                return {"tags": list(tag_matches)}
-        else:
-            if any(t in tag_matches for t in tags):
-                return {"tags": list(tag_matches)}
-
-    elif strategy == "score":
-        score = 0
-        if cur > ma20:                      score += 20
-        if ma20 > ma60:                     score += 20
-        if rsi is not None and 30 < rsi < 65: score += 20
-        if vol_ratio > 1.2:                 score += 20
-        if cur > prev:                      score += 20
-        if score >= min_score:
-            return {"score": score, "tags": list(tag_matches)}
-
-    elif strategy == "combined":
-        score = 0
-        if cur > ma20:                      score += 15
-        if ma20 > ma60:                     score += 15
-        if rsi is not None and 30 < rsi < 65: score += 15
-        if vol_ratio > 1.2:                 score += 15
-        tag_hit = any(t in tag_matches for t in tags) if tags else True
-        if score >= min_score and tag_hit:
-            return {"score": score, "tags": list(tag_matches)}
-
-    return None
+# KBJ P8 삭제: _bt_check_entry — kbj 페이지 12 백테스트(/api/backtest — DSL 규칙 백테스트, ADR 0032)
 
 
-@app.route("/api/backtest/available_tags")
-def api_backtest_available_tags():
-    """discover_results에서 실제 사용된 Stage 2 태그 목록 반환."""
-    tags: set = set()
-    if _SQLITE_OK and USE_SQLITE:
-        try:
-            with _get_db() as conn:
-                rows = conn.execute(
-                    "SELECT items_json FROM discover_results "
-                    "WHERE items_json IS NOT NULL ORDER BY updated_at DESC LIMIT 10"
-                ).fetchall()
-            for r in rows:
-                try:
-                    items = json.loads(r["items_json"] or "[]")
-                    for it in items:
-                        for t in (it.get("details") or {}).get("rsi_macd_tags") or []:
-                            tags.add(t)
-                except Exception:
-                    pass
-        except Exception:
-            pass
-
-    # 코드 기반 폴백 (discover 이력 없을 때)
-    if not tags:
-        tags = {
-            "MACD_골든크로스", "MACD_데드크로스", "MACD_양전환", "MACD_강세구간",
-            "MACD_상승강화", "MACD_양수유지",
-            "과매수_RSI", "과매도_RSI", "상승진행_RSI", "과매도회복_RSI",
-            "외국인_3일연속", "외국인_5일연속", "외국인_집중매수", "외국인_대량매수",
-            "쌍끌이_매수",
-            "베어리시_RSI_다이버전스", "베어리시_MACD_다이버전스",
-            "불리시_RSI_다이버전스", "불리시_MACD_다이버전스",
-        }
-    return jsonify({"tags": sorted(tags)})
+# KBJ P8 삭제: api_backtest_available_tags — kbj 페이지 12 백테스트(/api/backtest — DSL 규칙 백테스트, ADR 0032)
 
 
-@app.route("/api/backtest", methods=["POST"])
-def _bt_check_stage2_entry(item, strategy, tags, tag_logic, min_score):
-    """Stage 2 item(discover_results) 기반 진입 신호 판단."""
-    score = item.get("total_score") or 0
-    item_tags = (item.get("details") or {}).get("rsi_macd_tags") or []
-
-    if strategy == "tag" and tags:
-        if tag_logic == "AND":
-            return all(t in item_tags for t in tags)
-        return any(t in item_tags for t in tags)
-    if strategy == "score":
-        return score >= min_score
-    if strategy == "combined":
-        tag_ok = any(t in item_tags for t in tags) if tags else True
-        return score >= min_score and tag_ok
-    return False
+# KBJ P8 삭제: _bt_check_stage2_entry — kbj 페이지 12 백테스트(/api/backtest — DSL 규칙 백테스트, ADR 0032)
 
 
-def _bt_simulate_trade(conn, code, name, entry_date_str, hold_days, stop_loss, take_profit):
-    """OHLCV에서 진입일 이후 hold_days 수익률 시뮬."""
-    rows = conn.execute(
-        "SELECT date, open, high, low, close FROM ohlcv "
-        "WHERE code = ? AND date >= ? ORDER BY date ASC LIMIT ?",
-        (code, entry_date_str, hold_days + 2),
-    ).fetchall()
-    if len(rows) < 2:
-        return None
-    entry_price = rows[1]["open"] or rows[1]["close"] or 0
-    entry_date = rows[1]["date"]
-    if entry_price <= 0:
-        return None
-
-    exit_price = entry_price
-    exit_date = entry_date
-    exit_reason = "hold"
-    for row in rows[1:]:
-        high, low, close = row["high"], row["low"], row["close"]
-        if not all([high, low, close]):
-            continue
-        low_pct = (low / entry_price - 1) * 100
-        high_pct = (high / entry_price - 1) * 100
-        if low_pct <= stop_loss:
-            exit_price = entry_price * (1 + stop_loss / 100)
-            exit_date = row["date"]; exit_reason = "stop_loss"; break
-        if high_pct >= take_profit:
-            exit_price = entry_price * (1 + take_profit / 100)
-            exit_date = row["date"]; exit_reason = "take_profit"; break
-        exit_price = close
-        exit_date = row["date"]
-
-    pnl_pct = round((exit_price / entry_price - 1) * 100, 2)
-    return {
-        "code": code, "name": name,
-        "entry_date": entry_date, "entry_price": round(entry_price),
-        "exit_date": exit_date, "exit_price": round(exit_price),
-        "pnl_pct": pnl_pct, "exit_reason": exit_reason,
-    }
+# KBJ P8 삭제: _bt_simulate_trade — kbj 페이지 12 백테스트(/api/backtest — DSL 규칙 백테스트, ADR 0032)
 
 
-def api_backtest():
-    """태그/스코어 기반 전략 백테스트.
-    우선순위: discover_results 과거 스냅샷 → OHLCV 룰 기반 폴백.
-    """
-    if not (_SQLITE_OK and USE_SQLITE):
-        return jsonify({"error": "SQLite 비활성"}), 503
-
-    data = request.get_json(silent=True) or {}
-    strategy = data.get("strategy", "score")
-    tags = data.get("tags") or []
-    tag_logic = data.get("tag_logic", "OR")
-    min_score = int(data.get("min_score", 70))
-    hold_days = int(data.get("hold_days", 5))
-    lookback_days = int(data.get("lookback_days", 60))
-    stop_loss = float(data.get("stop_loss", -5))
-    take_profit = float(data.get("take_profit", 10))
-    max_stocks = int(data.get("max_stocks", 500))
-
-    from datetime import timedelta as _td
-    start_date = (now_kst() - _td(days=lookback_days)).strftime("%Y-%m-%d")
-
-    trades: list = []
-    source_used = "ohlcv_rules"
-
-    # 1순위: discover_results 과거 스냅샷 재사용 (Stage 2 실제 태그/점수)
-    try:
-        with _get_db() as conn:
-            snapshots = conn.execute(
-                "SELECT updated_at, items_json FROM discover_results "
-                "WHERE market='kr' AND items_json IS NOT NULL "
-                "AND DATE(updated_at) >= DATE(?) "
-                "ORDER BY updated_at ASC", (start_date,)
-            ).fetchall()
-
-            snap_count = len(snapshots)
-            if snap_count >= 1:
-                source_used = "discover_history"
-                seen: set = set()  # (code, date) 중복 방지
-                for snap in snapshots:
-                    snap_date = (snap["updated_at"] or "")[:10]
-                    try:
-                        items = json.loads(snap["items_json"] or "[]")
-                    except Exception:
-                        continue
-                    for it in items:
-                        code = it.get("code")
-                        name = it.get("name")
-                        if not code or (code, snap_date) in seen:
-                            continue
-                        if not _bt_check_stage2_entry(it, strategy, tags, tag_logic, min_score):
-                            continue
-                        seen.add((code, snap_date))
-                        t = _bt_simulate_trade(conn, code, name, snap_date,
-                                               hold_days, stop_loss, take_profit)
-                        if t:
-                            t["signal"] = {
-                                "score": it.get("total_score"),
-                                "tags": (it.get("details") or {}).get("rsi_macd_tags", [])[:5],
-                            }
-                            trades.append(t)
-                log.info("[Backtest] discover 스냅샷 %d개 → %d trades",
-                         snap_count, len(trades))
-    except Exception as exc:
-        log.debug("[Backtest] discover 방식 실패: %s", exc)
-
-    # 2순위: OHLCV 룰 기반 폴백 (discover_results 없거나 trades 0건일 때)
-    if not trades:
-        try:
-            with _get_db() as conn:
-                # 대상: KR 일반 종목, ETF 제외
-                codes_rows = conn.execute(
-                    "SELECT code, name FROM stocks "
-                    "WHERE (market = '' OR market LIKE 'KOS%') "
-                    "AND COALESCE(is_etf, 0) = 0 "
-                    "ORDER BY COALESCE(market_cap, 0) DESC, volume_mn DESC "
-                    "LIMIT ?", (max_stocks,)
-                ).fetchall()
-                codes_map = {r["code"]: r["name"] for r in codes_rows}
-
-                for code, name in codes_map.items():
-                    rows = conn.execute(
-                        "SELECT date, open, high, low, close, volume "
-                        "FROM ohlcv WHERE code=? ORDER BY date ASC", (code,)
-                    ).fetchall()
-                    ohlcv = [dict(r) for r in rows]
-                    if len(ohlcv) < 60:
-                        continue
-
-                    for i in range(30, len(ohlcv) - hold_days):
-                        date_str = ohlcv[i]["date"]
-                        if date_str < start_date:
-                            continue
-
-                        signal = _bt_check_entry(
-                            ohlcv[:i + 1], strategy, tags, tag_logic, min_score
-                        )
-                        if not signal:
-                            continue
-
-                        entry_price = ohlcv[i + 1]["open"] or ohlcv[i + 1]["close"]
-                        if not entry_price or entry_price <= 0:
-                            continue
-                        entry_date = ohlcv[i + 1]["date"]
-
-                        exit_price = entry_price
-                        exit_date = entry_date
-                        exit_reason = "hold"
-
-                        for j in range(i + 1, min(i + 1 + hold_days, len(ohlcv))):
-                            bar = ohlcv[j]
-                            high, low, close = bar.get("high"), bar.get("low"), bar.get("close")
-                            if not all([high, low, close]):
-                                continue
-                            low_pct = (low / entry_price - 1) * 100
-                            high_pct = (high / entry_price - 1) * 100
-
-                            if low_pct <= stop_loss:
-                                exit_price = entry_price * (1 + stop_loss / 100)
-                                exit_date = bar["date"]
-                                exit_reason = "stop_loss"
-                                break
-                            if high_pct >= take_profit:
-                                exit_price = entry_price * (1 + take_profit / 100)
-                                exit_date = bar["date"]
-                                exit_reason = "take_profit"
-                                break
-                            exit_price = close
-                            exit_date = bar["date"]
-
-                        pnl_pct = round((exit_price / entry_price - 1) * 100, 2)
-                        trades.append({
-                            "code": code, "name": name,
-                            "entry_date": entry_date, "entry_price": round(entry_price),
-                            "exit_date": exit_date, "exit_price": round(exit_price),
-                            "pnl_pct": pnl_pct, "exit_reason": exit_reason,
-                            "signal": signal,
-                        })
-        except Exception as exc:
-            log.exception("backtest failed")
-            return jsonify({"error": str(exc)}), 500
-
-    # 요약
-    summary = {}
-    if trades:
-        pnls = [t["pnl_pct"] for t in trades]
-        wins = [p for p in pnls if p > 0]
-        losses = [p for p in pnls if p <= 0]
-        summary = {
-            "total_trades": len(trades),
-            "win_rate": round(len(wins) / len(trades) * 100, 1),
-            "avg_pnl": round(sum(pnls) / len(pnls), 2),
-            "median_pnl": round(sorted(pnls)[len(pnls) // 2], 2),
-            "max_win": round(max(pnls), 2),
-            "max_loss": round(min(pnls), 2),
-            "avg_win": round(sum(wins) / len(wins), 2) if wins else 0,
-            "avg_loss": round(sum(losses) / len(losses), 2) if losses else 0,
-            "profit_factor": round(abs(sum(wins) / sum(losses)), 2) if losses and sum(losses) else 999,
-            "stop_loss_count": len([t for t in trades if t["exit_reason"] == "stop_loss"]),
-            "take_profit_count": len([t for t in trades if t["exit_reason"] == "take_profit"]),
-            "hold_count": len([t for t in trades if t["exit_reason"] == "hold"]),
-        }
-
-    trades.sort(key=lambda x: x["entry_date"], reverse=True)
-    return jsonify({
-        "strategy": strategy, "tags": tags, "tag_logic": tag_logic,
-        "min_score": min_score, "hold_days": hold_days,
-        "lookback_days": lookback_days,
-        "stop_loss": stop_loss, "take_profit": take_profit,
-        "source": source_used,
-        "trades": trades[:200], "summary": summary,
-    })
+# KBJ P8 삭제: api_backtest — kbj 페이지 12 백테스트(/api/backtest — DSL 규칙 백테스트, ADR 0032)
 
 
 # ── 상관관계 매트릭스 ────────────────────────────────────
-def _load_server_portfolio_codes() -> list:
-    """포트폴리오 종목 코드 목록 반환 (market 무관)."""
-    f = BASE_DIR / "cache" / "server_portfolio.json"
-    if not f.exists():
-        return []
-    try:
-        pf = json.loads(f.read_text(encoding="utf-8"))
-    except Exception:
-        return []
-    out = []
-    for p in pf.get("positions") or []:
-        c = p.get("code")
-        if c:
-            out.append({"code": c, "name": p.get("name") or c,
-                        "market": p.get("market", "kr")})
-    return out
+# KBJ P8 삭제: _load_server_portfolio_codes — api_correlation 전용 도우미(P8 삭제)
 
 
-def _load_watchlist_codes() -> list:
-    items = _load_server_watchlist() or []
-    out = []
-    for w in items:
-        c = w.get("code")
-        if c:
-            out.append({"code": c, "name": w.get("name") or c,
-                        "market": w.get("market", "kr")})
-    return out
+# KBJ P8 삭제: _load_watchlist_codes — api_correlation 전용 도우미(P8 삭제)
 
 
-def _compute_correlation(closes_by_code: dict, codes: list) -> dict:
-    """closes_by_code = {code: [close_1, close_2, ...]} (길이 정렬 필수).
-    Pearson correlation of daily returns."""
-    import math
-    # 일간 수익률 계산
-    rets = {}
-    for c in codes:
-        cl = closes_by_code.get(c) or []
-        if len(cl) < 2:
-            continue
-        r = []
-        for i in range(1, len(cl)):
-            if cl[i - 1] and cl[i - 1] > 0:
-                r.append((cl[i] / cl[i - 1]) - 1)
-            else:
-                r.append(0.0)
-        rets[c] = r
-
-    valid = [c for c in codes if c in rets]
-    min_len = min((len(rets[c]) for c in valid), default=0)
-    if min_len < 10:
-        return {"codes": valid, "matrix": []}
-    for c in valid:
-        rets[c] = rets[c][-min_len:]
-
-    # Pearson
-    matrix = []
-    for a in valid:
-        row = []
-        ra = rets[a]; ma = sum(ra) / len(ra)
-        for b in valid:
-            if a == b:
-                row.append(1.0); continue
-            rb = rets[b]; mb = sum(rb) / len(rb)
-            num = sum((ra[i] - ma) * (rb[i] - mb) for i in range(min_len))
-            dena = math.sqrt(sum((ra[i] - ma) ** 2 for i in range(min_len)))
-            denb = math.sqrt(sum((rb[i] - mb) ** 2 for i in range(min_len)))
-            den = dena * denb
-            row.append(round(num / den, 3) if den > 0 else 0.0)
-        matrix.append(row)
-    return {"codes": valid, "matrix": matrix}
+# KBJ P8 삭제: _compute_correlation — kbj 페이지 12 상관관계(/api/portfolio/correlation — kbj.engines.journal.correlation)
 
 
-@app.route("/api/correlation")
-def api_correlation():
-    """포트폴리오 + 관심종목 기반 상관관계 매트릭스 (최근 60일 OHLCV).
-    source=portfolio|watchlist|both (기본 both)."""
-    if not (_SQLITE_OK and USE_SQLITE):
-        return jsonify({"error": "SQLite 비활성"}), 503
-
-    source = request.args.get("source", "both")
-    days = int(request.args.get("days", 60))
-
-    items: list = []
-    seen: set = set()
-    if source in ("portfolio", "both"):
-        for it in _load_server_portfolio_codes():
-            if it["code"] not in seen:
-                items.append(it); seen.add(it["code"])
-    if source in ("watchlist", "both"):
-        for it in _load_watchlist_codes():
-            if it["code"] not in seen:
-                items.append(it); seen.add(it["code"])
-
-    if len(items) < 2:
-        return jsonify({"error": "분석할 종목이 2개 미만입니다",
-                        "codes": [c["code"] for c in items]}), 400
-
-    # OHLCV 종가 로드 (SQLite 우선, 미국 종목은 fallback)
-    closes_by_code: dict = {}
-    name_by_code: dict = {}
-    try:
-        with _get_db() as conn:
-            for it in items:
-                code = it["code"]
-                rows = conn.execute(
-                    "SELECT close FROM ohlcv WHERE code=? "
-                    "ORDER BY date DESC LIMIT ?", (code, days)
-                ).fetchall()
-                closes = [r["close"] for r in rows if r["close"]]
-                if closes:
-                    closes_by_code[code] = list(reversed(closes))
-                    name_by_code[code] = it["name"]
-    except Exception as exc:
-        log.exception("correlation ohlcv load")
-        return jsonify({"error": str(exc)}), 500
-
-    codes = list(closes_by_code.keys())
-    if len(codes) < 2:
-        return jsonify({"error": "OHLCV 데이터가 부족한 종목이 많습니다",
-                        "loaded": codes}), 400
-
-    result = _compute_correlation(closes_by_code, codes)
-    result["names"] = [name_by_code.get(c, c) for c in result["codes"]]
-    result["source"] = source
-    result["days"] = days
-    return jsonify(result)
+# KBJ P8 삭제: api_correlation — kbj /api/portfolio/correlation
 
 
 # ── 추천 성과 검증 (recommendation_history) ────────────────────────────────────
@@ -10233,102 +9343,10 @@ def migrate_discover_to_recommendations() -> dict:
     return {"snapshots": snapshots, "inserted": total}
 
 
-@app.route("/api/recommendation/performance")
-def api_recommendation_performance():
-    """추천 시점 대비 D+1 ~ D+7 수익률.
-    쿼리: source=discover_kr|discover_us|agent_kr|agent_us, days=7"""
-    if not (_SQLITE_OK and USE_SQLITE):
-        return jsonify({"error": "SQLite 비활성"}), 503
-    source = request.args.get("source", "discover_kr")
-    days = int(request.args.get("days", 7))
-    from datetime import timedelta as _td
-    cutoff = (now_kst() - _td(days=days)).strftime("%Y-%m-%d")
-
-    out = {
-        "source": source, "lookback_days": days,
-        "daily_snapshots": [], "overall": {},
-    }
-    all_pnls: list = []
-    try:
-        with _get_db() as conn:
-            dates = conn.execute(
-                "SELECT DISTINCT date FROM recommendation_history "
-                "WHERE source = ? AND date >= ? ORDER BY date DESC",
-                (source, cutoff)
-            ).fetchall()
-            for dr in dates:
-                rec_date = dr["date"]
-                picks = conn.execute(
-                    "SELECT rank, code, name, market, score, price_at_rec, tags_json "
-                    "FROM recommendation_history "
-                    "WHERE source = ? AND date = ? ORDER BY rank ASC",
-                    (source, rec_date)
-                ).fetchall()
-                day = {"date": rec_date, "picks": []}
-                day_pnls: list = []
-                for p in picks:
-                    code = p["code"]; rec_price = p["price_at_rec"] or 0
-                    if rec_price <= 0:
-                        continue
-                    ohlcv = conn.execute(
-                        "SELECT date, close FROM ohlcv "
-                        "WHERE code = ? AND date > ? ORDER BY date ASC LIMIT 7",
-                        (code, rec_date)
-                    ).fetchall()
-                    cur_row = conn.execute(
-                        "SELECT close FROM stocks WHERE code = ?", (code,)
-                    ).fetchone()
-                    cur_price = (cur_row["close"] if cur_row else 0) or 0
-                    daily_pnl: list = []
-                    for o in ohlcv:
-                        if o["close"] and rec_price > 0:
-                            pct = round((o["close"] / rec_price - 1) * 100, 2)
-                            daily_pnl.append({"date": o["date"],
-                                              "close": o["close"], "pnl_pct": pct})
-                    if daily_pnl:
-                        final_pnl = daily_pnl[-1]["pnl_pct"]
-                    elif cur_price > 0:
-                        final_pnl = round((cur_price / rec_price - 1) * 100, 2)
-                    else:
-                        final_pnl = 0.0
-                    try:
-                        tags = json.loads(p["tags_json"] or "[]")
-                    except Exception:
-                        tags = []
-                    day["picks"].append({
-                        "rank": p["rank"], "code": code, "name": p["name"],
-                        "market": p["market"], "score": p["score"],
-                        "rec_price": rec_price, "current_price": cur_price,
-                        "final_pnl": final_pnl,
-                        "d1_pnl": daily_pnl[0]["pnl_pct"] if daily_pnl else None,
-                        "sparkline": [d["pnl_pct"] for d in daily_pnl],
-                        "daily_pnl": daily_pnl, "tags": tags,
-                    })
-                    day_pnls.append(final_pnl)
-                    all_pnls.append(final_pnl)
-                day["avg_pnl"] = round(sum(day_pnls) / len(day_pnls), 2) if day_pnls else 0
-                day["win_count"] = sum(1 for p in day_pnls if p > 0)
-                day["total_count"] = len(day_pnls)
-                out["daily_snapshots"].append(day)
-        if all_pnls:
-            wins = [p for p in all_pnls if p > 0]
-            out["overall"] = {
-                "total_picks": len(all_pnls),
-                "avg_pnl": round(sum(all_pnls) / len(all_pnls), 2),
-                "win_rate": round(len(wins) / len(all_pnls) * 100, 1),
-                "max_win": round(max(all_pnls), 2),
-                "max_loss": round(min(all_pnls), 2),
-                "total_return": round(sum(all_pnls), 2),
-            }
-    except Exception as exc:
-        log.exception("recommendation performance")
-        return jsonify({"error": str(exc)}), 500
-    return jsonify(out)
+# KBJ P8 삭제: api_recommendation_performance — kbj 페이지 12 추천 성과(/api/journal/picks)
 
 
-@app.route("/api/recommendation/migrate", methods=["POST"])
-def api_recommendation_migrate():
-    return jsonify(migrate_discover_to_recommendations())
+# KBJ P8 삭제: api_recommendation_migrate — kbj legacy 이관(journal import-sd — recommendation_history)
 
 
 # ── 장마감 시황 자동 요약 (순수 데이터 기반) ────────────────────────────────────
@@ -12429,242 +11447,19 @@ def _score_sentiment_titles(titles: list, sdict: dict) -> dict:
 
 
 # ── 수익률 저널 (trade_journal) ─────────────
-def _init_trade_journal():
-    if not (_SQLITE_OK and USE_SQLITE):
-        return
-    try:
-        with _get_db() as conn:
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS trade_journal (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    code TEXT NOT NULL,
-                    name TEXT,
-                    market TEXT,
-                    action TEXT NOT NULL,
-                    price REAL NOT NULL,
-                    qty INTEGER NOT NULL,
-                    total_amount REAL,
-                    fee REAL DEFAULT 0,
-                    tax REAL DEFAULT 0,
-                    strategy TEXT,
-                    memo TEXT,
-                    trade_date TEXT NOT NULL,
-                    created_at TEXT DEFAULT (datetime('now', 'localtime')),
-                    linked_buy_id INTEGER,
-                    realized_pnl REAL,
-                    realized_pnl_pct REAL,
-                    hold_days INTEGER
-                )
-            """)
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_tj_date ON trade_journal(trade_date DESC)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_tj_code ON trade_journal(code)")
-            conn.commit()
-        log.info("[저널] trade_journal 테이블 초기화")
-    except Exception as exc:
-        log.warning("[저널] 초기화 실패: %s", exc)
+# KBJ P8 삭제: _init_trade_journal — kbj 페이지 12 저널(/api/journal/* — 쓰기 모듈 kbj.services.personal.journal, ADR 0033)
 
 
-@app.route("/api/journal/add", methods=["POST"])
-def api_journal_add():
-    """매매 기록 추가 — 매도 시 FIFO로 매수 연결 + 실현손익 자동 계산."""
-    if not (_SQLITE_OK and USE_SQLITE):
-        return jsonify({"error": "SQLite 비활성"}), 503
-    data = request.get_json(silent=True) or {}
-    code = (data.get("code") or "").strip()
-    action = (data.get("action") or "").strip().lower()
-    try:
-        price = float(data.get("price") or 0)
-        qty = int(data.get("qty") or 0)
-    except Exception:
-        price, qty = 0, 0
-    if not code or action not in ("buy", "sell") or price <= 0 or qty <= 0:
-        return jsonify({"error": "필수값 누락 (code/action/price/qty)"}), 400
-
-    trade_date = data.get("trade_date") or now_kst().strftime("%Y-%m-%d")
-    total = price * qty
-    # 한국 주식 수수료(0.015%) + 매도 시 거래세(0.18%)
-    fee = round(total * 0.00015)
-    tax = round(total * 0.0018) if action == "sell" else 0
-
-    realized_pnl = None
-    realized_pnl_pct = None
-    hold_days = None
-    linked_buy_id = None
-    name = data.get("name") or ""
-    market = data.get("market") or "kr"
-
-    try:
-        with _get_db() as conn:
-            if not name:
-                row = conn.execute("SELECT name, market FROM stocks WHERE code = ?", (code,)).fetchone()
-                if row:
-                    name = row["name"] or code
-                    market = row["market"] or market
-            name = name or code
-
-            if action == "sell":
-                # FIFO: 가장 오래된 미연결 매수 1건과 매칭
-                buy_row = conn.execute(
-                    "SELECT id, price, trade_date FROM trade_journal "
-                    "WHERE code = ? AND action = 'buy' "
-                    "AND id NOT IN (SELECT linked_buy_id FROM trade_journal "
-                    "                WHERE linked_buy_id IS NOT NULL) "
-                    "ORDER BY trade_date ASC, id ASC LIMIT 1",
-                    (code,)
-                ).fetchone()
-                if buy_row:
-                    linked_buy_id = buy_row["id"]
-                    bp = buy_row["price"] or 0
-                    realized_pnl = round((price - bp) * qty - fee - tax)
-                    realized_pnl_pct = round((price / bp - 1) * 100, 2) if bp else 0
-                    try:
-                        from datetime import datetime as _dt
-                        bd = _dt.strptime(buy_row["trade_date"], "%Y-%m-%d")
-                        sd = _dt.strptime(trade_date, "%Y-%m-%d")
-                        hold_days = (sd - bd).days
-                    except Exception:
-                        pass
-
-            cur = conn.execute(
-                "INSERT INTO trade_journal "
-                "(code, name, market, action, price, qty, total_amount, fee, tax, "
-                " strategy, memo, trade_date, linked_buy_id, realized_pnl, "
-                " realized_pnl_pct, hold_days) "
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                (code, name, market, action, price, qty, total, fee, tax,
-                 (data.get("strategy") or "").strip(),
-                 (data.get("memo") or "").strip(),
-                 trade_date, linked_buy_id, realized_pnl, realized_pnl_pct, hold_days)
-            )
-            conn.commit()
-            new_id = cur.lastrowid
-        return jsonify({"status": "ok", "id": new_id, "realized_pnl": realized_pnl,
-                        "realized_pnl_pct": realized_pnl_pct, "hold_days": hold_days})
-    except Exception as exc:
-        log.exception("journal/add")
-        return jsonify({"error": str(exc)}), 500
+# KBJ P8 삭제: api_journal_add — kbj 페이지 12 저널(/api/journal/* — 쓰기 모듈 kbj.services.personal.journal, ADR 0033)
 
 
-@app.route("/api/journal/list")
-def api_journal_list():
-    """매매 이력 조회 — period 일수 (기본 30)."""
-    if not (_SQLITE_OK and USE_SQLITE):
-        return jsonify({"trades": []})
-    try:
-        period = max(1, int(request.args.get("period", 30)))
-    except Exception:
-        period = 30
-    from datetime import timedelta as _td
-    cutoff = (now_kst() - _td(days=period)).strftime("%Y-%m-%d")
-    try:
-        with _get_db() as conn:
-            rows = conn.execute(
-                "SELECT * FROM trade_journal WHERE trade_date >= ? "
-                "ORDER BY trade_date DESC, id DESC", (cutoff,)
-            ).fetchall()
-        return jsonify({"trades": [dict(r) for r in rows]})
-    except Exception as exc:
-        log.exception("journal/list")
-        return jsonify({"trades": [], "error": str(exc)}), 500
+# KBJ P8 삭제: api_journal_list — kbj 페이지 12 저널(/api/journal/* — 쓰기 모듈 kbj.services.personal.journal, ADR 0033)
 
 
-@app.route("/api/journal/summary")
-def api_journal_summary():
-    """수익률 요약 (overall / 그룹별 / 누적 곡선)."""
-    if not (_SQLITE_OK and USE_SQLITE):
-        return jsonify({"overall": {"total_trades": 0}})
-    try:
-        period = max(1, int(request.args.get("period", 30)))
-    except Exception:
-        period = 30
-    group_by = request.args.get("group", "daily")
-    from datetime import timedelta as _td
-    cutoff = (now_kst() - _td(days=period)).strftime("%Y-%m-%d")
-    try:
-        with _get_db() as conn:
-            rows = conn.execute(
-                "SELECT realized_pnl, realized_pnl_pct, hold_days, trade_date, "
-                "       strategy, name, code FROM trade_journal "
-                "WHERE action='sell' AND trade_date >= ? "
-                "AND realized_pnl IS NOT NULL "
-                "ORDER BY trade_date ASC, id ASC", (cutoff,)
-            ).fetchall()
-        data = [dict(r) for r in rows]
-        if not data:
-            return jsonify({"overall": {"total_trades": 0},
-                            "groups": [], "equity_curve": []})
-
-        pnls = [r["realized_pnl"] or 0 for r in data]
-        pcts = [r["realized_pnl_pct"] or 0 for r in data]
-        wins = [p for p in pnls if p > 0]
-        losses = [p for p in pnls if p <= 0]
-        sum_losses = sum(losses)
-        overall = {
-            "total_trades": len(pnls),
-            "total_pnl":    round(sum(pnls)),
-            "avg_pnl":      round(sum(pnls) / len(pnls)),
-            "avg_pnl_pct":  round(sum(pcts) / len(pcts), 2),
-            "win_rate":     round(len(wins) / len(pnls) * 100, 1),
-            "max_win":      round(max(pnls)),
-            "max_loss":     round(min(pnls)),
-            "avg_win":      round(sum(wins) / len(wins)) if wins else 0,
-            "avg_loss":     round(sum_losses / len(losses)) if losses else 0,
-            "profit_factor": round(abs(sum(wins) / sum_losses), 2) if sum_losses else 999,
-            "avg_hold_days": round(
-                sum((r["hold_days"] or 0) for r in data) / len(data), 1
-            ),
-        }
-
-        from collections import defaultdict
-        bucket: dict = defaultdict(list)
-        for r in data:
-            if group_by == "monthly":
-                key = (r["trade_date"] or "")[:7]
-            elif group_by == "strategy":
-                key = (r["strategy"] or "미분류")
-            else:
-                key = r["trade_date"] or ""
-            bucket[key].append(r)
-
-        groups = []
-        keys = sorted(bucket.keys()) if group_by != "strategy" else \
-            sorted(bucket.keys(), key=lambda k: -sum((t["realized_pnl"] or 0) for t in bucket[k]))
-        for k in keys:
-            ts = bucket[k]
-            tp = sum((t["realized_pnl"] or 0) for t in ts)
-            tw = sum(1 for t in ts if (t["realized_pnl"] or 0) > 0)
-            groups.append({
-                "label": k, "trades": len(ts),
-                "pnl": round(tp), "wins": tw,
-                "win_rate": round(tw / len(ts) * 100, 1),
-            })
-
-        cum = 0
-        curve = []
-        for r in data:
-            cum += r["realized_pnl"] or 0
-            curve.append({"date": r["trade_date"], "cumulative": round(cum)})
-
-        return jsonify({"overall": overall, "groups": groups, "equity_curve": curve})
-    except Exception as exc:
-        log.exception("journal/summary")
-        return jsonify({"error": str(exc)}), 500
+# KBJ P8 삭제: api_journal_summary — kbj 페이지 12 저널(/api/journal/* — 쓰기 모듈 kbj.services.personal.journal, ADR 0033)
 
 
-@app.route("/api/journal/delete/<int:trade_id>", methods=["DELETE"])
-def api_journal_delete(trade_id):
-    if not (_SQLITE_OK and USE_SQLITE):
-        return jsonify({"error": "SQLite 비활성"}), 503
-    try:
-        with _get_db() as conn:
-            # 이 매수에 연결된 매도가 있는지 확인 → 함께 정리
-            conn.execute("UPDATE trade_journal SET linked_buy_id = NULL "
-                         "WHERE linked_buy_id = ?", (trade_id,))
-            conn.execute("DELETE FROM trade_journal WHERE id = ?", (trade_id,))
-            conn.commit()
-        return jsonify({"status": "deleted", "id": trade_id})
-    except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+# KBJ P8 삭제: api_journal_delete — kbj 페이지 12 저널(/api/journal/* — 쓰기 모듈 kbj.services.personal.journal, ADR 0033)
 
 
 # ── 🔗 밸류체인 맵 (산업별 레이어 + 뉴스 heat) ──────────────
@@ -13281,152 +12076,34 @@ def api_vc2_review_compare():
 # Step 4-4-J: analysis_journal Flask API
 # ============================================================
 
-@app.route('/api/journal/recent', methods=['GET'])
-def api_analysis_journal_recent():
-    """최근 분석 (전체 종목 통합). limit (기본 30, 최대 100)."""
-    try:
-        from analysis_journal_api import list_recent_journals
-        limit = request.args.get('limit', default=30, type=int)
-        results = list_recent_journals(limit)
-        return jsonify({'count': len(results), 'journals': results})
-    except Exception as e:
-        log.exception("journal/recent")
-        return jsonify({'error': str(e)}), 500
+# KBJ P8 삭제: api_analysis_journal_recent — kbj 페이지 12 저널(/api/journal/* — 쓰기 모듈 kbj.services.personal.journal, ADR 0033) — 분석 일지
 
 
-@app.route('/api/journal/stock/<stock_code>', methods=['GET'])
-def api_analysis_journal_by_stock(stock_code):
-    """종목별 분석 이력 (최신순)."""
-    try:
-        from analysis_journal_api import list_journals_by_stock
-        limit = request.args.get('limit', default=10, type=int)
-        results = list_journals_by_stock(stock_code, limit)
-        return jsonify({
-            'stock_code': stock_code,
-            'count': len(results),
-            'journals': results,
-        })
-    except Exception as e:
-        log.exception("journal/by_stock")
-        return jsonify({'error': str(e)}), 500
+# KBJ P8 삭제: api_analysis_journal_by_stock — kbj 페이지 12 저널(/api/journal/* — 쓰기 모듈 kbj.services.personal.journal, ADR 0033) — 분석 일지
 
 
-@app.route('/api/journal/<int:journal_id>', methods=['GET'])
-def api_analysis_journal_read(journal_id):
-    """단일 분석 조회."""
-    try:
-        from analysis_journal_api import read_journal
-        result = read_journal(journal_id)
-        if result:
-            return jsonify(result)
-        return jsonify({'error': f'id {journal_id} 없음'}), 404
-    except Exception as e:
-        log.exception("journal/read")
-        return jsonify({'error': str(e)}), 500
+# KBJ P8 삭제: api_analysis_journal_read — kbj 페이지 12 저널(/api/journal/* — 쓰기 모듈 kbj.services.personal.journal, ADR 0033) — 분석 일지
 
 
-@app.route('/api/journal', methods=['POST'])
-def api_analysis_journal_create():
-    """신규 분석 입력. Body(JSON): {stock_code, ...}"""
-    try:
-        from analysis_journal_api import create_journal
-        data = request.get_json(silent=True)
-        if not data:
-            return jsonify({'success': False, 'error': 'JSON body 필수'}), 400
-        result = create_journal(data)
-        if result.get('success'):
-            return jsonify(result), 201
-        return jsonify(result), 400
-    except Exception as e:
-        log.exception("journal/create")
-        return jsonify({'success': False, 'error': str(e)}), 500
+# KBJ P8 삭제: api_analysis_journal_create — kbj 페이지 12 저널(/api/journal/* — 쓰기 모듈 kbj.services.personal.journal, ADR 0033) — 분석 일지
 
 
-@app.route('/api/journal/<int:journal_id>', methods=['PATCH'])
-def api_analysis_journal_update(journal_id):
-    """분석 부분 수정. Body(JSON): 변경할 필드만."""
-    try:
-        from analysis_journal_api import update_journal
-        updates = request.get_json(silent=True)
-        if not updates:
-            return jsonify({'success': False, 'error': 'JSON body 필수'}), 400
-        result = update_journal(journal_id, updates)
-        if result.get('success'):
-            return jsonify(result)
-        # 없는 id면 404, 그 외는 400
-        err = result.get('error', '') or ''
-        status = 404 if '없음' in err else 400
-        return jsonify(result), status
-    except Exception as e:
-        log.exception("journal/update")
-        return jsonify({'success': False, 'error': str(e)}), 500
+# KBJ P8 삭제: api_analysis_journal_update — kbj 페이지 12 저널(/api/journal/* — 쓰기 모듈 kbj.services.personal.journal, ADR 0033) — 분석 일지
 
 
-@app.route('/api/journal/<int:journal_id>', methods=['DELETE'])
-def api_analysis_journal_delete(journal_id):
-    """분석 hard delete."""
-    try:
-        from analysis_journal_api import delete_journal
-        result = delete_journal(journal_id)
-        if result.get('success'):
-            return jsonify(result)
-        return jsonify(result), 404
-    except Exception as e:
-        log.exception("journal/delete")
-        return jsonify({'success': False, 'error': str(e)}), 500
+# KBJ P8 삭제: api_analysis_journal_delete — kbj 페이지 12 저널(/api/journal/* — 쓰기 모듈 kbj.services.personal.journal, ADR 0033) — 분석 일지
 
 
-@app.route('/api/journal/<int:journal_id>/export/markdown', methods=['GET'])
-def api_analysis_journal_export_markdown(journal_id):
-    """단일 분석 Markdown export (5분 피치)."""
-    try:
-        from analysis_journal_api import export_to_markdown, read_journal
-        if not read_journal(journal_id):
-            return jsonify({'error': f'id {journal_id} 없음'}), 404
-        md = export_to_markdown(journal_id)
-        return md, 200, {'Content-Type': 'text/markdown; charset=utf-8'}
-    except Exception as e:
-        log.exception("journal/export/markdown")
-        return jsonify({'error': str(e)}), 500
+# KBJ P8 삭제: api_analysis_journal_export_markdown — kbj 페이지 12 저널(/api/journal/* — 쓰기 모듈 kbj.services.personal.journal, ADR 0033) — 분석 일지
 
 
-@app.route('/api/journal/import-review', methods=['POST'])
-def api_analysis_journal_import_review():
-    """검토 6종목 일괄 임포트 (관리자용). body: {force: true}"""
-    try:
-        from analysis_journal_api import import_review_session_analysis
-        data = request.get_json(silent=True) or {}
-        force = data.get('force', False)
-        result = import_review_session_analysis(skip_duplicates=not force)
-        return jsonify(result)
-    except Exception as e:
-        log.exception("journal/import-review")
-        return jsonify({'success': False, 'error': str(e)}), 500
+# KBJ P8 삭제: api_analysis_journal_import_review — kbj 페이지 12 저널(/api/journal/* — 쓰기 모듈 kbj.services.personal.journal, ADR 0033) — 분석 일지
 
 
-@app.route('/api/journal/prefill/<stock_code>', methods=['GET'])
-def api_analysis_journal_prefill(stock_code):
-    """종목 코드로 분석 일지 초안 자동 작성."""
-    try:
-        from analysis_journal_helper import build_prefill_data
-        data = build_prefill_data(stock_code)
-        return jsonify(data)
-    except Exception as e:
-        log.exception("journal/prefill")
-        return jsonify({'error': str(e), 'stock_code': stock_code}), 500
+# KBJ P8 삭제: api_analysis_journal_prefill — kbj 페이지 12 저널(/api/journal/* — 쓰기 모듈 kbj.services.personal.journal, ADR 0033) — 분석 일지
 
 
-@app.route('/api/journal/stats', methods=['GET'])
-def api_analysis_journal_stats():
-    """분석 메타 통계 + 미분석 종목 일부."""
-    try:
-        from analysis_journal_helper import get_journal_stats, get_stocks_without_analysis
-        stats = get_journal_stats()
-        stats['missing_stocks_sample'] = get_stocks_without_analysis(limit=20)
-        return jsonify(stats)
-    except Exception as e:
-        log.exception("journal/stats")
-        return jsonify({'error': str(e)}), 500
+# KBJ P8 삭제: api_analysis_journal_stats — kbj 페이지 12 저널(/api/journal/* — 쓰기 모듈 kbj.services.personal.journal, ADR 0033) — 분석 일지
 
 
 # ============================================================

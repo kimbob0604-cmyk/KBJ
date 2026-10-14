@@ -4,10 +4,13 @@
 처리기다.
 
 `flows(ctx)` — 선점한 키(as_of = 슬롯 시작 `YYYY-MM-DDTHH:MM` KST):
-- `inst_foreign_intraday`[거래소] → FHPTJ04400000 시장 2 × 구분(외국인·기관) 2 = 4건. 이력
-  `prv_flows.investor_intraday`(ts = 슬롯 시작, source `kis.prelim`) + 일별 원장 오늘 행
-  (`prv_flows.stock_investor_daily`, source `kis.prelim`, estimated, revise=False — 마감 확정이
-  덮는다). 가집계 회차 전의 빈 목록은 0행(실패 아님).
+- `inst_foreign_intraday`[거래소] → FHPTJ04400000 시장 2 × 구분(외국인·기관) 2 × 방향(순매수·
+  순매도 상위 — 공식 예제상 순위 목록이라 순매도 종목은 순매수 목록에 없다) 2 = 8건. 이력
+  `prv_flows.investor_intraday`(ts = 슬롯 시작, source `kis.prelim`, rank = 순매수 목록 순위 —
+  순매도 목록 행은 None) + 일별 원장 오늘 행(`prv_flows.stock_investor_daily`, source `kis.prelim`,
+  estimated, revise=False — 마감 확정이 덮는다). 가집계 회차 전의 빈 목록은 0행(실패 아님). 값은
+  하루 4회 입력 회차에만 바뀐다(`investors.PRELIM_ROUNDS`) — 회차 고르기는 읽는 쪽
+  (`rules.intraday`).
 - `turnover_rank_intraday`[거래소] → FHPST01710000 시장 2건. 이력
   `prv_market.turnover_rank_intraday` + 목록 종목의 오늘 잠정 스냅(`prv_market.stock_snapshot`,
   source `kis.prelim`, estimated).
@@ -45,6 +48,7 @@ from kbj.data.private.kis.index import (
     parse_sector_quotes,
 )
 from kbj.data.private.kis.investors import (
+    INST_FOREIGN_SIDES,
     INST_FOREIGN_WHO,
     merge_inst_foreign,
     params_inst_foreign,
@@ -113,9 +117,11 @@ def _inst_foreign(c: _Ctx, venue: str) -> int:
     lists: list[tuple[str, list[IntradayInvestor]]] = []
     for market in INVESTOR_MARKETS:
         for who in INST_FOREIGN_WHO:
-            body = _get(c, "inst_foreign_total", params_inst_foreign(market, who, venue),
-                        f"FHPTJ04400000 {market} {who}")  # fmt: skip
-            lists.append((who, parse_inst_foreign_total(body, ts=c.ts, venue=venue)))
+            for side in INST_FOREIGN_SIDES:  # 순매수 목록이 먼저(merge 의 순위 자리)
+                body = _get(c, "inst_foreign_total", params_inst_foreign(market, who, venue, side),
+                            f"FHPTJ04400000 {market} {who} {side}")  # fmt: skip
+                rows = parse_inst_foreign_total(body, ts=c.ts, venue=venue, ranked=side == "buy")
+                lists.append((who, rows))
     rows = merge_inst_foreign(lists)
     c.repos.flows.put_intraday(rows, loaded_by=c.job, received_at=c.now)
     rep = c.repos.flows.upsert_investor_days(

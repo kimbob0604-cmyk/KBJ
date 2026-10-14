@@ -1,18 +1,24 @@
 """시총 순위·완충 규칙 — KOSPI200·KOSDAQ150·KRX300 형(metrics §24.7).
 
-KRX 지수 산출 방법론 원문을 옮기기 전 근사다 [확인 필요] — 업종별 누적 시총 비중 규칙은 아직 없다.
+KRX 방법론 원문을 직접 받지 못해 2차 자료(삼성증권 2026-03-27 등)로 옮긴 근사다 [확인 필요].
+산업군은 설정 `sectors`(KSIC 근사 — 2026-11-02 KRX 개정의 KRICS 9개 산업군 매핑은 TODO).
+예비종목 제도는 2026-11-02 개정으로 폐지 — 이 엔진에 없다.
 
 순서
 1. 구성종목이 없으면 `no_constituents`.
 2. 대상: 설정 시장(markets)·kinds·exclude_flags(관리·거래정지·정리매매) 밖. 대상 밖 구성종목은 편출
-후보.
-3. 순위 = 대상 종목 전체 시총 내림차순(1 = 가장 큼).
-4. 유동성: 산업군 안 일평균 거래대금 순위 백분위 ≤ liquidity_pct. 거래대금을 모르면 판정 보류(None).
-5. 문턱: 신규 = 순위 floor(size × add_rank_ratio) 종목의 시총, 유지 = floor(size × keep_rank_ratio).
-   괴리율 = 시총 ÷ 문턱 − 1, 필요 상승률 = 문턱 ÷ 시총 − 1(1bp 올림 — 다른 종목 고정).
-6. 신규 상장 min_listing_days 미만은 편입하지 않는다(시총 순위 ≤ fast_entry_rank 면 특례).
+   후보.
+3. 심사 시총 = 심사기간 일평균 시총(`mktcap_avg`), 없으면 기준일 시총으로 대체(사유 — 추정).
+   순위 = 대상 종목 전체 심사 시총 내림차순(표시·신규 상장 특례·정원 채움 순서).
+4. 산업군마다 심사 시총 내림차순으로 산업군 안 순위 p, 산업군 구성종목 수 n:
+   신규 = p ≤ floor(n × add_rank_ratio) 이고 산업군 누적 시총 비중 안(자기보다 큰 종목 비중 <
+   sector_cum_mcap — 문턱에 처음 닿는 종목까지), 기존 = p ≤ floor(n × keep_rank_ratio).
+   문턱 = 그 경계 위치 종목의 심사 시총. 괴리율 = 심사 시총 ÷ 문턱 − 1, 필요 상승률 = 문턱 ÷ 심사
+   시총 − 1(1bp 올림 — 다른 종목 고정). 시총이 오르면 p 는 나빠지지 않고 누적 비중도 줄어든다(단조).
+5. 유동성: 산업군 안 일평균 거래대금 순위 백분위 ≤ liquidity_pct. 거래대금을 모르면 판정 보류(None).
+6. 신규 상장 min_listing_days 미만은 편입하지 않는다(전체 순위 ≤ fast_entry_rank 면 특례).
 7. 정원 맞추기: 편입 뒤 수 > size 면 순위 낮은 편입 후보부터 경계, < size 면 다음 순위 비구성종목을
-채운다.
+   채운다.
 """
 
 from __future__ import annotations
@@ -65,6 +71,43 @@ def liquidity(stocks: Sequence[StockIn], pct: float) -> dict[str, bool | None]:
     return out
 
 
+def _cap(s: StockIn) -> int:
+    """심사 시총 — 심사기간 일평균, 없으면 기준일 시총."""
+    return s.mktcap_avg if s.mktcap_avg is not None and s.mktcap_avg > 0 else (s.mktcap or 0)
+
+
+def sector_limits(
+    stocks: Sequence[StockIn], add_ratio: float, keep_ratio: float, cum_pct: float | None
+) -> dict[str, tuple[str, int, int, int, int, int | None, int]]:
+    """종목 → (산업군, 산업군 안 순위, 산업군 구성종목 수, 신규 한도 위치, 유지 한도 위치,
+    신규 문턱(원 — 한도 0 이면 None), 유지 문턱(원)). 순위·문턱은 심사 시총 기준."""
+    groups: dict[str, list[StockIn]] = {}
+    for s in stocks:
+        groups.setdefault(s.sector or DEFAULT_SECTOR, []).append(s)
+    out: dict[str, tuple[str, int, int, int, int, int | None, int]] = {}
+    for sec, rows in groups.items():
+        rows = sorted(rows, key=lambda s: (-_cap(s), s.code))
+        n_mem = sum(1 for s in rows if s.member)
+        add_k = math.floor(n_mem * add_ratio + 1e-9)
+        keep_k = max(add_k, math.floor(n_mem * keep_ratio + 1e-9), 1)
+        if cum_pct is not None:
+            total = sum(_cap(s) for s in rows)
+            larger, cum_k = 0, 0
+            for s in rows:  # 자기보다 큰 종목 비중 < 문턱인 앞부분(비중은 위치에 따라 늘기만 한다)
+                if total <= 0 or larger / total >= cum_pct - 1e-12:
+                    break
+                cum_k += 1
+                larger += _cap(s)
+            add_k = min(add_k, cum_k)
+        add_k = min(add_k, len(rows))
+        keep_k = min(keep_k, len(rows))
+        add_thr = _cap(rows[add_k - 1]) if add_k >= 1 else None
+        keep_thr = _cap(rows[keep_k - 1])
+        for i, s in enumerate(rows):
+            out[s.code] = (sec, i + 1, n_mem, add_k, keep_k, add_thr, keep_thr)
+    return out
+
+
 def _outcome(member: bool, met: bool, g: float, band: float) -> Outcome:
     if abs(g) < band:
         return "borderline"
@@ -85,8 +128,8 @@ def predict_krx(
     if not members:
         return IndexResult("no_constituents", None, (), 0, (NO_LIST,), True)
     size = int(rules.val("size"))
-    add_n = max(1, math.floor(size * rules.val("add_rank_ratio") + 1e-9))
-    keep_n = max(add_n, math.floor(size * rules.val("keep_rank_ratio") + 1e-9))
+    add_ratio, keep_ratio = rules.val("add_rank_ratio"), rules.val("keep_rank_ratio")
+    cum_pct = rules.opt("sector_cum_mcap")
     band = rules.val("borderline")
     notes: list[str] = []
     ok: list[StockIn] = []
@@ -107,10 +150,12 @@ def predict_krx(
             ))  # fmt: skip
     if not ok:
         return IndexResult("no_data", None, (), len(members), ("시세 없음",), True)
-    ranked = sorted(ok, key=lambda s: (-(s.mktcap or 0), s.code))
+    n_no_avg = sum(1 for s in ok if s.mktcap_avg is None or s.mktcap_avg <= 0)
+    if n_no_avg:
+        notes.append(f"심사기간 평균 시총 없는 {n_no_avg}종목은 기준일 시총으로 대체(추정)")
+    ranked = sorted(ok, key=lambda s: (-_cap(s), s.code))
     rank = {s.code: i + 1 for i, s in enumerate(ranked)}
-    add_thr_won = ranked[min(add_n, len(ranked)) - 1].mktcap or 0
-    keep_thr_won = ranked[min(keep_n, len(ranked)) - 1].mktcap or 0
+    lim = sector_limits(ok, add_ratio, keep_ratio, cum_pct)
     liquid = liquidity(ok, rules.val("liquidity_pct"))
     min_days = int(rules.val("min_listing_days"))
     fast = int(rules.val("fast_entry_rank"))
@@ -118,13 +163,24 @@ def predict_krx(
     for s in ok:
         if s.mktcap is None:
             raise ValueError(f"{s.code}: 시총 없음")
-        thr_won = keep_thr_won if s.member else add_thr_won
-        thr = threshold(1.0, thr_won)
-        g = gap(s.mktcap, thr)
-        rr, _ = required_rise(s.mktcap, None, thr, None)
+        sec, p, n_mem, add_k, keep_k, add_thr, keep_thr = lim[s.code]
+        cap = _cap(s)
         reasons: list[str] = []
+        if s.member:
+            thr_won: int = keep_thr
+            met = p <= keep_k
+        elif add_thr is None:
+            thr_won = keep_thr if keep_thr > 0 else cap
+            met = False
+            reasons.append(f"산업군 {sec} 구성종목 {n_mem} — 신규 편입 자리 없음")
+        else:
+            thr_won = add_thr
+            met = p <= add_k
+        reasons.append(f"산업군 {sec} 안 {p}위/구성 {n_mem}(한도 {keep_k if s.member else add_k})")
+        thr = threshold(1.0, thr_won)
+        g = gap(cap, thr)
+        rr, _ = required_rise(cap, None, thr, None)
         lq = liquid.get(s.code)
-        met = rank[s.code] <= (keep_n if s.member else add_n)
         if lq is False:
             met = False
             reasons.append("산업군 내 거래대금 순위 밖")
@@ -137,6 +193,8 @@ def predict_krx(
                 met = False
                 reasons.append(f"상장 {min_days}일 미만")
         outcome = _outcome(s.member, met, g, band)
+        if not s.member and add_thr is None:
+            outcome = "none"  # 산업군에 신규 자리가 없다(문턱 없음 — 경계로 보이지 않는다)
         if lq is None and outcome in ("add", "keep"):
             outcome = "borderline"
         if lq is False or any("미만" in r for r in reasons):
@@ -153,7 +211,13 @@ def predict_krx(
     out = _fit_size(out, size, blocked, notes)
     out = with_passive(out, aum_won)
     out.sort(key=lambda o: (o.rank is None, o.rank or 0, o.code))
-    cutoff = Cutoff(add_thr_won, None, keep_thr_won, f"rank {add_n}/{keep_n}", "model")
+    # 대표 문턱(화면용) = 산업군 신규·유지 문턱 가운데 가장 낮은 값 — 산업군마다 다르다
+    adds = [v[5] for v in lim.values() if v[5] is not None]
+    keeps = [v[6] for v in lim.values()]
+    method = f"sector rank {add_ratio:.0%}/{keep_ratio:.0%}" + (
+        f" cum {cum_pct:.0%}" if cum_pct is not None else ""
+    )
+    cutoff = Cutoff(min(adds) if adds else min(keeps), None, min(keeps), method, "model")
     if aum_won is None:
         notes.append("추종 자금 없음 — 예상 패시브 매매를 계산하지 않았다")
     return IndexResult("ok", cutoff, tuple(out), len(members), tuple(notes), True)
