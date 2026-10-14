@@ -124,6 +124,31 @@ def test_db_outage_goes_to_the_disk_spool_and_replays(tmp_path: Path) -> None:
     assert [e.kind for e in events] == ["db_spooling", "db_spool_replayed"]
 
 
+def test_a_hook_set_after_construction_gets_notices_from_before_it(tmp_path: Path) -> None:
+    # 서비스 조립(open_store → ServiceHealthSink(store) → set_health_hook) 순서: 기동 때 남은 스풀
+    # 알림은 잇기 전에 생기지만 잃지 않고, 이은 뒤의 알림과 함께 health 로 넘어간다
+    spool = DiskSpool(tmp_path / "spool")
+    mono = [0.0]
+    first = SpooledGexStore(
+        FakeDb(down=True), service="recorder", spool=spool, monotonic=lambda: mono[0]
+    )
+    first.write_raw([_env(0)])
+    first.close()
+    db = FakeDb()
+    events: list[HealthEvent] = []
+    sink = SpooledGexStore(
+        db,
+        service="recorder",
+        spool=DiskSpool(tmp_path / "spool"),
+        monotonic=lambda: mono[0],
+        now=lambda: T0,
+    )
+    sink.set_health_hook(events.append)
+    assert sink.flush_spool()
+    assert [e.kind for e in events] == ["db_spool_pending_at_start", "db_spool_replayed"]
+    assert len(db.of("raw_messages")) == 1
+
+
 def test_while_the_spool_is_pending_new_batches_queue_behind_it(tmp_path: Path) -> None:
     db = FakeDb(down=True)
     mono = [0.0]

@@ -227,6 +227,9 @@ def main() -> int:  # pragma: no cover — compose 진입점 (.env·실제 Redis
     url = settings.redis_url
     try:
         health = ServiceHealthSink(store, tagger)
+        # 스풀 시작·복구 알림도 ops.health_events 로(GX PostgresSink on_health 자리 — 잇지 않으면
+        # 로그에만 남는다)
+        store.set_health_hook(health.emit)
         recorder = Recorder(store, health)
         hb = Heartbeater(connect_redis(url), SERVICE)
         log_event(log, logging.INFO, SERVICE, "started")

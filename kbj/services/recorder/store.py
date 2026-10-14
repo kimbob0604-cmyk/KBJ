@@ -68,6 +68,7 @@ from kbj.store.spool import (
 Row = tuple[Any, ...]
 Tag = tuple[date | None, str | None]
 HealthHook = Callable[[HealthEvent], None]
+_PENDING_HOOKS = 100  # health 싱크를 잇기 전 붙잡아 두는 알림 수
 
 TABLES: Final[tuple[GxTable, ...]] = (
     RAW_MESSAGES,
@@ -372,13 +373,18 @@ class SpooledGexStore:
         self._spooling = False
         self._notice("db_spool_replayed", "DB 복구 — 스풀을 모두 재적재했다", "info")
 
+    def set_health_hook(self, hook: HealthHook | None) -> None:
+        """조립 뒤 health 싱크를 잇는다 — 싱크(`ServiceHealthSink`)가 이 저장소에 쓰므로 저장소를
+        먼저 만들고 나중에 잇는다. 잇기 전에 쌓인 알림(기동 때 남은 스풀 등)은 다음 쓰기 때
+        넘어간다."""
+        self._on_health = hook
+
     def _notice(self, kind: str, detail: str, severity: Severity) -> None:
         level = {"info": logging.INFO, "warning": logging.WARNING}.get(severity, logging.CRITICAL)
         log_event(log, level, self.service, kind, detail=detail)
-        if self._on_health is not None:
-            self._hooks.append(
-                HealthEvent(kind, detail, self._now(), severity, service=self.service)
-            )
+        self._hooks.append(HealthEvent(kind, detail, self._now(), severity, service=self.service))
+        if self._on_health is None:  # 아직 안 이었으면 최근 것만 붙잡아 둔다(로그에는 이미 남았다)
+            del self._hooks[:-_PENDING_HOOKS]
 
     def _dispatch_hooks(self) -> None:
         """잠금 밖에서 on_health 로 넘긴다(그쪽이 다시 이 싱크에 써도 막히지 않게)."""

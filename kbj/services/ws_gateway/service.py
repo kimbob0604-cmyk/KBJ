@@ -657,7 +657,13 @@ def main() -> int:  # pragma: no cover — compose 진입점 (.env·실제 Redis
 
     from kbj.config.settings import Settings
     from kbj.services.recorder.store import open_store
-    from kbj.services.runtime import LogHealthSink, connect_redis, setup_logging, tagger_for
+    from kbj.services.runtime import (
+        LogHealthSink,
+        ServiceHealthSink,
+        connect_redis,
+        setup_logging,
+        tagger_for,
+    )
     from kbj.services.ws_gateway.client import redis_key_source
 
     setup_logging()
@@ -669,6 +675,8 @@ def main() -> int:  # pragma: no cover — compose 진입점 (.env·실제 Redis
     cal = TradingCalendar.default()
     redis = connect_redis(settings.redis_url)
     store = open_store(settings, service=SERVICE, tagger=tagger_for(cal))
+    # 스풀 시작·복구 알림을 ops.health_events 로(잇지 않으면 로그에만 남는다 — recorder 와 같다)
+    store.set_health_hook(ServiceHealthSink(store, tagger_for(cal)).emit)
     cfg = load_config()
 
     async def amain() -> bool:
