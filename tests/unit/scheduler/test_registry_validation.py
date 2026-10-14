@@ -86,13 +86,17 @@ P5_ENABLED = {
 # P6(docs/p6_design.md D-P6-20 — 웨이브 3 WRAP). 외부 호출이 없는 세 작업만. 관세청 수집
 # 두 작업(trade.customs_*)은 키 수령·실측(#1~#6·#17·#55) 뒤 켠다
 P6_ENABLED = {"trade.map_load", "trade.derive", "trade.stock_index"}
-# 단계별 켜진 작업(웨이브 3 묶음이 P3~P6 을 켰다). 새 단계가 작업을 켜면 이 표에 한 줄 더한다.
+# P7(docs/p7_design.md §1.7-1 — 웨이브 3 WRAP). 외부 호출이 없는 세 작업. krx.vkospi 는 VKOSPI 행·칸
+# 실측(#P7-1) 전까지 꺼진 채(D-P7-14). 서비스 gex.engine·ws_gateway·recorder 는 P7_SERVICES(아래)
+P7_ENABLED = {"diag.public", "diag.daily", "gex.alert"}
+# 단계별 켜진 작업(웨이브 3 묶음이 P3~P7 을 켰다). 새 단계가 작업을 켜면 이 표에 한 줄 더한다.
 ENABLED_BY_PHASE = {
     "P2": P2_ENABLED,
     "P3": P3_ENABLED,
     "P4": P4_ENABLED,
     "P5": P5_ENABLED,
     "P6": P6_ENABLED,
+    "P7": P7_ENABLED,
 }
 
 
@@ -150,7 +154,11 @@ def test_enabled_jobs_by_phase_and_core_services() -> None:  # §6.6-10, §6.9, 
     assert enabled == set().union(*ENABLED_BY_PHASE.values())
     for phase, names in ENABLED_BY_PHASE.items():
         assert {j.name for j in REG.enabled_jobs() if j.phase == phase} == names, phase
-    assert {s.name for s in REG.services if s.enabled} == {"auth", "notifier", "scheduler"}
+    assert {s.name for s in REG.services if s.enabled} == {
+        "auth", "notifier", "scheduler",
+        # P7 WRAP(D-P7-10) — KBJ 로 옮긴 GEX 상시 프로세스
+        "gex.engine", "gex.ws_gateway", "gex.recorder",
+    }  # fmt: skip
     assert all(not j.enabled for j in REG.jobs if j.external)
     # P4 이후 단계는 아직 하나도 켜지 않는다(처리기 없음)
     assert not [j.name for j in REG.enabled_jobs() if j.phase not in ENABLED_BY_PHASE]
@@ -242,7 +250,8 @@ def test_budget_estimates_fit_caps() -> None:  # §6.6-9
     calls = REG.daily_calls(CATALOG)
     assert 0 < calls["krx"] <= BUDGETS["krx"][0]  # type: ignore[operator]
     assert calls["dart"] <= BUDGETS["dart"][0]  # type: ignore[operator]
-    assert calls["krx"] == 10 * 12 + 2 * 12  # krx.daily 10키 × 12회 + GX 파생 2 × 12
+    # krx.daily 10키 × 12회 + GX 파생 2 × 12 + P7 krx.vkospi 1 × 12(꺼진 작업도 등록부 추정에 든다)
+    assert calls["krx"] == 10 * 12 + 2 * 12 + 1 * 12
 
 
 # ── 규칙을 어기면 잡힌다 ──────────────────────────────────────────────────────────────────
@@ -439,7 +448,7 @@ def test_budget_missing_or_over_cap() -> None:  # §6.6-9
     errs = mutated(lambda d: job(d, "krx.daily").update(budget=None))
     assert any("krx.daily" in e and "예산 krx" in e for e in errs)
     errs = Registry.parse(raw()).validate(CATALOG, budgets={**BUDGETS, "krx": (100, None)})
-    assert any("예산 krx: 하루 추정 144 > 상한 100" in e for e in errs)
+    assert any("예산 krx: 하루 추정 156 > 상한 100" in e for e in errs)
     errs = Registry.parse(raw()).validate(CATALOG, budgets={**BUDGETS, "datago": (None, 3)})
     assert any("데이터셋별 상한 3" in e for e in errs)
 
@@ -898,7 +907,8 @@ def _kis_daily_estimate() -> dict[str, int]:
 
 def test_p5_kis_daily_calls_fit_the_soft_cap() -> None:  # §3.4
     est = _kis_daily_estimate()
-    assert est["flows.market_minute"] == 3 * 401  # K2I 3조합(현물은 #39 뒤)
+    # K2I 3조합 + 위클리 4조합(P7 WRAP 이 켬 — D-P7-6, GX 실측 #13). 현물은 #39 뒤
+    assert est["flows.market_minute"] == 7 * 401
     assert est["program.intraday"] == 2 * 401
     assert est["program.daily"] == 4
     total = sum(est.values()) + KIS_P3_P4_DAILY
@@ -1026,3 +1036,128 @@ def test_p6_sends_nothing_new_and_keeps_the_1600_rule() -> None:  # D-P6-8, ADR 
     ]
     assert closing == ["brief.closing"]
     assert REG.by_name("brief.closing").schedule.cron == "0 16 * * 1-5"
+
+
+# ── P7(docs/p7_design.md §0.4·§3.2 — 묶음 FND-B 가 모양 확정, 켜기는 WRAP) ──
+
+P7_JOBS = {
+    "diag.public": "kbj.services.engine.diag_pub:run",
+    "diag.daily": "kbj.services.engine.diag:run",
+    "krx.vkospi": "kbj.services.collectors.krx_vkospi:run",
+    "gex.alert": "kbj.services.engine.gex_alert:run",
+}
+P7_WRITES = {
+    "diag.public": {"pub_diag.indicator", "pub_diag.gauge", "pub_diag.event_marker"},
+    "diag.daily": {"prv_diag.indicator", "prv_diag.fear_greed", "prv_diag.verdict"},
+    "krx.vkospi": {"prv_diag.vol_index"},
+    "gex.alert": set(),
+}
+P7_SERVICE_WRITES = {
+    "gex.engine": {
+        "prv_gex.levels", "prv_gex.metrics", "prv_gex.strike_gex", "prv_gex.option_iv",
+        "prv_gex.oi_changes",
+    },
+    "gex.ws_gateway": {"prv_gex.fut_ticks", "prv_gex.opt_ticks"},
+    "gex.recorder": {"prv_gex.raw_messages"},
+}  # fmt: skip
+P7_SERVICES = {
+    "gex.engine": "kbj.services.engine.gex",
+    "gex.ws_gateway": "kbj.services.ws_gateway",
+    "gex.recorder": "kbj.services.recorder",
+}
+
+
+def test_p7_jobs_and_services_are_registered_with_design_owners() -> None:
+    p7 = {j.name: j for j in REG.jobs if j.name in P7_JOBS}
+    assert set(p7) == set(P7_JOBS)
+    for name, owner in P7_JOBS.items():
+        assert p7[name].owner == owner and p7[name].phase == "P7", name
+        assert set(p7[name].writes) == P7_WRITES[name], name
+    # VKOSPI 는 실측 #P7-1 전까지 꺼진 채 고정(D-P7-14)
+    assert not p7["krx.vkospi"].enabled and "#P7-1" in (p7["krx.vkospi"].note or "")
+    services = {s.name: s for s in REG.services}
+    for name, owner in P7_SERVICES.items():
+        s = services[name]
+        assert s.owner == owner and s.runner == "kbj" and s.heartbeat_s == 60, name
+        # 웨이브 3(WRAP)이 켰다 — 쓰기 표는 ServiceSpec.writes(0020 주석의 쓰기 주인과 같다)
+        assert s.enabled and set(s.writes) == P7_SERVICE_WRITES[name], name
+    # 워치독은 프로세스가 남기는 하트비트 이름(모듈 SERVICE — GX 이름 그대로)을 본다
+    from kbj.services.engine.gex import SERVICE as ENGINE
+    from kbj.services.recorder.service import SERVICE as RECORDER
+    from kbj.services.ws_gateway.client import SERVICE as WS
+
+    beats = {n: services[n].beat_name for n in P7_SERVICES}
+    assert beats == {"gex.engine": ENGINE, "gex.ws_gateway": WS, "gex.recorder": RECORDER}
+    assert all(services[n].beat_name == n for n in ("auth", "notifier", "scheduler"))
+    assert {j.name for j in REG.jobs if j.phase == "P7" and j.enabled} == P7_ENABLED
+    # GX 수집 경로는 legacy 외부 서비스로 남는다(§10 Q1)
+    assert services["gex.poller"].runner == "external"
+    for name in ("gex.day_minutes", "gex.night_minutes", "gex.krx_derivatives", "kis.master"):
+        assert REG.by_name(name).runner == "external", name
+        assert "search_path" in (REG.by_name(name).note or ""), name
+
+
+def test_p7_diag_tables_have_one_owner_each() -> None:
+    from kbj.core.p7_rows import DIAG_PRV_TABLES, DIAG_PUB_TABLES
+
+    owners: dict[str, list[str]] = {}
+    for j in REG.jobs:
+        for w in j.writes:
+            if w.startswith(("pub_diag.", "prv_diag.")):
+                owners.setdefault(w, []).append(j.name)
+    assert set(owners) == set(DIAG_PUB_TABLES) | set(DIAG_PRV_TABLES)
+    assert all(len(v) == 1 for v in owners.values()), owners
+    # 공개 진단 작업은 공개 표에만, 로그인 출처를 받지 않는다(D-P7-15)
+    pub = REG.by_name("diag.public")
+    assert all(w.startswith("pub_") for w in pub.writes) and not pub.collects
+    # prv_gex.investor_flow 의 쓰기 주인은 여전히 flows.market_minute 하나(D-P7-5)
+    flow_owners = [j.name for j in REG.jobs if "prv_gex.investor_flow" in j.writes]
+    assert flow_owners == ["flows.market_minute"]
+
+
+def test_p7_schedules_and_sends_follow_the_design() -> None:  # D-P7-15·16, ADR 0018
+    pub = REG.by_name("diag.public")
+    assert pub.schedule.cron == "40 8 * * 1-5" and pub.schedule.catch_up_until == "10:00"
+    deps = {d.job: d for d in pub.depends_on}
+    assert deps["macro.morning"].wait_min == 20 and not deps["macro.morning"].hard
+    assert deps["market_stats.kofia"].as_of == "prev" and not deps["market_stats.kofia"].hard
+    daily = REG.by_name("diag.daily")
+    assert daily.schedule.cron == "0 16 * * 1-5" and daily.notify is None
+    ddeps = {d.job: d for d in daily.depends_on}
+    assert ddeps["market.close_collect"].hard
+    assert ddeps["board.daily"].wait_min == 15 and not ddeps["board.daily"].hard
+    closing = {d.job: d for d in REG.by_name("brief.closing").depends_on}
+    assert closing["diag.daily"].wait_min == 10 and not closing["diag.daily"].hard
+    vk = REG.by_name("krx.vkospi")
+    assert vk.schedule.cron == "10 8 * * 1-5" and vk.budget == "krx"
+    assert vk.retry.until == "10:00"
+    alert = REG.by_name("gex.alert")
+    eq = alert.schedule.equity
+    assert eq is not None and (eq.start, eq.end, eq.every_min) == ("open", "close", 1)
+    assert alert.notify is not None and alert.notify.kind == "alert.gex_level"
+    assert alert.notify.when == "changed" and alert.deadline_min == 1 and not alert.writes
+    # 마감 뒤 새 발송 없음 — 16:00 의 발송 작업 목록은 그대로(POST_CLOSE_SENDERS)
+    for name in ("diag.public", "diag.daily", "krx.vkospi"):
+        assert REG.by_name(name).notify is None, name
+
+
+def test_service_writes_are_checked_like_job_writes() -> None:
+    """ServiceSpec.writes(P7 WRAP) — 형식·공개 표 금지·작업과 겹침·서비스끼리 겹침·마이그레이션."""
+    data = raw()
+    svc = next(s for s in data["services"] if s["name"] == "gex.engine")
+    svc["writes"] = [
+        "prv_gex.levels",
+        "bad name",
+        "pub_diag.gauge",
+        "prv_gex.investor_flow",
+        "prv_gex.fut_ticks",
+        "prv_gex.no_such_table",
+    ]
+    errs = "\n".join(errors_of(data))
+    assert "gex.engine: writes 형식" in errs
+    assert "gex.engine: 서비스는 공개 표 pub_diag.gauge" in errs
+    assert "prv_gex.investor_flow 를 작업 flows.market_minute 도 쓴다" in errs
+    assert "prv_gex.fut_ticks 를 서비스 gex.ws_gateway 도 쓴다" in errs or (
+        "gex.ws_gateway: 표 prv_gex.fut_ticks 를 서비스 gex.engine 도 쓴다" in errs
+    )
+    assert "gex.engine: enabled 인데 표 prv_gex.no_such_table" in errs

@@ -1,0 +1,87 @@
+{
+  "source": "KBJ:gex.engine(KIS 옵션 체인·웹소켓)",
+  "as_of": "2026-12-10T04:30:00Z",
+  "quality": "stale",
+  "notes": [
+    "현재가: 선물 전광판 근월물 A01612(엔진 F_ref 없음 — estimated)",
+    "엔진 지연 — 마지막 사이클 13:30 KST(30분 전)"
+  ],
+  "generated_at": "2026-12-10T14:00:00+09:00",
+  "data": {
+    "scope": "0dte",
+    "trade_date": "2026-12-10",
+    "session": "day",
+    "cycle_at": "2026-12-10T04:30:00Z",
+    "session_open": true,
+    "price": 351.46,
+    "price_quality": "estimated",
+    "stale": true,
+    "stale_reason": "엔진 지연 — 마지막 사이클 13:30 KST(30분 전)",
+    "levels": [
+      {
+        "name": "abs_gamma",
+        "value": 350.0,
+        "flag": "visible",
+        "quality": "ok",
+        "reasons": [],
+        "detail": {}
+      },
+      {
+        "name": "call_wall",
+        "value": 360.0,
+        "flag": "visible",
+        "quality": "ok",
+        "reasons": [],
+        "detail": {}
+      },
+      {
+        "name": "expected_move_calendar",
+        "value": 4.2,
+        "flag": "visible",
+        "quality": "ok",
+        "reasons": [],
+        "detail": {}
+      },
+      {
+        "name": "expected_move_trading",
+        "value": 3.9,
+        "flag": "visible",
+        "quality": "ok",
+        "reasons": [],
+        "detail": {}
+      },
+      {
+        "name": "flip",
+        "value": 350.5,
+        "flag": "visible",
+        "quality": "ok",
+        "reasons": [],
+        "detail": {}
+      },
+      {
+        "name": "flip_distance",
+        "value": 0.2731,
+        "flag": "visible",
+        "quality": "ok",
+        "reasons": [],
+        "detail": {}
+      },
+      {
+        "name": "put_wall",
+        "value": 340.0,
+        "flag": "visible",
+        "quality": "ok",
+        "reasons": [],
+        "detail": {}
+      },
+      {
+        "name": "top_levels",
+        "value": 3.0,
+        "flag": "visible",
+        "quality": "ok",
+        "reasons": [],
+        "detail": {}
+      }
+    ]
+  }
+}

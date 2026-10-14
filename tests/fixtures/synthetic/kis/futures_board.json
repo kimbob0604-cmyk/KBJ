@@ -1,0 +1,9 @@
+{
+ "_source": "SYNTHETIC — scripts/make_synthetic_fixtures.py(시드 고정)가 만든 합성 데이터. 실측 아님 — 선물 전광판(FHPIF05030200) output 앞 2행 형태, 14:27",
+ "rt_cd": "0",
+ "msg_cd": "MCA00000",
+ "output": [
+  {"futs_shrn_iscd": "A01612", "hts_kor_isnm": "F 202612", "futs_prpr": "1095.10", "futs_prdy_vrss": "-31.05", "prdy_vrss_sign": "5", "futs_prdy_ctrt": "-2.76", "hts_thpr": "1100.70", "acml_vol": "77504", "futs_askp": "1095.10", "futs_bidp": "1095.00", "hts_otst_stpl_qty": "137340", "futs_hgpr": "1123.70", "futs_lwpr": "1090.10", "hts_rmnn_dynu": "74", "total_askp_rsqn": "498", "total_bidp_rsqn": "423", "futs_antc_cnpr": "0.00", "futs_antc_cntg_vrss": "0.00", "antc_cntg_vrss_sign": "0", "antc_cntg_prdy_ctrt": "0.00"},
+  {"futs_shrn_iscd": "A01703", "hts_kor_isnm": "F 202703", "futs_prpr": "1085.00", "futs_prdy_vrss": "-27.60", "prdy_vrss_sign": "5", "futs_prdy_ctrt": "-2.48", "hts_thpr": "1107.91", "acml_vol": "8", "futs_askp": "1086.35", "futs_bidp": "1083.85", "hts_otst_stpl_qty": "4662", "futs_hgpr": "1111.50", "futs_lwpr": "1085.00", "hts_rmnn_dynu": "165", "total_askp_rsqn": "4", "total_bidp_rsqn": "2", "futs_antc_cnpr": "0.00", "futs_antc_cntg_vrss": "0.00", "antc_cntg_vrss_sign": "0", "antc_cntg_prdy_ctrt": "0.00"}
+ ]
+}

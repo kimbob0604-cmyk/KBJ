@@ -86,7 +86,8 @@ def test_빼던_섹션이_돌아오지_않는다() -> None:
     for t in ("AI 추천", "GEX·시그널", "옵션/선물"):
         assert t not in text
     omitted = {s.key for s in cfg().closing.sections if s.status == "omitted"}
-    assert omitted == {"gex_signals"}
+    # P7 FND-B 가 나눴고 OUT 이 gex_diag 를 켰다 — 남은 것은 P8(signals)
+    assert omitted == {"signals"}
 
 
 # ── check_closing_brief ───────────────────────────────────────────────────────────────
@@ -182,5 +183,7 @@ def test_3_종가가_비면_그_봉은_쓰지_않는다() -> None:
 
 def test_1_아침_브리핑에_한국_날짜_신선도_꼬리표가_없다() -> None:
     text = build("morning", ctx(morning_repos(), MORNING))[1]
-    assert "야간선물" not in text and "옵션/선물" not in text
+    assert (
+        "옵션/선물" not in text
+    )  # ④ 야간선물·GEX 는 P7 OUT 이 켰다 — 날짜 꼬리표는 사이클 시각(KST)
     assert "(11/16 종가)" in text  # 미국 거래일(뉴욕) — 실행일(한국 11/17)이 아니다

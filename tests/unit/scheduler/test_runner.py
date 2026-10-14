@@ -353,7 +353,9 @@ def test_soft_dependency_without_wait_min_does_not_hold() -> None:
     started, detail = _brief_started(rig)
     assert started == kst(2026, 10, 6, 16, 0)
     assert "waiting" not in rig.kinds("brief.closing")
-    assert detail["soft_deps"] == {"board.daily": "running"}
+    # 보드 첫 시도(16:00)는 그 자리에서 끝나 같은 회차에 바로 거둬진다(실패 — 16:10 재시도 대기).
+    # 기다리지 않았으니 마감 요약은 그 기록을 그대로 적는다
+    assert detail["soft_deps"] == {"board.daily": "failed"}
     assert len(briefs) == 1
 
 

@@ -11,6 +11,7 @@ from decimal import Decimal
 from zoneinfo import ZoneInfo
 
 import pytest
+from pydantic import ValidationError
 
 from core.calendar import TradingCalendar, state_at
 from data.kis.models import FuturesBoardRow
@@ -239,7 +240,7 @@ def test_fresh_day_start_puts_p0_first_then_priority_order() -> None:
     k = kinds(p)
     assert k["option_list"] == 3 and k["expiry"] == 5
     assert k["futures_board"] == k["underlying"] == 1 and k["board"] == 3
-    assert k["investor"] == 1  # 첫 조합(오프셋 5초)만
+    assert k["investor"] == 0  # KBJ P7(D-P7-5): 투자자별은 부르지 않는다(flows.market_minute 몫)
     assert k["fill1"] == 8  # 60/82 초 간격 — 5.5초까지 8건
     assert k["fill2"] == 1
     prios = [j.priority for j in p.jobs]
@@ -271,7 +272,7 @@ def test_day_cadence_matches_plan_4_4_over_two_minutes() -> None:
         "board": 12,
         "futures_board": 4,
         "underlying": 4,
-        "investor": 14,
+        # KBJ P7(D-P7-5): "investor" 14 → 0 — 투자자별은 flows.market_minute 가 부른다
         "fill1": 164,
         "fill2": 120,
     }
@@ -341,12 +342,12 @@ def test_night_mode_job_sets() -> None:
     now = kst(2026, 9, 28, 21, 0, 10)  # 09-28 밤 → 09-29 귀속, WKM 260904 는 15:20 에 만기
     runs = steady(ctx, now)
     a = plan_at(now, ctx, runs, PollerConfig(night_mode="A"))
-    assert set(kinds(a)) == {"board", "futures_board", "underlying", "investor", "fill1", "fill2"}
+    assert set(kinds(a)) == {"board", "futures_board", "underlying", "fill1", "fill2"}  # P7: 투자자별 없음
     assert {j.series for j in a.jobs if j.kind == "board"} <= {WKI_1001, WKM_1001, M_10}
     assert {j.tag for j in a.jobs} == {(date(2026, 9, 29), "night")}
 
     b = plan_at(now, ctx, runs, PollerConfig(night_mode="B"))
-    assert set(kinds(b)) == {"futures_single", "investor", "fill1", "fill2"}
+    assert set(kinds(b)) == {"futures_single", "fill1", "fill2"}  # P7: 투자자별 없음
     assert {j.market for j in b.jobs if j.kind == "futures_single"} == {"CM"}
     assert {j.market for j in b.jobs if j.kind in ("fill1", "fill2")} == {"EU"}
     targets = ctx.targets(now)
@@ -359,9 +360,11 @@ def test_night_mode_job_sets() -> None:
     ]
 
     c = plan_at(now, ctx, runs, PollerConfig(night_mode="C"))
-    assert set(kinds(c)) == {"investor"}
-    none = plan_at(now, ctx, runs, PollerConfig(night_mode="C", night_investor=False))
-    assert none.jobs == ()
+    # KBJ P7(D-P7-5): 모드 C 에서 부르던 투자자별이 없어져 부르는 것이 없다. 끄던 설정
+    # (night_investor)도 지웠다 — 주면 설정 오류
+    assert set(kinds(c)) == set() and c.jobs == ()
+    with pytest.raises(ValidationError):
+        PollerConfig(night_mode="C", night_investor=False)  # pyright: ignore[reportCallIssue]
 
 
 def test_night_b_futures_are_the_two_nearest_codes() -> None:

@@ -328,3 +328,76 @@ healthcheck·log_event·sink·backoff 7개(GX `services.runtime` 은 GX `service
 
 `scripts/test_legacy.sh gexlab`: **2,716 통과**(P1 3,177 − 승격·폐지 461 − 매개변수 1 + 다리 1).
 `gexlab-integration`: 50(compose 1 + Docker 49) — 실행 결과는 묶음 H 보고에 적는다.
+
+## P7. GEX 엔진·웹소켓·녹화 KBJ 이식 (묶음 FND-B·FND-C·ENG·ING, 확정 WRAP, 2026-10-13)
+
+근거: `docs/p7_design.md` §1.8·§1.11, ADR 0029(GEX 이식 경계). 옮긴 만큼만 지웠다(D-P7-9). 남은 GX
+수집 경로(poller·scheduler·gaps·store·db)는 legacy 외부 서비스로 KBJ DB(`search_path=prv_gex,ops`)에
+붙는다(§10 Q1 — 이식은 P9).
+
+### P7.1 다시 내보내기(shim — 정본 → 이 파일)
+
+| legacy | KBJ 정본 | 묶음 |
+|---|---|---|
+| `core/{black76,chain,forward,gex,greeks,iv,levels,preprocess,specs}.py`·`core/metrics/*` | `kbj.core.gex.<모듈>`(같은 이름) | FND-C |
+| `scripts/validate_greeks.py` 스냅샷 입력 모델 | `kbj.engines.gex.snapshot`(KIS 그릭스 필드가 있어 core 밖) | FND-C |
+| `scripts/make_golden.py` core·chain-subset | `python -m kbj.services.engine.gex_golden core` | FND-C |
+| `services/engine/{daily,evaluate,extended,flow,futures,registry}.py` | `kbj.engines.gex.<모듈>` | ENG |
+| `services/engine/{service,publish,context,__main__}.py` | `kbj.services.engine.gex`(한 모듈) | ENG |
+| `core/features.py` | `kbj.config.gex`(플래그 로더 — 값은 `config/gex.yaml features`) | ENG |
+| `services/ws_gateway/**`·`services/recorder/**` | `kbj.services.ws_gateway`·`kbj.services.recorder` | ING |
+| `data/kis/{ws,models}.py` | `kbj.data.private.kis.ws`·`kbj.data.private.kis.derivatives` | ING |
+| `scripts/make_golden.py` raw | `python -m kbj.services.recorder.golden raw-parse` | ING |
+| `services/{bus,chain_feed}.py`·레코드 모델 | `kbj.services.runtime.{bus,chain_feed}`·`kbj.core.gex.records` | FND-B |
+
+`config/{kis_ws,kis_ws_fields,ws_budget}.yaml` 은 레포 루트 `config/` 로 `git mv`(ING). `config/features.yaml`
+은 GX compose 마운트·`test_compose` 가 읽어 남겼다(값이 KBJ `config/gex.yaml features` 와 같은지 다리 시험이
+본다 — compose 를 KBJ 로 옮기면 지운다).
+
+### P7.2 지운 것·바꾼 것
+
+- poller 투자자별 폴링 삭제(D-P7-5): `FHPTJ04030000`·`_investors` 계획 0 — `KIS:market_investor_intraday`
+  는 KBJ `flows.market_minute` 만 부른다(ADR 0019). `collector._on_investor` 는 부르는 계획이 없는 죽은
+  코드로 남았다(P9 정리). `services/scheduler/service.py` 1줄(`night_investor` 필드 삭제 대응),
+  `db/migrate.py`(KBJ DB 일 때 GX 마이그레이션 건너뜀).
+- `tests/fakes/engine_inputs.py` 는 KBJ 로 `git mv` 하고 legacy 자리에 `snapshot_cycle` 얇은 shim(남은
+  `shadow_report` 시험용).
+
+### P7.3 시험 — 승격으로 지운 것(KBJ 쪽에서 같은 단언이 돈다)
+
+pytest 수집 항목(매개변수 펼친 수, 2026-10-13 `--collect-only`).
+
+| 지운 시험 | 항목 | KBJ 쪽 |
+|---|---|---|
+| 단위 `black76` 260·`greeks` 497·`forward` 119·`iv` 117·`gex` 109·`specs` 80·`levels` 75·`chain` 63·`flow` 46·`preprocess` 38·`vol` 23·`futures_metrics` 16·`exposure` 14 | 1,457 | `tests/unit/core/gex/` |
+| 속성 9파일(`probe_properties` 2 는 남김) | 46 | `tests/property/gex/` |
+| `tests/test_sign_conventions.py` | 9 | `tests/unit/core/gex/` |
+| 골든 `test_core_golden` 22·`test_chain_subset` 14 | 36 | `tests/golden/gex/` |
+| FND-C 소계 | **1,548** | |
+| `test_engine_{service 29,evaluate 25,ticks 22,flow 14,investor 11,daily 10,extended 8,futures 6}`·`test_features` 21 | 146 | `tests/unit/engines/gex/` |
+| `test_store_engine.py` 32 중 30(2 남김 — GX 001/002 마이그레이션·shadow_report 읽기) | 30 | `tests/unit/store/test_gex_repo_engine.py` |
+| ENG 소계 | **176** | |
+| `test_kis_ws` 38·`test_kis_models` 39 | 77 | `tests/unit/kis/test_{kis_ws,derivatives}.py` |
+| `test_ws_{client 50,gateway_service 20,watch 20,subscriptions 10,backoff 6,budget 3}` | 109 | `tests/unit/ws_gateway/` |
+| `test_recorder_envelope` 8·`test_recorder_service` 7 중 6(PostgresSink 스풀 1 은 `test_recorder_postgres_spool.py` 로 남김) | 14 | `tests/unit/recorder/` |
+| 골든 `test_raw_golden` | 32 | `tests/golden/gex/test_raw_golden.py` |
+| ING 소계 | **232** | |
+| 합계 | **1,956** | |
+
+통합(`gexlab-integration`): `test_engine_store` 9 중 8 → `tests/integration/test_gex_engine_pg.py`(1 남김 —
+shadow_report), `test_make_golden_db` 3 → `tests/integration/test_recorder_golden_pg.py`. 50 → **39**.
+
+### P7.4 시험 — 고친 것·더한 것
+
+- `test_fixtures_clean.py` 매개변수 −3: 옮긴 코어 골든 데이터 1(FND-C)·raw 녹화 2(ING) — 그 파일의 비밀
+  검사는 KBJ `scripts/check_public_safety.py` 가 본다.
+- `test_poller_{collector,planner,service}.py`: 투자자별 단언을 '부르지 않는다' 단언으로 바꿨다(항목 수 유지).
+- `test_metric_report.py` 2줄·`test_spool.py`(이동 반영)·`tests/integration/test_engine_store.py`(남은 1개).
+- 새 다리 시험 +3: `test_kbj_gex_core_bridge.py`(FND-C)·`test_kbj_gex_engine_bridge.py`(ENG)·
+  `test_kbj_gex_ingest_bridge.py`(ING) — 다시 내보낸 객체가 KBJ 와 같은지, 남긴 합성 fixture 가 KBJ 사본과
+  바이트까지 같은지, `config/features.yaml` 값이 KBJ 와 같은지.
+
+### P7.5 결과
+
+`scripts/test_legacy.sh gexlab`: **760**(2,716 − 1,956 − 매개변수 3 + 다리 3). `gexlab-integration`: **39**
+(compose 2·Docker 37 — CI 는 38 이상). 기준 수는 `scripts/test_legacy.sh` 머리말·`.github/workflows/ci.yml`.

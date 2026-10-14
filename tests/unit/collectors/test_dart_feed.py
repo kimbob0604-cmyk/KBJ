@@ -468,7 +468,8 @@ def test_correction_after_the_quarter_end_keeps_the_original_period() -> None:
         fin=d.repos.fin,
         macro=d.repos.macro,
         market_stats=d.repos.market_stats,
-    )  # P5 FND 가 공개 묶음에 macro·market_stats 를 더했다
+        diag=d.repos.diag,
+    )  # P5 FND 가 공개 묶음에 macro·market_stats 를, P7 FND-B 가 diag 를 더했다
     env = F._Env(repos, d.claims, d.client, d.cfg, TradingCalendar.default(), d.now, "t")  # pyright: ignore[reportPrivateUsage]
     got = F._period_of_original(env, disc, fix)  # pyright: ignore[reportPrivateUsage]
     assert (got.fiscal_year, got.fiscal_q, got.period_end) == (2026, 2, date(2026, 6, 30))

@@ -63,6 +63,14 @@ KIS 버킷은 따로 그대로 센다). F2 KIS TR 은 가짜 KIS 가 합성으�
 시뮬레이션 처리기(P3 실제 처리기는 test_one_day_p3, P4 는 test_one_day_p4). p5 가 아닌 창의
 시뮬레이션 처리기 경로에서 P5 새 출처는 여전히 부른 것만 기록한다(`OFFLINE_SOURCES`).
 
+P7 확장(docs/p7_design.md §1.7-2 — 웨이브 3 WRAP): 등록부의 KBJ GEX 상시 서비스
+(`gex.engine`·`gex.ws_gateway`·`gex.recorder` — 켜짐)는 모든 창에서 하트비트를 남긴다(이름은
+`ServiceSpec.beat_name` — 프로세스 SERVICE). `SimOptions(p7=True)` 면 켜진 P7 작업(`diag.public`·
+`diag.daily`·`gex.alert`)은 실제 처리기, `gex.engine` 은 실제 `EngineService`(메모리 GEX 저장소 —
+`MemoryRepos.gex`)가 GX poller 흉내의 10분 회차마다 합성 체인(월물 202612 — Black-76 이론가,
+`tests/unit/engines/gex/engine_inputs.synthetic_series`)으로 사이클을 돈다(주간·야간). 엔진은 KIS 를
+부르지 않는다. 웹소켓·녹화 서비스는 하트비트만(구독은 위 `ws` 흉내).
+
 키·토큰은 모두 가짜 값이다. 로그인 등급 응답은 합성(U3).
 """
 
@@ -77,8 +85,9 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from datetime import time as dtime
+from decimal import Decimal
 from pathlib import Path
-from typing import Any, Final
+from typing import Any, Final, Literal
 from zoneinfo import ZoneInfo
 
 import fakeredis
@@ -88,7 +97,9 @@ from pydantic import SecretStr
 from redis import Redis
 from redis.exceptions import RedisError
 
+from kbj.config.diag import load_diag
 from kbj.config.fin import load_fin
+from kbj.config.gex import load_gex
 from kbj.config.macro import load_macro
 from kbj.config.markets import MarketsConfig, load_markets
 from kbj.config.settings import Settings
@@ -103,9 +114,11 @@ from kbj.core.calendar import (
     State,
     TradingCalendar,
     night_session_opens,
+    state_at,
     us_calendar,
 )
 from kbj.core.fin_rows import WatchItem
+from kbj.core.gex.records import ExpiryRecord
 from kbj.data import legacy_bridge
 from kbj.data.budget import DailyBudget, krx_budget
 from kbj.data.catalog import all_datasets
@@ -152,6 +165,8 @@ from kbj.services.collectors import corp_code, ops_watchdog
 from kbj.services.collectors import fin as fin_job
 from kbj.services.collectors.corp_code import MemoryCorpCodeStore
 from kbj.services.collectors.krx_daily import Coverage
+from kbj.services.engine.gex import SERVICE as ENGINE_SERVICE
+from kbj.services.engine.gex import EngineContext, EnginePublisher, EngineService
 from kbj.services.notifier.client import NotifyClient, set_default_client
 from kbj.services.notifier.outbox import Outbox
 from kbj.services.notifier.policy import NotifyConfig, load_notify_config
@@ -159,6 +174,7 @@ from kbj.services.notifier.service import NotifierService, build_service
 from kbj.services.notifier.store import MemoryInboxStore, MemoryNotifyLogStore
 from kbj.services.ops import nightly
 from kbj.services.runtime import MemoryHealthSink
+from kbj.services.runtime.bus import ChainReady
 from kbj.services.runtime.heartbeat import Heartbeater, heartbeat_age
 from kbj.services.scheduler.claims import (
     MemoryClaimStore,
@@ -197,7 +213,7 @@ from tests.fakes.nasdaq_server import FakeNasdaq, FakeStooq, StubLimiter
 from tests.fakes.nyfed_server import FakeNyfed
 from tests.fakes.telegram_server import FakeTelegram
 from tests.fakes.treasury_server import FakeTreasury
-from tests.fakes.ws_server import FakeKisWsServer, subscribe_once
+from tests.fakes.ws_server import FakeChain, FakeKisWsServer, FakeSeries, subscribe_once
 from tests.fakes.yahoo_server import FakeYahoo
 from tests.fixtures.synthetic.p4_world import P4World, build_world
 from tests.fixtures.synthetic.p5_world import US_DAY as P5_US_DAY
@@ -209,6 +225,7 @@ from tests.unit.api.web_fixtures_p5.etf import load_etf as load_etf_world
 from tests.unit.api.web_fixtures_p5.macro import load_macro as load_macro_world
 from tests.unit.collectors.p3_fakes import seed_universe
 from tests.unit.engines.filings.filings_world import load as load_filings
+from tests.unit.engines.gex.engine_inputs import fut_row, seed_master, synthetic_series
 from tests.unit.public_export.pub_rows import MemReader, PubWorld
 from tests.unit.reports.briefs.brief_world import board_record
 
@@ -247,6 +264,15 @@ WATCH: Final = SYMBOLS[:5]  # 알림 규칙 관심종목(합성)
 ETF_CODE: Final = "990990"  # 합성 ETF
 FUT_CODE: Final = (
     "A01612"  # 합성 마스터의 선물 코드(tests/fixtures/synthetic/kis/master_lines.json)
+)
+
+
+# P7 GEX 엔진 사이클의 합성 체인 — 월물 202612(최종거래일 12-10 둘째 목요일), 행사가 범위는
+# tests/fakes/ws_server.default_chain 의 월물과 같다. 선물 근월물은 그 마스터의 A01612(F 202612)
+P7_MONTH: Final = "202612"
+P7_EXPIRY: Final = date(2026, 12, 10)
+P7_CHAIN: Final = FakeChain(
+    series=(FakeSeries("", P7_MONTH, P7_EXPIRY, Decimal("745.0"), Decimal("1595.0")),)
 )
 
 
@@ -490,6 +516,7 @@ class SimOptions:
     p4: bool = False  # 합성 20종목 세계 + 켜진 P4 작업은 실제 처리기로(위 머리말)
     enable: tuple[str, ...] = ()  # 이 시뮬레이션의 등록부 사본에서만 켤 작업(운영 등록부는 그대로)
     p5: bool = False  # 합성 P5 세계 + 켜진 P5 작업은 실제 처리기로(위 머리말)
+    p7: bool = False  # 켜진 P7 작업은 실제 처리기 + 실제 GEX 엔진 사이클(위 머리말)
     drop_minutes: frozenset[str] = (
         frozenset()
     )  # P5 F2 실패 변형 — 이 분(HH:MM)의 1분 수집은 가짜 KIS 오류
@@ -595,6 +622,10 @@ class SimDay:
         self._p5_fakes()
         if opts.p5:
             self._p5_seed()
+        # P7: 켜진 P7 작업은 실제 처리기(diag.public·diag.daily·gex.alert)
+        self.p7_owners: frozenset[str] = frozenset(
+            j.owner for j in self.registry.jobs if opts.p7 and j.enabled and j.phase == "P7"
+        )
         if opts.seed_runs:
             self._seed_runs()
         # ── 프로세스 ─────────────────────────────────────────────────────────────────
@@ -810,6 +841,7 @@ class SimDay:
                 job.owner in self.p3_owners
                 or job.owner in self.p4_owners
                 or (job.owner in self.p5_owners)
+                or (job.owner in self.p7_owners)
             ):
                 handlers[job.owner] = resolve(job.owner)  # 실제 P3·P4·P5 처리기(import 검증 겸)
                 continue
@@ -839,6 +871,8 @@ class SimDay:
             resources.update(self._p4_resources())
         if self.opts.p5:
             resources.update(self._p5_resources())
+        if self.opts.p7:
+            resources.update(self._p7_resources())
         return JobRunner(
             self.registry,
             handlers,
@@ -1001,6 +1035,15 @@ class SimDay:
         # 그날 보드 산출(board.daily 는 시뮬레이션 처리기 — 16:03 산출을 미리 둔다: 마감 요약 ③·
         # 수급 리포트 대상). 합성 — tests/unit/reports/briefs/brief_world.board_record
         self.repos.board.put_day(board_record(day), loaded_by="sim.seed", now=eve)
+
+    def _p7_resources(self) -> dict[str, Any]:
+        """실제 P7 처리기의 자원(진단·GEX 알림 — 운영은 설정 파일·연결로 만든다)."""
+        return {
+            "repos": self.repos,
+            "markets": self.markets(),
+            "diag_config": load_diag(settings=self.sched_settings),
+            "gex_config": load_gex(settings=self.sched_settings),
+        }
 
     def _p5_resources(self) -> dict[str, Any]:
         """실제 P5 처리기의 자원(각 처리기 머리말 — 운영은 설정·연결로 만든다)."""
@@ -1232,6 +1275,69 @@ class SimDay:
         self._gx_krx_due: dict[str, datetime] = {}  # as_of → 다음 시도 시각
         self._gx_poll_done: set[str] = set()
         self._gx_ws_done: set[tuple[date, str]] = set()
+        # P7: KBJ GEX 상시 서비스(등록부 services 의 켜진 gex.*) — 하트비트는 프로세스 이름으로
+        self.gex_redis = self._redis()
+        self.gex_hbs: dict[str, Heartbeater] = {
+            svc.name: Heartbeater(self.gex_redis, svc.beat_name, now=self.clock.now)
+            for svc in self.registry.services
+            if svc.enabled and svc.runner == "kbj" and svc.name.startswith("gex.")
+        }
+        self.gex_cycles: list[tuple[datetime, str, str]] = []  # (as_of, 세션, 결과 품질)
+        self.gex_engine: EngineService | None = None
+        if self.opts.p7:
+            self._gex_engine_setup()
+
+    def _gex_engine_setup(self) -> None:
+        """실제 GEX 엔진 — 메모리 GEX 저장소를 읽고 쓴다(운영 PgGexRepo 자리)."""
+        seed_master(self.gex_redis, "\n".join(P7_CHAIN.master_lines()) + "\n")
+        t0 = self.start
+        d0 = t0.astimezone(KST).date()
+        self.repos.gex.seed_expiries(
+            [
+                ExpiryRecord(
+                    ts=t0, trade_date=d0, session="day", mrkt_cls="", expiry=P7_MONTH,
+                    last_trade_date=P7_EXPIRY, source="kis",
+                )
+            ]
+        )  # fmt: skip
+        self.gex_engine = EngineService(
+            self.repos.gex,
+            self.repos.gex,
+            EnginePublisher(self.gex_redis),
+            EngineContext(self.gex_redis, self.kr, clock=self.clock.monotonic),
+            self.kr,
+            health=MemoryHealthSink(),
+            now=self.clock.now,
+            mono=self.clock.monotonic,
+            heartbeat=Heartbeater(self.gex_redis, ENGINE_SERVICE, now=self.clock.now),
+        )
+
+    def _gex_cycle(self, now: datetime) -> None:
+        """poller 흉내 회차 하나 → 합성 체인·선물 행을 저장소에 두고 chain.ready 한 건(실제
+        엔진)."""
+        eng = self.gex_engine
+        if eng is None:
+            return
+        info = state_at(now, self.kr)
+        if info.trade_date is None or info.session is None:
+            return
+        src: Literal["board", "fill"] = "board" if info.session == "day" else "fill"
+        self.repos.gex.seed_chain(synthetic_series("", P7_MONTH, P7_EXPIRY, now, source=src))
+        self.repos.gex.seed_futures(
+            [
+                fut_row(
+                    now - timedelta(seconds=5), remaining_days=5, session=info.session,
+                    trade_date=info.trade_date,
+                )
+            ]
+        )  # fmt: skip
+        res = eng.on_ready(
+            ChainReady(
+                ts=now, trade_date=info.trade_date, session=info.session,
+                series=(("", P7_MONTH),),
+            )
+        )  # fmt: skip
+        self.gex_cycles.append((now, info.session, "none" if res is None else res.quality))
 
     def _gx_claim(self, job: str, key: DataKey, now: datetime) -> bool:
         return self.claims.claim(key, job, make_run_id(job, key.as_of, 1), now)
@@ -1260,6 +1366,7 @@ class SimDay:
             self._gx_krx_derivatives(now, d)
         if cur in (State.DAY, State.NIGHT) and local.minute % 10 == 0:
             self._gx_poll(now)
+            self._gex_cycle(now)
         if self.ws is not None and trading:
             for at, label in ((dtime(8, 44), "day"), (dtime(17, 59), "night")):
                 if label == "night" and not night_session_opens(d, self.kr):
@@ -1500,6 +1607,12 @@ class SimDay:
         self.scheduler.step()
         self.sched_hb.beat()
         self._gx_tick(self.clock.now())
+        # ws-gateway·recorder(·엔진 사이클이 없는 창의 engine) 하트비트
+        for name, hb in self.gex_hbs.items():
+            if not (name == "gex.engine" and self.gex_engine is not None):
+                hb.beat()
+        if self.gex_engine is not None:
+            self.gex_engine.tick()  # 곁일 + 하트비트(실제 엔진)
         self._legacy_tick(self.clock.now())
         self.notifier.step()
         self.notifier_hb.beat()

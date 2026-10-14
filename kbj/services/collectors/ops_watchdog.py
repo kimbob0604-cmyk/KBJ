@@ -90,7 +90,7 @@ def find_problems(
     for svc in registry.services:
         if not svc.enabled or svc.heartbeat_s is None:
             continue
-        age = heartbeat_age(svc.name, now)
+        age = heartbeat_age(svc.beat_name, now)
         if age is None or age > svc.heartbeat_s:
             seen = "없음" if age is None else f"{age:.0f}초 전"
             out.append(

@@ -15,6 +15,7 @@ from tests.unit.api.make_web_fixtures import AUTH, FIXTURES, OUT, render
 from tests.unit.api.test_routes_common import DATA_ROUTES
 from tests.unit.api.web_fixtures_p5 import DOMAINS as P5_DOMAINS
 from tests.unit.api.web_fixtures_p6 import DOMAINS as P6_DOMAINS
+from tests.unit.api.web_fixtures_p7 import DOMAINS as P7_DOMAINS
 
 
 def _base(path: str) -> str:
@@ -232,3 +233,40 @@ def test_p6_domains_and_modules(monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(flash, "render", lambda bad=bad: {bad: "{}"})
         with pytest.raises(ValueError, match="경로 형식"):
             mk.render_p6("flash")
+
+
+# ── P7(docs/p7_design.md §1.1 — 도메인별 모듈, gex·diag 폴더만) ──────────────────────────────
+
+
+@pytest.mark.parametrize("domain", P7_DOMAINS)
+def test_p7_fixtures_are_fresh(domain: str) -> None:
+    """`web/test/fixtures/api/<도메인>/**` 가 그 도메인 모듈의 출력과 같다. 다르면
+    `uv run python -m tests.unit.api.make_web_fixtures --only <도메인>` 로 다시 만든다."""
+    from tests.unit.api.make_web_fixtures import p7_files_on_disk, render_p7
+
+    want = render_p7(domain)
+    assert set(want) == p7_files_on_disk(domain), f"{domain}: 픽스처 파일 목록이 낡았다"
+    for rel, text in want.items():
+        assert rel.startswith(f"{domain}/")
+        assert (OUT / rel).read_text(encoding="utf-8") == text, f"{rel} 이 낡았다"
+        json.loads(text)
+
+
+def test_p7_domains_and_modules(monkeypatch: pytest.MonkeyPatch) -> None:
+    import importlib
+
+    from tests.unit.api import make_web_fixtures as mk
+    from tests.unit.api.web_fixtures_p7 import gex
+
+    assert P7_DOMAINS == ("gex", "diag")
+    for d in P7_DOMAINS:
+        assert importlib.import_module(f"tests.unit.api.web_fixtures_p7.{d}").DOMAIN == d
+    with pytest.raises(ValueError, match="모르는 P7 도메인"):
+        mk.render_p7("nope")
+    # P7 폴더는 P3~P6 폴더와 겹치지 않는다
+    taken = {*P5_DOMAINS, *(f"trade_{d}" for d in P6_DOMAINS), "stock", "filings", "watchlist"}
+    assert not set(P7_DOMAINS) & taken
+    for bad in ("../x.json", "/abs.json", "x.txt"):
+        monkeypatch.setattr(gex, "render", lambda bad=bad: {bad: "{}"})
+        with pytest.raises(ValueError, match="경로 형식"):
+            mk.render_p7("gex")

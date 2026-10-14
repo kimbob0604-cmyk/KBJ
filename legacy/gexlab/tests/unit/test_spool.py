@@ -428,8 +428,16 @@ def test_from_settings_puts_the_spool_under_the_service_directory(
 # 없어 "auth" 경우를 뺐다(KBJ auth 의 health 싱크는 kbj 쪽 시험이 본다)
 @pytest.mark.parametrize("service", ["poller", "recorder", "scheduler", "ws_gateway"])
 def test_every_service_gives_its_sink_the_calendar_tagger(service: str) -> None:
-    """서비스 진입점(main — compose 에서만 돈다)이 싱크에 tagger 를 넘긴다 (소스로 확인)."""
+    """서비스 진입점(main — compose 에서만 돈다)이 싱크에 tagger 를 넘긴다 (소스로 확인).
+
+    KBJ P7 ING: recorder·ws_gateway 는 KBJ 로 옮겼다 — KBJ 진입점이 KBJ 싱크
+    (`kbj.services.recorder.store.open_store`)에 tagger 를 넘기는지 본다."""
     root = Path(__file__).resolve().parents[2]
+    if service in ("recorder", "ws_gateway"):
+        kbj = root.parents[1] / "kbj" / "services" / service / "service.py"
+        calls = re.findall(r"open_store\(([^)]*)\)", kbj.read_text(encoding="utf-8"))
+        assert calls and all("tagger=" in c for c in calls), service
+        return
     src = (root / "services" / service / "service.py").read_text(encoding="utf-8")
     calls = re.findall(r"PostgresSink\.from_settings\(([^)]*)\)", src)
     assert calls and all("tagger=" in c for c in calls), service

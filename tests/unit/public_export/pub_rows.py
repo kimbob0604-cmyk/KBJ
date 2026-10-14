@@ -691,6 +691,13 @@ class MemReader:
         )
 
     def __getattr__(self, attr: str) -> Any:
+        if attr.startswith("q_diag_"):  # P7 DIAG(diag/ — pub_diag) — diag_seed.DiagReader 한 곳
+            from kbj.services.public_export import diag_json
+            from tests.unit.engines.diagnosis.diag_seed import DiagReader
+
+            q = {v.name: v for v in vars(diag_json).values() if isinstance(v, Query)}[attr[2:]]
+            reader = DiagReader(self.world.repos.diag)
+            return lambda p: reader(q, p)  # pyright: ignore[reportUnknownLambdaType]
         if attr.startswith("q_trade_x_"):
             name = attr[2:]
             return lambda p: self._explore(name, p)  # pyright: ignore[reportUnknownLambdaType]

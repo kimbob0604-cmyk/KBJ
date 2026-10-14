@@ -28,7 +28,13 @@ export interface PageDef {
 export const PAGES: readonly PageDef[] = [
   { n: 1, title: '시장', phase: 'P3', tier: 'mixed', plan: '지수·시장 거래대금·업종 히트맵·시장폭·투자자 수급' },
   { n: 2, title: '신고가 보드', phase: 'P3', tier: 'login', lock: 'board', plan: '역사적·52주·120일 신고가, 섹터·테마 집계, 랭킹, 탐지' },
-  { n: 3, title: '진단', phase: 'P7', tier: 'login', lock: 'options', plan: '종합 판정·공포탐욕·GEX 레벨(Flip·월·기대변동폭)' },
+  {
+    n: 3,
+    title: '진단',
+    phase: 'P7',
+    tier: 'mixed',
+    plan: '종합 판정·공포탐욕·시장 진단·GEX 레벨(Flip·월·기대변동폭) — 공공지표 진단·이벤트는 공개',
+  },
   { n: 4, title: '수급·스크리닝', phase: 'P3', tier: 'login', lock: 'investor', plan: '스크리너 6기준·투자자별·기관 7구분·종목 상세·장중 잠정' },
   // 5: DART 패널은 공개(관심종목만 보기 토글은 로그인), 경제 캘린더·뉴스는 P5 — 패널마다 등급이 달라 mixed(D-P4-15)
   { n: 5, title: '공시·일정', phase: 'P4', tier: 'mixed', plan: 'DART 공시 피드·잠정실적·오버행·내부자·실적 일정 (경제 캘린더·뉴스는 P5)' },
@@ -85,6 +91,9 @@ export const P5_PAGES: readonly number[] = PAGES.filter((p) => p.phase === 'P5' 
 /** P6 에 위젯이 들어오는 페이지(7 — 페이지 8 겹쳐 보기 패널은 P4 페이지 안 고리, WRAP) */
 export const P6_PAGES: readonly number[] = PAGES.filter((p) => p.phase === 'P6').map((p) => p.n);
 
+/** P7 위젯 페이지 — 3 진단(docs/p7_design.md §6, mixed: 공공지표 진단·이벤트만 공개) */
+export const P7_PAGES: readonly number[] = PAGES.filter((p) => p.phase === 'P7').map((p) => p.n);
+
 export type PageLoader = () => Promise<PageModule>;
 
 /**
@@ -92,7 +101,7 @@ export type PageLoader = () => Promise<PageModule>;
  * 페이지마다 따로 불러온다(처음 보일 때). 번호는 위젯이 있는 단계의 페이지만(P3 1·2·4·10 + P4 5·8 + P5 6 + P6 7) — 하위
  * 폴더(`src/pages/p8/*.ts`)는 이 glob 에 걸리지 않는다(진입 파일이 import).
  */
-const FOUND = import.meta.glob<PageModule>('../pages/p{1,2,4,5,6,7,8,10}_*.ts', { import: 'default' });
+const FOUND = import.meta.glob<PageModule>('../pages/p{1,2,3,4,5,6,7,8,10}_*.ts', { import: 'default' });
 
 export function pageLoaders(found: Record<string, () => Promise<PageModule>> = FOUND): Map<number, PageLoader> {
   const out = new Map<number, PageLoader>();

@@ -148,7 +148,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # gexlab: 단위·속성·골든(통합 49개는 아래 gexlab-integration 잡)
+        # gexlab: 단위·속성·골든 760(P7 — core·엔진·웹소켓·녹화 시험은 kbj 로 승격, 통합 39개는 아래
+        # gexlab-integration 잡. 승격한 시험은 위 test·kbj-integration 잡이 마커로 모은다 — legacy/gexlab/MIGRATION.md 'P7')
         # board: unittest(기준 수는 scripts/test_legacy.sh) / etf-rest: monitor/kr 94·flowlab 44·dart-report·etf_tracker_v9
         # (monitor/flow 는 P5 에 kbj/reports/flows 로 승격하고 지웠다 — legacy/etf_traker/MIGRATION.md 'P5')
         # stock_dashboard: 검사 스크립트 10개 pytest 래퍼
@@ -167,7 +168,7 @@ jobs:
         run: uv run pytest -m legacy -rs
 
   gexlab-integration:
-    # GEXLAB 통합 시험 49개. 원본 GEXLAB CI 처럼 러너의 Docker 를 그대로 쓴다 — 시험이 docker CLI 로
+    # GEXLAB 통합 시험 39개(P7 — 엔진 저장 8·raw 골든 DB 3 은 kbj tests/integration 으로 옮김, CI 는 38 이상). 원본 GEXLAB CI 처럼 러너의 Docker 를 그대로 쓴다 — 시험이 docker CLI 로
     # TimescaleDB(pg16)·Redis 컨테이너를 직접 띄우고 지운다(legacy/gexlab/tests/integration/conftest.py,
     # docker-compose.test.yml). 그래서 job services 는 두지 않고 이미지만 미리 받는다.
     # KBJ_REQUIRE_DOCKER=1 — Docker 를 못 써서 건너뛰면 녹색이 아니라 실패로 본다.

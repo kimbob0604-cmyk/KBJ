@@ -33,6 +33,11 @@ dependencies = [
     "pyyaml>=6.0",
     "redis>=8.1.0",
     "uvicorn>=0.30",
+    # P7 GEX 엔진·웹소켓(docs/p7_design.md D-P7-19) — legacy 그룹에서 런타임으로 옮겼다(같은 하한).
+    # vollib: Black-76 가격·IV·그릭스(kbj.core.gex), websockets: KIS 웹소켓(kbj.services.ws_gateway 안에서만 —
+    # import 계약은 WRAP). numpy 는 kbj 가 직접 import 하지 않는다(vollib 이 끌어온다 — FND-C grep)
+    "vollib>=1.0.11",
+    "websockets>=17.1",
 ]
 
 [dependency-groups]
@@ -47,17 +52,14 @@ dev = [
     "pytest>=8.3",
     "ruff>=0.6",
     "types-pyyaml>=6.0.12",
-    # 하루 운영 시뮬레이션의 가짜 KIS 웹소켓 서버(tests/fakes/ws_server.py — GX 승격, 묶음 I)
-    "websockets>=17.1",
+    # 하루 운영 시뮬레이션의 가짜 KIS 웹소켓 서버(tests/fakes/ws_server.py)의 websockets 는 P7 부터 런타임
 ]
 # legacy 세 프로젝트(legacy/gexlab·etf_traker·stock_dashboard)를 루트 .venv 하나로 돌리는 의존성.
 # 이식 보고들의 python_deps 를 합쳤다(docs/conflict_map.md §3.3, /tmp/p0test/resolve/union.txt 해석과 같은 범위).
 # 루트 uv.lock 이 정본이다 — legacy/gexlab/uv.lock 은 원본 기록으로만 남는다(legacy/gexlab/MIGRATION.md).
 # legacy 를 비우는 단계(PLAN D8)에서 이 그룹도 지운다.
 legacy = [
-    # gexlab (실행) — exchange-calendars 는 P2 부터 런타임 의존성(위 dependencies)
-    "vollib>=1.0.11",
-    "websockets>=17.1",
+    # gexlab (실행) — exchange-calendars 는 P2, vollib·websockets 는 P7 부터 런타임 의존성(위 dependencies)
     # gexlab (개발 — 자기 pyright·pre-commit 설정용). pandas-stubs 는 P2 부터 dev 그룹(위)
     "pre-commit>=3.7",
     # 공통 — pandas 는 pykrx 가 <3.0 을 요구해 2.3 대로 묶는다(GX 는 2.3.3 에서 통과 확인, E2)
@@ -398,3 +400,64 @@ forbidden_modules = [
     "kbj.store.repos.etf",
     "kbj.store.repos.memory",
 ]
+
+# ── P7 WRAP(docs/p7_design.md D-P7-20) ──
+# (가) 공개 진단(엔진 공개부·작업 diag.public·공개 내보내기 diag_json)은 로그인 원천·로그인 저장소·GEX 를
+# 모른다 — 공개 빌드에 로그인 산출(공포탐욕·종합 판정·GEX)이 새지 않게
+[[tool.importlinter.contracts]]
+name = "⑱ 공개 진단(engines.diagnosis.public·engine.diag_pub·public_export.diag_json)은 로그인 원천·저장소·GEX 를 import 하지 않는다"
+type = "forbidden"
+source_modules = [
+    "kbj.engines.diagnosis.public",
+    "kbj.services.engine.diag_pub",
+    "kbj.services.public_export.diag_json",
+]
+forbidden_modules = [
+    "kbj.data.private",
+    "kbj.core.gex",
+    "kbj.engines.gex",
+    "kbj.engines.diagnosis.fear_greed",
+    "kbj.engines.diagnosis.verdict",
+    "kbj.services.engine.gex",
+    "kbj.services.engine.diag",
+    "kbj.services.collectors",
+    "kbj.store.repos.gex",
+    "kbj.store.repos.diag_prv",
+    "kbj.store.repos.macro_prv",
+    "kbj.store.repos.us",
+    "kbj.store.repos.program",
+    "kbj.store.repos.consensus",
+    "kbj.store.repos.journal",
+    "kbj.store.repos.market",
+    "kbj.store.repos.flows",
+    "kbj.store.repos.board",
+    "kbj.store.repos.etf",
+    "kbj.store.repos.memory",
+]
+
+# (나) 웹소켓 라이브러리는 ws-gateway 안에서만(계약 ⑤ 텔레그램 방식 — 연결 지점 하나)
+[[tool.importlinter.contracts]]
+name = "⑲ 웹소켓 라이브러리(websockets)는 kbj.services.ws_gateway 안에서만"
+type = "forbidden"
+source_modules = [
+    "kbj.core",
+    "kbj.config",
+    "kbj.data",
+    "kbj.store",
+    "kbj.engines",
+    "kbj.reports",
+    "kbj.services.api",
+    "kbj.services.auth",
+    "kbj.services.collectors",
+    "kbj.services.engine",
+    "kbj.services.notifier",
+    "kbj.services.ops",
+    "kbj.services.public_export",
+    "kbj.services.recorder",
+    "kbj.services.runtime",
+    "kbj.services.scheduler",
+    "kbj.services.watchlist",
+]
+forbidden_modules = ["websockets"]
+# 직접 import 만 막는다 — recorder.golden 이 ws_gateway.service 를 지나 닿는 것은 연결 지점이 하나라는 뜻
+allow_indirect_imports = "True"

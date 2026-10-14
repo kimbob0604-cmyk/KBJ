@@ -208,7 +208,8 @@ def test_two_minutes_of_day_collection_with_master_from_redis() -> None:
     col = rig.collector
     assert len(col.ctx.master) == len(CHAIN.master_lines())  # scheduler 가 둔 마스터
     assert col.stats.executed["board"] > 0 and col.stats.executed["fill2"] > 0
-    assert rig.inner.chain and rig.inner.futures and rig.inner.investor
+    # KBJ P7(D-P7-5): 투자자별은 poller 가 부르지 않는다(flows.market_minute 몫)
+    assert rig.inner.chain and rig.inner.futures and rig.inner.investor == []
     assert rig.inner.raw == [] and rig.sink.published > 0  # 원문은 recorder 로
     assert rig.kis_server.max_in_window(1.0) <= 4  # 설계 §3
     ctx = load_context(rig.redis)

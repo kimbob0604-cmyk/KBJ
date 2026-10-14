@@ -6,8 +6,10 @@ DATA_TIERS §4, ADR 0001 U3). 이 폴더의 JSON 은 모두 **고정 시드 생�
 | 파일 | 내용 | 쓰는 시험 |
 |---|---|---|
 | `master_lines.json` | 지수선물옵션 마스터(`fo_idx_code_mts.mst`) 줄 형식 110줄 — 옵션 단축코드·표준코드는 합성 규칙 | `tests/unit/kis/test_kis_master.py`·`test_master_download.py` |
-| `callput_202610.json` | 전광판 콜/풋(FHPIF05030100) 월물 202610 응답 모양 | `test_kis_master.py`(마스터와 코드·행사가 대조) |
+| `callput_202610.json` | 전광판 콜/풋(FHPIF05030100) 월물 202610 응답 모양 | `test_kis_master.py`(마스터와 코드·행사가 대조)·`test_derivatives.py`(P7) |
 | `callput_wkm_260904.json` | 전광판 콜/풋 위클리(월) 260904 응답 모양 | 같음 |
+| `minute_day.json` | 지수선물 분봉(주간) 첫 응답 모양(A01612, 14:01 — output2 앞 3봉) | `tests/unit/core/gex/test_futures_metrics.py`(P7 묶음 FND-C — legacy 사본과 같은지는 `legacy/gexlab/tests/unit/test_kbj_gex_core_bridge.py`) |
+| `futures_board.json`·`option_list.json`·`price_options.json`·`investor.json` | 선물 전광판(FHPIF05030200)·월물리스트(FHPIO056104C0)·옵션 단건(FHMIF10000000)·시장별 투자자(FHPTJ04030000) 응답 모양 — GX 합성 fixture 그대로(P7 묶음 ING 복사, 생성기 출력과 바이트까지 같다) | `tests/unit/kis/test_derivatives.py`(GX `test_kis_models.py` 승격)·`tests/golden/gex/synthetic.py`(raw 녹화 골든 합성 입력) |
 | `p3_responses.json` | P3 TR 8개(현재가·종목/시장 투자자·가집계·거래대금 순위·ETF 현재가·지수·업종 [추정 TR]) 응답 모양 — 생성기 `make_p3.py`(가짜 KIS 서버 `synthetic_output`, sha256 고정 시드) | `tests/unit/kis/test_parse_*.py`(묶음 C) |
 | `p5_flows_program.json` | P5 F2 TR 6개(장중 투자자 1분 `FHPTJ04030000`·프로그램 시장 일별·장중·투자자 당일·종목 장중·일별 — TR id·경로는 `kbj/data/private/kis/datasets.py`, 모양은 `kbj.data.private.kis.{investors_minute,program}` 상수 표, 전부 [확인 필요 #39~#41]) 응답 — 생성기 `p5_make.py`(가짜 KIS 서버 — 합성 세계 `p5_world` 시드 20261113) | `tests/unit/kis/test_parse_{investors_minute,program}.py`(P5 묶음 F2) |
 | `p4_consensus.json` | P4 컨센서스 TR 2개(종목추정실적·종목투자의견 — TR id·경로는 `kbj/data/private/kis/datasets.py:CONSENSUS_TRS`, 모양은 `kbj.data.private.kis.consensus` 상수 표, 전부 [확인 필요 #29]) 응답 11건 — 생성기 `make_p4.py`(가짜 KIS 서버 `consensus_output` — 합성 20종목 세계 `p4_world` 시드 20261007 의 의미값·세계 밖은 sha256 고정 시드) | `tests/unit/kis/test_parse_consensus.py`(P4 묶음 K) |

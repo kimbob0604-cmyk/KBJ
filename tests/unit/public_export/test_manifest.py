@@ -411,9 +411,9 @@ def test_p5_bad_subdir_names_refused(name: str) -> None:
 
 def test_p5_subdirs_and_caps_declared() -> None:
     assert set(DART_SUBDIRS) < set(SUBDIRS)
-    assert set(SUBDIRS) - set(DART_SUBDIRS) == {"macro", "trade"}  # trade 는 P6(아래)
+    assert set(SUBDIRS) - set(DART_SUBDIRS) == {"macro", "trade", "diag"}  # trade P6·diag P7(아래)
     assert DIR_CAPS["macro"] == 3 * 1024 * 1024
-    assert {k: v for k, v in FILE_CAPS.items() if not k.startswith("trade/")} == {
+    assert {k: v for k, v in FILE_CAPS.items() if not k.startswith(("trade/", "diag/"))} == {
         "credit.json": 100 * 1024,
         "macro/calendar.json": 200 * 1024,
     }
@@ -583,3 +583,28 @@ def test_p6_nested_tree_is_written_checked_and_cleaned(tmp_path: Path) -> None:
                      data={"pad": "x" * (101 * 1024)})  # fmt: skip
     with pytest.raises(Exception, match="상한"):
         write_files([big], d, now=NOW)
+
+
+# ── P7 diag/(docs/p7_design.md §7 — 공공지표 진단·게이지·이벤트, 로그인 판정 키 0) ──
+
+
+def test_p7_diag_subdir_caps_and_login_keys() -> None:
+    from kbj.services.public_export.manifest import check_payload, diag_problems
+
+    assert "diag" in SUBDIRS and "diag" not in DART_SUBDIRS
+    assert DIR_CAPS["diag"] == 1024 * 1024
+    assert {k for k in FILE_CAPS if k.startswith("diag/")} == {
+        "diag/summary.json", "diag/history.json", "diag/events.json",
+    }  # fmt: skip
+    f = PublicFile(name="diag/summary.json", source="ECOS,DATAGO", as_of=NOW, quality="ok",
+                   data={"gauge": {"label": "neutral"}})  # fmt: skip
+    assert f.name == "diag/summary.json"
+    bad = {"data": {"fear_greed": 50, "rows": [{"gex_flip": 1}], "verdict": "risk_on"}}
+    got = diag_problems("diag/summary.json", bad)
+    assert len(got) == 3 and all("로그인 판정 키" in p for p in got)
+    assert diag_problems("trade/flash.json", bad) == []
+    text = (
+        '{"source":"ECOS","as_of":"2026-10-13T00:00:00+00:00","quality":"ok",'
+        '"generated_at":"2026-10-13T00:00:00+00:00","data":{"verdict":"x"}}'
+    )
+    assert any("로그인 판정 키" in p for p in check_payload("diag/summary.json", text))

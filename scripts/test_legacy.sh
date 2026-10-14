@@ -7,8 +7,8 @@
 #   uv run bash scripts/test_legacy.sh etf-rest         # 묶음 이름도 된다(CI 매트릭스)
 #
 # 부분 이름
-#   gexlab               legacy/gexlab           pytest -m "not network and not integration"(2,716 — P2)
-#   gexlab-integration   legacy/gexlab           pytest -m "integration and not network"(50 — 49개는 Docker
+#   gexlab               legacy/gexlab           pytest -m "not network and not integration"(760 — P7)
+#   gexlab-integration   legacy/gexlab           pytest -m "integration and not network"(39 — 38개는 Docker
 #                                                필요, 없으면 건너뜀)
 #   board                legacy/etf_traker       unittest discover -s board/tests
 #   kr                   legacy/etf_traker       unittest discover -s monitor/kr
@@ -140,14 +140,19 @@ run_part() {
             # 원본 'pytest -m "not network"'(Docker 없이 3,178 통과·49 건너뜀)을 둘로 나눈다:
             # 여기 + gexlab-integration 50(Docker 없이도 도는 compose 설정 검사 1 + 컨테이너 49).
             # P1 3,177 → P2 2,716: kbj 로 승격한 원본 시험 462개를 빼고(gexlab/MIGRATION.md P2) 다리 시험 +1
-            part_pytest gexlab "$GX" 2716 -m "not network and not integration"
+            # P7 2,716 → 760(WRAP 실측 2026-10-13 — gexlab/MIGRATION.md 'P7'): FND-C core 1,548·ENG 엔진 146 +
+            # store_engine 30·ING 232(단위 200 + raw 골든 32 — recorder 스풀 1 은 남김)를 kbj 로 옮기고, test_fixtures_clean 매개변수 −3(옮긴 골든·녹화 파일의
+            # 비밀 검사는 kbj check_public_safety 로), 다리 시험 +3(core·engine·ingest)
+            part_pytest gexlab "$GX" 760 -m "not network and not integration"
             ;;
         gexlab-integration)
             # 시험이 docker CLI 로 TimescaleDB·Redis 컨테이너를 직접 띄운다(tests/integration/conftest.py)
-            # Docker 가 있어야 하는 CI(KBJ_REQUIRE_DOCKER=1)에서는 50개 중 49개 이상 통과를 요구한다
-            # (원본도 이미지 빌드가 안 되는 환경에서는 test_compose 1개를 건너뛴다)
+            # Docker 가 있어야 하는 CI(KBJ_REQUIRE_DOCKER=1)에서는 39개 중 38개 이상 통과를 요구한다
+            # (원본도 이미지 빌드가 안 되는 환경에서는 test_compose 1개를 건너뛴다).
+            # P7 50 → 39(WRAP 실측): test_engine_store 9 중 8(ENG → tests/integration/test_gex_engine_pg.py)·
+            # test_make_golden_db 3(ING → tests/integration/test_recorder_golden_pg.py)을 kbj 로 옮겼다
             local need=0
-            [[ "${KBJ_REQUIRE_DOCKER:-0}" == "1" ]] && need=49
+            [[ "${KBJ_REQUIRE_DOCKER:-0}" == "1" ]] && need=38
             part_pytest gexlab-integration "$GX" "$need" -m "integration and not network"
             if [[ "${KBJ_REQUIRE_DOCKER:-0}" == "1" ]] && grep -q "Docker 없음" "$LAST_LOG"; then
                 record gexlab-integration "FAIL" "KBJ_REQUIRE_DOCKER=1 인데 Docker 가 없어 건너뛴 시험이 있다"

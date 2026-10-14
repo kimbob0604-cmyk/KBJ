@@ -476,10 +476,11 @@ def main() -> int:  # pragma: no cover — compose 진입점 (.env·실제 Redis
                 cal,
                 health,
                 minute=minute,
-                # 야간 분기·야간 투자자별은 poller 설정과 같게 (services/gaps.py GapConfig)
+                # 야간 분기는 poller 설정과 같게 (services/gaps.py GapConfig). KBJ P7(D-P7-5): 야간
+                # 투자자별은 아무도 부르지 않는다(KBJ flows.market_minute 는 주간만 — D-P7-6)
                 gap_config=GapConfig(
                     night_mode=PollerConfig().night_mode,
-                    night_investor=PollerConfig().night_investor,
+                    night_investor=False,
                 ),
             ),
         )

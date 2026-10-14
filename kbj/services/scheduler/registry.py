@@ -296,6 +296,17 @@ class ServiceSpec(_Owned):
     name: str
     heartbeat_s: int | None = Field(default=None, gt=0)
     enabled: bool = False
+    # 상시 프로세스가 쓰는 표(쓰기 주인 — P7 gex.engine·ws_gateway·recorder). 작업 writes 와 같은
+    # 형식·마이그레이션 검사를 받고, 한 표를 작업과 서비스가 같이 쓰지 않는다
+    writes: tuple[str, ...] = ()
+    # 프로세스가 하트비트를 남기는 이름(`Heartbeater(redis, SERVICE)`·compose healthcheck).
+    # 비우면 name. P7 GEX 셋은 GX 이름 그대로(engine·ws-gateway·recorder) — 등록부 이름(gex.*)과
+    # 다르다
+    heartbeat_key: str | None = None
+
+    @property
+    def beat_name(self) -> str:
+        return self.heartbeat_key or self.name
 
     @field_validator("name")
     @classmethod
@@ -587,6 +598,27 @@ class Registry(_Model):
                 for w in j.writes:
                     if w not in tables:
                         errs.append(f"{j.name}: enabled 인데 표 {w} 를 만드는 마이그레이션이 없다")
+        job_writes = {w: j.name for j in self.jobs for w in j.writes}
+        seen: dict[str, str] = {}
+        beats: dict[str, str] = {}
+        for s in self.services:
+            if s.beat_name in beats:
+                other = beats[s.beat_name]
+                errs.append(f"{s.name}: 하트비트 이름 {s.beat_name} 을 {other} 도 쓴다")
+            beats.setdefault(s.beat_name, s.name)
+        for s in self.services:
+            for w in s.writes:
+                if not _TABLE.fullmatch(w):
+                    errs.append(f"{s.name}: writes 형식은 '<pub_|prv_|ops>.<표>': {w!r}")
+                if w.startswith("pub_"):
+                    errs.append(f"{s.name}: 서비스는 공개 표 {w} 에 쓰지 않는다(ADR 0002)")
+                if w in job_writes:
+                    errs.append(f"{s.name}: 표 {w} 를 작업 {job_writes[w]} 도 쓴다(쓰기 주인 하나)")
+                if w in seen:
+                    errs.append(f"{s.name}: 표 {w} 를 서비스 {seen[w]} 도 쓴다(쓰기 주인 하나)")
+                seen.setdefault(w, s.name)
+                if s.enabled and tables is not None and w not in tables:
+                    errs.append(f"{s.name}: enabled 인데 표 {w} 를 만드는 마이그레이션이 없다")
         return errs
 
     def _check_schedule(self) -> list[str]:

@@ -10,6 +10,11 @@
 - 로그인: 사용자 `demo`, 비밀번호는 환경변수 `KBJ_DEMO_PASSWORD`(데모 스크립트가 실행마다 무작위로
   만든다 — 레포·로그에 남지 않는다). 루프백에서만 연다(비보안 쿠키 — 개발 모드).
 - 정적 파일: 로그인 SPA 빌드(`web/dist-login`) — 같은 출처 `/api`.
+- 페이지 3(P7 — 진단·GEX): 합성 P7 세계(`tests/fixtures/synthetic/p7_world.py` — 고정 시드)의 진단
+  입력 시계열을 같은 메모리 저장소에 싣고 데모 시계 그날까지 `diag.public`·`diag.daily` 를 실제
+  처리기로 돌려 이력을 만들며, GEX 는 실제 엔진(`EngineService`)이 합성 체인(월물 202610 — Black-76
+  이론가)으로 데모 시계 그날 주간 사이클을 돈다(`_load_p7`). Pg 모드(`--db`)에서는 싣지 않는다 —
+  페이지 3 은 '아직 없음' 안내.
 
     KBJ_DEMO_PASSWORD=... uv run python scripts/demo_p3_server.py --port 8765
 """
@@ -63,6 +68,79 @@ def scale_market(m: Any) -> Any:
     return replace(m, snaps=snaps, bars=bars, index_bars=idx, investors=invs, market_investors=mkt)
 
 
+def _load_p7(world: Any) -> None:
+    """페이지 3 합성 데이터 — 진단 이력(데모 그날까지)과 GEX 엔진 주간 사이클(그날)."""
+    from datetime import date, datetime, time
+    from decimal import Decimal
+
+    import fakeredis
+
+    from kbj.config.diag import load_diag
+    from kbj.config.markets import load_markets
+    from kbj.core.calendar import TradingCalendar, state_at
+    from kbj.core.gex.records import ExpiryRecord
+    from kbj.core.time import KST
+    from kbj.services.engine import diag_pub
+    from kbj.services.engine.diag import run_day
+    from kbj.services.engine.gex import EngineContext, EnginePublisher, EngineService
+    from kbj.services.runtime import MemoryHealthSink
+    from kbj.services.runtime.bus import ChainReady
+    from kbj.services.scheduler.handlers import JobContext
+    from tests.fakes.ws_server import FakeChain, FakeSeries
+    from tests.fixtures.synthetic.p7_world import build_world as build_p7_world
+    from tests.unit.api.web_fixtures_p7.diag import HISTORY_DAYS, world_values
+    from tests.unit.engines.diagnosis.diag_seed import seed_public
+    from tests.unit.engines.gex.engine_inputs import fut_row, seed_master, synthetic_series
+
+    repos = world.repos
+    now: datetime = world.clock()
+    cal = TradingCalendar.default()
+    cfg, mk = load_diag(), load_markets()
+    w = build_p7_world()
+    seed_public(repos, w, received_at=now)
+    today = now.astimezone(KST).date()
+    values = world_values(w)
+    for d in [x for x in w.days if x <= today][-HISTORY_DAYS:]:
+        diag_pub.run(
+            JobContext(
+                job="diag.public", as_of=d.isoformat(), run_id=f"demo:{d}", attempt=1,
+                now=datetime.combine(d, time(8, 40), tzinfo=KST),
+                resources={"repos": repos, "kr": cal, "diag_config": cfg},
+            )
+        )  # fmt: skip
+        if datetime.combine(d, time(16, 0), tzinfo=KST) <= now:
+            run_day(
+                repos, day=d, now=datetime.combine(d, time(16, 0), tzinfo=KST), cfg=cfg,
+                markets=mk, cal=cal, market_values=values,
+            )  # fmt: skip
+    # GEX — 실제 엔진이 합성 체인으로 그날 주간 사이클(10분마다, 데모 시계까지)
+    month, expiry = "202610", date(2026, 10, 8)
+    chain = FakeChain(series=(FakeSeries("", month, expiry, Decimal("745.0"), Decimal("1595.0")),))
+    r = fakeredis.FakeRedis()
+    seed_master(r, "\n".join(chain.master_lines()) + "\n")
+    t = {"now": now, "mono": 0.0}
+    repos.gex.seed_expiries(
+        [ExpiryRecord(ts=now, trade_date=today, session="day", mrkt_cls="", expiry=month,
+                      last_trade_date=expiry, source="kis")]
+    )  # fmt: skip
+    eng = EngineService(
+        repos.gex, repos.gex, EnginePublisher(r), EngineContext(r, cal, clock=lambda: t["mono"]),
+        cal, health=MemoryHealthSink(), now=lambda: t["now"], mono=lambda: t["mono"],
+    )  # fmt: skip
+    at = datetime.combine(today, time(9, 10), tzinfo=KST)
+    end = min(now, datetime.combine(today, time(15, 30), tzinfo=KST))
+    while at <= end:
+        info = state_at(at, cal)
+        if info.trade_date is not None and info.session == "day":
+            t["now"], t["mono"] = at, t["mono"] + 600
+            repos.gex.seed_chain(synthetic_series("", month, expiry, at))
+            repos.gex.seed_futures([fut_row(at - timedelta(seconds=5), remaining_days=17)])
+            eng.on_ready(
+                ChainReady(ts=at, trade_date=info.trade_date, session="day", series=(("", month),))
+            )
+        at += timedelta(minutes=10)
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="demo_p3_server")
     p.add_argument("--port", type=int, default=8765)
@@ -101,6 +179,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.at == "intraday":
         world.clock.set(world.slot + timedelta(minutes=5))
     overrides: dict[str, Any] = {}
+    if not os.environ.get("KBJ_DEMO_DATABASE_URL", ""):
+        _load_p7(world)  # 페이지 3 — 합성 P7 세계(진단 이력 + GEX 엔진 사이클)
     store = "메모리 저장소 + fakeredis"
     db_url = os.environ.get("KBJ_DEMO_DATABASE_URL", "")
     if db_url:

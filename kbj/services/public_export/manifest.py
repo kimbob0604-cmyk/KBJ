@@ -31,6 +31,9 @@
   `static.ts` 와 같은 정규식 — 시험). 상한은 `DIR_CAPS["trade"]`·`FILE_CAPS`(평평한 파일)·
   `PREFIX_CAPS`(코드 파일 — `file_cap`). 내용 검사(`trade_problems`):
   `origin: local`(VM 관심종목 매핑 — D-P6-14) 0, `trade/stock/` 에 시세 칸(close·price …) 0.
+- **P7 공개 파일(docs/p7_design.md §7)**: 하위 폴더 `diag/` — `diag/<소문자>.json`(summary·history·
+  events — 공공지표 진단·매크로 위험 게이지·이벤트, `pub_diag` 만). 상한은 `DIR_CAPS["diag"]`·
+  `FILE_CAPS`. 내용 검사(`diag_problems`): 로그인 판정 키(`fear_greed`·`verdict`·`gex*`) 0.
 - 문제 목록에는 값이 아니라 파일 이름·JSON 경로·규칙만 담는다.
 """
 
@@ -74,6 +77,7 @@ __all__ = [
     "check_payload",
     "check_tree",
     "dart_only",
+    "diag_problems",
     "dir_digest",
     "file_cap",
     "forbidden_hits",
@@ -95,10 +99,11 @@ NAME_RE: Final = re.compile(r"[a-z0-9_]+\.json")
 # 하위 폴더 — web/src/data/static.ts PUBLIC_SUBDIR·PUBLIC_DOWNLOAD, merge-public-data.mjs 와 같은
 # 규칙. P4 fin·reports(종목코드 이름 — DART 전용), P5 macro(소문자 이름 — 공개 출처 여럿),
 # P6 trade(평평한 소문자 이름 + (hs|country|region|stock)/<코드> 한 단계 — docs/p6_design.md §7)
-SUBDIRS: Final[tuple[str, ...]] = ("fin", "reports", "macro", "trade")
+# P7 diag(소문자 이름 — 공공지표 진단·게이지·이벤트, docs/p7_design.md §7)
+SUBDIRS: Final[tuple[str, ...]] = ("fin", "reports", "macro", "trade", "diag")
 DART_SUBDIRS: Final[tuple[str, ...]] = ("fin", "reports")
 SUBDIR_JSON_RE: Final = re.compile(
-    r"(?:(fin|reports)/[0-9A-Z]{6}|(macro)/[a-z0-9_]+"
+    r"(?:(fin|reports)/[0-9A-Z]{6}|(macro|diag)/[a-z0-9_]+"
     r"|(trade)/(?:(?:hs|country|region|stock)/[0-9A-Z]{2,10}|[a-z0-9_]+))\.json"
 )
 SUBDIR_XLSX_RE: Final = re.compile(r"reports/[0-9A-Z]{6}\.xlsx")
@@ -119,7 +124,10 @@ _KB: Final = 1024
 # fin/ 상한은 config/fin.yaml(public_export.fin_max_total_mb)에서 따로 온다.
 # P6 trade/ 상한(docs/p6_design.md §7 [제안 — 실측 #57 뒤 확정], config/trade.yaml public_export 와
 # 같은 숫자 — 시험이 대조).
-DIR_CAPS: Final[dict[str, int]] = {"macro": 3 * _KB * _KB, "trade": 20 * _KB * _KB}
+# P7 diag/ 상한(docs/p7_design.md §7 [제안] — 250거래일 공개 지표 5개 + 게이지·이벤트, 수십 KB 예상)
+DIR_CAPS: Final[dict[str, int]] = {
+    "macro": 3 * _KB * _KB, "trade": 20 * _KB * _KB, "diag": 1 * _KB * _KB,
+}  # fmt: skip
 FILE_CAPS: Final[dict[str, int]] = {
     "credit.json": 100 * _KB,
     "macro/calendar.json": 200 * _KB,
@@ -130,6 +138,9 @@ FILE_CAPS: Final[dict[str, int]] = {
     "trade/surge.json": 1024 * _KB,
     "trade/items104.json": 1024 * _KB,
     "trade/stocks.json": 1024 * _KB,
+    "diag/summary.json": 100 * _KB,
+    "diag/history.json": 512 * _KB,
+    "diag/events.json": 100 * _KB,
 }
 # 코드 이름 파일(하위 폴더 한 단계 더) — 경로 접두 → 파일 하나 상한
 PREFIX_CAPS: Final[dict[str, int]] = {
@@ -138,6 +149,8 @@ PREFIX_CAPS: Final[dict[str, int]] = {
     "trade/region/": 200 * _KB,
     "trade/stock/": 100 * _KB,
 }
+# 공개 diag/ 파일에 없어야 하는 로그인 판정 키(국장 공포탐욕·종합 판정·GEX — docs/p7_design.md §7)
+_DIAG_LOGIN_KEYS: Final = frozenset({"fear_greed", "verdict"})
 # 공개 trade/stock/ 파일에 없어야 하는 시세 칸(로그인 등급 — D-P6-4)
 _TRADE_PRICE_KEYS: Final = frozenset({"close", "price", "chg_pct", "mktcap", "open", "high", "low"})
 Quality = Literal["ok", "stale", "estimated", "invalid"]
@@ -216,6 +229,19 @@ def trade_problems(name: str, raw: object) -> list[str]:
             for p in _key_paths(raw, lambda k, _x: k in _TRADE_PRICE_KEYS)  # pyright: ignore[reportUnknownLambdaType]
         ]
     return out
+
+
+def diag_problems(name: str, raw: object) -> list[str]:
+    """P7 `diag/` 파일 내용 검사 — 로그인 판정 키(fear_greed·verdict·gex*) 0(p7_design §7)."""
+    if not name.startswith("diag/"):
+        return []
+    return [
+        f"{name}: 로그인 판정 키({p})"
+        for p in _key_paths(
+            raw,
+            lambda k, _x: k in _DIAG_LOGIN_KEYS or k.startswith("gex"),  # pyright: ignore[reportUnknownLambdaType]
+        )
+    ]
 
 
 def dart_only(name: str) -> bool:
@@ -470,6 +496,7 @@ def check_payload(name: str, text: str) -> list[str]:
         if _LOGIN_SCHEMA_TEXT in text:
             problems.append(f"{name}: 로그인 등급 스키마 이름('{_LOGIN_SCHEMA_TEXT}' 규칙)")
     problems += trade_problems(name, raw)
+    problems += diag_problems(name, raw)
     if not isinstance(raw, dict):
         return [*problems, f"{name}: 봉투가 아님(최상위가 객체가 아님)"]
     env: dict[str, Any] = raw  # pyright: ignore[reportUnknownVariableType]

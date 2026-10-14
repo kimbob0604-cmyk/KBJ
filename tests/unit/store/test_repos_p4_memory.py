@@ -26,6 +26,7 @@ def as_repos(m: MemoryRepos) -> Repos:
         consensus=m.consensus, journal=m.journal, macro=m.macro, macro_prv=m.macro_prv,
         market_stats=m.market_stats, us=m.us,
         program=m.program, index_review=m.index_review, trade=m.trade,
+        gex=m.gex, diag=m.diag, diag_pub=m.diag_pub,
     )  # fmt: skip
 
 
@@ -42,6 +43,7 @@ def test_public_bundle_shares_the_same_tables() -> None:
         fin=pub.fin,
         macro=pub.macro,
         market_stats=pub.market_stats,
+        diag=pub.diag,
     )
     as_public.filings.upsert_disclosures([disc(1)], loaded_by=JOB, now=NOW)
     assert m.filings.seen([rc(1)]) == {rc(1)}  # 공개 작업이 쓴 것을 API(로그인)가 본다

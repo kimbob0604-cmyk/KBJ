@@ -2,7 +2,9 @@
 
 창 2026-10-06 07:50 ~ 10:30 KST. `krx.daily`(08:05, 10분마다 10:00 까지)와 legacy GX 의 KRX 파생
 단계가 08:05·08:15 에 빈 응답을 받고 08:25 에 받는다. 성공 수집은 키마다 1회, 일 예산은
-3 × 엔드포인트 수(빈 응답도 센다 — kbj/data/budget.py).
+3 × 엔드포인트 수(빈 응답도 센다 — kbj/data/budget.py). P7 `krx.vkospi`(08:10, 10분마다 —
+운영 등록부에서는 꺼짐 #P7-1, 하네스는 꺼진 작업도 시뮬레이션 처리기로 돌린다 — 하네스 머리말)는
+08:10 빈 응답·08:20 성공으로 2번.
 """
 
 from __future__ import annotations
@@ -46,20 +48,28 @@ def test_krx_daily_retries_until_published(late: SimDay) -> None:
     assert late.final_runs()[("krx.daily", "2026-10-02")].status == "ok"
 
 
+# P7 krx.vkospi(파생상품지수 일별 — 13번째 엔드포인트). 운영에서는 꺼짐(#P7-1), 하네스는 돈다
+VKOSPI = "/idx/drvprod_dd_trd"
+
+
 def test_each_endpoint_requested_three_times_and_succeeds_once(late: SimDay) -> None:
     req = Counter(late.krx.requested())
-    assert len(req) == 12 and set(req.values()) == {3}
-    hits = [s.at.astimezone(KST).strftime("%H:%M") for s in late.krx.seen]
+    assert len(req) == 13
+    assert {n for (ep, _), n in req.items() if ep != VKOSPI} == {3}
+    assert [n for (ep, _), n in req.items() if ep == VKOSPI] == [2]  # 08:10 빈 응답·08:20 성공
+    hits = [s.at.astimezone(KST).strftime("%H:%M") for s in late.krx.seen if s.endpoint != VKOSPI]
     assert sorted(set(hits)) == ["08:05", "08:15", "08:25"]
+    vk = [s.at.astimezone(KST).strftime("%H:%M") for s in late.krx.seen if s.endpoint == VKOSPI]
+    assert vk == ["08:10", "08:20"]
     ok = Counter((s.endpoint, s.bas_dd) for s in late.krx.successes())
-    assert len(ok) == 12 and set(ok.values()) == {1}
+    assert len(ok) == 13 and set(ok.values()) == {1}
 
 
 def test_keys_collected_once_and_budget_counts_empty_answers(late: SimDay) -> None:
     krx_keys = Counter(k for k in late.done_keys() if k.source == "KRX")
-    assert len(krx_keys) == 12 and set(krx_keys.values()) == {1}
+    assert len(krx_keys) == 13 and set(krx_keys.values()) == {1}  # + krx.vkospi(위 VKOSPI)
     assert late.claims.refused == []
-    assert late.budget_used("krx", date(2026, 10, 6)) == 3 * 12
+    assert late.budget_used("krx", date(2026, 10, 6)) == 3 * 12 + 2
 
 
 def test_gx_derivatives_follow_the_same_rule(late: SimDay) -> None:

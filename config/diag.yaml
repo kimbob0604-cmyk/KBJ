@@ -1,0 +1,44 @@
+# 페이지 3 진단 지표 설정 — 비밀 아님(P7 묶음 FND-B 가 모양, DIAG 가 값). 해석기 kbj/config/diag.py(모르는 키는
+# 오류). 정의는 docs/metrics.md §D0~§D9(부록 A — [제안] 값은 여기 한 곳). 반도체·경기민감·방어 묶음은
+# config/markets.yaml ribbon 을 읽는다(두 벌 금지 — 여기 적지 않는다).
+version: 1
+
+window: 250                 # 백분위 창(거래일, 그날 포함) — §D0
+min_history: 60             # 이력이 이보다 짧으면 구간 없음(estimated + '이력 부족') — §D0
+bands: [20, 40, 60, 80]     # 백분위 다섯 칸 경계(극단 낮음·낮음·보통·높음·극단 높음) — §D0
+sigma_band: 1.0             # 신용스프레드 구간 = 1년 평균 ± 1σ — §D1
+change_days: 20             # 신용잔고·예탁금 변화율·금리 방향·한국 대 글로벌·수급 누적의 창(거래일) — §D2·§D5·§D6
+
+# 지표 키 → 등급·단위·상태 점수 방향(§D1~§D6). risk_on: high = 높음·극단 높음이 위험 선호(+1), low = 낮음이
+# 위험 선호, none = 점수 없음(플래그만). 키 이름은 저장 표 indicator.key 와 같다.
+indicators:
+  credit_spread:   {tier: public,  unit: "%p",  risk_on: low,  section: D1}
+  credit_balance:  {tier: public,  unit: "%",   risk_on: high, section: D2, overheat_flag: true}
+  deposits:        {tier: public,  unit: "%",   risk_on: high, section: D2}
+  export_momentum: {tier: public,  unit: "%",   risk_on: high, section: D3}
+  rate_direction:  {tier: public,  unit: "bp",  risk_on: low,  section: D5}
+  semis_concentration: {tier: login, unit: "%", risk_on: none, section: D6, fragile_flag: true}
+  cyclical_defensive:  {tier: login, unit: "%", risk_on: high, section: D6}
+  breadth_ma20:        {tier: login, unit: "%", risk_on: high, section: D6}
+  breadth_new_high:    {tier: login, unit: "%", risk_on: high, section: D6}
+  kr_vs_global:        {tier: login, unit: "%p", risk_on: high, section: D6}
+  foreign_flow:        {tier: login, unit: "원", risk_on: high, section: D6}
+
+# 국장 공포탐욕(§D7 — §10 Q6: v0.2 다섯 성분 같은 가중). 성분 4개 미만이면 값 없음(invalid), 4개면 estimated.
+fear_greed:
+  components: [vol, breadth, credit_balance, foreign, credit_spread]
+  min_components: 4
+  weights: equal
+  bands: [25, 45, 56, 76]   # 0–24 극단적 공포 · 25–44 공포 · 45–55 중립 · 56–75 탐욕 · 76–100 극단적 탐욕
+
+# 매크로 위험 게이지(공개 — §D4)·종합 판정(로그인 — §D8): 점수 합 S ≥ risk_on_at 위험 선호, ≤ risk_off_at 위험 회피
+# (키에 on·off 를 쓰지 않는다 — YAML 1.1 은 참·거짓으로 읽는다).
+gauge:   {risk_on_at: 2, risk_off_at: -2, min_components: 3}
+verdict: {risk_on_at: 2, risk_off_at: -2, min_components: 4, top_reasons: 3}
+
+# 이벤트 표시(§D9). 실적 집중 = 그날 시총 상위 universe_top 종목 중 실적 일정 수 ≥ earnings_cluster_min [제안].
+events:
+  earnings_cluster_min: 10
+  universe_top: 200
+  caution_days: 1           # 이벤트가 오늘·다음 거래일이면 '이벤트 주의'
+  horizon_days: 30          # 이벤트 달력 범위(페이지 3 timeline)

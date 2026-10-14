@@ -37,6 +37,7 @@ BUILDERS: Final[Mapping[str, Mapping[str, Builder]]] = {
         "us": M.us_overnight,
         "rates_fx_commodities": M.rates_table,
         "kr_macro": M.kr_macro,
+        "night_futures_gex": M.night_gex,  # P7 OUT(D-P7-16)
         "calendar": M.calendar_section,
     },
     "closing": {
@@ -45,6 +46,7 @@ BUILDERS: Final[Mapping[str, Mapping[str, Builder]]] = {
         "newhigh": C.newhigh_section,
         "flows": C.flows_trend,
         "filings": C.filings_section,
+        "gex_diag": C.gex_diag_section,  # P7 OUT(D-P7-16)
     },
 }
 

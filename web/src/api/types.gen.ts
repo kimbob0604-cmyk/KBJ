@@ -1092,6 +1092,125 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/gex/levels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Levels */
+        get: operations["levels_api_gex_levels_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/gex/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Profile */
+        get: operations["profile_api_gex_profile_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/gex/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Metrics */
+        get: operations["metrics_api_gex_metrics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/gex/flow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Flow */
+        get: operations["flow_api_gex_flow_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/diag/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Summary */
+        get: operations["summary_api_diag_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/diag/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** History */
+        get: operations["history_api_diag_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/diag/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Events */
+        get: operations["events_api_diag_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/telegram/webhook": {
         parameters: {
             query?: never;
@@ -1709,6 +1828,195 @@ export interface components {
             source: string;
         };
         /**
+         * DiagEvent
+         * @description 이벤트 표시(§D9).
+         */
+        DiagEvent: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "expiry" | "mpc" | "export_flash" | "earnings_cluster";
+            /** Title */
+            title: string;
+            /** Days Left */
+            days_left?: number | null;
+            quality: components["schemas"]["Quality"];
+        };
+        /**
+         * DiagEvents
+         * @description `/api/diag/events?from=&to=` — 이벤트 달력(페이지 3 timeline).
+         */
+        DiagEvents: {
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
+            /** Events */
+            events: components["schemas"]["DiagEvent"][];
+            /** Generated For */
+            generated_for?: string | null;
+        };
+        /**
+         * DiagFearGreed
+         * @description 국장 공포탐욕(§D7). components 는 0~100(뒤집은 뒤), 빠진 성분 None.
+         */
+        DiagFearGreed: {
+            /** Score */
+            score?: number | null;
+            /** Band */
+            band: ("extreme_fear" | "fear" | "neutral" | "greed" | "extreme_greed") | null;
+            /** Components */
+            components: {
+                [key: string]: number | null;
+            };
+            /** Substitutes */
+            substitutes?: string[];
+            quality: components["schemas"]["Quality"];
+            /** Reasons */
+            reasons?: string[];
+        };
+        /**
+         * DiagGauge
+         * @description 매크로 위험 게이지(공개 판정 — §D4).
+         */
+        DiagGauge: {
+            /**
+             * Label
+             * @enum {string}
+             */
+            label: "risk_on" | "neutral" | "risk_off" | "hold";
+            /** Score */
+            score: number | null;
+            /** Parts */
+            parts: {
+                [key: string]: number;
+            };
+            quality: components["schemas"]["Quality"];
+            /** Reasons */
+            reasons?: string[];
+        };
+        /**
+         * DiagHistory
+         * @description `/api/diag/history?key=&days=` — 지표(또는 fear_greed) 시계열과 구간 경계.
+         */
+        DiagHistory: {
+            /** Key */
+            key: string;
+            /**
+             * Tier
+             * @enum {string}
+             */
+            tier: "public" | "login";
+            /** Unit */
+            unit: string;
+            /** Bands */
+            bands: number[];
+            /** Points */
+            points: components["schemas"]["DiagHistoryPoint"][];
+        };
+        /** DiagHistoryPoint */
+        DiagHistoryPoint: {
+            /**
+             * Trade Date
+             * Format: date
+             */
+            trade_date: string;
+            /** Value */
+            value: number | null;
+            /** State */
+            state: ("extreme_low" | "low" | "normal" | "high" | "extreme_high" | "narrow" | "wide") | null;
+            /** Pct Rank */
+            pct_rank?: number | null;
+            quality: components["schemas"]["Quality"];
+        };
+        /**
+         * DiagIndicator
+         * @description 지표 카드 하나(§D1~§D6). state None = 이력 부족(estimated).
+         */
+        DiagIndicator: {
+            /** Key */
+            key: string;
+            /**
+             * Tier
+             * @enum {string}
+             */
+            tier: "public" | "login";
+            /** Value */
+            value: number | null;
+            /** Unit */
+            unit: string;
+            /** State */
+            state: ("extreme_low" | "low" | "normal" | "high" | "extreme_high" | "narrow" | "wide") | null;
+            /** Pct Rank */
+            pct_rank?: number | null;
+            /** Score */
+            score?: (-1 | 0 | 1) | null;
+            /** Flags */
+            flags?: string[];
+            quality: components["schemas"]["Quality"];
+            /** Reasons */
+            reasons?: string[];
+        };
+        /**
+         * DiagSummary
+         * @description `/api/diag/summary?date=` — 판정 띠·공포탐욕·지표 카드·이벤트(페이지 3 위쪽).
+         */
+        DiagSummary: {
+            /**
+             * Trade Date
+             * Format: date
+             */
+            trade_date: string;
+            verdict: components["schemas"]["DiagVerdict"] | null;
+            fear_greed: components["schemas"]["DiagFearGreed"] | null;
+            gauge: components["schemas"]["DiagGauge"] | null;
+            /** Indicators */
+            indicators: components["schemas"]["DiagIndicator"][];
+            /** Events */
+            events: components["schemas"]["DiagEvent"][];
+            /**
+             * Caution
+             * @default false
+             */
+            caution: boolean;
+        };
+        /**
+         * DiagVerdict
+         * @description 종합 판정(§D8). top = 기여 큰 셋(부호·이름).
+         */
+        DiagVerdict: {
+            /**
+             * Label
+             * @enum {string}
+             */
+            label: "risk_on" | "neutral" | "risk_off" | "hold";
+            /** Score */
+            score: number | null;
+            /** Parts */
+            parts: {
+                [key: string]: number;
+            };
+            /** Top */
+            top?: string[];
+            /** Event Flags */
+            event_flags?: ("expiry" | "mpc" | "export_flash" | "earnings_cluster")[];
+            quality: components["schemas"]["Quality"];
+            /** Reasons */
+            reasons?: string[];
+        };
+        /**
          * DisclosureView
          * @description 공시 한 건. `kw_score` = 제목 키워드 점수(공개), `login_score`·`importance` = 키워드 +
          *     관심종목 + 시총 가산(로그인 — 읽을 때 계산). `first_seen_at` = 우리가 처음 본 시각(DART
@@ -1941,6 +2249,63 @@ export interface components {
              */
             generated_at: string;
             data: components["schemas"]["Consensus"];
+        };
+        /** Envelope[DiagEvents] */
+        Envelope_DiagEvents_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["DiagEvents"];
+        };
+        /** Envelope[DiagHistory] */
+        Envelope_DiagHistory_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["DiagHistory"];
+        };
+        /** Envelope[DiagSummary] */
+        Envelope_DiagSummary_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["DiagSummary"];
         };
         /** Envelope[Disclosures] */
         Envelope_Disclosures_: {
@@ -2207,6 +2572,82 @@ export interface components {
              */
             generated_at: string;
             data: components["schemas"]["Financials"];
+        };
+        /** Envelope[GexFlow] */
+        Envelope_GexFlow_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["GexFlow"];
+        };
+        /** Envelope[GexLevels] */
+        Envelope_GexLevels_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["GexLevels"];
+        };
+        /** Envelope[GexMetricSeries] */
+        Envelope_GexMetricSeries_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["GexMetricSeries"];
+        };
+        /** Envelope[GexProfile] */
+        Envelope_GexProfile_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["GexProfile"];
         };
         /** Envelope[IndexReview] */
         Envelope_IndexReview_: {
@@ -3325,6 +3766,205 @@ export interface components {
             eps: number | null;
             /** Ebitda */
             ebitda: number | null;
+            quality: components["schemas"]["Quality"];
+        };
+        /**
+         * GexFlow
+         * @description `/api/gex/flow` — HIRO-lite·투자자별. 야간 투자자별은 수집하지 않는다(D-P7-6).
+         */
+        GexFlow: {
+            /**
+             * Hiro Flag
+             * @enum {string}
+             */
+            hiro_flag: "off" | "shadow" | "visible";
+            /** Hiro */
+            hiro: components["schemas"]["GexFlowPoint"][];
+            /** Investors */
+            investors: components["schemas"]["GexInvestorRow"][];
+            /**
+             * Night Investor Collected
+             * @default false
+             */
+            night_investor_collected: boolean;
+        };
+        /**
+         * GexFlowPoint
+         * @description HIRO-lite 한 점(GX §6.1 — 섀도면 value None).
+         */
+        GexFlowPoint: {
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
+            /** Value */
+            value: number | null;
+            quality: components["schemas"]["Quality"];
+        };
+        /**
+         * GexInvestorRow
+         * @description 투자자별 선물·옵션 순매수(`prv_gex.investor_flow` 마지막 행 — 대금은 **원**).
+         */
+        GexInvestorRow: {
+            /** Market Code */
+            market_code: string;
+            /** Sector Code */
+            sector_code: string;
+            /** Investor */
+            investor: string;
+            /** Net Qty */
+            net_qty: number | null;
+            /** Net Value Won */
+            net_value_won: number | null;
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
+            quality: components["schemas"]["Quality"];
+        };
+        /**
+         * GexLevel
+         * @description 레벨 하나(`prv_gex.levels` — GX §3). name 예 call_wall·put_wall·abs_gamma·flip·flip_distance·
+         *     expected_move_calendar·expected_move_trading·top_levels. 섀도면 value None.
+         */
+        GexLevel: {
+            /** Name */
+            name: string;
+            /** Value */
+            value: number | null;
+            /**
+             * Flag
+             * @enum {string}
+             */
+            flag: "off" | "shadow" | "visible";
+            quality: components["schemas"]["Quality"];
+            /** Reasons */
+            reasons?: string[];
+            /** Detail */
+            detail?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * GexLevels
+         * @description `/api/gex/levels?scope=` — 최신 사이클 레벨 + 현재가(S_ref).
+         */
+        GexLevels: {
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "all" | "nearest" | "0dte";
+            /**
+             * Trade Date
+             * Format: date
+             */
+            trade_date: string;
+            /**
+             * Session
+             * @enum {string}
+             */
+            session: "day" | "night";
+            /**
+             * Cycle At
+             * Format: date-time
+             */
+            cycle_at: string;
+            /** Session Open */
+            session_open: boolean;
+            /** Price */
+            price: number | null;
+            price_quality: components["schemas"]["Quality"] | null;
+            /**
+             * Stale
+             * @default false
+             */
+            stale: boolean;
+            /** Stale Reason */
+            stale_reason?: string | null;
+            /** Levels */
+            levels: components["schemas"]["GexLevel"][];
+        };
+        /** GexMetricPoint */
+        GexMetricPoint: {
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
+            /** Value */
+            value: number | null;
+            quality: components["schemas"]["Quality"];
+        };
+        /**
+         * GexMetricSeries
+         * @description `/api/gex/metrics?name=&from=&to=` — 지표 시계열. 섀도면 points 의 값이 모두 None(상태만).
+         */
+        GexMetricSeries: {
+            /** Name */
+            name: string;
+            /** Scope */
+            scope: string;
+            /**
+             * Key
+             * @default
+             */
+            key: string;
+            /**
+             * Flag
+             * @enum {string}
+             */
+            flag: "off" | "shadow" | "visible";
+            /** Points */
+            points: components["schemas"]["GexMetricPoint"][];
+        };
+        /**
+         * GexProfile
+         * @description `/api/gex/profile?scope=` — 행사가별 GEX 막대 + 현재가·Flip·월(화면 `profile`·`ladder`).
+         */
+        GexProfile: {
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "all" | "nearest" | "0dte";
+            /**
+             * Cycle At
+             * Format: date-time
+             */
+            cycle_at: string;
+            /** Price */
+            price: number | null;
+            /** Flip */
+            flip: number | null;
+            /** Call Wall */
+            call_wall: number | null;
+            /** Put Wall */
+            put_wall: number | null;
+            /** Expected Move */
+            expected_move: number | null;
+            /** Bars */
+            bars: components["schemas"]["GexStrikeBar"][];
+        };
+        /**
+         * GexStrikeBar
+         * @description 행사가 하나의 GEX(원/1%, GX §2.1 — 콜 롱·풋 숏 naive 딜러).
+         */
+        GexStrikeBar: {
+            /** Mrkt Cls */
+            mrkt_cls: string;
+            /** Expiry */
+            expiry: string;
+            /** Strike */
+            strike: number;
+            /** Gex Call */
+            gex_call: number;
+            /** Gex Put */
+            gex_put: number;
+            /** Gex */
+            gex: number;
             quality: components["schemas"]["Quality"];
         };
         /** Health */
@@ -9283,6 +9923,414 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_TradeStock_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    levels_api_gex_levels_get: {
+        parameters: {
+            query?: {
+                scope?: "all" | "nearest" | "0dte";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_GexLevels_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    profile_api_gex_profile_get: {
+        parameters: {
+            query?: {
+                scope?: "all" | "nearest" | "0dte";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_GexProfile_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    metrics_api_gex_metrics_get: {
+        parameters: {
+            query: {
+                name: string;
+                from?: string | null;
+                to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_GexMetricSeries_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    flow_api_gex_flow_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_GexFlow_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    summary_api_diag_summary_get: {
+        parameters: {
+            query?: {
+                date?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_DiagSummary_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    history_api_diag_history_get: {
+        parameters: {
+            query: {
+                key: string;
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_DiagHistory_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    events_api_diag_events_get: {
+        parameters: {
+            query?: {
+                from?: string | null;
+                to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_DiagEvents_"];
                 };
             };
             /** @description 세션 없음·만료 */

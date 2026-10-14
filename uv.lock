@@ -704,6 +704,8 @@ dependencies = [
     { name = "pyyaml" },
     { name = "redis" },
     { name = "uvicorn" },
+    { name = "vollib" },
+    { name = "websockets" },
 ]
 
 [package.dev-dependencies]
@@ -716,7 +718,6 @@ dev = [
     { name = "pytest" },
     { name = "ruff" },
     { name = "types-pyyaml" },
-    { name = "websockets" },
 ]
 legacy = [
     { name = "anthropic" },
@@ -735,8 +736,6 @@ legacy = [
     { name = "pykrx" },
     { name = "requests" },
     { name = "simple-websocket" },
-    { name = "vollib" },
-    { name = "websockets" },
     { name = "yfinance" },
 ]
 
@@ -755,6 +754,8 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "redis", specifier = ">=8.1.0" },
     { name = "uvicorn", specifier = ">=0.30" },
+    { name = "vollib", specifier = ">=1.0.11" },
+    { name = "websockets", specifier = ">=17.1" },
 ]
 
 [package.metadata.requires-dev]
@@ -767,7 +768,6 @@ dev = [
     { name = "pytest", specifier = ">=8.3" },
     { name = "ruff", specifier = ">=0.6" },
     { name = "types-pyyaml", specifier = ">=6.0.12" },
-    { name = "websockets", specifier = ">=17.1" },
 ]
 legacy = [
     { name = "anthropic", specifier = ">=0.40.0" },
@@ -786,8 +786,6 @@ legacy = [
     { name = "pykrx", specifier = ">=1.0.51" },
     { name = "requests", specifier = ">=2.31" },
     { name = "simple-websocket", specifier = ">=1.0" },
-    { name = "vollib", specifier = ">=1.0.11" },
-    { name = "websockets", specifier = ">=17.1" },
     { name = "yfinance", specifier = ">=0.2.40" },
 ]
 

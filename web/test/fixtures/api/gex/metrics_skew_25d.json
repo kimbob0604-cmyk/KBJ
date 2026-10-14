@@ -1,0 +1,32 @@
+{
+  "source": "KBJ:gex.engine(KIS 옵션 체인·웹소켓)",
+  "as_of": "2026-12-10T04:30:00Z",
+  "quality": "ok",
+  "notes": [
+    "섀도 검증 중 — 값은 저장만(1주 섀도 운영 뒤 visible, §10 Q3)"
+  ],
+  "generated_at": "2026-12-10T14:00:00+09:00",
+  "data": {
+    "name": "skew_25d",
+    "scope": "all",
+    "key": "",
+    "flag": "shadow",
+    "points": [
+      {
+        "ts": "2026-12-10T01:00:00Z",
+        "value": null,
+        "quality": "ok"
+      },
+      {
+        "ts": "2026-12-10T02:30:00Z",
+        "value": null,
+        "quality": "ok"
+      },
+      {
+        "ts": "2026-12-10T04:30:00Z",
+        "value": null,
+        "quality": "ok"
+      }
+    ]
+  }
+}

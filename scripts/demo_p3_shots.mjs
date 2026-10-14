@@ -15,6 +15,7 @@ import { join, resolve } from 'node:path';
 const PAGES = [
   { n: 1, name: 'p1_market', title: '시장' },
   { n: 2, name: 'p2_board', title: '신고가 보드' },
+  { n: 3, name: 'p3_diag', title: '진단·GEX' },
   { n: 4, name: 'p4_flows', title: '수급·스크리닝' },
   { n: 5, name: 'p5_filings', title: '일정·공시' },
   { n: 8, name: 'p8_stock', title: '종목 상세' },

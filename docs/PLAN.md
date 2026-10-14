@@ -264,9 +264,35 @@ kbj/
   - legacy 정리: 없음 — legacy 에 관세청·HS·104품목 코드가 없다(설계 §9.1)
   - 남은 것: ① 관세청 키 활용신청·실측 #1~#6·#17·#55~#57 뒤 수집 두 작업 켜기·5년 백필 ② 매핑표 첫 판 61종목 가중치·근거 검토(사용자)·VM local 매핑 파일 ③ `trade/flash.json` 10년 공개(종류별 분할 — #57) ④ p6_world 시군구 개편(29·46 지역 valid_to) 세계 보정 ⑤ Docker 통합·legacy 전체·sim 전체(메인 병렬 스크립트)·CI 녹색
 
-**P7 — GEX·진단 (3~5일)**
+**P7 — GEX·진단 (3~5일)** — 완료(2026-10-13, 합성 데이터 기준 — VKOSPI·야간 투자자별은 실측 뒤)
 - GEXLAB engine 이식(이미 서비스형), 페이지 3 진단, 국장 공포탐욕·종합 판정
 - **완료 기준:** GEXLAB 골든·명세 테스트가 KBJ에서 녹색이다. 진단 지표 명세가 `metrics.md`에 있다.
+- **결과(2026-10-13, 웨이브 3 WRAP — 설계 `docs/p7_design.md`, ADR 0029·0030 확정, 0019 P7 확인 메모, 0025 예산 갱신):**
+  - 사용자 결정(§10 기본값): GX 수집 경로(poller·scheduler)는 legacy 외부 서비스로 KBJ DB 에 붙이기만(이식 P9), 이력 이전은 스크립트·
+    런북만(`scripts/gex_migrate_data.sh` — 실행은 사용자, #P7-3), 섀도 지표 숨김('섀도 검증 중'), 페이지 3 공개판(공공지표 진단·이벤트만,
+    나머지 자물쇠), GEX 알림은 정규장 09:00~15:30(쿨다운 10분), 공포탐욕 다섯 성분 같은 가중, VM 전환은 WRAP 뒤 첫 주말(런북).
+  - 완료 증명 ① 골든·명세: `tests/acceptance/test_p7_golden_spec.py` — 골든 코어 22·체인 부분집합 14·raw 32(같아야 함 — 녹색, CLI
+    `gex_golden core`·`recorder.golden raw-parse` 재생성 없이 종료 0), 명세 단위·부호 1,466·속성 46(FND-C 1,548 옮김). 골든 JSON 은
+    `git mv` — raw 녹화 바이트 같음, 기대값 JSON 은 메타·입력 경로 문자열만 KBJ 경로(숫자 그대로). 허용오차 그대로.
+  - 완료 증명 ② 진단 명세: `docs/metrics.md` §D0~§D9(백분위 공식 확정), 시험 `tests/unit/engines/diagnosis/test_spec_*`.
+  - 하루 운영(`tests/sim/test_one_day_p7.py` — 2026-12-03(목) 위클리 만기일 24시간): 실제 GEX 엔진이 합성 체인으로 주간·야간 사이클
+    (품질 ok), `diag.public` 08:40·`diag.daily` 16:00 한 번씩, `brief.closing` 1통(⑥ GEX·진단 줄), `gex.alert` 391분 매분 —
+    알림은 정규장 안에만·주제별 쿨다운 10분, `investor_flow` 쓰기 주인 `flows.market_minute` 하나, KIS 어떤 1초에도 ≤ 4,
+    하트비트 끊김 0. 이 sim 이 찾은 것: 워치독이 GEX 셋을 등록부 이름으로 읽어 늘 '끊김' — `ServiceSpec.heartbeat_key` 로 고침.
+  - 작업 등록부: `diag.public`·`diag.daily`·`gex.alert` 켬(`ENABLED_BY_PHASE["P7"]`), 서비스 `gex.engine`·`gex.ws_gateway`·
+    `gex.recorder` 켬(쓰기 표는 새 `ServiceSpec.writes` — 작업·서비스 통틀어 쓰기 주인 하나 검사). `krx.vkospi` 는 꺼진 채(#58 `#P7-1`).
+    위클리 4조합 켬(D-P7-6 — `flows.market_minute` 7조합).
+  - 경계: import-linter **18 kept, 0 broken**(⑱ 공개 진단 → 로그인 원천·저장소·GEX 금지, ⑲ `websockets` 는 ws-gateway 안에서만),
+    `test_public_writers` 에 `diag.public`(pub_ SQL 만). 직접 호출 검사 `kis_ws` 목표 0(legacy 4 → 0). compose 에 `ws-gateway`·
+    `recorder`·`gex-engine`(KBJ 이미지 — 시크릿 없음). `/gex` 봇 명령 운영 연결(notifier 진입점).
+  - 프런트: 페이지 3(진단·GEX) 공개·로그인 — `web/test/acceptance/p7_pages.test.ts`(공개판 로그인 API 0·로그인 값 0). 공개 JS gzip
+    **81,266 B**·로그인 99,353 B → 예산 88 KB·107 KB(ADR 0025 갱신 — 실측 + 10%). 데모(`scripts/demo_p3.sh --shots`)에 페이지 3
+    (합성 P7 세계 — 진단 이력·실제 GEX 엔진 사이클): 패널 10·오류 0·콘솔 오류 0.
+  - legacy 정리: GX core·엔진·웹소켓·녹화 → KBJ, legacy 는 shim. `test_legacy.sh gexlab` 2,716 → **760**(실측 통과),
+    `gexlab-integration` 50 → 39(`legacy/gexlab/MIGRATION.md` 'P7' — 옮긴 1,956 항목 1:1).
+  - 남은 것: ① VKOSPI 실측(#58) 뒤 `krx.vkospi` 켜기 ② 야간 투자자별 응답(#59) ③ GX DB 이관·VM 전환(#60, 사용자) ④ KBJ ws-gateway
+    하루 무결측(#61)·섀도 1주(#62 → visible 전환은 `config/gex.yaml` 값만) ⑤ 위클리 하루 대조(#63) ⑥ legacy GX 접속 환경변수 이름(#64)
+    ⑦ 엔진 쓰기 디스크 스풀(녹화 싱크 공용화 — ADR 0029 §4-6) ⑧ 공개 페이지 3 청크의 로그인 본문 분리(ADR 0025 갱신 '다시 볼 때').
 
 **P8 — 규칙 알림·백테스트·저널 (6~8일)** — REBUILD_BRIEF §6
 - 규칙 DSL(JSON 스키마), 평가 엔진(장중 10분·마감), 쿨다운, 근거 메시지, **알림 후 성과 통계**

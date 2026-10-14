@@ -5567,6 +5567,592 @@
         }
       }
     },
+    "/api/gex/levels": {
+      "get": {
+        "tags": [
+          "gex"
+        ],
+        "summary": "Levels",
+        "operationId": "levels_api_gex_levels_get",
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "all",
+                "nearest",
+                "0dte"
+              ],
+              "type": "string",
+              "default": "all",
+              "title": "Scope"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_GexLevels_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gex/profile": {
+      "get": {
+        "tags": [
+          "gex"
+        ],
+        "summary": "Profile",
+        "operationId": "profile_api_gex_profile_get",
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "all",
+                "nearest",
+                "0dte"
+              ],
+              "type": "string",
+              "default": "all",
+              "title": "Scope"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_GexProfile_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gex/metrics": {
+      "get": {
+        "tags": [
+          "gex"
+        ],
+        "summary": "Metrics",
+        "operationId": "metrics_api_gex_metrics_get",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]{0,40}$",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_GexMetricSeries_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gex/flow": {
+      "get": {
+        "tags": [
+          "gex"
+        ],
+        "summary": "Flow",
+        "operationId": "flow_api_gex_flow_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_GexFlow_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/diag/summary": {
+      "get": {
+        "tags": [
+          "diag"
+        ],
+        "summary": "Summary",
+        "operationId": "summary_api_diag_summary_get",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_DiagSummary_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/diag/history": {
+      "get": {
+        "tags": [
+          "diag"
+        ],
+        "summary": "History",
+        "operationId": "history_api_diag_history_get",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]{0,40}$",
+              "title": "Key"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1250,
+              "minimum": 20,
+              "default": 250,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_DiagHistory_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/diag/events": {
+      "get": {
+        "tags": [
+          "diag"
+        ],
+        "summary": "Events",
+        "operationId": "events_api_diag_events_get",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_DiagEvents_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/telegram/webhook": {
       "post": {
         "tags": [
@@ -7722,6 +8308,586 @@
         ],
         "title": "DayValue"
       },
+      "DiagEvent": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "expiry",
+              "mpc",
+              "export_flash",
+              "earnings_cluster"
+            ],
+            "title": "Kind"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Title"
+          },
+          "days_left": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days Left"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "kind",
+          "title",
+          "quality"
+        ],
+        "title": "DiagEvent",
+        "description": "이벤트 표시(§D9)."
+      },
+      "DiagEvents": {
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date",
+            "title": "Start"
+          },
+          "end": {
+            "type": "string",
+            "format": "date",
+            "title": "End"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/DiagEvent"
+            },
+            "type": "array",
+            "title": "Events"
+          },
+          "generated_for": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated For"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "start",
+          "end",
+          "events"
+        ],
+        "title": "DiagEvents",
+        "description": "`/api/diag/events?from=&to=` — 이벤트 달력(페이지 3 timeline)."
+      },
+      "DiagFearGreed": {
+        "properties": {
+          "score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "band": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "extreme_fear",
+                  "fear",
+                  "neutral",
+                  "greed",
+                  "extreme_greed"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Band"
+          },
+          "components": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Components"
+          },
+          "substitutes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Substitutes"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "band",
+          "components",
+          "quality"
+        ],
+        "title": "DiagFearGreed",
+        "description": "국장 공포탐욕(§D7). components 는 0~100(뒤집은 뒤), 빠진 성분 None."
+      },
+      "DiagGauge": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "enum": [
+              "risk_on",
+              "neutral",
+              "risk_off",
+              "hold"
+            ],
+            "title": "Label"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "parts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Parts"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "label",
+          "score",
+          "parts",
+          "quality"
+        ],
+        "title": "DiagGauge",
+        "description": "매크로 위험 게이지(공개 판정 — §D4)."
+      },
+      "DiagHistory": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "title": "Key"
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "public",
+              "login"
+            ],
+            "title": "Tier"
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit"
+          },
+          "bands": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Bands"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/DiagHistoryPoint"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "tier",
+          "unit",
+          "bands",
+          "points"
+        ],
+        "title": "DiagHistory",
+        "description": "`/api/diag/history?key=&days=` — 지표(또는 fear_greed) 시계열과 구간 경계."
+      },
+      "DiagHistoryPoint": {
+        "properties": {
+          "trade_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Trade Date"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "extreme_low",
+                  "low",
+                  "normal",
+                  "high",
+                  "extreme_high",
+                  "narrow",
+                  "wide"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "pct_rank": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pct Rank"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "trade_date",
+          "value",
+          "state",
+          "quality"
+        ],
+        "title": "DiagHistoryPoint"
+      },
+      "DiagIndicator": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "title": "Key"
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "public",
+              "login"
+            ],
+            "title": "Tier"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "extreme_low",
+                  "low",
+                  "normal",
+                  "high",
+                  "extreme_high",
+                  "narrow",
+                  "wide"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "pct_rank": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pct Rank"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "enum": [
+                  -1,
+                  0,
+                  1
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "flags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Flags"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "tier",
+          "value",
+          "unit",
+          "state",
+          "quality"
+        ],
+        "title": "DiagIndicator",
+        "description": "지표 카드 하나(§D1~§D6). state None = 이력 부족(estimated)."
+      },
+      "DiagSummary": {
+        "properties": {
+          "trade_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Trade Date"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DiagVerdict"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fear_greed": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DiagFearGreed"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "gauge": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DiagGauge"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "indicators": {
+            "items": {
+              "$ref": "#/components/schemas/DiagIndicator"
+            },
+            "type": "array",
+            "title": "Indicators"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/DiagEvent"
+            },
+            "type": "array",
+            "title": "Events"
+          },
+          "caution": {
+            "type": "boolean",
+            "title": "Caution",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "trade_date",
+          "verdict",
+          "fear_greed",
+          "gauge",
+          "indicators",
+          "events"
+        ],
+        "title": "DiagSummary",
+        "description": "`/api/diag/summary?date=` — 판정 띠·공포탐욕·지표 카드·이벤트(페이지 3 위쪽)."
+      },
+      "DiagVerdict": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "enum": [
+              "risk_on",
+              "neutral",
+              "risk_off",
+              "hold"
+            ],
+            "title": "Label"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "parts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Parts"
+          },
+          "top": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Top"
+          },
+          "event_flags": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "expiry",
+                "mpc",
+                "export_flash",
+                "earnings_cluster"
+              ]
+            },
+            "type": "array",
+            "title": "Event Flags"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "label",
+          "score",
+          "parts",
+          "quality"
+        ],
+        "title": "DiagVerdict",
+        "description": "종합 판정(§D8). top = 기여 큰 셋(부호·이름)."
+      },
       "DisclosureView": {
         "properties": {
           "rcept_no": {
@@ -8275,6 +9441,135 @@
           "data"
         ],
         "title": "Envelope[Consensus]"
+      },
+      "Envelope_DiagEvents_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DiagEvents"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[DiagEvents]"
+      },
+      "Envelope_DiagHistory_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DiagHistory"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[DiagHistory]"
+      },
+      "Envelope_DiagSummary_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DiagSummary"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[DiagSummary]"
       },
       "Envelope_Disclosures_": {
         "properties": {
@@ -8877,6 +10172,178 @@
           "data"
         ],
         "title": "Envelope[Financials]"
+      },
+      "Envelope_GexFlow_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/GexFlow"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[GexFlow]"
+      },
+      "Envelope_GexLevels_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/GexLevels"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[GexLevels]"
+      },
+      "Envelope_GexMetricSeries_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/GexMetricSeries"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[GexMetricSeries]"
+      },
+      "Envelope_GexProfile_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/GexProfile"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[GexProfile]"
       },
       "Envelope_IndexReview_": {
         "properties": {
@@ -11910,6 +13377,499 @@
           "quality"
         ],
         "title": "FyEstimateView"
+      },
+      "GexFlow": {
+        "properties": {
+          "hiro_flag": {
+            "type": "string",
+            "enum": [
+              "off",
+              "shadow",
+              "visible"
+            ],
+            "title": "Hiro Flag"
+          },
+          "hiro": {
+            "items": {
+              "$ref": "#/components/schemas/GexFlowPoint"
+            },
+            "type": "array",
+            "title": "Hiro"
+          },
+          "investors": {
+            "items": {
+              "$ref": "#/components/schemas/GexInvestorRow"
+            },
+            "type": "array",
+            "title": "Investors"
+          },
+          "night_investor_collected": {
+            "type": "boolean",
+            "title": "Night Investor Collected",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "hiro_flag",
+          "hiro",
+          "investors"
+        ],
+        "title": "GexFlow",
+        "description": "`/api/gex/flow` — HIRO-lite·투자자별. 야간 투자자별은 수집하지 않는다(D-P7-6)."
+      },
+      "GexFlowPoint": {
+        "properties": {
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ts"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "ts",
+          "value",
+          "quality"
+        ],
+        "title": "GexFlowPoint",
+        "description": "HIRO-lite 한 점(GX §6.1 — 섀도면 value None)."
+      },
+      "GexInvestorRow": {
+        "properties": {
+          "market_code": {
+            "type": "string",
+            "title": "Market Code"
+          },
+          "sector_code": {
+            "type": "string",
+            "title": "Sector Code"
+          },
+          "investor": {
+            "type": "string",
+            "title": "Investor"
+          },
+          "net_qty": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Qty"
+          },
+          "net_value_won": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Value Won"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ts"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "market_code",
+          "sector_code",
+          "investor",
+          "net_qty",
+          "net_value_won",
+          "ts",
+          "quality"
+        ],
+        "title": "GexInvestorRow",
+        "description": "투자자별 선물·옵션 순매수(`prv_gex.investor_flow` 마지막 행 — 대금은 **원**)."
+      },
+      "GexLevel": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Name"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "flag": {
+            "type": "string",
+            "enum": [
+              "off",
+              "shadow",
+              "visible"
+            ],
+            "title": "Flag"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons"
+          },
+          "detail": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Detail"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "value",
+          "flag",
+          "quality"
+        ],
+        "title": "GexLevel",
+        "description": "레벨 하나(`prv_gex.levels` — GX §3). name 예 call_wall·put_wall·abs_gamma·flip·flip_distance·\nexpected_move_calendar·expected_move_trading·top_levels. 섀도면 value None."
+      },
+      "GexLevels": {
+        "properties": {
+          "scope": {
+            "type": "string",
+            "enum": [
+              "all",
+              "nearest",
+              "0dte"
+            ],
+            "title": "Scope"
+          },
+          "trade_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Trade Date"
+          },
+          "session": {
+            "type": "string",
+            "enum": [
+              "day",
+              "night"
+            ],
+            "title": "Session"
+          },
+          "cycle_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Cycle At"
+          },
+          "session_open": {
+            "type": "boolean",
+            "title": "Session Open"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "price_quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "stale": {
+            "type": "boolean",
+            "title": "Stale",
+            "default": false
+          },
+          "stale_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stale Reason"
+          },
+          "levels": {
+            "items": {
+              "$ref": "#/components/schemas/GexLevel"
+            },
+            "type": "array",
+            "title": "Levels"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scope",
+          "trade_date",
+          "session",
+          "cycle_at",
+          "session_open",
+          "price",
+          "price_quality",
+          "levels"
+        ],
+        "title": "GexLevels",
+        "description": "`/api/gex/levels?scope=` — 최신 사이클 레벨 + 현재가(S_ref)."
+      },
+      "GexMetricPoint": {
+        "properties": {
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ts"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "ts",
+          "value",
+          "quality"
+        ],
+        "title": "GexMetricPoint"
+      },
+      "GexMetricSeries": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Name"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key",
+            "default": ""
+          },
+          "flag": {
+            "type": "string",
+            "enum": [
+              "off",
+              "shadow",
+              "visible"
+            ],
+            "title": "Flag"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/GexMetricPoint"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "scope",
+          "flag",
+          "points"
+        ],
+        "title": "GexMetricSeries",
+        "description": "`/api/gex/metrics?name=&from=&to=` — 지표 시계열. 섀도면 points 의 값이 모두 None(상태만)."
+      },
+      "GexProfile": {
+        "properties": {
+          "scope": {
+            "type": "string",
+            "enum": [
+              "all",
+              "nearest",
+              "0dte"
+            ],
+            "title": "Scope"
+          },
+          "cycle_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Cycle At"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "flip": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flip"
+          },
+          "call_wall": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Call Wall"
+          },
+          "put_wall": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Put Wall"
+          },
+          "expected_move": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Move"
+          },
+          "bars": {
+            "items": {
+              "$ref": "#/components/schemas/GexStrikeBar"
+            },
+            "type": "array",
+            "title": "Bars"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scope",
+          "cycle_at",
+          "price",
+          "flip",
+          "call_wall",
+          "put_wall",
+          "expected_move",
+          "bars"
+        ],
+        "title": "GexProfile",
+        "description": "`/api/gex/profile?scope=` — 행사가별 GEX 막대 + 현재가·Flip·월(화면 `profile`·`ladder`)."
+      },
+      "GexStrikeBar": {
+        "properties": {
+          "mrkt_cls": {
+            "type": "string",
+            "title": "Mrkt Cls"
+          },
+          "expiry": {
+            "type": "string",
+            "pattern": "^[0-9]{6}$",
+            "title": "Expiry"
+          },
+          "strike": {
+            "type": "number",
+            "title": "Strike"
+          },
+          "gex_call": {
+            "type": "number",
+            "title": "Gex Call"
+          },
+          "gex_put": {
+            "type": "number",
+            "title": "Gex Put"
+          },
+          "gex": {
+            "type": "number",
+            "title": "Gex"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "mrkt_cls",
+          "expiry",
+          "strike",
+          "gex_call",
+          "gex_put",
+          "gex",
+          "quality"
+        ],
+        "title": "GexStrikeBar",
+        "description": "행사가 하나의 GEX(원/1%, GX §2.1 — 콜 롱·풋 숏 naive 딜러)."
       },
       "Health": {
         "properties": {

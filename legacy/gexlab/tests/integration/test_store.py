@@ -2,7 +2,9 @@
 
 - 마이그레이션(두 번 적용·hypertable·압축 정책·동시 실행)
 - 가짜 KIS 서버 → poller 수집기 → PostgresSink 로 쓴 실제 레코드를 읽어 메모리 싱크와 맞춘다
-  (trade_date·session·UTC ts·값). 같은 묶음을 다시 써도 행이 늘지 않는다
+  (trade_date·session·UTC ts·값). 같은 묶음을 다시 써도 행이 늘지 않는다. poller 는 투자자별
+  (FHPTJ04030000)을 부르지 않고 investor_flow 에 쓰지 않는다 — 쓰기 주인은 KBJ flows.market_minute
+  하나(KBJ P7 D-P7-5, ADR 0019 §2-2)
 - recorder 원본(웹소켓 문자열·장 밖 수신)·auth health·재연결·오류 가림·압축 청크 중복
 - scheduler 적재: KRX 일별(야간 IMP_VOLT '0.00' → NULL 유지)·분봉(야간 24~30시)·마스터
 - ws-gateway 체결(같은 초는 seq 로)·세션 상태 전이 기록·공백 재판정
@@ -252,20 +254,20 @@ def _collect(
     tee = TeeSink(pg)
     col = Collector(kis, tee, calendar=CAL, clock=clock, config=cfg, master=chain.master_rows())
     if faults:  # 검증 실패 행 → quarantine + invalid 레코드 + health
+        # (투자자별 응답 깨뜨리기는 뺐다 — KBJ P7 D-P7-5 로 poller 가 그 TR 을 부르지 않는다)
         server.inject(
             "malformed", tr_id=TR_CALLPUT, params={"FID_MTRT_CNT": "260904"}, mutate=_bad_board
         )
-        server.inject(
-            "malformed",
-            tr_id=TR_INVESTOR,
-            params={"FID_INPUT_ISCD_2": "F001"},
-            mutate=lambda b: b["output"][0].pop("frgn_seln_vol"),
-        )
     col.run_until(end)
     assert col.stats.sink_errors == 0
+    # KBJ P7 D-P7-5(ADR 0019 §2-2): 투자자별 TR 은 한 번도 부르지 않고 investor 레코드도 없다
+    assert server.quote_calls(TR_INVESTOR) == [] and server.calls
+    assert tee.mem.investor == []
     return tee.mem
 
 
+# poller 싱크 프로토콜의 표 — investor_flow 는 write_investor 가 남아 있어 그대로 두되, KBJ P7
+# D-P7-5 뒤 poller 는 여기에 행을 쓰지 않는다(NOT_WRITTEN — 행 0 을 단언한다)
 POLLER_TABLES = {
     "chain_snapshots": "chain",
     "fut_board": "futures",
@@ -275,6 +277,7 @@ POLLER_TABLES = {
     "quarantine": "quarantine",
     "health_events": "health",
 }
+NOT_WRITTEN = frozenset({"investor_flow"})  # 쓰기 주인 KBJ flows.market_minute(ADR 0019 §2-1)
 
 
 def _replay(pg: PostgresSink, mem: InMemorySink) -> None:
@@ -309,7 +312,9 @@ def test_poller_records_round_trip_with_trade_date_session_and_utc_ts(day_run: R
     assert day_run.counts == {t: len(getattr(mem, attr)) for t, attr in POLLER_TABLES.items()}
     assert day_run.counts["chain_snapshots"] > 1000
     assert day_run.counts["quarantine"] > 0 and day_run.counts["health_events"] > 0
-    for t in POLLER_TABLES:
+    # KBJ P7 D-P7-5: poller 는 investor_flow 에 쓰지 않는다 — 행 0
+    assert {t: day_run.counts[t] for t in NOT_WRITTEN} == dict.fromkeys(NOT_WRITTEN, 0)
+    for t in POLLER_TABLES.keys() - NOT_WRITTEN:
         q = sql.SQL("SELECT DISTINCT trade_date, session FROM {}").format(sql.Identifier(t))
         assert _rows(url, q) == [(DAY, "day")], t
     # 시각: 10:00~10:01 KST = 01:00~01:01 UTC, 메모리의 ts 와 마이크로초까지 같다
@@ -356,7 +361,10 @@ def test_rewriting_the_same_batches_adds_nothing(day_run: Run) -> None:
     with PostgresSink(day_run.dsn, service="poller") as pg:
         _replay(pg, day_run.mem)
         _replay(pg, day_run.mem)
-        assert pg.stats.failures == 0 and pg.stats.batches == 14
+        # 표 7 × 두 번 = 14 였다. KBJ P7 D-P7-5 로 poller 가 investor 레코드를 내지 않아(빈 묶음은
+        # 쓰지 않는다 — 배치로 세지 않음) 투자자별 배치 2개가 빠져 6 × 2 = 12
+        assert pg.stats.failures == 0 and pg.stats.batches == 2 * (len(POLLER_TABLES) - 1) == 12
+        assert "investor_flow" not in pg.stats.by_table
     assert {t: _count(day_run.dsn, t) for t in POLLER_TABLES} == day_run.counts
 
 
@@ -366,9 +374,11 @@ def test_night_run_is_tagged_next_trading_day(timescale: PgContainer) -> None:
     with PostgresSink(url, service="poller") as pg:
         mem = _collect(pg, start, start + timedelta(seconds=40), PollerConfig(night_mode="A"))
     assert mem.chain and _count(url, "chain_snapshots") == len(mem.chain)
-    for t in ("chain_snapshots", "raw_messages", "investor_flow"):
+    for t in ("chain_snapshots", "raw_messages"):
         q = sql.SQL("SELECT DISTINCT trade_date, session FROM {}").format(sql.Identifier(t))
         assert _rows(url, q) == [(date(2026, 9, 29), "night")], t  # 월요일 밤 → 화요일 귀속
+    # 야간 투자자별도 부르지 않는다(KBJ P7 D-P7-5·D-P7-6 — 야간 조합은 KBJ 에서도 꺼짐)
+    assert not mem.investor and _count(url, "investor_flow") == 0
     lo = _one(url, "SELECT min(ts) FROM chain_snapshots")
     assert lo >= datetime(2026, 9, 28, 12, 0, tzinfo=UTC)  # 21:00 KST
 
@@ -760,9 +770,8 @@ def test_gap_inputs_read_what_the_collector_wrote(day_run: Run) -> None:
     }
     assert set(board) == want_board and len(board) == len(want_board) > 0
     assert set(fut) == {r.ts for r in mem.futures if r.quality != "invalid"}
-    assert set(inv) == {
-        (r.market_code, r.sector_code, r.ts) for r in mem.investor if r.quality != "invalid"
-    }
+    # KBJ P7 D-P7-5: poller 는 investor_flow 를 쓰지 않는다 — 판정 입력도 비어 있다
+    assert inv == [] and mem.investor == []
     want_under = {
         e.received_at
         for e in mem.raw

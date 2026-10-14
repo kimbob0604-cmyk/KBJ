@@ -31,6 +31,15 @@ from typing import Any, Final, Literal
 
 import httpx
 
+# P7 DIAG — 파생상품지수 일별(VKOSPI) 합성 행. 칸 이름은 다른 지수 일별과 같다고 본 가정이다
+# [실측 필요 #P7-1] — 값은 지어낸 합성(실데이터 아님), 행 이름은 `kbj.data.private.krx.vol_index`
+# 후보
+DRVPROD_ROWS: Final[tuple[dict[str, str], ...]] = (
+    {"IDX_CLSS": "파생", "IDX_NM": "코스피 200 변동성지수", "CLSPRC_IDX": "18.52",
+     "CMPPREVDD_IDX": "-0.31", "FLUC_RT": "-1.65"},
+    {"IDX_CLSS": "파생", "IDX_NM": "코스피 200 선물지수", "CLSPRC_IDX": "1234.56",
+     "CMPPREVDD_IDX": "3.10", "FLUC_RT": "0.25"},
+)  # fmt: skip
 FIX: Final = Path(__file__).resolve().parents[1] / "fixtures" / "synthetic" / "krx"
 KEY: Final = "krx-SIM-fake-key-0123456789"
 API_PREFIX: Final = "/svc/apis"
@@ -44,6 +53,7 @@ ENDPOINTS: Final[tuple[str, ...]] = (
     "/idx/kospi_dd_trd",
     "/idx/kosdaq_dd_trd",
     "/idx/krx_dd_trd",
+    "/idx/drvprod_dd_trd",
     "/etp/etf_bydd_trd",
     "/etp/etn_bydd_trd",
     "/drv/fut_bydd_trd",
@@ -97,6 +107,7 @@ def _templates() -> dict[str, list[dict[str, Any]]]:
         "/idx/kospi_dd_trd": _first_day(index["kospi"]),
         "/idx/kosdaq_dd_trd": _first_day(index["kosdaq"]),
         "/idx/krx_dd_trd": _first_day(index["kospi"]),
+        "/idx/drvprod_dd_trd": [dict(r) for r in DRVPROD_ROWS],
         "/etp/etf_bydd_trd": _first_day(_load("etf_daily.json")),
         "/etp/etn_bydd_trd": _first_day(_load("etn_daily.json")),
         "/drv/fut_bydd_trd": _first_day(_load("fut_daily.json")),

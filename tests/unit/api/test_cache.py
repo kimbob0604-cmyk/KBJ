@@ -37,6 +37,7 @@ def test_domains_cover_routes() -> None:
         "macro", "program", "flows_minute", "board_us",
         "index_review",  # P5 2차 묶음 IDX
         "trade",  # P6 묶음 FND
+        "gex", "diag",  # P7 묶음 FND-B
     }  # fmt: skip
 
 

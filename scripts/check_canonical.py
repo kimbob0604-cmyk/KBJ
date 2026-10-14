@@ -11,9 +11,9 @@ KIS 토큰 발급은 auth 한 곳, KIS·KRX·DART 호출은 kbj 어댑터, 텔�
 — 가짜 오류 문구에 호스트가 들어간다), 이 스크립트 자신(패턴은 조각을 이어 만든다).
 
 규칙
-- 호스트 그룹(``--list`` 로 본다). 목표 0 그룹(kis_oauth·kis_rest·kis_master·krx_api·dart·fnguide)은
-  허용 위치 밖 어디서든 한 줄이라도 있으면 실패한다. 기준선 그룹(telegram·ecos·datago·
-  kosis·kis_ws·naver·etf_issuers·krx_scrape)은 ``kbj/`` 에서는 허용 위치 밖이면 실패, 그
+- 호스트 그룹(``--list`` 로 본다). 목표 0 그룹(kis_oauth·kis_rest·kis_master·krx_api·dart·fnguide·
+  kis_ws)은 허용 위치 밖 어디서든 한 줄이라도 있으면 실패한다. 기준선 그룹(telegram·ecos·datago·
+  kosis·naver·etf_issuers·krx_scrape)은 ``kbj/`` 에서는 허용 위치 밖이면 실패, 그
   밖(legacy 등)은 ``scripts/canonical_baseline.txt`` 와 견준다.
 - 기준선은 줄어들기만 한다: 기준선에 없는 파일의 위반, 건수 증가, 건수가 줄었는데
   기준선을 안 줄임, 목표 0 그룹·kbj 경로가 기준선에 있음 — 모두 실패.
@@ -171,8 +171,9 @@ GROUPS: dict[str, Group] = {
             "kis_ws",
             re.compile(r"\b" + _dots("ops", "koreainvestment", "com")),
             ("kbj/services/ws_gateway/*",),
-            False,
-            "KIS 웹소켓 호스트 — ws-gateway 승격(P7)까지 legacy GX(메인 결정 D2)",
+            True,
+            "KIS 웹소켓 호스트 — kbj.services.ws_gateway(endpoints.py) 만(P7 WRAP 이 목표 0 으로, "
+            "legacy GX ws_gateway 는 shim)",
             "P7",
         ),
         Group(
@@ -304,6 +305,27 @@ LEGACY_KBJ_ALLOW: tuple[str, ...] = (
     "kbj.data.private.nasdaq",
     "kbj.data.private.stooq",
     "kbj.data.private.yahoo",
+    # P7 묶음 FND-C(docs/p7_design.md §1.2): GX scripts/make_golden.py 가 core·chain-subset
+    # 골든 이름을 KBJ CLI 에서 다시 내보내고(모드도 넘김), scripts/validate_greeks.py 가 스냅샷
+    # 입력 모델을 kbj.engines.gex.snapshot 에서 다시 내보낸다(KIS 그릭스 필드가 있어 core 가 아닌
+    # engines — 비공개 이름은 kbj 공개 이름의 별칭). GX core/** shim 은 위 kbj.core 로 덮인다.
+    # WRAP 확정
+    "kbj.engines.gex",
+    "kbj.services.engine.gex_golden",
+    # P7 묶음 ING(docs/p7_design.md §1.4): GX services/{ws_gateway,recorder}/*·
+    # data/kis/{ws,models}.py 가 KBJ 웹소켓·녹화 서비스·파생 응답 모델을 다시 내보내는 shim(legacy
+    # poller·scheduler 가 계속 쓴다), scripts/make_golden.py 가 raw 골든 이름을 KBJ CLI 에서 다시
+    # 내보낸다. WRAP 확정
+    "kbj.data.private.kis.ws",
+    "kbj.data.private.kis.derivatives",
+    "kbj.services.ws_gateway",
+    "kbj.services.recorder",
+    # P7 묶음 ENG(docs/p7_design.md §1.3): GX services/engine/* 가 KBJ 엔진 서비스(service·
+    # publish·context — 한 모듈)를, core/features.py 가 KBJ 플래그 로더를 다시 내보내는 shim(GX
+    # compose 의 `python -m services.engine`·통합 시험이 KBJ 엔진으로 돈다). WRAP 확정(2026-10-13 —
+    # FND-C·ING·ENG 가 더한 여덟 줄 모두 shim 이 실제로 쓰고 다리 시험이 같은 객체인지 본다)
+    "kbj.services.engine.gex",
+    "kbj.config.gex",
 )
 
 ALL_RULES: dict[str, str] = {**{g.name: g.desc for g in GROUPS.values()}, **AST_RULES}

@@ -76,17 +76,18 @@ describe('check-bundle: 크기 예산(gzip)', () => {
   it('JS·CSS 합계, sw.js 는 제외', () => {
     const r = checkBudget(
       [
-        { name: 'assets/a.js', bytes: 60_000 },
-        { name: 'assets/b.js', bytes: 20_000 },
+        { name: 'assets/a.js', bytes: 70_000 },
+        { name: 'assets/b.js', bytes: 25_000 },
         { name: 'sw.js', bytes: 99_999 },
         { name: 'assets/a.css', bytes: 1_000 },
       ],
       BUDGET_GZIP.public,
     );
-    expect(r.js).toBe(80_000);
+    expect(r.js).toBe(95_000);
     expect(r.findings.map((f) => f.rule)).toEqual(['budget_js']);
-    // ADR 0025: 공개 JS 예산 72 KB(P6 페이지 7)
-    expect(BUDGET_GZIP.public.js).toBe(72 * 1024);
+    // ADR 0025: 공개 JS 예산 72 KB(P6 페이지 7) → 88 KB·로그인 107 KB(P7 WRAP — 실측 + 10%)
+    expect(BUDGET_GZIP.public.js).toBe(88 * 1024);
+    expect(BUDGET_GZIP.login.js).toBe(107 * 1024);
     expect(checkBudget([{ name: 'assets/a.js', bytes: 70_000 }], BUDGET_GZIP.public).findings).toEqual([]);
     expect(checkBudget([{ name: 'assets/a.js', bytes: 70_000 }], BUDGET_GZIP.login).findings).toEqual([]);
   });
@@ -302,7 +303,7 @@ describe('merge-public-data: P5 하위 폴더(macro)·credit.json — p5_design 
   });
 
   it('규칙: P5 폴더는 SUBDIRS 에 있고 DART 전용이 아니다, 크기 상한은 파이썬과 같은 숫자', () => {
-    expect(SUBDIRS).toEqual(['fin', 'reports', 'macro', 'trade']); // P6 trade 는 아래 묶음
+    expect(SUBDIRS).toEqual(['fin', 'reports', 'macro', 'trade', 'diag']); // P6 trade·P7 diag 는 아래 묶음
     expect(DART_SUBDIRS).toEqual(['fin', 'reports']);
     expect([...P5_FLAT_NAMES]).toEqual(['credit.json']);
     expect(DIR_CAPS).toMatchObject({ macro: 3 * 1024 * 1024 });

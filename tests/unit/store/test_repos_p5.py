@@ -35,7 +35,7 @@ def as_repos(m: MemoryRepos) -> Repos:
         market=m.market, flows=m.flows, board=m.board, etf=m.etf, filings=m.filings, fin=m.fin,
         consensus=m.consensus, journal=m.journal, macro=m.macro, macro_prv=m.macro_prv,
         market_stats=m.market_stats, us=m.us, program=m.program, index_review=m.index_review,
-        trade=m.trade,
+        trade=m.trade, gex=m.gex, diag=m.diag, diag_pub=m.diag_pub,
     )  # fmt: skip
 
 
@@ -49,7 +49,7 @@ def test_public_bundle_shares_the_p5_public_tables() -> None:
     pub = m.public()
     as_public = PublicRepos(
         filings=pub.filings, fin=pub.fin, macro=pub.macro,
-        market_stats=pub.market_stats,
+        market_stats=pub.market_stats, diag=pub.diag,
     )  # fmt: skip
     as_public.macro.upsert_meta([meta("FRED:DGS10")], loaded_by=JOB, now=NOW)
     assert [x.series_id for x in m.macro.meta()] == [

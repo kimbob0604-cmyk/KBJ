@@ -1,0 +1,277 @@
+{
+  "source": "KBJ:diag.public+KBJ:diag.daily",
+  "as_of": "2026-12-10T08:40:00+09:00",
+  "quality": "estimated",
+  "notes": [
+    "공공지표 2026-12-10 · 시장 진단 2026-12-09 기준",
+    "값 없음: export_momentum, cyclical_defensive"
+  ],
+  "generated_at": "2026-12-10T14:00:00+09:00",
+  "data": {
+    "trade_date": "2026-12-10",
+    "verdict": {
+      "label": "neutral",
+      "score": 0,
+      "parts": {
+        "fear_greed": 0,
+        "credit_spread": 1,
+        "breadth_ma20": -1,
+        "kr_vs_global": -1,
+        "foreign_flow": 1
+      },
+      "top": [
+        "+신용스프레드",
+        "−시장폭",
+        "−한국 대 글로벌"
+      ],
+      "event_flags": [
+        "expiry"
+      ],
+      "quality": "estimated",
+      "reasons": [
+        "성분 없음: gex"
+      ]
+    },
+    "fear_greed": {
+      "score": 54.7,
+      "band": "neutral",
+      "components": {
+        "vol": null,
+        "breadth": 22.86,
+        "credit_balance": 23.69,
+        "foreign": 85.71,
+        "credit_spread": 86.35
+      },
+      "substitutes": [],
+      "quality": "estimated",
+      "reasons": [
+        "빠진 성분: vol"
+      ]
+    },
+    "gauge": {
+      "label": "neutral",
+      "score": -1,
+      "parts": {
+        "credit_spread": 1,
+        "credit_balance": -1,
+        "deposits": -1,
+        "rate_direction": 0
+      },
+      "quality": "estimated",
+      "reasons": [
+        "성분 없음: export_momentum"
+      ]
+    },
+    "indicators": [
+      {
+        "key": "credit_spread",
+        "tier": "public",
+        "value": 0.5509,
+        "unit": "%p",
+        "state": "narrow",
+        "pct_rank": 12.45,
+        "score": 1,
+        "flags": [],
+        "quality": "ok",
+        "reasons": []
+      },
+      {
+        "key": "credit_balance",
+        "tier": "public",
+        "value": -1.0271,
+        "unit": "%",
+        "state": "low",
+        "pct_rank": 26.1,
+        "score": -1,
+        "flags": [],
+        "quality": "ok",
+        "reasons": []
+      },
+      {
+        "key": "deposits",
+        "tier": "public",
+        "value": -2.8621,
+        "unit": "%",
+        "state": "extreme_low",
+        "pct_rank": 15.66,
+        "score": -1,
+        "flags": [],
+        "quality": "ok",
+        "reasons": []
+      },
+      {
+        "key": "export_momentum",
+        "tier": "public",
+        "value": null,
+        "unit": "%",
+        "state": null,
+        "pct_rank": null,
+        "score": null,
+        "flags": [],
+        "quality": "invalid",
+        "reasons": [
+          "준비 중 — 수출 속보(관세청 10일 잠정치) 없음"
+        ]
+      },
+      {
+        "key": "rate_direction",
+        "tier": "public",
+        "value": 1.17,
+        "unit": "bp",
+        "state": "normal",
+        "pct_rank": 58.63,
+        "score": 0,
+        "flags": [],
+        "quality": "ok",
+        "reasons": []
+      },
+      {
+        "key": "semis_concentration",
+        "tier": "login",
+        "value": 2.4416,
+        "unit": "%",
+        "state": "high",
+        "pct_rank": 68.57,
+        "score": 0,
+        "flags": [],
+        "quality": "estimated",
+        "reasons": []
+      },
+      {
+        "key": "cyclical_defensive",
+        "tier": "login",
+        "value": null,
+        "unit": "%",
+        "state": null,
+        "pct_rank": null,
+        "score": null,
+        "flags": [],
+        "quality": "invalid",
+        "reasons": [
+          "업종 지수 코드 미정 [확인 필요]"
+        ]
+      },
+      {
+        "key": "breadth_ma20",
+        "tier": "login",
+        "value": 7.3162,
+        "unit": "%",
+        "state": "low",
+        "pct_rank": 22.86,
+        "score": -1,
+        "flags": [],
+        "quality": "estimated",
+        "reasons": []
+      },
+      {
+        "key": "breadth_new_high",
+        "tier": "login",
+        "value": 15.0565,
+        "unit": "%",
+        "state": "extreme_high",
+        "pct_rank": 92.86,
+        "score": 1,
+        "flags": [],
+        "quality": "estimated",
+        "reasons": []
+      },
+      {
+        "key": "kr_vs_global",
+        "tier": "login",
+        "value": 1.5774,
+        "unit": "%p",
+        "state": "low",
+        "pct_rank": 27.14,
+        "score": -1,
+        "flags": [],
+        "quality": "estimated",
+        "reasons": []
+      },
+      {
+        "key": "foreign_flow",
+        "tier": "login",
+        "value": -3490084721.0,
+        "unit": "원",
+        "state": "extreme_high",
+        "pct_rank": 85.71,
+        "score": 1,
+        "flags": [],
+        "quality": "estimated",
+        "reasons": []
+      }
+    ],
+    "events": [
+      {
+        "date": "2026-12-10",
+        "kind": "expiry",
+        "title": "월물 만기",
+        "days_left": 0,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-12-11",
+        "kind": "earnings_cluster",
+        "title": "실적 몰림 12종목",
+        "days_left": 1,
+        "quality": "estimated"
+      },
+      {
+        "date": "2026-12-14",
+        "kind": "expiry",
+        "title": "위클리(월) 만기",
+        "days_left": 4,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-12-17",
+        "kind": "expiry",
+        "title": "위클리(목) 만기",
+        "days_left": 7,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-12-21",
+        "kind": "expiry",
+        "title": "위클리(월) 만기",
+        "days_left": 11,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-12-24",
+        "kind": "expiry",
+        "title": "위클리(목) 만기",
+        "days_left": 14,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-12-28",
+        "kind": "expiry",
+        "title": "위클리(월) 만기",
+        "days_left": 18,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-12-30",
+        "kind": "expiry",
+        "title": "위클리(목) 만기",
+        "days_left": 20,
+        "quality": "ok"
+      },
+      {
+        "date": "2027-01-04",
+        "kind": "expiry",
+        "title": "위클리(월) 만기",
+        "days_left": 25,
+        "quality": "ok"
+      },
+      {
+        "date": "2027-01-07",
+        "kind": "expiry",
+        "title": "위클리(목) 만기",
+        "days_left": 28,
+        "quality": "ok"
+      }
+    ],
+    "caution": true
+  }
+}

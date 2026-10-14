@@ -26,8 +26,9 @@
 #   페이지 6·10 — 네이버 ETF 시세 1)를 지웠다. naver 67 → 65, krx_scrape 62 → 57. 새 그룹 없음. etf_tracker_v9
 #   market.py 는 monitor/kr(테마 — 사용자 별도 진행)이 import 해서, SD 테마·밸류체인 라우트·theme_crawler 는 테마
 #   사전 통합을 사용자가 따로 진행해(2026-10-13 Q1) 남긴다.
+# - 2026-10-13 P7 WRAP(docs/p7_design.md §1.7-5): GX ws_gateway·recorder·data/kis/ws 를 kbj 로 옮기고 legacy 는
+#   shim(묶음 ING) — kis_ws 4 → 0, 그룹을 목표 0 으로 바꿨다(kbj 안은 kbj/services/ws_gateway/* 만). 새 그룹 없음.
 datago | legacy/etf_traker/board/ingest/datago.py | 1 | P4~P8(P3 S 이월) — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import — 그 기능 대체 때 삭제
-kis_ws | legacy/gexlab/config/kis_ws.yaml | 4 | P7 — ws-gateway 승격 때 kbj/services/ws_gateway 로(메인 결정 D2, 접속키는 auth 만 발급)
 krx_scrape | legacy/etf_traker/board/ingest/flows.py | 2 | P4~P8(P3 S 이월) — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import — 그 기능 대체 때 삭제
 krx_scrape | legacy/etf_traker/board/ingest/pipeline.py | 1 | P4~P8(P3 S 이월) — 남은 legacy 명령(triggers P4·classify P5·signals·backtest P8)이 import — 그 기능 대체 때 삭제
 krx_scrape | legacy/etf_traker/flowlab/naver.py | 1 | P8(P3 S 이월) — flowlab flows·verify·selftest 가 import — 이벤트 스터디 대체 때 삭제

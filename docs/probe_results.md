@@ -407,6 +407,15 @@
 | 55 | 관세청 10일 잠정치 공표·반영 (P6 — `trade.customs_tenday` 폴링 창) | 1·11·21일이 주말·공휴일일 때 공표일(당일·다음 영업일), API 반영 시각 분포(보도 시각 대비 지연 — 분), 같은 구간 재공표 여부. 막는 작업: `trade.customs_tenday`(사흘 창 20분 폴링 → 확정 뒤 창 축소, `config/trade.yaml tenday.poll`) |
 | 56 | 종목↔HS 매핑표 실데이터 검증 (P6 — VM, `verify_trade`) | `python -m kbj.services.engine.verify_trade --watchlist main --json` 건수만: 매핑된 관심종목 수·상장사 목록에 없는 종목코드 수·`pub_trade.hs_dim` 에 없는 HS 접두 수·겹쳐 보기 상태별(ok·no_revenue·short_overlap·no_trade) 수 — 값·종목명은 적지 않는다. 상장사 목록 표는 `pub_filings.corp_code`(`filings.corp_index` — MAP 확인으로 정정). [확인 필요] 첫 판 61종목의 대표 HS·가중치(`reviewed: false`)와 근거 DART 접수번호(비워 둠 — 지어내지 않는다) |
 | 57 | 관세청 월간 크기 (P6 — `trade.customs_monthly`·공개 `trade/`) | 품목(15101609)·품목×국가(15100475)·시군구(15134343) 응답 행 수(달마다)·저장 행 증가(행/월), 공개 `trade/` 폴더 크기(MB)·가장 큰 파일(KB). 확정할 것: `config/trade.yaml public_export`(개월 수·상한)·`manifest.DIR_CAPS["trade"]`·`PREFIX_CAPS`. [확인 필요] ① 15100475 국가 목록을 코드표 전체(약 269)로 할지, 같은 달 15101612 응답에 나온 국가로 할지(지금 구현 — 같은 달 15101612 국가) ② 공개 품목 파일을 장마다 SELECT 할 때 행 수·메모리 ③ `trade/flash.json` 10년 공개 여부(지금 6개월 — 200 KB 상한, 종류별 파일로 쪼갤지) ④ 104품목 자체 목록(`knowledge/trade_items.yaml`)과 실데이터 '최근 12개월 상위 HS4' 대조 ⑤ `price_volume.weight_unfit`(89장 말고 더 있는지) |
+| 58 (`#P7-1`) | KRX 파생상품지수 일별 `idx/drvprod_dd_trd` (P7 — `krx.vkospi`, 꺼짐) | VKOSPI 행을 고르는 칸·지수 이름/코드(`IDX_NM` 등 [실측 필요]), 종가 칸 이름·단위(지수 pt), 공표 시각(08:10 실행에 전 거래일 값이 있는지), 휴장일 응답 — 막는 작업: `krx.vkospi`(`prv_diag.vol_index`). 값은 적지 않는다 |
+| 59 (`#P7-2`) | KIS 야간 투자자별 응답 (P7 — D-P7-5·R7) | 야간 세션(18:00~05:00)에 투자자별 선물·옵션 TR 이 응답하는지·칸·단위(백만원 가정)·반영 주기 — `flows.market_minute` 야간 조합(`k200_fut_night`)은 꺼진 채, 결과로 별도 작업 여부 결정. 값은 적지 않는다 |
+| 60 (`#P7-3`) | GX DB → KBJ DB 이관 행 수 (P7 — `scripts/gex_migrate_data.sh`, VM) | `prv_gex.*` 표별 행 수 대조(이관 전·후 같은지)·`raw_messages` 기간·`--data-only` 소요 시간. 표 이름·건수만 적고 값은 적지 않는다 |
+| 61 (`#P7-4`) | KBJ ws-gateway 하루 무결측 (P7 — `nogap_report`) | 구독 수(41 예산 안)·재연결 횟수·순번 공백 건수·세션 닫힘 처리 — 하루치 건수만. 값은 적지 않는다 |
+| 62 (`#P7-5`) | GEX 섀도 1주 (P7 — `shadow_report`, §10 Q3 '섀도 검증 중') | 섀도 지표별 계산 성공률·`estimated` 비율·KIS 대조 차이 분포(건수·비율만) — 결과로 `config/gex.yaml features` visible 승격 여부. 값은 적지 않는다 |
+| 63 (`#P7-6`) | 위클리 4조합 KBJ 수집 하루 대조 (P7 — D-P7-6, `config/markets.yaml` `wkm_*`·`wki_*`) | KBJ `flows.market_minute` 위클리 조합 응답 칸·시장 코드(`WKM`·`WKI`)·행 수를 GX 수집과 하루 대조(건수만). 값은 적지 않는다 |
+| 64 (`#P7-7`) | legacy GX 를 KBJ DB 에 붙이는 환경변수 (P7 — ADR 0029 §3-7, VM) | 운영 VM 의 GX poller·scheduler 컨테이너 환경변수 이름(`DB_SEARCH_PATH` [확인 필요])과 붙은 뒤 `prv_gex.chain_snapshots`·`fut_board`·`series_expiries` 새 행이 KBJ DB 에 쌓이는지 — 이름·건수만. 값은 적지 않는다 |
+
+P7 번호 표기: 설계서의 상대 번호 `#P7-1`~`#P7-6` 을 실제 번호 #58~#63 으로 매겼다(칸에 둘 다 — WRAP 확정: 설계서도 둘을 같이 쓴다), WRAP 이 #64(`#P7-7`)를 더했다. `krx.vkospi` 는 #58 전 꺼짐, 위클리 4조합은 #13(GX 실측)로 켰고 KBJ 하루 대조는 #63.
 
 P6 관세청 수집(`trade.customs_tenday`·`trade.customs_monthly`)을 막는 번호: #1~#6·#17·#55·#57 — 등록부 노트에 적었고(`config/jobs.yaml`), P6 WRAP(2026-10-13)은 외부 호출이 없는 `trade.map_load`·`trade.derive`·`trade.stock_index` 만 켰다. 관세청 두 작업은 키 수령·위 실측 뒤 켠다(값은 적지 않고 칸·단위·코드·반영 시각만). 상태: #55~#57 미실측.
 

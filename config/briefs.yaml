@@ -11,7 +11,7 @@ morning:
     - {key: us, title: 간밤 미국, status: include, source_job: us.eod, due: "06:10"}
     - {key: rates_fx_commodities, title: 금리·달러·원자재, status: include, source_job: macro.morning, due: "06:20"}
     - {key: kr_macro, title: 한국 매크로(새 공표), status: include, source_job: macro.monthly, due: "09:10", empty: skip}
-    - {key: night_futures_gex, title: 야간선물·GEX, status: omitted, phase: P7}
+    - {key: night_futures_gex, title: 야간선물·GEX, status: include, source_job: gex.night_minutes, due: "06:00"}   # P7 OUT — 간밤 야간 마지막 엔진 산출(D-P7-16). 재료 주인은 서비스 gex.engine(작업이 아니라 source_job 은 야간 분봉 작업)
     - {key: calendar, title: 오늘·이번 주 일정, status: include, source_job: macro.morning, due: "06:20", empty: none_line}
     - {key: quality, title: 데이터 품질, status: include}
 closing:
@@ -22,7 +22,8 @@ closing:
     - {key: newhigh, title: 신고가(120일·52주·역사적), status: include, source_job: board.daily, due: "16:00"}
     - {key: flows, title: 수급 동향, status: include, source_job: market.close_collect, due: "15:35"}
     - {key: filings, title: 주요 공시, status: include, source_job: filings.dart_feed, due: "16:00", empty: none_line, none_text: "오늘 중요 공시 없음"}
-    - {key: gex_signals, title: GEX·시그널·초안·추천, status: omitted, phase: P7}
+    - {key: gex_diag, title: GEX·진단, status: include, source_job: diag.daily, due: "16:00"}   # P7 OUT — 주간 마지막 GEX 사이클 + diag.daily(무른 의존 wait_min 10 — D-P7-16)
+    - {key: signals, title: 시그널·초안·추천, status: omitted, phase: P8}   # LLM 서술은 P8(절대 규칙 3 — 수치는 저장소 값)
     - {key: quality, title: 데이터 품질, status: include}
 
 # 아침 ② 표 시리즈(config/macro.yaml series[].brief: true 와 같아야 한다 — 시험). 美10년은 DGS10 하나(중복 제거).

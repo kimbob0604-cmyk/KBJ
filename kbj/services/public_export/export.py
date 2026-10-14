@@ -18,6 +18,9 @@ docs/p3_design.md §7, docs/p4_design.md §1.9·§7, DATA_TIERS §3, ADR 0002 §
 - P6(docs/p6_design.md §7): `trade/`(`_p6_files` — 본문은 FLASH `trade_flash_json`·EXP
   `trade_explore_json`·MAP `trade_stock_json`). 공개 매핑(`origin = 'public'`)만, 시세 칸 없음.
   상한은 `DIR_CAPS["trade"]`·`FILE_CAPS`·`PREFIX_CAPS`.
+- P7(docs/p7_design.md §7): `diag/`(`_p7_files` — 본문은 DIAG `diag_json`). `pub_diag` 만, 로그인
+  판정 키(fear_greed·verdict·gex*) 없음(`manifest.diag_problems`). 상한은 `DIR_CAPS["diag"]`·
+  `FILE_CAPS`.
 - 그 밖에 쓰는 것: 거래 캘린더(코드 계산)·`config/calendar_events.yaml`(공개 설정)·`config/fin.yaml`
   (중요도 등급·크기 상한)·`config/reports.yaml`(공개 데모 종목).
 - 이 패키지는 로그인 등급 코드(`kbj.data.private`·`kbj.engines`·`kbj.services.{api,collectors,
@@ -50,6 +53,7 @@ from kbj.services.public_export.calendar_json import build_calendar
 from kbj.services.public_export.corp_index import NAME as CORP_INDEX_NAME
 from kbj.services.public_export.corp_index import build_corp_index, load_corps
 from kbj.services.public_export.credit_json import build_credit
+from kbj.services.public_export.diag_json import build_diag
 from kbj.services.public_export.events_json import build_events
 from kbj.services.public_export.filings_json import build_filings
 from kbj.services.public_export.fin_json import FIN_DIR, build_fin
@@ -381,6 +385,12 @@ def _p6_files(read: Reader, *, now: datetime) -> tuple[list[PublicFile], list[st
     return files, skipped
 
 
+def _p7_files(read: Reader, *, now: datetime) -> tuple[list[PublicFile], list[str]]:
+    """P7 공개 파일(diag/ — pub_diag 만, docs/p7_design.md §7). 본문은 DIAG(`diag_json`)."""
+    out = build_diag(read, now=now)
+    return list(out.files), list(out.skipped)
+
+
 def export_all(
     conn_pub: psycopg.Connection[Any] | None,
     out_dir: Path,
@@ -429,6 +439,10 @@ def export_all(
         p6, why6 = _p6_files(reader, now=now)
         files += p6
         skipped += why6
+        # P7: diag/ (pub_diag — 공공지표 진단·게이지·이벤트만)
+        p7, why7 = _p7_files(reader, now=now)
+        files += p7
+        skipped += why7
     caps.update(DIR_CAPS)
     return write_files(files, out_dir, now=now, blobs=blobs, caps=caps, skipped=skipped)
 

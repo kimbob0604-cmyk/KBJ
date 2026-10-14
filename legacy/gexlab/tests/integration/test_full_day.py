@@ -20,6 +20,11 @@
 - ws-gateway: `build_gateway` + `run_gateway` (세션 클라이언트·구독 컨트롤러·문맥 갱신·작업 스레드)
 - 가짜 KIS REST(tests/fakes/kis_server.py — probe 녹화 fixture 재생)와 가짜 웹소켓 서버
   (tests/fakes/ws_server.py — 합성 체결 프레임). 실제 KIS·KRX·네트워크 호출은 없다
+- KBJ `flows.market_minute` 흉내(`MarketMinuteStub` — SYNTHETIC): KBJ P7 D-P7-5 로 poller 는
+  투자자별(FHPTJ04030000)을 부르지 않는다. investor_flow 의 쓰기 주인은 KBJ 작업 하나(ADR 0019
+  §2-1)라 시험이 그 자리를 흉내 낸다 — 주간 09:00~15:40(equity open ~ close+10) 1분 슬롯마다
+  7조합 × 12투자자 행(ts = 슬롯 분, 품질 ok, 값은 investor.json 녹화에 슬롯 번호를 더한 것),
+  야간은 없다(D-P7-6). engine 은 이 표를 읽기만 한다
 
 시계는 하나(`FakeClock`): 레이트리미터·수집기·scheduler·ws-gateway(now)·recorder·하트비트가 모두
 이것을 본다. 서비스 안 묶음 나이(recorder 1초·ws 작업 스레드 0.5초)와 ws 응답 대기만 실제 시간이다 —
@@ -41,8 +46,9 @@ DAY·NIGHT 창에서 5초마다 보낸다(구독 중인 종목으로).
 
 - 상태 전이 IDLE(기동)→PRE_DAY→DAY→POST_DAY→PRE_NIGHT→NIGHT→IDLE 가 session_log 와
   `session.events` 에 순서대로, 경계 시각에, 거래일·세션과 함께 (NIGHT 는 2026-09-29 귀속)
-- chain_snapshots·fut_board·investor_flow·raw_messages·opt_ticks·fut_ticks 가 세션(주간 09-28·
-  야간 09-29)마다 있고, 행의 거래일·세션이 시각의 `session_tag` 와 같다. quality 는 허용 값만
+- chain_snapshots·fut_board·raw_messages·opt_ticks·fut_ticks 가 세션(주간 09-28·
+  야간 09-29)마다 있고, 행의 거래일·세션이 시각의 `session_tag` 와 같다. quality 는 허용 값만.
+  investor_flow 는 흉내 낸 KBJ 작업의 주간 행뿐(poller 는 투자자별 TR 을 한 번도 부르지 않는다)
 - 야간 분기 B: NIGHT 엔 전광판·선물 전광판·기초자산 REST 가 없고 단건 EU(옵션)·CM(선물)만
 - 레이트리미터: 가짜 시계의 어떤 반열린 1초 창에도 KIS 호출 4건 이하
 - WKM 260904 만기(15:20): poller 전광판 대상이 15:20 에 바뀌고, ws-gateway 구독은 마감 여유(60초)
@@ -61,7 +67,8 @@ DAY·NIGHT 창에서 5초마다 보낸다(구독 중인 종목으로).
   (oi_changes)은 세션마다 첫 스냅샷부터. 체결 틱(ticks.opt·ticks.fut)은 engine 이 다 받아 HIRO-lite
   hiro 행을 세션마다(estimated, 야간 첫 행은 세션 전환 리셋), 대량 체결 기준은 세션 거래일마다 한
   번(체결 기록 20거래일 전이라 비활성, block_trade 행 없음). 투자자별 순매수(investor_flow 지표)는
-  investor_flow 표의 외국인·개인·기관계·증권 행 그대로, 딜러 가정 점검(dealer_check)은 POST_DAY 에
+  investor_flow 표(흉내 낸 KBJ flows.market_minute 행)의 외국인·개인·기관계·증권 행 그대로(주간만 —
+  야간은 수집 안 함, D-P7-6), 딜러 가정 점검(dealer_check)은 POST_DAY 에
   그 거래일 한 행. 일별 지표(atm_iv_daily·iv_rank·
   iv_percentile·iv_hv)는 POST_DAY(15:45 창)에 한 번 — 그 거래일 15:45 행, 오늘 값은 마지막 주간
   사이클의 월물 ATM IV
@@ -96,11 +103,19 @@ from pydantic import SecretStr
 
 from core.calendar import State, TradingCalendar, state_at
 from data.kis.auth_client import RedisTokenCache, TokenRecord, token_owner
+from data.kis.models import InvestorRow
 from data.kis.ratelimit import RedisRateLimiter, limiter_key
 from data.kis.rest import KisClient
 from data.store import PostgresSink
 from db.migrate import migrate
-from scripts.probe_common import TR_CALLPUT, TR_FUT_BOARD, TR_OPTION_LIST, TR_PRICE, TR_TOP
+from scripts.probe_common import (
+    TR_CALLPUT,
+    TR_FUT_BOARD,
+    TR_INVESTOR,
+    TR_OPTION_LIST,
+    TR_PRICE,
+    TR_TOP,
+)
 from services.auth.health import LogHealthSink
 from services.auth.service import TOKEN_KEY, WS_KEY_KEY, reader
 from services.bus import (
@@ -126,6 +141,7 @@ from services.poller.config import PollerConfig
 from services.poller.context import session_tag
 from services.poller.planner import from_us
 from services.poller.ready import READY_MAX_WAIT_S, ReadyNotifier, ReadyTap
+from services.poller.records import InvestorRecord
 from services.poller.service import PollerService, RawFanout
 from services.recorder.service import Recorder
 from services.recorder.service import run as run_recorder
@@ -145,6 +161,7 @@ from tests.fakes.kis_server import (
     FakeSeries,
     default_chain,
     fake_settings,
+    load_fixture,
 )
 from tests.fakes.ws_server import FakeKisWsServer
 from tests.integration.conftest import _docker, _docker_ready, compose_available
@@ -235,6 +252,10 @@ TRANSITIONS = (  # (상태, 이전 상태, 경계 시각, 거래일, 세션)
     (State.IDLE, State.NIGHT, kst(N, 6), None, None),
 )
 QUALITIES = {"ok", "stale", "estimated", "invalid"}
+# KBJ flows.market_minute(config/jobs.yaml — equity {start: open, end: close+10, every_min: 1}) 슬롯
+FLOWS_FIRST = kst(D, 9)
+FLOWS_LAST = kst(D, 15, 40)
+FLOWS_SLOTS = int((FLOWS_LAST - FLOWS_FIRST) / timedelta(minutes=1)) + 1  # 401
 
 
 # ── compose 시험 스택 ─────────────────────────────────────────────────────────
@@ -383,6 +404,48 @@ def seed_credentials(r: Any, now: datetime) -> None:
         RedisTokenCache(r, key).store(rec, now)
 
 
+class MarketMinuteStub:
+    """SYNTHETIC: KBJ `flows.market_minute` 흉내 — investor_flow 의 유일한 쓰기 주인(ADR 0019 §2-1,
+    KBJ P7 D-P7-5). 주간 1분 슬롯마다(FLOWS_FIRST~FLOWS_LAST, 시각이 슬롯에 닿으면) 7조합 ×
+    12투자자 행을 ts = 슬롯 분·품질 ok 로 쓴다. 값은 investor.json 녹화(2026-09-28 GX 실측 응답)에
+    슬롯 번호 k 를 매수·순매수에 더한 것(순매수 = 매수 − 매도 유지 — 누적처럼 분마다 바뀐다).
+    야간 조합은 KBJ 에서도 꺼져 있다(D-P7-6) — 야간 행은 없다."""
+
+    def __init__(self, store: PostgresSink) -> None:
+        self.store = store
+        self.next_slot = FLOWS_FIRST
+        self.slots = 0
+        self.base = {
+            tuple(pair.split("/")): InvestorRow.model_validate(body["output"][0]).to_long()
+            for pair, body in load_fixture("investor.json")["pairs"].items()
+        }
+
+    def step(self, now: datetime) -> None:
+        while self.next_slot <= min(now, FLOWS_LAST):
+            self.store.write_investor(self._rows(self.next_slot, self.slots))
+            self.slots += 1
+            self.next_slot += timedelta(minutes=1)
+
+    def _rows(self, slot: datetime, k: int) -> list[InvestorRecord]:
+        out: list[InvestorRecord] = []
+        for (mkt, sector), flows in self.base.items():
+            for f in flows:
+                v = f.model_dump()
+                for name in ("buy_qty", "net_qty"):
+                    v[name] = None if v[name] is None else v[name] + k
+                out.append(
+                    InvestorRecord(
+                        ts=slot,
+                        trade_date=D,
+                        session="day",
+                        market_code=mkt,
+                        sector_code=sector,
+                        **v,
+                    )
+                )
+        return out
+
+
 @dataclass
 class FullDay:
     stack: ComposeStack
@@ -417,6 +480,7 @@ class FullDay:
 
         # poller — 레이트리미터·수집기·곁일(마스터·문맥 발행)이 모두 가짜 시계
         ps = self._store("poller")
+        self.poller_store = ps
         limiter = RedisRateLimiter(self.redis, APP_KEY, clock=self.clock)
         tokens = reader(self.redis, SETTINGS, now=self.clock.now)
         self.kis_client = KisClient(
@@ -441,6 +505,9 @@ class FullDay:
             ready=self.ready,
         )
         self.poller_stop = threading.Event()
+
+        # KBJ flows.market_minute 흉내 — investor_flow 는 poller 가 아니라 이것만 쓴다(D-P7-5)
+        self.flows = MarketMinuteStub(self._store("flows"))
 
         # engine — chain.ready 로 사이클, 10초 따라잡기·문맥 갱신도 가짜 시계
         es = self._store("engine")
@@ -686,6 +753,7 @@ class FullDay:
         while self.clock.now() < t:
             self.clock.set(min(self.clock.now() + SKIP, t))
             self.sched()
+            self.flows.step(self.clock.now())
             self.eng()
             await self.pump(ticks=False)
 
@@ -694,6 +762,7 @@ class FullDay:
         k = 0
         while self.clock.now() < end:
             self.sched()
+            self.flows.step(self.clock.now())
             k += 1
             target = min(start + k * STEP, end)
             if self.clock.now() < target:
@@ -786,7 +855,7 @@ def test_a_whole_trading_day_from_pre_day_to_idle(
         _check_session_log(db, day)
         _check_rest_calls(day)
         _check_expiry_switch(db, day)
-        _check_rows(db)
+        _check_rows(db, day)
         _check_ws(day)
         _check_services(db, day)
         _check_engine(db, day)
@@ -840,6 +909,8 @@ def _check_rest_calls(day: FullDay) -> None:
     assert all(c.status == 200 and c.msg_cd.startswith("MCA") for c in calls), Counter(
         (c.tr_id, c.status, c.msg_cd) for c in calls if c.status != 200 or c.msg_cd[:3] != "MCA"
     )
+    # KBJ P7 D-P7-5(ADR 0019 §2-2): poller 는 투자자별 TR 을 어느 상태에서도 부르지 않는다
+    assert day.kis.quote_calls(TR_INVESTOR) == []
     day_tr = Counter(c.tr_id for c in by_state[State.DAY])
     assert day_tr[TR_CALLPUT] and day_tr[TR_FUT_BOARD] and day_tr[TR_TOP] and day_tr[TR_PRICE]
     day_markets = {c.params.get("FID_COND_MRKT_DIV_CODE") for c in by_state[State.DAY]}
@@ -895,14 +966,28 @@ def _check_expiry_switch(db: psycopg.Connection[Any], day: FullDay) -> None:
     assert new_ticks is not None and new_ticks >= EXPIRY_SWITCH + LATE_GRACE
 
 
-def _check_rows(db: psycopg.Connection[Any]) -> None:
+def _check_rows(db: psycopg.Connection[Any], day: FullDay) -> None:
     sessions = {(D, "day"), (N, "night")}
     for table in ("chain_snapshots", "fut_board", "investor_flow"):
         rows = _q(db, f"SELECT ts, trade_date, session, quality FROM {table}")  # noqa: S608
-        assert {(td, ss) for _, td, ss, _ in rows} == sessions, table
+        # investor_flow 는 흉내 낸 KBJ flows.market_minute 의 주간 행뿐(야간 수집 안 함 — D-P7-6)
+        want = {(D, "day")} if table == "investor_flow" else sessions
+        assert {(td, ss) for _, td, ss, _ in rows} == want, table
         assert {q for *_, q in rows} <= QUALITIES and any(q == "ok" for *_, q in rows), table
         bad = [(ts, td, ss) for ts, td, ss, _ in rows if session_tag(ts, CAL) != (td, ss)]
         assert not bad, (table, bad[:5])
+    # investor_flow: KBJ P7 D-P7-5 — poller 는 한 행도 쓰지 않았다. 행은 모두 흉내 낸 작업의 것
+    # (슬롯 분 401 × 7조합 × 12투자자, 품질 ok) — 다른 시각·다른 쓰기가 섞이지 않았다
+    assert day.flows.slots == FLOWS_SLOTS
+    assert "investor_flow" not in day.poller_store.stats.by_table
+    inv = _q(
+        db,
+        "SELECT ts, count(*), count(DISTINCT (market_code, sector_code)), "
+        "bool_and(quality = 'ok') FROM investor_flow GROUP BY ts ORDER BY ts",
+    )
+    slots = [FLOWS_FIRST + timedelta(minutes=i) for i in range(FLOWS_SLOTS)]
+    assert [r[0] for r in inv] == slots
+    assert all(r[1:] == (7 * 12, 7, True) for r in inv), inv[:3]
     # 야간 체인은 단건 보강뿐(전광판 없음), 야간 선물은 단건 CM
     night_chain = _q(
         db,
@@ -1115,8 +1200,9 @@ def _check_engine_ticks(db: psycopg.Connection[Any], day: FullDay) -> None:
 
 
 def _check_engine_investor(db: psycopg.Connection[Any]) -> None:
-    """투자자별 순매수(§6.2): engine 이 낸 investor_flow 지표 행은 모두 investor_flow 표의 한 행
-    (같은 시각·조합·투자자·거래일·세션·순매수) 그대로 — 외국인·개인·기관계·증권만."""
+    """투자자별 순매수(§6.2): engine 이 낸 investor_flow 지표 행은 모두 investor_flow 표(흉내 낸
+    KBJ flows.market_minute 행)의 한 행(같은 시각·조합·투자자·거래일·세션·순매수) 그대로 —
+    외국인·개인·기관계·증권만. 주간만(야간 수집 안 함 — D-P7-6), 마지막 슬롯(15:40)까지 따라왔다."""
     src = {
         (ts, f"{m}:{sc}:{inv}", td, ss, None if n is None else float(n))
         for ts, m, sc, inv, td, ss, n in _q(
@@ -1135,7 +1221,9 @@ def _check_engine_investor(db: psycopg.Connection[Any]) -> None:
         )
     }
     assert got and got <= src, sorted(got - src)[:3]
-    assert {(td, ss) for _, _, td, ss, _ in got} >= {(D, "day")}
+    assert {(td, ss) for _, _, td, ss, _ in got} == {(D, "day")}
+    last = {key for ts, key, *_ in got if ts == FLOWS_LAST}
+    assert len(last) == 7 * 4, sorted(last)  # 7조합 × 표시 투자자 넷
 
 
 def _scope_expiries(db: psycopg.Connection[Any], scope: str) -> dict[datetime, list[str]]:

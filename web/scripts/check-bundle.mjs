@@ -34,8 +34,9 @@ export const LOGIN_FORBIDDEN = [
 ];
 
 export const BUDGET_GZIP = {
-  public: { js: 72 * 1024, css: 20 * 1024 }, // ADR 0025(P6 — 60 → 72 KB)
-  login: { js: 90 * 1024, css: 20 * 1024 },
+  // ADR 0025(P6 — 60 → 72 KB, P7 WRAP — 실측 + 10%: 공개 81,266 B → 88 KB, 로그인 99,353 B → 107 KB)
+  public: { js: 88 * 1024, css: 20 * 1024 },
+  login: { js: 107 * 1024, css: 20 * 1024 },
 };
 
 const TEXT_EXT = /\.(?:js|mjs|css|html|json|webmanifest|svg|txt|map|xml)$/i;

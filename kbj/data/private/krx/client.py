@@ -60,6 +60,8 @@ KSQ_BASE_INFO: Final = "/sto/ksq_isu_base_info"  # 코스닥 종목기본정보
 IDX_KOSPI_DAILY: Final = "/idx/kospi_dd_trd"  # KOSPI 시리즈 일별시세(업종지수 포함)
 IDX_KOSDAQ_DAILY: Final = "/idx/kosdaq_dd_trd"  # KOSDAQ 시리즈 일별시세
 IDX_KRX_DAILY: Final = "/idx/krx_dd_trd"  # KRX 시리즈 일별시세
+# 파생상품지수 일별(VKOSPI 행 — P7 krx.vkospi, 경로·행 이름·칸 [실측 필요 #P7-1])
+IDX_DRVPROD_DAILY: Final = "/idx/drvprod_dd_trd"
 ETF_DAILY: Final = "/etp/etf_bydd_trd"  # ETF 일별매매정보(NAV·상장좌수·순자산)
 ETN_DAILY: Final = "/etp/etn_bydd_trd"  # ETN 일별매매정보
 FUT_DAILY: Final = "/drv/fut_bydd_trd"  # 선물 일별매매정보(GX)
@@ -92,6 +94,7 @@ ENDPOINTS: Final[tuple[str, ...]] = (
     IDX_KOSPI_DAILY,
     IDX_KOSDAQ_DAILY,
     IDX_KRX_DAILY,
+    IDX_DRVPROD_DAILY,
     ETF_DAILY,
     ETN_DAILY,
     FUT_DAILY,

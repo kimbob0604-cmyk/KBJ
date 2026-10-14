@@ -1,0 +1,160 @@
+{
+  "source": "KBJ:diag.public",
+  "as_of": "2026-12-10T08:40:00+09:00",
+  "quality": "invalid",
+  "notes": [],
+  "generated_at": "2026-12-10T14:00:00+09:00",
+  "data": {
+    "trade_date": "2026-12-10",
+    "gauge": {
+      "label": "neutral",
+      "score": -1,
+      "parts": {
+        "credit_balance": -1,
+        "credit_spread": 1,
+        "deposits": -1,
+        "rate_direction": 0
+      },
+      "quality": "estimated",
+      "reasons": [
+        "성분 없음: export_momentum"
+      ]
+    },
+    "indicators": [
+      {
+        "key": "credit_balance",
+        "tier": "public",
+        "value": -1.0271,
+        "unit": "%",
+        "state": "low",
+        "pct_rank": 26.1,
+        "score": -1,
+        "flags": [],
+        "quality": "ok",
+        "reasons": []
+      },
+      {
+        "key": "credit_spread",
+        "tier": "public",
+        "value": 0.5509,
+        "unit": "%p",
+        "state": "narrow",
+        "pct_rank": 12.45,
+        "score": 1,
+        "flags": [],
+        "quality": "ok",
+        "reasons": []
+      },
+      {
+        "key": "deposits",
+        "tier": "public",
+        "value": -2.8621,
+        "unit": "%",
+        "state": "extreme_low",
+        "pct_rank": 15.66,
+        "score": -1,
+        "flags": [],
+        "quality": "ok",
+        "reasons": []
+      },
+      {
+        "key": "export_momentum",
+        "tier": "public",
+        "value": null,
+        "unit": "%",
+        "state": null,
+        "pct_rank": null,
+        "score": null,
+        "flags": [],
+        "quality": "invalid",
+        "reasons": [
+          "준비 중 — 수출 속보(관세청 10일 잠정치) 없음"
+        ]
+      },
+      {
+        "key": "rate_direction",
+        "tier": "public",
+        "value": 1.17,
+        "unit": "bp",
+        "state": "normal",
+        "pct_rank": 58.63,
+        "score": 0,
+        "flags": [],
+        "quality": "ok",
+        "reasons": []
+      }
+    ],
+    "events": [
+      {
+        "date": "2026-12-10",
+        "kind": "expiry",
+        "title": "월물 만기",
+        "days_left": 0,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-12-11",
+        "kind": "earnings_cluster",
+        "title": "실적 몰림 12종목",
+        "days_left": 1,
+        "quality": "estimated"
+      },
+      {
+        "date": "2026-12-14",
+        "kind": "expiry",
+        "title": "위클리(월) 만기",
+        "days_left": 4,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-12-17",
+        "kind": "expiry",
+        "title": "위클리(목) 만기",
+        "days_left": 7,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-12-21",
+        "kind": "expiry",
+        "title": "위클리(월) 만기",
+        "days_left": 11,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-12-24",
+        "kind": "expiry",
+        "title": "위클리(목) 만기",
+        "days_left": 14,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-12-28",
+        "kind": "expiry",
+        "title": "위클리(월) 만기",
+        "days_left": 18,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-12-30",
+        "kind": "expiry",
+        "title": "위클리(목) 만기",
+        "days_left": 20,
+        "quality": "ok"
+      },
+      {
+        "date": "2027-01-04",
+        "kind": "expiry",
+        "title": "위클리(월) 만기",
+        "days_left": 25,
+        "quality": "ok"
+      },
+      {
+        "date": "2027-01-07",
+        "kind": "expiry",
+        "title": "위클리(목) 만기",
+        "days_left": 28,
+        "quality": "ok"
+      }
+    ]
+  }
+}

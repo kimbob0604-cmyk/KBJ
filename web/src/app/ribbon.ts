@@ -8,6 +8,8 @@
 //   '준비 중' 칩(phase_pending)을 그대로 보낸다(수집 꺼짐·실측 전 #43·#48).
 // - P6(FLASH — metrics §25): '수출 속보' 칩 = 관세청 10일 잠정치 수출 품목 전체 최신 구간의 발표 당시 YoY(`1~20일 +12.3%`,
 //   잠정). 로그인은 API 칩, 공개는 공개 파일 `trade/ribbon`(공개 내보내기 trade/ribbon.json — 같은 칩 모양). 값이 없으면 '—'.
+// - P7(OUT — metrics §G3.5): 'GEX Flip 거리' 칩(로그인) = (현재가 − Flip) ÷ 현재가 × 100(%), 엔진 산출 visible 일 때만.
+//   단계 표시를 지웠다 — 산출이 없거나 섀도면 서버가 '준비 중(P7)' 칩(phase_pending)을 보낸다. 공개 빌드는 자물쇠.
 // - 칩 순서·이름·단계는 엔진 `kbj/engines/market/ribbon.py` 의 CHIP_ORDER·PENDING 과 같다.
 // - 값이 없는 칩은 0 이 아니라 '—'(사유는 title). 금액은 원 단위 → 화면에서만 억·조.
 import type { components } from '../api/types.gen';
@@ -26,7 +28,7 @@ export const RIBBON_REFRESH_MS = 60_000;
 /** 공개 띠: 세션 카운트다운만 다시 계산(파일은 다시 받지 않는다) */
 export const PUBLIC_TICK_MS = 30_000;
 
-/** 칩 자리(엔진 CHIP_ORDER 와 같은 순서). phase 가 있으면 아직 원천이 없다(P6·P7). */
+/** 칩 자리(엔진 CHIP_ORDER 와 같은 순서). phase 가 있으면 아직 원천이 없다(지금은 없음 — P7 에 모두 들어왔다). */
 export const CHIP_SLOTS: readonly { key: string; label: string; tier: 'public' | 'login'; phase?: string }[] = [
   { key: 'session', label: '세션', tier: 'public' },
   { key: 'bok_mpc', label: '금통위', tier: 'public' },
@@ -40,7 +42,7 @@ export const CHIP_SLOTS: readonly { key: string; label: string; tier: 'public' |
   { key: 'semi_skew', label: '반도체 쏠림', tier: 'login' },
   { key: 'cyc_def', label: '경기민감 대 방어', tier: 'login' },
   { key: 'kr_vs_global', label: '한국 대 글로벌', tier: 'login' },
-  { key: 'gex_flip', label: 'GEX Flip 거리', tier: 'login', phase: 'P7' },
+  { key: 'gex_flip', label: 'GEX Flip 거리', tier: 'login' },
 ];
 
 // ── 시간 계산(KST) ──────────────────────────────────────────
@@ -240,6 +242,11 @@ export function chipOptions(c: ApiChip, now: Date): ChipOptions {
     case 'cyc_def':
     case 'kr_vs_global':
       text = n === null ? DASH : `${num(n, 2, true)}%p`;
+      cls = signClass(n);
+      break;
+    case 'gex_flip':
+      // 값 = Flip 거리(%) — 양수는 현재가가 Flip 위. Flip·F(pt)는 title(note)
+      text = n === null ? DASH : pct(n, 2, true);
       cls = signClass(n);
       break;
     case 'credit_spread': {

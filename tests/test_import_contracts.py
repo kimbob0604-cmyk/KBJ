@@ -15,6 +15,9 @@
    저장소를 모른다. ⑭·⑯ 은 P5 웨이브 3(WRAP)이 더했다(docs/p5_design.md D-P5-25): ⑭ 공개 매크로·
    통계 작업(collectors.macro·kofia)과 공개 원천(fred·treasury·nyfed)은 로그인 원천·저장소를 모른다,
    ⑯ 브리핑·리포트(reports.briefs·flows·etf)는 어댑터·수집기·API 를 모른다(발송 시각 외부 호출 0).
+   ⑰ 은 P6 WRAP, ⑱·⑲ 는 P7 WRAP(docs/p7_design.md D-P7-20): ⑱ 공개 진단(engines.diagnosis.public·
+   engine.diag_pub·public_export.diag_json)은 로그인 원천·저장소·GEX 를 모른다, ⑲ websockets 는
+   kbj.services.ws_gateway 안에서만 직접 import 한다. GEX·진단 엔진은 ⑨ 에 든다(사례로 확인).
    ⑮(분류 사전)는 테마 사전 통합을 사용자가 따로 진행해(2026-10-13 Q1) 번호만 비워 둔다.
    위반 하나가 두 계약에 함께 걸리면(예: 엔진이 auth 를 import — ④·⑨) 둘 다 기대값에 적는다.
 """
@@ -42,6 +45,8 @@ RUNTIME_IMPORTS = {
     "matplotlib",  # P5 flows.report 차트(docs/p5_design.md D-P5-16 — legacy 그룹에서 런타임으로)
     "starlette",  # fastapi 가 끌어온다(정적 파일·미들웨어)
     "uvicorn",
+    "vollib",  # P7 GEX 순수 계산(kbj.core.gex — Black-76·IV·그릭스, D-P7-19)
+    "websockets",  # P7 KIS 웹소켓(kbj.services.ws_gateway 안에서만 — 계약은 WRAP, D-P7-20 나)
     "httpx",
     "psycopg",
     "pydantic",
@@ -152,6 +157,16 @@ def test_kbj_imports_only_kbj_stdlib_and_declared_deps() -> None:
         ("kbj/services/engine/trade_map.py", "import kbj.store.repos.journal\n", "⑰"),
         ("kbj/services/collectors/customs.py", "import kbj.services.engine.verify_trade\n", "⑰"),
         ("kbj/services/public_export/trade_stock_json.py", "import kbj.store.repos.market\n", "⑧⑰"),
+        # ⑱ — 공개 진단이 로그인 저장소·GEX·로그인 진단을 끌어오면 실패(P7 WRAP, D-P7-20 가)
+        ("kbj/services/engine/diag_pub.py", "import kbj.store.repos.diag_prv\n", "⑱"),
+        ("kbj/engines/diagnosis/public.py", "import kbj.engines.gex.daily\n", "⑱"),
+        ("kbj/services/public_export/diag_json.py", "import kbj.engines.diagnosis.verdict\n", "⑧⑱"),
+        # ⑲ — 웹소켓 라이브러리는 ws-gateway 밖에서 직접 import 하지 않는다(D-P7-20 나)
+        ("kbj/services/recorder/_leak.py", "import websockets\n", "⑲"),
+        ("kbj/services/engine/_ws.py", "from websockets.asyncio.client import connect\n", "⑲"),
+        # D-P7-20 다 — GEX·진단 엔진도 계약 ⑨(순수)에 든다(새 계약 없이 확인)
+        ("kbj/engines/gex/_io.py", "import psycopg\n", "⑨"),
+        ("kbj/engines/diagnosis/_svc.py", "import kbj.store.repos.diag\n", "⑨"),
     ],
 )
 def test_contract_catches_violation(
@@ -187,13 +202,13 @@ def test_contract_catches_violation(
 
 
 def test_fifteen_contracts_are_declared() -> None:
-    """P3 묶음 S — 계약 ⑧~⑩, P4 묶음 S — ⑪~⑬, P5 WRAP — ⑭·⑯, P6 WRAP — ⑰ 이 실제로 들어 있다(이름
-    첫 글자 기호로). ⑮ 는 테마 사전 작업 몫으로 비어 있다."""
+    """P3 묶음 S — 계약 ⑧~⑩, P4 묶음 S — ⑪~⑬, P5 WRAP — ⑭·⑯, P6 WRAP — ⑰, P7 WRAP — ⑱·⑲ 가
+    실제로 들어 있다(이름 첫 글자 기호로). ⑮ 는 테마 사전 작업 몫으로 비어 있다."""
     text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     names = [
         line.split("=", 1)[1].strip().strip('"')
         for line in text.splitlines()
         if line.startswith("name = ")
-        and line.split("=", 1)[1].strip().strip('"')[:1] in "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰"
+        and line.split("=", 1)[1].strip().strip('"')[:1] in "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲"
     ]
-    assert [n[0] for n in names] == list("①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑯⑰")
+    assert [n[0] for n in names] == list("①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑯⑰⑱⑲")

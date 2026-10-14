@@ -1,0 +1,789 @@
+{
+  "source": "KBJ:gex.engine(웹소켓 체결)+KIS(투자자별 — flows.market_minute)",
+  "as_of": "2026-12-10T05:00:00Z",
+  "quality": "ok",
+  "notes": [
+    "투자자별 대금은 원(investor_flow 백만원 × 10⁶)",
+    "섀도 검증 중 — 값은 저장만(1주 섀도 운영 뒤 visible, §10 Q3)"
+  ],
+  "generated_at": "2026-12-10T14:00:00+09:00",
+  "data": {
+    "hiro_flag": "shadow",
+    "hiro": [
+      {
+        "ts": "2026-12-10T01:00:00Z",
+        "value": null,
+        "quality": "ok"
+      },
+      {
+        "ts": "2026-12-10T02:30:00Z",
+        "value": null,
+        "quality": "ok"
+      },
+      {
+        "ts": "2026-12-10T04:30:00Z",
+        "value": null,
+        "quality": "ok"
+      }
+    ],
+    "investors": [
+      {
+        "market_code": "K2I",
+        "sector_code": "F001",
+        "investor": "bank",
+        "net_qty": 4127,
+        "net_value_won": 267000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "F001",
+        "investor": "etc_corp",
+        "net_qty": 1827,
+        "net_value_won": 145000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "F001",
+        "investor": "etc_orgt",
+        "net_qty": 1501,
+        "net_value_won": 284000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "F001",
+        "investor": "frgn",
+        "net_qty": 776,
+        "net_value_won": 152000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "F001",
+        "investor": "fund",
+        "net_qty": -818,
+        "net_value_won": -83000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "F001",
+        "investor": "insu",
+        "net_qty": 1311,
+        "net_value_won": 486000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "F001",
+        "investor": "ivtr",
+        "net_qty": -1354,
+        "net_value_won": 368000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "F001",
+        "investor": "mrbn",
+        "net_qty": -685,
+        "net_value_won": 66000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "F001",
+        "investor": "orgn",
+        "net_qty": -4355,
+        "net_value_won": -297000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "F001",
+        "investor": "pe_fund",
+        "net_qty": 1747,
+        "net_value_won": -146000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "F001",
+        "investor": "prsn",
+        "net_qty": 1354,
+        "net_value_won": 262000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "F001",
+        "investor": "scrt",
+        "net_qty": 661,
+        "net_value_won": -158000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OC01",
+        "investor": "bank",
+        "net_qty": -495,
+        "net_value_won": -551000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OC01",
+        "investor": "etc_corp",
+        "net_qty": -2605,
+        "net_value_won": -559000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OC01",
+        "investor": "etc_orgt",
+        "net_qty": -2430,
+        "net_value_won": 323000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OC01",
+        "investor": "frgn",
+        "net_qty": 1423,
+        "net_value_won": 575000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OC01",
+        "investor": "fund",
+        "net_qty": -64,
+        "net_value_won": 667000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OC01",
+        "investor": "insu",
+        "net_qty": -1423,
+        "net_value_won": 289000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OC01",
+        "investor": "ivtr",
+        "net_qty": 2280,
+        "net_value_won": -583000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OC01",
+        "investor": "mrbn",
+        "net_qty": 787,
+        "net_value_won": 16000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OC01",
+        "investor": "orgn",
+        "net_qty": -2230,
+        "net_value_won": 211000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OC01",
+        "investor": "pe_fund",
+        "net_qty": -2683,
+        "net_value_won": -8000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OC01",
+        "investor": "prsn",
+        "net_qty": -2108,
+        "net_value_won": -161000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OC01",
+        "investor": "scrt",
+        "net_qty": -1753,
+        "net_value_won": -143000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OP01",
+        "investor": "bank",
+        "net_qty": 1218,
+        "net_value_won": -233000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OP01",
+        "investor": "etc_corp",
+        "net_qty": -1917,
+        "net_value_won": 630000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OP01",
+        "investor": "etc_orgt",
+        "net_qty": 890,
+        "net_value_won": -442000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OP01",
+        "investor": "frgn",
+        "net_qty": -1301,
+        "net_value_won": -199000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OP01",
+        "investor": "fund",
+        "net_qty": -735,
+        "net_value_won": -754000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OP01",
+        "investor": "insu",
+        "net_qty": -2554,
+        "net_value_won": -7000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OP01",
+        "investor": "ivtr",
+        "net_qty": 271,
+        "net_value_won": 726000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OP01",
+        "investor": "mrbn",
+        "net_qty": 3370,
+        "net_value_won": -407000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OP01",
+        "investor": "orgn",
+        "net_qty": -1898,
+        "net_value_won": -28000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OP01",
+        "investor": "pe_fund",
+        "net_qty": -854,
+        "net_value_won": 324000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OP01",
+        "investor": "prsn",
+        "net_qty": -285,
+        "net_value_won": -348000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "K2I",
+        "sector_code": "OP01",
+        "investor": "scrt",
+        "net_qty": -1987,
+        "net_value_won": -122000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OC04",
+        "investor": "bank",
+        "net_qty": -2346,
+        "net_value_won": 80000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OC04",
+        "investor": "etc_corp",
+        "net_qty": -2099,
+        "net_value_won": -151000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OC04",
+        "investor": "etc_orgt",
+        "net_qty": -3634,
+        "net_value_won": 663000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OC04",
+        "investor": "frgn",
+        "net_qty": 2155,
+        "net_value_won": 165000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OC04",
+        "investor": "fund",
+        "net_qty": 1175,
+        "net_value_won": 210000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OC04",
+        "investor": "insu",
+        "net_qty": -272,
+        "net_value_won": -291000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OC04",
+        "investor": "ivtr",
+        "net_qty": -1247,
+        "net_value_won": -29000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OC04",
+        "investor": "mrbn",
+        "net_qty": -1543,
+        "net_value_won": -82000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OC04",
+        "investor": "orgn",
+        "net_qty": 2786,
+        "net_value_won": 143000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OC04",
+        "investor": "pe_fund",
+        "net_qty": 440,
+        "net_value_won": -127000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OC04",
+        "investor": "prsn",
+        "net_qty": -4468,
+        "net_value_won": -92000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OC04",
+        "investor": "scrt",
+        "net_qty": -1347,
+        "net_value_won": 142000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OP04",
+        "investor": "bank",
+        "net_qty": -37,
+        "net_value_won": 48000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OP04",
+        "investor": "etc_corp",
+        "net_qty": 2398,
+        "net_value_won": -197000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OP04",
+        "investor": "etc_orgt",
+        "net_qty": -1302,
+        "net_value_won": 524000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OP04",
+        "investor": "frgn",
+        "net_qty": 2141,
+        "net_value_won": 44000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OP04",
+        "investor": "fund",
+        "net_qty": 3229,
+        "net_value_won": 59000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OP04",
+        "investor": "insu",
+        "net_qty": 962,
+        "net_value_won": -359000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OP04",
+        "investor": "ivtr",
+        "net_qty": -3588,
+        "net_value_won": 678000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OP04",
+        "investor": "mrbn",
+        "net_qty": -1546,
+        "net_value_won": 439000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OP04",
+        "investor": "orgn",
+        "net_qty": -4270,
+        "net_value_won": 107000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OP04",
+        "investor": "pe_fund",
+        "net_qty": -926,
+        "net_value_won": -332000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OP04",
+        "investor": "prsn",
+        "net_qty": 565,
+        "net_value_won": -23000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKI",
+        "sector_code": "OP04",
+        "investor": "scrt",
+        "net_qty": 1261,
+        "net_value_won": 341000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OC05",
+        "investor": "bank",
+        "net_qty": 454,
+        "net_value_won": -303000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OC05",
+        "investor": "etc_corp",
+        "net_qty": -663,
+        "net_value_won": -281000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OC05",
+        "investor": "etc_orgt",
+        "net_qty": -1009,
+        "net_value_won": 130000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OC05",
+        "investor": "frgn",
+        "net_qty": 1521,
+        "net_value_won": -74000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OC05",
+        "investor": "fund",
+        "net_qty": 3336,
+        "net_value_won": 508000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OC05",
+        "investor": "insu",
+        "net_qty": 1740,
+        "net_value_won": 119000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OC05",
+        "investor": "ivtr",
+        "net_qty": 1832,
+        "net_value_won": 266000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OC05",
+        "investor": "mrbn",
+        "net_qty": -2258,
+        "net_value_won": 299000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OC05",
+        "investor": "orgn",
+        "net_qty": 3975,
+        "net_value_won": -168000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OC05",
+        "investor": "pe_fund",
+        "net_qty": 2030,
+        "net_value_won": 109000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OC05",
+        "investor": "prsn",
+        "net_qty": 2725,
+        "net_value_won": 181000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OC05",
+        "investor": "scrt",
+        "net_qty": 4049,
+        "net_value_won": 318000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OP05",
+        "investor": "bank",
+        "net_qty": -749,
+        "net_value_won": 238000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OP05",
+        "investor": "etc_corp",
+        "net_qty": 992,
+        "net_value_won": 432000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OP05",
+        "investor": "etc_orgt",
+        "net_qty": 170,
+        "net_value_won": -10000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OP05",
+        "investor": "frgn",
+        "net_qty": 2450,
+        "net_value_won": -667000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OP05",
+        "investor": "fund",
+        "net_qty": -1051,
+        "net_value_won": 166000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OP05",
+        "investor": "insu",
+        "net_qty": -806,
+        "net_value_won": 20000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OP05",
+        "investor": "ivtr",
+        "net_qty": -1468,
+        "net_value_won": 238000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OP05",
+        "investor": "mrbn",
+        "net_qty": 3719,
+        "net_value_won": 476000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OP05",
+        "investor": "orgn",
+        "net_qty": 1093,
+        "net_value_won": 295000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OP05",
+        "investor": "pe_fund",
+        "net_qty": -2173,
+        "net_value_won": -233000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OP05",
+        "investor": "prsn",
+        "net_qty": 3023,
+        "net_value_won": 200000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      },
+      {
+        "market_code": "WKM",
+        "sector_code": "OP05",
+        "investor": "scrt",
+        "net_qty": -374,
+        "net_value_won": -120000000,
+        "ts": "2026-12-10T05:00:00Z",
+        "quality": "ok"
+      }
+    ],
+    "night_investor_collected": false
+  }
+}

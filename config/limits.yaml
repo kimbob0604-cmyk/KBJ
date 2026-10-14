@@ -21,9 +21,9 @@ kis:
   # 역할 → 우선순위(설계 §4.2 [제안], conflict_map §1.2). 높은 등급이 기다리면 낮은 등급은 못 받는다
   priorities:
     auth_issue: P0              # 접근토큰·접속키 발급 요청(services.auth)
-    ws_reconnect_snapshot: P0   # 웹소켓 재연결 뒤 복구 스냅샷(legacy GX → P7)
-    gex_board: P1               # GX 전광판(legacy GX poller)
-    gex_investor: P2            # GX 투자자별
+    ws_reconnect_snapshot: P0   # 웹소켓 재연결 뒤 복구 스냅샷(KBJ ws-gateway — P7, D-P7-10)
+    gex_board: P1               # GX 전광판(legacy GX poller). 투자자별 우선순위는 P7 에 지웠다 — poller 가
+                                # 부르지 않는다(D-P7-5, flows.market_minute 의 market_minute 를 쓴다)
     command_reply: P2           # 텔레그램 명령 /가격 (KIS:quote_on_demand)
     close_collect: P3           # 장마감 수집 market.close_collect
     legacy_bridge: P3           # legacy 논리 URL 브리지 기본값(헤더 x-kbj-priority 로 바꿈)

@@ -82,9 +82,10 @@ def test_공시가_없으면_한_줄() -> None:
     assert C.filings_section(ctx(memory_repos(), CLOSING)).lines == (C.NO_FILINGS,)
 
 
-def test_프로그램_P7_P8_줄은_없다() -> None:
+def test_프로그램_P8_줄은_없다() -> None:
+    # P7 OUT 이 ⑥ GEX·진단 섹션을 켰다(D-P7-16) — 그 내용은 test_closing_p7.py 가 본다
     text = text_of(closing_repos())
-    for word in ("프로그램", "GEX", "시그널", "추천", "초안"):
+    for word in ("프로그램", "시그널", "추천", "초안"):
         assert word not in text
 
 

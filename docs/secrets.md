@@ -125,10 +125,10 @@ KIS REST 는 **모든 요청 헤더에** `appkey`·`appsecret` 을 요구한다(
 
 | 무엇 | 어디에 |
 |---|---|
-| `KBJ_KIS_APP_KEY`·`KBJ_KIS_APP_SECRET`·`KBJ_KIS_ENV` 주입 | KIS REST 를 부르는 프로세스: `auth`, scheduler 실행기·collectors, legacy 브리지를 쓰는 legacy 실행, P7 까지 legacy GX poller·ws-gateway. **그 밖 서비스(notifier·api·migrate 등)에는 넣지 않는다**(compose — 묶음 I) |
+| `KBJ_KIS_APP_KEY`·`KBJ_KIS_APP_SECRET`·`KBJ_KIS_ENV` 주입 | KIS REST 를 부르는 프로세스: `auth`, scheduler 실행기·collectors, legacy 브리지를 쓰는 legacy 실행, legacy GX poller(P9 까지). P7 부터 KBJ `ws-gateway` 에는 `KBJ_KIS_APP_KEY`·`KBJ_KIS_ENV` 만(접속키 캐시 이름 — 시크릿 없음, 접속키는 auth 가 발급해 Redis 에 둔다). **그 밖 서비스(notifier·api·migrate 등)에는 넣지 않는다**(compose — 묶음 I) |
 | 접근토큰·웹소켓 접속키 **발급** | `services.auth` 한 곳. 나머지는 Redis `kis:token`·`kis:ws_key` 를 읽기만 한다 |
 | 발급 차단 세 겹 | ① 발급 클래스는 `kbj/services/auth/issuer.py` 에만, import-linter 계약으로 auth 밖 import 금지 ② `oauth2/tokenP`·`oauth2/Approval` 문자열 검사(`scripts/check_canonical.py`) ③ 런타임 가드 — `KBJ_SERVICE` 가 `auth` 가 아니면 발급자 생성 거부 |
-| 웹소켓 연결 코드 | P7 까지 legacy GX(`check_canonical` 기준선 그룹 `kis_ws`). 접속키 발급은 지금부터 auth 만 |
+| 웹소켓 연결 코드 | P7 부터 KBJ `kbj.services.ws_gateway`(호스트는 `endpoints.py` 한 곳 — `check_canonical` `kis_ws` 목표 0, import-linter ⑲). 접속키 발급은 auth 만 |
 
 서비스별 주입(`docker-compose.yml` profile `app` — `.env` 를 통째로 넣지 않는다, `tests/test_store_layout.py` 가 고정):
 
@@ -151,4 +151,14 @@ KIS REST 는 **모든 요청 헤더에** `appkey`·`appsecret` 을 요구한다(
 - 주입 범위(compose 반영 완료 — 웨이브 3 묶음 S, §5.1): `api` 서비스는 `KBJ_DATABASE_URL`·`KBJ_REDIS_URL`·`KBJ_WEB_USER`·`KBJ_WEB_PASSWORD_HASH`·`KBJ_TELEGRAM_WEBHOOK_SECRET`·`KBJ_PUBLIC_BASE_URL` 만(KIS·KRX 키 없음 — 계약 ⑩). `public.export` 작업은 `KBJ_PUBLIC_EXPORT_DATABASE_URL`(+ 승인 뒤 배포 키 경로·디스패치 토큰). KIS 수집 작업이 켜지는 P3 에 scheduler 에도 `KBJ_KIS_APP_KEY`·`KBJ_KIS_APP_SECRET`·`KBJ_KIS_ENV`·`KBJ_KRX_API_KEY`(ADR 0004 "P3 에 scheduler 에도").
 - compose `api` 는 **호스트 네트워크**(`network_mode: host`, `127.0.0.1:8000` — TLS 역방향 프록시가 실제 접속 IP 를 넘겨 로그인 잠금이 IP 별로 걸리게)라서 DB·Redis 주소가 서비스 이름이 아니라 `127.0.0.1`(compose 의 `*_host` 접속 문자열)이다.
 - `KBJ_WEB_PASSWORD_HASH` 값에는 `$` 가 들어 있다 — `.env` 에 **작은따옴표**로 넣는다(`KBJ_WEB_PASSWORD_HASH='scrypt$…'`). 따옴표가 없으면 compose 의 변수 치환이 `$n`·`$r` 등을 지워 값이 깨지고 로그인이 503 이 된다.
+
+## P7 (docs/p7_design.md §1.7-7 — WRAP 확인 2026-10-13)
+
+- 새 비밀 이름 **없음**. GEX 셋(`ws-gateway`·`recorder`·`gex-engine`)은 기존 `KBJ_REDIS_URL`·`KBJ_DATABASE_URL` 과
+  ws-gateway 만 `KBJ_KIS_APP_KEY`·`KBJ_KIS_ENV`(위 §4). 녹화·엔진에는 KIS 이름이 없다(compose — `tests/test_compose_p7.py`).
+- 이관 런북 `scripts/gex_migrate_data.sh` 는 운영 VM 에서 사용자가 한 번 돌리는 도구라 셸 환경변수
+  `GX_SOURCE_DATABASE_URL`(GX 운영 DB 접속 문자열 — 비밀번호 포함)과 `KBJ_DATABASE_URL` 을 받는다. `.env`·compose 에 넣지
+  않고 출력하지 않는다. 이관이 끝나면 셸에서 지운다.
+- legacy GX 의 `DB_SEARCH_PATH`(값 `prv_gex,ops` — 비밀 아님)는 GX poller·scheduler 가 KBJ DB 에 붙을 때만(ADR 0029 §3-7)
+  [확인 필요 — 운영 VM 의 실제 이름, probe #64].
 

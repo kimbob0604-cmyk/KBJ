@@ -1,4 +1,4 @@
-"""마이그레이션 0001~0019 를 실제 TimescaleDB 에 적용(Docker).
+"""마이그레이션 0001~0020 을 실제 TimescaleDB 에 적용(Docker).
 
 근거: docs/p2_design.md §8.2·§8.8, docs/p3_design.md §3.4.
 
@@ -60,8 +60,9 @@ P2 = [
     "0017_program.sql",
     "0018_index.sql",
     "0019_trade.sql",
-]  # 이름은 P2 시험 그대로 — 0001~0019 전부(P3 0007~0009, P4 0010~0013, P5 0014~0017,
-#   P5 2차 IDX 0018, P6 0019)
+    "0020_diag.sql",
+]  # 이름은 P2 시험 그대로 — 0001~0020 전부(P3 0007~0009, P4 0010~0013, P5 0014~0017,
+#   P5 2차 IDX 0018, P6 0019, P7 0020)
 GX_DAILY = {
     "prv_gex.raw_messages", "prv_gex.fut_ticks", "prv_gex.opt_ticks", "prv_gex.chain_snapshots",
     "prv_gex.fut_board", "prv_gex.investor_flow", "prv_gex.series_expiries",
@@ -653,5 +654,69 @@ BAD_P6_ROWS = (
 
 @pytest.mark.parametrize("stmt", BAD_P6_ROWS)
 def test_p6_constraints(dsn: str, stmt: str) -> None:
+    with pytest.raises(psycopg.errors.CheckViolation), psycopg.connect(dsn) as c:
+        c.execute(stmt.encode())
+
+
+# ── P7 묶음 FND-B(0020 — 진단, pub_diag 공개·prv_diag 로그인 — docs/p7_design.md §3.3) ──
+
+P7_PUB = {"pub_diag.indicator", "pub_diag.gauge", "pub_diag.event_marker"}
+P7_PRV = {"prv_diag.indicator", "prv_diag.fear_greed", "prv_diag.verdict", "prv_diag.vol_index"}
+
+
+def test_p7_tables_exist_and_export_role_reads_pub_only(dsn: str) -> None:
+    rows = _rows(
+        dsn,
+        "SELECT table_schema || '.' || table_name FROM information_schema.tables "
+        "WHERE table_schema IN ('pub_diag', 'prv_diag')",
+    )
+    assert {r[0] for r in rows} == P7_PUB | P7_PRV
+    for table in sorted(P7_PUB):
+        _as_export(dsn, f"SELECT count(*) FROM {table}")  # noqa: S608 — 상수 표 이름
+    for table in sorted(P7_PRV):
+        with pytest.raises(psycopg.errors.InsufficientPrivilege):
+            _as_export(dsn, f"SELECT count(*) FROM {table}")  # noqa: S608
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        _as_export(dsn, "DELETE FROM pub_diag.gauge")
+
+
+def test_p7_owner_comments_on_gex_tables(dsn: str) -> None:
+    rows = _rows(
+        dsn,
+        "SELECT c.relname, obj_description(c.oid, 'pg_class') FROM pg_class c "
+        "JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'prv_gex' "
+        "AND c.relkind IN ('r', 'p')",
+    )
+    comments = {r[0]: r[1] or "" for r in rows}
+    assert "gex.engine" in comments["levels"]
+    assert "gex.recorder" in comments["raw_messages"]
+    assert "flows.market_minute" in comments["investor_flow"]  # 0017 그대로
+
+
+BAD_P7_ROWS = (
+    # 값이 없는 지표는 ok 일 수 없다
+    "INSERT INTO pub_diag.indicator (trade_date, key, unit, source, as_of, quality, computed_at, "
+    "loaded_by) VALUES ('2026-10-13', 'credit_spread', '%p', 'KBJ:diag.public', now(), 'ok', "
+    "now(), 't')",
+    # 보류 판정에는 점수가 없다
+    "INSERT INTO pub_diag.gauge (trade_date, label, score, source, as_of, quality, computed_at, "
+    "loaded_by) VALUES ('2026-10-13', 'hold', 0, 'KBJ:diag.public', now(), 'invalid', now(), 't')",
+    # 이벤트 종류는 넷
+    "INSERT INTO pub_diag.event_marker (date, kind, title, source, as_of, quality, computed_at, "
+    "loaded_by) VALUES ('2026-10-13', 'holiday', 'x', 'KBJ', now(), 'ok', now(), 't')",
+    # 공포탐욕 점수 0~100, 점수·구간은 같이
+    "INSERT INTO prv_diag.fear_greed (trade_date, score, band, source, as_of, quality, "
+    "computed_at, loaded_by) VALUES ('2026-10-13', 120, 'greed', 'KBJ:diag.daily', now(), 'ok', "
+    "now(), 't')",
+    "INSERT INTO prv_diag.fear_greed (trade_date, score, source, as_of, quality, computed_at, "
+    "loaded_by) VALUES ('2026-10-13', 50, 'KBJ:diag.daily', now(), 'ok', now(), 't')",
+    # 종가 없는 VKOSPI 는 ok 일 수 없다
+    "INSERT INTO prv_diag.vol_index (trade_date, index_id, source, as_of, quality, received_at, "
+    "loaded_by) VALUES ('2026-10-13', 'vkospi', 'KRX:idx/drvprod_dd_trd', now(), 'ok', now(), 't')",
+)
+
+
+@pytest.mark.parametrize("stmt", BAD_P7_ROWS)
+def test_p7_constraints(dsn: str, stmt: str) -> None:
     with pytest.raises(psycopg.errors.CheckViolation), psycopg.connect(dsn) as c:
         c.execute(stmt.encode())

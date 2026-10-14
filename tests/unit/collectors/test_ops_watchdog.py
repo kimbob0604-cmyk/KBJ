@@ -74,6 +74,10 @@ def seeded_runs() -> MemoryRunLog:
     # P6(웨이브 3 WRAP 이 켰다 — docs/p6_design.md D-P6-20): 매핑표 07:35. trade.derive 는
     # 14~20일만, trade.stock_index 는 21:00 이라 10:30 기준 끝났어야 할 실행이 없다
     runs.record(RunRecord("trade.map_load:2026-10-06:1", "trade.map_load", "2026-10-06", 1, "ok"))
+    # P7(웨이브 3 WRAP 이 켰다 — docs/p7_design.md §1.7-1): diag.public 08:40, gex.alert 는 정규장
+    # 매분(마지막 발화 하나). diag.daily 는 16:00 이라 10:30 기준 끝났어야 할 실행이 없다
+    for job, as_of in (("diag.public", "2026-10-06"), ("gex.alert", "2026-10-06T10:30")):
+        runs.record(RunRecord(f"{job}:{as_of}:1", job, as_of, 1, "ok"))
     runs.record(
         RunRecord("ops.watchdog:2026-10-06T10:00:1", "ops.watchdog", "2026-10-06T10:00", 1, "ok")
     )
@@ -161,3 +165,19 @@ def test_notify_failure_fails_the_job() -> None:
     runs.records.pop("filings.corp_code:2026-10-06:1")
     result = wd.run(ctx(Notes(ok=False), runs))
     assert result.status == "failed" and "Redis 없음" in result.detail["reason"]
+
+
+def test_heartbeat_is_read_under_the_process_name() -> None:
+    """P7 GEX 셋은 등록부 이름(gex.*)이 아니라 프로세스 이름(engine·ws-gateway·recorder)으로
+    하트비트를 남긴다 — 워치독은 `heartbeat_key` 로 읽는다(아니면 늘 끊김으로 알린다)."""
+    asked: list[str] = []
+
+    def by_process_name(service: str, now: datetime) -> float | None:
+        asked.append(service)
+        return None if service.startswith("gex.") else 5.0
+
+    notes = Notes()
+    result = wd.run(ctx(notes, seeded_runs(), hb=by_process_name))
+    assert result.status == "ok" and result.detail["problems"] == 0, notes.sent
+    assert {"engine", "ws-gateway", "recorder"} <= set(asked)
+    assert not [a for a in asked if a.startswith("gex.")]

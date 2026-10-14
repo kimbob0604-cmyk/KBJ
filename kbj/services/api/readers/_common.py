@@ -28,10 +28,13 @@ from kbj.services.api.models.common import Envelope
 from kbj.store.repos import (
     BoardRepo,
     ConsensusRepo,
+    DiagPublicRepo,
+    DiagRepo,
     EtfRepo,
     FilingsRepo,
     FinRepo,
     FlowsRepo,
+    GexRepo,
     IndexReviewRepo,
     JournalRepo,
     MacroPrivateRepo,
@@ -119,6 +122,17 @@ class ApiRepos(Protocol):
     # P6 묶음 FND(0019 — 수출입·매핑, 공개)
     @property
     def trade(self) -> TradeRepo: ...
+
+    # P7 묶음 FND-B(0006 prv_gex — GEX, 0020 prv_diag·pub_diag — 진단). API 는 로그인이라
+    # 둘 다 읽는다
+    @property
+    def gex(self) -> GexRepo: ...
+
+    @property
+    def diag(self) -> DiagRepo: ...
+
+    @property
+    def diag_pub(self) -> DiagPublicRepo: ...
 
 
 class NoData(Exception):

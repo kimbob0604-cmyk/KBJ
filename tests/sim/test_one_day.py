@@ -135,7 +135,9 @@ def test_venue_split_keys(day: SimDay) -> None:
 
 def test_krx_each_endpoint_and_day_requested_once(day: SimDay) -> None:
     req = Counter(day.krx.requested())
-    assert len(req) == 12 and set(req.values()) == {1}
+    # 12 + P7 krx.vkospi(/idx/drvprod_dd_trd — 운영 등록부에서는 꺼짐 #P7-1, 하네스는 꺼진 작업도
+    # 시뮬레이션 처리기로 돌린다 — 하네스 머리말)
+    assert len(req) == 13 and set(req.values()) == {1}
     assert {b for _, b in req} == {"20261002"}
     assert {s.consumer for s in day.krx.seen if s.endpoint.startswith("/drv/")} == {"gx"}
     assert {s.consumer for s in day.krx.seen if not s.endpoint.startswith("/drv/")} == {"scheduler"}
@@ -170,7 +172,8 @@ def test_close_collect_requests_once_per_tr_venue_symbol(day: SimDay) -> None:
 
 
 def test_daily_budgets_within_caps(day: SimDay) -> None:
-    assert day.budget_used("krx", DAY) == 12  # 주식·지수·ETP 10 + 파생 2 — 상한 8,000
+    # 주식·지수·ETP 10 + 파생 2 + VKOSPI 1(P7 krx.vkospi — 운영은 꺼짐, 하네스는 돈다) — 상한 8,000
+    assert day.budget_used("krx", DAY) == 13
     assert 13 * 60 <= day.budget_used("dart", DAY) <= 18_000
     for ds in ("15094808", "15094807", "15094809"):
         assert 1 <= day.budget_used("datago", DAY, scope=ds) <= 9_500
@@ -196,7 +199,9 @@ def test_post_close_sends_fire_at_1600_after_the_board(day: SimDay) -> None:  # 
         assert run.started_at is not None and _hm(run.started_at) == "10-06 16:00", job
         if job != "consensus.snapshot":
             assert run.started_at >= board.finished_at, job
-            assert run.detail["soft_deps"] == {"board.daily": "ok"}, job
+            # P7(D-P7-16): 마감 요약은 diag.daily(16:00 — 보드 뒤 진단)도 무른 의존으로 기다린다
+            soft = {"board.daily": "ok"} | ({"diag.daily": "ok"} if job == "brief.closing" else {})
+            assert run.detail["soft_deps"] == soft, job
     flows = day.notify_log.of("flows.report")
     assert [(r.status, _hm(r.requested_at)) for r in flows] == [("suppressed", "10-06 16:00")]
 

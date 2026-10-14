@@ -131,7 +131,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stderr)
     from config.settings import Settings
 
-    url = Settings().database_url
+    settings = Settings()
+    if settings.db_search_path:  # KBJ P7(D-P7-4): KBJ DB — 스키마 정본은 KBJ 0006, 여기선 돌리지 않는다
+        _log(logging.INFO, "migration_skipped", reason="KBJ DB(DB_SEARCH_PATH) — KBJ 마이그레이션이 정본")
+        return 0
+    url = settings.database_url
     if url is None:
         _log(logging.ERROR, "migration_failed", error="DATABASE_URL 이 없다")
         return 2

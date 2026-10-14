@@ -4,7 +4,8 @@ docs/metrics.md §1·§4).
 등급은 모두 **로그인**(DATA_TIERS §1 — KRX OpenAPI 원천 데이터 재배포 금지)이라 저장 표는 `prv_*`
 뿐이다. 데이터셋 이름은 엔드포인트 경로(`sto/stk_bydd_trd`)다. 수집 작업은 P3 이후:
 `krx.daily`(08:05, 10분마다 10:00 까지 — 주식·지수·ETP @ prev_trading_day), `market.backfill`(수동 —
-백필 예산), `gex.krx_derivatives`(legacy GX — P7, `runner: external`).
+백필 예산), `gex.krx_derivatives`(legacy GX — P7, `runner: external`), `krx.vkospi`(P7 —
+파생상품지수 일별의 VKOSPI 행, 꺼짐 — 실측 #P7-1 전).
 
 - 리미터·일 예산은 모두 `krx`(config/limits.yaml — 2/s [추정], 8,000/일 [확인 필요 — 메인 결정
   D5]). 데이터셋 하나 = 하루 한 번 호출(재시도 포함 몇 번)이라 하루 12개 × 재시도 ≈ 수십~백여 건.
@@ -26,6 +27,7 @@ from kbj.data.private.krx.client import (
     ETF_DAILY,
     ETN_DAILY,
     FUT_DAILY,
+    IDX_DRVPROD_DAILY,
     IDX_KOSDAQ_DAILY,
     IDX_KOSPI_DAILY,
     IDX_KRX_DAILY,
@@ -139,6 +141,16 @@ DATASETS: Final[tuple[DatasetSpec, ...]] = (
         IDX_KRX_DAILY,
         store="prv_market.daily_bar",
         notes="KRX 시리즈 지수 일별(KRX300 등) — 필드는 KOSPI 시리즈와 같다 [실측 필요]",
+    ),
+    _krx(
+        IDX_DRVPROD_DAILY,
+        store="prv_diag.vol_index",
+        notes=(
+            "파생상품지수 일별시세 — VKOSPI(코스피200 변동성지수) 행만 쓴다(P7 krx.vkospi — "
+            "D-P7-14). 엔드포인트 경로·행 이름(IDX_NM)·종가 칸(CLSPRC_IDX)·단위(지수 pt) "
+            "[실측 필요 #P7-1] — 실측 전 작업은 꺼진 채. 국장 공포탐욕 변동성 성분(metrics §D7), "
+            "없으면 월물 ATM IV 로 대신(estimated)"
+        ),
     ),
     # ── ETP 일별(ETF 수급 원장 — D7) ────────────────────────────────────────────────────────
     _krx(

@@ -51,7 +51,7 @@ def test_entries_are_the_phase3_flags_in_catalog_order() -> None:
 
 
 def _test_names(path: str) -> list[str]:
-    text = (ROOT / path).read_text(encoding="utf-8")
+    text = mr.spec_path(path).read_text(encoding="utf-8")  # KBJ P7: 옮긴 시험은 KBJ 자리
     return re.findall(r"^(?:async )?def (test_\w+)", text, flags=re.M)
 
 
@@ -69,7 +69,7 @@ def test_every_test_pattern_matches_tests_in_its_file(path: str, pattern: str) -
 def test_spec_test_files_are_the_mapped_files() -> None:
     files = mr.spec_test_files()
     assert files == sorted(set(files)) and "tests/unit/test_flow.py" in files
-    assert all((ROOT / f).is_file() for f in files)
+    assert all(mr.spec_path(f).is_file() for f in files)  # KBJ P7: 옮긴 시험은 KBJ 자리
     assert not any("integration" in f for f in files)  # Docker 없이 돈다
 
 

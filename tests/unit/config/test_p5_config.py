@@ -104,7 +104,8 @@ def test_brief_sections_point_at_registered_jobs_and_macro_series() -> None:
     omitted = {s.key: s.phase for k in (b.morning, b.closing) for s in k.sections
                if s.status == "omitted"}  # fmt: skip
     # 구루 X 다이제스트는 사용자 결정(2026-10-13 Q4)으로 완전히 뺐다 — 자리표시도 없다
-    assert omitted == {"night_futures_gex": "P7", "gex_signals": "P7"}
+    # P7 FND-B 가 GEX·진단(P7)과 시그널·초안·추천(P8 — LLM)을 나눴고, OUT 이 P7 둘을 켰다(D-P7-16)
+    assert omitted == {"signals": "P8"}
     assert all(s.key != "guru" for k in (b.morning, b.closing) for s in k.sections)
     # 간밤 미국 지수는 config/us.yaml indexes(us.eod 가 받는 것)와 같다
     assert [{"symbol": s, "name": n} for s, n in b.us_index_pairs()] == _yaml("us.yaml")["indexes"]
@@ -122,7 +123,7 @@ def test_brief_sections_point_at_registered_jobs_and_macro_series() -> None:
         (lambda d: d["morning"]["sections"][0].update(status="on"), "include"),
         (lambda d: d["morning"]["sections"].pop(), "quality"),
         (lambda d: d["texts"].update(not_ready="미준비"), "job"),
-        (lambda d: d["closing"]["sections"][5].update(phase=None), "phase"),
+        (lambda d: d["closing"]["sections"][6].update(phase=None), "phase"),  # signals(P8)
         (lambda d: d["closing"]["sections"][0].update(none_text="없음"), "none_line"),
         (lambda d: d.update(us_indexes=[]), "us_indexes"),
     ],
@@ -139,7 +140,11 @@ def test_briefs_reject_bad_files(mutate: Any, match: str) -> None:
 
 def test_minute_pairs_start_with_the_three_gx_measured_k2i_pairs() -> None:
     m = load_markets()
-    assert m.flows.minute.enabled_pairs() == (("K2I", "F001"), ("K2I", "OC01"), ("K2I", "OP01"))
+    assert m.flows.minute.enabled_pairs()[:3] == (("K2I", "F001"), ("K2I", "OC01"), ("K2I", "OP01"))
+    # 위클리 4조합은 P7 WRAP 이 켰다(D-P7-6 — GX 실측 #13). 야간은 꺼진 채(#P7-2)
+    assert m.flows.minute.enabled_pairs()[3:] == (
+        ("WKM", "OC05"), ("WKM", "OP05"), ("WKI", "OC04"), ("WKI", "OP04"),
+    )  # fmt: skip
     assert m.flows.minute.enabled_pairs("night") == ()
     spot = [p for p in m.flows.minute.pairs if p.id in {"kospi", "kosdaq", "stock_fut"}]
     assert spot and all(not p.enabled and p.market is None for p in spot)  # 코드를 지어내지 않는다

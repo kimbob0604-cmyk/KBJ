@@ -20,6 +20,8 @@
   구성종목·리뷰 일정·편입/편출 예측·패시브 규모).
 - P6 묶음 FND(docs/p6_design.md §1.1): 공개 `trade`(0019 pub_trade.* — 관세청 10일·월간·HS
   차원·급등·104품목·종목↔HS 매핑·종목 수출 지수).
+- P7 묶음 FND-B(docs/p7_design.md §1.1): 로그인 `gex`(0006 prv_gex.* — GX 싱크 메서드 이름 그대로,
+  D-P7-8)·`diag`(0020 prv_diag.*), 공개 `diag_pub`(0020 pub_diag.* — `kbj.store.repos.diag`).
 
 - 행 모양은 `kbj.core.rows`(엔진과 공유). 이 패키지는 `kbj.core`·psycopg 만 쓴다(계약 ⑦).
 - Postgres 구현은 연결 공장(`ConnFactory`)을 받아 부를 때마다 짧게 연다. 서비스는
@@ -35,10 +37,13 @@ from dataclasses import dataclass
 from kbj.store.repos._common import MARKET, ConnFactory
 from kbj.store.repos.board import BoardRepo, PgBoardRepo
 from kbj.store.repos.consensus import ConsensusRepo, PgConsensusRepo
+from kbj.store.repos.diag import DiagPublicRepo, PgDiagPublicRepo
+from kbj.store.repos.diag_prv import DiagRepo, PgDiagRepo
 from kbj.store.repos.etf import EtfRepo, PgEtfRepo
 from kbj.store.repos.filings import FilingsRepo, PgFilingsRepo
 from kbj.store.repos.fin import FinRepo, PgFinRepo
 from kbj.store.repos.flows import FlowsRepo, PgFlowsRepo, RevisionReport
+from kbj.store.repos.gex import GexRepo, PgGexRepo
 from kbj.store.repos.index_review import IndexReviewRepo, PgIndexReviewRepo
 from kbj.store.repos.journal import JournalRepo, PgJournalRepo
 from kbj.store.repos.macro import MacroPublicRepo, PgMacroPublicRepo
@@ -56,10 +61,13 @@ __all__ = [
     "BoardRepo",
     "ConnFactory",
     "ConsensusRepo",
+    "DiagPublicRepo",
+    "DiagRepo",
     "EtfRepo",
     "FilingsRepo",
     "FinRepo",
     "FlowsRepo",
+    "GexRepo",
     "IndexReviewRepo",
     "JournalRepo",
     "MacroPrivateRepo",
@@ -100,12 +108,16 @@ class Repos:
     index_review: IndexReviewRepo
     # P6 묶음 FND(0019 — 공개)
     trade: TradeRepo
+    # P7 묶음 FND-B(0006 prv_gex 로그인·0020 prv_diag 로그인·pub_diag 공개)
+    gex: GexRepo
+    diag: DiagRepo
+    diag_pub: DiagPublicRepo
 
     def public(self) -> PublicRepos:
-        """같은 공개 저장소(filings·fin·macro·market_stats)를 공개 작업 묶음으로."""
+        """같은 공개 저장소(filings·fin·macro·market_stats·diag)를 공개 작업 묶음으로."""
         return PublicRepos(
             filings=self.filings, fin=self.fin, macro=self.macro,
-            market_stats=self.market_stats,
+            market_stats=self.market_stats, diag=self.diag_pub,
         )  # fmt: skip
 
 
@@ -126,4 +138,7 @@ def pg_repos(conn_factory: ConnFactory) -> Repos:
         program=PgProgramRepo(conn_factory),
         index_review=PgIndexReviewRepo(conn_factory),
         trade=PgTradeRepo(conn_factory),
+        gex=PgGexRepo(conn_factory),
+        diag=PgDiagRepo(conn_factory),
+        diag_pub=PgDiagPublicRepo(conn_factory),
     )

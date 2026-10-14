@@ -26,6 +26,7 @@ from kbj.store.redis_keys import api_data_version_key
 
 __all__ = [
     "DOMAIN_JOBS",
+    "DOMAIN_TS",
     "CachedBody",
     "DataVersionSource",
     "DataVersions",
@@ -80,7 +81,17 @@ DOMAIN_JOBS: Final[Mapping[str, tuple[str, ...]]] = {
     # P6(docs/p6_design.md §5 — 웨이브 1 FND) — 수출입 속보·탐색·매핑(관세청 수집·파생·매핑·지수)
     "trade": ("trade.customs_tenday", "trade.customs_monthly", "trade.derive", "trade.map_load",
               "trade.stock_index"),
+    # P7(docs/p7_design.md §5 — 웨이브 1 FND-B). GEX 는 상시 서비스(gex.engine)가 쓰므로 작업 완료
+    # 기록이 없다 — 버전은 마지막 엔진 사이클 시각(DOMAIN_TS 의 `gex:latest` 뜻 —
+    # prv_gex.levels max(ts))
+    # 과 알림 작업 중 늦은 것. 진단은 작업 셋(공개·로그인·VKOSPI).
+    "gex": ("gex.alert",),
+    "diag": ("diag.public", "diag.daily", "krx.vkospi"),
 }  # fmt: skip
+# 작업 기록 말고 표의 최신 시각으로도 버전을 정하는 영역(상시 서비스가 쓰는 표 — 상수 SQL)
+DOMAIN_TS: Final[Mapping[str, str]] = {
+    "gex": "SELECT max(ts) FROM prv_gex.levels",
+}
 
 
 class DataVersionSource(Protocol):
@@ -105,7 +116,13 @@ class PgDataVersionSource:
         jobs = list(DOMAIN_JOBS[domain])
         with self._connect() as conn:
             row = conn.execute(_VERSION_SQL, {"jobs": jobs}).fetchone()
-        ts = None if row is None else row[0]
+            ts = None if row is None else row[0]
+            extra = DOMAIN_TS.get(domain)
+            if extra is not None:
+                more = conn.execute(extra).fetchone()
+                t2 = None if more is None else more[0]
+                if t2 is not None and (ts is None or t2 > ts):
+                    ts = t2
         return NO_VERSION if ts is None else ts.isoformat()
 
 

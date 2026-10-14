@@ -1,5 +1,5 @@
-"""`python -m services.engine` — compose 진입점."""
+"""KBJ P7(묶음 ENG): `python -m services.engine` — KBJ engine 서비스를 띄운다(GX compose 그대로)."""
 
-from services.engine.service import main
+from kbj.services.engine.gex import main
 
 raise SystemExit(main())

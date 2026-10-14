@@ -54,6 +54,8 @@ ribbon:
 # KIS FHPTJ04030000 의 FID_INPUT_ISCD·FID_INPUT_ISCD_2. GX 가 2026-09-28 실측한 K2I 3조합만 켠다.
 # 현물(코스피·코스닥)은 코드 쌍을 모른다(예제 999·S001 의 뜻) [확인 필요 #39] — 코드를 지어내지 않고 비운 채 끈다.
 # 위클리(WKM·WKI)·야간은 GX poller 조합 — P7 이 켠다(ADR 0019). tab = 페이지 1 시장 탭 id.
+# P7(D-P7-6): 위클리 4조합은 GX 실측 #13(7조합 정상 응답)을 근거로 WRAP 이 켠다(웨이브 3 — 값은 그때).
+# 야간(k200_fut_night)은 꺼진 채 — 실행기에 야간 분 트리거가 없고 야간 응답 실측도 없다(#P7-2).
 flows:
   minute:
     pairs:
@@ -63,10 +65,10 @@ flows:
       - {id: kospi, market: null, sector: null, session: day, tab: kospi, label: 코스피, enabled: false, note: "현물 코드 쌍 [확인 필요 #39]"}
       - {id: kosdaq, market: null, sector: null, session: day, tab: kosdaq, label: 코스닥, enabled: false, note: "현물 코드 쌍 [확인 필요 #39]"}
       - {id: stock_fut, market: null, sector: null, session: day, tab: stock_fut, label: 주식선물, enabled: false, note: "주식선물 코드 [확인 필요 #39]"}
-      - {id: wkm_call, market: WKM, sector: OC05, session: day, tab: weekly, label: 위클리(월) 콜, enabled: false, note: "GX poller 조합 — P7"}
-      - {id: wkm_put, market: WKM, sector: OP05, session: day, tab: weekly, label: 위클리(월) 풋, enabled: false, note: "GX poller 조합 — P7"}
-      - {id: wki_call, market: WKI, sector: OC04, session: day, tab: weekly, label: 위클리(목) 콜, enabled: false, note: "GX poller 조합 — P7"}
-      - {id: wki_put, market: WKI, sector: OP04, session: day, tab: weekly, label: 위클리(목) 풋, enabled: false, note: "GX poller 조합 — P7"}
+      - {id: wkm_call, market: WKM, sector: OC05, session: day, tab: weekly, label: 위클리(월) 콜, enabled: true, note: "GX 실측 #13(7조합 정상 응답) — P7 WRAP 이 켬(D-P7-6)"}
+      - {id: wkm_put, market: WKM, sector: OP05, session: day, tab: weekly, label: 위클리(월) 풋, enabled: true, note: "GX 실측 #13(7조합 정상 응답) — P7 WRAP 이 켬(D-P7-6)"}
+      - {id: wki_call, market: WKI, sector: OC04, session: day, tab: weekly, label: 위클리(목) 콜, enabled: true, note: "GX 실측 #13(7조합 정상 응답) — P7 WRAP 이 켬(D-P7-6)"}
+      - {id: wki_put, market: WKI, sector: OP04, session: day, tab: weekly, label: 위클리(목) 풋, enabled: true, note: "GX 실측 #13(7조합 정상 응답) — P7 WRAP 이 켬(D-P7-6)"}
       - {id: k200_fut_night, market: K2I, sector: F001, session: night, tab: k200_fut, label: 코스피200 선물(야간), enabled: false, note: "야간 세션 [확인 필요] — P7"}
 
 # ── P5 F2 프로그램매매(F2 §1.4·§3.4, metrics §22) ──

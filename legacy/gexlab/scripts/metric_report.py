@@ -45,14 +45,16 @@ import sys
 import tempfile
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import date
 from decimal import Decimal
 from fractions import Fraction
 from pathlib import Path
 from typing import Any, Literal, cast
 from xml.etree import ElementTree
 
-from core.calendar import KST, TradingCalendar, state_at
+from kbj.engines.gex.snapshot_cycle import SnapshotCycle, snapshot_cycle
+
+from core.calendar import KST, TradingCalendar
 from core.features import CATALOG, FEATURES_PATH, Features, FlagSpec, load_features
 from core.gex import OPTION_MULTIPLIER, ExpiryEval
 from core.greeks import DAYS_PER_YEAR, charm, greeks, vanna
@@ -69,17 +71,18 @@ from core.metrics.vol import (
 )
 from data.kis.models import InvestorRow
 from data.krx.models import parse_option_rows
-from scripts.make_golden import CORE_FIXTURES, shift_snapshot
-from scripts.validate_greeks import Snapshot, load_snapshot, series_rows
-from services.bus import BasisBook, SeriesKey
-from services.engine.evaluate import CycleInput, CycleResult, ExpiryInfo, evaluate_cycle
+from scripts.make_golden import CORE_FIXTURES
+from scripts.validate_greeks import Snapshot, load_snapshot, series_rows  # noqa: F401
+from services.bus import BasisBook
+from services.engine.evaluate import CycleInput, CycleResult, evaluate_cycle
 from services.engine.flow import OiTracker
 from services.engine.futures import quote_of
 from services.engine.records import LevelRecord, MetricRecord, OiChangeRecord
 from services.engine.service import ENGINE_REGISTRY
-from services.poller.records import ChainRecord, FuturesRecord
+from services.poller.records import ChainRecord
 
 ROOT = Path(__file__).resolve().parents[1]
+KBJ_ROOT = ROOT.parents[1]  # KBJ P7: 옮긴 명세 시험은 KBJ 레포 루트 기준으로 돈다(MOVED_TESTS)
 OUT = ROOT / "docs" / "metric_validation.md"
 METRICS_MD = ROOT / "docs" / "metrics.md"
 PROBE_DIR = ROOT / "probe_out"
@@ -120,6 +123,46 @@ E_DAILY = "tests/unit/test_engine_daily.py"
 E_INV = "tests/unit/test_engine_investor.py"
 E_TICKS = "tests/unit/test_engine_ticks.py"
 E_FUT = "tests/unit/test_engine_futures.py"
+
+# KBJ P7 FND-C: GX core 명세 시험은 KBJ 로 옮겼다(docs/p7_design.md §1.2). 리포트의 시험 이름(위 GX
+# 경로 — 지표 표·실패 줄에 찍히는 이름)은 그대로 두고, 실행·읽기만 KBJ 경로(KBJ 레포 루트 기준)로
+# 한다 — `spec_path`·`run_spec_tests`. 옮긴 파일을 더 늘리면(ENG 의 엔진 시험) 여기에 더한다
+MOVED_TESTS: Mapping[str, str] = {
+    "tests/unit/test_greeks.py": "tests/unit/core/gex/test_greeks.py",
+    "tests/unit/test_exposure.py": "tests/unit/core/gex/test_exposure.py",
+    "tests/unit/test_vol.py": "tests/unit/core/gex/test_vol.py",
+    "tests/unit/test_flow.py": "tests/unit/core/gex/test_flow.py",
+    "tests/unit/test_futures_metrics.py": "tests/unit/core/gex/test_futures_metrics.py",
+    "tests/unit/test_gex.py": "tests/unit/core/gex/test_gex.py",
+    "tests/unit/test_levels.py": "tests/unit/core/gex/test_levels.py",
+    "tests/test_sign_conventions.py": "tests/unit/core/gex/test_sign_conventions.py",
+    "tests/property/test_exposure_properties.py": "tests/property/gex/test_exposure_properties.py",
+    "tests/property/test_flow_properties.py": "tests/property/gex/test_flow_properties.py",
+    "tests/property/test_futures_properties.py": "tests/property/gex/test_futures_properties.py",
+    "tests/property/test_gex_properties.py": "tests/property/gex/test_gex_properties.py",
+    "tests/property/test_levels_properties.py": "tests/property/gex/test_levels_properties.py",
+    "tests/golden/test_core_golden.py": "tests/golden/gex/test_core_golden.py",
+    # KBJ P7 ENG: 엔진 시험(docs/p7_design.md §1.3)
+    **{
+        f"tests/unit/test_{n}.py": f"tests/unit/engines/gex/test_{n}.py"
+        for n in (
+            "engine_evaluate",
+            "engine_extended",
+            "engine_flow",
+            "engine_daily",
+            "engine_investor",
+            "engine_ticks",
+            "engine_futures",
+            "engine_service",
+            "features",
+        )
+    },
+}
+
+
+def spec_path(f: str) -> Path:
+    """명세 시험 이름(GX 경로) → 실제 파일. 옮긴 것은 KBJ 레포의 자리."""
+    return KBJ_ROOT / MOVED_TESTS[f] if f in MOVED_TESTS else ROOT / f
 
 
 @dataclass(frozen=True)
@@ -408,106 +451,72 @@ def spec_test_files() -> list[str]:
     return sorted(files)
 
 
-def run_spec_tests(files: Sequence[str], out: Path) -> None:
-    """pytest 를 따로 돌려 JUnit XML 을 out 에 — 실패해도 XML 은 남는다(결과는 리포트가 센다)."""
+def _pytest_junit(files: Sequence[str], out: Path, cwd: Path, extra: Sequence[str] = ()) -> None:
     cmd = [
         sys.executable,
         "-m",
         "pytest",
         "-o",
         "addopts=",
+        *extra,
         "-q",
         "-p",
         "no:cacheprovider",
         f"--junitxml={out}",
         *files,
     ]
-    subprocess.run(cmd, cwd=ROOT, check=False, capture_output=True, timeout=1800)  # noqa: S603
+    subprocess.run(cmd, cwd=cwd, check=False, capture_output=True, timeout=1800)  # noqa: S603
+
+
+def _dotted(path: str) -> str:
+    return path.removesuffix(".py").replace("/", ".")
+
+
+def _rename_moved(suite_xml: str) -> list[ElementTree.Element]:
+    """KBJ 쪽 JUnit 의 모듈 주소(`tests.unit.core.gex.test_flow`)를 GX 이름(`tests.unit.test_flow`)
+    으로 되돌린 testsuite 들 — 리포트의 매핑·표기가 그대로 맞게."""
+    back = {_dotted(new): _dotted(old) for old, new in MOVED_TESTS.items()}
+    root = ElementTree.fromstring(suite_xml)  # noqa: S314 — 이 스크립트가 돌린 pytest 의 출력
+    for tc in root.iter("testcase"):
+        for attr in ("classname", "name"):
+            v = tc.get(attr, "")
+            for new, old in back.items():
+                if v == new or v.startswith(new + "."):
+                    tc.set(attr, old + v[len(new) :])
+                    break
+    return list(root.iter("testsuite"))
+
+
+def run_spec_tests(files: Sequence[str], out: Path) -> None:
+    """pytest 를 따로 돌려 JUnit XML 을 out 에 — 실패해도 XML 은 남는다(결과는 리포트가 센다).
+
+    KBJ 로 옮긴 명세 시험(`MOVED_TESTS`)은 KBJ 레포 루트에서 KBJ 설정(importlib 수집)으로 따로 돌려
+    한 XML 로 합친다. 어느 한쪽이라도 XML 을 남기지 않으면 out 을 쓰지 않는다(리포트가 실패로 본다).
+    """
+    local = [f for f in files if f not in MOVED_TESTS]
+    moved = [MOVED_TESTS[f] for f in files if f in MOVED_TESTS]
+    if not moved:
+        _pytest_junit(local, out, ROOT)
+        return
+    with tempfile.TemporaryDirectory() as tmp:
+        gx_xml, kbj_xml = Path(tmp) / "gx.xml", Path(tmp) / "kbj.xml"
+        if local:
+            _pytest_junit(local, gx_xml, ROOT)
+        _pytest_junit(moved, kbj_xml, KBJ_ROOT, ("--import-mode=importlib",))
+        if (local and not gx_xml.is_file()) or not kbj_xml.is_file():
+            return
+        merged = ElementTree.Element("testsuites")
+        if local:
+            gx = ElementTree.fromstring(gx_xml.read_text(encoding="utf-8"))  # noqa: S314
+            merged.extend(gx.iter("testsuite"))
+        merged.extend(_rename_moved(kbj_xml.read_text(encoding="utf-8")))
+        out.write_text(ElementTree.tostring(merged, encoding="unicode"), encoding="utf-8")
 
 
 # ── 스냅샷 → engine 입력 ──────────────────────────────────────────────────────
 
-_KIND_CLS = {"MONTH": "", "WKM": "WKM", "WKI": "WKI"}
-
-
-@dataclass(frozen=True)
-class SnapshotCycle:
-    inp: CycleInput
-    labels: dict[str, str]  # 스냅샷 라벨(MONTH:202610) → engine 라벨(M:202610)
-
-
-def snapshot_cycle(
-    path: Path,
-    *,
-    shift: timedelta | None = None,
-    fresh_since: datetime | None = None,
-    strikes: Mapping[SeriesKey, Sequence[Decimal]] | None = None,
-    cal: TradingCalendar | None = None,
-) -> SnapshotCycle:
-    """체인 스냅샷(probe `chain_snapshot.json` 또는 그 작은 발췌) 하나 → engine `CycleInput`.
-
-    전광판·보강 행을 `scripts.validate_greeks.series_rows` 로 OptionQuote 로 푼 뒤 체인 행으로
-    되돌린다(행 시각 = 그 전광판 시각 — core_golden 의 평가 시각과 같게). 최종거래일은 스냅샷의
-    월물리스트(없으면 캘린더), S_ref 는 스냅샷의 근월물 — 주간 전광판 F, 야간(시각을 옮긴 파생
-    입력)이면 단건 CM. shift: 시각만 옮긴다(`scripts.make_golden.shift_snapshot`)."""
-    cal = cal or TradingCalendar.default()
-    snap: Snapshot = load_snapshot(path)
-    if shift is not None:
-        snap = shift_snapshot(snap, shift)
-    info = state_at(snap.started_kst, cal)
-    if info.trade_date is None or info.session is None:
-        raise ValueError(f"세션 밖 스냅샷: {snap.started_kst}")
-    rows: list[ChainRecord] = []
-    expiries: dict[SeriesKey, ExpiryInfo] = {}
-    labels: dict[str, str] = {}
-    for label in snap.boards:
-        kind, _, code = label.partition(":")
-        cls = _KIND_CLS[kind]
-        s = series_rows(snap, label, cal)
-        key = cast(SeriesKey, (cls, code))
-        expiries[key] = ExpiryInfo(s.expiry_date, "kis" if s.expiry_source == "kis" else "calendar")
-        labels[label] = f"{cls or 'M'}:{code}"
-        for q in s.quotes:
-            rows.append(
-                ChainRecord(
-                    ts=s.now,
-                    trade_date=info.trade_date,
-                    session=info.session,
-                    mrkt_cls=cls,
-                    expiry=code,
-                    strike=q.strike,
-                    cp=q.cp,
-                    source=q.source,
-                    last=q.last,
-                    bid=q.bid,
-                    ask=q.ask,
-                    oi=q.oi,
-                    volume=q.volume,
-                    iv_kis=None if q.kis_iv_pct is None else Decimal(str(q.kis_iv_pct)),
-                )
-            )
-    day = info.session == "day"
-    fut = FuturesRecord(
-        ts=snap.started_kst,
-        trade_date=info.trade_date,
-        session=info.session,
-        code=snap.atm_ref.code,
-        market="F" if day else "CM",
-        source="board" if day else "single",
-        price=Decimal(str(snap.atm_ref.price)),
-    )
-    inp = CycleInput(
-        as_of=max(r.ts for r in rows),
-        trade_date=info.trade_date,
-        session=info.session,
-        chain=rows,
-        futures=[fut],
-        expiries=expiries,
-        near_code=snap.atm_ref.code,
-        strikes=dict(strikes or {}),
-        fresh_since=fresh_since,
-    )
-    return SnapshotCycle(inp, labels)
+# KBJ P7(묶음 ENG): 스냅샷 → engine 입력 변환은 `kbj.engines.gex.snapshot_cycle` 로 옮겼다
+# (위 import).
 
 
 @dataclass(frozen=True)

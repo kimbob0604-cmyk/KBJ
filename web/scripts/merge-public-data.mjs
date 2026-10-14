@@ -20,6 +20,8 @@
 // - P6 공개 파일(docs/p6_design.md §7): 하위 폴더 trade/ — 평평한 trade/<소문자>.json 과 한 단계 더
 //   trade/(hs|country|region|stock)/<코드 2~10자>.json. 코드 파일 상한은 PREFIX_CAPS. 'origin: local'(VM 관심종목 매핑) 0,
 //   trade/stock/ 에 시세 칸(close·price …) 0(manifest.py trade_problems 와 같다).
+// - P7 공개 파일(docs/p7_design.md §7): 하위 폴더 diag/<소문자>.json(공공지표 진단·게이지·이벤트). 로그인 판정 키
+//   (fear_greed·verdict·gex*) 0(manifest.py diag_problems 와 같다).
 // - manifest 에 없는 파일·폴더는 복사하지 않고 목록만 알린다.
 // 규칙은 파이썬 kbj/services/public_export/manifest.py 와 같게 둔다(tests/unit/public_export/test_manifest.py 가 대조).
 import { createHash } from 'node:crypto';
@@ -28,11 +30,11 @@ import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 export const NAME_RE = /^[a-z0-9_]+\.json$/;
-export const SUBDIRS = ['fin', 'reports', 'macro', 'trade'];
+export const SUBDIRS = ['fin', 'reports', 'macro', 'trade', 'diag'];
 /** P4 하위 폴더 — 원천이 DART 하나(manifest.py DART_SUBDIRS) */
 export const DART_SUBDIRS = ['fin', 'reports'];
 export const SUBDIR_JSON_RE =
-  /^(?:(fin|reports)\/[0-9A-Z]{6}|(macro)\/[a-z0-9_]+|(trade)\/(?:(?:hs|country|region|stock)\/[0-9A-Z]{2,10}|[a-z0-9_]+))\.json$/;
+  /^(?:(fin|reports)\/[0-9A-Z]{6}|(macro|diag)\/[a-z0-9_]+|(trade)\/(?:(?:hs|country|region|stock)\/[0-9A-Z]{2,10}|[a-z0-9_]+))\.json$/;
 export const SUBDIR_XLSX_RE = /^reports\/[0-9A-Z]{6}\.xlsx$/;
 /** P4 공시·재무 목록 파일 — 원천이 DART 하나(manifest.py DART_ONLY_NAMES 와 같은 목록) */
 export const DART_ONLY = new Set([
@@ -47,7 +49,7 @@ export const DART_ONLY = new Set([
 export const P5_FLAT_NAMES = new Set(['credit.json']);
 const KB = 1024;
 /** 크기 상한(바이트, p5·p6_design §7 [제안]) — manifest.py DIR_CAPS·FILE_CAPS·PREFIX_CAPS 와 같다 */
-export const DIR_CAPS = { macro: 3 * KB * KB, trade: 20 * KB * KB };
+export const DIR_CAPS = { macro: 3 * KB * KB, trade: 20 * KB * KB, diag: 1 * KB * KB };
 export const FILE_CAPS = {
   'credit.json': 100 * KB,
   'macro/calendar.json': 200 * KB,
@@ -58,6 +60,9 @@ export const FILE_CAPS = {
   'trade/surge.json': 1024 * KB,
   'trade/items104.json': 1024 * KB,
   'trade/stocks.json': 1024 * KB,
+  'diag/summary.json': 100 * KB,
+  'diag/history.json': 512 * KB,
+  'diag/events.json': 100 * KB,
 };
 /** 코드 이름 파일(trade/ 한 단계 더) — 경로 접두 → 파일 하나 상한 */
 export const PREFIX_CAPS = {
@@ -225,6 +230,17 @@ function keyPaths(v, pred, path = '$') {
   return out;
 }
 
+/** P7 공개 diag/ 에 없어야 하는 로그인 판정 키(docs/p7_design.md §7 — gex 로 시작하는 키도) */
+const DIAG_LOGIN_KEYS = new Set(['fear_greed', 'verdict']);
+
+/** P7 diag/ 내용 검사 — 로그인 판정 키 0(manifest.py diag_problems 와 같다). */
+export function diagProblems(name, parsed) {
+  if (!name.startsWith('diag/')) return [];
+  return keyPaths(parsed, (k) => DIAG_LOGIN_KEYS.has(k) || k.startsWith('gex')).map(
+    (p) => `${name}: 로그인 판정 키(${p})`,
+  );
+}
+
 /** P6 trade/ 내용 검사 — origin local 0, trade/stock/ 시세 칸 0(manifest.py trade_problems 와 같다). */
 export function tradeProblems(name, parsed) {
   if (!name.startsWith('trade/')) return [];
@@ -262,6 +278,7 @@ function checkSubdirJson(p, data) {
   const dartDir = DART_SUBDIRS.includes(p.split('/')[0]);
   errors.push(...(dartDir ? dartOnlyProblems(p, text, env) : traceProblems(p, text, env)));
   errors.push(...tradeProblems(p, env));
+  errors.push(...diagProblems(p, env));
   const claim = env.data && typeof env.data === 'object' ? env.data.xlsx_sha256 : undefined;
   return { errors, claim: typeof claim === 'string' ? claim : null };
 }

@@ -67,3 +67,12 @@
    투신 카드는 사모 제외(사용자 결정 Q7 — KRX 표기, 사모는 기관 세부 선).
 4. 남은 확인: 현물 조합 코드(#39)·프로그램 TR 칸·단위·투자자 코드(#40·#41)·검산 실데이터(#42). 장중 종목 훑기 행 ts = 슬롯 + 5분
    (`SCAN_OFFSET_MIN` — 등록부 `open+5` 와 같이 바꾼다).
+
+## P7 확인 메모(2026-10-13 — P7 WRAP)
+
+- §2-2 운영 조건 해소: GX poller 의 투자자별 폴링(`FHPTJ04030000`·`_investors` 계획)을 지웠다(묶음 ING — legacy poller
+  소스 grep 0). `prv_gex.investor_flow` 의 쓰기 주인은 등록부에서 `flows.market_minute` 하나(작업·서비스 통틀어 —
+  `ServiceSpec.writes` 검사, `tests/unit/scheduler/test_registry_validation.py`). GX 엔진은 이 표를 **읽기만** 한다
+  (`EngineSink` 에 투자자별 쓰기 없음 — sim `tests/sim/test_one_day_p7.py`).
+- 위클리 4조합(WKM OC05·OP05, WKI OC04·OP04)을 켰다(D-P7-6 — GX 실측 #13). `flows.market_minute` 은 정규장 391분 × 7조합
+  = 하루 2,807 호출(KIS 일 상한 안 — 등록부 시험). 야간 조합은 꺼진 채(#P7-2) — 엔진 `investor_flow` 지표는 야간에 '수집 안 함'.

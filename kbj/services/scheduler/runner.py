@@ -456,6 +456,12 @@ class JobRunner:
             except Exception as e:  # 격리 — 이 실행만 늦추고(저장소 오류 등) 다른 작업은 계속
                 p.next_at = now + timedelta(seconds=DEP_POLL_S)
                 self._job_error(now, "job_advance_failed", p.job.name, e)
+                continue
+            # 그 자리에서 끝난 시도(inline·아주 빠른 처리기)는 바로 거둔다 — 같은 회차에서 뒤에 오는
+            # 작업이 이것을 '진행 중'으로 보고 DEP_POLL_S 를 한 번 더 기다리지 않게. 무른 의존 사슬
+            # (board.daily → diag.daily → brief.closing)이 홉마다 30초씩 밀려 16:00 을 넘기지 않는다
+            # (ADR 0018·0030). 실패면 _finish 가 재시도를 잡아 진행 목록에 남긴다 — 기다림은 그대로
+            self._collect_one(p, now, events)
 
     def _advance_one(self, p: _Pending, now: datetime, events: list[RunEvent]) -> None:
         if p.future is not None:
@@ -630,13 +636,8 @@ class JobRunner:
     def _collect(self, now: datetime, events: list[RunEvent]) -> None:
         for key in list(self._pending):
             p = self._pending.get(key)
-            if p is None or p.future is None or not p.future.done():
-                continue
-            try:
-                self._finish(p, now, events)
-            except Exception as e:  # 격리 — 기록 저장소 오류 등. 이 실행은 재시도 간격 뒤 다시
-                p.next_at = now + timedelta(seconds=DEP_POLL_S)
-                self._job_error(now, "job_finish_failed", p.job.name, e)
+            if p is not None:
+                self._collect_one(p, now, events)
         for p in list(self._abandoned):
             if p.future is not None and p.future.done():
                 self._abandoned.remove(p)
@@ -648,6 +649,15 @@ class JobRunner:
                     job=p.job.name,
                     as_of=p.as_of,
                 )
+
+    def _collect_one(self, p: _Pending, now: datetime, events: list[RunEvent]) -> None:
+        if p.future is None or not p.future.done():
+            return
+        try:
+            self._finish(p, now, events)
+        except Exception as e:  # 격리 — 기록 저장소 오류 등. 이 실행은 재시도 간격 뒤 다시
+            p.next_at = now + timedelta(seconds=DEP_POLL_S)
+            self._job_error(now, "job_finish_failed", p.job.name, e)
 
     def _finish(self, p: _Pending, now: datetime, events: list[RunEvent]) -> None:
         fut = p.future

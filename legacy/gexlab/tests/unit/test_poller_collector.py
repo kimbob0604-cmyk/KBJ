@@ -39,7 +39,7 @@ from services.poller.collector import Collector, ObservedLimiter
 from services.poller.config import PollerConfig
 from services.poller.context import Series
 from services.poller.planner import fill_plan
-from services.poller.records import InvestorRecord
+from services.poller.records import FuturesRecord
 from services.poller.sink import InMemorySink
 from tests.fakes.kis_server import (
     Call,
@@ -148,7 +148,7 @@ def test_two_minute_day_run_matches_plan_4_4_and_stays_under_4_per_second() -> N
         (c.params["FID_INPUT_ISCD"], c.params["FID_INPUT_ISCD_2"])
         for c in s.quote_calls(TR_INVESTOR)
     )
-    assert len(inv) == 7 and set(inv.values()) == {2}
+    assert inv == Counter()  # KBJ P7(D-P7-5): 투자자별 TR 을 부르지 않는다(flows.market_minute 몫)
     # 보강 1: 월물 ATM±20 × 콜풋 82건/60초, 보강 2: 약 1건/초
     ex = r.col.stats.executed
     assert ex["fill1"] == 164
@@ -162,7 +162,7 @@ def test_two_minute_day_run_matches_plan_4_4_and_stays_under_4_per_second() -> N
     assert len(r.sink.raw) == len(s.calls)
     assert all_tags(r.sink) == {DAY}
     assert r.sink.health == [] and r.sink.quarantine == []
-    assert len(r.sink.investor) == 14 * 12  # 7조합 × 2회 × 투자자 12종
+    assert r.sink.investor == []  # KBJ P7(D-P7-5): 투자자별 행은 KBJ flows.market_minute 가 쓴다
 
 
 def test_records_carry_board_and_fill_fields() -> None:
@@ -221,7 +221,7 @@ def test_priorities_under_contention_p4_is_skipped_first() -> None:
     st = r.col.stats
     assert len(r.server.quote_calls(TR_CALLPUT)) == 12  # P1 은 기다려서라도 한다
     assert len(r.server.quote_calls(TR_FUT_BOARD)) == 4
-    assert len(r.server.quote_calls(TR_INVESTOR)) == 14  # P2 도 이 정도 경합이면 제시간에
+    assert len(r.server.quote_calls(TR_INVESTOR)) == 0  # KBJ P7(D-P7-5): 투자자별(P2)은 부르지 않는다
     assert st.skipped[Priority.P1] == st.skipped[Priority.P0] == 0
     assert st.skipped[Priority.P4] > 30 and st.skipped[Priority.P4] > st.skipped[Priority.P3]
     assert st.executed["fill1"] >= 150
@@ -262,7 +262,7 @@ def test_rate_limited_twice_gives_up_until_next_cycle() -> None:
 
 
 class _ContendedLimiter:
-    """한도초과 뒤 P2 재시도 허가가 대기 한도까지 밀린다(공유 Redis 리미터에서 다른 프로세스의
+    """한도초과 뒤 P3 재시도 허가가 대기 한도까지 밀린다(KBJ P7: P2 투자자별을 지워 P3 보강 1 로)(공유 Redis 리미터에서 다른 프로세스의
     P1 대기열 뒤에 선 것처럼) — 그 재시도는 보내지 않는다."""
 
     def __init__(self, inner: LocalRateLimiter, clock: FakeClock) -> None:
@@ -272,7 +272,7 @@ class _ContendedLimiter:
         self.signals: list[float] = []
 
     def acquire(self, priority: Priority, tr_id: str, timeout: float | None = None) -> None:
-        if self.armed and priority == Priority.P2:
+        if self.armed and priority == Priority.P3:
             self.armed = False
             self.clock.sleep(timeout or 0.0)
             raise RateLimitTimeout(priority, tr_id, Reason.PRIORITY)
@@ -294,14 +294,18 @@ def test_rate_limited_retry_not_sent_is_signalled_once() -> None:
     sink = InMemorySink()
     kis = make_client(server, limiter, StaticTokenProvider())
     col = Collector(kis, sink, calendar=CAL, clock=clock, master=ch.master_rows())
-    server.inject("rate_limit", tr_id=TR_INVESTOR, params={"FID_INPUT_ISCD_2": "F001"})
+    # KBJ P7(D-P7-5): 대기 한도가 있는 P2 투자자별을 지워 같은 규칙(P2·P3 짧게 기다림)의 P3 보강 1 로
+    monthly = ch.find("", "202610")
+    assert monthly is not None
+    atm_call = monthly.code("C", Decimal("1095.0"))
+    server.inject("rate_limit", tr_id=TR_PRICE, params={"FID_INPUT_ISCD": atm_call})
     col.run_until(kst(2026, 9, 28, 10, 0, 20))
-    f001 = server.quote_calls(TR_INVESTOR, FID_INPUT_ISCD_2="F001")
+    f001 = server.quote_calls(TR_PRICE, FID_INPUT_ISCD=atm_call)
     assert [c.msg_cd for c in f001] == ["EGW00201"]  # 재시도는 허가를 못 받아 보내지 않았다
     # 한도초과 응답은 하나 — 감속도 한 번(2.0/s), 없는 두 번째 응답으로 1.0/s 까지 내리지 않는다
     assert limiter.signals == [2.0] and inner.current_rate() == 2.0
     assert [e.kind for e in sink.health].count("rate_limited") == 1
-    assert col.stats.slowdowns == 1 and col.stats.failed["investor"] == 1
+    assert col.stats.slowdowns == 1 and col.stats.failed["fill1"] == 1
 
 
 def test_rate_limited_p4_is_not_retried_and_signalled_once() -> None:
@@ -310,7 +314,8 @@ def test_rate_limited_p4_is_not_retried_and_signalled_once() -> None:
     assert monthly is not None
     first_fill2 = monthly.code("C", Decimal("1147.5"))  # 전광판·보강 1 밖에서 ATM 에 가장 가까운 행
     r.server.inject("rate_limit", tr_id=TR_PRICE, params={"FID_INPUT_ISCD": first_fill2})
-    r.run(kst(2026, 9, 28, 10, 0, 10))
+    # KBJ P7(D-P7-5): 투자자별(P2)이 없어 2.0/s 감속 중에도 다음 차례(8초)가 바로 돈다 — 그 전까지
+    r.run(kst(2026, 9, 28, 10, 0, 7, 500_000))
     calls = r.server.quote_calls(TR_PRICE, FID_INPUT_ISCD=first_fill2)
     assert [c.msg_cd for c in calls] == ["EGW00201"]  # P4 는 재시도 허가를 기다리지 않는다
     assert [e.kind for e in r.sink.health] == ["rate_limited"]  # 신호도 한 번
@@ -336,12 +341,6 @@ def test_malformed_rows_are_quarantined_and_cycle_continues() -> None:
     r.server.inject(
         "malformed", tr_id=TR_CALLPUT, params={"FID_MTRT_CNT": "260904"}, mutate=_break_board
     )
-    r.server.inject(
-        "malformed",
-        tr_id=TR_INVESTOR,
-        params={"FID_INPUT_ISCD_2": "F001"},
-        mutate=lambda b: b["output"][0].pop("frgn_seln_vol"),
-    )
     monthly = r.chain.find("", "202610")
     assert monthly is not None
     atm_call = monthly.code("C", Decimal("1095.0"))
@@ -353,20 +352,19 @@ def test_malformed_rows_are_quarantined_and_cycle_continues() -> None:
     )
     r.run(kst(2026, 9, 28, 10, 1))
     q = Counter(x.tr_id for x in r.sink.quarantine)
-    assert q == {TR_CALLPUT: 2, TR_INVESTOR: 1, TR_PRICE: 1}
+    assert q == {TR_CALLPUT: 2, TR_PRICE: 1}  # KBJ P7(D-P7-5): 투자자별 격리 갈래는 부르지 않아 없다
     assert all(x.trade_date == DAY[0] and x.session == "day" for x in r.sink.quarantine)
     wk = [c for c in r.sink.chain if c.expiry == "260904" and c.source == "board"]
     first_cycle = [c for c in wk if c.ts == wk[0].ts]
     assert len(first_cycle) == 199  # 200 − 행사가 못 읽은 1
     bad = [c for c in first_cycle if c.quality == "invalid"]
     assert len(bad) == 1 and bad[0].cp == "P" and bad[0].oi is None
-    inv = Counter(x.sector_code for x in r.sink.investor)
-    assert "F001" not in inv and set(inv.values()) == {12} and len(inv) == 6  # 그 조합만 격리
+    assert r.sink.investor == [] and r.server.quote_calls(TR_INVESTOR) == []  # KBJ P7(D-P7-5)
     fill_bad = [c for c in r.sink.chain if c.code == atm_call]
     assert [c.quality for c in fill_bad][:1] == ["invalid"]
     assert r.col.stats.executed["fill1"] == 82  # 주기는 계속
     qh = {e.detail["job"]: e.detail["rows"] for e in r.sink.health if e.kind == "quarantine"}
-    assert qh == {"board:WKM:260904": 2, "investor:K2I/F001": 1, "fill1:M:202610:1095.00:C": 1}
+    assert qh == {"board:WKM:260904": 2, "fill1:M:202610:1095.00:C": 1}
 
 
 def test_negative_iv_is_an_outlier_but_zero_iv_is_no_value() -> None:
@@ -400,25 +398,23 @@ def test_negative_iv_is_an_outlier_but_zero_iv_is_no_value() -> None:
 
 def test_http500_and_token_errors_are_isolated_per_job() -> None:
     r = rig(kst(2026, 9, 28, 10, 0))
-    r.server.inject("http500", tr_id=TR_INVESTOR, params={"FID_INPUT_ISCD_2": "OC05"}, times=2)
+    # KBJ P7(D-P7-5): 60초 주기 작업이던 투자자별(OC05)을 지워 같은 주기의 보강 1 한 대상으로
+    monthly = r.chain.find("", "202610")
+    assert monthly is not None
+    atm_put = monthly.code("P", Decimal("1095.0"))
+    r.server.inject("http500", tr_id=TR_PRICE, params={"FID_INPUT_ISCD": atm_put}, times=2)
     r.server.inject("token", tr_id=TR_FUT_BOARD)
     r.run(kst(2026, 9, 28, 10, 2))
     assert r.tokens.invalidated == 1  # 토큰 거절 → 제공자에 알리고 1회 재시도
     assert len(r.server.quote_calls(TR_FUT_BOARD)) == 5
     assert len({x.ts for x in r.sink.futures}) == 4
-    oc05 = [x for x in r.sink.investor if x.sector_code == "OC05"]
-    assert oc05 == []  # 두 회차 모두 실패
-    assert {x.sector_code for x in r.sink.investor} == {
-        "F001",
-        "OC01",
-        "OP01",
-        "OP05",
-        "OC04",
-        "OP04",
-    }
+    put = [x for x in r.sink.chain if x.code == atm_put]
+    assert put == []  # 두 회차 모두 실패
+    fill1 = {x.code for x in r.sink.chain if x.source == "fill" and x.expiry == "202610"}
+    assert len(fill1) >= 81 and atm_put not in fill1  # 나머지 보강 1 대상은 받았다
     failed = [e for e in r.sink.health if e.kind == "job_failed"]
     assert len(failed) == 1 and failed[0].detail["consecutive"] == 2  # 연속 2회째에 health
-    assert r.col.stats.executed["fill1"] == 164
+    assert r.col.stats.executed["fill1"] == 164 - 2  # 주기는 계속 — 실패한 두 회차만 빠진다
 
 
 def _reject_code(body: dict[str, Any]) -> None:
@@ -469,18 +465,21 @@ def test_skipped_fill2_slot_keeps_its_target_for_the_next_slot() -> None:
     assert called == order[: len(called)]  # 빠진 대상 없이 순서대로
 
 
-class _BrokenInvestorSink(InMemorySink):
-    def write_investor(self, rows: Sequence[InvestorRecord]) -> None:
+class _BrokenFuturesSink(InMemorySink):
+    """KBJ P7(D-P7-5): 투자자별 쓰기가 없어져 선물 전광판 쓰기를 깨뜨린다."""
+
+    def write_futures(self, rows: Sequence[FuturesRecord]) -> None:
         raise RuntimeError("db down")
 
 
 def test_sink_failure_does_not_stop_collection() -> None:
     r = rig(kst(2026, 9, 28, 10, 0))
-    sink = _BrokenInvestorSink()
+    sink = _BrokenFuturesSink()
     r.col.sink = sink
     r.run(kst(2026, 9, 28, 10, 0, 30))
-    assert r.col.stats.sink_errors == 7 and sink.investor == []
-    assert sink.chain and sink.futures
+    # 선물 전광판은 30초 주기 — 30초 안에 한 번(10:00:00) 쓰다 실패
+    assert r.col.stats.sink_errors == 1 and sink.futures == []
+    assert sink.chain and sink.investor == [] and len(r.server.quote_calls(TR_FUT_BOARD)) == 1
 
 
 # ── 만기 전환·커버리지 ──
@@ -706,7 +705,7 @@ def test_night_mode_c_only_investor_and_day_rows_become_estimated() -> None:
     r.run(kst(2026, 9, 28, 21, 1))
     night = Counter(c.tr_id for c in r.server.calls[day_calls:])
     # 설계 §7 C: 야간 옵션 REST 없음 — 최종거래일도 부르지 않고 주간에 받은 KIS 값을 그대로 쓴다
-    assert night == {TR_OPTION_LIST: 3, TR_INVESTOR: 7}
+    assert night == {TR_OPTION_LIST: 3}  # KBJ P7(D-P7-5): 투자자별 7조합(TR_INVESTOR 7)은 부르지 않는다
     assert {e.source for e in r.col.ctx.expiries.values()} == {"kis"}
     assert "expiry_unresolved" not in r.sink.health_kinds()
     view = r.col.chain_view()
@@ -717,7 +716,8 @@ def test_night_mode_c_fresh_start_uses_calendar_expiries_without_calls() -> None
     r = rig(kst(2026, 9, 28, 17, 55), PollerConfig(night_mode="C"))  # PRE_NIGHT 에 새로 뜬 poller
     r.run(kst(2026, 9, 28, 18, 5))
     assert r.server.quote_calls(TR_PRICE) == []
-    assert Counter(c.tr_id for c in r.server.calls) == {TR_OPTION_LIST: 6, TR_INVESTOR: 35}
+    # KBJ P7(D-P7-5): 투자자별 35건(TR_INVESTOR)은 부르지 않는다
+    assert Counter(c.tr_id for c in r.server.calls) == {TR_OPTION_LIST: 6}
     ex = {(e.mrkt_cls, e.expiry): e for e in r.sink.expiries}
     wki = ex[("WKI", "261001")]
     assert (wki.source, wki.last_trade_date, wki.quality) == (

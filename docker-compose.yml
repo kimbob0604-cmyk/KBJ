@@ -9,7 +9,7 @@
 # - 앱 서비스(P2 — 묶음 I)는 profile `app` 이다: `docker compose up -d` 는 지금처럼 db·redis 만,
 #   `docker compose --profile app up -d --build` 는 migrate → auth·scheduler·notifier 까지 띄운다.
 #   이미지는 레포 루트 Dockerfile 하나(런타임 의존성만, 비밀 없음 — 로그인 SPA 빌드 결과 포함).
-#   ws-gateway 는 P7 에서 더한다. P3 수집·엔진 작업(krx.daily·close_collect·장중·board·etf·public.export)은
+#   P7 에 GEX 상시 프로세스 ws-gateway·recorder·gex-engine 을 더했다(아래). P3 수집·엔진 작업(krx.daily·close_collect·장중·board·etf·public.export)은
 #   별도 컨테이너가 아니라 scheduler 의 작업 등록부가 돌린다.
 # - P3(묶음 S — docs/p3_design.md §1.9·D-P3-3·§5.4): 서비스 `api`(로그인 API·텔레그램 웹훅 수신·로그인 SPA
 #   정적 파일을 같은 출처로 — FastAPI + uvicorn 한 프로세스). **호스트 네트워크**로 띄워 호스트 루프백
@@ -206,6 +206,83 @@ services:
         condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "python", "-m", "kbj.services.runtime.healthcheck", "notifier", "60"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # P7 WRAP(docs/p7_design.md §1.7-6·D-P7-10) — GX 에서 옮긴 GEX 상시 프로세스 셋(KBJ 이미지). 하트비트 이름은
+  # 각 모듈의 SERVICE(ws-gateway·recorder·engine) — 등록부 config/jobs.yaml services 의 gex.* 와 짝.
+  # ws-gateway 는 KIS 웹소켓(호스트는 kbj/services/ws_gateway/endpoints.py 한 곳)에 붙는다. 접속키는 auth 가
+  # 발급해 Redis kis:ws_key 에 둔 것을 읽기만(ADR 0004 D2) — 앱키는 캐시 키 이름에만 쓰고 시크릿은 넣지 않는다.
+  # 녹화·엔진은 KIS 를 부르지 않는다(키 없음). 쓰기 실패는 /data/spool/<서비스> 디스크 큐(GX 규칙).
+  # legacy GX compose 의 같은 셋은 통합 시험용으로 남고, 운영 VM 에서는 §10 Q7 순서로 GX 쪽을 끈다
+  # (런북: scripts/gex_migrate_data.sh 머리말).
+  ws-gateway:
+    <<: *app
+    command: ["python", "-m", "kbj.services.ws_gateway"]
+    environment:
+      TZ: UTC
+      KBJ_SERVICE: ws-gateway
+      KBJ_REDIS_URL: *redis_url
+      KBJ_DATABASE_URL: *database_url
+      KBJ_KIS_APP_KEY: ${KBJ_KIS_APP_KEY:-}
+      KBJ_KIS_ENV: ${KBJ_KIS_ENV:-real}
+      KBJ_SPOOL_DIR: /data/spool
+    volumes:
+      - state:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      auth:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-m", "kbj.services.runtime.healthcheck", "ws-gateway", "60"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  recorder:
+    <<: *app
+    command: ["python", "-m", "kbj.services.recorder"]
+    environment:
+      TZ: UTC
+      KBJ_SERVICE: recorder
+      KBJ_REDIS_URL: *redis_url
+      KBJ_DATABASE_URL: *database_url
+      KBJ_SPOOL_DIR: /data/spool
+    volumes:
+      - state:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-m", "kbj.services.runtime.healthcheck", "recorder", "60"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  gex-engine:
+    <<: *app
+    command: ["python", "-m", "kbj.services.engine.gex"]
+    environment:
+      TZ: UTC
+      KBJ_SERVICE: engine
+      KBJ_REDIS_URL: *redis_url
+      KBJ_DATABASE_URL: *database_url
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-m", "kbj.services.runtime.healthcheck", "engine", "60"]
       interval: 30s
       timeout: 10s
       retries: 3

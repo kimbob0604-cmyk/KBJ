@@ -1,0 +1,517 @@
+{
+  "source": "KBJ:diag.public",
+  "as_of": "2026-12-10T08:40:00+09:00",
+  "quality": "ok",
+  "notes": [],
+  "generated_at": "2026-12-10T14:00:00+09:00",
+  "data": {
+    "key": "credit_spread",
+    "tier": "public",
+    "unit": "%p",
+    "bands": [
+      20.0,
+      40.0,
+      60.0,
+      80.0
+    ],
+    "points": [
+      {
+        "trade_date": "2026-08-28",
+        "value": 0.6165,
+        "state": "normal",
+        "pct_rank": 35.53,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-08-31",
+        "value": 0.6107,
+        "state": "normal",
+        "pct_rank": 34.5,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-09-01",
+        "value": 0.5911,
+        "state": "normal",
+        "pct_rank": 26.52,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-09-02",
+        "value": 0.5973,
+        "state": "normal",
+        "pct_rank": 30.3,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-09-03",
+        "value": 0.5942,
+        "state": "normal",
+        "pct_rank": 29.31,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-09-04",
+        "value": 0.5901,
+        "state": "normal",
+        "pct_rank": 26.18,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-09-07",
+        "value": 0.6016,
+        "state": "normal",
+        "pct_rank": 32.48,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-09-08",
+        "value": 0.5994,
+        "state": "normal",
+        "pct_rank": 31.91,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-09-09",
+        "value": 0.5996,
+        "state": "normal",
+        "pct_rank": 32.2,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-09-10",
+        "value": 0.6055,
+        "state": "normal",
+        "pct_rank": 35.02,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-09-11",
+        "value": 0.6037,
+        "state": "normal",
+        "pct_rank": 33.61,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-09-14",
+        "value": 0.6044,
+        "state": "normal",
+        "pct_rank": 34.31,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-09-15",
+        "value": 0.6041,
+        "state": "normal",
+        "pct_rank": 34.17,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-09-16",
+        "value": 0.5984,
+        "state": "normal",
+        "pct_rank": 30.5,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-09-17",
+        "value": 0.5947,
+        "state": "normal",
+        "pct_rank": 28.93,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-09-18",
+        "value": 0.5944,
+        "state": "normal",
+        "pct_rank": 28.81,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-09-21",
+        "value": 0.5888,
+        "state": "normal",
+        "pct_rank": 23.77,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-09-22",
+        "value": 0.5848,
+        "state": "normal",
+        "pct_rank": 21.63,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-09-23",
+        "value": 0.5851,
+        "state": "normal",
+        "pct_rank": 22.15,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-09-28",
+        "value": 0.5744,
+        "state": "narrow",
+        "pct_rank": 18.42,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-09-29",
+        "value": 0.5614,
+        "state": "narrow",
+        "pct_rank": 12.1,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-09-30",
+        "value": 0.563,
+        "state": "narrow",
+        "pct_rank": 14.46,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-10-01",
+        "value": 0.5553,
+        "state": "narrow",
+        "pct_rank": 7.03,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-10-02",
+        "value": 0.5522,
+        "state": "narrow",
+        "pct_rank": 4.42,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-10-06",
+        "value": 0.5716,
+        "state": "narrow",
+        "pct_rank": 19.28,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-10-07",
+        "value": 0.5637,
+        "state": "narrow",
+        "pct_rank": 15.66,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-10-08",
+        "value": 0.5736,
+        "state": "narrow",
+        "pct_rank": 20.08,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-10-12",
+        "value": 0.5748,
+        "state": "narrow",
+        "pct_rank": 21.69,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-10-13",
+        "value": 0.5465,
+        "state": "narrow",
+        "pct_rank": 3.21,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-10-14",
+        "value": 0.5448,
+        "state": "narrow",
+        "pct_rank": 2.21,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-10-15",
+        "value": 0.535,
+        "state": "narrow",
+        "pct_rank": 1.2,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-10-16",
+        "value": 0.5324,
+        "state": "narrow",
+        "pct_rank": 1.2,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-10-19",
+        "value": 0.5301,
+        "state": "narrow",
+        "pct_rank": 0.8,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-10-20",
+        "value": 0.5332,
+        "state": "narrow",
+        "pct_rank": 2.01,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-10-21",
+        "value": 0.5163,
+        "state": "narrow",
+        "pct_rank": 0.0,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-10-22",
+        "value": 0.5199,
+        "state": "narrow",
+        "pct_rank": 0.4,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-10-23",
+        "value": 0.521,
+        "state": "narrow",
+        "pct_rank": 0.8,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-10-26",
+        "value": 0.5462,
+        "state": "narrow",
+        "pct_rank": 6.22,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-10-27",
+        "value": 0.5471,
+        "state": "narrow",
+        "pct_rank": 7.23,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-10-28",
+        "value": 0.5397,
+        "state": "narrow",
+        "pct_rank": 4.42,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-10-29",
+        "value": 0.5443,
+        "state": "narrow",
+        "pct_rank": 5.22,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-10-30",
+        "value": 0.548,
+        "state": "narrow",
+        "pct_rank": 8.84,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-02",
+        "value": 0.5257,
+        "state": "narrow",
+        "pct_rank": 1.61,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-03",
+        "value": 0.5334,
+        "state": "narrow",
+        "pct_rank": 4.02,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-04",
+        "value": 0.541,
+        "state": "narrow",
+        "pct_rank": 5.62,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-05",
+        "value": 0.5399,
+        "state": "narrow",
+        "pct_rank": 5.62,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-06",
+        "value": 0.5496,
+        "state": "narrow",
+        "pct_rank": 10.84,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-09",
+        "value": 0.5619,
+        "state": "narrow",
+        "pct_rank": 21.89,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-10",
+        "value": 0.5618,
+        "state": "narrow",
+        "pct_rank": 21.49,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-11",
+        "value": 0.5718,
+        "state": "normal",
+        "pct_rank": 28.51,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-12",
+        "value": 0.5744,
+        "state": "normal",
+        "pct_rank": 30.12,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-13",
+        "value": 0.5773,
+        "state": "normal",
+        "pct_rank": 32.13,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-16",
+        "value": 0.5847,
+        "state": "normal",
+        "pct_rank": 34.54,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-17",
+        "value": 0.596,
+        "state": "normal",
+        "pct_rank": 44.18,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-18",
+        "value": 0.5832,
+        "state": "normal",
+        "pct_rank": 34.14,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-19",
+        "value": 0.5833,
+        "state": "normal",
+        "pct_rank": 34.54,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-20",
+        "value": 0.5774,
+        "state": "normal",
+        "pct_rank": 32.53,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-23",
+        "value": 0.5903,
+        "state": "normal",
+        "pct_rank": 40.96,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-24",
+        "value": 0.5867,
+        "state": "normal",
+        "pct_rank": 37.75,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-25",
+        "value": 0.5851,
+        "state": "normal",
+        "pct_rank": 36.95,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-26",
+        "value": 0.566,
+        "state": "normal",
+        "pct_rank": 25.3,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-27",
+        "value": 0.5565,
+        "state": "narrow",
+        "pct_rank": 16.47,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-30",
+        "value": 0.5544,
+        "state": "narrow",
+        "pct_rank": 14.06,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-12-01",
+        "value": 0.5513,
+        "state": "narrow",
+        "pct_rank": 12.05,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-12-02",
+        "value": 0.5521,
+        "state": "narrow",
+        "pct_rank": 12.45,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-12-03",
+        "value": 0.5608,
+        "state": "normal",
+        "pct_rank": 21.29,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-12-04",
+        "value": 0.5476,
+        "state": "narrow",
+        "pct_rank": 10.44,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-12-07",
+        "value": 0.5339,
+        "state": "narrow",
+        "pct_rank": 4.42,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-12-08",
+        "value": 0.5583,
+        "state": "narrow",
+        "pct_rank": 20.08,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-12-09",
+        "value": 0.5526,
+        "state": "narrow",
+        "pct_rank": 13.65,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-12-10",
+        "value": 0.5509,
+        "state": "narrow",
+        "pct_rank": 12.45,
+        "quality": "ok"
+      }
+    ]
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "source": "KBJ:diag.public",
+  "as_of": "2026-12-10T08:40:00+09:00",
+  "quality": "estimated",
+  "notes": [],
+  "generated_at": "2026-12-10T14:00:00+09:00",
+  "data": {
+    "start": "2026-12-03",
+    "end": "2027-01-09",
+    "events": [
+      {
+        "date": "2026-12-03",
+        "kind": "expiry",
+        "title": "위클리(목) 만기",
+        "days_left": null,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-12-07",
+        "kind": "expiry",
+        "title": "위클리(월) 만기",
+        "days_left": null,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-12-10",
+        "kind": "expiry",
+        "title": "월물 만기",
+        "days_left": 0,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-12-11",
+        "kind": "earnings_cluster",
+        "title": "실적 몰림 12종목",
+        "days_left": 1,
+        "quality": "estimated"
+      },
+      {
+        "date": "2026-12-14",
+        "kind": "expiry",
+        "title": "위클리(월) 만기",
+        "days_left": 4,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-12-17",
+        "kind": "expiry",
+        "title": "위클리(목) 만기",
+        "days_left": 7,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-12-21",
+        "kind": "expiry",
+        "title": "위클리(월) 만기",
+        "days_left": 11,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-12-24",
+        "kind": "expiry",
+        "title": "위클리(목) 만기",
+        "days_left": 14,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-12-28",
+        "kind": "expiry",
+        "title": "위클리(월) 만기",
+        "days_left": 18,
+        "quality": "ok"
+      },
+      {
+        "date": "2026-12-30",
+        "kind": "expiry",
+        "title": "위클리(목) 만기",
+        "days_left": 20,
+        "quality": "ok"
+      },
+      {
+        "date": "2027-01-04",
+        "kind": "expiry",
+        "title": "위클리(월) 만기",
+        "days_left": 25,
+        "quality": "ok"
+      },
+      {
+        "date": "2027-01-07",
+        "kind": "expiry",
+        "title": "위클리(목) 만기",
+        "days_left": 28,
+        "quality": "ok"
+      }
+    ]
+  }
+}

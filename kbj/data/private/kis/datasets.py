@@ -323,7 +323,9 @@ DATASETS: Final[tuple[DatasetSpec, ...]] = (
             "표의 뷰(0006). 파서 kbj/data/private/kis/investors_minute.py(TR_MARKET_MINUTE·칸 표 — "
             "순매수 수량 칸 pe_fund·etc_orgt·etc_corp 는 _ntby_vol, 나머지 _ntby_qty: GX 실측). "
             "행 ts = 슬롯 분, 슬롯 + 45초 넘어 받으면 estimated, 값이 모두 0 이면 공표 전(장전 — "
-            "#39)"
+            "#39). P7: 위클리 4조합(WKM OC05·OP05, WKI OC04·OP04)은 GX 실측 #13(7조합 정상 "
+            "응답)을 근거로 켠다(WRAP — markets.yaml), 야간(K2I F001 night)은 응답 실측 #P7-2 "
+            "전까지 꺼진 채(D-P7-6)"
         ),
     ),
     # ── P5 F2 프로그램매매(docs/p5_flow_program_prompt.md §1.4 — 칸 이름은 KIS 공식 예제 기준,
@@ -409,8 +411,10 @@ DATASETS: Final[tuple[DatasetSpec, ...]] = (
         as_of="minute",
         store="prv_gex.raw_messages",
         notes=(
-            "KIS 웹소켓 체결·호가 — legacy GX ws-gateway(P7, ADR 0004 D2). 접속키는 auth 가 "
-            "발급하고(kis:ws_key) ws-gateway 는 읽기만. 앱키 REST 리미터는 재연결 스냅샷만 탄다"
+            "KIS 웹소켓 체결·호가 — 받는 주인은 KBJ ws-gateway(서비스 gex.ws_gateway — P7, "
+            "D-P7-10, ADR 0004 D2 마감). 저장 표 셋: 원문 prv_gex.raw_messages(녹화 서비스), "
+            "체결 prv_gex.fut_ticks·opt_ticks(ws-gateway). 접속키는 auth 가 발급하고(kis:ws_key) "
+            "ws-gateway 는 읽기만. 앱키 REST 리미터는 재연결 스냅샷만 탄다"
         ),
     ),
 )

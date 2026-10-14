@@ -1,0 +1,517 @@
+{
+  "source": "KBJ:diag.daily",
+  "as_of": "2026-12-09T16:00:00+09:00",
+  "quality": "estimated",
+  "notes": [],
+  "generated_at": "2026-12-10T14:00:00+09:00",
+  "data": {
+    "key": "breadth_ma20",
+    "tier": "login",
+    "unit": "%",
+    "bands": [
+      20.0,
+      40.0,
+      60.0,
+      80.0
+    ],
+    "points": [
+      {
+        "trade_date": "2026-08-27",
+        "value": 20.829,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-08-28",
+        "value": 11.633,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-08-31",
+        "value": 14.7502,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-09-01",
+        "value": 11.3001,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-09-02",
+        "value": 12.1389,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-09-03",
+        "value": 11.2094,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-09-04",
+        "value": 13.3989,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-09-07",
+        "value": 10.5942,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-09-08",
+        "value": 10.7866,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-09-09",
+        "value": 12.466,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-09-10",
+        "value": 16.7641,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-09-11",
+        "value": 13.1875,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-09-14",
+        "value": 16.4385,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-09-15",
+        "value": 14.1638,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-09-16",
+        "value": 7.0554,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-09-17",
+        "value": 11.8975,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-09-18",
+        "value": 13.2401,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-09-21",
+        "value": 19.0615,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-09-22",
+        "value": 11.1285,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-09-23",
+        "value": 10.4897,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-09-28",
+        "value": 4.9424,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-09-29",
+        "value": 4.8137,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-09-30",
+        "value": 6.2247,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-10-01",
+        "value": 11.3804,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-10-02",
+        "value": 12.5441,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-10-06",
+        "value": 11.1298,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-10-07",
+        "value": 8.0061,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-10-08",
+        "value": 4.7478,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-10-12",
+        "value": 11.1993,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-10-13",
+        "value": 13.0002,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-10-14",
+        "value": 13.4647,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-10-15",
+        "value": 15.8051,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-10-16",
+        "value": 19.1619,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-10-19",
+        "value": 18.926,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-10-20",
+        "value": 10.9453,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-10-21",
+        "value": 17.7819,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-10-22",
+        "value": 16.94,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-10-23",
+        "value": 17.8913,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-10-26",
+        "value": 16.4043,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-10-27",
+        "value": 18.2356,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-10-28",
+        "value": 8.1513,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-10-29",
+        "value": 8.4604,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-10-30",
+        "value": 6.0271,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-11-02",
+        "value": 4.3087,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-11-03",
+        "value": 4.0,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-11-04",
+        "value": 4.0,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-11-05",
+        "value": 10.5289,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-11-06",
+        "value": 6.5126,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-11-09",
+        "value": 12.1874,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-11-10",
+        "value": 18.4123,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-11-11",
+        "value": 17.3675,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-11-12",
+        "value": 17.6514,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-11-13",
+        "value": 17.5858,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-11-16",
+        "value": 10.1051,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-11-17",
+        "value": 9.7418,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-11-18",
+        "value": 10.4177,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-11-19",
+        "value": 10.4224,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-11-20",
+        "value": 15.89,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-11-23",
+        "value": 8.829,
+        "state": null,
+        "pct_rank": null,
+        "quality": "estimated"
+      },
+      {
+        "trade_date": "2026-11-24",
+        "value": 4.0,
+        "state": "extreme_low",
+        "pct_rank": 1.69,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-25",
+        "value": 4.6983,
+        "state": "extreme_low",
+        "pct_rank": 6.67,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-26",
+        "value": 9.6536,
+        "state": "low",
+        "pct_rank": 26.23,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-27",
+        "value": 6.6502,
+        "state": "extreme_low",
+        "pct_rank": 17.74,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-11-30",
+        "value": 11.6058,
+        "state": "normal",
+        "pct_rank": 52.38,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-12-01",
+        "value": 11.6086,
+        "state": "normal",
+        "pct_rank": 53.13,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-12-02",
+        "value": 12.7244,
+        "state": "high",
+        "pct_rank": 63.08,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-12-03",
+        "value": 10.309,
+        "state": "low",
+        "pct_rank": 30.3,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-12-04",
+        "value": 7.1125,
+        "state": "extreme_low",
+        "pct_rank": 19.4,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-12-07",
+        "value": 4.0,
+        "state": "extreme_low",
+        "pct_rank": 2.21,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-12-08",
+        "value": 5.113,
+        "state": "extreme_low",
+        "pct_rank": 13.04,
+        "quality": "ok"
+      },
+      {
+        "trade_date": "2026-12-09",
+        "value": 7.3162,
+        "state": "low",
+        "pct_rank": 22.86,
+        "quality": "estimated"
+      }
+    ]
+  }
+}

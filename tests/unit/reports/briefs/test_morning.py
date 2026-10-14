@@ -22,6 +22,7 @@ from tests.unit.reports.briefs.brief_world import (
     morning_repos,
     us_brief_artifact,
 )
+from tests.unit.reports.gex.gex_world import at, levels
 
 
 def text_of(repos: object, **kw: Any) -> str:
@@ -175,15 +176,18 @@ def test_일정이_없으면_일정_없음_한_줄() -> None:
 # ── 단계 밖·품질 줄·격리 ───────────────────────────────────────────────────────────────
 
 
-def test_P7_P8_섹션은_싣지_않고_품질_줄에도_없다() -> None:
+def test_구루는_없고_P7_야간_GEX_는_재료가_없으면_미준비() -> None:
+    # P7 OUT 이 ④ 야간선물·GEX 를 켰다(D-P7-16) — 내용은 test_morning_p7.py
     text = text_of(morning_repos())
-    for word in ("야간선물", "GEX", "구루"):
-        assert word not in text
+    assert "구루" not in text
+    assert "<b>야간선물·GEX</b>\n미준비 — gex.night_minutes(06:00)" in text
 
 
 def test_모두_ok_면_자료_이상_없음() -> None:
     c = cfg().model_copy(update={"table_series": ("FRED:DGS10", "ECOS:817Y002:ktb3y")})
-    text = text_of(morning_repos(), cfg_=c)
+    repos = morning_repos()
+    repos.gex.write_levels(levels(at(MORNING.date(), 5, 59), session="night"))  # ④ 간밤 야간 산출
+    text = text_of(repos, cfg_=c)
     assert text.rstrip().endswith("<b>데이터 품질</b>\n자료 이상 없음")
 
 

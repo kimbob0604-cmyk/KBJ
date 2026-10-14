@@ -26,16 +26,14 @@ class PollerConfig(BaseModel):
 
     # 설계 §7 분기 B — #19 야간 실측(2026-09-29)으로 확정
     night_mode: NightMode = "B"
-    # 야간 투자자별: 녹화로 값이 움직이는지 보고 결정할 때까지 수집(설계 §7)
-    night_investor: bool = True
+    # KBJ P7(D-P7-5): 투자자별 폴링(night_investor·investor_period_s·investor_offset_s)을 지웠다 —
+    # `prv_gex.investor_flow` 는 KBJ flows.market_minute 만 쓴다(ADR 0019 §2-2)
 
     # ── 주기 (PLAN §4.4 표) ──
     board_period_s: float = Field(default=30.0, gt=0)  # 전광판 3만기
     # 전광판 만기 사이 간격 — 리미터의 전광판 TR 최소 간격과 같게(설계 §3)
     board_gap_s: float = Field(default=1.0, ge=0)
     futures_period_s: float = Field(default=30.0, gt=0)  # 선물 전광판·기초자산
-    investor_period_s: float = Field(default=60.0, gt=0)  # 투자자별 7조합
-    investor_offset_s: float = Field(default=5.0, ge=0)  # 분 안에서 전광판과 덜 겹치게
     option_list_refresh_s: float = Field(default=3600.0, gt=0)  # 세션 시작 + 1시간
     option_list_retry_s: float = Field(default=60.0, gt=0)  # 실패 뒤 다시 부를 간격
     # 최종거래일 조회 실패(오류·코드 없음·빈 값) 뒤 다시 부를 간격 — 그 사이엔 캘린더 계산값

@@ -60,7 +60,8 @@ def test_마감도_한_통() -> None:
     n = Notify()
     res = closing(job_ctx("brief.closing", CLOSING, closing_repos(), n))
     assert res.status == "ok" and [kw["kind"] for _, kw in n.calls] == ["brief.closing"]
-    assert res.detail["not_ready"] == []
+    # P7 OUT: ⑥ GEX·진단 재료(prv_gex·prv_diag)는 이 세계에 없다 — 미준비(내용은 test_closing_p7.py)
+    assert res.detail["not_ready"] == ["gex_diag"]
 
 
 def test_같은_날_두번째는_중복이고_성공으로_끝난다() -> None:

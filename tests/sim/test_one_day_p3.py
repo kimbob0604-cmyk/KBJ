@@ -215,7 +215,9 @@ def test_board_is_ready_before_the_1600_sends(day: SimDay) -> None:  # ADR 0018
         (run,) = [r for r in day.runs.history if r.job == job and r.status == "running"]
         assert run.started_at is not None and run.started_at >= board.finished_at, job
         assert run.started_at < at(10, 7, 16, 5), job
-        assert run.detail["soft_deps"] == {"board.daily": "ok"}, job
+        # P7(D-P7-16): 마감 요약은 diag.daily(16:00 — 보드 뒤 진단)도 무른 의존으로 기다린다
+        soft = {"board.daily": "ok"} | ({"diag.daily": "ok"} if job == "brief.closing" else {})
+        assert run.detail["soft_deps"] == soft, job
         (sent,) = day.notify_log.of(job)
         assert at(10, 7, 16, 0) <= sent.requested_at < at(10, 7, 16, 5), job
 

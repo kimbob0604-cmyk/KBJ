@@ -8,6 +8,7 @@ export const FILE_CAPS: Record<string, number>;
 export const PREFIX_CAPS: Record<string, number>;
 export function fileCap(name: string): number | undefined;
 export function tradeProblems(name: string, parsed: unknown): string[];
+export function diagProblems(name: string, parsed: unknown): string[];
 export const SUBDIR_JSON_RE: RegExp;
 export const SUBDIR_XLSX_RE: RegExp;
 export const DART_ONLY: Set<string>;

@@ -826,3 +826,28 @@ svg text.warn {
 .treemap .def {
   padding: 4px 0 0;
 }
+/* P7 공용 부품(ui/gauge·ladder·profile — docs/p7_design.md D-P7-18). 기존 토큰만, 폭은 svg 100% — 가로 넘침 없음 */
+.gauge,
+.ladder,
+.profile {
+  min-width: 0;
+  max-width: 100%;
+}
+.gauge-value,
+.ladder-missing,
+.profile-missing {
+  margin: 4px 0 0;
+  font-family: var(--kr);
+  font-size: 11px;
+  color: var(--dim);
+  overflow-wrap: anywhere;
+}
+.gauge-value {
+  color: var(--fg);
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.ladder svg text,
+.profile svg text {
+  font-size: 10px;
+}

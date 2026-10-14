@@ -111,7 +111,7 @@ def test_named_endpoints_hit_their_paths_with_bas_dd(
 
 
 def test_endpoint_list_matches_the_named_methods() -> None:
-    assert len(ENDPOINTS) == len(set(ENDPOINTS)) == 12
+    assert len(ENDPOINTS) == len(set(ENDPOINTS)) == 13  # P7 — 파생상품지수(VKOSPI, #P7-1)
     assert dataset_of(ETF_DAILY) == "etp/etf_bydd_trd"
 
 

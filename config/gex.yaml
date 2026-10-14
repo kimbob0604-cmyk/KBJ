@@ -1,0 +1,56 @@
+# GEX 엔진·알림 설정 — 비밀 아님(P7 묶음 FND-B 가 모양, ENG 가 값·로더 본문). 해석기 kbj/config/gex.py
+# (모르는 키는 오류). 근거 docs/p7_design.md §3.6·D-P7-11·D-P7-17, docs/metrics.md §G8.
+# 이 파일은 yaml.BaseLoader 로 읽는다 — YAML 1.1 은 따옴표 없는 off 를 false 로 읽어서다(GX features.yaml 규칙).
+version: 1
+
+# 기능 플래그 — GX config/features.yaml 값 그대로(D-P7-11). off = 계산 안 함, shadow = 계산·저장만(화면·
+# 알림·브리핑에 싣지 않고 패널 자리에 '섀도 검증 중'), visible = 표시. 섀도 → visible 은 사용자가
+# shadow_report 1주 확인 뒤 바꾼다(§10 Q3 — 기본: 숨긴다). Phase 2 핵심은 off 로 둘 수 없다 [확인 필요].
+features:
+  metrics:
+    # ── Phase 2 핵심 (engine 사이클) ──
+    net_gex: visible        # §G2.2 순GEX (all·nearest·0dte)
+    dex: visible            # §G2.3 DEX
+    atm_iv: visible         # §G3.7 ATM IV (시리즈마다)
+    expiry_gamma: visible   # §G3.10 만기별 감마 소멸액
+    call_wall: visible      # §G3.1 레벨
+    put_wall: visible       # §G3.2
+    abs_gamma: visible      # §G3.3
+    flip: visible           # §G3.4
+    flip_distance: visible  # §G3.5
+    expected_move: visible  # §G3.8 expected_move_calendar·expected_move_trading
+    top_levels: visible     # §G3.9 기대범위 내 상위 GEX 레벨
+    # ── Phase 3 확장 지표 — 1주 섀도 운영 전까지 shadow ──
+    vex: shadow             # §G4.1 Vanna 익스포저
+    cex: shadow             # §G4.2 Charm 익스포저
+    gex_pc: shadow          # §G4.3 GEX P/C
+    iv_term: shadow         # §G5.2 IV 기간구조
+    skew_25d: shadow        # §G5.3 25Δ 스큐
+    atm_iv_daily: shadow    # §G5.4 일별 월물 ATM IV (IV 랭크 입력)
+    iv_rank: shadow         # §G5.4
+    iv_percentile: shadow   # §G5.4
+    iv_hv: shadow           # §G5.5 IV − HV20
+    hiro: shadow            # §G6.1 HIRO-lite
+    investor_flow: shadow   # §G6.2 투자자별 순매수
+    dealer_check: shadow    # §G6.3 딜러 가정 점검
+    block_trades: shadow    # §G6.4 대량 체결
+    pcr: shadow             # §G6.5 pcr_oi·pcr_volume
+    max_pain: shadow        # §G6.6
+    oi_changes: shadow      # §G6.7 OI 증감 히트맵
+    futures: shadow         # §G7 선물 베이시스 등
+  widgets: {}
+  alerts: {}
+  strategies: {}
+
+# 엔진 주기 — GX services/engine/service.py 상수 그대로(값 바꾸지 않음 — 골든·통합 시험이 기대).
+engine:
+  catchup_s: 10           # chain.ready 를 놓쳤을 때 DB max(ts) 를 보는 주기(GX CATCHUP_S)
+  grace_s: 35             # 따라잡기 여유 = 사이클 최대 대기 30 + 5(GX CATCHUP_GRACE)
+  daily_retry_s: 60       # 일별 지표가 통째로 실패하면 다시(POST_DAY 동안, GX DAILY_RETRY_S)
+
+# 장중 레벨 알림(작업 gex.alert — D-P7-17 [제안]). visible 플래그 지표만, 품질 invalid·stale 은 보내지 않는다.
+alert:
+  conditions: [flip_cross, wall_move, outside_1sigma]   # Flip(all) 건넘 · 콜월/풋월 행사가 바뀜 · ±1σ(달력) 밖
+  scope: all
+  window: {start: "09:00", end: "15:30"}               # 정규장만(§10 Q5) — 등록부 gex.alert 와 같다
+  cooldown_s: 600                                      # notify.yaml alert.gex_level 과 같다

@@ -1,7 +1,10 @@
 """마감 요약(16:00 — ADR 0018) 섹션 — 지수·환율·시장 수급 / 업종·특징주 / 신고가 3축 / 수급 동향 /
 주요 공시.
 
-프로그램매매 줄(F2)·GEX·시그널·초안·추천(P7·P8)은 싣지 않는다. 재료는 저장소에서만 읽는다(계약 ⑯):
+프로그램매매 줄(F2)·시그널·초안·추천(P8)은 싣지 않는다. ⑥ GEX·진단(P7 OUT — D-P7-16)은 주간 마지막
+엔진 산출(`prv_gex.levels` 범위 all, visible 만)과 `diag.daily`(16:00 — 무른 의존 wait_min 10)가 쓴
+종합 판정·공포탐욕(`prv_diag`)을 싣는다(문장 `kbj.reports.gex.lines`).
+재료는 저장소에서만 읽는다(계약 ⑯):
 장중 지수 `prv_market.index_quote`(KIS — 마지막 값), 환율 `prv_macro`/`pub_macro` 최신, 시장 투자자
 `prv_flows.market_investor_daily`, 보드 산출 `prv_board.artifact`(KR — sectors·events·newhigh)·
 `stock_day`(이름), 종목 투자자 `prv_flows.stock_investor_daily`, 공시 `pub_filings.disclosure`
@@ -23,6 +26,7 @@ from kbj.core.quality import Quality
 from kbj.core.rows import Investor
 from kbj.core.trade_rows import prev_ym
 from kbj.engines.trade.flash import FlashChip, new_segments
+from kbj.reports.gex.lines import cycle_label, diag_lines, gex_lines, snapshot
 
 from .sections import BriefCtx, Material, SectionOut, eok, esc, fmt_num, mmdd, worst
 
@@ -31,6 +35,7 @@ __all__ = [
     "export_flash_line",
     "filings_section",
     "flows_trend",
+    "gex_diag_section",
     "market_section",
     "newhigh_section",
     "sectors_section",
@@ -301,3 +306,57 @@ def filings_section(bc: BriefCtx, *, limit: int = 10) -> SectionOut:
     if len(hot) > limit:
         lines.append(f"… 외 {len(hot) - limit}건")
     return SectionOut(tuple(lines), "dart", bc.now, Quality.OK)
+
+
+# ── ⑥ GEX·진단(P7 — D-P7-16) ─────────────────────────────────────────────────────────────
+
+GEX_DAY_JOB: Final = ("gex.engine", "15:45")  # 재료 주인(서비스)·주간 세션 끝 — 품질 줄용
+DIAG_JOB: Final = ("diag.daily", "16:00")
+
+
+def gex_diag_section(bc: BriefCtx) -> SectionOut:
+    """⑥ 오늘 주간 마지막 GEX 사이클 + 진단(종합 판정·공포탐욕). 둘 다 없으면 미준비."""
+    lines: list[str] = []
+    mats: list[Material] = []
+    qs: list[Quality | None] = []
+    stamps: list[datetime] = []
+    srcs: list[str] = []
+
+    snap = snapshot(bc.repos.gex.levels_latest("all", upto=bc.now))
+    job, due = GEX_DAY_JOB
+    if snap is None:
+        mats.append(Material("GEX 마감", "not_ready", job=job, due=due))
+    else:
+        fresh = snap.trade_date == bc.day and snap.session == "day"
+        lines.append(f"📐 <b>GEX</b> <i>{esc(cycle_label(snap))} 마지막 사이클</i>")
+        if not fresh:
+            lines.append("<i>오늘 주간 산출 없음 — 마지막 산출을 싣는다</i>")
+        lines += gex_lines(snap)
+        mats.append(Material("GEX 마감", "ok" if fresh else "late", snap.quality, snap.trade_date,
+                             bc.day, job, due))  # fmt: skip
+        qs.append(snap.quality)
+        stamps.append(snap.ts)
+        srcs.append("KBJ:gex.engine")
+
+    job, due = DIAG_JOB
+    verdict = bc.repos.diag.verdict_on(bc.day)
+    prev_day = bc.prev_kr_day()
+    fg = {r.trade_date: r for r in bc.repos.diag.fear_greed_history(prev_day, bc.day)}
+    body = diag_lines(verdict, fg.get(bc.day), fg.get(prev_day))
+    if verdict is None and bc.day not in fg:
+        mats.append(Material("진단", "not_ready", job=job, due=due))
+        if lines:
+            lines.append(esc(bc.cfg.texts.not_ready.format(job=job, due=due)))
+    else:
+        lines.append("🧭 <b>진단</b>")
+        lines += body
+        got = [r for r in (verdict, fg.get(bc.day)) if r is not None]
+        q = worst([r.quality for r in got])
+        mats.append(Material("진단", "ok", q, bc.day, bc.day, job, due))
+        qs.append(q)
+        stamps += [r.as_of for r in got]
+        srcs += [r.source for r in got]
+    if not lines:
+        return SectionOut(materials=tuple(mats), not_ready=True)
+    src = "+".join(dict.fromkeys(srcs)) or "KBJ"
+    return SectionOut(tuple(lines), src, max(stamps), worst(qs), tuple(mats))

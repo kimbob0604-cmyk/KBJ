@@ -59,9 +59,10 @@ def test_one_minute_writes_twelve_rows_per_on_pair_at_the_slot_minute() -> None:
     assert len(rows) == 3 * 12
     assert {r.ts for r in rows} == {kst(2026, 11, 17, 13, 0)}  # 호출 시각이 아니라 슬롯 분
     assert {r.quality for r in rows} == {Quality.OK}
-    assert kis.count("FHPTJ04030000") == 3  # 켠 조합만(현물·주식선물·위클리는 꺼짐)
+    # 켠 조합만 — K2I 3 + 위클리 4(P7 WRAP 이 켬, D-P7-6). 현물·주식선물·야간은 꺼짐
+    assert kis.count("FHPTJ04030000") == 7
     assert res.collected == (key(at(13, 0)),)
-    assert res.detail["pairs"] == 3 and res.detail["pairs_written"] == 3
+    assert res.detail["pairs"] == 7 and res.detail["pairs_written"] == 7
 
 
 def test_late_minute_is_estimated_with_reason() -> None:
@@ -100,7 +101,7 @@ def test_pair_failure_is_isolated_and_retry_calls_only_missing_pairs() -> None:
     res2 = run(repos, kis, at(11, 0), clock(), attempt=2)
     assert res2.status == "ok", res2.detail
     assert kis.count("FHPTJ04030000") - before == 1  # 못 받은 조합 하나만
-    assert res2.detail["pairs_already"] == 2
+    assert res2.detail["pairs_already"] == 6  # K2I 둘 + 위클리 넷
     assert len(repos.flows.investor_minutes(DAY, K2I)) == 3 * 12
 
 

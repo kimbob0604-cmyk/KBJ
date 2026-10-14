@@ -9,6 +9,10 @@
 # - 공개 포트 없음(PLAN §11.2). 시각은 UTC(TZ=UTC), 표시는 앱이 KST 로
 # - restart: always + healthcheck(서비스 하트비트 — Redis health:heartbeat:<서비스>,
 #   `python -m services.healthcheck`). migrate 는 한 번 돌고 끝난다
+# - KBJ P7(D-P7-4): 운영에서는 KBJ DB 에 붙는다 — .env 에 DB_SEARCH_PATH=prv_gex,ops 를 주면 접속에
+#   search_path 가 붙고(config/settings.py) migrate 는 아무것도 하지 않고 끝난다(스키마 정본은 KBJ
+#   0006). 비우면(통합 시험의 자기 db 컨테이너) 지금처럼 GX 마이그레이션을 돈다. ws-gateway·recorder 는
+#   P7 에 KBJ 로 옮겼다(`python -m services.*` 는 KBJ 서비스를 부르는 shim — KBJ_* 환경변수)
 # - DB 장애 동안 쓰기 묶음은 서비스마다 state/spool/<서비스>/ (볼륨 spool)에 쌓였다가 복구 뒤 재적재
 # - probe 는 tools 프로파일: docker compose --profile tools run --rm probe
 

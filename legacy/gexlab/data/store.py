@@ -72,10 +72,14 @@ from pydantic import (
     model_validator,
 )
 
-from core.calendar import SessionInfo, State, TradingCalendar, day_bar_time, night_bar_time
-from data.kis.master import MRKT_CLS_FAMILY, MasterRow
-from data.kis.models import MinuteBar
-from data.kis.ws import FuturesTick, OptionTick
+from kbj.core.gex.records import (  # noqa: F401 — KBJ P7(FND-B) 모델 정본, 다시 내보낸다
+    FuturesTickRecord,
+    MinuteBarRecord,
+    OptionTickRecord,
+    SessionLogRecord,
+)
+
+from data.kis.master import MasterRow
 from data.krx.models import KrxFuturesDaily, KrxOptionDaily
 from data.spool import (
     DiskSpool,
@@ -684,78 +688,8 @@ def _utc(ts: datetime) -> datetime:
 
 
 # ── poller 밖 입력 레코드 ────────────────────────────────────────────────────
-
-
-class _Stamped(BaseModel):
-    """시장 데이터 행 공통: ts(UTC)·trade_date·session (PLAN §4.5 공통)."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    ts: AwareDatetime
-    trade_date: date
-    session: Literal["day", "night"]
-
-    @field_validator("ts")
-    @classmethod
-    def _ts_utc(cls, v: datetime) -> datetime:
-        return v.astimezone(UTC)
-
-
-class MinuteBarRecord(_Stamped):
-    """`minute_bars` 한 행. ts = 봉 시각(UTC), received_at = 적재 때 받은 시각."""
-
-    received_at: AwareDatetime
-    code: str
-    market: Literal["F", "CM"]  # 주간 F · 야간 CM
-    open: Decimal
-    high: Decimal
-    low: Decimal
-    close: Decimal
-    volume: int | None = None  # 봉 체결량
-    cum_value: int | None = None  # 누적 거래대금(천원)
-
-    @field_validator("received_at")
-    @classmethod
-    def _received_utc(cls, v: datetime) -> datetime:
-        return v.astimezone(UTC)
-
-    @model_validator(mode="after")
-    def _market_is_session(self) -> Self:
-        if (self.market == "F") != (self.session == "day"):
-            raise ValueError(f"시장 {self.market} 과 세션 {self.session} 이 맞지 않는다")
-        return self
-
-    @classmethod
-    def from_kis(
-        cls,
-        bar: MinuteBar,
-        *,
-        code: str,
-        market: Literal["F", "CM"],
-        received_at: datetime,
-        calendar: TradingCalendar,
-    ) -> MinuteBarRecord:
-        """KIS 분봉 → 행. 야간 CM 봉의 (야간 시작일, 24~30시)는 core.calendar 가 푼다(설계 §8)."""
-        if market == "CM":
-            ts, trade_date = night_bar_time(bar.stck_bsop_date, bar.stck_cntg_hour, calendar)
-            session: Literal["day", "night"] = "night"
-        else:
-            ts, trade_date = day_bar_time(bar.stck_bsop_date, bar.stck_cntg_hour)
-            session = "day"
-        return cls(
-            ts=ts,
-            trade_date=trade_date,
-            session=session,
-            received_at=received_at,
-            code=code,
-            market=market,
-            open=bar.futs_oprc,
-            high=bar.futs_hgpr,
-            low=bar.futs_lwpr,
-            close=bar.futs_prpr,
-            volume=bar.cntg_vol,
-            cum_value=bar.acml_tr_pbmn,
-        )
+# KBJ P7(FND-B): MinuteBarRecord·FuturesTickRecord·OptionTickRecord·SessionLogRecord 모델은
+# `kbj.core.gex.records` 로 옮겼다 — 아래 import 로 다시 내보낸다.
 
 
 def krx_loadable(r: KrxFuturesDaily | KrxOptionDaily) -> bool:
@@ -843,152 +777,7 @@ def master_row(r: MasterRow, *, ts: datetime, trade_date: date, session: str) ->
 
 # ── 웹소켓 체결 (ws-gateway) ────────────────────────────────────────────────
 
-_FAMILY_MRKT_CLS = {family: cls for cls, family in MRKT_CLS_FAMILY.items()}
-
-
-class _TickRecord(_Stamped):
-    """체결 틱 공통. ts = 체결 시각(UTC — 원문 HHMMSS 를 세션 날짜로 푼 것은 ws-gateway 몫),
-    seq = ws-gateway 수신 순번(같은 초·같은 종목 체결을 가른다 — 키 (ts, code, seq))."""
-
-    received_at: AwareDatetime
-    tr_id: str
-    code: str
-    seq: int = Field(ge=0)
-    price: Decimal
-    qty: int | None = None
-    cum_vol: int | None = None
-    cum_value: int | None = None
-    cum_buy_qty: int | None = None  # 누적 매수 체결수량 (HIRO-lite, PLAN §5.5)
-    cum_sell_qty: int | None = None
-    oi: int | None = None
-    oi_chg: int | None = None
-    bid: Decimal | None = None
-    ask: Decimal | None = None
-
-    @field_validator("received_at")
-    @classmethod
-    def _received_utc(cls, v: datetime) -> datetime:
-        return v.astimezone(UTC)
-
-
-def _tick_fields(tick: FuturesTick | OptionTick) -> dict[str, Any]:
-    return {
-        "session": tick.session,
-        "tr_id": tick.tr_id,
-        "code": tick.code,
-        "price": tick.price,
-        "qty": tick.qty,
-        "cum_vol": tick.cum_vol,
-        "cum_value": tick.cum_value,
-        "cum_buy_qty": tick.cum_buy_qty,
-        "cum_sell_qty": tick.cum_sell_qty,
-        "oi": tick.oi,
-        "oi_chg": tick.oi_chg,
-        "bid": tick.bid,
-        "ask": tick.ask,
-    }
-
-
-class FuturesTickRecord(_TickRecord):
-    """`fut_ticks` 한 행 (H0IFCNT0 주간 · H0MFCNT0 야간)."""
-
-    @classmethod
-    def from_tick(
-        cls, tick: FuturesTick, *, ts: datetime, trade_date: date, seq: int, received_at: datetime
-    ) -> FuturesTickRecord:
-        return cls(
-            ts=ts, trade_date=trade_date, seq=seq, received_at=received_at, **_tick_fields(tick)
-        )
-
-
-class OptionTickRecord(_TickRecord):
-    """`opt_ticks` 한 행 (H0IOCNT0 주간 · H0EUCNT0 야간). 시리즈 정보는 마스터에서."""
-
-    mrkt_cls: str | None = None  # '' 월물 · WKM · WKI (미니 등은 None)
-    expiry: str | None = Field(default=None, pattern=r"^\d{6}$")
-    strike: Decimal | None = None
-    cp: Literal["C", "P"] | None = None
-    delta: Decimal | None = None
-    gamma: Decimal | None = None
-    vega: Decimal | None = None
-    theta: Decimal | None = None
-    rho: Decimal | None = None
-    iv: Decimal | None = None  # %, KIS 0 은 값 없음 → None
-
-    @classmethod
-    def from_tick(
-        cls,
-        tick: OptionTick,
-        *,
-        ts: datetime,
-        trade_date: date,
-        seq: int,
-        received_at: datetime,
-        master: MasterRow | None = None,
-    ) -> OptionTickRecord:
-        """master 는 이 종목코드의 마스터 줄(없으면 만기·행사가·콜풋 NULL)."""
-        series: dict[str, Any] = {}
-        if master is not None:
-            if master.code != tick.code:
-                raise ValueError(f"마스터 코드 {master.code} ≠ 틱 코드 {tick.code}")
-            series = {
-                "mrkt_cls": _FAMILY_MRKT_CLS.get(master.family),
-                "expiry": master.expiry,
-                "strike": master.strike,
-                "cp": master.cp or None,
-            }
-        return cls(
-            ts=ts,
-            trade_date=trade_date,
-            seq=seq,
-            received_at=received_at,
-            delta=tick.delta,
-            gamma=tick.gamma,
-            vega=tick.vega,
-            theta=tick.theta,
-            rho=tick.rho,
-            iv=tick.iv_kis,
-            **_tick_fields(tick),
-            **series,
-        )
-
-
 # ── 세션 기록·공백 (scheduler) ──────────────────────────────────────────────
-
-
-class SessionLogRecord(BaseModel):
-    """`session_log` 한 행 — 상태 전이, 캘린더/데이터 불일치('예상 밖 개장' 등, 설계 §6)."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    ts: AwareDatetime
-    trade_date: date | None = None
-    session: Literal["day", "night"] | None = None
-    service: str = "scheduler"
-    kind: str  # transition · calendar_mismatch · unexpected_open …
-    state: State | None = None
-    prev_state: State | None = None
-    detail: dict[str, Any] = Field(default_factory=dict[str, Any])
-
-    @field_validator("ts")
-    @classmethod
-    def _ts_utc(cls, v: datetime) -> datetime:
-        return v.astimezone(UTC)
-
-    @classmethod
-    def transition(
-        cls, ts: datetime, info: SessionInfo, prev: State | None, **detail: Any
-    ) -> SessionLogRecord:
-        """`core.calendar.state_at` 결과로 상태 전이 한 건."""
-        return cls(
-            ts=ts,
-            trade_date=info.trade_date,
-            session=info.session,
-            kind="transition",
-            state=info.state,
-            prev_state=prev,
-            detail=detail,
-        )
 
 
 class CollectionGapRecord(BaseModel):

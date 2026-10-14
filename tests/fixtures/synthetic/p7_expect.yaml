@@ -1,0 +1,46 @@
+# p7_world(시드 20261201)의 손계산 기대값 — tests/unit/fixtures/test_p7_world.py 가 생성기 출력과 맞춘다.
+# 합성 데이터의 기대값이다(실측 아님). 생성기를 고치면 이 파일도 같은 커밋에서 고친다(FND-B 담당 — 다른 묶음은 요청).
+_source: "SYNTHETIC — tests/fixtures/synthetic/p7_world.py(고정 시드 생성기)가 만든 합성 데이터의 기대값. 실측 아님"
+seed: 20261201
+clock: "2026-12-10T14:00:00+09:00"     # 12월 월물 만기일(둘째 목요일) — 0DTE
+
+days: {n: 300, first: "2025-09-18", last: "2026-12-10"}
+
+counts:
+  # 주간 3사이클 × 4시리즈 × 17행사가 × 콜풋 2 = 408, 야간 1사이클 × 월물 2시리즈 × 17 × 2 = 68
+  chain: 476
+  chain_invalid: 1
+  futures: 7          # 주간 3사이클 × 근월·차월 + 야간 single 1
+  expiries: 4
+  investor: 924       # 정규장 30분 슬롯 11 × 7조합 × 투자자 12 — 야간 행 0(D-P7-6)
+  investor_night: 0
+  levels: 72          # 3사이클 × 범위 3 × 레벨 8
+  metrics: 18         # 3사이클 × 6(visible 2·shadow 4)
+  metrics_shadow: 12
+  strike_gex: 17
+  events_with_trade: 11
+  events_without_trade: 8
+  export_flash_points: 26   # 300거래일 중 1·11·21일인 거래일
+
+# 사이클(KST) — 엔진 레벨 Flip(범위 all)은 사이클마다 1pt 오른다
+cycles: ["10:00", "11:30", "13:30"]
+flip_all: [348.5, 349.5, 350.5]
+net_gex_last: 105000000000.0     # 1.25e11 − 2 × 1e10(원/1%)
+chain_latest_day_rows: 136       # 마지막 사이클까지 (시리즈·행사가·콜풋·원천)별 최신 — invalid 행은 앞 사이클 값
+
+# 진단 입력(metrics §D0~§D7)
+series:
+  keys: [credit_spread, ktb3y, credit_balance, deposits, breadth_ma20, new_high_ratio, foreign_spot,
+         foreign_k200_fut, kospi, acwi, vkospi]
+  vkospi_missing: 7
+  credit_late: 3                 # 신용잔고 공표 지연(D+2 13:00)
+  published:
+    credit_spread: same_18      # 그날 18:00
+    credit_balance: d1_13       # 다음 거래일 13:00(금투협 D+1)
+    vkospi: d1_08               # 다음 거래일 08:00
+
+events:
+  expiry: ["2026-11-12", "2026-12-10", "2026-12-14", "2026-12-17", "2027-01-14"]
+  mpc: ["2026-11-26", "2027-01-14"]
+  earnings_cluster: {"2026-12-11": 12}     # 9종목인 2026-12-15 는 문턱(10) 아래 — 이벤트 아님
+  export_flash: ["2026-12-01", "2026-12-11", "2026-12-21"]

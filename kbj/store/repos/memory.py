@@ -44,6 +44,8 @@ from kbj.core.rows import (
 )
 from kbj.store.repos._common import require_aware, require_loaded_by, window_start
 from kbj.store.repos.consensus import MemoryConsensusRepo
+from kbj.store.repos.diag import MemoryDiagPublicRepo
+from kbj.store.repos.diag_prv import MemoryDiagRepo
 from kbj.store.repos.etf import (
     best_etf_days,
     check_changes,
@@ -62,6 +64,7 @@ from kbj.store.repos.flows import (
     minute_order,
     plan_investor_upsert,
 )
+from kbj.store.repos.gex import MemoryGexRepo
 from kbj.store.repos.index_review import MemoryIndexReviewRepo
 from kbj.store.repos.journal import MemoryJournalRepo
 from kbj.store.repos.macro import MemoryMacroPublicRepo
@@ -728,13 +731,17 @@ class MemoryRepos:
     index_review: MemoryIndexReviewRepo = field(default_factory=MemoryIndexReviewRepo)
     # P6 묶음 FND(0019 — 공개)
     trade: MemoryTradeRepo = field(default_factory=MemoryTradeRepo)
+    # P7 묶음 FND-B(0006 prv_gex·0020 prv_diag 로그인·pub_diag 공개)
+    gex: MemoryGexRepo = field(default_factory=MemoryGexRepo)
+    diag: MemoryDiagRepo = field(default_factory=MemoryDiagRepo)
+    diag_pub: MemoryDiagPublicRepo = field(default_factory=MemoryDiagPublicRepo)
 
     def public(self) -> MemoryPublicRepos:
         """같은 공개 저장소 객체(filings·fin·macro·market_stats)를 공개 작업 묶음으로
         (공개·로그인 처리기가 같은 메모리 표를 본다)."""
         return MemoryPublicRepos(
             filings=self.filings, fin=self.fin, macro=self.macro,
-            market_stats=self.market_stats,
+            market_stats=self.market_stats, diag=self.diag_pub,
         )  # fmt: skip
 
 

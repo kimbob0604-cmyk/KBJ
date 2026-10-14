@@ -252,8 +252,8 @@ def plan(
         _boards_and_futures(b, targets, cfg, live, ref)
     elif mode == "B":
         _night_futures(b, cfg, live)
-    if info.state is State.DAY or cfg.night_investor:
-        _investors(b, cfg)
+    # KBJ P7(D-P7-5): 시장별 투자자는 부르지 않는다 — `prv_gex.investor_flow` 의 쓰기 주인은 KBJ
+    # 작업 flows.market_minute 하나(ADR 0019 §2-2, 같은 TR 두 곳 금지). 엔진은 그 표를 읽는다
     if targets is not None and ref is not None:  # 만기 지난 근월물 시세로 ATM 을 잡지 않는다
         fp = fill_plan(ctx, targets, mode, cfg)
         if fp is not None:
@@ -342,14 +342,6 @@ def _night_futures(b: _Builder, cfg: PollerConfig, live: Sequence[str]) -> None:
         if (sl := b.slot(key, cfg.futures_period_s, 0.5 * i)) is not None:
             req = ep.single_price(mkt, code)
             b.jobs.append(Job("futures_single", key, Priority.P1, *sl, req, b.tag, market=mkt))
-
-
-def _investors(b: _Builder, cfg: PollerConfig) -> None:
-    for j, (mkt, sector) in enumerate(ep.INVESTOR_PAIRS):
-        key = f"investor:{mkt}/{sector}"
-        if (sl := b.slot(key, cfg.investor_period_s, cfg.investor_offset_s + j)) is not None:
-            req = ep.investor(mkt, sector)
-            b.jobs.append(Job("investor", key, Priority.P2, *sl, req, b.tag))
 
 
 def _fills(b: _Builder, fp: FillPlan, cfg: PollerConfig) -> None:

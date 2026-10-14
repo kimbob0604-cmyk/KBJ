@@ -1,0 +1,174 @@
+{
+  "source": "KBJ:gex.engine(KIS 옵션 체인·웹소켓)",
+  "as_of": "2026-12-10T04:30:00Z",
+  "quality": "estimated",
+  "notes": [
+    "범위별 시리즈 표시 없음 — 그 사이클 행사가 막대를 모두 실었다",
+    "현재가: 선물 전광판 근월물 A01612(엔진 F_ref 없음 — estimated)"
+  ],
+  "generated_at": "2026-12-10T14:00:00+09:00",
+  "data": {
+    "scope": "all",
+    "cycle_at": "2026-12-10T04:30:00Z",
+    "price": 351.46,
+    "flip": 350.5,
+    "call_wall": 360.0,
+    "put_wall": 340.0,
+    "expected_move": 4.2,
+    "bars": [
+      {
+        "mrkt_cls": "",
+        "expiry": "202612",
+        "strike": 330.0,
+        "gex_call": 0.0,
+        "gex_put": -3600000000.0,
+        "gex": -3600000000.0,
+        "quality": "ok"
+      },
+      {
+        "mrkt_cls": "",
+        "expiry": "202612",
+        "strike": 332.5,
+        "gex_call": 3200000000.0,
+        "gex_put": 0.0,
+        "gex": 3200000000.0,
+        "quality": "ok"
+      },
+      {
+        "mrkt_cls": "",
+        "expiry": "202612",
+        "strike": 335.0,
+        "gex_call": 1800000000.0,
+        "gex_put": -2500000000.0,
+        "gex": -700000000.0,
+        "quality": "ok"
+      },
+      {
+        "mrkt_cls": "",
+        "expiry": "202612",
+        "strike": 337.5,
+        "gex_call": 3000000000.0,
+        "gex_put": -1200000000.0,
+        "gex": 1800000000.0,
+        "quality": "ok"
+      },
+      {
+        "mrkt_cls": "",
+        "expiry": "202612",
+        "strike": 340.0,
+        "gex_call": 2300000000.0,
+        "gex_put": -900000000.0,
+        "gex": 1400000000.0,
+        "quality": "ok"
+      },
+      {
+        "mrkt_cls": "",
+        "expiry": "202612",
+        "strike": 342.5,
+        "gex_call": 1600000000.0,
+        "gex_put": -200000000.0,
+        "gex": 1400000000.0,
+        "quality": "ok"
+      },
+      {
+        "mrkt_cls": "",
+        "expiry": "202612",
+        "strike": 345.0,
+        "gex_call": 3800000000.0,
+        "gex_put": -4000000000.0,
+        "gex": -200000000.0,
+        "quality": "ok"
+      },
+      {
+        "mrkt_cls": "",
+        "expiry": "202612",
+        "strike": 347.5,
+        "gex_call": 1900000000.0,
+        "gex_put": -2200000000.0,
+        "gex": -300000000.0,
+        "quality": "ok"
+      },
+      {
+        "mrkt_cls": "",
+        "expiry": "202612",
+        "strike": 350.0,
+        "gex_call": 1400000000.0,
+        "gex_put": -600000000.0,
+        "gex": 800000000.0,
+        "quality": "ok"
+      },
+      {
+        "mrkt_cls": "",
+        "expiry": "202612",
+        "strike": 352.5,
+        "gex_call": 3000000000.0,
+        "gex_put": -3400000000.0,
+        "gex": -400000000.0,
+        "quality": "ok"
+      },
+      {
+        "mrkt_cls": "",
+        "expiry": "202612",
+        "strike": 355.0,
+        "gex_call": 300000000.0,
+        "gex_put": -900000000.0,
+        "gex": -600000000.0,
+        "quality": "ok"
+      },
+      {
+        "mrkt_cls": "",
+        "expiry": "202612",
+        "strike": 357.5,
+        "gex_call": 3600000000.0,
+        "gex_put": -3000000000.0,
+        "gex": 600000000.0,
+        "quality": "ok"
+      },
+      {
+        "mrkt_cls": "",
+        "expiry": "202612",
+        "strike": 360.0,
+        "gex_call": 1200000000.0,
+        "gex_put": -3800000000.0,
+        "gex": -2600000000.0,
+        "quality": "ok"
+      },
+      {
+        "mrkt_cls": "",
+        "expiry": "202612",
+        "strike": 362.5,
+        "gex_call": 2500000000.0,
+        "gex_put": -1800000000.0,
+        "gex": 700000000.0,
+        "quality": "ok"
+      },
+      {
+        "mrkt_cls": "",
+        "expiry": "202612",
+        "strike": 365.0,
+        "gex_call": 800000000.0,
+        "gex_put": 0.0,
+        "gex": 800000000.0,
+        "quality": "ok"
+      },
+      {
+        "mrkt_cls": "",
+        "expiry": "202612",
+        "strike": 367.5,
+        "gex_call": 1300000000.0,
+        "gex_put": -2100000000.0,
+        "gex": -800000000.0,
+        "quality": "ok"
+      },
+      {
+        "mrkt_cls": "",
+        "expiry": "202612",
+        "strike": 370.0,
+        "gex_call": 0.0,
+        "gex_put": -2400000000.0,
+        "gex": -2400000000.0,
+        "quality": "ok"
+      }
+    ]
+  }
+}

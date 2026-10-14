@@ -1,12 +1,24 @@
 # KBJ P7 설계서 — GEX 엔진 이식·페이지 3 진단
 
-- 작성: 2026-10-13. 상태: **설계(구현 전)**. 대상 단계: `docs/PLAN.md` §4 페이지 3·§8 P7 — "GEXLAB engine 이식(이미 서비스형), 페이지 3 진단, 국장 공포탐욕·종합 판정". 완료 기준: **GEXLAB 골든·명세 시험이 KBJ 에서 녹색이고, 진단 지표 명세가 `docs/metrics.md` 에 있다.**
+- 작성: 2026-10-13. 상태: **구현 완료**(2026-10-13 P7 WRAP — 아래 'WRAP 보정' 이 이 문서보다 우선). 대상 단계: `docs/PLAN.md` §4 페이지 3·§8 P7 — "GEXLAB engine 이식(이미 서비스형), 페이지 3 진단, 국장 공포탐욕·종합 판정". 완료 기준: **GEXLAB 골든·명세 시험이 KBJ 에서 녹색이고, 진단 지표 명세가 `docs/metrics.md` 에 있다.**
 - 참고: 같은 시각 설계 중인 `docs/p6_design.md` 는 `0019_trade.sql`·ADR 0025~0027(초안)·metrics §25~§26·계약 ⑰ 을 쓴다 — P7 의 실제 번호는 그 뒤(FND 가 확정).
 - 시작 조건: **IDX(P5 2차 — 지금 작업 트리에서 빌드 중, `0018_index.sql`) 커밋 → P6 커밋(마이그레이션 0019 부터) 뒤.** 이 문서의 번호는 전부 상대 번호다 — 마이그레이션 = **"P6 다음 번호"**, ADR = "IDX·P6 다음 번호", `docs/metrics.md` 절 = "P6 다음 절"(이 문서에서는 GEX 를 §G0~§G8, 진단을 §D1~§D9 로 부르고 FND 가 실제 번호로 바꾼다), import-linter 계약 = "⑯ 뒤 다음 번호", 실측 체크리스트 = `#P7-1~#P7-6`(FND 가 `docs/probe_results.md` §7 의 다음 번호로 바꾼다).
 - 기준 문서: 계획 `docs/PLAN.md` §2·§4·§8, 등급 `docs/DATA_TIERS.md`(정본 — 페이지 3 공개 = 공공데이터만으로 만든 지표: 신용스프레드 구간·신용잔고·예탁금 추세·매크로 위험 게이지·수출 모멘텀, 로그인 = GEX 레벨 전부·시장폭·수급 진단·국장 공포탐욕·종합 판정 — :49), v0.2 지표 표 `docs/reference/plan_kr_v0.2.md`:55~78(반도체 쏠림·시장폭·신용스프레드·한국 대 글로벌·공포탐욕), 미리보기 `docs/design/preview_synthetic.html`:196~205·490~501(페이지 3 패널 배치: '공공지표 진단' + 'GEX 레벨' — `.lvl` 행·행사가 막대·현재가·Flip 선), P4·P5 설계(구조·관례), ADR 0002(등급 스키마)·0004 D2(웹소켓)·0005(outbox)·0006(등록부·선점)·0007(legacy 기준선)·0018(마감 뒤 16:00)·0019(investor_flow 쓰기 주인), 묶음 F2 지시 `docs/p5_flow_program_prompt.md` §2.
 - 원본 위치: `GX:` = `legacy/gexlab/`. GX 지표 명세 `GX:docs/metrics.md` §0~§8, 이식 기록 `GX:MIGRATION.md` 'P2'.
 - 표기: **[추정]** = 코드로 끝까지 확인하지 못함, **[확인 필요]** = 기본값으로 정한 것, **[실측 필요]** = 키를 받은 뒤 실제 응답으로 확인, **[결정 필요]** = 사용자가 정할 것(§10), **[제안]** = 이 설계의 권고, ⚠ = 충돌·위험.
 - 키·토큰·계좌 값은 이 문서 어디에도 없다. `.env`·토큰 캐시는 열지 않았다. 네트워크 호출은 하지 않았다. 증명은 전부 **합성 데이터·가짜 서버**로 한다(GX 골든은 이미 합성 — `GX:tests/golden/core/chain_synthetic_20260928_small.json`·`raw/synthetic_20260928.*`, 생성기 `GX:scripts/make_synthetic_fixtures.py` 시드 고정). KIS·KRX 원자료와 그것으로 만든 픽스처는 레포에 넣지 않는다. 로그인 등급 산출은 공개 빌드에 들어가지 않는다.
+
+**WRAP 보정(2026-10-13 — 구현이 이 문서와 다른 곳, 구현이 정본)**:
+- 번호: 마이그레이션 `0020_diag.sql`, ADR-A = **0029**(GEX 이식 경계), ADR-B = **0030**(진단 지표), import-linter (가) = **⑱**·
+  (나) = **⑲**, 실측 `#P7-1~#P7-6` = probe **#58~#63**(+ WRAP #64 `#P7-7`), metrics §G·§D 는 그 이름 그대로.
+- §1.2: 스냅샷 입력 모델은 `kbj/engines/gex/snapshot.py`(KIS 그릭스 필드를 읽어 core 금지 단언 때문에 engines). 골든 입력은
+  `tests/fixtures/synthetic/gex/validation/`, 재생성은 `uv run python -m kbj.services.engine.gex_golden core --write`.
+- §1.3: 서비스 실행부(service·publish·context)는 `kbj/services/engine/gex.py` 한 파일(context 는 Redis 라 서비스 쪽). 버스 모델·
+  캘린더 최종거래일 계산 일부는 계약 ⑨ 때문에 `kbj/engines/gex/series.py`. store_engine 은 32 중 30 승격.
+- §1.10 OUT 명령의 `npx vitest run test/ribbon.test.ts` → `test/pages/ribbon.test.ts`.
+- §1.11 실측: legacy `gexlab` 760, `gexlab-integration` 39(옮김 1,956 = FND-C 1,548 · ENG 176 · ING 232 — `GX:MIGRATION.md` 'P7').
+- 등록부: `ServiceSpec` 에 `writes`(쓰기 주인)·`heartbeat_key`(프로세스 하트비트 이름 — engine·ws-gateway·recorder) 칸을 더했다.
+- 공개 JS 예산: 88 KB·로그인 107 KB(ADR 0025 갱신 — 실측 + 10%).
 
 **코드로 확인한 사실(2026-10-13, HEAD `138da8f` + IDX 미커밋 작업본) — 이 설계의 출발점**:
 
@@ -86,7 +98,7 @@
 | 새 `diag.daily` | owner `kbj.services.engine.diag:run`, `cron "0 16 * * 1-5"`, `when: trading_day`, `depends_on` `market.close_collect`(굳은)·`board.daily`(무른 — `wait_min` 15), `writes: [prv_diag.indicator, prv_diag.fear_greed, prv_diag.verdict]`, notify 없음 |
 | 새 `krx.vkospi` | owner `kbj.services.collectors.krx_vkospi:run`, `cron "10 8 * * 1-5"`, `retry {every_s: 600, until: "10:00"}`, `budget: krx`, collects `KRX:idx/drvprod_dd_trd`(as_of prev_trading_day), `writes: [prv_diag.vol_index]`, **enabled false 고정**(실측 `#P7-1` 전) |
 | 새 `gex.alert` | owner `kbj.services.engine.gex_alert:run`, `equity {start: open, end: close, every_min: 1}`, `deadline_min: 1`, notify `{kind: alert.gex_level, when: changed}`, `writes: []`(상태는 Redis `gex:alert:last` — 표 아님) |
-| `brief.closing` | `depends_on` 에 `diag.daily`(무른 — `wait_min` 10) 추가. 발화 시각 16:00 그대로 |
+| `brief.closing` | `depends_on` 에 `diag.daily`(무른 — `wait_min` 10) 추가. 발화 시각 16:00 그대로(보드 → 진단 → 마감 요약 사슬이 16:00 안에 — 실행기가 그 자리에서 끝난 시도를 같은 회차에 거둔다, ADR 0030 §4-6) |
 | `flows.market_minute` | 바뀌지 않음(쓰기 주인 그대로). 노트에 '위클리 4조합 P7 켬(GX #13)' — 값은 `markets.yaml` |
 
 ---

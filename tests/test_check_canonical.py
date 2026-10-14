@@ -111,6 +111,14 @@ def test_fnguide_is_zero_anywhere_and_does_not_double_count_naver_wisereport() -
     assert hit == {"naver"}
 
 
+def test_kis_ws_is_zero_and_only_in_ws_gateway() -> None:
+    """P7 WRAP(docs/p7_design.md §1.7-5) — ws-gateway 승격으로 legacy 기준선 줄이 0 이 되어 목표 0.
+    KBJ 안에서는 kbj.services.ws_gateway 만(웹소켓 호스트 한 곳 — endpoints.py)."""
+    g = cc.GROUPS["kis_ws"]
+    assert g.zero and g.allowed == ("kbj/services/ws_gateway/*",)
+    assert g.pattern.search(SAMPLES["kis_ws"])
+
+
 def test_script_itself_has_no_whole_host_strings() -> None:
     text = (ROOT / "scripts" / "check_canonical.py").read_text(encoding="utf-8")
     assert cc.scan_hosts("legacy/x.py", text, cc.GROUPS.values()) == []
@@ -118,7 +126,7 @@ def test_script_itself_has_no_whole_host_strings() -> None:
 
 # ── 목표 0 그룹 ───────────────────────────────────────────────────────────────────────────
 @pytest.mark.parametrize(
-    "group", ["kis_oauth", "kis_rest", "kis_master", "krx_api", "dart", "fnguide"]
+    "group", ["kis_oauth", "kis_rest", "kis_master", "krx_api", "dart", "fnguide", "kis_ws"]
 )
 def test_zero_group_in_legacy_fails(
     tmp_path: Path, capsys: pytest.CaptureFixture[str], group: str

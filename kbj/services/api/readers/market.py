@@ -9,6 +9,9 @@
   없으면(수집 꺼짐·실측 전 #43·#48) '준비 중' 칩을 그대로 둔다.
 - 수출 속보 칩(P6 FLASH — metrics §25): `pub_trade.ten_day` 수출 품목 전체 최신 구간의 발표 당시 YoY
   (`kbj.engines.trade.flash.flash_chip`). 표가 비면 값 없이 사유(수집 전 #6·#17·#55).
+- GEX Flip 거리 칩(P7 OUT — metrics §G3.5): `prv_gex.levels` 범위 all 마지막 사이클(엔진이
+  저장한 값 — DB 만, 계약 ⑩). visible 이 아니거나 행이 없으면 '준비 중(P7)' 그대로
+  (`kbj.engines.market.ribbon`).
 """
 
 from __future__ import annotations
@@ -17,6 +20,7 @@ from collections.abc import Sequence
 from datetime import date, datetime, timedelta
 from typing import Any, Final
 
+from kbj.core.calendar import State, state_at
 from kbj.core.quality import Quality, Sourced
 from kbj.core.rows import IndexBar, IndexQuote
 from kbj.core.time import KST
@@ -429,6 +433,8 @@ def market_ribbon(ctx: ReadContext) -> Envelope[Ribbon]:
             next_mpc=None if nxt is None else nxt.date,
             nxt_excluded=bool(ctx.venue_notes()),
             export_flash=_export_flash(ctx, now),
+            gex_levels=ctx.repos.gex.levels_latest("all", upto=ctx.now()),
+            gex_live=state_at(now, ctx.cal).state in (State.DAY, State.NIGHT),
         ),
         now,
         ctx.cal,

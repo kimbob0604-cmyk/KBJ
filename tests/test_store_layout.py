@@ -1,4 +1,4 @@
-"""DB 스키마 마이그레이션 0001~0019 와 docker-compose.yml 의 구조 검사(정적 — DB·데몬 없이).
+"""DB 스키마 마이그레이션 0001~0020 과 docker-compose.yml 의 구조 검사(정적 — DB·데몬 없이).
 
 ADR 0002: 공개 등급은 pub_*, 로그인 등급은 prv_*, 운영은 ops. kbj_public_export 는 pub_* 에만
 USAGE·SELECT. compose 는 비밀번호 기본값이 없고 포트는 127.0.0.1 에만 연다.
@@ -1093,3 +1093,86 @@ def test_p6_enum_checks_match_rows_and_values_are_null_not_zero() -> None:
     # 금액 칸은 NULL 허용(NOT NULL 없음)
     assert not re.search(r"\b(usd|exp_usd|imp_usd|export_usd)\s+numeric\(20, 0\) NOT NULL", body)
     assert body.count("OR quality <> 'ok')") >= 7
+
+
+# ── P7 마이그레이션 0020(docs/p7_design.md §3.3 — 공개 pub_diag·로그인 prv_diag) ──
+
+P7_FILE = "0020_diag.sql"
+
+
+def test_p7_migration_is_0020_after_p6() -> None:
+    names = sorted(p.name for p in MIGRATIONS.glob("*.sql"))
+    assert names[names.index(P6_FILE) + 1] == P7_FILE
+
+
+def test_p7_statements_are_idempotent_and_never_alter_gx_tables() -> None:
+    body = _body(P7_FILE)
+    assert not re.search(r"CREATE (SCHEMA|TABLE|EXTENSION)(?! IF NOT EXISTS)", body)
+    starts = {s.strip().split(maxsplit=1)[0].upper() for s in body.split(";") if s.strip()}
+    assert starts <= {"CREATE", "GRANT", "REVOKE", "ALTER", "COMMENT"}, starts
+    # ALTER 는 기본 권한 한 줄뿐 — prv_gex 표 정의는 0006 그대로(체크섬)
+    alters = [s.strip() for s in body.split(";") if s.strip().upper().startswith("ALTER")]
+    assert alters == [
+        "ALTER DEFAULT PRIVILEGES IN SCHEMA pub_diag GRANT SELECT ON TABLES TO kbj_public_export"
+    ]
+    assert "create_hypertable" not in body
+    assert not re.search(r"\bDROP\b|\bINSERT\b|\bUPDATE\b", body)
+    created = set(re.findall(r"CREATE SCHEMA IF NOT EXISTS (\w+)", body))
+    assert created == {"pub_diag", "prv_diag"}
+    assert re.search(r"REVOKE ALL ON SCHEMA pub_diag, prv_diag FROM PUBLIC", body)
+
+
+def test_p7_tables_match_rows_and_tiers() -> None:
+    from kbj.core import p7_rows as pr
+
+    tables = _tables(_body(P7_FILE))
+    assert set(tables) == set(pr.DIAG_PUB_TABLES) | set(pr.DIAG_PRV_TABLES)
+    earlier = (
+        set(_all_p2_tables()) | set(_all_p3_tables()) | set(_all_p4_tables())
+        | set(_all_p5_tables()) | set(_tables(_body(P6_FILE)))
+    )  # fmt: skip
+    assert not set(tables) & earlier
+    for table, cols in tables.items():
+        assert {"source", "as_of", "quality", "loaded_by"} <= set(cols), table
+        assert {"received_at", "computed_at"} & set(cols), table
+        if table.startswith("pub_"):
+            assert not LOGIN_ONLY_COLS & set(cols), table
+    # 공개 지표·로그인 지표는 같은 모양(§3.3)
+    assert tables["pub_diag.indicator"] == tables["prv_diag.indicator"]
+
+
+def test_p7_grants_and_enum_checks_match_rows() -> None:
+    from kbj.core import p7_rows as pr
+
+    body = _body(P7_FILE)
+    stmts = [s.strip() for s in body.split(";") if "kbj_public_export" in s]
+    selects = {
+        m.group(1)
+        for s in stmts
+        if (m := re.fullmatch(r"GRANT SELECT ON ([\w.]+) TO kbj_public_export", s))
+    }
+    assert selects == set(pr.DIAG_PUB_TABLES)
+    for s in stmts:
+        assert "prv_" not in s, s
+        assert not re.search(r"INSERT|UPDATE|DELETE|ALL PRIVILEGES", s), s
+
+    def values(col: str) -> set[str]:
+        found = re.findall(rf"\b{col}\s+text (?:NOT NULL )?CHECK \({col} IN \(([^)]*)\)\)", body)
+        assert found, col
+        return {v for f in found for v in re.findall(r"'([\w]+)'", f)}
+
+    assert values("state") == set(pr.DIAG_STATES)
+    assert values("band") == set(pr.FEAR_GREED_BANDS)
+    assert values("label") == set(pr.VERDICT_LABELS)
+    assert values("kind") == set(pr.EVENT_KINDS)
+    assert "DEFAULT 0" not in body
+    assert body.count("OR quality <> 'ok')") >= 6
+
+
+def test_p7_owner_comments_cover_every_gex_engine_table() -> None:
+    raw = (MIGRATIONS / P7_FILE).read_text(encoding="utf-8")
+    gx = {t for t in _tables(_body("0006_gex.sql")) if t.startswith("prv_gex.")}
+    commented = set(re.findall(r"COMMENT ON TABLE ([\w.]+) IS", raw))
+    # investor_flow 는 0017 이 적었다
+    assert gx - {"prv_gex.investor_flow"} <= commented
+    assert "prv_gex.investor_flow" not in commented

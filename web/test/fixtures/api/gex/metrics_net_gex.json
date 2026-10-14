@@ -1,0 +1,30 @@
+{
+  "source": "KBJ:gex.engine(KIS 옵션 체인·웹소켓)",
+  "as_of": "2026-12-10T04:30:00Z",
+  "quality": "ok",
+  "notes": [],
+  "generated_at": "2026-12-10T14:00:00+09:00",
+  "data": {
+    "name": "net_gex",
+    "scope": "all",
+    "key": "",
+    "flag": "visible",
+    "points": [
+      {
+        "ts": "2026-12-10T01:00:00Z",
+        "value": 125000000000.0,
+        "quality": "ok"
+      },
+      {
+        "ts": "2026-12-10T02:30:00Z",
+        "value": 115000000000.0,
+        "quality": "ok"
+      },
+      {
+        "ts": "2026-12-10T04:30:00Z",
+        "value": 105000000000.0,
+        "quality": "ok"
+      }
+    ]
+  }
+}

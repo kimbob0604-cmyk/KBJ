@@ -26,10 +26,11 @@ export const PUBLIC_NAME = /^[a-z0-9_]+$/;
 
 /**
  * 하위 폴더 키 — 파일 자체가 봉투인 공개 파일(P4 종목마다 하나, P5 매크로 탭마다 하나, P6 `trade/<이름>`·
- * `trade/(hs|country|region|stock)/<코드 2~10자>` — docs/p6_design.md §7, manifest.py·merge-public-data.mjs 와 같은 규칙)
+ * `trade/(hs|country|region|stock)/<코드 2~10자>` — docs/p6_design.md §7, P7 `diag/<이름>` — 공공지표 진단·게이지·이벤트
+ * (docs/p7_design.md §7), manifest.py·merge-public-data.mjs 와 같은 규칙)
  */
 export const PUBLIC_SUBDIR =
-  /^(?:(?:fin|reports)\/[0-9A-Z]{6}|(?:macro)\/[a-z0-9_]+|(?:trade)\/(?:(?:hs|country|region|stock)\/[0-9A-Z]{2,10}|[a-z0-9_]+))$/;
+  /^(?:(?:fin|reports)\/[0-9A-Z]{6}|(?:macro|diag)\/[a-z0-9_]+|(?:trade)\/(?:(?:hs|country|region|stock)\/[0-9A-Z]{2,10}|[a-z0-9_]+))$/;
 
 /** 공개 내려받기 파일 — dart-report 엑셀(데모 종목만 있다) */
 export const PUBLIC_DOWNLOAD = /^reports\/[0-9A-Z]{6}\.xlsx$/;

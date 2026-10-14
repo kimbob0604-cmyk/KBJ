@@ -14,6 +14,11 @@
   (공개 등급).
 - 수출 속보(P6 FLASH — metrics §25): 관세청 10일 잠정치 수출 품목 전체의 최신 구간 YoY(발표 당시 값,
   estimated). 값은 `kbj.engines.trade.flash.flash_chip` 이 내고 부르는 쪽이 넘긴다.
+- GEX Flip 거리(P7 OUT — metrics §6.5 → §G3.5, 로그인): `prv_gex.levels` 범위 all 마지막
+  사이클의 Flip 거리(%) = (현재가 − Flip) ÷ 현재가 × 100(엔진 `flip_distance` 행 그대로).
+  기능 플래그 visible 이고 invalid 가 아닐 때만 값 — 섀도·꺼짐·행 없음은
+  '준비 중(P7)' 칩 그대로, Flip 없음(교차 없음)은 값 없이 사유. 장 중인데 사이클이
+  `GEX_STALE_AFTER` 보다 오래면 stale.
 
 튜닝값(`ribbon.semis`·`cyclical`·`defensive`)과 금통위 날짜는 부르는 쪽이 `kbj.config.markets` 로
 읽어 넘긴다(이 모듈은 파일을 읽지 않는다).
@@ -33,6 +38,7 @@ from kbj.core.calendar import (
     session_bounds,
     state_at,
 )
+from kbj.core.gex.records import LevelRecord
 from kbj.core.quality import Quality, Sourced
 from kbj.core.rows import IndexBar
 from kbj.core.time import KST
@@ -55,6 +61,7 @@ __all__ = [
     "SkewResult",
     "cyclical_vs_defensive",
     "export_flash_chip",
+    "gex_flip_chip",
     "ribbon",
     "semi_skew",
     "semi_skew_from_ledger",
@@ -318,6 +325,62 @@ def export_flash_chip(fc: FlashChip | None) -> Chip:
     )
 
 
+# ── GEX Flip 거리(P7 OUT — metrics §G3.5) ───────────────────────────────────────────────
+
+GEX_LABEL: Final = "GEX Flip 거리"
+GEX_SOURCE: Final = "KBJ:gex.engine"
+GEX_STALE_AFTER: Final = timedelta(minutes=2)  # API GEX 리더 '지연'과 같다 [확인 필요]
+_GEX_Q: Final[Mapping[str, int]] = {"ok": 0, "estimated": 1, "stale": 2, "invalid": 3}
+_SESSION_KO: Final[Mapping[str, str]] = {"day": "주간", "night": "야간"}
+
+
+def _pending_gex(note: str | None = None) -> Chip:
+    _, tier, phase = PENDING["gex_flip"]
+    return Chip("gex_flip", GEX_LABEL, None, tier, phase_pending=phase, note=note)
+
+
+def gex_flip_chip(rows: Sequence[LevelRecord] | None, now: datetime, *, live: bool) -> Chip:
+    """GEX Flip 거리 칩(로그인). rows = `levels_latest('all')`(한 사이클). live = 지금 장 중인가."""
+    use = {
+        r.name: r
+        for r in rows or ()
+        if r.name in ("flip", "flip_distance") and r.flag == "visible" and r.quality != "invalid"
+    }
+    flip = use.get("flip")
+    if flip is None:
+        return _pending_gex()  # 행 없음·섀도·꺼짐·invalid — '준비 중' 그대로(값을 짓지 않는다)
+    tags = (_SESSION_KO.get(flip.session, flip.session),)
+    if flip.value is None:
+        return Chip("gex_flip", GEX_LABEL, None, "login", tags=tags,
+                    note="Flip 없음 — 범위 안에서 총 GEX 부호가 같다(§G3.4)")  # fmt: skip
+    dist = use.get("flip_distance")
+    f_ref = flip.detail.get("f_ref")
+    price = float(f_ref) if isinstance(f_ref, int | float) and not isinstance(f_ref, bool) else None
+    q = flip.quality
+    if dist is not None and dist.value is not None:
+        value = dist.value
+        q = max(q, dist.quality, key=lambda x: _GEX_Q[x])
+    elif price:
+        value = (price - flip.value) / price * 100  # §G3.5 — 거리 행이 없을 때만(같은 식)
+    else:
+        return Chip("gex_flip", GEX_LABEL, None, "login", tags=tags, note="현재가(F) 없음")
+    quality = Quality(q)
+    age = now - flip.ts
+    if live and age > GEX_STALE_AFTER and quality is not Quality.INVALID:
+        quality = Quality.STALE
+    note = f"Flip {flip.value:,.2f}" + (f" · F {price:,.2f}" if price is not None else "")
+    return Chip(
+        "gex_flip",
+        GEX_LABEL,
+        Sourced[float](value=value, source=GEX_SOURCE, as_of=flip.ts, quality=quality),
+        "login",
+        tags=tags,
+        note=note,
+        detail={"flip": flip.value, "price": price, "session": flip.session,
+                "multi_cross": bool(flip.detail.get("multi_cross"))},
+    )  # fmt: skip
+
+
 # ── 띠 ──────────────────────────────────────────────────────────────────────────────────
 
 
@@ -337,6 +400,9 @@ class RibbonInputs:
     nxt_excluded: bool = True  # D-P3-9 — KRX 구분만
     # P6 FLASH(metrics §25): 수출 품목 전체 최신 구간 YoY(발표 당시 기준 — kbj.engines.trade.flash)
     export_flash: FlashChip | None = None
+    # P7 OUT(metrics §G3.5): prv_gex.levels 범위 all 마지막 사이클(None = 읽지 않음 — '준비 중')
+    gex_levels: Sequence[LevelRecord] | None = None
+    gex_live: bool = False  # 지금 장(주간·야간) 중인가 — 지연(stale) 판정에만
 
 
 def _skew_chip(key: str, label: str, res: SkewResult | None, pending_note: str) -> Chip:
@@ -419,4 +485,5 @@ def ribbon(inputs: RibbonInputs, now: datetime, cal: TradingCalendar) -> list[Ch
     chips["export_flash"] = export_flash_chip(inputs.export_flash)
     for key, (label, tier, phase) in PENDING.items():
         chips[key] = Chip(key, label, None, tier, phase_pending=phase)
+    chips["gex_flip"] = gex_flip_chip(inputs.gex_levels, now, live=inputs.gex_live)
     return [chips[k] for k in CHIP_ORDER]

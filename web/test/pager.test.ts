@@ -1,7 +1,7 @@
 // 탭·해시·←/→·미니맵, 13페이지 등록 (§6.8 pager.test) + P4 종목 해시 #/p/8/<코드> (p4_design §1.2·§6.5)
 import { describe, expect, it, vi } from 'vitest';
 import { mountApp } from '../src/app/app';
-import { pageLoaders, PAGES, P3_PAGES, P4_PAGES, P5_PAGES, P6_PAGES } from '../src/app/pages';
+import { pageLoaders, PAGES, P3_PAGES, P4_PAGES, P5_PAGES, P6_PAGES, P7_PAGES } from '../src/app/pages';
 import { formatHash, HASH_RE, isMostlyVisible, parseHash, parseRoute } from '../src/app/pager';
 import { createRoute, route as appRoute } from '../src/app/route';
 import type { DataSource } from '../src/data/source';
@@ -27,9 +27,10 @@ describe('페이지 등록부', () => {
     // 9 는 단계 표기만 P5 — 테마 사전 통합은 사용자가 따로 진행(2026-10-13 Q1), P3 자리표시 그대로
     expect(P5_PAGES).toEqual([6]);
     expect(P6_PAGES).toEqual([7]); // P6 수출입(docs/p6_design.md §6)
-    // DATA_TIERS §2: 7 은 공개 표시, 1·5·6·8 은 공개·로그인 섞임(D-P4-15·p5_design §6), 나머지는 로그인
+    expect(P7_PAGES).toEqual([3]); // P7 진단(docs/p7_design.md §6)
+    // DATA_TIERS §2: 7 은 공개 표시, 1·3·5·6·8 은 공개·로그인 섞임(D-P4-15·p5_design §6·p7_design D-P7-12), 나머지는 로그인
     expect(PAGES.filter((p) => p.tier === 'public').map((p) => p.n)).toEqual([7]);
-    expect(PAGES.filter((p) => p.tier === 'mixed').map((p) => p.n)).toEqual([1, 5, 6, 8]);
+    expect(PAGES.filter((p) => p.tier === 'mixed').map((p) => p.n)).toEqual([1, 3, 5, 6, 8]);
     // 섞인 페이지는 페이지 자물쇠가 없다(패널마다 정한다)
     for (const p of PAGES.filter((x) => x.tier === 'mixed')) expect(p.lock, `페이지 ${p.n}`).toBeUndefined();
   });
@@ -58,14 +59,22 @@ describe('페이지 등록부', () => {
       '../pages/p8_stock.ts': noop,
       '../pages/p6_macro.ts': noop,
       '../pages/p7_trade.ts': noop,
+      '../pages/p3_diag.ts': noop,
       '../pages/placeholder.ts': noop,
     });
-    expect([...m.keys()].sort((a, b) => a - b)).toEqual([1, 5, 6, 7, 8, 10]);
+    expect([...m.keys()].sort((a, b) => a - b)).toEqual([1, 3, 5, 6, 7, 8, 10]);
   });
 
-  it('빌드 glob 이 페이지 5·8·6·7 진입 파일도 찾는다(p{1,2,4,5,6,7,8,10}_*.ts — 9 는 자리표시)', async () => {
+  it('빌드 glob 이 페이지 3·5·8·6·7 진입 파일도 찾는다(p{1,2,3,4,5,6,7,8,10}_*.ts — 9 는 자리표시)', async () => {
     const src = (await import('../src/app/pages.ts?raw')).default;
-    expect(src).toContain("'../pages/p{1,2,4,5,6,7,8,10}_*.ts'");
+    expect(src).toContain("'../pages/p{1,2,3,4,5,6,7,8,10}_*.ts'");
+  });
+
+  it('P7 페이지 3 문구: mixed — 페이지 자물쇠 없음, 공공지표 진단·이벤트는 공개(D-P7-12)', () => {
+    const p3 = PAGES.find((p) => p.n === 3);
+    expect(p3).toMatchObject({ phase: 'P7', tier: 'mixed' });
+    expect(p3?.lock).toBeUndefined();
+    for (const w of ['종합 판정', '공포탐욕', 'GEX', '공공지표 진단']) expect(p3?.plan).toContain(w);
   });
 
   it('P6 페이지 7 문구: 공개 전부, 탭 여섯·매핑 종목', () => {

@@ -15,7 +15,7 @@ import ribbon, {
   RIBBON_REFRESH_MS,
   sessionAt,
 } from '../../src/app/ribbon';
-import type { DataSource, Tier } from '../../src/data/source';
+import type { DataSource, Quality, Tier } from '../../src/data/source';
 import { fixedClock, json } from '../helpers';
 import fixtureRibbon from '../fixtures/api/market_ribbon.json';
 import publicCalendar from './fixtures/public_calendar.json';
@@ -293,9 +293,9 @@ describe('상단 띠 — P5 신용·한국 대 글로벌 칩(MAC)', () => {
     expect(o.cls).toBe('down');
   });
 
-  it('칩 자리: P5·P6 칩은 단계 표시가 없다(값이 없으면 서버가 준비 중·사유를 보낸다)', () => {
+  it('칩 자리: P5·P6·P7 칩은 단계 표시가 없다(값이 없으면 서버가 준비 중·사유를 보낸다)', () => {
     const phased = CHIP_SLOTS.filter((s) => s.phase).map((s) => s.key);
-    expect(phased).toEqual(['gex_flip']);
+    expect(phased).toEqual([]);
   });
 });
 
@@ -346,5 +346,43 @@ describe('상단 띠 — P6 수출 속보 칩(FLASH)', () => {
     expect(neg.value).toBe('1~20일 -8.3%');
     expect(neg.cls).toBe('down');
     expect(neg.state).toBe('estimated');
+  });
+});
+
+describe('상단 띠 — P7 GEX Flip 거리 칩(OUT)', () => {
+  const NOW = new Date('2026-12-10T05:00:00Z'); // KST 14:00
+  const gex = (value: number | null, quality = 'ok', phase: string | null = null) =>
+    chipOptions(
+      {
+        key: 'gex_flip',
+        label: 'GEX Flip 거리',
+        value:
+          value === null ? null : { value, source: 'KBJ:gex.engine', as_of: '2026-12-10T13:59:30+09:00', quality: quality as Quality },
+        tier: 'login',
+        phase_pending: phase,
+        tags: ['주간'],
+        note: value === null ? 'Flip 없음 — 범위 안에서 총 GEX 부호가 같다(§G3.4)' : 'Flip 350.00 · F 351.20',
+        detail: { flip: 350, price: 351.2, session: 'day', multi_cross: false },
+      },
+      NOW,
+    );
+
+  it('값 = Flip 거리(%) — 부호 색, Flip·F 는 title', () => {
+    const up = gex(0.3417);
+    expect(up.value).toBe('+0.34%');
+    expect(up.cls).toBe('up');
+    expect(up.title).toContain('Flip 350.00 · F 351.20');
+    expect(up.title).toContain('KBJ:gex.engine');
+    expect(gex(-1.2).cls).toBe('down');
+  });
+
+  it('Flip 없음은 0 이 아니라 — + 사유, 준비 중은 단계 표시, 지연은 기준 시각', () => {
+    const none = gex(null);
+    expect(none.value).toBe('—');
+    expect(none.title).toContain('Flip 없음');
+    expect(gex(null, 'ok', 'P7').state).toBe('pending');
+    const stale = gex(0.5, 'stale');
+    expect(stale.cls).toBe('warn');
+    expect(stale.value).toContain('(기준 13:59)');
   });
 });

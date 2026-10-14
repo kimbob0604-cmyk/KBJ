@@ -113,11 +113,17 @@ def cmd_run(settings: Settings) -> int:  # pragma: no cover — 진입점(실제
             log, logging.ERROR, SERVICE, "config_error", error="KBJ_REDIS_URL·KBJ_DATABASE_URL 필요"
         )
         return 2
+    from kbj.reports.gex.lines import command_reader
     from kbj.store.db import connect
+    from kbj.store.repos.gex import PgGexRepo
 
     config = load_notify_config(settings=settings)
     redis = connect_redis(settings.redis_url)
     conn = connect(settings, autocommit=True, service=SERVICE, retries=3)
+
+    def gex_conn() -> Any:  # /gex 를 부를 때마다 짧게 연다(PgGexRepo 관례 — 수명은 with 블록)
+        return connect(settings, autocommit=True, service=SERVICE)
+
     service = build_service(
         settings,
         config=config,
@@ -126,6 +132,7 @@ def cmd_run(settings: Settings) -> int:  # pragma: no cover — 진입점(실제
         inbox_store=PgInboxStore(conn),
         now=utcnow,
         health=LogHealthSink(),
+        gex=command_reader(PgGexRepo(gex_conn), utcnow),
     )
     if service.router is not None:
         set_default_client(service.router.client)  # 이 프로세스 안의 notify() 도 같은 대기열로

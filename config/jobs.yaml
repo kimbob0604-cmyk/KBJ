@@ -35,6 +35,12 @@
 # - P6(docs/p6_design.md §0.4·§3.2): 웨이브 1(묶음 FND)이 trade.* 다섯 작업의 owner·schedule·as_of·collects·
 #   writes 를 확정했다 — 전부 enabled: false(켜기는 웨이브 3 WRAP, 관세청 수집은 실측 #1~#6·#17·#55 뒤).
 #   새 텔레그램 발송 없음 — 수출 속보는 16:00 brief.closing 한 줄(D-P6-8, ADR 0018). public.export 는 하루 4번(D-P6-7).
+# - P7(docs/p7_design.md §0.4·§3.2): 웨이브 1(묶음 FND-B)이 모양을 확정했다 — GEX 엔진·웹소켓·녹화 서비스는
+#   KBJ 소유(runner kbj — 웨이브 3 WRAP 이 켰다), 새 작업 diag.public·diag.daily·gex.alert 도 WRAP 이 켰다
+#   (krx.vkospi 는 실측 #P7-1 전까지 꺼진 채 고정). GX 수집 경로(poller·분봉·KRX 파생·마스터)는 legacy 외부
+#   서비스로 남고 KBJ DB 에 search_path=prv_gex,ops 로 붙는다(§10 Q1 — 이식은 P9). 장중 GEX 알림은 gex.alert
+#   (정규장 09:00~15:30, 쿨다운 10분) 하나 — 마감 뒤 새 발송 없음(ADR 0018, §10 Q5). 서비스의 쓰기 표는
+#   ServiceSpec writes 칸(WRAP 이 더함 — 작업과 같은 형식·마이그레이션·쓰기 주인 하나 검사).
 version: 1
 
 defaults:
@@ -60,19 +66,36 @@ services:
     collects:
       - {source: KIS, dataset: option_chain_live, as_of: minute}
     absorbs: ["GX:poller"]
-    note: "투자자별(KIS:market_investor_intraday)은 flows.market_minute 이 유일하게 쓴다(ADR 0019 — P5 D-P5-21 ①). P7 이 poller 를 옮길 때 이 TR 을 부르지 않고 prv_gex.investor_flow 를 읽는다. ⚠ legacy GX poller 를 kbj 와 함께 돌리면 같은 TR 을 두 곳이 부른다 — investor_period_s 를 끄는 설정 [확인 필요]"
+    note: "P7 — 투자자별 폴링 삭제(D-P7-5): KIS:market_investor_intraday 는 flows.market_minute 이 유일하게 쓰고(ADR 0019) poller 는 부르지 않는다. 전광판·체인·선물·최종거래일만(prv_gex.chain_snapshots·fut_board·series_expiries 쓰기 주인). legacy 외부 서비스로 남고 KBJ DB(search_path=prv_gex,ops) — P7, 이식은 P9(§10 Q1)"
   - name: gex.ws_gateway
-    owner: "legacy:gexlab/services/ws_gateway"
-    runner: external
+    owner: kbj.services.ws_gateway
     phase: P7
+    heartbeat_s: 60
+    heartbeat_key: ws-gateway           # 프로세스 SERVICE 이름(compose healthcheck 와 같다)
+    enabled: true               # P7 WRAP(D-P7-10) — GX 운영으로 데이터 확인됨
+    writes: [prv_gex.fut_ticks, prv_gex.opt_ticks]
     collects:
       - {source: KIS, dataset: ws_ticks, as_of: minute}
     absorbs: ["GX:ws_gateway", "GX:ws_gateway:closed_session_watch"]
-    note: "접속키는 auth 가 발급, ws-gateway 는 읽기만(ADR 0004 D2)"
-  - {name: gex.recorder, owner: "legacy:gexlab/services/recorder", runner: external, phase: P7,
-     absorbs: ["GX:recorder"]}
-  - {name: gex.engine, owner: "legacy:gexlab/services/engine", runner: external, phase: P7,
-     absorbs: ["GX:engine:cycle", "GX:engine:daily_post_day"]}
+    note: "KBJ 소유(D-P7-10). 원문은 ws.raw 로 녹화 서비스에. 접속키는 auth 가 발급, ws-gateway 는 kis:ws_key 를 읽기만(ADR 0004 D2). 웹소켓 호스트는 kbj/services/ws_gateway/endpoints.py 한 곳"
+  - name: gex.recorder
+    owner: kbj.services.recorder
+    phase: P7
+    heartbeat_s: 60
+    heartbeat_key: recorder           # 프로세스 SERVICE 이름(compose healthcheck 와 같다)
+    enabled: true               # P7 WRAP(D-P7-10) — GX 운영으로 데이터 확인됨
+    writes: [prv_gex.raw_messages]
+    absorbs: ["GX:recorder"]
+    note: "KBJ 소유. raw_messages 는 ws.raw·rest.raw 녹화. 예외: 버스 발행 실패 때 발행자가 직접 쓴다 — digest UNIQUE 로 멱등(D-P7-7, ADR 0029)"
+  - name: gex.engine
+    owner: kbj.services.engine.gex
+    phase: P7
+    heartbeat_s: 60
+    heartbeat_key: engine           # 프로세스 SERVICE 이름(compose healthcheck 와 같다)
+    enabled: true               # P7 WRAP(D-P7-10) — GX 운영으로 데이터 확인됨
+    writes: [prv_gex.levels, prv_gex.metrics, prv_gex.strike_gex, prv_gex.option_iv, prv_gex.oi_changes]
+    absorbs: ["GX:engine:cycle", "GX:engine:daily_post_day"]
+    note: "KBJ 소유. chain.ready·10초 따라잡기·POST_DAY 일별(GX 규칙 그대로 — config/gex.yaml engine). 발송하지 않는다 — 장중 알림은 작업 gex.alert, 마감 뒤는 brief.closing(D-P7-16)"
 
 jobs:
   # ── 새벽(운영·공시 기준표) ─────────────────────────────────────────────────────────────
@@ -182,7 +205,7 @@ jobs:
       - {source: KIS, dataset: fut_minute_night, as_of: trade_date}
     writes: [prv_gex.minute_bars]
     absorbs: ["GX:scheduler:minute_night", "GX:scheduler:gap_night", "GX:scheduler:open_check_night"]
-    note: "GX 규칙 그대로 — IDLE 06:10~08:00 야간(CM) 분봉·무결측, 18:03 야간 개장 확인"
+    note: "GX 규칙 그대로 — IDLE 06:10~08:00 야간(CM) 분봉·무결측, 18:03 야간 개장 확인. KBJ DB(search_path) — P7(§10 Q1 — 이식은 P9)"
 
   - name: etf.collect
     phase: P3                 # D-P3-12 — P5 에서 당겼다(페이지 10 구성종목 변동)
@@ -205,7 +228,7 @@ jobs:
       - {source: KIS, dataset: fo_master, as_of: trade_date}
     writes: [prv_gex.master_snapshots]
     absorbs: ["GX:scheduler:master"]
-    note: "GX _master_step — 실패하면 60초 뒤 다시(GX 규칙)"
+    note: "GX _master_step — 실패하면 60초 뒤 다시(GX 규칙). KBJ DB(search_path) — P7(§10 Q1 — 이식은 P9)"
 
   - name: krx.daily
     phase: P3
@@ -257,6 +280,7 @@ jobs:
     budget: krx
     writes: [prv_gex.krx_fut_daily, prv_gex.krx_opt_daily]
     absorbs: ["GX:scheduler:krx_daily"]
+    note: "KBJ DB(search_path) — P7(§10 Q1 — 이식은 P9)"
 
   - name: etf.report
     phase: P5
@@ -552,7 +576,7 @@ jobs:
     collects:
       - {source: KIS, dataset: market_investor_intraday, as_of: minute}
     writes: [prv_gex.investor_flow]
-    note: "ADR 0019 — prv_gex.investor_flow 의 유일한 쓰기 주인(D-P5-21). 조합은 config/markets.yaml flows.minute.pairs 의 켠 것만(실측 전 K2I F001·OC01·OP01 — 현물은 #39 뒤). 대금 백만원(GX 단위 그대로). 같은 분 재실행 멱등(UNIQUE ts·시장·업종·투자자)"
+    note: "ADR 0019 — prv_gex.investor_flow 의 유일한 쓰기 주인(D-P5-21). 조합은 config/markets.yaml flows.minute.pairs 의 켠 것만(실측 전 K2I F001·OC01·OP01 — 현물은 #39 뒤, 위클리 4조합은 P7 켬 — GX #13, 값은 markets.yaml). 대금 백만원(GX 단위 그대로). 같은 분 재실행 멱등(UNIQUE ts·시장·업종·투자자)"
 
   - name: program.intraday
     phase: P5
@@ -606,7 +630,7 @@ jobs:
       - {source: KIS, dataset: fut_minute_day, as_of: trade_date}
     writes: [prv_gex.minute_bars]
     absorbs: ["GX:scheduler:minute_day", "GX:scheduler:gap_day", "GX:scheduler:open_check_day"]
-    note: "GX 규칙 그대로 — POST_DAY 16:00~17:50 주간(F) 분봉·무결측, 08:48 개장 확인"
+    note: "GX 규칙 그대로 — POST_DAY 16:00~17:50 주간(F) 분봉·무결측, 08:48 개장 확인. KBJ DB(search_path) — P7(§10 Q1 — 이식은 P9)"
 
   # 장 끝난 뒤 텔레그램은 전부 16:00(ADR 0018 — 사용자 결정 2026-10-08, 원본 SD·ET 와 같다). 16:00 에
   # 발화해 굳은 의존(market.close_collect — 15:35 시작, 약 24분)을 기다리고, 발송 작업은 같은 16:00 의
@@ -635,6 +659,7 @@ jobs:
     depends_on:
       - {job: market.close_collect, hard: true}
       - {job: board.daily, hard: false, wait_min: 20}   # 진행 중인 보드를 최대 20분(재시도 1번) 기다린다
+      - {job: diag.daily, hard: false, wait_min: 10}    # P7 — 진단·GEX 마감 줄(D-P7-16). 없으면 '미준비'
     notify: {kind: brief.closing}
     absorbs: ["SD:tg_closing", "SD:tg_closing_summary", "SD:closing_brief_catchup", "SD:agent_pipeline",
               "ET:board@16:10:send", "GX:plan:brief_1550"]
@@ -842,6 +867,59 @@ jobs:
     depends_on: [{job: market.close_collect, hard: true}]
     writes: [prv_index.prediction_run, prv_index.predictions, prv_index.passive_aum]
     note: "규칙 숫자 [확인 필요 #50·#52·#53]. 켜진 지수(MSCI Korea·KOSPI200·KOSDAQ150)마다 효력 전 첫 리뷰의 편입·편출·경계·유지 판정(metrics §24). 계산 날짜 = min(그날, 리뷰 기준일) — 기준일 뒤엔 기준일 값으로 고정. 구성종목 목록(prv_index.constituents — 사용자·보도자료, load-constituents CLI)이 없으면 no_constituents 한 줄만(예측하지 않는다). 지수 하나의 실패는 격리. 백테스트·목록 반영·컷오프 입력은 `python -m kbj.services.engine.index_review`"
+
+  # ── P7 — 페이지 3 진단·GEX 알림·VKOSPI(docs/p7_design.md §0.4·§3.2) ───────────────────────────
+  # 웨이브 1(FND-B)이 모양을 확정했고 웨이브 3(WRAP)이 diag.public·diag.daily·gex.alert 를 켰다(krx.vkospi 꺼짐). 공개 진단(diag.public)·로그인
+  # 진단(diag.daily)은 모듈이 나뉜다(공개 작업은 로그인 원천·저장소를 모른다 — D-P7-15). 마감 뒤 새 발송은
+  # 없다 — 진단·GEX 마감 줄은 16:00 brief.closing(무른 의존), 장중 레벨 알림만 gex.alert(ADR 0018, §10 Q5).
+  - name: diag.public
+    phase: P7
+    enabled: true               # P7 WRAP(§1.7-1)
+    owner: "kbj.services.engine.diag_pub:run"
+    schedule: {cron: "40 8 * * 1-5", when: trading_day, catch_up_until: "10:00"}
+    retry: {max: 2, backoff_s: [600]}
+    as_of: trade_date
+    depends_on:
+      - {job: macro.morning, hard: false, wait_min: 20}
+      - {job: market_stats.kofia, as_of: prev, hard: false}   # 13:30 공표 — 아침엔 직전 거래일 실행분
+    writes: [pub_diag.indicator, pub_diag.gauge, pub_diag.event_marker]
+    note: "공공지표 진단(metrics §D1~§D5·§D9) — 신용스프레드 구간·신용잔고·예탁금 추세·수출 모멘텀·금리 방향 → 매크로 위험 게이지, 이벤트 표시. 공개 표(pub_*)만 읽고 쓴다(D-P7-15 — 로그인 원천·저장소를 모른다). 외부 호출 없음. 금투협은 D+1 13시 공표라 아침엔 직전 실행분(전전 거래일 값 — 품질 규칙 §D2)"
+
+  - name: diag.daily
+    phase: P7
+    enabled: true               # P7 WRAP(§1.7-1)
+    owner: "kbj.services.engine.diag:run"
+    schedule: {cron: "0 16 * * 1-5", when: trading_day}
+    retry: {max: 1, backoff_s: [300]}
+    as_of: trade_date
+    depends_on:
+      - {job: market.close_collect, hard: true}
+      - {job: board.daily, hard: false, wait_min: 15}
+    writes: [prv_diag.indicator, prv_diag.fear_greed, prv_diag.verdict]
+    note: "시장 진단·국장 공포탐욕·종합 판정(metrics §D6~§D8). 그날 D 는 estimated, 직전 거래일 D−1 은 KRX 확정 원장으로 다시 계산해 ok 로 덮는다 — 확정용 두 번째 작업 없음(쓰기 주인 하나, D-P7-15). 발송하지 않는다 — brief.closing 이 무른 의존으로 기다린다(D-P7-16). 보드·마감 수집이 재료라 16:00 전으로 못 당긴다 — 보드 → 진단 → 마감 요약이 16:00 안에 도는 것은 실행기가 끝난 시도를 같은 회차에 거두어서(ADR 0030 §4-6)"
+
+  - name: krx.vkospi
+    phase: P7
+    enabled: false              # 고정 — VKOSPI 행·칸 실측(#P7-1) 전(D-P7-14). 켜기는 실측 뒤
+    owner: "kbj.services.collectors.krx_vkospi:run"
+    schedule: {cron: "10 8 * * 1-5", when: trading_day}
+    retry: {every_s: 600, until: "10:00"}
+    collects:
+      - {source: KRX, dataset: idx/drvprod_dd_trd, as_of: prev_trading_day}
+    budget: krx
+    writes: [prv_diag.vol_index]
+    note: "파생상품지수 일별의 VKOSPI 행 [실측 필요 #P7-1 — 데이터셋·행 이름·칸]. 꺼져 있거나 값이 없으면 공포탐욕 변동성 성분은 월물 ATM IV(prv_gex.metrics atm_iv)로 대신하고 estimated + '대체: ATM IV'(metrics §D7)"
+
+  - name: gex.alert
+    phase: P7
+    enabled: true               # P7 WRAP(§1.7-1)
+    owner: "kbj.services.engine.gex_alert:run"
+    schedule: {equity: {start: open, end: close, every_min: 1}, when: trading_day}
+    retry: {max: 0}
+    deadline_min: 1
+    as_of: minute
+    notify: {kind: alert.gex_level, when: changed}
+    note: "장중 GEX 레벨 알림(D-P7-17 [제안]) — visible 지표만: Flip(all) 건넘·콜월/풋월 행사가 바뀜·기대변동폭 ±1σ 밖. 정규장 09:00~15:30 만(15:30 에 끝 — §10 Q5), 쿨다운 600초(notify.yaml). invalid·stale 산출로는 보내지 않는다. 표에 쓰지 않는다(상태는 Redis gex:alert:last). 15:30 뒤·야간 변화는 16:00 마감 요약·아침 브리핑에만"
 
 # ── 폐지하는 legacy 정기 작업(§6.8) ──────────────────────────────────────────────────────────
 retired:

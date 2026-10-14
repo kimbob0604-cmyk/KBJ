@@ -7,6 +7,10 @@
 - 처리기 예외는 삼키지 않는다: 종류를 로그에 남기고 '처리 중 오류' 로 답한다(본문·키는 싣지 않는다).
 - 답은 `Reply` 로 돌려줄 뿐 보내지 않는다 — 보내는 것은 notify(`cmd.reply`, 받은 대화·스레드)다.
 - 종목명 → 코드는 SD `_resolve_kr_code`(네이버 유니버스)가 아니라 `prv_market.universe` 로(U4, P3).
+- `/gex`(P7 OUT — docs/p7_design.md §1.6): 최신 GEX 레벨 요약 한 덩어리. 명령은 허용 대화
+  (로그인 등급 채팅 — `InboundRouter.command_chats`)에서만 받는다. 본문은
+  `default_registry(gex=…)` 로 넘긴 읽기 함수(저장소만 읽는다 —
+  `kbj.reports.gex.lines.command_reader`)가 만든다. 넘기지 않으면 '준비 중(P7)'.
 """
 
 from __future__ import annotations
@@ -139,8 +143,8 @@ class CommandRegistry:
             return Reply(f"⚠️ /{html.escape(cmd.name)} 처리 중 오류: {type(e).__name__}")
 
 
-def default_registry() -> CommandRegistry:
-    """§5.7 표 그대로. `/도움` 만 P2 에서 동작한다."""
+def default_registry(*, gex: Callable[[], str] | None = None) -> CommandRegistry:
+    """§5.7 표 그대로. `/도움` 은 늘 동작하고, `/gex` 는 읽기 함수 `gex` 를 주면 동작한다(P7)."""
     reg = CommandRegistry()
     reg.register("도움", ("help", "start", "명령"), summary="이 안내")
     reg.register("시황", ("summary",), phase="P3", summary="오늘 장마감 요약")
@@ -154,4 +158,11 @@ def default_registry() -> CommandRegistry:
         return Reply(reg.help_text())
 
     reg.register("도움", ("help", "start", "명령"), _help, summary="이 안내")
+    if gex is not None:
+        read = gex
+
+        def _gex(_: CommandContext) -> Reply:
+            return Reply(read())
+
+        reg.register("gex", (), _gex, phase="P7", summary="최신 GEX 레벨")
     return reg

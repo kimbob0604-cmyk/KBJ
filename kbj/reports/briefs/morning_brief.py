@@ -1,7 +1,9 @@
 """아침 브리핑(08:10) 섹션 — ① 간밤 미국 ② 금리·달러·원자재 ③ 한국 매크로(새 공표)
-⑤ 일정·결과·실적·금통위.
+④ 야간선물·GEX(P7 OUT) ⑤ 일정·결과·실적·금통위.
 
-④ 야간선물·GEX(P7)·⑥ 구루(P8)는 싣지 않는다(config/briefs.yaml `omitted`). ⑦ 품질 줄은 `quality.py`.
+⑥ 구루(Q4 — 뺐다)는 없다. ⑦ 품질 줄은 `quality.py`.
+④ 는 간밤 야간 세션 마지막 엔진 산출(`prv_gex.levels` 범위 all — D-P7-16): F·Flip·월·±1σ,
+기능 플래그 visible 만(섀도는 '섀도 검증 중'). 문장은 `kbj.reports.gex.lines`.
 재료는 저장소에서만 읽는다(계약 ⑯): US 묶음이 쓴 `prv_board.artifact(US, us_brief)`·미국 일봉
 (`prv_market.daily_bar` market='US'), 매크로 `pub_macro`·`prv_macro`(시리즈·캘린더), 실적 일정
 `pub_filings.earnings_schedule`, 금통위 `config/calendar_events.yaml`.
@@ -21,6 +23,7 @@ from typing import Any, Final
 from zoneinfo import ZoneInfo
 
 from kbj.core.quality import Quality
+from kbj.reports.gex.lines import cycle_label, gex_lines, snapshot
 
 from .sections import (
     WEEKDAY_KO,
@@ -37,6 +40,7 @@ __all__ = [
     "US_INDEXES",
     "calendar_section",
     "kr_macro",
+    "night_gex",
     "rates_table",
     "us_index_lines",
     "us_overnight",
@@ -326,3 +330,29 @@ def calendar_section(bc: BriefCtx) -> SectionOut:
     qs = [e.quality for e in events] + [s.quality for s in sched]
     src = "+".join(sorted({*(e.source for e in events), *(["dart"] if sched else [])})) or "config"
     return SectionOut(tuple(lines), src, bc.now, worst(qs) or Quality.OK)
+
+
+# ── ④ 야간선물·GEX(P7 — D-P7-16) ─────────────────────────────────────────────────────────
+
+NIGHT_FRESH: Final = timedelta(hours=6)  # 야간 세션 끝(06:00) 뒤 08:10 발송 — 이보다 오래면 '지연'
+GEX_JOB: Final = ("gex.engine", "06:00")  # 재료 주인(서비스)·예정 시각 — 품질 줄용
+
+
+def night_gex(bc: BriefCtx) -> SectionOut:
+    """④ 간밤 야간 세션 마지막 엔진 산출(범위 all).
+
+    야간 산출이 아니거나 오래됐으면 마지막 산출을 싣고 '지연'으로 적는다."""
+    snap = snapshot(bc.repos.gex.levels_latest("all", upto=bc.now))
+    job, due = GEX_JOB
+    if snap is None:
+        return SectionOut(
+            materials=(Material("야간 GEX", "not_ready", job=job, due=due),), not_ready=True
+        )
+    fresh = snap.session == "night" and bc.now - snap.ts <= NIGHT_FRESH
+    lines = [f"<i>{esc(cycle_label(snap))} 마지막 사이클</i>", *gex_lines(snap)]
+    if not fresh:
+        lines.insert(0, "<i>간밤 야간 세션 산출 없음 — 마지막 산출을 싣는다</i>")
+    mat = Material(
+        "야간 GEX", "ok" if fresh else "late", snap.quality, snap.trade_date, bc.day, job, due
+    )
+    return SectionOut(tuple(lines), "KBJ:gex.engine", snap.ts, snap.quality, (mat,))

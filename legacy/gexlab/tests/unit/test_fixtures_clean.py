@@ -47,8 +47,15 @@ def test_fixtures_exist() -> None:
 
 def test_golden_data_exists() -> None:
     names = {p.relative_to(GOLDEN).as_posix() for p in golden_files()}
-    assert "core/chain_synthetic_20260928_small.json" in names
-    assert {"raw/synthetic_20260928.jsonl", "raw/synthetic_20260928.parsed.json"} <= names
+    # KBJ P7 FND-C: 코어 골든은 KBJ 로 옮겼다 — 비밀 같은 문자열 검사는 KBJ check_public_safety 가
+    # 레포 전체(이 파일 포함)로 한다. 여기서는 옮긴 자리에 있고 이 폴더에 사본이 없는지만 본다
+    assert "core/chain_synthetic_20260928_small.json" not in names
+    kbj_golden = TESTS.parents[2] / "tests/golden/gex/core/chain_synthetic_20260928_small.json"
+    assert kbj_golden.is_file()
+    # KBJ P7 ING: raw 녹화 골든도 KBJ tests/golden/gex/raw/ 로 옮겼다(비교 KBJ test_raw_golden.py)
+    raw = ("raw/synthetic_20260928.jsonl", "raw/synthetic_20260928.parsed.json")
+    assert not set(raw) & names
+    assert all((TESTS.parents[2] / "tests/golden/gex" / r).is_file() for r in raw)
 
 
 @pytest.mark.parametrize(
