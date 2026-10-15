@@ -1,0 +1,1737 @@
+{
+  "source": "KIS+stock-dashboard:data/master+naver(stock-dashboard 수집)",
+  "as_of": "2026-09-15T15:30:00+09:00",
+  "quality": "estimated",
+  "notes": [
+    "편입 = 대테마에 걸린 네이버 테마(stock-dashboard 수집)의 종목 합집합",
+    "등락은 시총 가중 평균(시총 모르면 단순 평균) · 20일 = 21거래일 전 종가 대비(보드)",
+    "시세 2026-09-15 마감(보드)"
+  ],
+  "generated_at": "2026-09-15T18:00:00+09:00",
+  "data": {
+    "id": "syn_1_2",
+    "name": "기술 합성 테마 2",
+    "section": "기술",
+    "valuechain": null,
+    "built_at": "2026-09-13T18:00:00+09:00",
+    "trade_date": "2026-09-15",
+    "naver": [
+      {
+        "no": 3,
+        "name": "합성 원본 테마 003",
+        "count": 22,
+        "in_master": 20,
+        "n_members": 20
+      },
+      {
+        "no": 4,
+        "name": "합성 원본 테마 004",
+        "count": 24,
+        "in_master": 20,
+        "n_members": 20
+      },
+      {
+        "no": 5,
+        "name": "합성 원본 테마 005",
+        "count": 20,
+        "in_master": 20,
+        "n_members": 20
+      },
+      {
+        "no": 6,
+        "name": "합성 원본 테마 006",
+        "count": 24,
+        "in_master": 20,
+        "n_members": 20
+      }
+    ],
+    "members": [
+      {
+        "code": "902650",
+        "name": "합성종목265",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 하드웨어",
+        "naver": [
+          3
+        ],
+        "reasons": [
+          {
+            "naver_no": 3,
+            "reason": "합성 편입 사유 3-650"
+          }
+        ],
+        "chg_pct": -2.39,
+        "ret_5d": -4.73,
+        "ret_20d": -12.25,
+        "mktcap": 36274610000000,
+        "label": null
+      },
+      {
+        "code": "900150",
+        "name": "합성종목015",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 금융",
+        "naver": [
+          4
+        ],
+        "reasons": [
+          {
+            "naver_no": 4,
+            "reason": "합성 편입 사유 4-150"
+          }
+        ],
+        "chg_pct": 1.84,
+        "ret_5d": 1.08,
+        "ret_20d": 16.65,
+        "mktcap": 35517730000000,
+        "label": "hist"
+      },
+      {
+        "code": "901150",
+        "name": "합성종목115",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 에너지",
+        "naver": [
+          3
+        ],
+        "reasons": [
+          {
+            "naver_no": 3,
+            "reason": "합성 편입 사유 3-150"
+          }
+        ],
+        "chg_pct": 1.0,
+        "ret_5d": 1.59,
+        "ret_20d": 5.43,
+        "mktcap": 29290510000000,
+        "label": null
+      },
+      {
+        "code": "901350",
+        "name": "합성종목135",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 금융",
+        "naver": [
+          4
+        ],
+        "reasons": [
+          {
+            "naver_no": 4,
+            "reason": "합성 편입 사유 4-350"
+          }
+        ],
+        "chg_pct": -3.7,
+        "ret_5d": -4.47,
+        "ret_20d": -10.79,
+        "mktcap": 18868320000000,
+        "label": null
+      },
+      {
+        "code": "902050",
+        "name": "합성종목205",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 산업재",
+        "naver": [
+          3
+        ],
+        "reasons": [
+          {
+            "naver_no": 3,
+            "reason": "합성 편입 사유 3-050"
+          }
+        ],
+        "chg_pct": 0.51,
+        "ret_5d": 3.41,
+        "ret_20d": -4.52,
+        "mktcap": 15940670000000,
+        "label": null
+      },
+      {
+        "code": "900900",
+        "name": "합성종목090",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 소프트웨어",
+        "naver": [
+          4
+        ],
+        "reasons": [
+          {
+            "naver_no": 4,
+            "reason": "합성 편입 사유 4-900"
+          }
+        ],
+        "chg_pct": -2.68,
+        "ret_5d": -2.43,
+        "ret_20d": 3.31,
+        "mktcap": 14984150000000,
+        "label": null
+      },
+      {
+        "code": "901950",
+        "name": "합성종목195",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 에너지",
+        "naver": [
+          5
+        ],
+        "reasons": [
+          {
+            "naver_no": 5,
+            "reason": "합성 편입 사유 5-950"
+          }
+        ],
+        "chg_pct": -0.14,
+        "ret_5d": -0.95,
+        "ret_20d": 4.36,
+        "mktcap": 14369480000000,
+        "label": null
+      },
+      {
+        "code": "900450",
+        "name": "합성종목045",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 산업재",
+        "naver": [
+          3
+        ],
+        "reasons": [
+          {
+            "naver_no": 3,
+            "reason": "합성 편입 사유 3-450"
+          }
+        ],
+        "chg_pct": 1.13,
+        "ret_5d": -4.6,
+        "ret_20d": -11.27,
+        "mktcap": 10386910000000,
+        "label": null
+      },
+      {
+        "code": "902550",
+        "name": "합성종목255",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 금융",
+        "naver": [
+          3
+        ],
+        "reasons": [
+          {
+            "naver_no": 3,
+            "reason": "합성 편입 사유 3-550"
+          }
+        ],
+        "chg_pct": 0.7,
+        "ret_5d": -2.05,
+        "ret_20d": -3.94,
+        "mktcap": 9349770000000,
+        "label": null
+      },
+      {
+        "code": "902000",
+        "name": "합성종목200",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 반도체",
+        "naver": [
+          3
+        ],
+        "reasons": [
+          {
+            "naver_no": 3,
+            "reason": "합성 편입 사유 3-000"
+          }
+        ],
+        "chg_pct": 0.2,
+        "ret_5d": -1.53,
+        "ret_20d": -1.19,
+        "mktcap": 7437200000000,
+        "label": null
+      },
+      {
+        "code": "901530",
+        "name": "합성종목153",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 하드웨어",
+        "naver": [
+          5
+        ],
+        "reasons": [
+          {
+            "naver_no": 5,
+            "reason": "합성 편입 사유 5-530"
+          }
+        ],
+        "chg_pct": 1.15,
+        "ret_5d": 3.3,
+        "ret_20d": 12.67,
+        "mktcap": 1214780000000,
+        "label": "w52"
+      },
+      {
+        "code": "902190",
+        "name": "합성종목219",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 에너지",
+        "naver": [
+          6
+        ],
+        "reasons": [
+          {
+            "naver_no": 6,
+            "reason": "합성 편입 사유 6-190"
+          }
+        ],
+        "chg_pct": 1.17,
+        "ret_5d": 7.75,
+        "ret_20d": 17.9,
+        "mktcap": 1208160000000,
+        "label": "hist"
+      },
+      {
+        "code": "902690",
+        "name": "합성종목269",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 산업재",
+        "naver": [
+          6
+        ],
+        "reasons": [
+          {
+            "naver_no": 6,
+            "reason": "합성 편입 사유 6-690"
+          }
+        ],
+        "chg_pct": 0.14,
+        "ret_5d": -4.65,
+        "ret_20d": 4.62,
+        "mktcap": 1193480000000,
+        "label": null
+      },
+      {
+        "code": "900320",
+        "name": "합성종목032",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 반도체",
+        "naver": [
+          6
+        ],
+        "reasons": [
+          {
+            "naver_no": 6,
+            "reason": "합성 편입 사유 6-320"
+          }
+        ],
+        "chg_pct": 1.33,
+        "ret_5d": 5.39,
+        "ret_20d": -0.66,
+        "mktcap": 1121260000000,
+        "label": null
+      },
+      {
+        "code": "901840",
+        "name": "합성종목184",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 반도체",
+        "naver": [
+          4
+        ],
+        "reasons": [
+          {
+            "naver_no": 4,
+            "reason": "합성 편입 사유 4-840"
+          }
+        ],
+        "chg_pct": 0.7,
+        "ret_5d": 4.71,
+        "ret_20d": 15.6,
+        "mktcap": 1073810000000,
+        "label": "w52"
+      },
+      {
+        "code": "900970",
+        "name": "합성종목097",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 하드웨어",
+        "naver": [
+          5
+        ],
+        "reasons": [
+          {
+            "naver_no": 5,
+            "reason": "합성 편입 사유 5-970"
+          }
+        ],
+        "chg_pct": -0.4,
+        "ret_5d": 1.17,
+        "ret_20d": 10.78,
+        "mktcap": 1038650000000,
+        "label": null
+      },
+      {
+        "code": "901360",
+        "name": "합성종목136",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 반도체",
+        "naver": [
+          5
+        ],
+        "reasons": [
+          {
+            "naver_no": 5,
+            "reason": "합성 편입 사유 5-360"
+          }
+        ],
+        "chg_pct": -2.18,
+        "ret_5d": 0.45,
+        "ret_20d": 1.28,
+        "mktcap": 983930000000,
+        "label": null
+      },
+      {
+        "code": "902990",
+        "name": "합성종목299",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 에너지",
+        "naver": [
+          6
+        ],
+        "reasons": [
+          {
+            "naver_no": 6,
+            "reason": "합성 편입 사유 6-990"
+          }
+        ],
+        "chg_pct": -0.32,
+        "ret_5d": 1.91,
+        "ret_20d": -7.03,
+        "mktcap": 978780000000,
+        "label": null
+      },
+      {
+        "code": "900040",
+        "name": "합성종목004",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 소비재",
+        "naver": [
+          3
+        ],
+        "reasons": [
+          {
+            "naver_no": 3,
+            "reason": "합성 편입 사유 3-040"
+          }
+        ],
+        "chg_pct": -0.69,
+        "ret_5d": -7.58,
+        "ret_20d": -6.86,
+        "mktcap": 934210000000,
+        "label": null
+      },
+      {
+        "code": "901270",
+        "name": "합성종목127",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 금융",
+        "naver": [
+          4
+        ],
+        "reasons": [
+          {
+            "naver_no": 4,
+            "reason": "합성 편입 사유 4-270"
+          }
+        ],
+        "chg_pct": 0.64,
+        "ret_5d": 1.2,
+        "ret_20d": -4.74,
+        "mktcap": 861840000000,
+        "label": null
+      },
+      {
+        "code": "902040",
+        "name": "합성종목204",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 소비재",
+        "naver": [
+          5
+        ],
+        "reasons": [
+          {
+            "naver_no": 5,
+            "reason": "합성 편입 사유 5-040"
+          }
+        ],
+        "chg_pct": 1.38,
+        "ret_5d": 0.24,
+        "ret_20d": -5.96,
+        "mktcap": 814930000000,
+        "label": null
+      },
+      {
+        "code": "901630",
+        "name": "합성종목163",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 에너지",
+        "naver": [
+          3
+        ],
+        "reasons": [
+          {
+            "naver_no": 3,
+            "reason": "합성 편입 사유 3-630"
+          }
+        ],
+        "chg_pct": 0.25,
+        "ret_5d": 4.18,
+        "ret_20d": -2.12,
+        "mktcap": 780370000000,
+        "label": null
+      },
+      {
+        "code": "900380",
+        "name": "합성종목038",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 헬스케어",
+        "naver": [
+          6
+        ],
+        "reasons": [
+          {
+            "naver_no": 6,
+            "reason": "합성 편입 사유 6-380"
+          }
+        ],
+        "chg_pct": -1.8,
+        "ret_5d": -2.18,
+        "ret_20d": -12.25,
+        "mktcap": 770840000000,
+        "label": null
+      },
+      {
+        "code": "900480",
+        "name": "합성종목048",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 반도체",
+        "naver": [
+          3
+        ],
+        "reasons": [
+          {
+            "naver_no": 3,
+            "reason": "합성 편입 사유 3-480"
+          }
+        ],
+        "chg_pct": -1.95,
+        "ret_5d": 0.38,
+        "ret_20d": 2.25,
+        "mktcap": 762470000000,
+        "label": null
+      },
+      {
+        "code": "900870",
+        "name": "합성종목087",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 금융",
+        "naver": [
+          4
+        ],
+        "reasons": [
+          {
+            "naver_no": 4,
+            "reason": "합성 편입 사유 4-870"
+          }
+        ],
+        "chg_pct": -0.91,
+        "ret_5d": 0.36,
+        "ret_20d": -5.12,
+        "mktcap": 713090000000,
+        "label": null
+      },
+      {
+        "code": "902840",
+        "name": "합성종목284",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 소비재",
+        "naver": [
+          4
+        ],
+        "reasons": [
+          {
+            "naver_no": 4,
+            "reason": "합성 편입 사유 4-840"
+          }
+        ],
+        "chg_pct": 0.69,
+        "ret_5d": -1.89,
+        "ret_20d": -5.26,
+        "mktcap": 666340000000,
+        "label": null
+      },
+      {
+        "code": "900020",
+        "name": "합성종목002",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 소프트웨어",
+        "naver": [
+          3
+        ],
+        "reasons": [
+          {
+            "naver_no": 3,
+            "reason": "합성 편입 사유 3-020"
+          }
+        ],
+        "chg_pct": -2.29,
+        "ret_5d": -8.74,
+        "ret_20d": -7.26,
+        "mktcap": 648860000000,
+        "label": null
+      },
+      {
+        "code": "901570",
+        "name": "합성종목157",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 산업재",
+        "naver": [
+          5
+        ],
+        "reasons": [
+          {
+            "naver_no": 5,
+            "reason": "합성 편입 사유 5-570"
+          }
+        ],
+        "chg_pct": -1.96,
+        "ret_5d": -3.37,
+        "ret_20d": 5.71,
+        "mktcap": 608010000000,
+        "label": null
+      },
+      {
+        "code": "900170",
+        "name": "합성종목017",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 하드웨어",
+        "naver": [
+          3
+        ],
+        "reasons": [
+          {
+            "naver_no": 3,
+            "reason": "합성 편입 사유 3-170"
+          }
+        ],
+        "chg_pct": -2.07,
+        "ret_5d": -0.71,
+        "ret_20d": -3.46,
+        "mktcap": 583090000000,
+        "label": null
+      },
+      {
+        "code": "901220",
+        "name": "합성종목122",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 소프트웨어",
+        "naver": [
+          6
+        ],
+        "reasons": [
+          {
+            "naver_no": 6,
+            "reason": "합성 편입 사유 6-220"
+          }
+        ],
+        "chg_pct": 1.35,
+        "ret_5d": 0.59,
+        "ret_20d": -5.02,
+        "mktcap": 567140000000,
+        "label": null
+      },
+      {
+        "code": "901940",
+        "name": "합성종목194",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 소프트웨어",
+        "naver": [
+          4
+        ],
+        "reasons": [
+          {
+            "naver_no": 4,
+            "reason": "합성 편입 사유 4-940"
+          }
+        ],
+        "chg_pct": -1.37,
+        "ret_5d": -5.34,
+        "ret_20d": -11.23,
+        "mktcap": 555760000000,
+        "label": null
+      },
+      {
+        "code": "900640",
+        "name": "합성종목064",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 반도체",
+        "naver": [
+          5
+        ],
+        "reasons": [
+          {
+            "naver_no": 5,
+            "reason": "합성 편입 사유 5-640"
+          }
+        ],
+        "chg_pct": 3.24,
+        "ret_5d": 2.85,
+        "ret_20d": 1.0,
+        "mktcap": 518950000000,
+        "label": null
+      },
+      {
+        "code": "900110",
+        "name": "합성종목011",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 에너지",
+        "naver": [
+          3
+        ],
+        "reasons": [
+          {
+            "naver_no": 3,
+            "reason": "합성 편입 사유 3-110"
+          }
+        ],
+        "chg_pct": 1.85,
+        "ret_5d": -2.78,
+        "ret_20d": -3.11,
+        "mktcap": 511880000000,
+        "label": null
+      },
+      {
+        "code": "900160",
+        "name": "합성종목016",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 반도체",
+        "naver": [
+          6
+        ],
+        "reasons": [
+          {
+            "naver_no": 6,
+            "reason": "합성 편입 사유 6-160"
+          }
+        ],
+        "chg_pct": 0.06,
+        "ret_5d": 2.16,
+        "ret_20d": 3.79,
+        "mktcap": 483640000000,
+        "label": null
+      },
+      {
+        "code": "900370",
+        "name": "합성종목037",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 산업재",
+        "naver": [
+          6
+        ],
+        "reasons": [
+          {
+            "naver_no": 6,
+            "reason": "합성 편입 사유 6-370"
+          }
+        ],
+        "chg_pct": -0.02,
+        "ret_5d": 3.85,
+        "ret_20d": 7.26,
+        "mktcap": 391440000000,
+        "label": null
+      },
+      {
+        "code": "902580",
+        "name": "합성종목258",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 소프트웨어",
+        "naver": [
+          5
+        ],
+        "reasons": [
+          {
+            "naver_no": 5,
+            "reason": "합성 편입 사유 5-580"
+          }
+        ],
+        "chg_pct": -3.09,
+        "ret_5d": -2.47,
+        "ret_20d": 2.65,
+        "mktcap": 363220000000,
+        "label": null
+      },
+      {
+        "code": "900670",
+        "name": "합성종목067",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 에너지",
+        "naver": [
+          4
+        ],
+        "reasons": [
+          {
+            "naver_no": 4,
+            "reason": "합성 편입 사유 4-670"
+          }
+        ],
+        "chg_pct": -0.99,
+        "ret_5d": -3.94,
+        "ret_20d": 3.23,
+        "mktcap": 354720000000,
+        "label": null
+      },
+      {
+        "code": "902320",
+        "name": "합성종목232",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 반도체",
+        "naver": [
+          6
+        ],
+        "reasons": [
+          {
+            "naver_no": 6,
+            "reason": "합성 편입 사유 6-320"
+          }
+        ],
+        "chg_pct": 0.41,
+        "ret_5d": 0.33,
+        "ret_20d": -12.43,
+        "mktcap": 308400000000,
+        "label": null
+      },
+      {
+        "code": "901160",
+        "name": "합성종목116",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 소비재",
+        "naver": [
+          5
+        ],
+        "reasons": [
+          {
+            "naver_no": 5,
+            "reason": "합성 편입 사유 5-160"
+          }
+        ],
+        "chg_pct": -2.16,
+        "ret_5d": 3.06,
+        "ret_20d": -3.07,
+        "mktcap": 220200000000,
+        "label": null
+      },
+      {
+        "code": "901780",
+        "name": "합성종목178",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 소프트웨어",
+        "naver": [
+          4
+        ],
+        "reasons": [
+          {
+            "naver_no": 4,
+            "reason": "합성 편입 사유 4-780"
+          }
+        ],
+        "chg_pct": -4.12,
+        "ret_5d": -0.72,
+        "ret_20d": 18.77,
+        "mktcap": 202810000000,
+        "label": null
+      },
+      {
+        "code": "901180",
+        "name": "합성종목118",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 헬스케어",
+        "naver": [
+          4
+        ],
+        "reasons": [
+          {
+            "naver_no": 4,
+            "reason": "합성 편입 사유 4-180"
+          }
+        ],
+        "chg_pct": -0.35,
+        "ret_5d": 1.59,
+        "ret_20d": -5.14,
+        "mktcap": 187230000000,
+        "label": null
+      },
+      {
+        "code": "900030",
+        "name": "합성종목003",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 에너지",
+        "naver": [
+          5,
+          6
+        ],
+        "reasons": [
+          {
+            "naver_no": 5,
+            "reason": "합성 편입 사유 5-030"
+          },
+          {
+            "naver_no": 6,
+            "reason": "합성 편입 사유 6-030"
+          }
+        ],
+        "chg_pct": 0.93,
+        "ret_5d": 4.45,
+        "ret_20d": 17.78,
+        "mktcap": 151330000000,
+        "label": "hist"
+      },
+      {
+        "code": "900730",
+        "name": "합성종목073",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 하드웨어",
+        "naver": [
+          4
+        ],
+        "reasons": [
+          {
+            "naver_no": 4,
+            "reason": "합성 편입 사유 4-730"
+          }
+        ],
+        "chg_pct": 1.77,
+        "ret_5d": 5.56,
+        "ret_20d": 2.28,
+        "mktcap": 145880000000,
+        "label": null
+      },
+      {
+        "code": "900560",
+        "name": "합성종목056",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 반도체",
+        "naver": [
+          3
+        ],
+        "reasons": [
+          {
+            "naver_no": 3,
+            "reason": "합성 편입 사유 3-560"
+          }
+        ],
+        "chg_pct": -0.94,
+        "ret_5d": 3.78,
+        "ret_20d": -0.44,
+        "mktcap": 89100000000,
+        "label": null
+      },
+      {
+        "code": "900840",
+        "name": "합성종목084",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 소비재",
+        "naver": [
+          5
+        ],
+        "reasons": [
+          {
+            "naver_no": 5,
+            "reason": "합성 편입 사유 5-840"
+          }
+        ],
+        "chg_pct": -1.69,
+        "ret_5d": 5.59,
+        "ret_20d": 19.27,
+        "mktcap": 86930000000,
+        "label": null
+      },
+      {
+        "code": "902660",
+        "name": "합성종목266",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 소프트웨어",
+        "naver": [
+          4
+        ],
+        "reasons": [
+          {
+            "naver_no": 4,
+            "reason": "합성 편입 사유 4-660"
+          }
+        ],
+        "chg_pct": 0.31,
+        "ret_5d": -3.73,
+        "ret_20d": 15.73,
+        "mktcap": 70470000000,
+        "label": null
+      },
+      {
+        "code": "901470",
+        "name": "합성종목147",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 에너지",
+        "naver": [
+          4
+        ],
+        "reasons": [
+          {
+            "naver_no": 4,
+            "reason": "합성 편입 사유 4-470"
+          }
+        ],
+        "chg_pct": -0.23,
+        "ret_5d": 8.8,
+        "ret_20d": 37.7,
+        "mktcap": 56560000000,
+        "label": null
+      },
+      {
+        "code": "901400",
+        "name": "합성종목140",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 소비재",
+        "naver": [
+          3
+        ],
+        "reasons": [
+          {
+            "naver_no": 3,
+            "reason": "합성 편입 사유 3-400"
+          }
+        ],
+        "chg_pct": 0.17,
+        "ret_5d": -3.24,
+        "ret_20d": -14.15,
+        "mktcap": 56540000000,
+        "label": null
+      },
+      {
+        "code": "902030",
+        "name": "합성종목203",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 에너지",
+        "naver": [
+          5
+        ],
+        "reasons": [
+          {
+            "naver_no": 5,
+            "reason": "합성 편입 사유 5-030"
+          }
+        ],
+        "chg_pct": 3.21,
+        "ret_5d": 0.64,
+        "ret_20d": 19.97,
+        "mktcap": 42150000000,
+        "label": null
+      },
+      {
+        "code": "902380",
+        "name": "합성종목238",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 헬스케어",
+        "naver": [
+          6
+        ],
+        "reasons": [
+          {
+            "naver_no": 6,
+            "reason": "합성 편입 사유 6-380"
+          }
+        ],
+        "chg_pct": -1.71,
+        "ret_5d": 7.43,
+        "ret_20d": -9.01,
+        "mktcap": 33900000000,
+        "label": null
+      },
+      {
+        "code": "901330",
+        "name": "합성종목133",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 산업재",
+        "naver": [
+          5
+        ],
+        "reasons": [
+          {
+            "naver_no": 5,
+            "reason": "합성 편입 사유 5-330"
+          }
+        ],
+        "chg_pct": 0.23,
+        "ret_5d": -0.04,
+        "ret_20d": -2.94,
+        "mktcap": 29490000000,
+        "label": null
+      },
+      {
+        "code": "902240",
+        "name": "합성종목224",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 반도체",
+        "naver": [
+          5
+        ],
+        "reasons": [
+          {
+            "naver_no": 5,
+            "reason": "합성 편입 사유 5-240"
+          }
+        ],
+        "chg_pct": -2.41,
+        "ret_5d": -2.78,
+        "ret_20d": -8.17,
+        "mktcap": 27860000000,
+        "label": null
+      },
+      {
+        "code": "900070",
+        "name": "합성제1호스팩",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 금융",
+        "naver": [
+          6
+        ],
+        "reasons": [
+          {
+            "naver_no": 6,
+            "reason": "합성 편입 사유 6-070"
+          }
+        ],
+        "chg_pct": 0.88,
+        "ret_5d": 0.54,
+        "ret_20d": 2.17,
+        "mktcap": 25410000000,
+        "label": null
+      },
+      {
+        "code": "900770",
+        "name": "합성종목077",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 산업재",
+        "naver": [
+          6
+        ],
+        "reasons": [
+          {
+            "naver_no": 6,
+            "reason": "합성 편입 사유 6-770"
+          }
+        ],
+        "chg_pct": 5.06,
+        "ret_5d": 6.43,
+        "ret_20d": -5.63,
+        "mktcap": 21400000000,
+        "label": null
+      },
+      {
+        "code": "900050",
+        "name": "가상종목0005",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 산업재",
+        "naver": [
+          6
+        ],
+        "reasons": [
+          {
+            "naver_no": 6,
+            "reason": "합성 편입 사유 6-050"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "930219",
+        "name": "가상종목0519",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 금융",
+        "naver": [
+          6
+        ],
+        "reasons": [
+          {
+            "naver_no": 6,
+            "reason": "합성 편입 사유 6-219"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "930473",
+        "name": "가상종목0773",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 산업재",
+        "naver": [
+          6
+        ],
+        "reasons": [
+          {
+            "naver_no": 6,
+            "reason": "합성 편입 사유 6-473"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "930514",
+        "name": "가상종목0814",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 헬스케어",
+        "naver": [
+          3
+        ],
+        "reasons": [
+          {
+            "naver_no": 3,
+            "reason": "합성 편입 사유 3-514"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "930638",
+        "name": "가상종목0938",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 소프트웨어",
+        "naver": [
+          6
+        ],
+        "reasons": [
+          {
+            "naver_no": 6,
+            "reason": "합성 편입 사유 6-638"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "930808",
+        "name": "가상종목1108",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 소비재",
+        "naver": [
+          5
+        ],
+        "reasons": [
+          {
+            "naver_no": 5,
+            "reason": "합성 편입 사유 5-808"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "930818",
+        "name": "가상종목1118",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 헬스케어",
+        "naver": [
+          4
+        ],
+        "reasons": [
+          {
+            "naver_no": 4,
+            "reason": "합성 편입 사유 4-818"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "930838",
+        "name": "가상종목1138",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 소프트웨어",
+        "naver": [
+          6
+        ],
+        "reasons": [
+          {
+            "naver_no": 6,
+            "reason": "합성 편입 사유 6-838"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "930851",
+        "name": "가상종목1151",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 금융",
+        "naver": [
+          3
+        ],
+        "reasons": [
+          {
+            "naver_no": 3,
+            "reason": "합성 편입 사유 3-851"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "930863",
+        "name": "가상종목1163",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 에너지",
+        "naver": [
+          5
+        ],
+        "reasons": [
+          {
+            "naver_no": 5,
+            "reason": "합성 편입 사유 5-863"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "931009",
+        "name": "가상종목1309",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 산업재",
+        "naver": [
+          4
+        ],
+        "reasons": [
+          {
+            "naver_no": 4,
+            "reason": "합성 편입 사유 4-009"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "931059",
+        "name": "가상종목1359",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 금융",
+        "naver": [
+          5
+        ],
+        "reasons": [
+          {
+            "naver_no": 5,
+            "reason": "합성 편입 사유 5-059"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "931103",
+        "name": "가상종목1403",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 에너지",
+        "naver": [
+          4
+        ],
+        "reasons": [
+          {
+            "naver_no": 4,
+            "reason": "합성 편입 사유 4-103"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "931117",
+        "name": "가상종목1417",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 하드웨어",
+        "naver": [
+          5
+        ],
+        "reasons": [
+          {
+            "naver_no": 5,
+            "reason": "합성 편입 사유 5-117"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "931166",
+        "name": "가상종목1466",
+        "market": "KOSPI",
+        "type": "reit",
+        "industry_group": "가상 소프트웨어",
+        "naver": [
+          4
+        ],
+        "reasons": [
+          {
+            "naver_no": 4,
+            "reason": "합성 편입 사유 4-166"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "931199",
+        "name": "가상종목1499",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 에너지",
+        "naver": [
+          3
+        ],
+        "reasons": [
+          {
+            "naver_no": 3,
+            "reason": "합성 편입 사유 3-199"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "931217",
+        "name": "가상종목1517",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 산업재",
+        "naver": [
+          3
+        ],
+        "reasons": [
+          {
+            "naver_no": 3,
+            "reason": "합성 편입 사유 3-217"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "931346",
+        "name": "가상종목1646",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 헬스케어",
+        "naver": [
+          4
+        ],
+        "reasons": [
+          {
+            "naver_no": 4,
+            "reason": "합성 편입 사유 4-346"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "931383",
+        "name": "가상종목1683",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 에너지",
+        "naver": [
+          3
+        ],
+        "reasons": [
+          {
+            "naver_no": 3,
+            "reason": "합성 편입 사유 3-383"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "931401",
+        "name": "가상종목1701",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 산업재",
+        "naver": [
+          6
+        ],
+        "reasons": [
+          {
+            "naver_no": 6,
+            "reason": "합성 편입 사유 6-401"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "931543",
+        "name": "가상종목1843",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 에너지",
+        "naver": [
+          6
+        ],
+        "reasons": [
+          {
+            "naver_no": 6,
+            "reason": "합성 편입 사유 6-543"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "931579",
+        "name": "가상종목1879",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 금융",
+        "naver": [
+          5
+        ],
+        "reasons": [
+          {
+            "naver_no": 5,
+            "reason": "합성 편입 사유 5-579"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "931661",
+        "name": "가상종목1961",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 하드웨어",
+        "naver": [
+          3
+        ],
+        "reasons": [
+          {
+            "naver_no": 3,
+            "reason": "합성 편입 사유 3-661"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "931726",
+        "name": "가상종목2026",
+        "market": "KOSPI",
+        "type": "common",
+        "industry_group": "가상 소프트웨어",
+        "naver": [
+          5
+        ],
+        "reasons": [
+          {
+            "naver_no": 5,
+            "reason": "합성 편입 사유 5-726"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      },
+      {
+        "code": "931729",
+        "name": "가상종목2029",
+        "market": "KOSDAQ",
+        "type": "common",
+        "industry_group": "가상 산업재",
+        "naver": [
+          4
+        ],
+        "reasons": [
+          {
+            "naver_no": 4,
+            "reason": "합성 편입 사유 4-729"
+          }
+        ],
+        "chg_pct": null,
+        "ret_5d": null,
+        "ret_20d": null,
+        "mktcap": null,
+        "label": null
+      }
+    ],
+    "stats": {
+      "n_members": 79,
+      "n_priced": 54,
+      "chg_pct": -0.37,
+      "ret_5d": -1.09,
+      "ret_20d": 0.05,
+      "weighted": true,
+      "up": 28,
+      "flat": 0,
+      "down": 26,
+      "unknown": 25,
+      "up_ratio": 0.5185,
+      "n_newhigh": 5,
+      "n_near": 10,
+      "turnover_mult": 0.97,
+      "mktcap": 214878660000000,
+      "leader": {
+        "code": "902040",
+        "name": "합성종목204",
+        "chg_pct": 1.38
+      }
+    }
+  }
+}

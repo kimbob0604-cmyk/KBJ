@@ -1226,3 +1226,22 @@ test_index_review_repo.py·tests/unit/engines/index_review/test_service.py·test
 | 상관 | 쌍마다 일간 수익률 피어슨 상관(기준 달력 마지막 60·120 거래일) | 관심종목 main 또는 보유 앞 50종목. 일간 수익률은 바로 앞 거래일 종가가 있을 때만(정지 뒤 첫날을 잇지 않는다) | 겹치는 날 < 40 이거나 분산 0 이면 None, 2종목 미만이면 404 |
 | prefill 52주 수익률 | 마지막 확정 종가 ÷ 250 거래일 전 종가 − 1 | % | 유효 일봉 240 미만이면 None **[확인 필요]**. 칸마다 출처(`kbj`·`consensus`, 화면에서 고치면 `manual`) |
 | 추천 사후 수익 D+k | 추천일 뒤 k 번째 거래일 확정 종가 ÷ 추천가 − 1 | % — 추천가 없으면 추천일 종가 | 없으면 None. SD `recommendation_history` 이관분만(새 추천 생성기 없음) |
+
+## 31. 테마 강도·밸류체인 (로그인 — 페이지 9, ADR 0039)
+
+- **입력**: 대테마(`pub_themes.theme` — 사용자 작성 분류), 대테마 ↔ 네이버 테마(`prv_themes.theme_link`), 편입
+  (`prv_themes.member`), 종목 마스터(`prv_themes.stock`), 보드 종목 하루(`prv_board.stock_day` — 보드 마지막 날).
+- **대테마 종목** = 그 대테마에 걸린 네이버 테마들의 편입 종목 합집합 ∩ 종목 마스터(한 종목 한 번).
+- **등락(당일·5일·20일)** = 종목 `chg_pct`·`ret_5d`·`ret_21d`(보드 — 20일 = 21거래일 전 종가 대비, 수정주가 이상 구간
+  제외)의 **시총 가중 평균**(가중치 = 보드 시총, 원). 시총을 아는 종목이 없으면 단순 평균(`weighted=false`).
+  보드 롤업(`kbj.engines.board.aggregate.rollup`)과 같은 식 — 소수 둘째 자리 반올림. 단위 %.
+- **상승 비율** = 상승 종목 / 등락을 아는 종목(보합 = 정확히 0). 아는 종목이 없으면 None(0 으로 채우지 않는다).
+- **신고가 수** = 보드 라벨(hist·w52·d120 — 52주 신저가 제외)이 있는 종목 수. **근접 수** = 보드 near_kind.
+- **거래대금 배수** = 아는 거래대금 합 / 아는 20일 평균 거래대금 합(보드 규칙). **시총 합** = 아는 시총 합(원).
+- **밸류체인** = valuechain 값이 같은 대테마들의 종목 합집합으로 같은 집계.
+- **정렬**: 고른 기간(1·5·20) 값 내림차순, 값 없음은 뒤, 같으면 원천 순서.
+- **품질**: 구성 행(편입 판·분류 판·보드 종목 하루) 중 가장 나쁜 것. 판이 `stale_days`(15일) 넘게 오래되면 stale, 공개
+  분류 판과 편입 판의 built_at 이 다르면 stale + notes. invalid 보드 행은 계산에서 뺀다.
+- **예외**: 분류 없음 → 404(theme.classes_sync), 편입 없음 → 404(theme.master_sync), 보드 종목 하루 없음 → 강도 404
+  (board.daily) — 상세는 시세 칸 None 으로 200.
+- **시험**: `tests/unit/theme/test_strength.py`(손계산·보드 롤업 대조), `tests/unit/api/test_routes_themes.py`.

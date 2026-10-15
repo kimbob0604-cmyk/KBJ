@@ -715,11 +715,11 @@ def test_real_registry_one_day_runs_only_enabled_jobs() -> None:
     rig = Rig([], handlers, kst(2026, 10, 6, 0, 0), registry=reg)
     rig.run_until(kst(2026, 10, 7, 0, 0), every=timedelta(minutes=1))
     # market.backfill·fin.backfill 은 수동(발화 없음), filings.company_profile 은 토요일 04:00.
-    # us.universe 는 일요일 04:00(P5). trade.derive 는 month_days 14~20 만(P6). 나머지 켜진
-    # 작업은 10-06(화, 거래일)에 모두 돈다
+    # us.universe 는 일요일 04:00(P5). trade.derive 는 month_days 14~20 만(P6). 테마 마스터 둘은
+    # 일요일 12:40(ADR 0039). 나머지 켜진 작업은 10-06(화, 거래일)에 모두 돈다
     assert set(ran) == enabled - {
         "market.backfill", "fin.backfill", "filings.company_profile", "us.universe",
-        "trade.derive",
+        "trade.derive", "theme.master_sync", "theme.classes_sync",
     }  # fmt: skip
     # P6 웨이브 3 이 켠 매핑표·종목 수출 지수는 매일 돈다(외부 호출 없음)
     assert ran.count("trade.map_load") == ran.count("trade.stock_index") == 1

@@ -453,10 +453,11 @@ describe("merge-public-data: P5 하위 폴더(macro)·credit.json — p5_design 
   it("규칙: P5 폴더는 SUBDIRS 에 있고 DART 전용이 아니다, 크기 상한은 파이썬과 같은 숫자", () => {
     expect(SUBDIRS).toEqual(["fin", "reports", "macro", "trade", "diag"]); // P6 trade·P7 diag 는 아래 묶음
     expect(DART_SUBDIRS).toEqual(["fin", "reports"]);
-    expect([...P5_FLAT_NAMES]).toEqual(["credit.json"]);
+    expect([...P5_FLAT_NAMES]).toEqual(["credit.json", "themes.json"]); // themes.json — 페이지 9(ADR 0039)
     expect(DIR_CAPS).toMatchObject({ macro: 3 * 1024 * 1024 });
     expect(FILE_CAPS).toMatchObject({
       "credit.json": 100 * 1024,
+      "themes.json": 200 * 1024,
       "macro/calendar.json": 200 * 1024,
     });
     for (const key of [

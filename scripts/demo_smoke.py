@@ -34,6 +34,8 @@ PATHS: Final[tuple[tuple[int, str], ...]] = (
     (4, "/api/flows/investors"),
     (6, "/api/macro/tabs"),
     (7, "/api/trade/flash"),
+    (9, "/api/themes"),
+    (9, "/api/themes/strength"),
     (10, "/api/etf/flows"),
     (11, "/api/rules"),
     (12, "/api/backtest/runs"),

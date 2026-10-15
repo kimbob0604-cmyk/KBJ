@@ -449,3 +449,36 @@ forbidden_modules = [
     "kbj.services.engine",
     "httpx",
 ]
+
+# ── 페이지 9(ADR 0039 — 사용자 결정 2026-10-15) — 공개 대테마 분류(엔진 classes·작업 theme.classes_sync·공개
+# 내보내기 themes_json·공개 저장소 theme_pub)는 네이버 유래 로그인 쪽(원천 어댑터·엔진 master·strength·작업
+# theme.master_sync·저장소 theme)과 다른 로그인 저장소를 모른다(간접 import 까지). SQL 표 쪽 겹은
+# tests/unit/test_public_writers.py(P9_PUBLIC_JOBS) ──
+[[tool.importlinter.contracts]]
+name = "㉑ 공개 테마 분류(engines.theme.classes·collectors.theme_classes·public_export.themes_json·store.repos.theme_pub)는 로그인 원천·테마 로그인 모듈·로그인 저장소를 import 하지 않는다"
+type = "forbidden"
+source_modules = [
+    "kbj.engines.theme.classes",
+    "kbj.services.collectors.theme_classes",
+    "kbj.services.public_export.themes_json",
+    "kbj.store.repos.theme_pub",
+]
+forbidden_modules = [
+    "kbj.data.private",
+    "kbj.engines.theme.master",
+    "kbj.engines.theme.strength",
+    "kbj.engines.board",
+    "kbj.services.collectors.theme_master",
+    "kbj.services.collectors._p3",
+    "kbj.store.repos.theme",
+    "kbj.store.repos.board",
+    "kbj.store.repos.market",
+    "kbj.store.repos.flows",
+    "kbj.store.repos.etf",
+    "kbj.store.repos.consensus",
+    "kbj.store.repos.journal",
+    "kbj.store.repos.macro_prv",
+    "kbj.store.repos.us",
+    "kbj.store.repos.program",
+    "kbj.store.repos.memory",
+]

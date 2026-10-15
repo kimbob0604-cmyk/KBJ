@@ -1,0 +1,297 @@
+{
+  "source": "stock-dashboard:data/master",
+  "as_of": "2026-09-13T18:00:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "대테마 분류는 사용자 작성(stock-dashboard 테마 마스터 — 주 1회)"
+  ],
+  "generated_at": "2026-09-15T18:00:00+09:00",
+  "data": {
+    "built_at": "2026-09-13T18:00:00+09:00",
+    "n_themes": 36,
+    "sections": [
+      {
+        "section": "기술",
+        "themes": [
+          {
+            "id": "syn_1_1",
+            "name": "기술 합성 테마 1",
+            "section": "기술",
+            "valuechain": "CHAIN_C"
+          },
+          {
+            "id": "syn_1_2",
+            "name": "기술 합성 테마 2",
+            "section": "기술",
+            "valuechain": null
+          },
+          {
+            "id": "syn_1_3",
+            "name": "기술 합성 테마 3",
+            "section": "기술",
+            "valuechain": "CHAIN_A"
+          },
+          {
+            "id": "syn_1_4",
+            "name": "기술 합성 테마 4",
+            "section": "기술",
+            "valuechain": null
+          },
+          {
+            "id": "syn_1_5",
+            "name": "기술 합성 테마 5",
+            "section": "기술",
+            "valuechain": null
+          },
+          {
+            "id": "syn_1_6",
+            "name": "기술 합성 테마 6",
+            "section": "기술",
+            "valuechain": "CHAIN_B"
+          },
+          {
+            "id": "syn_1_7",
+            "name": "기술 합성 테마 7",
+            "section": "기술",
+            "valuechain": null
+          },
+          {
+            "id": "syn_1_8",
+            "name": "기술 합성 테마 8",
+            "section": "기술",
+            "valuechain": "CHAIN_A"
+          },
+          {
+            "id": "syn_1_9",
+            "name": "기술 합성 테마 9",
+            "section": "기술",
+            "valuechain": null
+          }
+        ]
+      },
+      {
+        "section": "에너지",
+        "themes": [
+          {
+            "id": "syn_2_1",
+            "name": "에너지 합성 테마 1",
+            "section": "에너지",
+            "valuechain": null
+          },
+          {
+            "id": "syn_2_2",
+            "name": "에너지 합성 테마 2",
+            "section": "에너지",
+            "valuechain": "CHAIN_A"
+          },
+          {
+            "id": "syn_2_3",
+            "name": "에너지 합성 테마 3",
+            "section": "에너지",
+            "valuechain": null
+          },
+          {
+            "id": "syn_2_4",
+            "name": "에너지 합성 테마 4",
+            "section": "에너지",
+            "valuechain": "CHAIN_D"
+          },
+          {
+            "id": "syn_2_5",
+            "name": "에너지 합성 테마 5",
+            "section": "에너지",
+            "valuechain": null
+          },
+          {
+            "id": "syn_2_6",
+            "name": "에너지 합성 테마 6",
+            "section": "에너지",
+            "valuechain": null
+          },
+          {
+            "id": "syn_2_7",
+            "name": "에너지 합성 테마 7",
+            "section": "에너지",
+            "valuechain": "CHAIN_A"
+          },
+          {
+            "id": "syn_2_8",
+            "name": "에너지 합성 테마 8",
+            "section": "에너지",
+            "valuechain": null
+          }
+        ]
+      },
+      {
+        "section": "소비",
+        "themes": [
+          {
+            "id": "syn_3_1",
+            "name": "소비 합성 테마 1",
+            "section": "소비",
+            "valuechain": "CHAIN_A"
+          },
+          {
+            "id": "syn_3_2",
+            "name": "소비 합성 테마 2",
+            "section": "소비",
+            "valuechain": null
+          },
+          {
+            "id": "syn_3_3",
+            "name": "소비 합성 테마 3",
+            "section": "소비",
+            "valuechain": null
+          },
+          {
+            "id": "syn_3_4",
+            "name": "소비 합성 테마 4",
+            "section": "소비",
+            "valuechain": "CHAIN_D"
+          },
+          {
+            "id": "syn_3_5",
+            "name": "소비 합성 테마 5",
+            "section": "소비",
+            "valuechain": null
+          },
+          {
+            "id": "syn_3_6",
+            "name": "소비 합성 테마 6",
+            "section": "소비",
+            "valuechain": "CHAIN_A"
+          }
+        ]
+      },
+      {
+        "section": "산업",
+        "themes": [
+          {
+            "id": "syn_4_1",
+            "name": "산업 합성 테마 1",
+            "section": "산업",
+            "valuechain": null
+          },
+          {
+            "id": "syn_4_2",
+            "name": "산업 합성 테마 2",
+            "section": "산업",
+            "valuechain": null
+          },
+          {
+            "id": "syn_4_3",
+            "name": "산업 합성 테마 3",
+            "section": "산업",
+            "valuechain": "CHAIN_B"
+          },
+          {
+            "id": "syn_4_4",
+            "name": "산업 합성 테마 4",
+            "section": "산업",
+            "valuechain": null
+          },
+          {
+            "id": "syn_4_5",
+            "name": "산업 합성 테마 5",
+            "section": "산업",
+            "valuechain": "CHAIN_B"
+          }
+        ]
+      },
+      {
+        "section": "의료",
+        "themes": [
+          {
+            "id": "syn_5_1",
+            "name": "의료 합성 테마 1",
+            "section": "의료",
+            "valuechain": null
+          },
+          {
+            "id": "syn_5_2",
+            "name": "의료 합성 테마 2",
+            "section": "의료",
+            "valuechain": null
+          },
+          {
+            "id": "syn_5_3",
+            "name": "의료 합성 테마 3",
+            "section": "의료",
+            "valuechain": "CHAIN_A"
+          },
+          {
+            "id": "syn_5_4",
+            "name": "의료 합성 테마 4",
+            "section": "의료",
+            "valuechain": null
+          }
+        ]
+      },
+      {
+        "section": "금융",
+        "themes": [
+          {
+            "id": "syn_6_1",
+            "name": "금융 합성 테마 1",
+            "section": "금융",
+            "valuechain": "CHAIN_D"
+          },
+          {
+            "id": "syn_6_2",
+            "name": "금융 합성 테마 2",
+            "section": "금융",
+            "valuechain": null
+          },
+          {
+            "id": "syn_6_3",
+            "name": "금융 합성 테마 3",
+            "section": "금융",
+            "valuechain": null
+          },
+          {
+            "id": "syn_6_4",
+            "name": "금융 합성 테마 4",
+            "section": "금융",
+            "valuechain": null
+          }
+        ]
+      }
+    ],
+    "valuechains": [
+      {
+        "key": "CHAIN_A",
+        "themes": [
+          "syn_1_3",
+          "syn_1_8",
+          "syn_2_2",
+          "syn_2_7",
+          "syn_3_1",
+          "syn_3_6",
+          "syn_5_3"
+        ]
+      },
+      {
+        "key": "CHAIN_B",
+        "themes": [
+          "syn_1_6",
+          "syn_4_3",
+          "syn_4_5"
+        ]
+      },
+      {
+        "key": "CHAIN_C",
+        "themes": [
+          "syn_1_1"
+        ]
+      },
+      {
+        "key": "CHAIN_D",
+        "themes": [
+          "syn_2_4",
+          "syn_3_4",
+          "syn_6_1"
+        ]
+      }
+    ]
+  }
+}

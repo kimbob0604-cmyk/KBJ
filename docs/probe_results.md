@@ -423,7 +423,7 @@
 | 71 (P9 OPS) | VM 첫 `ops check` — 표 크기·DB 크기 쿼리가 Timescale 에서 도는지(`hypertable_size`·청크 제외)와 걸리는 시간 (ADR 0037) | `docker compose --profile app exec api python -m kbj.services.ops check --json` 종료 코드 0·1(2 아님), 상위 10 에 하이퍼테이블이 청크 합으로 보임, 5초 안 |
 | 72 (P9 OPS) | 매일 점검 7일 — 장 시작 전·마감 뒤 `ops check` 결과 레벨 (런북 ⑤) | 하루 2회 기록, FAIL 은 원인 메모(레벨·항목 이름만) |
 | 73 (P9 OPS) | 1주 판정 — `python -m kbj.services.ops week --end <마지막 날>` (런북 ⑩, 사용자 결정 §11 Q6) | 종료 코드 0(통과) — 결과는 통과/실패·개수만 `docs/PLAN.md` P9 결과에. ① 끊김 판정은 워치독(5분·24시간)이 `heartbeat_gap` 을 쓰기 시작한 뒤부터 의미가 있다 |
-| 74 (P9 DEMO) | 데모 compose 첫 기동 — 이미지 빌드 시간·이미지 크기·healthcheck 통과까지 시간(합성 세계 적재 약 2분 기대)·arm64(Apple Silicon) 빌드 (ADR 0034) | `docker compose -f docker-compose.demo.yml up -d --build` 뒤 `docker image ls kbj-demo`·`docker compose -f docker-compose.demo.yml ps`·`uv run python scripts/demo_smoke.py` — **2026-10-14 메인 실측(x86_64 세션 컨테이너)**: 이미지 1.34 GB, 빌드+기동+연기 시험 통과까지 231초(healthy), `demo_smoke` 경로 15개 통과(페이지 5 공시 피드는 합성 세계에 없어 404 안내). arm64 는 미확인 |
+| 74 (P9 DEMO) | 데모 compose 첫 기동 — 이미지 빌드 시간·이미지 크기·healthcheck 통과까지 시간(합성 세계 적재 약 2분 기대)·arm64(Apple Silicon) 빌드 (ADR 0034) | `docker compose -f docker-compose.demo.yml up -d --build` 뒤 `docker image ls kbj-demo`·`docker compose -f docker-compose.demo.yml ps`·`uv run python scripts/demo_smoke.py` — **2026-10-14 메인 실측(x86_64 세션 컨테이너)**: 이미지 1.34 GB, 빌드+기동+연기 시험 통과까지 231초(healthy), `demo_smoke` 경로 15개 통과(페이지 5 공시 피드는 합성 세계에 없어 404 안내). arm64: 2026-10-15 qemu 로 운영 이미지 arm64 빌드·주요 import·`scheduler validate` 통과(ADR 0040) — 실제 Ampere VM 기동은 미확인 |
 
 P9 번호(FND 확정): GXI #68~#70, OPS #71~#73, DEMO #74 — 묶음 초안(`docs/p9_design.md` 각 '구현 기록')을 WRAP 이 이 표로 옮겼다.
 

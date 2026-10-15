@@ -25,6 +25,7 @@ export const PUBLIC_FORBIDDEN = [
   { id: 'session_cookie', needle: 'kbj_session', why: '세션 쿠키 이름', ci: true },
   { id: 'index_review', needle: 'index-review', why: '지수 정기변경 API(로그인 전용 — 구성종목·컷오프 추정, P5 2차 IDX)' },
   { id: 'trade_overlay_price', needle: '월말 종가', why: '페이지 8 수출 겹쳐 보기 로그인 줄(p8/trade_overlay_price.ts — 시세, P6 D-P6-4)' },
+  { id: 'theme_members', needle: '편입 사유', why: '페이지 9 로그인 본문(p9/strength.ts — 네이버 유래 편입 종목·사유·시세 강도, ADR 0039)' },
 ];
 
 export const LOGIN_FORBIDDEN = [

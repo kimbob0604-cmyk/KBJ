@@ -1,0 +1,1186 @@
+{
+  "source": "KIS+stock-dashboard:data/master+naver(stock-dashboard 수집)",
+  "as_of": "2026-09-15T15:30:00+09:00",
+  "quality": "estimated",
+  "notes": [
+    "편입 = 대테마에 걸린 네이버 테마(stock-dashboard 수집)의 종목 합집합",
+    "등락은 시총 가중 평균(시총 모르면 단순 평균) · 20일 = 21거래일 전 종가 대비(보드)",
+    "시세 2026-09-15 마감(보드)"
+  ],
+  "generated_at": "2026-09-15T18:00:00+09:00",
+  "data": {
+    "trade_date": "2026-09-15",
+    "period": 5,
+    "built_at": "2026-09-13T18:00:00+09:00",
+    "rows": [
+      {
+        "rank": 1,
+        "id": "syn_5_2",
+        "name": "의료 합성 테마 2",
+        "section": "의료",
+        "valuechain": null,
+        "stats": {
+          "n_members": 76,
+          "n_priced": 53,
+          "chg_pct": 0.1,
+          "ret_5d": 2.74,
+          "ret_20d": 1.49,
+          "weighted": true,
+          "up": 22,
+          "flat": 0,
+          "down": 31,
+          "unknown": 23,
+          "up_ratio": 0.4151,
+          "n_newhigh": 4,
+          "n_near": 9,
+          "turnover_mult": 1.19,
+          "mktcap": 139580370000000,
+          "leader": {
+            "code": "902770",
+            "name": "합성종목277",
+            "chg_pct": 0.15
+          }
+        }
+      },
+      {
+        "rank": 2,
+        "id": "syn_2_8",
+        "name": "에너지 합성 테마 8",
+        "section": "에너지",
+        "valuechain": null,
+        "stats": {
+          "n_members": 60,
+          "n_priced": 42,
+          "chg_pct": 0.97,
+          "ret_5d": 2.16,
+          "ret_20d": 2.46,
+          "weighted": true,
+          "up": 19,
+          "flat": 0,
+          "down": 23,
+          "unknown": 18,
+          "up_ratio": 0.4524,
+          "n_newhigh": 5,
+          "n_near": 11,
+          "turnover_mult": 1.13,
+          "mktcap": 74002220000000,
+          "leader": {
+            "code": "902770",
+            "name": "합성종목277",
+            "chg_pct": 0.15
+          }
+        }
+      },
+      {
+        "rank": 3,
+        "id": "syn_4_4",
+        "name": "산업 합성 테마 4",
+        "section": "산업",
+        "valuechain": null,
+        "stats": {
+          "n_members": 94,
+          "n_priced": 62,
+          "chg_pct": 1.89,
+          "ret_5d": 1.93,
+          "ret_20d": 5.12,
+          "weighted": true,
+          "up": 35,
+          "flat": 0,
+          "down": 27,
+          "unknown": 32,
+          "up_ratio": 0.5645,
+          "n_newhigh": 6,
+          "n_near": 16,
+          "turnover_mult": 0.94,
+          "mktcap": 154385660000000,
+          "leader": {
+            "code": "901310",
+            "name": "합성종목131",
+            "chg_pct": 2.3
+          }
+        }
+      },
+      {
+        "rank": 4,
+        "id": "syn_3_6",
+        "name": "소비 합성 테마 6",
+        "section": "소비",
+        "valuechain": "CHAIN_A",
+        "stats": {
+          "n_members": 91,
+          "n_priced": 61,
+          "chg_pct": 1.6,
+          "ret_5d": 1.85,
+          "ret_20d": -2.6,
+          "weighted": true,
+          "up": 30,
+          "flat": 0,
+          "down": 31,
+          "unknown": 30,
+          "up_ratio": 0.4918,
+          "n_newhigh": 7,
+          "n_near": 13,
+          "turnover_mult": 1.19,
+          "mktcap": 140389130000000,
+          "leader": {
+            "code": "900980",
+            "name": "합성종목098",
+            "chg_pct": 0.78
+          }
+        }
+      },
+      {
+        "rank": 5,
+        "id": "syn_1_5",
+        "name": "기술 합성 테마 5",
+        "section": "기술",
+        "valuechain": null,
+        "stats": {
+          "n_members": 58,
+          "n_priced": 40,
+          "chg_pct": 1.42,
+          "ret_5d": 1.45,
+          "ret_20d": -0.11,
+          "weighted": true,
+          "up": 19,
+          "flat": 0,
+          "down": 21,
+          "unknown": 18,
+          "up_ratio": 0.475,
+          "n_newhigh": 5,
+          "n_near": 9,
+          "turnover_mult": 0.98,
+          "mktcap": 93736090000000,
+          "leader": {
+            "code": "901860",
+            "name": "합성종목186",
+            "chg_pct": 0.58
+          }
+        }
+      },
+      {
+        "rank": 6,
+        "id": "syn_4_2",
+        "name": "산업 합성 테마 2",
+        "section": "산업",
+        "valuechain": null,
+        "stats": {
+          "n_members": 60,
+          "n_priced": 41,
+          "chg_pct": 0.94,
+          "ret_5d": 1.42,
+          "ret_20d": -0.96,
+          "weighted": true,
+          "up": 21,
+          "flat": 0,
+          "down": 20,
+          "unknown": 19,
+          "up_ratio": 0.5122,
+          "n_newhigh": 3,
+          "n_near": 7,
+          "turnover_mult": 0.75,
+          "mktcap": 156186840000000,
+          "leader": {
+            "code": "901720",
+            "name": "합성종목172",
+            "chg_pct": 5.75
+          }
+        }
+      },
+      {
+        "rank": 7,
+        "id": "syn_2_7",
+        "name": "에너지 합성 테마 7",
+        "section": "에너지",
+        "valuechain": "CHAIN_A",
+        "stats": {
+          "n_members": 107,
+          "n_priced": 71,
+          "chg_pct": 1.27,
+          "ret_5d": 1.26,
+          "ret_20d": 1.83,
+          "weighted": true,
+          "up": 35,
+          "flat": 0,
+          "down": 36,
+          "unknown": 36,
+          "up_ratio": 0.493,
+          "n_newhigh": 8,
+          "n_near": 19,
+          "turnover_mult": 1.12,
+          "mktcap": 254423940000000,
+          "leader": {
+            "code": "902770",
+            "name": "합성종목277",
+            "chg_pct": 0.15
+          }
+        }
+      },
+      {
+        "rank": 8,
+        "id": "syn_3_3",
+        "name": "소비 합성 테마 3",
+        "section": "소비",
+        "valuechain": null,
+        "stats": {
+          "n_members": 112,
+          "n_priced": 76,
+          "chg_pct": 0.21,
+          "ret_5d": 1.12,
+          "ret_20d": 3.68,
+          "weighted": true,
+          "up": 33,
+          "flat": 0,
+          "down": 43,
+          "unknown": 36,
+          "up_ratio": 0.4342,
+          "n_newhigh": 7,
+          "n_near": 15,
+          "turnover_mult": 1.02,
+          "mktcap": 315429050000000,
+          "leader": {
+            "code": "900400",
+            "name": "합성종목040",
+            "chg_pct": 1.03
+          }
+        }
+      },
+      {
+        "rank": 9,
+        "id": "syn_1_4",
+        "name": "기술 합성 테마 4",
+        "section": "기술",
+        "valuechain": null,
+        "stats": {
+          "n_members": 114,
+          "n_priced": 77,
+          "chg_pct": 1.11,
+          "ret_5d": 0.77,
+          "ret_20d": 1.72,
+          "weighted": true,
+          "up": 39,
+          "flat": 0,
+          "down": 38,
+          "unknown": 37,
+          "up_ratio": 0.5065,
+          "n_newhigh": 13,
+          "n_near": 14,
+          "turnover_mult": 1.15,
+          "mktcap": 227958680000000,
+          "leader": {
+            "code": "900980",
+            "name": "합성종목098",
+            "chg_pct": 0.78
+          }
+        }
+      },
+      {
+        "rank": 10,
+        "id": "syn_5_1",
+        "name": "의료 합성 테마 1",
+        "section": "의료",
+        "valuechain": null,
+        "stats": {
+          "n_members": 57,
+          "n_priced": 39,
+          "chg_pct": 0.86,
+          "ret_5d": 0.76,
+          "ret_20d": 0.87,
+          "weighted": true,
+          "up": 23,
+          "flat": 0,
+          "down": 16,
+          "unknown": 18,
+          "up_ratio": 0.5897,
+          "n_newhigh": 6,
+          "n_near": 9,
+          "turnover_mult": 1.3,
+          "mktcap": 119561830000000,
+          "leader": {
+            "code": "900400",
+            "name": "합성종목040",
+            "chg_pct": 1.03
+          }
+        }
+      },
+      {
+        "rank": 11,
+        "id": "syn_5_3",
+        "name": "의료 합성 테마 3",
+        "section": "의료",
+        "valuechain": "CHAIN_A",
+        "stats": {
+          "n_members": 93,
+          "n_priced": 63,
+          "chg_pct": 1.73,
+          "ret_5d": 0.69,
+          "ret_20d": -1.05,
+          "weighted": true,
+          "up": 35,
+          "flat": 0,
+          "down": 28,
+          "unknown": 30,
+          "up_ratio": 0.5556,
+          "n_newhigh": 11,
+          "n_near": 8,
+          "turnover_mult": 1.11,
+          "mktcap": 239549240000000,
+          "leader": {
+            "code": "900980",
+            "name": "합성종목098",
+            "chg_pct": 0.78
+          }
+        }
+      },
+      {
+        "rank": 12,
+        "id": "syn_1_6",
+        "name": "기술 합성 테마 6",
+        "section": "기술",
+        "valuechain": "CHAIN_B",
+        "stats": {
+          "n_members": 75,
+          "n_priced": 51,
+          "chg_pct": 1.26,
+          "ret_5d": 0.65,
+          "ret_20d": -1.9,
+          "weighted": true,
+          "up": 25,
+          "flat": 0,
+          "down": 26,
+          "unknown": 24,
+          "up_ratio": 0.4902,
+          "n_newhigh": 5,
+          "n_near": 9,
+          "turnover_mult": 0.89,
+          "mktcap": 138168730000000,
+          "leader": {
+            "code": "900980",
+            "name": "합성종목098",
+            "chg_pct": 0.78
+          }
+        }
+      },
+      {
+        "rank": 13,
+        "id": "syn_1_8",
+        "name": "기술 합성 테마 8",
+        "section": "기술",
+        "valuechain": "CHAIN_A",
+        "stats": {
+          "n_members": 113,
+          "n_priced": 76,
+          "chg_pct": 0.8,
+          "ret_5d": 0.52,
+          "ret_20d": 3.65,
+          "weighted": true,
+          "up": 33,
+          "flat": 0,
+          "down": 43,
+          "unknown": 37,
+          "up_ratio": 0.4342,
+          "n_newhigh": 11,
+          "n_near": 17,
+          "turnover_mult": 0.93,
+          "mktcap": 251034750000000,
+          "leader": {
+            "code": "901590",
+            "name": "합성종목159",
+            "chg_pct": -2.38
+          }
+        }
+      },
+      {
+        "rank": 14,
+        "id": "syn_4_5",
+        "name": "산업 합성 테마 5",
+        "section": "산업",
+        "valuechain": "CHAIN_B",
+        "stats": {
+          "n_members": 114,
+          "n_priced": 76,
+          "chg_pct": -0.36,
+          "ret_5d": 0.44,
+          "ret_20d": 2.12,
+          "weighted": true,
+          "up": 40,
+          "flat": 0,
+          "down": 36,
+          "unknown": 38,
+          "up_ratio": 0.5263,
+          "n_newhigh": 9,
+          "n_near": 19,
+          "turnover_mult": 1.05,
+          "mktcap": 130861320000000,
+          "leader": {
+            "code": "900980",
+            "name": "합성종목098",
+            "chg_pct": 0.78
+          }
+        }
+      },
+      {
+        "rank": 15,
+        "id": "syn_4_1",
+        "name": "산업 합성 테마 1",
+        "section": "산업",
+        "valuechain": null,
+        "stats": {
+          "n_members": 114,
+          "n_priced": 76,
+          "chg_pct": 0.72,
+          "ret_5d": 0.34,
+          "ret_20d": -0.84,
+          "weighted": true,
+          "up": 41,
+          "flat": 0,
+          "down": 35,
+          "unknown": 38,
+          "up_ratio": 0.5395,
+          "n_newhigh": 9,
+          "n_near": 13,
+          "turnover_mult": 1.01,
+          "mktcap": 283370690000000,
+          "leader": {
+            "code": "900400",
+            "name": "합성종목040",
+            "chg_pct": 1.03
+          }
+        }
+      },
+      {
+        "rank": 16,
+        "id": "syn_4_3",
+        "name": "산업 합성 테마 3",
+        "section": "산업",
+        "valuechain": "CHAIN_B",
+        "stats": {
+          "n_members": 77,
+          "n_priced": 53,
+          "chg_pct": 0.2,
+          "ret_5d": 0.2,
+          "ret_20d": -1.43,
+          "weighted": true,
+          "up": 25,
+          "flat": 0,
+          "down": 28,
+          "unknown": 24,
+          "up_ratio": 0.4717,
+          "n_newhigh": 4,
+          "n_near": 11,
+          "turnover_mult": 0.86,
+          "mktcap": 214466270000000,
+          "leader": {
+            "code": "901860",
+            "name": "합성종목186",
+            "chg_pct": 0.58
+          }
+        }
+      },
+      {
+        "rank": 17,
+        "id": "syn_2_1",
+        "name": "에너지 합성 테마 1",
+        "section": "에너지",
+        "valuechain": null,
+        "stats": {
+          "n_members": 73,
+          "n_priced": 49,
+          "chg_pct": 0.21,
+          "ret_5d": 0.17,
+          "ret_20d": -1.43,
+          "weighted": true,
+          "up": 24,
+          "flat": 0,
+          "down": 25,
+          "unknown": 24,
+          "up_ratio": 0.4898,
+          "n_newhigh": 7,
+          "n_near": 7,
+          "turnover_mult": 0.94,
+          "mktcap": 193200110000000,
+          "leader": {
+            "code": "902190",
+            "name": "합성종목219",
+            "chg_pct": 1.17
+          }
+        }
+      },
+      {
+        "rank": 18,
+        "id": "syn_6_4",
+        "name": "금융 합성 테마 4",
+        "section": "금융",
+        "valuechain": null,
+        "stats": {
+          "n_members": 110,
+          "n_priced": 74,
+          "chg_pct": 0.52,
+          "ret_5d": 0.15,
+          "ret_20d": 1.88,
+          "weighted": true,
+          "up": 34,
+          "flat": 0,
+          "down": 40,
+          "unknown": 36,
+          "up_ratio": 0.4595,
+          "n_newhigh": 7,
+          "n_near": 17,
+          "turnover_mult": 1.09,
+          "mktcap": 307573650000000,
+          "leader": {
+            "code": "902150",
+            "name": "합성종목215",
+            "chg_pct": 1.84
+          }
+        }
+      },
+      {
+        "rank": 19,
+        "id": "syn_3_5",
+        "name": "소비 합성 테마 5",
+        "section": "소비",
+        "valuechain": null,
+        "stats": {
+          "n_members": 77,
+          "n_priced": 53,
+          "chg_pct": 0.22,
+          "ret_5d": 0.11,
+          "ret_20d": -1.63,
+          "weighted": true,
+          "up": 22,
+          "flat": 0,
+          "down": 31,
+          "unknown": 24,
+          "up_ratio": 0.4151,
+          "n_newhigh": 2,
+          "n_near": 13,
+          "turnover_mult": 0.73,
+          "mktcap": 204914500000000,
+          "leader": {
+            "code": "901070",
+            "name": "합성종목107",
+            "chg_pct": -0.56
+          }
+        }
+      },
+      {
+        "rank": 20,
+        "id": "syn_6_1",
+        "name": "금융 합성 테마 1",
+        "section": "금융",
+        "valuechain": "CHAIN_D",
+        "stats": {
+          "n_members": 58,
+          "n_priced": 40,
+          "chg_pct": 0.94,
+          "ret_5d": -0.03,
+          "ret_20d": -0.28,
+          "weighted": true,
+          "up": 15,
+          "flat": 0,
+          "down": 25,
+          "unknown": 18,
+          "up_ratio": 0.375,
+          "n_newhigh": 4,
+          "n_near": 5,
+          "turnover_mult": 0.87,
+          "mktcap": 97226920000000,
+          "leader": {
+            "code": "901020",
+            "name": "합성종목102",
+            "chg_pct": -2.28
+          }
+        }
+      },
+      {
+        "rank": 21,
+        "id": "syn_5_4",
+        "name": "의료 합성 테마 4",
+        "section": "의료",
+        "valuechain": null,
+        "stats": {
+          "n_members": 105,
+          "n_priced": 70,
+          "chg_pct": -0.01,
+          "ret_5d": -0.04,
+          "ret_20d": -0.04,
+          "weighted": true,
+          "up": 38,
+          "flat": 0,
+          "down": 32,
+          "unknown": 35,
+          "up_ratio": 0.5429,
+          "n_newhigh": 9,
+          "n_near": 16,
+          "turnover_mult": 0.87,
+          "mktcap": 107572100000000,
+          "leader": {
+            "code": "901310",
+            "name": "합성종목131",
+            "chg_pct": 2.3
+          }
+        }
+      },
+      {
+        "rank": 22,
+        "id": "syn_1_9",
+        "name": "기술 합성 테마 9",
+        "section": "기술",
+        "valuechain": null,
+        "stats": {
+          "n_members": 59,
+          "n_priced": 41,
+          "chg_pct": -0.28,
+          "ret_5d": -0.07,
+          "ret_20d": 7.23,
+          "weighted": true,
+          "up": 20,
+          "flat": 0,
+          "down": 21,
+          "unknown": 18,
+          "up_ratio": 0.4878,
+          "n_newhigh": 7,
+          "n_near": 8,
+          "turnover_mult": 0.73,
+          "mktcap": 123865150000000,
+          "leader": {
+            "code": "902370",
+            "name": "합성종목237",
+            "chg_pct": 0.24
+          }
+        }
+      },
+      {
+        "rank": 23,
+        "id": "syn_1_3",
+        "name": "기술 합성 테마 3",
+        "section": "기술",
+        "valuechain": "CHAIN_A",
+        "stats": {
+          "n_members": 92,
+          "n_priced": 62,
+          "chg_pct": 0.76,
+          "ret_5d": -0.12,
+          "ret_20d": 2.04,
+          "weighted": true,
+          "up": 35,
+          "flat": 0,
+          "down": 27,
+          "unknown": 30,
+          "up_ratio": 0.5645,
+          "n_newhigh": 7,
+          "n_near": 16,
+          "turnover_mult": 0.99,
+          "mktcap": 260598020000000,
+          "leader": {
+            "code": "902770",
+            "name": "합성종목277",
+            "chg_pct": 0.15
+          }
+        }
+      },
+      {
+        "rank": 24,
+        "id": "syn_2_6",
+        "name": "에너지 합성 테마 6",
+        "section": "에너지",
+        "valuechain": null,
+        "stats": {
+          "n_members": 94,
+          "n_priced": 62,
+          "chg_pct": -0.34,
+          "ret_5d": -0.26,
+          "ret_20d": 1.61,
+          "weighted": true,
+          "up": 30,
+          "flat": 0,
+          "down": 32,
+          "unknown": 32,
+          "up_ratio": 0.4839,
+          "n_newhigh": 12,
+          "n_near": 18,
+          "turnover_mult": 1.08,
+          "mktcap": 243089110000000,
+          "leader": {
+            "code": "902770",
+            "name": "합성종목277",
+            "chg_pct": 0.15
+          }
+        }
+      },
+      {
+        "rank": 25,
+        "id": "syn_3_1",
+        "name": "소비 합성 테마 1",
+        "section": "소비",
+        "valuechain": "CHAIN_A",
+        "stats": {
+          "n_members": 78,
+          "n_priced": 53,
+          "chg_pct": -0.26,
+          "ret_5d": -0.27,
+          "ret_20d": -2.79,
+          "weighted": true,
+          "up": 25,
+          "flat": 0,
+          "down": 28,
+          "unknown": 25,
+          "up_ratio": 0.4717,
+          "n_newhigh": 5,
+          "n_near": 11,
+          "turnover_mult": 1.01,
+          "mktcap": 144771030000000,
+          "leader": {
+            "code": "900980",
+            "name": "합성종목098",
+            "chg_pct": 0.78
+          }
+        }
+      },
+      {
+        "rank": 26,
+        "id": "syn_2_5",
+        "name": "에너지 합성 테마 5",
+        "section": "에너지",
+        "valuechain": null,
+        "stats": {
+          "n_members": 74,
+          "n_priced": 50,
+          "chg_pct": -0.94,
+          "ret_5d": -0.32,
+          "ret_20d": -0.71,
+          "weighted": true,
+          "up": 26,
+          "flat": 0,
+          "down": 24,
+          "unknown": 24,
+          "up_ratio": 0.52,
+          "n_newhigh": 6,
+          "n_near": 12,
+          "turnover_mult": 1.17,
+          "mktcap": 141811420000000,
+          "leader": {
+            "code": "902770",
+            "name": "합성종목277",
+            "chg_pct": 0.15
+          }
+        }
+      },
+      {
+        "rank": 27,
+        "id": "syn_1_1",
+        "name": "기술 합성 테마 1",
+        "section": "기술",
+        "valuechain": "CHAIN_C",
+        "stats": {
+          "n_members": 57,
+          "n_priced": 38,
+          "chg_pct": -0.6,
+          "ret_5d": -0.37,
+          "ret_20d": -1.69,
+          "weighted": true,
+          "up": 21,
+          "flat": 0,
+          "down": 17,
+          "unknown": 19,
+          "up_ratio": 0.5526,
+          "n_newhigh": 3,
+          "n_near": 7,
+          "turnover_mult": 1.04,
+          "mktcap": 196269080000000,
+          "leader": {
+            "code": "900730",
+            "name": "합성종목073",
+            "chg_pct": 1.77
+          }
+        }
+      },
+      {
+        "rank": 28,
+        "id": "syn_6_3",
+        "name": "금융 합성 테마 3",
+        "section": "금융",
+        "valuechain": null,
+        "stats": {
+          "n_members": 99,
+          "n_priced": 68,
+          "chg_pct": 0.3,
+          "ret_5d": -0.41,
+          "ret_20d": 3.09,
+          "weighted": true,
+          "up": 35,
+          "flat": 0,
+          "down": 33,
+          "unknown": 31,
+          "up_ratio": 0.5147,
+          "n_newhigh": 9,
+          "n_near": 16,
+          "turnover_mult": 1.02,
+          "mktcap": 188944660000000,
+          "leader": {
+            "code": "900980",
+            "name": "합성종목098",
+            "chg_pct": 0.78
+          }
+        }
+      },
+      {
+        "rank": 29,
+        "id": "syn_2_2",
+        "name": "에너지 합성 테마 2",
+        "section": "에너지",
+        "valuechain": "CHAIN_A",
+        "stats": {
+          "n_members": 95,
+          "n_priced": 65,
+          "chg_pct": -0.23,
+          "ret_5d": -0.42,
+          "ret_20d": -2.2,
+          "weighted": true,
+          "up": 33,
+          "flat": 0,
+          "down": 32,
+          "unknown": 30,
+          "up_ratio": 0.5077,
+          "n_newhigh": 8,
+          "n_near": 11,
+          "turnover_mult": 1.09,
+          "mktcap": 158412930000000,
+          "leader": {
+            "code": "900400",
+            "name": "합성종목040",
+            "chg_pct": 1.03
+          }
+        }
+      },
+      {
+        "rank": 30,
+        "id": "syn_6_2",
+        "name": "금융 합성 테마 2",
+        "section": "금융",
+        "valuechain": null,
+        "stats": {
+          "n_members": 75,
+          "n_priced": 49,
+          "chg_pct": 0.77,
+          "ret_5d": -0.52,
+          "ret_20d": 5.14,
+          "weighted": true,
+          "up": 32,
+          "flat": 0,
+          "down": 17,
+          "unknown": 26,
+          "up_ratio": 0.6531,
+          "n_newhigh": 5,
+          "n_near": 15,
+          "turnover_mult": 1.11,
+          "mktcap": 167853460000000,
+          "leader": {
+            "code": "901310",
+            "name": "합성종목131",
+            "chg_pct": 2.3
+          }
+        }
+      },
+      {
+        "rank": 31,
+        "id": "syn_3_2",
+        "name": "소비 합성 테마 2",
+        "section": "소비",
+        "valuechain": null,
+        "stats": {
+          "n_members": 96,
+          "n_priced": 66,
+          "chg_pct": 0.99,
+          "ret_5d": -0.65,
+          "ret_20d": 1.11,
+          "weighted": true,
+          "up": 32,
+          "flat": 0,
+          "down": 34,
+          "unknown": 30,
+          "up_ratio": 0.4848,
+          "n_newhigh": 5,
+          "n_near": 14,
+          "turnover_mult": 0.86,
+          "mktcap": 203244230000000,
+          "leader": {
+            "code": "901590",
+            "name": "합성종목159",
+            "chg_pct": -2.38
+          }
+        }
+      },
+      {
+        "rank": 32,
+        "id": "syn_1_7",
+        "name": "기술 합성 테마 7",
+        "section": "기술",
+        "valuechain": null,
+        "stats": {
+          "n_members": 91,
+          "n_priced": 61,
+          "chg_pct": 0.42,
+          "ret_5d": -0.74,
+          "ret_20d": 0.11,
+          "weighted": true,
+          "up": 35,
+          "flat": 0,
+          "down": 26,
+          "unknown": 30,
+          "up_ratio": 0.5738,
+          "n_newhigh": 9,
+          "n_near": 13,
+          "turnover_mult": 1.09,
+          "mktcap": 197987490000000,
+          "leader": {
+            "code": "902040",
+            "name": "합성종목204",
+            "chg_pct": 1.38
+          }
+        }
+      },
+      {
+        "rank": 33,
+        "id": "syn_3_4",
+        "name": "소비 합성 테마 4",
+        "section": "소비",
+        "valuechain": "CHAIN_D",
+        "stats": {
+          "n_members": 55,
+          "n_priced": 37,
+          "chg_pct": 1.14,
+          "ret_5d": -0.8,
+          "ret_20d": 7.03,
+          "weighted": true,
+          "up": 15,
+          "flat": 0,
+          "down": 22,
+          "unknown": 18,
+          "up_ratio": 0.4054,
+          "n_newhigh": 2,
+          "n_near": 10,
+          "turnover_mult": 1.08,
+          "mktcap": 145171220000000,
+          "leader": {
+            "code": "902190",
+            "name": "합성종목219",
+            "chg_pct": 1.17
+          }
+        }
+      },
+      {
+        "rank": 34,
+        "id": "syn_2_3",
+        "name": "에너지 합성 테마 3",
+        "section": "에너지",
+        "valuechain": null,
+        "stats": {
+          "n_members": 109,
+          "n_priced": 73,
+          "chg_pct": -0.21,
+          "ret_5d": -0.9,
+          "ret_20d": 1.37,
+          "weighted": true,
+          "up": 37,
+          "flat": 0,
+          "down": 36,
+          "unknown": 36,
+          "up_ratio": 0.5068,
+          "n_newhigh": 10,
+          "n_near": 14,
+          "turnover_mult": 1.2,
+          "mktcap": 198015030000000,
+          "leader": {
+            "code": "902770",
+            "name": "합성종목277",
+            "chg_pct": 0.15
+          }
+        }
+      },
+      {
+        "rank": 35,
+        "id": "syn_2_4",
+        "name": "에너지 합성 테마 4",
+        "section": "에너지",
+        "valuechain": "CHAIN_D",
+        "stats": {
+          "n_members": 58,
+          "n_priced": 40,
+          "chg_pct": 0.44,
+          "ret_5d": -0.94,
+          "ret_20d": -0.26,
+          "weighted": true,
+          "up": 27,
+          "flat": 0,
+          "down": 13,
+          "unknown": 18,
+          "up_ratio": 0.675,
+          "n_newhigh": 8,
+          "n_near": 10,
+          "turnover_mult": 1.32,
+          "mktcap": 169460890000000,
+          "leader": {
+            "code": "900980",
+            "name": "합성종목098",
+            "chg_pct": 0.78
+          }
+        }
+      },
+      {
+        "rank": 36,
+        "id": "syn_1_2",
+        "name": "기술 합성 테마 2",
+        "section": "기술",
+        "valuechain": null,
+        "stats": {
+          "n_members": 79,
+          "n_priced": 54,
+          "chg_pct": -0.37,
+          "ret_5d": -1.09,
+          "ret_20d": 0.05,
+          "weighted": true,
+          "up": 28,
+          "flat": 0,
+          "down": 26,
+          "unknown": 25,
+          "up_ratio": 0.5185,
+          "n_newhigh": 5,
+          "n_near": 10,
+          "turnover_mult": 0.97,
+          "mktcap": 214878660000000,
+          "leader": {
+            "code": "902040",
+            "name": "합성종목204",
+            "chg_pct": 1.38
+          }
+        }
+      }
+    ],
+    "chains": [
+      {
+        "key": "CHAIN_A",
+        "themes": [
+          "syn_1_3",
+          "syn_1_8",
+          "syn_2_2",
+          "syn_2_7",
+          "syn_3_1",
+          "syn_3_6",
+          "syn_5_3"
+        ],
+        "stats": {
+          "n_members": 449,
+          "n_priced": 242,
+          "chg_pct": 0.67,
+          "ret_5d": 0.35,
+          "ret_20d": 1.04,
+          "weighted": true,
+          "up": 120,
+          "flat": 0,
+          "down": 122,
+          "unknown": 207,
+          "up_ratio": 0.4959,
+          "n_newhigh": 28,
+          "n_near": 53,
+          "turnover_mult": 1.06,
+          "mktcap": 785962010000000,
+          "leader": {
+            "code": "900980",
+            "name": "합성종목098",
+            "chg_pct": 0.78
+          }
+        }
+      },
+      {
+        "key": "CHAIN_B",
+        "themes": [
+          "syn_1_6",
+          "syn_4_3",
+          "syn_4_5"
+        ],
+        "stats": {
+          "n_members": 231,
+          "n_priced": 148,
+          "chg_pct": 0.37,
+          "ret_5d": 0.24,
+          "ret_20d": -1.45,
+          "weighted": true,
+          "up": 72,
+          "flat": 0,
+          "down": 76,
+          "unknown": 83,
+          "up_ratio": 0.4865,
+          "n_newhigh": 13,
+          "n_near": 32,
+          "turnover_mult": 0.95,
+          "mktcap": 395509990000000,
+          "leader": {
+            "code": "900980",
+            "name": "합성종목098",
+            "chg_pct": 0.78
+          }
+        }
+      },
+      {
+        "key": "CHAIN_C",
+        "themes": [
+          "syn_1_1"
+        ],
+        "stats": {
+          "n_members": 57,
+          "n_priced": 38,
+          "chg_pct": -0.6,
+          "ret_5d": -0.37,
+          "ret_20d": -1.69,
+          "weighted": true,
+          "up": 21,
+          "flat": 0,
+          "down": 17,
+          "unknown": 19,
+          "up_ratio": 0.5526,
+          "n_newhigh": 3,
+          "n_near": 7,
+          "turnover_mult": 1.04,
+          "mktcap": 196269080000000,
+          "leader": {
+            "code": "900730",
+            "name": "합성종목073",
+            "chg_pct": 1.77
+          }
+        }
+      },
+      {
+        "key": "CHAIN_D",
+        "themes": [
+          "syn_2_4",
+          "syn_3_4",
+          "syn_6_1"
+        ],
+        "stats": {
+          "n_members": 157,
+          "n_priced": 104,
+          "chg_pct": 0.86,
+          "ret_5d": -0.53,
+          "ret_20d": 2.88,
+          "weighted": true,
+          "up": 53,
+          "flat": 0,
+          "down": 51,
+          "unknown": 53,
+          "up_ratio": 0.5096,
+          "n_newhigh": 14,
+          "n_near": 21,
+          "turnover_mult": 1.11,
+          "mktcap": 352329170000000,
+          "leader": {
+            "code": "900980",
+            "name": "합성종목098",
+            "chg_pct": 0.78
+          }
+        }
+      }
+    ]
+  }
+}

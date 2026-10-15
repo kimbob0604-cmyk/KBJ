@@ -37,6 +37,7 @@ def as_repos(m: MemoryRepos) -> Repos:
         market_stats=m.market_stats, us=m.us, program=m.program, index_review=m.index_review,
         trade=m.trade, gex=m.gex, diag=m.diag, diag_pub=m.diag_pub,
         rules=m.rules, personal=m.personal,  # P8(0021)
+        theme=m.theme, theme_pub=m.theme_pub,  # 페이지 9(0023)
     )  # fmt: skip
 
 

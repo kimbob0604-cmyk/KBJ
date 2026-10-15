@@ -1629,6 +1629,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/themes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Catalog */
+        get: operations["catalog_api_themes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/themes/strength": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Strength */
+        get: operations["strength_api_themes_strength_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/themes/{theme_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Detail */
+        get: operations["detail_api_themes__theme_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/telegram/webhook": {
         parameters: {
             query?: never;
@@ -2332,6 +2383,14 @@ export interface components {
             /** Reasons */
             reasons: string[];
             quality: components["schemas"]["Quality"];
+        };
+        /** ChainStrengthRow */
+        ChainStrengthRow: {
+            /** Key */
+            key: string;
+            /** Themes */
+            themes: string[];
+            stats: components["schemas"]["ThemeStats"];
         };
         /** ChangeRow */
         ChangeRow: {
@@ -4364,6 +4423,63 @@ export interface components {
             generated_at: string;
             data: components["schemas"]["StockSearch"];
         };
+        /** Envelope[ThemeCatalog] */
+        Envelope_ThemeCatalog_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["ThemeCatalog"];
+        };
+        /** Envelope[ThemeDetail] */
+        Envelope_ThemeDetail_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["ThemeDetail"];
+        };
+        /** Envelope[ThemeStrength] */
+        Envelope_ThemeStrength_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["ThemeStrength"];
+        };
         /** Envelope[TradeCountries] */
         Envelope_TradeCountries_: {
             /** Source */
@@ -5859,6 +5975,23 @@ export interface components {
          * @enum {string}
          */
         NaReason: "loss" | "capital_impairment" | "no_revenue" | "financial_sector" | "short_history" | "not_detail_tier" | "not_in_consensus_universe" | "no_filings" | "spac" | "konex_no_consensus" | "currency_mismatch" | "missing_input";
+        /**
+         * NaverThemeRef
+         * @description 대테마에 걸린 네이버 테마(로그인). count = 네이버 전체 종목 수(ETF 포함), in_master = 원천이
+         *     센 마스터 안 종목 수, n_members = 받은 편입 줄 수(종목 마스터 안).
+         */
+        NaverThemeRef: {
+            /** No */
+            no: number;
+            /** Name */
+            name: string;
+            /** Count */
+            count: number | null;
+            /** In Master */
+            in_master: number | null;
+            /** N Members */
+            n_members: number;
+        };
         /**
          * NewHighBadges
          * @description 신고가 3축(ADR 0017 — 120일 = 120 KRX 거래일, 52주 = 달력 364일, 역사적 = 상장 이후, 엄격
@@ -7404,6 +7537,194 @@ export interface components {
             upside_pct: number | null;
             quality: components["schemas"]["Quality"];
         };
+        /**
+         * ThemeCatalog
+         * @description 대테마 분류 — 섹션별(섹션은 원천 첫 등장 순서)·밸류체인별(이름순).
+         */
+        ThemeCatalog: {
+            /**
+             * Built At
+             * Format: date-time
+             */
+            built_at: string;
+            /** N Themes */
+            n_themes: number;
+            /** Sections */
+            sections: components["schemas"]["ThemeSection"][];
+            /** Valuechains */
+            valuechains: components["schemas"]["ValueChainGroup"][];
+        };
+        /** ThemeDetail */
+        ThemeDetail: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Section */
+            section: string;
+            /** Valuechain */
+            valuechain: string | null;
+            /**
+             * Built At
+             * Format: date-time
+             */
+            built_at: string;
+            /** Trade Date */
+            trade_date: string | null;
+            /** Naver */
+            naver: components["schemas"]["NaverThemeRef"][];
+            /** Members */
+            members: components["schemas"]["ThemeMember"][];
+            stats: components["schemas"]["ThemeStats"] | null;
+        };
+        /**
+         * ThemeInfo
+         * @description 대테마 하나(공개 칸).
+         */
+        ThemeInfo: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Section */
+            section: string;
+            /** Valuechain */
+            valuechain: string | null;
+        };
+        /**
+         * ThemeLeader
+         * @description 주도주 — 거래대금이 가장 큰 종목(보드 롤업 규칙).
+         */
+        ThemeLeader: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Chg Pct */
+            chg_pct: number | null;
+        };
+        /**
+         * ThemeMember
+         * @description 편입 종목 한 줄 — 종목 마스터·편입 사유(로그인) + 보드 종목 하루(없으면 None).
+         */
+        ThemeMember: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Market */
+            market: string;
+            /** Type */
+            type: string;
+            /** Industry Group */
+            industry_group: string | null;
+            /** Naver */
+            naver: number[];
+            /** Reasons */
+            reasons: components["schemas"]["ThemeMemberReason"][];
+            /** Chg Pct */
+            chg_pct: number | null;
+            /** Ret 5D */
+            ret_5d: number | null;
+            /** Ret 20D */
+            ret_20d: number | null;
+            /** Mktcap */
+            mktcap: number | null;
+            /** Label */
+            label: ("hist" | "w52" | "d120") | null;
+        };
+        /** ThemeMemberReason */
+        ThemeMemberReason: {
+            /** Naver No */
+            naver_no: number;
+            /** Reason */
+            reason: string | null;
+        };
+        /** ThemeSection */
+        ThemeSection: {
+            /** Section */
+            section: string;
+            /** Themes */
+            themes: components["schemas"]["ThemeInfo"][];
+        };
+        /**
+         * ThemeStats
+         * @description 강도 — 등락은 %(시총 가중 평균, 시총 모르면 단순 평균 — weighted False), 20일 = 21거래일 전
+         *     종가 대비(보드 ret_21d). up_ratio = 상승 / 등락을 아는 종목(없으면 None). 시총 합은 원(아는
+         *     종목만).
+         */
+        ThemeStats: {
+            /** N Members */
+            n_members: number;
+            /** N Priced */
+            n_priced: number;
+            /** Chg Pct */
+            chg_pct: number | null;
+            /** Ret 5D */
+            ret_5d: number | null;
+            /** Ret 20D */
+            ret_20d: number | null;
+            /** Weighted */
+            weighted: boolean;
+            /** Up */
+            up: number;
+            /** Flat */
+            flat: number;
+            /** Down */
+            down: number;
+            /** Unknown */
+            unknown: number;
+            /** Up Ratio */
+            up_ratio: number | null;
+            /** N Newhigh */
+            n_newhigh: number;
+            /** N Near */
+            n_near: number;
+            /** Turnover Mult */
+            turnover_mult: number | null;
+            /** Mktcap */
+            mktcap: number | null;
+            leader: components["schemas"]["ThemeLeader"] | null;
+        };
+        /**
+         * ThemeStrength
+         * @description 강도 순위 — 고른 기간(1·5·20일) 내림차순(값 없음은 뒤).
+         */
+        ThemeStrength: {
+            /**
+             * Trade Date
+             * Format: date
+             */
+            trade_date: string;
+            /**
+             * Period
+             * @enum {integer}
+             */
+            period: 1 | 5 | 20;
+            /**
+             * Built At
+             * Format: date-time
+             */
+            built_at: string;
+            /** Rows */
+            rows: components["schemas"]["ThemeStrengthRow"][];
+            /** Chains */
+            chains: components["schemas"]["ChainStrengthRow"][];
+        };
+        /** ThemeStrengthRow */
+        ThemeStrengthRow: {
+            /** Rank */
+            rank: number;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Section */
+            section: string;
+            /** Valuechain */
+            valuechain: string | null;
+            stats: components["schemas"]["ThemeStats"];
+        };
         /** TimelineItem */
         TimelineItem: {
             /** Rcept No */
@@ -8114,6 +8435,16 @@ export interface components {
             psr_fwd: components["schemas"]["MultipleCell"];
             ev_ebitda_fwd: components["schemas"]["MultipleCell"];
             quality: components["schemas"]["Quality"];
+        };
+        /**
+         * ValueChainGroup
+         * @description 밸류체인 묶음 — 대테마 valuechain 값이 같은 대테마들(원천 순서).
+         */
+        ValueChainGroup: {
+            /** Key */
+            key: string;
+            /** Themes */
+            themes: string[];
         };
         /**
          * WatchOrderIn
@@ -14462,6 +14793,178 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_OpsNotify_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    catalog_api_themes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_ThemeCatalog_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    strength_api_themes_strength_get: {
+        parameters: {
+            query?: {
+                period?: 1 | 5 | 20;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_ThemeStrength_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    detail_api_themes__theme_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                theme_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_ThemeDetail_"];
                 };
             };
             /** @description 세션 없음·만료 */

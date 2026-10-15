@@ -4,7 +4,7 @@
 // - 로그인: console.error 0, 오류 줄 0, DOM 글자에 NaN·undefined·Infinity 0, 390px 폭에서 가로 넘침 원인 0(고정 폭 SVG·
 //   390px 넘는 인라인 폭 없음 — jsdom 은 배치를 계산하지 않으므로 구성으로 본다), axe 심각 위반 0.
 // - 공개: 로그인 API 0회(공개 파일만), 로그인 패널은 자물쇠 — 공개 패널만 그린다.
-// 페이지 9(테마·밸류체인)는 사전 통합을 사용자가 따로 진행(2026-10-13 Q1) — P3 자리표시 그대로인지 본다.
+// 페이지 9(테마·밸류체인)는 ADR 0039(2026-10-15)로 채웠다 — 합성 테마 마스터 픽스처(test/fixtures/api/themes/**).
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mountApp } from '../../src/app/app';
 import { route } from '../../src/app/route';
@@ -13,7 +13,7 @@ import { createApiSource } from '../../src/data/api';
 import { macroFixture } from '../fixtures/api/macro/harness';
 import { apiPath, p4PublicHarness, p4Response, seriousA11y } from './support_p4';
 
-const P5 = import.meta.glob<unknown>('../fixtures/api/{program,etf,us,index_review}/*.json', { eager: true, import: 'default' });
+const P5 = import.meta.glob<unknown>('../fixtures/api/{program,etf,us,index_review,themes}/*.json', { eager: true, import: 'default' });
 const PAGES = [1, 2, 5, 6, 9, 10] as const;
 const NOW = new Date('2026-11-17T07:30:00Z'); // 합성 세계 CLOCK(2026-11-17 16:30 KST)
 
@@ -42,6 +42,9 @@ function p5Response(url: string): Response {
   if (path.startsWith('etf/holders/')) return p5('etf/holders_none');
   if (path.startsWith('etf/fund/')) return p5('etf/fund_holdings_semi');
   if (path === 'board/us') return p5(q.get('basis') === 'high' ? 'us/board_high' : 'us/board_close');
+  if (path === 'themes') return p5('themes/catalog');
+  if (path === 'themes/strength') return p5(`themes/strength_${q.get('period') ?? '1'}`);
+  if (path.startsWith('themes/')) return p5('themes/detail');
   if (path === 'index-review') return p5(`index_review/review_${q.get('index') ?? 'msci'}`.replace('review_msci_korea', 'review_msci'));
   return p4Response(url);
 }
@@ -102,9 +105,10 @@ describe('P5 페이지 — 합성 데이터로 그려진다', () => {
     for (const p of ['flows/market-minute', 'program/daily', 'program/top', 'board/us', 'macro/tabs', 'etf/map']) {
       expect(paths, p).toContain(p);
     }
-    // 페이지 9 는 자리표시(테마 사전 통합은 사용자 별도) — 요청 없음
-    expect(paths.some((p) => p.startsWith('themes'))).toBe(false);
-    expect(root.querySelector('#page-9 .panel.is-pending')).not.toBeNull();
+    // 페이지 9 는 ADR 0039 본문 — 분류·강도·편입 종목을 불렀다(자리표시 아님)
+    for (const p of ['themes', 'themes/strength']) expect(paths, p).toContain(p);
+    expect(paths.some((p) => /^themes\/syn_/.test(p))).toBe(true);
+    expect(root.querySelector('#page-9 .panel.is-pending')).toBeNull();
     expect(err).not.toHaveBeenCalled();
     expect(await seriousA11y(document.body)).toEqual([]);
     app.destroy();
@@ -112,7 +116,7 @@ describe('P5 페이지 — 합성 데이터로 그려진다', () => {
 
   it('공개: 로그인 API 0회, 공개 파일만, 로그인 패널은 자물쇠(공개 빌드는 공개 패널만)', async () => {
     window.history.replaceState(null, '', '#/p/1');
-    const pub: Record<string, unknown> = { credit: macroFixture('public/credit') };
+    const pub: Record<string, unknown> = { credit: macroFixture('public/credit'), themes: P5['../fixtures/api/themes/public.json'] };
     for (const n of ['tabs', 'rates', 'prices', 'us', 'calendar']) pub[`macro/${n}`] = macroFixture(`public/macro/${n}`);
     const hz = p4PublicHarness(pub);
     const root = appRoot();

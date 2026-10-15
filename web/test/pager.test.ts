@@ -24,25 +24,26 @@ describe('페이지 등록부', () => {
     expect(PAGES.map((p) => p.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
     expect(P3_PAGES).toEqual([1, 2, 4, 10]);
     expect(P4_PAGES).toEqual([5, 8]);
-    // 9 는 단계 표기만 P5 — 테마 사전 통합은 사용자가 따로 진행(2026-10-13 Q1), P3 자리표시 그대로
-    expect(P5_PAGES).toEqual([6]);
+    // 9 는 2026-10-15 사용자 결정(ADR 0039 — stock-dashboard 테마 마스터)으로 채웠다(단계 표기 P5 그대로)
+    expect(P5_PAGES).toEqual([6, 9]);
     expect(P6_PAGES).toEqual([7]); // P6 수출입(docs/p6_design.md §6)
     expect(P7_PAGES).toEqual([3]); // P7 진단(docs/p7_design.md §6)
     expect(P8_PAGES).toEqual([11, 12]); // P8 알림·규칙·백테스트·저널(docs/p8_design.md §6)
     expect(P9_PAGES).toEqual([13]); // P9 운영 최소판(docs/p9_design.md §6, ADR 0037)
-    // DATA_TIERS §2: 7 은 공개 표시, 1·3·5·6·8 은 공개·로그인 섞임(D-P4-15·p5_design §6·p7_design D-P7-12), 나머지는 로그인
+    // DATA_TIERS §2: 7 은 공개 표시, 1·3·5·6·8·9 는 공개·로그인 섞임(D-P4-15·p5_design §6·p7_design D-P7-12·ADR 0039), 나머지는 로그인
     expect(PAGES.filter((p) => p.tier === 'public').map((p) => p.n)).toEqual([7]);
-    expect(PAGES.filter((p) => p.tier === 'mixed').map((p) => p.n)).toEqual([1, 3, 5, 6, 8]);
+    expect(PAGES.filter((p) => p.tier === 'mixed').map((p) => p.n)).toEqual([1, 3, 5, 6, 8, 9]);
     // 섞인 페이지는 페이지 자물쇠가 없다(패널마다 정한다)
     for (const p of PAGES.filter((x) => x.tier === 'mixed')) expect(p.lock, `페이지 ${p.n}`).toBeUndefined();
   });
 
-  it('P5 페이지 문구: 6 은 공개·로그인 몫을 함께, 9 는 자리표시 그대로, 10 은 P5 패널 예고', () => {
+  it('P5 페이지 문구: 6·9 는 공개·로그인 몫을 함께(9 — ADR 0039), 10 은 P5 패널 예고', () => {
     const plan = (n: number) => PAGES.find((p) => p.n === n)?.plan ?? '';
     expect(plan(6)).toContain('(공개)');
     expect(plan(6)).toContain('(로그인)');
-    expect(PAGES.find((p) => p.n === 9)).toMatchObject({ phase: 'P5', tier: 'login', lock: 'quote_based' });
-    expect(plan(9)).toBe('테마·체인 모니터, 밸류체인 맵, 테마 강도');
+    expect(PAGES.find((p) => p.n === 9)).toMatchObject({ phase: 'P5', tier: 'mixed' });
+    expect(PAGES.find((p) => p.n === 9)?.lock).toBeUndefined();
+    for (const w of ['대테마 분류', '밸류체인', '(공개)', '테마 강도', '편입 종목', '(로그인)']) expect(plan(9)).toContain(w);
     expect(plan(10)).toContain('ETF 맵');
   });
 
@@ -69,9 +70,9 @@ describe('페이지 등록부', () => {
     expect([...m.keys()].sort((a, b) => a - b)).toEqual([1, 3, 5, 6, 7, 8, 10, 11, 12]);
   });
 
-  it('빌드 glob 이 페이지 3·5·8·6·7·11·12·13 진입 파일도 찾는다(p{1,2,3,4,5,6,7,8,10,11,12,13}_*.ts — 9 는 자리표시)', async () => {
+  it('빌드 glob 이 페이지 3·5·8·6·7·9·11·12·13 진입 파일도 찾는다(p{1,…,13}_*.ts — 9 는 ADR 0039)', async () => {
     const src = (await import('../src/app/pages.ts?raw')).default;
-    expect(src).toContain("'../pages/p{1,2,3,4,5,6,7,8,10,11,12,13}_*.ts'");
+    expect(src).toContain("'../pages/p{1,2,3,4,5,6,7,8,9,10,11,12,13}_*.ts'");
   });
 
   it('P8 페이지 11·12 문구: 개인 기능 — 로그인 전부(자물쇠 personal), 13 운영은 P9(같은 자물쇠)', () => {

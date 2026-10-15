@@ -81,6 +81,8 @@ from kbj.store.repos.personal import MemoryPersonalRepo
 from kbj.store.repos.program import MemoryProgramRepo
 from kbj.store.repos.public import MemoryPublicRepos
 from kbj.store.repos.rules import MemoryRulesRepo
+from kbj.store.repos.theme import MemoryThemeRepo
+from kbj.store.repos.theme_pub import MemoryThemePublicRepo
 from kbj.store.repos.trade import MemoryTradeRepo
 from kbj.store.repos.us import MemoryUsRepo
 
@@ -741,6 +743,9 @@ class MemoryRepos:
     # 같은 메모리 표에 쓴다(한 DB 처럼 — 쓰기는 personal, 읽기는 rules·journal)
     rules: MemoryRulesRepo = field(default_factory=MemoryRulesRepo)
     personal: MemoryPersonalRepo = field(init=False)
+    # 페이지 9(0023 — ADR 0039)
+    theme: MemoryThemeRepo = field(default_factory=MemoryThemeRepo)
+    theme_pub: MemoryThemePublicRepo = field(default_factory=MemoryThemePublicRepo)
 
     def __post_init__(self) -> None:
         self.personal = MemoryPersonalRepo(

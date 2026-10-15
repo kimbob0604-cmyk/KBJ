@@ -11,12 +11,17 @@ P9 묶음 OPS(docs/p9_design.md §6.3, ADR 0037). 서울 VM 하나에서 KBJ 를
 
 ## ① VM 준비 [사용자]
 
-- 서울 리전 VM(사양은 사용자 결정 — [확인 필요]). Docker Engine + Compose v2.
-- 시각: 호스트 NTP 동기화 켜기(`timedatectl status` → `System clock synchronized: yes`). 컨테이너는 `TZ=UTC` 로 돌고
-  KST 변환은 코드가 한다 — 호스트 시간대를 바꾸지 않아도 된다.
-- 디스크: Postgres 볼륨(`pgdata`)·상태 폴더(`state` — 백업·스풀)가 같은 디스크면 여유 20% 이상을 유지한다. 크기 판단은
-  ⑤ 의 `ops check` 가 보여 주는 표 크기 상위 10·DB 크기로 한다.
-- 열린 포트: API 는 루프백(127.0.0.1)에만 묶인다. 바깥은 TLS 역방향 프록시(ADR 0008)만 연다 [사용자].
+- **오라클 클라우드 무료 VM**(Ampere A1 ARM64 4 OCPU·24GB, Ubuntu 24.04, 홈 리전 서울·춘천 — ADR 0040). 만들기·포트 열기는
+  [`docs/deploy_oracle.md`](deploy_oracle.md) ①~③(콘솔 클릭), VM 준비는 그 ④ 의 한 줄 `scripts/vm/install.sh` 가 한다:
+  Docker Engine + Compose v2(공식 저장소), 시간대 Asia/Seoul·NTP, (메모리 8GB 미만이면) 스왑, 방화벽 80·443(오라클
+  iptables 기본 규칙 앞), 레포 clone(`~/kbj`), `.env` 템플릿(권한 600). 여러 번 돌려도 안전하다.
+- 시각: 호스트 NTP 동기화(`timedatectl status` → `System clock synchronized: yes`). 컨테이너는 `TZ=UTC` 로 돌고 KST 변환은
+  코드가 한다 — 호스트 시간대(설치가 Asia/Seoul 로 둔다)는 cron·로그 읽기 편의일 뿐이다.
+- 디스크: Postgres 볼륨(`pgdata`)·상태 폴더(`state` — 백업·스풀)가 같은 디스크면 여유 20% 이상을 유지한다(부트 볼륨 100GB
+  권장 — 안내서 ②). 크기 판단은 ⑤ 의 `ops check` 가 보여 주는 표 크기 상위 10·DB 크기로 한다.
+- 열린 포트: API 는 루프백(127.0.0.1:8000)에만 묶인다. 바깥은 80·443 만 — TLS 역방향 프록시는 `docker-compose.vm.yml` 의
+  Caddy(호스트 네트워크, `deploy/Caddyfile`, ADR 0040 — ADR 0008 의 '레포 밖 프록시' 를 대체하는 선택 오버레이). 주소는
+  `KBJ_DOMAIN` 또는 `<공인IP 대시>.sslip.io`(Let's Encrypt 자동). 오라클 보안 목록 수신 규칙 80·443 [사용자 — 안내서 ③].
 
 ## ② `.env` 이름표
 
@@ -27,6 +32,15 @@ hash-password`), 텔레그램 봇·웹훅 비밀, KIS 앱키 묶음. 선택: KRX
 
 ## ③ 첫 기동
 
+VM 에서는 스크립트로 한다(안내서 ⑤·⑥ — 키 넣기 `scripts/vm/keys.sh`·`telegram.sh find-chat`·`set-password.sh`):
+
+```bash
+bash scripts/vm/start.sh     # .env 필수 이름 검사(이름만) → 주소 → 빌드 → db·redis → migrate → 공개 내보내기 역할 → validate → 전부 + Caddy
+bash scripts/vm/status.sh    # 컨테이너·healthcheck·HTTPS·ops check·디스크·백업
+```
+
+start.sh 가 하는 일을 손으로 하면(오버레이 없이 — 다른 호스팅·자기 프록시):
+
 ```bash
 docker compose --profile app up -d --build db redis
 docker compose --profile app run --rm migrate          # 마이그레이션(ops.schema_migrations 에 체크섬)
@@ -35,6 +49,11 @@ docker compose --profile app up -d --build             # auth·notifier·schedul
 docker compose --profile app ps                        # 모두 healthy(하트비트 healthcheck)
 ```
 
+- 공개 내보내기(`public.export`)는 `KBJ_PUBLIC_EXPORT_DATABASE_URL` 의 로그인 역할(`kbj_public_export` 구성원·
+  `default_transaction_read_only=on` — ADR 0002 §2.2)이 있어야 한다. start.sh 가 `kbj_public_reader` 로 만들고 맞춘다
+  (손으로 할 때는 같은 역할을 만든다).
+- VM 에서 runbook 의 `docker compose --profile app …` 명령을 칠 때는 `-f docker-compose.yml -f docker-compose.vm.yml` 을
+  붙인다(caddy 포함). 한 번짜리 명령(`exec`·`run`)은 붙이지 않아도 같다.
 - `gex-poller` 와 GX 수집 작업 다섯(`gex.day_minutes`·`gex.night_minutes`·`gex.krx_derivatives`·`kis.master`·
   `kis.master_night`·개장 확인 둘)은 등록부에서 **꺼져 있다**(§11 Q2 — 옛 GX 와 동시 실행 금지, §9 R2). ④ 에서 켠다.
 - 첫 기동 뒤 바로 `python -m kbj.services.ops check`(⑤)로 하트비트·작업 기록을 본다.

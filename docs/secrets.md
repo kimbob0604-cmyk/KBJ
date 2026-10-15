@@ -170,3 +170,18 @@ KIS REST 는 **모든 요청 헤더에** `appkey`·`appsecret` 을 요구한다(
 - GEX 분봉·KRX 파생·마스터·개장 확인 작업은 scheduler 안에서 돈다 — scheduler 의 기존 KIS·KRX 이름을 쓴다(새 주입 없음).
 - GX → KBJ 전환이 끝나면(런북 ④) legacy GX 의 `DB_SEARCH_PATH` 는 쓰지 않는다(GX poller·scheduler 정지).
 
+
+## VM 배포 (ADR 0040 — `scripts/vm`, `docker-compose.vm.yml`)
+
+- 새 이름 둘(비밀 아님 — **설정**). `.env.example` 에는 없고 `scripts/vm/lib.sh kbj_env_init` 이 VM 의 `.env` 끝에 더한다:
+
+| 이름 | 용도 | 등급 | 읽는 곳 |
+|---|---|---|---|
+| `KBJ_DOMAIN` | 내 도메인(선택). 비우면 `<공인IP 대시>.sslip.io` | 설정 | scripts/vm(주소 정하기) |
+| `KBJ_SITE_HOST` | 접속 주소 호스트 — start.sh 가 채운다(손대지 않음). Caddy 사이트 주소 | 설정 | docker-compose.vm.yml `caddy` |
+
+- install.sh·start.sh 가 **값을 무작위로 만드는** 이름(값은 출력하지 않는다): `KBJ_POSTGRES_PASSWORD`·`KBJ_REDIS_PASSWORD`·
+  `KBJ_TELEGRAM_WEBHOOK_SECRET`·`KBJ_PUBLIC_EXPORT_DATABASE_URL`(로그인 역할 `kbj_public_reader` — `kbj_public_export` 구성원,
+  `default_transaction_read_only=on`, ADR 0002 §2.2 의 '로그인 역할 이름' [확인 필요] 을 이것으로 정했다). start.sh 는
+  `KBJ_PUBLIC_BASE_URL` 을 `https://<KBJ_SITE_HOST>` 로 맞춘다. `KBJ_LIVE_TRADING`·`KBJ_NOTIFY_ENABLED` 는 비었으면 `false`.
+- `caddy` 서비스에는 비밀을 넣지 않는다(`KBJ_SITE_HOST`·`TZ` 만 — `tests/test_vm_kit.py`).

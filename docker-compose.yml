@@ -162,6 +162,11 @@ services:
       KBJ_KIS_APP_SECRET: ${KBJ_KIS_APP_SECRET:-}
       KBJ_KIS_ENV: ${KBJ_KIS_ENV:-real}
       KBJ_KRX_API_KEY: ${KBJ_KRX_API_KEY:-}
+      # 공개 원천(docs/secrets.md) — 거시·관세청·금투협·금융위 수집 작업이 스케줄러 안에서 돈다
+      KBJ_DATAGO_KEY: ${KBJ_DATAGO_KEY:-}
+      KBJ_ECOS_KEY: ${KBJ_ECOS_KEY:-}
+      KBJ_FRED_KEY: ${KBJ_FRED_KEY:-}
+      KBJ_KOSIS_KEY: ${KBJ_KOSIS_KEY:-}
       KBJ_PUBLIC_EXPORT_DATABASE_URL: ${KBJ_PUBLIC_EXPORT_DATABASE_URL:-}
       KBJ_PUBLIC_PUSH_ENABLED: ${KBJ_PUBLIC_PUSH_ENABLED:-false}
       KBJ_NOTIFY_ENABLED: ${KBJ_NOTIFY_ENABLED:-false}

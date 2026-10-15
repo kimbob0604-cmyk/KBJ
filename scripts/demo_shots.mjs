@@ -1,4 +1,4 @@
-// KBJ 데모 화면 확인 — 로그인 → 페이지 1·2·3·4·5·6·7·8·10·11·12·13 을 열어 스크린샷과 콘솔 오류를 모은다.
+// KBJ 데모 화면 확인 — 로그인 → 페이지 1~13 을 열어 스크린샷과 콘솔 오류를 모은다.
 // scripts/demo.sh 가 부른다(합성 데이터 데모 서버가 떠 있어야 한다). 비밀번호는 환경변수로만 받는다.
 //
 //   KBJ_DEMO_URL=http://127.0.0.1:8765/ KBJ_DEMO_PASSWORD=... [KBJ_DEMO_NOW=<서버 시계 ISO>] \
@@ -26,6 +26,7 @@ const PAGES = [
   { n: 6, name: 'p6_macro', title: '매크로' },
   { n: 8, name: 'p8_stock', title: '종목 상세' },
   { n: 7, name: 'p7_trade', title: '수출입' },
+  { n: 9, name: 'p9_themes', title: '테마·밸류체인' }, // ADR 0039 — demo_server._load_p9(합성 테마 마스터)
   { n: 10, name: 'p10_etf', title: 'ETF 수급' },
   { n: 11, name: 'p11_rules', title: '규칙 알림' },
   { n: 12, name: 'p12_journal', title: '백테스트·저널' },

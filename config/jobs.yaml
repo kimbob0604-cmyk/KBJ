@@ -791,7 +791,7 @@ jobs:
     depends_on: [{job: market.close_collect, hard: true}]
     writes: [prv_themes.strength]
     absorbs: ["ET:kr.yml:build"]
-    note: "테마·밸류체인 사전 통합(페이지 9)은 사용자가 따로 진행(2026-10-13 결정 Q1) — P5 에서 제외, 꺼짐. 처리기·표(prv_themes.strength)는 그 작업이 만든다. ET kr.yml 09:30·15:30 — 장중판은 폐지 [제안], 마감 뒤 1회. 텔레그램 아님(ADR 0018 대상 아님)"
+    note: "꺼짐(처리기·표 없음). 페이지 9 테마 강도는 2026-10-15 사용자 결정(ADR 0039)으로 로그인 API 가 읽을 때 보드 종목 하루(prv_board.stock_day)로 계산한다(/api/themes/strength — 저장 표 없음). 강도 이력을 쌓을 일이 생기면 이 작업이 prv_themes.strength 를 쓴다(그때 마이그레이션). ET kr.yml 09:30·15:30 — 장중판은 폐지 [제안], 마감 뒤 1회. 텔레그램 아님(ADR 0018 대상 아님)"
 
   - name: program.daily
     phase: P5
@@ -1004,6 +1004,36 @@ jobs:
     as_of: minute
     notify: {kind: alert.gex_level, when: changed}
     note: "장중 GEX 레벨 알림(D-P7-17 [제안]) — visible 지표만: Flip(all) 건넘·콜월/풋월 행사가 바뀜·기대변동폭 ±1σ 밖. 정규장 09:00~15:30 만(15:30 에 끝 — §10 Q5), 쿨다운 600초(notify.yaml). invalid·stale 산출로는 보내지 않는다. 표에 쓰지 않는다(상태는 Redis gex:alert:last). 15:30 뒤·야간 변화는 16:00 마감 요약·아침 브리핑에만"
+
+  # ── 페이지 9 테마·밸류체인 — stock-dashboard 테마 마스터 받아 쓰기(ADR 0039, 사용자 결정 2026-10-15) ──
+  # 원천 stock-dashboard '종목 마스터 갱신'(.github/workflows/master-refresh.yml cron '0 21 * * 6' = 일 06:00 KST,
+  # 바뀌면 PR — 머지 뒤 main 에 반영). 그 뒤 일요일 12:40 KST 에 한 번 본다(휴장과 무관). meta.json built_at 이
+  # 같으면 나머지 파일을 받지 않는다. PR 머지가 늦으면 다음 주에 반영 — 바로 반영하려면
+  # `python -m kbj.services.scheduler run-once theme.master_sync`(런북). 테마 강도는 표 없이 API 가 읽을 때 계산.
+  - name: theme.master_sync
+    phase: P9
+    enabled: true               # 외부 키 불필요(공개 GitHub raw 파일)
+    owner: "kbj.services.collectors.theme_master:run"
+    schedule: {cron: "40 12 * * 0", when: always}
+    retry: {max: 2, backoff_s: [1800, 3600]}
+    collects:
+      - {source: STOCK_DASHBOARD, dataset: theme_master, as_of: run_date}
+    writes: [prv_themes.master_load, prv_themes.naver_theme, prv_themes.theme_link,
+             prv_themes.naver_excluded, prv_themes.member, prv_themes.stock, prv_themes.industry_group,
+             prv_themes.type_override]
+    note: "data/master/ 7개 → 검증(필수 칸·참조·대테마 ≥ 30·편입 ≥ 3,000·직전 판 대비 20% 넘게 줄면 거부 — config/theme.yaml) → 로그인 표 한 트랜잭션 통째 교체. 검증 실패·직전보다 오래된 판은 적재하지 않고 실패(옛 판 유지 → 재시도 뒤 실패 알림). 네이버 유래(테마 이름·편입·사유·종목 마스터)는 prv_themes 만 — 공개 대테마 분류는 theme.classes_sync. KBJ 는 네이버에 직접 접속하지 않는다"
+
+  - name: theme.classes_sync
+    phase: P9
+    enabled: true               # 외부 키 불필요(공개 GitHub raw 파일)
+    owner: "kbj.services.collectors.theme_classes:run"
+    schedule: {cron: "40 12 * * 0", when: always}
+    retry: {max: 2, backoff_s: [1800, 3600]}
+    depends_on: [{job: theme.master_sync, hard: true}]
+    collects:
+      - {source: STOCK_DASHBOARD, dataset: theme_classes, as_of: run_date}
+    writes: [pub_themes.theme]
+    note: "공개 작업 — meta.json·themes.json 의 대테마 id·이름·섹션·밸류체인만(네이버 목록은 읽지 않는다) → pub_themes.theme 한 트랜잭션 통째 교체 → 공개 themes.json(public.export). 로그인 원천을 받는 theme.master_sync 는 공개 표에 쓰지 않으므로 따로 둔다(ADR 0002·0039). 굳은 의존 — 로그인 판 검증이 통과한 날만"
 
 # ── 폐지하는 legacy 정기 작업(§6.8) ──────────────────────────────────────────────────────────
 retired:

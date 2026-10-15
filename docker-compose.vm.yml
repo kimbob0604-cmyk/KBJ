@@ -1,0 +1,41 @@
+# KBJ 운영 VM 오버레이 — HTTPS 역방향 프록시(Caddy). ADR 0040, docs/deploy_oracle.md.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.vm.yml --profile app up -d
+#   (scripts/vm/start.sh·update.sh 가 이 순서로 부른다 — 직접 칠 일은 거의 없다)
+#
+# - 기본 docker-compose.yml 은 바꾸지 않는다. 이 파일은 caddy 서비스 하나만 더한다(profile app).
+# - caddy 는 **호스트 네트워크**다: api 가 호스트 루프백 127.0.0.1:8000 에만 열려 있어(docker-compose.yml 머리말)
+#   브리지 네트워크에서는 닿지 않는다. 호스트의 80·443 을 직접 연다(오라클 보안 목록·iptables 도 80·443 —
+#   scripts/vm/install.sh).
+# - 주소는 .env 의 KBJ_SITE_HOST(start.sh 가 KBJ_DOMAIN 또는 <공인IP 대시>.sslip.io 로 채운다). 비어 있으면
+#   compose 가 멈춘다. 비밀은 넣지 않는다 — Caddy 는 KBJ 키를 모른다.
+# - 인증서·ACME 계정은 caddy_data 볼륨(다시 띄워도 새로 받지 않는다 — Let's Encrypt 발급 한도).
+# - 이미지: 공식 caddy(arm64v8·amd64 다중 아키텍처). 2.11 줄을 따른다(부 버전 고정, 패치는 update.sh 가 받는다).
+
+name: kbj
+
+services:
+  caddy:
+    image: caddy:2.11-alpine
+    profiles: [app]
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      TZ: UTC
+      KBJ_SITE_HOST: ${KBJ_SITE_HOST:?KBJ_SITE_HOST 가 없다 — bash scripts/vm/start.sh 로 띄운다}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_started
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  caddy_data:
+  caddy_config:

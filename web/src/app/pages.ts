@@ -2,7 +2,8 @@
 //
 // P3 에 위젯을 채우는 페이지는 1·2·4·10, P4 는 5(공시·일정의 DART 패널)·8(종목 상세), P5 는 6(매크로) — p5_design §6,
 // P6 은 7(수출입 — p6_design §6, 진입 p7_trade.ts 탭 틀은 FND).
-// 9(테마·밸류체인)는 사전 통합을 사용자가 따로 진행해 P5 에서 뺐다 — P3 자리표시 그대로. 나머지는 빈 자리 패널 1개 + '준비 중(Pn)' + 등급 자물쇠(§6.5). 위젯 모듈은 src/pages/p<번호>_<이름>.ts
+// 9(테마·밸류체인)는 사용자 결정(2026-10-15, ADR 0039)으로 stock-dashboard 테마 마스터를 받아 채웠다(단계 표기는 원래 계획
+// 그대로 P5 — mixed: 대테마 분류 공개, 강도·편입 로그인). 위젯 모듈은 src/pages/p<번호>_<이름>.ts
 // (진입 파일 하나 — 하위 폴더 src/pages/p8/** 는 진입 파일이 import 한다) — 아래 glob 이 빌드 때 찾는다. 파일이 아직
 // 없으면 빈 자리로 그린다. P5 의 6 진입 파일은 MAC 이 채웠다.
 import type { PageModule } from './types';
@@ -63,8 +64,15 @@ export const PAGES: readonly PageDef[] = [
     tier: 'mixed',
     plan: '재무·dart-report·공시·오버행·내부자(공개) / 시세·수급·컨센서스·밸류에이션 밴드·시나리오 적정가(로그인)',
   },
-  // 9: 테마·밸류체인 사전 통합은 사용자가 따로 진행(2026-10-13 결정 Q1) — P5 에서 제외, P3 자리표시 그대로
-  { n: 9, title: '테마·밸류체인', phase: 'P5', tier: 'login', lock: 'quote_based', plan: '테마·체인 모니터, 밸류체인 맵, 테마 강도' },
+  // 9: 2026-10-13 Q1 로 P5 에서 뺐다가 2026-10-15 사용자 결정(ADR 0039)으로 채웠다 — stock-dashboard 테마 마스터를 받아 쓴다.
+  //    공개 = 대테마 분류(섹션·밸류체인 — 사용자 작성), 로그인 = 테마 강도(시세)·편입 종목·사유(네이버 유래)
+  {
+    n: 9,
+    title: '테마·밸류체인',
+    phase: 'P5',
+    tier: 'mixed',
+    plan: '대테마 분류·밸류체인(공개) / 테마 강도 순위·히트맵·밸류체인 강도·편입 종목(로그인)',
+  },
   {
     n: 10,
     title: 'ETF 수급',
@@ -106,8 +114,8 @@ export const P3_PAGES: readonly number[] = PAGES.filter((p) => p.phase === 'P3')
 /** P4 에 위젯이 들어오는 페이지(5·8) */
 export const P4_PAGES: readonly number[] = PAGES.filter((p) => p.phase === 'P4').map((p) => p.n);
 
-/** P5 에 위젯이 들어오는 페이지(6). 9 는 단계 표기만 P5 이고 위젯이 없다(테마 사전 통합은 사용자가 따로 — 자리표시) */
-export const P5_PAGES: readonly number[] = PAGES.filter((p) => p.phase === 'P5' && p.n !== 9).map((p) => p.n);
+/** P5 에 위젯이 들어오는 페이지(6·9 — 9 는 ADR 0039 테마 마스터로 채웠다) */
+export const P5_PAGES: readonly number[] = PAGES.filter((p) => p.phase === 'P5').map((p) => p.n);
 
 /** P6 에 위젯이 들어오는 페이지(7 — 페이지 8 겹쳐 보기 패널은 P4 페이지 안 고리, WRAP) */
 export const P6_PAGES: readonly number[] = PAGES.filter((p) => p.phase === 'P6').map((p) => p.n);
@@ -125,11 +133,11 @@ export type PageLoader = () => Promise<PageModule>;
 
 /**
  * 위젯 모듈 찾기 — `src/pages/p1_market.ts` 같은 파일. 빌드 때 정해지므로 없는 파일은 빈 목록이다.
- * 페이지마다 따로 불러온다(처음 보일 때). 번호는 위젯이 있는 단계의 페이지만(P3 1·2·4·10 + P4 5·8 + P5 6 + P6 7 + P7 3 +
+ * 페이지마다 따로 불러온다(처음 보일 때). 번호는 위젯이 있는 단계의 페이지만(P3 1·2·4·10 + P4 5·8 + P5 6·9 + P6 7 + P7 3 +
  * P8 11·12 + P9 13) — 하위
  * 폴더(`src/pages/p8/*.ts`)는 이 glob 에 걸리지 않는다(진입 파일이 import).
  */
-const FOUND = import.meta.glob<PageModule>('../pages/p{1,2,3,4,5,6,7,8,10,11,12,13}_*.ts', { import: 'default' });
+const FOUND = import.meta.glob<PageModule>('../pages/p{1,2,3,4,5,6,7,8,9,10,11,12,13}_*.ts', { import: 'default' });
 
 export function pageLoaders(found: Record<string, () => Promise<PageModule>> = FOUND): Map<number, PageLoader> {
   const out = new Map<number, PageLoader>();

@@ -92,6 +92,8 @@ DOMAIN_JOBS: Final[Mapping[str, tuple[str, ...]]] = {
     # 쓰기 모듈이 DB 에 바로 쓰므로 영역 없음(캐시 없이 — kbj.services.api.writes.fresh_json)
     "rules": ("rules.intraday", "rules.close", "rules.outcome", "rules.backtest_nightly"),
     "backtest": ("rules.outcome", "rules.backtest_nightly"),
+    # 페이지 9(ADR 0039) — 대테마 분류·편입(주 1회) + 강도의 시세(보드 종목 하루)
+    "themes": ("theme.master_sync", "theme.classes_sync", "board.daily", "board.confirm"),
 }  # fmt: skip
 # 작업 기록 말고 표의 최신 시각으로도 버전을 정하는 영역(상시 서비스가 쓰는 표 — 상수 SQL)
 DOMAIN_TS: Final[Mapping[str, str]] = {

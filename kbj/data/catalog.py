@@ -28,6 +28,7 @@ from kbj.data.private.fsc_stock_price import datasets as fsc_stock_datasets
 from kbj.data.private.kis import datasets as kis_datasets
 from kbj.data.private.krx import datasets as krx_datasets
 from kbj.data.private.nasdaq import datasets as nasdaq_datasets
+from kbj.data.private.stock_dashboard import datasets as stock_dashboard_datasets
 from kbj.data.private.yahoo import datasets as yahoo_datasets
 from kbj.data.public.customs import datasets as customs_datasets
 from kbj.data.public.dart import datasets as dart_datasets
@@ -36,6 +37,7 @@ from kbj.data.public.fred import datasets as fred_datasets
 from kbj.data.public.fsc_kofia_stats import datasets as kofia_datasets
 from kbj.data.public.kosis import datasets as kosis_datasets
 from kbj.data.public.nyfed import datasets as nyfed_datasets
+from kbj.data.public.stock_dashboard import datasets as stock_dashboard_public_datasets
 from kbj.data.public.treasury import datasets as treasury_datasets
 from kbj.data.spec import AsOfKind, DataKey, DatasetSpec, Tier, Venue
 
@@ -105,6 +107,8 @@ _ADAPTERS: Final[tuple[Sequence[DatasetSpec], ...]] = (
     fred_restricted.DATASETS,  # P5(MAC) — FRED 저작권 시리즈(로그인)
     forexfactory.DATASETS,  # P5(MAC) — 경제지표 예상치(로그인, 사용자 결정 Q3)
     nasdaq_datasets.DATASETS,  # P5(US) — 유니버스·일봉(Stooq 폴백 포함 논리 데이터셋)
+    stock_dashboard_public_datasets.DATASETS,  # 페이지 9 — 대테마 분류(공개, ADR 0039)
+    stock_dashboard_datasets.DATASETS,  # 페이지 9 — 테마 마스터 네이버 유래(로그인, ADR 0039)
     # 어댑터가 아직 없는 출처
     PLANNED,
 )

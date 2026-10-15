@@ -17,7 +17,9 @@
 !tests/fixtures/synthetic/p6_world.py
 !tests/fixtures/synthetic/p7_world.py
 !tests/fixtures/synthetic/p8_world.py
+!tests/fixtures/synthetic/theme_master.py
 !tests/unit/api/api_world.py
+!tests/unit/api/theme_world.py
 !tests/unit/api/web_fixtures_p6/**
 !tests/unit/api/web_fixtures_p7/**
 !tests/unit/api/web_fixtures_p8/**

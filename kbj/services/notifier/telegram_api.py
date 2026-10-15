@@ -442,6 +442,11 @@ class TelegramApi:
         res = self._query("getChat", {"chat_id": chat_id})
         return res if isinstance(res, dict) else {}
 
+    def get_updates(self, allowed_updates: Sequence[str]) -> list[dict[str, Any]]:
+        """getUpdates — 대기 중 업데이트(웹훅을 걸기 전 대화방 찾기용 — scripts/vm/telegram.sh)."""
+        res = self._query("getUpdates", {"allowed_updates": json.dumps(list(allowed_updates))})
+        return [u for u in res if isinstance(u, dict)] if isinstance(res, list) else []
+
     def get_webhook_info(self) -> dict[str, Any]:
         res = self._query("getWebhookInfo")
         return res if isinstance(res, dict) else {}

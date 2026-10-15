@@ -145,11 +145,24 @@ bash scripts/demo.sh --gif docs/media                        # README 미디어 
 python -m kbj.services.ops check                             # 운영 점검(VM — docs/runbook.md)
 ```
 
+## 운영 배포
+
+오라클 클라우드 **무료 ARM VM**(Ampere A1, Ubuntu 24.04)에 실데이터로 24시간 띄운다 — 단계별 안내(비개발자용, 클릭·붙여넣기):
+[`docs/deploy_oracle.md`](docs/deploy_oracle.md). VM 에서 한 줄 설치 뒤 `scripts/vm/` 스크립트로 시작·점검·업데이트·백업한다.
+HTTPS 는 `docker-compose.vm.yml` 의 Caddy(`<공인IP 대시>.sslip.io` 또는 내 도메인 — Let's Encrypt 자동). 결정: ADR
+[`0040`](docs/adr/0040-vm-deploy-oracle-caddy.md).
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kimbob0604-cmyk/KBJ/claude/build/scripts/vm/install.sh | bash   # VM 에서
+bash scripts/vm/keys.sh && bash scripts/vm/telegram.sh find-chat && bash scripts/vm/set-password.sh
+bash scripts/vm/start.sh        # 매일: status.sh · 새 버전: update.sh · 백업: backup.sh --install-cron
+```
+
 ## 직접 해야 하는 일(키·VM·GitHub 설정)
 
 코드로 할 수 없는 것들이다 — 순서와 명령은 [`docs/runbook.md`](docs/runbook.md).
 
-1. **VM 운영 시작**: `.env`(키·비밀번호 — [`docs/secrets.md`](docs/secrets.md)), `docker compose --profile app up -d --build`, 매일 `ops check`.
+1. **VM 운영 시작**: [`docs/deploy_oracle.md`](docs/deploy_oracle.md) 순서 — VM·키(`.env` — [`docs/secrets.md`](docs/secrets.md))·`scripts/vm/start.sh`, 매일 `scripts/vm/status.sh`(`ops check`).
 2. **GEX 수집 전환**(옛 GX → KBJ `gex-poller`): 주말에 런북 ④ 순서로 — 그 전까지 `gex.poller` 와 GX 수집 작업은 꺼져 있다.
 3. **운영 1주 무중단 판정**: 7일 동안 10분 넘는 끊김 0·켜진 작업 최종 실패 0·아침·마감 브리핑 매일 1통 — `python -m kbj.services.ops week`.
 4. **GitHub Pages 공개판**(운영 1주 뒤): `main` 에 합치기 → Settings → Pages(GitHub Actions) → 배포 키·디스패치 토큰·
@@ -160,5 +173,5 @@ python -m kbj.services.ops check                             # 운영 점검(VM 
 
 [`docs/PLAN.md`](docs/PLAN.md)(계획·단계별 결과) · [`docs/DATA_TIERS.md`](docs/DATA_TIERS.md)(공개/로그인 정본) ·
 [`docs/metrics.md`](docs/metrics.md)(지표 공식) · [`docs/probe_results.md`](docs/probe_results.md)(실측 체크리스트) ·
-[`docs/runbook.md`](docs/runbook.md)(운영) · [`docs/secrets.md`](docs/secrets.md)(키·환경변수) ·
+[`docs/runbook.md`](docs/runbook.md)(운영) · [`docs/deploy_oracle.md`](docs/deploy_oracle.md)(VM 배포) · [`docs/secrets.md`](docs/secrets.md)(키·환경변수) ·
 [`docs/migration/`](docs/migration/)(옮겨 온 세 프로젝트의 이식 기록) · [`docs/adr/`](docs/adr/README.md)(결정).

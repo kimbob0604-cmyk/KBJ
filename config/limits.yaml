@@ -113,6 +113,10 @@ treasury:
 nyfed:
   rate: 1.0
 
+# stock-dashboard 테마 마스터(로그인 — ADR 0039). GitHub raw 파일 7개, 주 1회 — 키 없음.
+stock_dashboard:
+  rate: 1.0
+
 # Yahoo chart(로그인 — 약관상) — 매크로 12종 + 미국 지수 약 6 + 상단 띠 '한국 대 글로벌'. 429 → 반감.
 yahoo:
   rate: 1.0

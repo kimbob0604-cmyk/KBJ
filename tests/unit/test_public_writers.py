@@ -48,6 +48,10 @@ P5_PUBLIC_JOBS = (
 # P7 공개 진단(docs/p7_design.md D-P7-15·20 — 계약 ⑱ 의 작업 소스, WRAP): pub_diag 만 쓰고
 # 공개 표만 읽는다
 P7_PUBLIC_JOBS = ("kbj.services.engine.diag_pub",)
+# 페이지 9 공개 대테마 분류(ADR 0039 — 계약 ㉑ 의 작업 소스): pub_themes.theme 만 쓴다. 같은
+# 원천의 로그인 작업(theme.master_sync — prv_themes)은 따로 있다(등록부 규칙 — 로그인 원천을 받는
+# 작업은 공개 표에 쓰지 않는다)
+P9_PUBLIC_JOBS = ("kbj.services.collectors.theme_classes",)
 REPORT_JOB = "kbj.reports.dart_excel.job"
 REPORT_LOGIN_READS = frozenset({"kbj.store.repos.journal"})  # 관심종목 읽기(대상 고르기)만
 # 운영 기반(데이터 표 쓰기가 아님): 선점 장부(ops.data_claim)·DB 접속과 건강 사건(ops.health_events)
@@ -116,7 +120,14 @@ def test_contract_18_sources_match_pyproject() -> None:
         assert f'"{job}"' in contract.split("forbidden_modules", 1)[0], job
 
 
-ALL_PUBLIC_JOBS = PUBLIC_JOBS + P5_PUBLIC_JOBS + P7_PUBLIC_JOBS
+def test_contract_21_sources_match_pyproject() -> None:
+    text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    _, _, contract = text.partition('name = "㉑')
+    for job in P9_PUBLIC_JOBS:
+        assert f'"{job}"' in contract.split("forbidden_modules", 1)[0], job
+
+
+ALL_PUBLIC_JOBS = PUBLIC_JOBS + P5_PUBLIC_JOBS + P7_PUBLIC_JOBS + P9_PUBLIC_JOBS
 
 
 @pytest.mark.parametrize("job", ALL_PUBLIC_JOBS)
@@ -125,11 +136,11 @@ def test_public_job_sql_is_pub_only(job: str) -> None:
     # 공개 저장소 묶음을 실제로 지나간다(빈 검사가 아님)
     assert {
         "kbj.store.repos.public", "kbj.store.repos.filings", "kbj.store.repos.macro",
-        "kbj.store.repos.market_stats", "kbj.store.repos.diag",
+        "kbj.store.repos.market_stats", "kbj.store.repos.diag", "kbj.store.repos.theme_pub",
     } & set(mods), mods  # fmt: skip
     assert not {
         "kbj.store.repos.consensus", "kbj.store.repos.journal", "kbj.store.repos.gex",
-        "kbj.store.repos.diag_prv",
+        "kbj.store.repos.diag_prv", "kbj.store.repos.theme",
     } & set(mods), mods  # fmt: skip
     bad = {m: v for m in mods if (v := _sql_violations(m))}
     assert bad == {}

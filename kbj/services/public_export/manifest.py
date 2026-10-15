@@ -126,7 +126,7 @@ DART_ONLY_NAMES: Final = frozenset({
     "corp_index.json",
 })  # fmt: skip
 # P5 평평한 공개 파일 — 관심종목 흔적·로그인 스키마 이름 검사를 받는다(DART 전용은 아니다)
-P5_FLAT_NAMES: Final = frozenset({"credit.json"})
+P5_FLAT_NAMES: Final = frozenset({"credit.json", "themes.json"})  # themes.json — 페이지 9(ADR 0039)
 _KB: Final = 1024
 # P5 크기 상한(바이트, docs/p5_design.md §7 [제안]) — 폴더 합계·파일 하나. merge-public-data.mjs 와
 # 같다.
@@ -139,6 +139,7 @@ DIR_CAPS: Final[dict[str, int]] = {
 }  # fmt: skip
 FILE_CAPS: Final[dict[str, int]] = {
     "credit.json": 100 * _KB,
+    "themes.json": 200 * _KB,  # 페이지 9 대테마 분류(ADR 0039 — 수십 개, 약 10 KB)
     "macro/calendar.json": 200 * _KB,
     "trade/flash.json": 200 * _KB,
     "trade/ribbon.json": 4 * _KB,  # 띠 칩(FLASH — credit.json 과 분리, 약 1 KB)
@@ -257,6 +258,23 @@ def trade_problems(name: str, raw: object) -> list[str]:
         for p in _key_paths(raw, lambda k, x: k == "origin" and x == "local")  # pyright: ignore[reportUnknownLambdaType]
     ]
     return out
+
+
+# 공개 themes.json 에 없어야 하는 키 — 네이버 유래(원본 테마 목록·편입 종목·사유) 칸(ADR 0039,
+# DATA_TIERS §2 9 행: 공개는 대테마 분류만)
+_THEME_LOGIN_KEYS: Final = frozenset({
+    "naver", "excluded_naver", "members", "member", "reason", "reasons", "code", "codes", "stocks",
+})  # fmt: skip
+
+
+def theme_problems(name: str, raw: object) -> list[str]:
+    """페이지 9 `themes.json` 내용 검사 — 네이버 유래 칸(`_THEME_LOGIN_KEYS`) 0."""
+    if name != "themes.json":
+        return []
+    return [
+        f"{name}: 로그인 전용 테마 칸({p})"
+        for p in _key_paths(raw, lambda k, _x: k in _THEME_LOGIN_KEYS)  # pyright: ignore[reportUnknownLambdaType]
+    ]
 
 
 def _price_shape_ok(kind: str, x: object) -> bool:
@@ -554,6 +572,7 @@ def check_payload(name: str, text: str) -> list[str]:
         if _LOGIN_SCHEMA_TEXT in text:
             problems.append(f"{name}: 로그인 등급 스키마 이름('{_LOGIN_SCHEMA_TEXT}' 규칙)")
     problems += trade_problems(name, raw)
+    problems += theme_problems(name, raw)
     problems += diag_problems(name, raw)
     problems += price_problems(name, raw)
     if not isinstance(raw, dict):

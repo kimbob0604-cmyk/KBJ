@@ -25,6 +25,8 @@
   슬롯·신호·성과·백테스트·
   일치 감시 쓰기 + 규칙 읽기)·`personal`(규칙·판·일지·매매·추천 쓰기 — 쓰기 모듈 하나, D-P8-15),
   `journal` 에 일지·매매·추천 읽기.
+- 페이지 9(ADR 0039): 로그인 `theme`(0023 prv_themes.* — 네이버 유래 편입·종목 마스터)·공개
+  `theme_pub`(pub_themes.theme — 대테마 분류). stock-dashboard 테마 마스터를 받아 쓴다.
 
 - 행 모양은 `kbj.core.rows`(엔진과 공유). 이 패키지는 `kbj.core`·psycopg 만 쓴다(계약 ⑦).
 - Postgres 구현은 연결 공장(`ConnFactory`)을 받아 부를 때마다 짧게 연다. 서비스는
@@ -58,6 +60,8 @@ from kbj.store.repos.personal import PersonalRepo, PgPersonalRepo
 from kbj.store.repos.program import PgProgramRepo, ProgramRepo
 from kbj.store.repos.public import PublicRepos
 from kbj.store.repos.rules import PgRulesRepo, RulesRepo
+from kbj.store.repos.theme import PgThemeRepo, ThemeRepo
+from kbj.store.repos.theme_pub import PgThemePublicRepo, ThemePublicRepo
 from kbj.store.repos.trade import PgTradeRepo, TradeRepo
 from kbj.store.repos.us import PgUsRepo, UsRepo
 
@@ -86,6 +90,8 @@ __all__ = [
     "Repos",
     "RevisionReport",
     "RulesRepo",
+    "ThemePublicRepo",
+    "ThemeRepo",
     "TradeRepo",
     "UsRepo",
     "memory_repos",
@@ -122,6 +128,9 @@ class Repos:
     # P8 묶음 FND(0021 — 로그인)
     rules: RulesRepo
     personal: PersonalRepo
+    # 페이지 9(0023 — 네이버 유래 로그인 theme·대테마 분류 공개 theme_pub, ADR 0039)
+    theme: ThemeRepo
+    theme_pub: ThemePublicRepo
 
     def public(self) -> PublicRepos:
         """같은 공개 저장소(filings·fin·macro·market_stats·diag)를 공개 작업 묶음으로."""
@@ -153,4 +162,6 @@ def pg_repos(conn_factory: ConnFactory) -> Repos:
         diag_pub=PgDiagPublicRepo(conn_factory),
         rules=PgRulesRepo(conn_factory),
         personal=PgPersonalRepo(conn_factory),
+        theme=PgThemeRepo(conn_factory),
+        theme_pub=PgThemePublicRepo(conn_factory),
     )

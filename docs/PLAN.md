@@ -349,8 +349,20 @@ kbj/
   - 운영 1주 무중단: **[사용자]** — VM·키·GX 전환(런북 ④) 뒤 `ops week` 결과(통과/실패·개수만)를 이 줄에 적는다.
   - 남은 것: ① [메인] 데모 compose 실제 기동(#74)·도커 통합(`pytest -m integration` — 새 `test_gex_ingest_pg` 9 포함)·CI 녹색
     ② [사용자] VM 운영·GX → KBJ 전환(#68~#70)·1주 판정(#71~#73) ③ [사용자] Pages 켜기(운영 1주 뒤 — 런북 ⑦) ④ [사용자, 선택]
-    커밋 `f6aeebd` 에 태그 `legacy-final` ⑤ 실측 체크리스트 #1~#67 미완(키 수령 뒤) ⑥ 테마·밸류체인(페이지 9 — 사용자 별도)
+    커밋 `f6aeebd` 에 태그 `legacy-final` ⑤ 실측 체크리스트 #1~#67 미완(키 수령 뒤) ⑥ 테마·밸류체인(페이지 9 — 2026-10-15 완료, 아래 절·ADR 0039)
     ⑦ 엔진 쓰기 디스크 스풀 공용화(P7 ⑦).
+
+**페이지 9 — 테마·밸류체인** — 코드 완료(2026-10-15, ADR 0039 — P9 '남은 것 ⑥'·P5 제외분 마감)
+- 사용자 결정(2026-10-15): stock-dashboard 가 매주 만드는 테마 마스터(`data/master/`)를 받아 쓴다. 네이버 직접 수집 없음.
+  대테마 분류(사용자 작성)는 공개, 네이버 유래 편입·사유·종목 마스터와 시세 기반 강도는 로그인(DATA_TIERS §1·§2 9 행).
+- 작업 둘(일 12:40 KST, 켬 — `ENABLED_BY_PHASE["P9"]`): 로그인 `theme.master_sync`(파일 7 → 검증 → `prv_themes.*` 한
+  트랜잭션) → 공개 `theme.classes_sync`(굳은 의존, `pub_themes.theme`). built_at 같으면 meta 만, 하한·감소율 20% 넘으면 거부.
+  마이그레이션 0023, 어댑터 `kbj/data/{public,private}/stock_dashboard`, 계약 ㉑(import-linter 19 kept).
+- 강도는 저장하지 않고 API 가 보드 종목 하루로 계산(보드 롤업 재사용 — metrics §31). API `/api/themes`·`/strength`·`/{id}`,
+  공개 파일 `themes.json`(분류만 — 내용 검사 `theme_problems`). 화면 페이지 9 mixed(공개 패널 둘 + 로그인 넷 — 로그인 본문
+  공개 번들 제외). 데모(`_load_p9`)·demo_shots 페이지 9 오류 0. 픽스처는 합성만(`tests/fixtures/synthetic/theme_master.py`).
+- 남은 것: ① [사용자] stock-dashboard PR 머지가 늦으면 다음 주 반영(바로는 run-once) ② 검증 문턱 실측 [확인 필요]
+  ③ [메인] 도커 통합(0023 적용 — `test_migrations_pg`)·CI.
 
 ---
 

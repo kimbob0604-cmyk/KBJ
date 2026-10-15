@@ -95,8 +95,11 @@ P7_ENABLED = {"diag.public", "diag.daily", "gex.alert"}
 P8_ENABLED = {"rules.close", "rules.outcome", "rules.backtest_nightly", "rules.intraday"}
 # P9(docs/p9_design.md §11 Q2 — WRAP): GX 수집 작업 일곱(gex.day_minutes·gex.night_minutes·
 # gex.krx_derivatives·kis.master·kis.master_night·gex.open_check_day·gex.open_check_night)과 서비스
-# gex.poller 는 꺼진 채 — 옛 GX 와 동시 실행 금지(§9 R2), 켜기는 사용자가 런북 ④ 전환 때
-P9_ENABLED: set[str] = set()
+# gex.poller 는 꺼진 채 — 옛 GX 와 동시 실행 금지(§9 R2), 켜기는 사용자가 런북 ④ 전환 때.
+# 페이지 9(ADR 0039 — 사용자 결정 2026-10-15): 테마 마스터 두 작업 켬(외부 키 불필요 — 공개
+# GitHub raw 파일). 로그인 theme.master_sync(prv_themes) → 공개 theme.classes_sync(pub_themes —
+# 굳은 의존)
+P9_ENABLED: set[str] = {"theme.master_sync", "theme.classes_sync"}
 # 단계별 켜진 작업(웨이브 3 묶음이 P3~P7 을 켰다). 새 단계가 작업을 켜면 이 표에 한 줄 더한다.
 ENABLED_BY_PHASE = {
     "P2": P2_ENABLED,
@@ -823,12 +826,13 @@ def test_p5_jobs_are_registered_with_design_owners_and_wave3_enables() -> None:
         assert p5[name].owner == owner, name
     # 켜기는 웨이브 3(WRAP — ENABLED_BY_PHASE["P5"], D-P5-23)
     assert {n for n, j in p5.items() if j.enabled} == P5_ENABLED
-    # 꺼진 채 남는 작업은 노트에 막는 실측 번호(#39~#49, IDX #50~#54)를 적는다 — 테마 강도는 사용자
-    # 별도 진행
+    # 꺼진 채 남는 작업은 노트에 막는 실측 번호(#39~#49, IDX #50~#54)를 적는다 — 테마 강도는
+    # 2026-10-15 사용자 결정(ADR 0039)으로 API 가 읽을 때 계산해 themes.monitor 는 꺼진 채(표 없음)
     for name, j in p5.items():
         if not j.enabled and name != "themes.monitor":
             assert j.note and re.search(r"#(39|4\d|5[0-4])", j.note), name
-    assert "사용자가 따로" in (p5["themes.monitor"].note or "")
+    assert "ADR 0039" in (p5["themes.monitor"].note or "")
+    assert not p5["themes.monitor"].enabled
     # 계약 ⑨ — 엔진은 순수(저장소 금지): 처리기는 kbj.services·kbj.reports 에(D-P5-7)
     assert all(not o.startswith("kbj.engines.") for o in P5_JOBS.values())
     # 공개·로그인 매크로 수집은 모듈이 다르다(계약 ⑭ — D-P5-7)

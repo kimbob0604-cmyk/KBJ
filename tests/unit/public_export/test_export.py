@@ -574,7 +574,8 @@ def test_p5_empty_hook_adds_no_files(tmp_path: Path, cal: TradingCalendar) -> No
     assert [d.name for d in m.dirs] == ["fin", "reports"]
     assert "credit.json" not in m.names and m.skipped == ()
     assert not (tmp_path / "macro").exists()
-    assert not hasattr(ex, "build_themes")  # 테마 사전 내보내기는 P5 에서 뺐다(사용자 결정 Q1)
+    # 페이지 9 대테마 분류(ADR 0039): pub_themes 가 비면 themes.json 도 0·이유 0
+    assert "themes.json" not in m.names
     assert check_tree(tmp_path) == []
 
 

@@ -11,6 +11,7 @@ import { AuthRequiredError, hrefOf, LockedError, reportXlsxKey } from '../src/da
 import { createStaticSource } from '../src/data/static';
 import p6 from '../src/pages/p6_macro';
 import p7 from '../src/pages/p7_trade';
+import p9 from '../src/pages/p9_themes';
 import p11, { P11_SECTIONS } from '../src/pages/p11_rules';
 import p12, { P12_SECTIONS } from '../src/pages/p12_journal';
 import { panel } from '../src/ui/panel';
@@ -241,28 +242,35 @@ describe('P4 섞인 페이지(8) — 등급별 키·자물쇠', () => {
   });
 });
 
-describe('P5 섞인 페이지 6 과 자리표시 9 — 공개 몫은 공개 파일, 로그인 몫은 자물쇠', () => {
-  // 9(테마·밸류체인)는 사전 통합을 사용자가 따로 진행(2026-10-13 Q1) — 모듈 없이 P3 자리표시 그대로
-  const loaders = () => new Map([[6, () => Promise.resolve(p6)]]);
+describe('P5 섞인 페이지 6·9 — 공개 몫은 공개 파일, 로그인 몫은 자물쇠', () => {
+  // 9(테마·밸류체인)는 ADR 0039(2026-10-15) — 대테마 분류는 공개 파일 themes.json, 강도·편입은 로그인(자물쇠 넷)
+  const loaders = () =>
+    new Map([
+      [6, () => Promise.resolve(p6)],
+      [9, () => Promise.resolve(p9)],
+    ]);
 
-  it('공개: 6 은 공개 파일만(MAC — 시장 탭 자물쇠 1), 9 는 페이지 자물쇠 자리표시', async () => {
+  it('공개: 6 은 공개 파일만(MAC — 시장 탭 자물쇠 1), 9 는 themes.json 만·로그인 패널 자물쇠 4', async () => {
     const root = appRoot();
     const { fetch, calls } = fakeFetch(() => json({}, 404));
     const app = bootPublic(root, { fetch, now: fixedClock(), loaders: loaders(), ribbon: null });
     for (const n of [6, 9]) app.pager.go(n, { smooth: false });
     await app.settled();
-    // 페이지 6(MAC 본문)은 공개 매크로 파일만 묻는다 — 로그인 API·시장 탭(자물쇠)은 묻지 않는다
-    expect(calls.map((c) => c.url).every((u) => u.startsWith('./data/macro/'))).toBe(true);
+    // 공개 매크로 파일·공개 대테마 분류 파일만 묻는다 — 로그인 API·로그인 패널(자물쇠)은 묻지 않는다
+    const urls = calls.map((c) => c.url);
+    expect(urls.every((u) => u.startsWith('./data/macro/') || u === './data/themes.json' || u === './data/manifest.json')).toBe(true);
+    expect(urls).toContain('./data/themes.json');
     const p6sec = root.querySelector('#page-6');
     expect(p6sec?.querySelectorAll('.panel.locked')).toHaveLength(1);
     expect(p6sec?.querySelectorAll('.panel.is-pending')).toHaveLength(0);
     const p9sec = root.querySelector('#page-9');
-    expect(p9sec?.querySelectorAll('.panel.locked')).toHaveLength(1);
+    expect(p9sec?.querySelectorAll('.panel.locked')).toHaveLength(4);
+    expect(p9sec?.querySelectorAll('.panel.is-pending')).toHaveLength(0);
     expect(p9sec?.querySelector('.panel.locked .lockmsg')?.textContent).toContain('시세 기반');
     app.destroy();
   });
 
-  it('로그인: 6 은 자물쇠·준비 중 없음, 9 는 자물쇠 없이 준비 중(P5) 자리표시', async () => {
+  it('로그인: 6·9 는 자물쇠·준비 중 없음(받을 것이 없으면 패널 안 안내)', async () => {
     const root = appRoot();
     const app = mountApp(root, {
       tier: 'login',
@@ -277,10 +285,8 @@ describe('P5 섞인 페이지 6 과 자리표시 9 — 공개 몫은 공개 파�
     for (const n of [6, 9]) {
       const sec = root.querySelector(`#page-${n}`);
       expect(sec?.querySelector('.panel.locked')).toBeNull();
-      // 페이지 6 은 MAC 본문(준비 중 없음 — 받을 것이 없으면 패널 안 '아직 없음'), 9 는 자리표시 1
-      expect(sec?.querySelectorAll('.panel.is-pending')).toHaveLength(n === 6 ? 0 : 1);
+      expect(sec?.querySelectorAll('.panel.is-pending')).toHaveLength(0);
     }
-    expect(root.querySelector('#page-9 .panel.is-pending')?.textContent).toContain('준비 중(P5)');
     app.destroy();
   });
 });

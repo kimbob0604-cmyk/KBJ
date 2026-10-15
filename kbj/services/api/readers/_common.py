@@ -44,6 +44,8 @@ from kbj.store.repos import (
     PersonalRepo,
     ProgramRepo,
     RulesRepo,
+    ThemePublicRepo,
+    ThemeRepo,
     TradeRepo,
     UsRepo,
 )
@@ -143,6 +145,11 @@ class ApiRepos(Protocol):
 
     @property
     def personal(self) -> PersonalRepo: ...
+    # 페이지 9(0023 — 대테마 분류·편입·종목 마스터, ADR 0039)
+    @property
+    def theme(self) -> ThemeRepo: ...
+    @property
+    def theme_pub(self) -> ThemePublicRepo: ...
 
 
 class NoData(Exception):

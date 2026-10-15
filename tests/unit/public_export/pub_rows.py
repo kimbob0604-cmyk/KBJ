@@ -606,6 +606,16 @@ def table_rows(repos: MemoryPublicRepos, name: str) -> list[Row]:
     return _rows(spec, mem.rows.values())
 
 
+def theme_rows(repo: Any) -> list[Row]:
+    """`pub_themes.theme` 메모리판 → Q_THEMES 와 같은 뜻(ord·id 순 — 열 이름 dict)."""
+    if repo is None:
+        return []
+    from kbj.store.repos.theme_pub import T_THEME
+
+    rows = _rows(T_THEME, repo.table.rows.values())
+    return sorted(rows, key=lambda r: (r["ord"], r["id"]))
+
+
 def _desc(*keys: str) -> Callable[[Row], tuple[Any, ...]]:
     return lambda r: tuple(r[k] for k in keys)
 
@@ -689,6 +699,10 @@ class MemReader:
         return memory_explore_reader(repo if repo is not None else MemoryTradeRepo())(
             Query(name, "SELECT 1"), p
         )
+
+    # ── 페이지 9(themes.json — pub_themes.theme, ADR 0039). 이 세계에 표가 없으면 빈 표 ──
+    def q_themes(self, p: dict[str, Any]) -> list[Row]:
+        return theme_rows(getattr(self.world.repos, "theme_pub", None))
 
     def __getattr__(self, attr: str) -> Any:
         if attr.startswith("q_diag_"):  # P7 DIAG(diag/ — pub_diag) — diag_seed.DiagReader 한 곳

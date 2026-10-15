@@ -1,4 +1,4 @@
-"""`python -m kbj.services.notifier [run | setup-webhook | webhook-info | check]`.
+"""`python -m kbj.services.notifier [run | setup-webhook | webhook-info | check | list-chats]`.
 
 - `run`(기본): 대기열 소비·발송·받은 업데이트 처리·웹훅 점검·하트비트(compose `notifier`,
   `KBJ_SERVICE=notifier`). `KBJ_NOTIFY_ENABLED=false`(기본)면 보내지 않고 기록만(`suppressed`).
@@ -9,6 +9,9 @@
   순서는 설계 §5.11.
 - `webhook-info`: getWebhookInfo 요약(주소는 호스트만).
 - `check`: getMe·getChat — 메시지를 보내지 않는다(ET `check`).
+- `list-chats`: getUpdates 로 봇이 본 대화방을 `제목 [종류]<TAB>번호` 줄로 — 웹훅을 걸기 전
+  대화방 고르기(`scripts/vm/telegram.sh find-chat` 이 받아 `.env` 에 넣는다). 번호는 이 명령의
+  stdout 에만 싣고 로그에는 싣지 않는다.
 
 출력·로그에 토큰·시크릿·chat id 를 싣지 않는다. 설정 오류는 종료 코드 2, 실행 실패는 1.
 """
@@ -102,6 +105,40 @@ def cmd_check(settings: Settings) -> int:
     return 0 if ok else 1
 
 
+_CHAT_KINDS = {"private": "1:1", "group": "그룹", "supergroup": "슈퍼그룹", "channel": "채널"}
+_CHAT_KEYS = ("message", "channel_post", "my_chat_member", "edited_message")
+
+
+def chats_from_updates(updates: Sequence[dict[str, Any]]) -> dict[int, str]:
+    """getUpdates 결과 → {대화방 번호: '제목 [종류]'} (나중 것이 이긴다)."""
+    seen: dict[int, str] = {}
+    for u in updates:
+        for k in _CHAT_KEYS:
+            c = (u.get(k) or {}).get("chat") if isinstance(u.get(k), dict) else None
+            if not isinstance(c, dict) or not isinstance(c.get("id"), int):
+                continue
+            name = c.get("title") or " ".join(
+                str(x) for x in (c.get("first_name"), c.get("last_name")) if x
+            )
+            kind = _CHAT_KINDS.get(str(c.get("type")), str(c.get("type")))
+            label = f"{name or '(이름 없음)'} [{kind}]"
+            seen[c["id"]] = " ".join(label.split())  # 탭·줄바꿈 제거
+    return seen
+
+
+def cmd_list_chats(settings: Settings) -> int:
+    api = TelegramApi(settings.telegram_bot_token)
+    try:
+        updates = api.get_updates(ALLOWED_UPDATES)
+    except TelegramApiError as e:
+        _say(f"getUpdates 실패: {e.reason}")
+        return 1
+    chats = chats_from_updates(updates)
+    for cid, label in chats.items():  # 번호는 이 stdout 에만(마스킹하지 않는다 — 고르는 데 쓴다)
+        sys.stdout.write(f"{label}\t{cid}\n")
+    return 0 if chats else 3
+
+
 def cmd_run(settings: Settings) -> int:  # pragma: no cover — 진입점(실제 Redis·DB·텔레그램)
     if settings.service != SERVICE:
         log_event(
@@ -160,6 +197,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     sw.add_argument("--confirm", action="store_true", help="실제로 건다")
     sub.add_parser("webhook-info", help="getWebhookInfo 요약")
     sub.add_parser("check", help="getMe·getChat(메시지 안 보냄)")
+    sub.add_parser("list-chats", help="getUpdates 로 봇이 본 대화방(제목<TAB>번호)")
     args = parser.parse_args(argv)
     setup_logging()
     try:
@@ -174,6 +212,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return cmd_webhook_info(settings)
     if cmd == "check":
         return cmd_check(settings)
+    if cmd == "list-chats":
+        return cmd_list_chats(settings)
     return cmd_run(settings)
 
 

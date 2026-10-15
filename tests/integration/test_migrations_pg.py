@@ -1,4 +1,4 @@
-"""마이그레이션 0001~0022 를 실제 TimescaleDB 에 적용(Docker).
+"""마이그레이션 0001~0023 을 실제 TimescaleDB 에 적용(Docker).
 
 근거: docs/p2_design.md §8.2·§8.8, docs/p3_design.md §3.4.
 
@@ -63,8 +63,10 @@ P2 = [
     "0020_diag.sql",
     "0021_rules_journal.sql",
     "0022_gex_ingest.sql",
-]  # 이름은 P2 시험 그대로 — 0001~0022 전부(P3 0007~0009, P4 0010~0013, P5 0014~0017,
-#   P5 2차 IDX 0018, P6 0019, P7 0020, P8 0021, P9 GXI 0022 — 쓰기 주인 COMMENT 만)
+    "0023_themes.sql",
+]  # 이름은 P2 시험 그대로 — 0001~0023 전부(P3 0007~0009, P4 0010~0013, P5 0014~0017,
+#   P5 2차 IDX 0018, P6 0019, P7 0020, P8 0021, P9 GXI 0022 — 쓰기 주인 COMMENT 만,
+#   페이지 9 테마 0023 — ADR 0039)
 GX_DAILY = {
     "prv_gex.raw_messages", "prv_gex.fut_ticks", "prv_gex.opt_ticks", "prv_gex.chain_snapshots",
     "prv_gex.fut_board", "prv_gex.investor_flow", "prv_gex.series_expiries",

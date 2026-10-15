@@ -415,8 +415,10 @@ def test_p5_subdirs_and_caps_declared() -> None:
     assert DIR_CAPS["macro"] == 3 * 1024 * 1024
     assert {k: v for k, v in FILE_CAPS.items() if not k.startswith(("trade/", "diag/"))} == {
         "credit.json": 100 * 1024,
+        "themes.json": 200 * 1024,  # 페이지 9 대테마 분류(ADR 0039)
         "macro/calendar.json": 200 * 1024,
     }
+    assert "credit.json" in P5_FLAT_NAMES and "themes.json" in P5_FLAT_NAMES
     assert "credit.json" in P5_FLAT_NAMES and not DART_ONLY_NAMES & P5_FLAT_NAMES
 
 

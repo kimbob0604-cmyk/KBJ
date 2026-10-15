@@ -41,6 +41,9 @@ ROUTES: tuple[tuple[str, int | None], ...] = (
     ("/api/trade/flash", 200),  # 7 수출입
     ("/api/trade/items", 200),
     ("/api/stock/search?q=0", None),  # 8 종목 상세
+    ("/api/themes", 200),  # 9 테마·밸류체인(ADR 0039 — demo_server._load_p9 합성 테마 마스터)
+    ("/api/themes/strength", 200),
+    ("/api/themes/syn_1_1", 200),
     ("/api/etf/flows", 200),  # 10 ETF
     ("/api/etf/types", 200),
     ("/api/rules", 200),  # 11 규칙 알림

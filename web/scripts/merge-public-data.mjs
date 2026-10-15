@@ -55,7 +55,7 @@ export const DART_ONLY = new Set([
   "corp_index.json",
 ]);
 /** P5 평평한 공개 파일 — 관심종목 흔적·로그인 스키마 이름 검사를 받는다(manifest.py P5_FLAT_NAMES) */
-export const P5_FLAT_NAMES = new Set(["credit.json"]);
+export const P5_FLAT_NAMES = new Set(["credit.json", "themes.json"]); // themes.json — 페이지 9(ADR 0039)
 const KB = 1024;
 /** 크기 상한(바이트, p5·p6_design §7 [제안]) — manifest.py DIR_CAPS·FILE_CAPS·PREFIX_CAPS 와 같다 */
 export const DIR_CAPS = {
@@ -65,6 +65,7 @@ export const DIR_CAPS = {
 };
 export const FILE_CAPS = {
   "credit.json": 100 * KB,
+  "themes.json": 200 * KB, // 페이지 9 대테마 분류(ADR 0039)
   "macro/calendar.json": 200 * KB,
   "trade/flash.json": 200 * KB,
   "trade/ribbon.json": 4 * KB,

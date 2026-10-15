@@ -21,6 +21,8 @@ docs/p3_design.md §7, docs/p4_design.md §1.9·§7, DATA_TIERS §3, ADR 0002 §
 - P7(docs/p7_design.md §7): `diag/`(`_p7_files` — 본문은 DIAG `diag_json`). `pub_diag` 만, 로그인
   판정 키(fear_greed·verdict·gex*) 없음(`manifest.diag_problems`). 상한은 `DIR_CAPS["diag"]`·
   `FILE_CAPS`.
+- 페이지 9(ADR 0039): 평평한 `themes.json`(`build_themes` — `pub_themes.theme` 대테마 분류만,
+  네이버 유래·강도 없음 — `manifest.theme_problems`). 상한은 `FILE_CAPS["themes.json"]`.
 - 그 밖에 쓰는 것: 거래 캘린더(코드 계산)·`config/calendar_events.yaml`(공개 설정)·`config/fin.yaml`
   (중요도 등급·크기 상한)·`config/reports.yaml`(공개 데모 종목).
 - 이 패키지는 로그인 등급 코드(`kbj.data.private`·`kbj.engines`·`kbj.services.{api,collectors,
@@ -87,6 +89,7 @@ from kbj.services.public_export.push import (
     push_public_data,
     ssh_remote,
 )
+from kbj.services.public_export.themes_json import build_themes
 from kbj.services.public_export.trade_explore_json import build_trade_explore
 from kbj.services.public_export.trade_flash_json import build_trade_flash
 from kbj.services.public_export.trade_stock_json import build_trade_stock
@@ -443,6 +446,10 @@ def export_all(
         p7, why7 = _p7_files(reader, now=now)
         files += p7
         skipped += why7
+        # 페이지 9: themes.json (pub_themes — 대테마 분류만, ADR 0039)
+        p9 = build_themes(reader, now=now)
+        files += p9.files
+        skipped += p9.skipped
     caps.update(DIR_CAPS)
     return write_files(files, out_dir, now=now, blobs=blobs, caps=caps, skipped=skipped)
 

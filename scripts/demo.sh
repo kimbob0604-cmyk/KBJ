@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # KBJ 데모 — 합성 데이터만(키 불필요). 로그인 SPA 빌드 + 합성 데이터 API 서버(scripts/demo_server.py)를 띄우고,
-# --shots 면 Playwright(크로미움)로 로그인 → 페이지 1·2·3·4·5·6·7·8·10·11·12·13 스크린샷·콘솔 오류 검사를 한다
+# --shots 면 Playwright(크로미움)로 로그인 → 페이지 1~13 스크린샷·콘솔 오류 검사를 한다
 # (페이지 3 은 합성 P7 세계 — 진단 이력·GEX 엔진 사이클, demo_server._load_p7. 페이지 6 은 합성 P5 매크로 —
 # demo_server._load_p6_macro. 페이지 11·12 는 합성 P8 세계 — 규칙·신호·성과·백테스트·일지·매매, _load_p8.
 # 페이지 13 은 합성 1주 운영 기록 — demo_server.attach_ops).

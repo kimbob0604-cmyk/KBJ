@@ -87,8 +87,12 @@ def test_openapi_lists_p5_routes_with_envelopes(world: World) -> None:
         ref = op["responses"]["200"]["content"]["application/json"]["schema"]["$ref"]
         assert ref.endswith(f"Envelope_{model}_"), (template, ref)
         assert "404" in op["responses"] and "401" in op["responses"]
-    # 테마·밸류체인(페이지 9) 라우트는 사전 통합을 사용자가 따로 진행해 P5 에서 뺐다(2026-10-13 Q1)
-    assert not [p for p in paths if p.startswith("/api/themes")]
+    # 테마·밸류체인(페이지 9) 라우트는 ADR 0039(2026-10-15)로 생겼다 — 분류·강도·상세 셋(봉투)
+    themes = sorted(p for p in paths if p.startswith("/api/themes"))
+    assert themes == ["/api/themes", "/api/themes/strength", "/api/themes/{theme_id}"]
+    for p in themes:
+        ref = paths[p]["get"]["responses"]["200"]["content"]["application/json"]["schema"]["$ref"]
+        assert "Envelope_Theme" in ref, (p, ref)
     schemas = spec["components"]["schemas"]
     # 순위 표는 범위 꼬리표가 필수(F2 §1.4 — 검산 ⑤)
     assert "scope_label" in schemas["ProgramTop"]["required"]

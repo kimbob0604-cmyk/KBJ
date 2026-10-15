@@ -1,0 +1,43 @@
+# KBJ VM — HTTPS 역방향 프록시(Caddy). docker-compose.vm.yml 의 caddy 서비스가 읽는다(ADR 0040 — ADR 0008 의
+# '레포 밖 TLS 프록시' 를 레포 안 선택 오버레이로).
+#
+# 주소 분기(scripts/vm/lib.sh kbj_site_host → .env KBJ_SITE_HOST):
+#   - .env 의 KBJ_DOMAIN 이 있으면 그 도메인(DNS A 레코드를 VM 공인 IP 로 먼저 건다).
+#   - 없으면 <공인IP 점을 대시로>.sslip.io (예: 1-2-3-4.sslip.io → 1.2.3.4). 도메인을 사지 않아도 된다.
+#   어느 쪽이든 Caddy 가 Let's Encrypt 인증서를 자동으로 받고 갱신한다(80·443 이 열려 있어야 한다).
+#
+# - api 는 호스트 루프백 127.0.0.1:8000 에만 열려 있다(docker-compose.yml — 호스트 네트워크). Caddy 도 호스트
+#   네트워크라 127.0.0.1 에서 들어가고, uvicorn forwarded_allow_ips=127.0.0.1 이 X-Forwarded-For 의 실제 접속
+#   IP 를 받아 로그인 실패 잠금이 IP 별로 돈다. Caddy 는 손님이 보낸 X-Forwarded-For 를 믿지 않고 덮어쓴다.
+# - 텔레그램 웹훅 POST /telegram/webhook 도 같은 호스트로 간다(kbj.services.notifier.webhook.WEBHOOK_PATH —
+#   경로를 여기서 바꾸지 않는다). 인증은 앱이 X-Telegram-Bot-Api-Secret-Token 으로.
+# - 보안 헤더: CSP·X-Frame-Options·nosniff·Referrer-Policy·Permissions-Policy 는 앱이 낸다(kbj/services/api/app.py).
+#   여기서는 HSTS 와 Server 헤더 지우기만 더한다.
+# - 접근 로그를 남기지 않는다(앱도 끈다 — IP·경로를 남기지 않는 규칙, docs/p3_design.md §5.4).
+
+{
+	# 관리 API 를 열지 않는다(호스트 네트워크라 열면 루프백 2019 에 뜬다). 설정을 바꾸면 컨테이너를 다시 띄운다
+	admin off
+	servers {
+		# 오라클 보안 목록은 TCP 80·443 만 연다 — HTTP/3(UDP) 는 끈다
+		protocols h1 h2
+	}
+}
+
+{$KBJ_SITE_HOST} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	# 텔레그램 웹훅 본문 상한은 앱이 1 MiB — 프록시는 조금 넉넉히
+	request_body {
+		max_size 2MB
+	}
+
+	reverse_proxy 127.0.0.1:8000 {
+		header_down -Server
+	}
+}

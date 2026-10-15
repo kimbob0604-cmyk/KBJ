@@ -1,0 +1,17 @@
+# 테마 마스터 받기(페이지 9 — 테마·밸류체인, ADR 0039 · 사용자 결정 2026-10-15)
+# 해석기: kbj/config/theme.py(모르는 키는 오류). 작업 theme.master_sync(config/jobs.yaml)가 읽는다.
+#
+# - 원천: stock-dashboard 레포(공개)의 GitHub Actions '종목 마스터 갱신'(일 06:00 KST — 바뀐 것이 있으면 PR)이
+#   만든 data/master/ 파일들. KBJ 는 네이버에 직접 접속하지 않는다(CLAUDE.md §2) — 이 파일들만 받는다.
+# - base_url 은 바꿀 수 있다(포크·태그 고정·사본 미러). 파일 이름은 코드(kbj/engines/theme/master.py FILES)가 정한다.
+# - 문턱은 '판이 크게 줄었으면 적재하지 않고 실패로 알린다'(옛 판 유지). 숫자는 2026-10-13 판(대테마 44·네이버 테마
+#   264·편입 6,437·종목 2,693)을 보고 정한 [제안] — 원천 구조가 바뀌면 다시 본다.
+master:
+  base_url: "https://raw.githubusercontent.com/kimbob0604-cmyk/stock-dashboard/main/data/master"
+  min_themes: 30              # 대테마 수 하한
+  min_naver_themes: 150       # 네이버 테마 수 하한
+  min_members: 3000           # 편입(네이버 테마 × 종목) 줄 수 하한
+  min_stocks: 2000            # 종목 마스터 수 하한
+  max_drop_ratio: 0.2         # 직전 적재 판보다 이 비율 넘게 줄면(표마다) 적재 거부
+  max_file_mb: 8              # 파일 하나 크기 상한(넘으면 실패 — 자르지 않는다)
+  stale_days: 15              # 화면 품질: built_at 이 이보다 오래되면 stale(주 1회 갱신 + 여유)

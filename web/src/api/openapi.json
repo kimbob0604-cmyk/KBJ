@@ -9014,6 +9014,218 @@
         }
       }
     },
+    "/api/themes": {
+      "get": {
+        "tags": [
+          "themes"
+        ],
+        "summary": "Catalog",
+        "operationId": "catalog_api_themes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ThemeCatalog_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/themes/strength": {
+      "get": {
+        "tags": [
+          "themes"
+        ],
+        "summary": "Strength",
+        "operationId": "strength_api_themes_strength_get",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                1,
+                5,
+                20
+              ],
+              "type": "integer",
+              "default": 1,
+              "title": "Period"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ThemeStrength_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/themes/{theme_id}": {
+      "get": {
+        "tags": [
+          "themes"
+        ],
+        "summary": "Detail",
+        "operationId": "detail_api_themes__theme_id__get",
+        "parameters": [
+          {
+            "name": "theme_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9_]{0,63}$",
+              "title": "Theme Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ThemeDetail_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/telegram/webhook": {
       "post": {
         "tags": [
@@ -11334,6 +11546,32 @@
           "quality"
         ],
         "title": "CandidateRow"
+      },
+      "ChainStrengthRow": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "themes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Themes"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/ThemeStats"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "themes",
+          "stats"
+        ],
+        "title": "ChainStrengthRow"
       },
       "ChangeRow": {
         "properties": {
@@ -16516,6 +16754,135 @@
         ],
         "title": "Envelope[StockSearch]"
       },
+      "Envelope_ThemeCatalog_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ThemeCatalog"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[ThemeCatalog]"
+      },
+      "Envelope_ThemeDetail_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ThemeDetail"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[ThemeDetail]"
+      },
+      "Envelope_ThemeStrength_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ThemeStrength"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[ThemeStrength]"
+      },
       "Envelope_TradeCountries_": {
         "properties": {
           "source": {
@@ -21085,6 +21452,57 @@
         ],
         "title": "NaReason",
         "description": "적용 불가 사유(설계 §5.2) — 값 칸은 None 이고 0 으로 채우지 않는다.\n\n`currency_mismatch`(§8.4 #19 외국기업 — 재무 통화 ≠ KRW 시세)와 `missing_input`(D&A 없는\nEV/EBITDA 처럼 필요한 입력이 공시에 없음)은 이 묶음(M)이 더한 두 값이다 [확인 필요 — A·V 와\n약속]."
+      },
+      "NaverThemeRef": {
+        "properties": {
+          "no": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "No"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Count"
+          },
+          "in_master": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "In Master"
+          },
+          "n_members": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "N Members"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "no",
+          "name",
+          "count",
+          "in_master",
+          "n_members"
+        ],
+        "title": "NaverThemeRef",
+        "description": "대테마에 걸린 네이버 테마(로그인). count = 네이버 전체 종목 수(ETF 포함), in_master = 원천이\n센 마스터 안 종목 수, n_members = 받은 편입 줄 수(종목 마스터 안)."
       },
       "NewHighBadges": {
         "properties": {
@@ -26278,6 +26696,614 @@
         ],
         "title": "TargetView"
       },
+      "ThemeCatalog": {
+        "properties": {
+          "built_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Built At"
+          },
+          "n_themes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "N Themes"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/ThemeSection"
+            },
+            "type": "array",
+            "title": "Sections"
+          },
+          "valuechains": {
+            "items": {
+              "$ref": "#/components/schemas/ValueChainGroup"
+            },
+            "type": "array",
+            "title": "Valuechains"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "built_at",
+          "n_themes",
+          "sections",
+          "valuechains"
+        ],
+        "title": "ThemeCatalog",
+        "description": "대테마 분류 — 섹션별(섹션은 원천 첫 등장 순서)·밸류체인별(이름순)."
+      },
+      "ThemeDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_]{0,63}$",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "section": {
+            "type": "string",
+            "title": "Section"
+          },
+          "valuechain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valuechain"
+          },
+          "built_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Built At"
+          },
+          "trade_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trade Date"
+          },
+          "naver": {
+            "items": {
+              "$ref": "#/components/schemas/NaverThemeRef"
+            },
+            "type": "array",
+            "title": "Naver"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/ThemeMember"
+            },
+            "type": "array",
+            "title": "Members"
+          },
+          "stats": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ThemeStats"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "section",
+          "valuechain",
+          "built_at",
+          "trade_date",
+          "naver",
+          "members",
+          "stats"
+        ],
+        "title": "ThemeDetail"
+      },
+      "ThemeInfo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_]{0,63}$",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "section": {
+            "type": "string",
+            "title": "Section"
+          },
+          "valuechain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valuechain"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "section",
+          "valuechain"
+        ],
+        "title": "ThemeInfo",
+        "description": "대테마 하나(공개 칸)."
+      },
+      "ThemeLeader": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[0-9A-Z]{6}$",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "chg_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chg Pct"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "chg_pct"
+        ],
+        "title": "ThemeLeader",
+        "description": "주도주 — 거래대금이 가장 큰 종목(보드 롤업 규칙)."
+      },
+      "ThemeMember": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[0-9A-Z]{6}$",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "market": {
+            "type": "string",
+            "title": "Market"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "industry_group": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Industry Group"
+          },
+          "naver": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Naver"
+          },
+          "reasons": {
+            "items": {
+              "$ref": "#/components/schemas/ThemeMemberReason"
+            },
+            "type": "array",
+            "title": "Reasons"
+          },
+          "chg_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chg Pct"
+          },
+          "ret_5d": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ret 5D"
+          },
+          "ret_20d": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ret 20D"
+          },
+          "mktcap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mktcap"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "hist",
+                  "w52",
+                  "d120"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "market",
+          "type",
+          "industry_group",
+          "naver",
+          "reasons",
+          "chg_pct",
+          "ret_5d",
+          "ret_20d",
+          "mktcap",
+          "label"
+        ],
+        "title": "ThemeMember",
+        "description": "편입 종목 한 줄 — 종목 마스터·편입 사유(로그인) + 보드 종목 하루(없으면 None)."
+      },
+      "ThemeMemberReason": {
+        "properties": {
+          "naver_no": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Naver No"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "naver_no",
+          "reason"
+        ],
+        "title": "ThemeMemberReason"
+      },
+      "ThemeSection": {
+        "properties": {
+          "section": {
+            "type": "string",
+            "title": "Section"
+          },
+          "themes": {
+            "items": {
+              "$ref": "#/components/schemas/ThemeInfo"
+            },
+            "type": "array",
+            "title": "Themes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "section",
+          "themes"
+        ],
+        "title": "ThemeSection"
+      },
+      "ThemeStats": {
+        "properties": {
+          "n_members": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "N Members"
+          },
+          "n_priced": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "N Priced"
+          },
+          "chg_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chg Pct"
+          },
+          "ret_5d": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ret 5D"
+          },
+          "ret_20d": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ret 20D"
+          },
+          "weighted": {
+            "type": "boolean",
+            "title": "Weighted"
+          },
+          "up": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Up"
+          },
+          "flat": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Flat"
+          },
+          "down": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Down"
+          },
+          "unknown": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Unknown"
+          },
+          "up_ratio": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Up Ratio"
+          },
+          "n_newhigh": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "N Newhigh"
+          },
+          "n_near": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "N Near"
+          },
+          "turnover_mult": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover Mult"
+          },
+          "mktcap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mktcap"
+          },
+          "leader": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ThemeLeader"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "n_members",
+          "n_priced",
+          "chg_pct",
+          "ret_5d",
+          "ret_20d",
+          "weighted",
+          "up",
+          "flat",
+          "down",
+          "unknown",
+          "up_ratio",
+          "n_newhigh",
+          "n_near",
+          "turnover_mult",
+          "mktcap",
+          "leader"
+        ],
+        "title": "ThemeStats",
+        "description": "강도 — 등락은 %(시총 가중 평균, 시총 모르면 단순 평균 — weighted False), 20일 = 21거래일 전\n종가 대비(보드 ret_21d). up_ratio = 상승 / 등락을 아는 종목(없으면 None). 시총 합은 원(아는\n종목만)."
+      },
+      "ThemeStrength": {
+        "properties": {
+          "trade_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Trade Date"
+          },
+          "period": {
+            "type": "integer",
+            "enum": [
+              1,
+              5,
+              20
+            ],
+            "title": "Period"
+          },
+          "built_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Built At"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ThemeStrengthRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "chains": {
+            "items": {
+              "$ref": "#/components/schemas/ChainStrengthRow"
+            },
+            "type": "array",
+            "title": "Chains"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "trade_date",
+          "period",
+          "built_at",
+          "rows",
+          "chains"
+        ],
+        "title": "ThemeStrength",
+        "description": "강도 순위 — 고른 기간(1·5·20일) 내림차순(값 없음은 뒤)."
+      },
+      "ThemeStrengthRow": {
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Rank"
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_]{0,63}$",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "section": {
+            "type": "string",
+            "title": "Section"
+          },
+          "valuechain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valuechain"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/ThemeStats"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rank",
+          "id",
+          "name",
+          "section",
+          "valuechain",
+          "stats"
+        ],
+        "title": "ThemeStrengthRow"
+      },
       "TimelineItem": {
         "properties": {
           "rcept_no": {
@@ -28744,6 +29770,29 @@
         ],
         "title": "ValuationCurrent",
         "description": "그날(전 거래일) PIT 배수 — t 까지 공시된 정기보고서 분기만(D-P4-11)."
+      },
+      "ValueChainGroup": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "themes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Themes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "themes"
+        ],
+        "title": "ValueChainGroup",
+        "description": "밸류체인 묶음 — 대테마 valuechain 값이 같은 대테마들(원천 순서)."
       },
       "WatchOrderIn": {
         "properties": {

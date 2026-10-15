@@ -14,7 +14,7 @@ from pydantic import SecretStr
 
 from kbj.services.notifier import __main__ as cli
 from kbj.services.notifier.telegram_api import TelegramApi
-from tests.unit.notifier.conftest import CHAT, FAKE_TOKEN, SECRET, FakeTelegram, make_settings
+from tests.unit.notifier.conftest import CHAT, FAKE_TOKEN, SECRET, FakeTelegram, make_settings, ok
 
 
 @pytest.fixture
@@ -109,3 +109,34 @@ def test_main_dispatches_and_maps_config_errors(
 
 def test_run_refuses_without_service_name() -> None:
     assert cli.cmd_run(make_settings()) == 2  # KBJ_SERVICE 가 notifier 가 아니면 돌지 않는다
+
+
+def test_list_chats_prints_title_and_id_lines_without_sending(
+    tg: FakeTelegram, capsys: pytest.CaptureFixture[str]
+) -> None:
+    tg.script["getUpdates"] = [
+        ok(
+            [
+                {"message": {"chat": {"id": -1001, "type": "supergroup", "title": "리서치\t방"}}},
+                {"channel_post": {"chat": {"id": -1002, "type": "channel", "title": "알림"}}},
+                {"message": {"chat": {"id": 7, "type": "private", "first_name": "김"}}},
+                {"message": {"text": "chat 없음"}},
+            ]
+        )
+    ]
+    assert cli.cmd_list_chats(make_settings()) == 0
+    assert tg.methods() == ["getUpdates"]
+    lines = capsys.readouterr().out.splitlines()
+    assert lines == ["리서치 방 [슈퍼그룹]\t-1001", "알림 [채널]\t-1002", "김 [1:1]\t7"]
+
+
+def test_list_chats_exit_3_when_bot_saw_no_chat(tg: FakeTelegram) -> None:
+    tg.script["getUpdates"] = [ok([])]
+    assert cli.cmd_list_chats(make_settings()) == 3
+
+
+def test_list_chats_api_failure_is_exit_1(
+    tg: FakeTelegram, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert cli.cmd_list_chats(make_settings()) == 1  # 가짜에 getUpdates 응답이 없으면 404
+    assert "getUpdates 실패" in _out(capsys)

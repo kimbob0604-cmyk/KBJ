@@ -28,7 +28,11 @@
   — 고정 시드)로 규칙 둘(E1·E8)을 만들고 `rules.outcome`·`rules.backtest_nightly` 를 실제 처리기로
   돌린 규칙 저장소를 데모 저장소의 규칙 표로 끼우고(`backtest_api_world`), 일지·매매·추천은
   페이지 12 웹 픽스처와 같은 합성 쓰기를 같은 API 로 넣는다(`_load_p8`).
-- Pg 모드(`--db`)에서는 페이지 3·6·11·12 를 싣지 않는다 — '아직 없음' 안내.
+- 페이지 9(테마·밸류체인 — ADR 0039): 합성 테마 마스터(`tests/fixtures/synthetic/theme_master.py`
+  — 고정 시드, 실제 stock-dashboard 내용 아님)를 작업과 같은 검증으로 저장소 둘(로그인 편입·공개
+  분류)에 싣고, 강도의 시세는 신고가 골든 합성 300종목을 보드 마지막 날 종목 하루로 끼운다
+  (`_load_p9` — `tests/unit/api/theme_world.py`).
+- Pg 모드(`--db`)에서는 페이지 3·6·9·11·12 를 싣지 않는다 — '아직 없음' 안내.
 
     KBJ_DEMO_PASSWORD=... uv run python scripts/demo_server.py --port 8765
 """
@@ -275,10 +279,21 @@ def _load_p8(world: Any) -> None:
             raise RuntimeError(f"관심종목 되돌리기 실패: HTTP {r.status_code}")
 
 
+def _load_p9(world: Any) -> None:
+    """페이지 9 — 합성 테마 마스터(고정 시드, 실데이터 아님) + 보드 종목 하루(합성 골든 300종목)."""
+    from tests.unit.api.theme_world import seed_board, seed_themes
+
+    seed_themes(world.repos, now=world.clock())
+    day = world.repos.board.last_day(world.clock().date())
+    if day is None:
+        raise RuntimeError("보드 마지막 날이 없다(합성 세계)")
+    seed_board(world.repos, day)
+
+
 def build_demo_world(at: str = "close", *, with_extras: bool = True) -> Any:
     """데모 합성 세계(메모리 저장소).
 
-    `with_extras=False` 는 Pg 모드 — 페이지 3·6·11·12 를 싣지 않는다."""
+    `with_extras=False` 는 Pg 모드 — 페이지 3·6·9·11·12 를 싣지 않는다."""
     from tests.fixtures.synthetic.p6_world import build_world as build_p6_world
     from tests.unit.api.api_world import build_world
     from tests.unit.api.web_fixtures_p6.explore import run_derive
@@ -293,6 +308,7 @@ def build_demo_world(at: str = "close", *, with_extras: bool = True) -> Any:
         _load_p7(world)  # 페이지 3 — 합성 P7 세계(진단 이력 + GEX 엔진 사이클)
         _load_p6_macro(world)  # 페이지 6 — 합성 P5 매크로(데모 날짜로 옮김 — 진단 입력 다음)
         _load_p8(world)  # 페이지 11·12 — 합성 P8 세계(규칙·신호·성과·백테스트 + 일지·매매)
+        _load_p9(world)  # 페이지 9 — 합성 테마 마스터 + 보드 종목 하루(ADR 0039)
     return world
 
 
