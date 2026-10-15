@@ -8,7 +8,10 @@
 # VM 의 DB 데이터도 함께 사라진다 — 먼저 백업을 내 PC 로 받아 둔다(docs/deploy_oracle.md ⑨). SSH 키는 남긴다.
 set -euo pipefail
 
-here="$(cd "$(dirname "${BASH_SOURCE[0]:-.}")" 2>/dev/null && pwd || true)"
+here=""
+if d="$(dirname "${BASH_SOURCE[0]:-.}")" && [[ -d "$d" ]]; then
+  here="$(cd "$d" && pwd)"
+fi
 if [[ -n "$here" && -f "$here/oci_create.sh" ]]; then
   exec bash "$here/oci_create.sh" --destroy "$@"
 fi
