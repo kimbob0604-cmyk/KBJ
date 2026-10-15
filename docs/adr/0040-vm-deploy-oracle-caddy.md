@@ -73,3 +73,21 @@ ADR 0008(로그인 API·TLS), ADR 0002 §2.2(공개 내보내기 역할), ADR 00
 - 위험: sslip.io(외부 DNS 서비스)가 멈추면 주소가 안 풀린다 — 도메인을 사서 `KBJ_DOMAIN` 으로 바꾸면 된다. 공인 IP 가
   바뀌면(인스턴스 재생성 등) start.sh 가 주소·`KBJ_PUBLIC_BASE_URL` 을 다시 맞추고 웹훅을 다시 걸라고 알린다. 오라클이
   유휴 무료 VM 을 회수할 수 있다(안내서 ⑩).
+
+## 5. 보충: Cloud Shell 자동 생성(oci_create.sh) (2026-10-15)
+
+- 맥락: 콘솔에서 VM·VCN·보안 목록을 손으로 만드는 ②·③ 이 비개발자에게 가장 어렵고, 무료 A1 은 '자리 없음' 이 잦아
+  여러 번 눌러야 한다.
+- 결정: `scripts/vm/oci_create.sh` — 오라클 **Cloud Shell**(OCI CLI 가 사용자 인증으로 이미 설정됨)에 한 줄을 붙여넣으면
+  테넌시 루트 구획·홈 리전에 `kbj-vcn`(10.0.0.0/16)·`kbj-igw`·기본 라우트 0.0.0.0/0·`kbj-sl`(들어옴 TCP 22·80·443 + ICMP
+  3/4, 나감 전체)·`kbj-subnet`(10.0.0.0/24, 공개)·SSH 키 `~/.ssh/kbj_vm`·인스턴스 `kbj-vm`(A1.Flex 4 OCPU·24GB·부트
+  100GB·공인 IP, Canonical Ubuntu 24.04 aarch64 최신)을 만든다. 이름으로 찾아 있으면 재사용(멱등). cloud-init 은
+  `install.sh --branch <브랜치>` 를 ubuntu 사용자로 돌리는 데까지만(키 입력은 사람이 — ⑤). 자리 없음·InternalError·
+  LimitExceeded·TooManyRequests 는 AD 를 돌며 재시도(기본 60초·6시간, `KBJ_RETRY_*`), 다른 A1 이 무료 합계를 쓰고 있으면
+  멈춘다. `--dry-run`(oci 미실행)·`--status`·`--detach`(nohup)·`--destroy`(`oci_destroy.sh` — 확인 문구 `kbj 지우기`).
+  OCID 는 끝 6자리만, 개인키는 출력하지 않는다. 오류는 쉬운 말 한 줄 + code·message 요약(OCID 가림).
+- 시험: `tests/test_vm_oci.py` — PATH 앞의 가짜 oci 로 생성 순서·멱등·AD 재시도·dry-run·한도·지우기 확인·출력 위생.
+  실제 OCI 접속은 하지 않았다 [확인 필요 — 첫 실제 실행]: Cloud Shell 의 `OCI_TENANCY` 변수(없으면 `/etc/oci/config` 의
+  `tenancy=`), `--wait-for-state` 를 여러 번 주는 launch, 자리 없음이 동기 오류(500 InternalError "Out of host capacity")로
+  오는지, Cloud Shell 이 닫힌 뒤 `--detach` 작업이 계속되는지.
+- 수동 단계(안내서 ②·③)는 '수동으로 할 때' 로 남긴다.

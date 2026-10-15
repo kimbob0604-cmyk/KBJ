@@ -12,10 +12,54 @@
 - 메뉴 이름은 오라클 콘솔의 영어(한국어) 순서로 적었다. 콘솔 화면은 자주 바뀐다 — 이름이 조금 달라도 같은 자리를 찾으면
   된다. 확실하지 않은 이름은 [확인 필요].
 
-목차: ① 가입 ② VM 만들기 ③ 포트 80·443 열기 ④ 설치 한 줄 ⑤ 키 넣기 ⑥ 시작·확인 ⑦ 텔레그램 연결 ⑧ GX → KBJ 전환
-⑨ 매일 점검·업데이트·백업 ⑩ 무료 VM 회수 주의 ⑪ 문제 해결
+목차: **빠른 길(권장)** · ① 가입 ② VM 만들기(수동으로 할 때) ③ 포트 80·443 열기(수동으로 할 때) ④ 설치 한 줄 ⑤ 키 넣기
+⑥ 시작·확인 ⑦ 텔레그램 연결 ⑧ GX → KBJ 전환 ⑨ 매일 점검·업데이트·백업 ⑩ 무료 VM 회수 주의 ⑪ 문제 해결
 
 ---
+
+## 빠른 길(권장) — Cloud Shell 에 한 줄
+
+②·③·④ 를 손으로 하지 않고 한 줄로 끝낸다. 오라클 콘솔 안의 검은 창(Cloud Shell)은 이미 내 계정으로 로그인돼 있어
+VM·네트워크·방화벽 규칙을 대신 만들 수 있다.
+
+1. ① 대로 가입하고 콘솔(<https://cloud.oracle.com>)에 로그인한다. 오른쪽 위 리전이 **홈 리전**인지 본다.
+2. **Cloud Shell 열기**: 콘솔 맨 위 줄 오른쪽의 **`>_` 모양 아이콘(Cloud Shell/Code Editor)** → **Cloud Shell**.
+   화면 아래에 검은 창이 열린다(처음은 1분쯤 걸린다). [확인 필요 — 아이콘 모양·메뉴 이름은 콘솔 판에 따라 다르다.
+   예전 화면은 **Developer tools → Cloud Shell**]
+3. 아래 한 줄을 복사해 검은 창에 붙여넣고 Enter:
+
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/kimbob0604-cmyk/KBJ/claude/build/scripts/vm/oci_create.sh | bash
+   ```
+
+   - 하는 일: 네트워크(`kbj-vcn`·`kbj-subnet`, 들어오는 문은 22·80·443 만) → Ubuntu 24.04 ARM 이미지 → SSH 키
+     `~/.ssh/kbj_vm`(Cloud Shell 에만 남는다) → VM `kbj-vm`(무료 A1 4 OCPU·24GB·디스크 100GB·공인 IP). VM 은 켜지면서
+     ④ 의 설치를 **스스로** 한다(5~15분).
+   - **다시 돌려도 안전하다** — 이미 만든 것은 그대로 쓴다. 중간에 끊겨도 같은 줄을 다시 붙여넣으면 이어서 한다.
+   - `[시도 3 · 14:02:11] AD-1 에 kbj-vm … → 자리 없음` 이 반복되면 정상이다. 무료 ARM 자리가 날 때까지 1분마다 최대
+     6시간 다시 시도한다. Cloud Shell 은 한동안 입력이 없으면 끊길 수 있어서, 오래 걸리면 **Ctrl+C** 뒤 뒤에서 돌린다:
+     `curl -fsSL https://raw.githubusercontent.com/kimbob0604-cmyk/KBJ/claude/build/scripts/vm/oci_create.sh | bash -s -- --detach`
+     (진행 보기 `tail -f ~/.kbj-oci/create.log`. Cloud Shell 이 닫히면 뒤의 작업도 멈출 수 있다 [확인 필요] — 그때는
+     같은 줄을 다시)
+   - 미리 보기만: 끝에 `-s -- --dry-run`. 만든 것·상태·IP 만 보기: `-s -- --status`.
+   - 다른 A1 VM 이 이미 무료 한도를 쓰고 있으면 이유를 말하고 멈춘다(아무것도 만들지 않는다).
+4. 끝나면 공인 IP·접속 주소(`https://1-2-3-4.sslip.io` 꼴)와 다음 할 일이 나온다. 그대로 친다:
+
+   ```bash
+   ssh -i ~/.ssh/kbj_vm ubuntu@1.2.3.4        # 1.2.3.4 는 화면에 나온 IP. 처음 묻는 yes/no 에는 yes
+   tail -f /var/log/kbj-install.log           # 설치 진행 — '== KBJ 설치 끝' 이 보이면 Ctrl+C
+   cd ~/kbj && bash scripts/vm/keys.sh && bash scripts/vm/telegram.sh find-chat && bash scripts/vm/set-password.sh
+   bash scripts/vm/start.sh
+   ```
+
+   키 넣기·텔레그램·비밀번호의 자세한 설명은 ⑤, 시작 확인은 ⑥, 웹훅은 ⑦. 이 길로 왔으면 ②·③·④ 는 건너뛴다(빠른 길의
+   SSH 키 이름은 `~/.ssh/kbj_vm` — ② 의 `~/.ssh/kbj` 대신 이것을 쓴다).
+5. 모두 지우고 처음부터 하고 싶을 때(VM 의 데이터도 사라진다 — 먼저 ⑨ 대로 백업을 받아 둔다):
+   `curl -fsSL https://raw.githubusercontent.com/kimbob0604-cmyk/KBJ/claude/build/scripts/vm/oci_destroy.sh | bash`
+   → `kbj 지우기` 를 그대로 쳐야 지운다.
+
+설치 브랜치를 바꿀 때(작업 브랜치가 main 에 합쳐진 뒤): 주소의 `claude/build` 를 `main` 으로 바꾸고 끝에
+`-s -- --branch main`.
 
 ## ① 오라클 클라우드 가입
 
@@ -28,7 +72,9 @@
    (Upgrade) 전까지 돈이 나가지 않는다.
 5. 가입이 끝나면 콘솔(<https://cloud.oracle.com>)에 로그인된다. 오른쪽 위 지역 표시가 홈 리전인지 본다.
 
-## ② VM 만들기(Ampere A1 4 OCPU·24GB, Ubuntu 24.04)
+## ② VM 만들기 — 수동으로 할 때(Ampere A1 4 OCPU·24GB, Ubuntu 24.04)
+
+빠른 길을 썼으면 건너뛴다.
 
 ### ②-1 SSH 키 만들기 — 브라우저 Cloud Shell(프로그램 설치 없음)
 
@@ -62,7 +108,9 @@
    - **'Out of capacity(용량 부족)'** 이 나오면: 몇 시간 뒤나 새벽에 다시 **Create**. 서울은 가용성 도메인(AD)이
      하나라 바꿀 수 없다. 계속 안 되면 ⑩ 의 '유료 계정 전환' 이 자리를 얻는 데 도움이 된다고 알려져 있다 [확인 필요].
 
-## ③ 포트 80·443 열기(보안 목록)
+## ③ 포트 80·443 열기(보안 목록) — 수동으로 할 때
+
+빠른 길을 썼으면 건너뛴다(`kbj-sl` 이 이미 22·80·443 을 연다).
 
 인증서 발급과 접속에 80(HTTP)·443(HTTPS)이 바깥에서 열려 있어야 한다. VM 안 방화벽은 ④ 의 설치가 연다 — 여기서는
 오라클 쪽 문을 연다.
@@ -80,6 +128,8 @@
    쓴다.
 
 ## ④ 접속해서 설치 한 줄
+
+빠른 길을 썼으면 VM 이 이 설치를 스스로 했다 — 위 빠른 길 4 의 `tail -f /var/log/kbj-install.log` 로 끝났는지만 본다.
 
 1. Cloud Shell(②-1 의 검은 창)에서 — `1.2.3.4` 를 내 공인 IP 로 바꿔서:
 
@@ -228,7 +278,9 @@ VM 에서는 runbook 의 `docker compose --profile app …` 대신 `bash scripts
 | 증상 | 할 일 |
 |---|---|
 | 브라우저가 안 열린다 / 인증서 오류 | ③ 의 80·443 수신 규칙 확인 → VM 에서 `bash scripts/vm/install.sh`(방화벽 다시) → `bash scripts/vm/status.sh --logs caddy`. 첫 발급은 1~2분 걸린다 |
-| `Out of capacity` 로 VM 이 안 만들어진다 | 시간을 두고 다시. ⑩ 의 종량제 전환 |
+| `Out of capacity` 로 VM 이 안 만들어진다 | 빠른 길의 한 줄이 자리가 날 때까지 다시 시도한다(`--detach` 로 뒤에서). 6시간 넘게 안 되면 새벽에 다시. ⑩ 의 종량제 전환 |
+| 빠른 길이 `✖ … 실패:` 로 멈췄다 | 그 줄의 쉬운 설명대로. '원문 요약' 줄(키·비밀번호 없음)은 개발 쪽에 그대로 전달해도 된다 |
+| 빠른 길의 VM 에서 설치가 실패했다(`== KBJ 설치 실패`) | VM 에서 `curl -fsSL https://raw.githubusercontent.com/kimbob0604-cmyk/KBJ/claude/build/scripts/vm/install.sh \| bash` 로 다시 |
 | `docker: permission denied` | 로그아웃(`exit`) 뒤 다시 접속(설치가 docker 그룹에 넣었다). 스크립트는 그 전에도 sudo 로 대신한다 |
 | `✖ 비어 있는 필수 이름: …` | 그 이름을 ⑤ 대로 채운다(`keys.sh`·`set-password.sh`·`telegram.sh find-chat`) |
 | 로그인이 503 | `KBJ_WEB_USER`·`KBJ_WEB_PASSWORD_HASH` 가 비었다 — `bash scripts/vm/set-password.sh` |
