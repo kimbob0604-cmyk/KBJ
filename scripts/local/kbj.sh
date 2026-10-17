@@ -11,6 +11,7 @@
 #   bash scripts/local/kbj.sh update       # 새 버전 받아 다시 띄움(먼저 백업)
 #   bash scripts/local/kbj.sh awake on|off|status   # 맥 잠자기 방지(수집은 맥이 깨어 있을 때만 돈다)
 #   bash scripts/local/kbj.sh backfill [일수]   # 지난 N일(기본 21일) 시장 일봉을 KRX 에서 받아 채움(KRX 키 필요)
+#   bash scripts/local/kbj.sh fill-dart         # 종목 상세(8)의 재무·공시용: DART 회사코드·프로필·재무 5년 백필·밸류에이션 재계산(DART 키 필요)
 #   bash scripts/local/kbj.sh job <작업> [--as-of 값]   # 작업 하나를 지금 한 번(예: job market.close_collect)
 #   bash scripts/local/kbj.sh open         # 브라우저로 열기
 #
@@ -24,7 +25,7 @@ source "$here/../vm/lib.sh"
 URL="http://127.0.0.1:8000"
 AWAKE_PID_FILE="${KBJ_AWAKE_PID_FILE:-$HOME/.kbj-awake.pid}"
 
-usage() { sed -n '2,17p' "$0"; }
+usage() { sed -n '2,18p' "$0"; }
 
 # 도커 설정 점검(메모리 5GB 미만이면 서비스가 죽을 수 있다 — 알려만 준다)
 check_docker_resources() {
@@ -162,6 +163,25 @@ cmd_job() {
   kbj_compose exec -T -e MPLCONFIGDIR=/tmp/mpl scheduler python -m kbj.services.scheduler run-once "$job" "$@"
 }
 
+# 종목 상세(8번)의 재무·공시·밸류에이션은 DART 가 있어야 채워진다. 순서대로 한 번씩 돌린다(한 단계가 실패해도 다음으로).
+# 재무 백필은 하루 호출 예산(DART 8,000건)에 나뉘어 돈다 — 끝나지 않으면 다음 날 같은 명령을 다시(받은 것은 건너뛴다)
+cmd_fill_dart() {
+  local rc_all=0 now to
+  kbj_env_has KBJ_DART_API_KEY || kbj_die "KBJ_DART_API_KEY 가 비었다 — $(kbj_cmd keys) KBJ_DART_API_KEY 로 넣고 $(kbj_cmd start) 를 다시"
+  require_scheduler
+  now="$(TZ=Asia/Seoul date +%Y-%m-%dT%H:%M)"; to="$(date_ago 3)"
+  kbj_step "1/4 DART 회사코드(종목코드 ↔ DART 코드)"
+  cmd_job filings.corp_code || rc_all=1
+  kbj_step "2/4 회사 프로필·상장주식수"
+  cmd_job filings.company_profile || rc_all=1
+  kbj_step "3/4 재무 백필(2021년부터 — 오래 걸린다)"
+  cmd_job fin.backfill --as-of "$now" || rc_all=1
+  kbj_step "4/4 밸류에이션 재계산($to 기준)"
+  kbj_compose exec -T -e MPLCONFIGDIR=/tmp/mpl scheduler python -m kbj.services.engine.valuation rebuild --as-of "$to" || rc_all=1
+  if (( rc_all == 0 )); then kbj_ok "끝 — 브라우저를 새로 고친다"; else kbj_warn "일부 단계가 실패했다 — 위 오류를 본다. 재무 백필이 예산 때문에 멈췄다면 내일 같은 명령을 다시"; fi
+  return "$rc_all"
+}
+
 cmd_update() {
   kbj_docker_init
   command -v git >/dev/null 2>&1 || kbj_die "git 이 없다"
@@ -185,6 +205,7 @@ main() {
     backup) exec bash "$here/../vm/backup.sh" "$@" ;;
     update) cmd_update ;;
     backfill) cmd_backfill "$@" ;;
+    fill-dart) cmd_fill_dart ;;
     job) cmd_job "$@" ;;
     awake) cmd_awake "$@" ;;
     open)

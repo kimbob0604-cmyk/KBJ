@@ -64,6 +64,7 @@ bash scripts/local/kbj.sh start
 | 백업 지금 | `bash scripts/local/kbj.sh backup --now` (`~/kbj-backup` 에 7일 보관) |
 | 새 버전 받기 | `bash scripts/local/kbj.sh update` (먼저 자동 백업) |
 | 지난 3주 시장 일봉 채우기(KRX 키 필요, 처음 한 번) | `bash scripts/local/kbj.sh backfill` (기본 21일. 더 길게는 `backfill 120`) |
+| 종목 상세(8번) 재무·공시 채우기(DART 키 필요, 처음 한 번 + 며칠) | `bash scripts/local/kbj.sh fill-dart` |
 | 작업 하나 지금 돌리기 | `bash scripts/local/kbj.sh job market.close_collect` (`--as-of 2026-10-16` 로 날짜 지정) |
 | 문제가 있는 서비스 로그 | `bash scripts/local/kbj.sh status --logs api` |
 
