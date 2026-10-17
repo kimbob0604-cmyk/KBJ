@@ -144,11 +144,11 @@ cmd_backfill() {
   require_scheduler
   from="$(date_ago "$days")"; to="$(date_ago 1)"
   kbj_step "시장 일봉 백필 $from ~ $to (거래일만, 최근부터)"
-  kbj_compose exec -T scheduler python -m kbj.services.scheduler backfill market.backfill --from "$from" --to "$to" || rc=$?
+  kbj_compose exec -T -e MPLCONFIGDIR=/tmp/mpl scheduler python -m kbj.services.scheduler backfill market.backfill --from "$from" --to "$to" || rc=$?
   if (( rc == 0 )); then
     kbj_ok "백필 끝 — 브라우저를 새로 고친다"
   else
-    kbj_warn "중간에 멈췄다(종료 $rc) — KRX 가 아직 공표 전이거나 하루 호출 예산에 닿았다. 위 줄의 날짜를 보고, 몇 시간 뒤 같은 명령을 다시(받은 날은 건너뛴다)"
+    kbj_warn "중간에 멈췄다(종료 $rc). 위 '멈춤:' 줄을 본다 — 'KrxNotSubscribed(401)' 이면 KRX OpenAPI 사이트에서 그 API 이용신청이 필요하고, '공표 전'·'예산' 이면 몇 시간 뒤 같은 명령을 다시(받은 날은 건너뛴다)"
   fi
   return "$rc"
 }
@@ -159,7 +159,7 @@ cmd_job() {
   [[ "$job" =~ ^[a-z][a-z0-9_.]*$ ]] || kbj_die "작업 이름이 필요하다 (예: $(kbj_cmd job) market.close_collect). 목록은 config/jobs.yaml 의 name"
   shift
   require_scheduler
-  kbj_compose exec -T scheduler python -m kbj.services.scheduler run-once "$job" "$@"
+  kbj_compose exec -T -e MPLCONFIGDIR=/tmp/mpl scheduler python -m kbj.services.scheduler run-once "$job" "$@"
 }
 
 cmd_update() {

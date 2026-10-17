@@ -55,7 +55,7 @@ from typing import Any, Final
 from kbj.config.markets import EtfCfg
 from kbj.core.quality import Quality
 from kbj.core.rows import Bar, EtfDay, EtfMeta, IndexBar, Snap, UniverseRow
-from kbj.data.private.krx.client import KrxClient, StockMarket
+from kbj.data.private.krx.client import KrxClient, KrxNotSubscribed, StockMarket
 from kbj.data.private.krx.models import (
     KrxIndexDaily,
     parse_base_info_rows,
@@ -107,6 +107,9 @@ ETF: Final = "etp/etf_bydd_trd"
 ETN: Final = "etp/etn_bydd_trd"
 # 처리 순서 — 기본정보(유니버스) → 주식 → 지수 → ETP
 ORDER: Final[tuple[str, ...]] = (*BASE_INFO, *STOCK, *INDEX, ETF, ETN)
+# 필수가 아닌 데이터셋(유가·코스닥·ETF 밖) — 이용신청이 없어(401) 구독이 없으면
+# 그날 수집을 막지 않고 0행으로 끝내 detail.not_subscribed 에 적는다. 그 밖은 구독이 없으면 실패
+OPTIONAL: Final = frozenset({"sto/knx_bydd_trd", ETN})
 _SPACE = re.compile(r"\s+")
 
 
@@ -396,7 +399,16 @@ def _etn(c: _Ctx) -> int:
     return len(bars)
 
 
-# ── 실행 ────────────────────────────────────────────────────────────────────────────────
+# ── 실행 ────────────────────────────────────────────────────────────────────────────
+
+
+def _optional(c: _Ctx, ds: str) -> int:
+    """OPTIONAL 데이터셋 — 구독이 없으면(KrxNotSubscribed) 0행으로 끝내고 사유만 남긴다."""
+    try:
+        return _etn(c) if ds == ETN else _stock(c, ds)
+    except KrxNotSubscribed:
+        c.detail.setdefault("not_subscribed", []).append(ds)
+        return 0
 
 
 def collect(
@@ -418,7 +430,9 @@ def collect(
     order = {name: i for i, name in enumerate(ORDER)}
     for key in sorted(keys, key=lambda k: order.get(k.dataset, len(order))):
         ds = key.dataset
-        if ds in STOCK:
+        if ds in OPTIONAL:
+            out.run(key, lambda ds=ds: _optional(c, ds))
+        elif ds in STOCK:
             out.run(key, lambda ds=ds: _stock(c, ds))
         elif ds in BASE_INFO:
             out.run(key, lambda ds=ds: _base_info(c, ds, notify_changes=notify_changes))
@@ -426,8 +440,6 @@ def collect(
             out.run(key, lambda ds=ds: _index(c, ds))
         elif ds == ETF:
             out.run(key, lambda: _etf(c))
-        elif ds == ETN:
-            out.run(key, lambda: _etn(c))
         else:
             out.errors[key.label()] = f"모르는 KRX 데이터셋: {ds}"
     changes: list[tuple[str, list[str], list[str]]] = out.detail.pop("_notify", [])

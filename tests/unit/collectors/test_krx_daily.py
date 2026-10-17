@@ -308,6 +308,24 @@ def test_one_key_failing_does_not_stop_the_others() -> None:
     assert len(repos.market.snapshots(D, source="krx")) == 4
 
 
+def test_unsubscribed_optional_dataset_does_not_block_the_day() -> None:
+    """코넥스·ETN 은 이용신청이 없어도(401 Unauthorized API Call) 그날 수집을 막지 않는다."""
+    repos, fake = setup()
+    fake.not_subscribed.update({"/sto/knx_bydd_trd", "/etp/etn_bydd_trd"})
+    res = run(repos, fake, keys("sto/ksq_bydd_trd", "sto/knx_bydd_trd", "etp/etn_bydd_trd"))
+    assert res.status == "ok", res.detail
+    assert res.detail["not_subscribed"] == ["sto/knx_bydd_trd", "etp/etn_bydd_trd"]
+    assert len(repos.market.snapshots(D, source="krx")) == 4  # 코스닥은 그대로 받았다
+
+
+def test_unsubscribed_required_dataset_still_fails_with_a_reason() -> None:
+    repos, fake = setup()
+    fake.not_subscribed.add("/sto/ksq_bydd_trd")
+    res = run(repos, fake, keys("sto/ksq_bydd_trd"))
+    assert res.status == "failed"
+    assert "KrxNotSubscribed" in res.detail["reason"]
+
+
 # ── 백필 CLI(`python -m kbj.services.scheduler backfill`) ─────────────────────────────────
 
 

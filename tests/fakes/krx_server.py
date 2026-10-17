@@ -149,6 +149,7 @@ class FakeKrx:
         self.key = key
         self.stale = stale
         self.fail: dict[str, int] = {}
+        self.not_subscribed: set[str] = set()  # 이용신청 안 한 API — 401 "Unauthorized API Call"
         self.seen: list[Seen] = []
         self._at: dict[str, datetime] = {}  # basDd → 공표 시각
         self._last: str | None = None
@@ -191,6 +192,8 @@ class FakeKrx:
                 return reply(404, "no such api")
             if req.headers.get("AUTH_KEY", "") != self.key:
                 return reply(401, {"respMsg": "Unauthorized Key", "respCode": "401"})
+            if endpoint in self.not_subscribed:
+                return reply(401, {"respMsg": "Unauthorized API Call", "respCode": "401"})
             status = self.fail.get(endpoint)
             if status is not None:
                 return reply(status, f"rejected AUTH_KEY={req.headers.get('AUTH_KEY', '')}\nmore")
