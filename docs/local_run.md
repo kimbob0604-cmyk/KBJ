@@ -63,6 +63,8 @@ bash scripts/local/kbj.sh start
 | 멈추기 / 다시 시작 | `bash scripts/local/kbj.sh stop` / `start` |
 | 백업 지금 | `bash scripts/local/kbj.sh backup --now` (`~/kbj-backup` 에 7일 보관) |
 | 새 버전 받기 | `bash scripts/local/kbj.sh update` (먼저 자동 백업) |
+| 지난 3주 시장 일봉 채우기(KRX 키 필요, 처음 한 번) | `bash scripts/local/kbj.sh backfill` (기본 21일. 더 길게는 `backfill 120`) |
+| 작업 하나 지금 돌리기 | `bash scripts/local/kbj.sh job market.close_collect` (`--as-of 2026-10-16` 로 날짜 지정) |
 | 문제가 있는 서비스 로그 | `bash scripts/local/kbj.sh status --logs api` |
 
 - 데이터는 도커 볼륨에 남는다. `stop` 이나 `--down` 으로는 지워지지 않는다(어느 명령도 데이터를 지우지 않는다).

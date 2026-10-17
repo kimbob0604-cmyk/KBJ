@@ -10,6 +10,8 @@
 #   bash scripts/local/kbj.sh backup [--now]   # 볼륨 밖(~/kbj-backup)으로 백업
 #   bash scripts/local/kbj.sh update       # 새 버전 받아 다시 띄움(먼저 백업)
 #   bash scripts/local/kbj.sh awake on|off|status   # 맥 잠자기 방지(수집은 맥이 깨어 있을 때만 돈다)
+#   bash scripts/local/kbj.sh backfill [일수]   # 지난 N일(기본 21일) 시장 일봉을 KRX 에서 받아 채움(KRX 키 필요)
+#   bash scripts/local/kbj.sh job <작업> [--as-of 값]   # 작업 하나를 지금 한 번(예: job market.close_collect)
 #   bash scripts/local/kbj.sh open         # 브라우저로 열기
 #
 # 맥 기본 bash(3.2)에서 돈다. 키 값은 화면·로그에 내지 않는다(lib.sh 규칙 그대로). 데이터 볼륨은 어느 명령도 지우지 않는다.
@@ -22,7 +24,7 @@ source "$here/../vm/lib.sh"
 URL="http://127.0.0.1:8000"
 AWAKE_PID_FILE="${KBJ_AWAKE_PID_FILE:-$HOME/.kbj-awake.pid}"
 
-usage() { sed -n '2,15p' "$0"; }
+usage() { sed -n '2,17p' "$0"; }
 
 # 도커 설정 점검(메모리 5GB 미만이면 서비스가 죽을 수 있다 — 알려만 준다)
 check_docker_resources() {
@@ -124,6 +126,42 @@ cmd_awake() {
   esac
 }
 
+# N일 전 날짜(YYYY-MM-DD) — 맥(BSD date)과 리눅스(GNU date) 둘 다
+date_ago() { date -v-"$1"d +%Y-%m-%d 2>/dev/null || date -d "$1 days ago" +%Y-%m-%d; }
+
+require_scheduler() {
+  kbj_docker_init
+  [[ -n "$(kbj_compose ps -q --status running scheduler 2>/dev/null)" ]] || kbj_die "scheduler 가 떠 있지 않다 — $(kbj_cmd start)"
+}
+
+# 지난 N일의 시장 일봉(+업종·ETF)을 KRX 확정 원장에서 받는다. 거래일만 받고, 이미 받은 날은 건너뛴다(중복 0).
+# 최근 날짜부터 과거로 받으며, 공표 전·하루 예산 소진이면 그 날짜에서 멈추고 종료 코드 1 — 같은 명령을 나중에 다시 돌리면 이어 받는다
+cmd_backfill() {
+  local days="${1:-21}" from to rc=0
+  [[ "$days" =~ ^[0-9]+$ ]] || kbj_die "일수는 1~1100 사이 숫자(기본 21)"
+  (( days >= 1 && days <= 1100 )) || kbj_die "일수는 1~1100 사이 숫자(기본 21)"
+  kbj_env_has KBJ_KRX_API_KEY || kbj_die "KBJ_KRX_API_KEY 가 비었다 — $(kbj_cmd keys) KBJ_KRX_API_KEY 로 넣고 $(kbj_cmd start) 를 다시"
+  require_scheduler
+  from="$(date_ago "$days")"; to="$(date_ago 1)"
+  kbj_step "시장 일봉 백필 $from ~ $to (거래일만, 최근부터)"
+  kbj_compose exec -T scheduler python -m kbj.services.scheduler backfill market.backfill --from "$from" --to "$to" || rc=$?
+  if (( rc == 0 )); then
+    kbj_ok "백필 끝 — 브라우저를 새로 고친다"
+  else
+    kbj_warn "중간에 멈췄다(종료 $rc) — KRX 가 아직 공표 전이거나 하루 호출 예산에 닿았다. 위 줄의 날짜를 보고, 몇 시간 뒤 같은 명령을 다시(받은 날은 건너뛴다)"
+  fi
+  return "$rc"
+}
+
+# 작업 하나를 지금 한 번(조건 무시). --as-of 로 과거 날짜·이벤트를 줄 수 있다
+cmd_job() {
+  local job="${1:-}"
+  [[ "$job" =~ ^[a-z][a-z0-9_.]*$ ]] || kbj_die "작업 이름이 필요하다 (예: $(kbj_cmd job) market.close_collect). 목록은 config/jobs.yaml 의 name"
+  shift
+  require_scheduler
+  kbj_compose exec -T scheduler python -m kbj.services.scheduler run-once "$job" "$@"
+}
+
 cmd_update() {
   kbj_docker_init
   command -v git >/dev/null 2>&1 || kbj_die "git 이 없다"
@@ -146,6 +184,8 @@ main() {
     telegram) exec bash "$here/../vm/telegram.sh" "$@" ;;
     backup) exec bash "$here/../vm/backup.sh" "$@" ;;
     update) cmd_update ;;
+    backfill) cmd_backfill "$@" ;;
+    job) cmd_job "$@" ;;
     awake) cmd_awake "$@" ;;
     open)
       if command -v open >/dev/null 2>&1; then open "$URL"; else kbj_say "브라우저에서 $URL 을 연다"; fi ;;
