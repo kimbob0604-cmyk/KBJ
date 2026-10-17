@@ -51,5 +51,5 @@ kbj_ok "로그인 아이디·비밀번호 해시를 .env 에 넣었다(값은 �
 if [[ -n "$(kbj_compose ps -q --status running api 2>/dev/null)" ]]; then
   kbj_compose up -d api >/dev/null && kbj_ok "api 를 다시 띄웠다 — 새 비밀번호로 로그인"
 else
-  kbj_say "다음: bash scripts/vm/start.sh"
+  kbj_say "다음: $(kbj_cmd start)"
 fi

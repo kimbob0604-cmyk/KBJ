@@ -23,7 +23,9 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 VM = ROOT / "scripts" / "vm"
+LOCAL = ROOT / "scripts" / "local"
 SCRIPTS = sorted(VM.glob("*.sh"))
+LOCAL_SCRIPTS = sorted(LOCAL.glob("*.sh"))
 ENTRY = [p for p in SCRIPTS if p.name != "lib.sh"]
 OVERLAY = ROOT / "docker-compose.vm.yml"
 CADDYFILE = ROOT / "deploy" / "Caddyfile"
@@ -71,7 +73,7 @@ def test_shellcheck_if_available() -> None:
     if exe is None:
         pytest.skip("shellcheck 없음(uvx --from shellcheck-py shellcheck 로 돌릴 수 있다)")
     r = subprocess.run(  # noqa: S603
-        [exe, "-x", "-P", "SCRIPTDIR", *map(str, SCRIPTS)],
+        [exe, "-x", "-P", "SCRIPTDIR", *map(str, [*SCRIPTS, *LOCAL_SCRIPTS])],
         capture_output=True,
         text=True,
         check=False,
@@ -110,6 +112,7 @@ def test_value_printing_lines_are_marked(path: Path) -> None:
 def test_marked_lines_only_in_value_handlers() -> None:
     marked = {p.name for p in SCRIPTS if "# 값-내부" in p.read_text(encoding="utf-8")}
     assert marked <= {"lib.sh", "set-password.sh", "telegram.sh"}
+    assert not [p.name for p in LOCAL_SCRIPTS if "# 값-내부" in p.read_text(encoding="utf-8")]
 
 
 # ── .env 템플릿·검사(동적 — 임시 폴더) ─────────────────────────────────────────────────
@@ -386,3 +389,95 @@ def test_docs_present() -> None:
     assert len(adr) == 1
     assert "docs/deploy_oracle.md" in (ROOT / "README.md").read_text(encoding="utf-8")
     assert "deploy_oracle.md" in (ROOT / "docs" / "runbook.md").read_text(encoding="utf-8")
+
+
+# ── 로컬 실행(Mac 한 대 — ADR 0041, scripts/local/kbj.sh, docker-compose.local.yml) ─────────
+
+LOCAL_OVERLAY = ROOT / "docker-compose.local.yml"
+
+
+@pytest.mark.parametrize("path", LOCAL_SCRIPTS, ids=lambda p: p.name)
+def test_local_script_syntax_executable(path: Path) -> None:
+    assert path.stat().st_mode & stat.S_IXUSR
+    r = subprocess.run(["bash", "-n", str(path)], capture_output=True, text=True, check=False)  # noqa: S603, S607
+    assert r.returncode == 0, r.stderr
+
+
+def test_local_and_vm_scripts_are_bash32_safe() -> None:
+    """맥 기본 bash 는 3.2 — bash 4+ 전용 문법·빈 배열 확장(set -u)을 쓰지 않는다."""
+    banned = re.compile(
+        r"\bmapfile\b|\breadarray\b|\bcoproc\b|declare\s+-A|local\s+-A|local\s+-n"
+        r"|\$\{[A-Za-z_]+(,,|\^\^)\}|\|&|;;&"
+    )
+    bare_sudo = re.compile(r'(?<!\+)"\$\{KBJ_SUDO\[@\]\}"')
+    for path in [*LOCAL_SCRIPTS, *(p for p in SCRIPTS if not p.name.startswith("oci_"))]:
+        for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            code = line.split(" #", 1)[0]
+            if code.lstrip().startswith("#"):
+                continue
+            assert not banned.search(code), f"{path.name}:{n}: bash 4+ 전용 문법"
+            assert not bare_sudo.search(code), f"{path.name}:{n}: 빈 배열 확장(KBJ_SUDO)"
+
+
+def test_local_overlay_publishes_loopback_only_without_secrets() -> None:
+    text = LOCAL_OVERLAY.read_text(encoding="utf-8")
+    data = yaml.safe_load(text.replace("!reset null", "null"))
+    assert set(data["services"]) == {"api"}
+    api = data["services"]["api"]
+    assert api["ports"] == ["127.0.0.1:8000:8000"], "호스트 쪽은 127.0.0.1 에만 게시"
+    assert "!reset null" in text and "network_mode" in api
+    env = api["environment"]
+    assert env["KBJ_API_CONTAINER_BIND"] == "true" and env["KBJ_WEB_COOKIE_SECURE"] == "false"
+    # 접속 문자열은 비밀번호를 .env 에서 받는다(값 직접 기입 없음)
+    assert "${KBJ_POSTGRES_PASSWORD" in env["KBJ_DATABASE_URL"]
+    assert "@db:5432" in env["KBJ_DATABASE_URL"] and "@redis:6379" in env["KBJ_REDIS_URL"]
+    assert not re.search(r"(?i)(token|secret|app_key|api_key)\s*[:=]\s*['\"]?[A-Za-z0-9]{8,}", text)
+
+
+def test_local_overlay_compose_config(tmp_path: Path) -> None:
+    docker = shutil.which("docker")
+    if docker is None:
+        pytest.skip("docker 없음")
+    env_file = tmp_path / "ci.env"
+    env_file.write_text("KBJ_POSTGRES_PASSWORD=x\nKBJ_REDIS_PASSWORD=y\n")
+    base = [docker, "compose", "--env-file", str(env_file)]
+    base += ["-f", "docker-compose.yml", "-f", LOCAL_OVERLAY.name]
+    r = subprocess.run(  # noqa: S603
+        [*base, "--profile", "app", "config", "--format", "json"],
+        capture_output=True,
+        text=True,
+        cwd=ROOT,
+        check=False,
+    )
+    if r.returncode != 0 and ("unknown" in r.stderr or "!reset" in r.stderr):
+        pytest.skip("docker compose 가 오래돼 !reset 을 모른다(2.24 이상 필요)")
+    assert r.returncode == 0, r.stderr
+    import json
+
+    api = json.loads(r.stdout)["services"]["api"]
+    assert api.get("network_mode") in (None, ""), "host 네트워크가 지워져야 한다"
+    assert any(
+        p.get("host_ip") == "127.0.0.1" and str(p.get("published")) == "8000" for p in api["ports"]
+    )
+
+
+def test_local_overlay_and_lib_mode(vm_root: Path) -> None:
+    r = _lib(vm_root, "KBJ_MODE=local; kbj_cmd start; echo; kbj_cmd password")
+    assert r.returncode == 0, r.stderr
+    assert "scripts/local/kbj.sh start" in r.stdout and "scripts/local/kbj.sh password" in r.stdout
+    r = _lib(vm_root, "kbj_cmd password; echo; kbj_cmd start")
+    assert "scripts/vm/set-password.sh" in r.stdout and "scripts/vm/start.sh" in r.stdout
+
+
+def test_container_bind_allows_insecure_cookie_only_with_flag() -> None:
+    from pydantic import ValidationError
+
+    from kbj.config.settings import Settings
+
+    base = {"api_host": "0.0.0.0", "web_cookie_secure": False}  # noqa: S104
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, **base)  # type: ignore[arg-type]
+    ok = Settings(_env_file=None, api_container_bind=True, **base)  # type: ignore[arg-type]
+    assert ok.web_cookie_secure is False
+    # 기본값은 그대로 안전(TLS 뒤 __Host- 쿠키)
+    assert Settings(_env_file=None).web_cookie_secure is True  # type: ignore[call-arg]

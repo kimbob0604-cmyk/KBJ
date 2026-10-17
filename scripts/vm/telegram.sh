@@ -14,7 +14,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 notifier() {
   kbj_docker_init
-  [[ -n "$(kbj_compose ps -q --status running notifier 2>/dev/null)" ]] || kbj_die "notifier 가 떠 있지 않다 — bash scripts/vm/start.sh"
+  [[ -n "$(kbj_compose ps -q --status running notifier 2>/dev/null)" ]] || kbj_die "notifier 가 떠 있지 않다 — $(kbj_cmd start)"
   kbj_compose exec -T notifier python -m kbj.services.notifier "$@"
 }
 
@@ -66,6 +66,7 @@ case "${1:-}" in
   find-chat) find_chat ;;
   check) notifier check ;;
   webhook)
+    [[ "$KBJ_MODE" != "local" ]] || kbj_die "로컬에서는 웹훅(받기)을 쓰지 않는다 — 공개 주소가 없다. 보내기(알림)는 'enable-send' 로 켠다"
     base="$(kbj_env_get KBJ_PUBLIC_BASE_URL)"
     [[ "$base" == https://* ]] || kbj_die "접속 주소가 아직 없다 — bash scripts/vm/start.sh 먼저"
     notifier setup-webhook --confirm

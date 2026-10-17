@@ -173,5 +173,5 @@ bash scripts/vm/start.sh        # 매일: status.sh · 새 버전: update.sh · 
 
 [`docs/PLAN.md`](docs/PLAN.md)(계획·단계별 결과) · [`docs/DATA_TIERS.md`](docs/DATA_TIERS.md)(공개/로그인 정본) ·
 [`docs/metrics.md`](docs/metrics.md)(지표 공식) · [`docs/probe_results.md`](docs/probe_results.md)(실측 체크리스트) ·
-[`docs/runbook.md`](docs/runbook.md)(운영) · [`docs/deploy_oracle.md`](docs/deploy_oracle.md)(VM 배포) · [`docs/secrets.md`](docs/secrets.md)(키·환경변수) ·
+[`docs/runbook.md`](docs/runbook.md)(운영) · [`docs/deploy_oracle.md`](docs/deploy_oracle.md)(VM 배포) · [`docs/local_run.md`](docs/local_run.md)(내 컴퓨터 혼자 쓰기) · [`docs/secrets.md`](docs/secrets.md)(키·환경변수) ·
 [`docs/migration/`](docs/migration/)(옮겨 온 세 프로젝트의 이식 기록) · [`docs/adr/`](docs/adr/README.md)(결정).

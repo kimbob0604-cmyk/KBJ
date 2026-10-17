@@ -48,6 +48,7 @@
 | `KBJ_WEB_PASSWORD_HASH` | 로그인 비밀번호의 scrypt 해시(`scrypt$n=…$r=…$p=…$<salt>$<dk>`). `python -m kbj.services.api hash-password` 가 stdout 에만 낸다 — 비밀번호 원문은 어디에도 두지 않는다. **기본값 없음** | 직접 생성 | 운영 | services.api(P3) |
 | `KBJ_WEB_SESSION_TTL_H` | 세션 고정 만료(시간, 기본 12) | — | 설정 | services.api |
 | `KBJ_WEB_COOKIE_SECURE` | 쿠키 Secure·`__Host-` 접두사(기본 true — TLS 역방향 프록시 뒤). false 는 `KBJ_API_HOST` 가 루프백일 때만(개발) | — | 설정 | services.api |
+| `KBJ_API_CONTAINER_BIND` | 로컬 도커(Mac) 전용 — 컨테이너 안 0.0.0.0 바인딩을 루프백으로 본다(호스트 쪽은 127.0.0.1 게시만). 기본 false, 이때만 `KBJ_WEB_COOKIE_SECURE=false` 허용 | — | 설정 | services.api |
 | `KBJ_WEB_DIST_DIR` | 로그인 SPA 빌드 폴더(기본 `web/dist-login`) — api 가 같은 출처로 내보낸다 | — | 설정 | services.api |
 | `KBJ_PUBLIC_EXPORT_DATABASE_URL` | 공개 내보내기 전용 접속 문자열 — `kbj_public_export`(pub_* SELECT 만) 구성원 로그인 역할, `default_transaction_read_only=on`(ADR 0002 §2.2). 앱 DSN(`KBJ_DATABASE_URL`)은 쓰지 않는다 | 운영 배포에서 역할 생성 | 운영 | services.public_export(P3) |
 | `KBJ_PUBLIC_PUSH_ENABLED` | public-data 브랜치 푸시·Pages 디스패치 켜기(기본 false). **[사용자 승인 필요]** | — | 설정 | services.public_export |

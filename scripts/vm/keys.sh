@@ -67,11 +67,14 @@ case "${1:-}" in
     exit 0 ;;
   -h|--help) sed -n '2,9p' "$0"; exit 0 ;;
   "")
-    kbj_say "키를 차례로 묻는다. 값은 화면에 보이지 않는다. 끝나면 텔레그램 대화방(telegram.sh find-chat)과 로그인(set-password.sh)."
-    for item in "${WIZARD[@]}"; do ask_one "${item%%|*}"; done ;;
+    kbj_say "키를 차례로 묻는다. 값은 화면에 보이지 않는다. 끝나면 텔레그램 대화방($(kbj_cmd telegram) find-chat)과 로그인($(kbj_cmd password))."
+    for item in "${WIZARD[@]}"; do
+      [[ "$KBJ_MODE" == "local" && "${item%%|*}" == "KBJ_DOMAIN" ]] && continue   # 로컬은 도메인이 없다
+      ask_one "${item%%|*}"
+    done ;;
   *)
     for n in "$@"; do ask_one "$n"; done ;;
 esac
 kbj_say ""
 kbj_check_env || true
-kbj_say "바꾼 키를 쓰려면: bash scripts/vm/start.sh"
+kbj_say "바꾼 키를 쓰려면: $(kbj_cmd start)"

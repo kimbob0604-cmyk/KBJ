@@ -1,0 +1,30 @@
+# KBJ 로컬(내 컴퓨터 한 대) 오버레이 — Mac(Docker Desktop)·Linux 개인 PC. ADR 0041, docs/local_run.md.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml --profile app up -d
+#   (scripts/local/kbj.sh start 가 이 순서로 부른다 — 직접 칠 일은 거의 없다)
+#
+# - 기본 docker-compose.yml 의 api 는 호스트 네트워크다(VM 의 Caddy 가 127.0.0.1 로 들어오게). Docker Desktop(Mac·Windows)
+#   의 host 네트워크는 **내 컴퓨터가 아니라 도커의 작은 VM** 이라 브라우저가 닿지 않는다. 그래서 여기서는 api 를
+#   일반 브리지 네트워크로 옮기고, 컨테이너 안 0.0.0.0:8000 을 호스트 **127.0.0.1:8000 에만** 게시한다
+#   (같은 집 와이파이의 다른 기기에서는 열리지 않는다).
+# - 접속 주소는 http://127.0.0.1:8000 (HTTPS·도메인·Caddy 없음). 그래서 쿠키는 Secure 가 아닌 개발용(KBJ_WEB_COOKIE_SECURE=false)
+#   이고, 그 조합은 KBJ_API_CONTAINER_BIND=true 일 때만 설정 검증을 통과한다.
+# - 텔레그램 **웹훅(받기)** 은 공개 주소가 있어야 해서 로컬에서는 쓰지 않는다. 보내기(알림)는 된다.
+# - 비밀은 넣지 않는다(.env 에서 — docs/secrets.md).
+
+name: kbj
+
+services:
+  api:
+    # `!reset` — 기본 파일의 network_mode: host 를 지운다(compose 2.24 이상 — Docker Desktop 4.27 이상)
+    network_mode: !reset null
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      KBJ_DATABASE_URL: "postgresql://kbj:${KBJ_POSTGRES_PASSWORD:?KBJ_POSTGRES_PASSWORD 를 .env 에 넣는다}@db:5432/kbj"
+      KBJ_REDIS_URL: "redis://:${KBJ_REDIS_PASSWORD:?KBJ_REDIS_PASSWORD 를 .env 에 넣는다}@redis:6379/0"
+      KBJ_API_HOST: 0.0.0.0
+      KBJ_API_CONTAINER_BIND: "true"
+      KBJ_WEB_COOKIE_SECURE: "false"
+      # 로그인 출처 검사는 요청 자신의 주소와 비교한다(공개 주소 없음 — 127.0.0.1·localhost 둘 다 된다)
+      KBJ_PUBLIC_BASE_URL: ""

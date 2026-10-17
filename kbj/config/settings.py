@@ -115,6 +115,9 @@ class Settings(BaseSettings):
     web_session_ttl_h: int = Field(default=12, gt=0, le=168)  # 고정 만료(활동해도 늘리지 않음)
     # __Host- 쿠키는 TLS 뒤에서만(VM 역방향 프록시). false 는 api_host 가 루프백일 때만(개발)
     web_cookie_secure: bool = True
+    # 컨테이너 안 0.0.0.0 + 호스트 127.0.0.1 에만 게시하는 로컬 실행(docker-compose.local.yml).
+    # Docker Desktop 은 host 네트워크가 호스트에 닿지 않는다. 이때만 http 쿠키(secure=false) 허용
+    api_container_bind: bool = False
     web_dist_dir: Path = Path("web/dist-login")  # 로그인 SPA 빌드(api 가 같은 출처로 내보낸다)
 
     # ── 공개 내보내기(P3 — §7). 공개 등급(pub_*)만 읽는 kbj_public_export 구성원 로그인 역할 ─────
@@ -152,7 +155,8 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _insecure_cookie_only_on_loopback(self) -> Settings:
-        if not self.web_cookie_secure and self.api_host not in _LOOPBACK:
+        loopback = self.api_host in _LOOPBACK or self.api_container_bind
+        if not self.web_cookie_secure and not loopback:
             raise ValueError("KBJ_WEB_COOKIE_SECURE=false 는 KBJ_API_HOST 가 루프백일 때만(개발)")
         return self
 

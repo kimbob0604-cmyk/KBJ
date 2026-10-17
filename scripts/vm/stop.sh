@@ -10,7 +10,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 kbj_docker_init
 
 case "${1:-}" in
-  "") kbj_compose stop; kbj_ok "멈췄다(데이터는 그대로). 다시 시작: bash scripts/vm/start.sh" ;;
+  "") kbj_compose stop; kbj_ok "멈췄다(데이터는 그대로). 다시 시작: $(kbj_cmd start)" ;;
   --down) kbj_compose down --remove-orphans; kbj_ok "컨테이너를 지웠다(데이터 볼륨은 그대로)" ;;
   -h|--help) sed -n '2,6p' "$0" ;;
   *) kbj_die "모르는 인자: $1" ;;

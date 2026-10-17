@@ -1,0 +1,90 @@
+# KBJ 내 컴퓨터(Mac)에서 혼자 쓰기 — 로컬 실행 안내서
+
+공유·도메인·서버 없이, 내 맥 한 대에서만 대시보드를 돌린다. 접속 주소는 **http://127.0.0.1:8000** (내 맥에서만 열린다 —
+같은 와이파이의 다른 기기에서도 안 열린다). 비용 0원. ADR 0041.
+
+> **먼저 알아둘 것**
+> - 수집은 **맥이 켜져 있고 깨어 있을 때만** 돈다. 맥이 잠든 동안(밤·덮개 닫힘)은 그 시간이 비어 있다. 장중에 쓰려면 전원을 꽂고
+>   `awake on` 을 켜 둔다(⑥).
+> - 텔레그램은 **보내기(알림)만** 된다. 텔레그램에서 명령(`/시그널` 같은 것)을 보내 받는 기능은 공개 주소가 있어야 해서 로컬에선 안 된다.
+> - 키(KIS 등)는 **채팅에 붙이지 않는다.** 내 맥의 터미널에서 직접 입력한다(화면에 안 보인다).
+
+## ① 준비물 설치 (처음 한 번)
+
+1. **Docker Desktop** 설치: https://www.docker.com/products/docker-desktop/ → Mac(Apple chip) 받아 설치 → 앱을 열고 약관 동의.
+2. Docker Desktop → 톱니바퀴(Settings) → **Resources** → Memory 를 **6GB 이상**으로 → Apply. 같은 창의 General 에서
+   "Start Docker Desktop when you sign in" 을 켜 두면 편하다.
+3. 터미널(Cmd+Space → "터미널")에서 `git --version` — 설치 안내 창이 뜨면 "설치"를 누른다(몇 분).
+
+## ② 코드 받기 (처음 한 번)
+
+```
+git clone --branch claude/build https://github.com/kimbob0604-cmyk/KBJ.git ~/kbj
+cd ~/kbj
+```
+
+## ③ 키와 로그인 정하기 (처음 한 번)
+
+```
+bash scripts/local/kbj.sh keys
+```
+
+차례로 묻는다. **KIS 앱키·앱시크릿은 꼭**, 나머지(KRX·DART·공공데이터·ECOS·FRED·KOSIS·텔레그램 토큰)는 없으면 Enter 로 건너뛴다.
+나중에 `bash scripts/local/kbj.sh keys KBJ_DART_API_KEY` 처럼 하나만 다시 넣어도 된다. 화면엔 글자 수만 나온다.
+
+```
+bash scripts/local/kbj.sh password
+```
+
+대시보드 로그인 아이디와 비밀번호(12자 이상)를 정한다. 처음엔 이미지를 만드느라 **10~20분** 걸린다(맥이 깨어 있어야 한다).
+
+## ④ 시작
+
+```
+bash scripts/local/kbj.sh start
+```
+
+마지막에 `✔ http://127.0.0.1:8000 열림` 이 나오면 브라우저에서 그 주소를 열고 ③에서 정한 아이디·비밀번호로 로그인한다.
+(`bash scripts/local/kbj.sh open` 으로도 열린다.) 이후로는 Docker Desktop 만 켜져 있으면 `start` 한 줄이면 된다.
+
+## ⑤ 텔레그램 알림 (선택)
+
+1. 텔레그램 `@BotFather` → `/newbot` → 받은 토큰을 `bash scripts/local/kbj.sh keys KBJ_TELEGRAM_BOT_TOKEN` 으로 넣는다.
+2. 만든 봇을 내가 쓸 대화방(나 혼자 있는 그룹)에 넣고 그 방에서 `/start` 를 보낸다.
+3. `bash scripts/local/kbj.sh start`(키 반영) → `bash scripts/local/kbj.sh telegram find-chat` → 방 번호 선택.
+4. `bash scripts/local/kbj.sh telegram enable-send` — 이때부터 알림이 간다(끄기는 `disable-send`). 장 마감 요약은 정확히 16:00(한국 시각)이다.
+
+## ⑥ 매일 쓰기
+
+| 하고 싶은 일 | 명령 |
+|---|---|
+| 맥 잠자기 방지 켜기/끄기(전원 꽂고, 덮개는 열어 둠) | `bash scripts/local/kbj.sh awake on` / `awake off` |
+| 상태 점검(컨테이너·접속·운영 점검·백업) | `bash scripts/local/kbj.sh status` |
+| 멈추기 / 다시 시작 | `bash scripts/local/kbj.sh stop` / `start` |
+| 백업 지금 | `bash scripts/local/kbj.sh backup --now` (`~/kbj-backup` 에 7일 보관) |
+| 새 버전 받기 | `bash scripts/local/kbj.sh update` (먼저 자동 백업) |
+| 문제가 있는 서비스 로그 | `bash scripts/local/kbj.sh status --logs api` |
+
+- 데이터는 도커 볼륨에 남는다. `stop` 이나 `--down` 으로는 지워지지 않는다(어느 명령도 데이터를 지우지 않는다).
+- 매일 새벽 3시의 자동 백업은 맥이 깨어 있어야 돈다. 일주일에 한 번 `backup --now` 를 해 두는 것을 권한다.
+
+## ⑦ 아직 안 되는 것 · 한계 (정직하게)
+
+- **맥이 잠든 동안의 빈 구간:** 장중 분 단위 수집은 그 시간만큼 비는 구간이 생기고 `status` 의 운영 점검에 표시된다. 일 단위 수집(장 마감 후
+  확정 데이터)은 맥이 깨어 있는 때 다시 돌려 메운다.
+- **실데이터로 아직 확인하지 못한 수집 작업은 꺼져 있다:** 관세청 수출입(`trade.customs_*`), 컨센서스 스냅샷, 지수 정기변경(`index.*`),
+  VKOSPI. 키를 넣고 실제로 한 번 받아 보며 확인한 뒤 켜는 일이 남아 있다(`docs/probe_results.md` §7).
+- **옵션 감마(GEX) 수집:** 기존 GEXLAB 이 계속 수집 중이면 그대로 둔다. KBJ 쪽 수집기(`gex.poller` 등)는 전환 순서(런북 ④)를 따라
+  켤 때까지 꺼져 있다.
+- **외부 공개 사이트(Pages)·공유 링크:** 로컬 모드에서는 쓰지 않는다.
+- **실주문은 없다:** `KBJ_LIVE_TRADING` 은 항상 false 다.
+
+## ⑧ 문제가 생기면
+
+| 증상 | 확인 |
+|---|---|
+| `Docker Desktop 이 꺼져 있다` | 앱을 열고 고래 아이콘이 가만히 있을 때 다시 |
+| 빌드가 중간에 멈춤 | 메모리를 6GB 이상으로(①-2), 인터넷 연결 확인 후 `start` 를 다시(이어서 빌드한다) |
+| `127.0.0.1:8000` 이 안 열림 | `bash scripts/local/kbj.sh status` → 이상한 서비스 이름을 `status --logs <이름>` |
+| 로그인이 안 됨 | `bash scripts/local/kbj.sh password` 로 다시 정한 뒤 `start` |
+| 8000 포트 사용 중 | 다른 프로그램이 쓰는 중 — 그 프로그램을 끄거나 알려 주세요 |

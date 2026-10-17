@@ -12,6 +12,8 @@ KBJ_VM_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KBJ_ROOT="${KBJ_ROOT:-$(cd "$KBJ_VM_LIB_DIR/../.." && pwd)}"
 KBJ_ENV_FILE="${KBJ_ENV_FILE:-$KBJ_ROOT/.env}"
 KBJ_BACKUP_DIR="${KBJ_BACKUP_DIR:-$HOME/kbj-backup}"
+# vm(기본 — 우분투 서버 + Caddy HTTPS) | local(내 컴퓨터 한 대 — scripts/local/kbj.sh 가 정한다, docker-compose.local.yml)
+KBJ_MODE="${KBJ_MODE:-vm}"
 # shellcheck disable=SC2034  # set-password.sh 가 쓴다
 KBJ_IMAGE="kbj-app:local"   # docker-compose.yml x-app image
 KBJ_EXPORT_ROLE="kbj_public_reader"   # 공개 내보내기 로그인 역할(kbj_public_export 구성원 — ADR 0002 §2.2)
@@ -32,6 +34,17 @@ if [[ -t 1 ]]; then
 else
   _c_ok="" _c_warn="" _c_err="" _c_b="" _c_0=""
 fi
+# 안내 문구용 — 지금 모드에서 해당 일을 하는 명령(start·stop·keys·password·status·backup·telegram)
+kbj_cmd() {
+  if [[ "$KBJ_MODE" == "local" ]]; then
+    printf 'bash scripts/local/kbj.sh %s' "$1"
+    return 0
+  fi
+  case "$1" in
+    password) printf 'bash scripts/vm/set-password.sh' ;;
+    *) printf 'bash scripts/vm/%s.sh' "$1" ;;
+  esac
+}
 kbj_say() { printf '%s\n' "$*"; }
 kbj_step() { printf '\n%s▶ %s%s\n' "$_c_b" "$*" "$_c_0"; }
 kbj_ok() { printf '%s✔ %s%s\n' "$_c_ok" "$*" "$_c_0"; }
@@ -127,13 +140,13 @@ kbj_check_env() {
   for name in "${KBJ_REQUIRED_KEYS[@]}"; do kbj_env_has "$name" || missing+=("$name"); done
   for name in "${KBJ_OPTIONAL_KEYS[@]}"; do kbj_env_has "$name" || soft+=("$name"); done
   lt="$(kbj_env_get KBJ_LIVE_TRADING)"
-  if [[ -n "$lt" && "${lt,,}" != "false" ]]; then
+  if [[ -n "$lt" && "$(printf '%s' "$lt" | tr '[:upper:]' '[:lower:]')" != "false" ]]; then
     kbj_err "KBJ_LIVE_TRADING 은 false 여야 한다(실주문 금지 — 절대 규칙 6)"
     rc=1
   fi
   if (( ${#missing[@]} )); then
     kbj_err "비어 있는 필수 이름: ${missing[*]}"
-    kbj_say "  채우기: bash scripts/vm/keys.sh   (로그인 비밀번호는 bash scripts/vm/set-password.sh)"
+    kbj_say "  채우기: $(kbj_cmd keys)   (로그인 비밀번호는 $(kbj_cmd password))"
     rc=1
   else
     kbj_ok "필수 이름 ${#KBJ_REQUIRED_KEYS[@]}개가 모두 채워져 있다"
@@ -148,6 +161,12 @@ kbj_check_env() {
 
 KBJ_SUDO=()
 kbj_docker_init() {
+  if [[ "$KBJ_MODE" == "local" ]]; then
+    command -v docker >/dev/null 2>&1 || kbj_die "docker 가 없다 — Docker Desktop 을 설치한다(docs/local_run.md ①)"
+    docker info >/dev/null 2>&1 || kbj_die "Docker Desktop 이 꺼져 있다 — 앱을 열고 고래 아이콘이 가만히 있을 때 다시 돌린다"
+    KBJ_SUDO=()
+    return 0
+  fi
   command -v docker >/dev/null 2>&1 || kbj_die "docker 가 없다 — install.sh 를 먼저 돌린다"
   if docker info >/dev/null 2>&1; then
     KBJ_SUDO=()
@@ -161,14 +180,15 @@ kbj_docker_init() {
 # compose 는 레포 루트의 .env 를 읽는다. 주소(KBJ_SITE_HOST)가 아직 없으면(처음·멈춤) 오버레이 검사만 통과시키는
 # 자리값 localhost — start.sh 가 진짜 주소를 .env 에 쓴 뒤 띄운다. sudo 는 환경을 지우니 env 로 넘긴다
 kbj_compose() {
-  local commit site
+  local commit site overlay=docker-compose.vm.yml
+  [[ "$KBJ_MODE" == "local" ]] && overlay=docker-compose.local.yml
   commit="$(git -C "$KBJ_ROOT" rev-parse --short HEAD 2>/dev/null || true)"
   site="$(kbj_env_get KBJ_SITE_HOST)"
-  (cd "$KBJ_ROOT" && "${KBJ_SUDO[@]}" env KBJ_GIT_COMMIT="$commit" KBJ_SITE_HOST="${site:-localhost}" \
-    docker compose -f docker-compose.yml -f docker-compose.vm.yml --profile app "$@")
+  (cd "$KBJ_ROOT" && ${KBJ_SUDO[@]+"${KBJ_SUDO[@]}"} env KBJ_GIT_COMMIT="$commit" KBJ_SITE_HOST="${site:-localhost}" \
+    docker compose -f docker-compose.yml -f "$overlay" --profile app "$@")
 }
 
-kbj_docker() { "${KBJ_SUDO[@]}" docker "$@"; }
+kbj_docker() { ${KBJ_SUDO[@]+"${KBJ_SUDO[@]}"} docker "$@"; }
 
 # 서비스가 모두 running(+ healthcheck 가 있으면 healthy)이 될 때까지. 끝까지 아니면 이름만 출력하고 1
 kbj_wait_healthy() {
@@ -184,7 +204,7 @@ kbj_wait_healthy() {
     if (( ${#bad[@]} == 0 )); then kbj_ok "서비스가 모두 정상(running·healthy)"; return 0; fi
     if (( SECONDS >= deadline )); then
       kbj_warn "아직 정상이 아닌 서비스: ${bad[*]}"
-      kbj_say "  로그: bash scripts/vm/status.sh --logs <서비스>"
+      kbj_say "  로그: $(kbj_cmd status) --logs <서비스>"
       return 1
     fi
     sleep 5
@@ -207,7 +227,7 @@ kbj_site_host() {
   local domain ip
   domain="$(kbj_env_get KBJ_DOMAIN)"
   domain="${domain#https://}"; domain="${domain#http://}"; domain="${domain%%/*}"
-  if [[ -n "$domain" ]]; then printf '%s' "${domain,,}"; return 0; fi
+  if [[ -n "$domain" ]]; then printf '%s' "$domain" | tr '[:upper:]' '[:lower:]'; return 0; fi
   ip="$(kbj_public_ip)" || return 1
   printf '%s.sslip.io' "${ip//./-}"
 }
@@ -272,9 +292,11 @@ kbj_bring_up() {
   kbj_step "작업 등록부 검증"
   kbj_compose run --rm --no-deps scheduler python -m kbj.services.scheduler validate || kbj_die "등록부 검증 실패"
   kbj_step "모든 서비스 기동(gex-poller 는 등록부에서 꺼져 있어 runbook ④ 전까지 띄우지 않는다)"
-  local svcs=()
-  mapfile -t svcs < <(kbj_app_services)
-  kbj_compose up -d --remove-orphans "${svcs[@]}" || kbj_die "기동 실패"
+  local svcs=() svc
+  while IFS= read -r svc; do   # mapfile 은 bash 4+ — Mac 기본 bash 3.2 에서도 돌게 한다
+    [[ -n "$svc" ]] && svcs+=("$svc")
+  done < <(kbj_app_services)
+  kbj_compose up -d --remove-orphans ${svcs[@]+"${svcs[@]}"} || kbj_die "기동 실패"
   kbj_wait_healthy 300 || true
 }
 
