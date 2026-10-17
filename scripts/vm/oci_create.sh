@@ -18,7 +18,7 @@
 # 옵션: --branch 브랜치  --dry-run(oci 명령을 실행하지 않고 할 일만)  --status(자원·상태·IP 만)
 #       --detach(뒤에서 돌리고 로그 위치만 알려 줌 — Cloud Shell 이 무입력으로 끊겨도 [확인 필요] 계속)
 #       --destroy(kbj-* 자원 지우기 — oci_destroy.sh 가 부른다. 확인 문구를 직접 쳐야 지운다)
-# 환경변수: KBJ_BRANCH(claude/build) KBJ_OCPUS(4) KBJ_MEMORY_GB(24) KBJ_BOOT_GB(100) KBJ_RETRY_INTERVAL(초, 60)
+# 환경변수: KBJ_BRANCH(claude/build) KBJ_OCPUS(2) KBJ_MEMORY_GB(12) KBJ_BOOT_GB(100) KBJ_RETRY_INTERVAL(초, 60)
 #           KBJ_RETRY_MAX_MINUTES(360) KBJ_SSH_KEY(~/.ssh/kbj_vm) KBJ_REPO_SLUG(kimbob0604-cmyk/KBJ)
 #
 # 규칙: 키·토큰을 출력하지 않는다. OCID 는 끝 6자리만 보인다(…abc123). 오류는 삼키지 않는다(쉬운 말 한 줄 + 원문 요약).
@@ -27,14 +27,14 @@ set -euo pipefail
 
 BRANCH="${KBJ_BRANCH:-claude/build}"
 REPO_SLUG="${KBJ_REPO_SLUG:-kimbob0604-cmyk/KBJ}"
-OCPUS="${KBJ_OCPUS:-4}"
-MEMORY_GB="${KBJ_MEMORY_GB:-24}"
+OCPUS="${KBJ_OCPUS:-2}"
+MEMORY_GB="${KBJ_MEMORY_GB:-12}"
 BOOT_GB="${KBJ_BOOT_GB:-100}"
 RETRY_INTERVAL="${KBJ_RETRY_INTERVAL:-60}"
 RETRY_MAX_MINUTES="${KBJ_RETRY_MAX_MINUTES:-360}"
 SSH_KEY="${KBJ_SSH_KEY:-$HOME/.ssh/kbj_vm}"
 STATE_DIR="$HOME/.kbj-oci"
-FREE_OCPUS=4      # Always Free A1 합계 한도
+FREE_OCPUS=4      # 옛 무료 한도(2026-08 이후 신규는 2 OCPU·12GB 로 줄었다는 안내가 있다 [확인 필요])
 FREE_MEMORY_GB=24
 FREE_BLOCK_GB=200 # Always Free 블록 저장소 합계(부트 볼륨 포함)
 
@@ -344,7 +344,7 @@ check_free_limit() {
     printf '%s✖ 무료 한도를 넘는다: 이미 다른 A1 VM 이 %s OCPU·%s GB 를 쓰고 있다(무료는 합계 %s OCPU·%s GB, 이번에 %s OCPU·%s GB 가 필요).%s\n' \
       "$c_err" "$used_cpu" "$used_mem" "$FREE_OCPUS" "$FREE_MEMORY_GB" "$OCPUS" "$MEMORY_GB" "$c_0" >&2
     say "  할 일: 콘솔 ☰ → Compute → Instances 에서 쓰지 않는 A1 VM 을 Terminate(종료)한 뒤 다시, 또는"
-    say "        남은 만큼만 쓰기: … | KBJ_OCPUS=2 KBJ_MEMORY_GB=12 bash   (KBJ 는 최소 2 OCPU·12GB 권장 [확인 필요])"
+    say "        남은 만큼만 쓰기: … | KBJ_OCPUS=1 KBJ_MEMORY_GB=6 bash   (KBJ 는 최소 2 OCPU·12GB 권장 [확인 필요])"
     exit 1
   fi
   ok "무료 A1 한도 안(다른 A1 VM: ${used_cpu} OCPU·${used_mem} GB)"

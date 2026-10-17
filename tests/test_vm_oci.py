@@ -193,7 +193,7 @@ def test_create_order_idempotent_and_clean(fake: dict[str, str]) -> None:
     launch = next(c for c in calls if "instance launch" in c)
     for want in (
         "VM.Standard.A1.Flex",
-        '{"ocpus":4,"memoryInGBs":24}',
+        '{"ocpus":2,"memoryInGBs":12}',
         "--boot-volume-size-in-gbs 100",
         "--assign-public-ip true",
         "--display-name kbj-vm",
@@ -261,7 +261,7 @@ def test_dry_run_calls_nothing(fake: dict[str, str]) -> None:
 
 
 def test_free_limit_stops(fake: dict[str, str]) -> None:
-    r = _run(CREATE, {**fake, "FAKE_OTHER_OCPUS": "2.0", "FAKE_OTHER_MEM": "12.0"})
+    r = _run(CREATE, {**fake, "FAKE_OTHER_OCPUS": "3.0", "FAKE_OTHER_MEM": "18.0"})
     assert r.returncode != 0
     assert "무료 한도" in r.stderr
     assert not [c for c in _calls(fake) if "instance launch" in c]
