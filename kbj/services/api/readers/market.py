@@ -223,7 +223,13 @@ def market_summary(ctx: ReadContext, *, day: date | None = None) -> Envelope[Mar
     now = ctx.now_kst()
     today, with_live = _end_day(ctx, day)
     codes = list(cfg.intraday_indices)
-    bars = ctx.repos.market.index_series(codes, today, SPARK_N + 1)
+    # KRX 지수 일별은 코드 칸이 없어 공백 뺀 이름이 코드다(krx_daily.index_code).
+    # KIS 코드(0001…)와 그 이름 둘 다 본다
+    krx_code = {c: "".join((cfg.intraday_indices.get(c) or "").split()) for c in codes}
+    both = ctx.repos.market.index_series(
+        [*codes, *(v for v in krx_code.values() if v)], today, SPARK_N + 1
+    )
+    bars = {c: both.get(c) or both.get(krx_code[c], []) for c in codes}
     quotes = ctx.repos.market.index_quotes(day_start(today), now) if with_live else []
     notes: list[str] = []
     tiles: list[IndexTile] = []
