@@ -364,7 +364,11 @@ check_free_limit() {
 
 list_ads() {
   oci_call iam availability-domain list --compartment-id "$TENANCY" --query 'data[].name' --raw-output
-  mapfile -t ADS < <(printf '%s\n' "$OCI_R" | grep -o '"[^"]*"' | tr -d '"')
+  local line
+  ADS=()
+  while IFS= read -r line; do  # mapfile 은 bash 4+ — macOS 기본 bash 3.2 에서도 돌게 한다
+    [[ -n "$line" ]] && ADS+=("$line")
+  done < <(printf '%s\n' "$OCI_R" | grep -o '"[^"]*"' | tr -d '"')
   if (( ${#ADS[@]} == 0 )); then
     (( DRY_RUN )) || die "가용 도메인(AD) 목록을 받지 못했다"
     ADS=("AD-1")

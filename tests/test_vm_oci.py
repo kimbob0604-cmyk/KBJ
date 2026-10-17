@@ -318,6 +318,17 @@ def test_empty_array_expansion_is_bash42_safe() -> None:
         assert not bare, f"{name}: 빈 배열 확장이 보호되지 않음"
 
 
+def test_no_bash4_only_builtins() -> None:
+    """macOS 기본 bash 는 3.2 — mapfile·readarray·연관 배열 등 bash 4+ 전용 문법을 쓰지 않는다."""
+    banned = re.compile(
+        r"\b(mapfile|readarray|coproc)\b|declare\s+-A|local\s+-A|\$\{[A-Za-z_]+(,,|\^\^)\}"
+    )
+    for path in (CREATE, DESTROY):
+        for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            code = line.split("#", 1)[0]
+            assert not banned.search(code), f"{path.name}:{n}: bash 4+ 전용 문법"
+
+
 def test_guide_quick_path() -> None:
     guide = GUIDE.read_text(encoding="utf-8")
     head = guide.split("## ①", 1)[0]
