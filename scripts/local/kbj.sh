@@ -142,7 +142,7 @@ cmd_backfill() {
   (( days >= 1 && days <= 1100 )) || kbj_die "일수는 1~1100 사이 숫자(기본 21)"
   kbj_env_has KBJ_KRX_API_KEY || kbj_die "KBJ_KRX_API_KEY 가 비었다 — $(kbj_cmd keys) KBJ_KRX_API_KEY 로 넣고 $(kbj_cmd start) 를 다시"
   require_scheduler
-  from="$(date_ago "$days")"; to="$(date_ago 2)"   # KRX 는 다음 거래일 아침에 공표 — 어제·그제 막 끝난 날은 매일 자동 수집(08:05)이 채운다
+  from="$(date_ago "$days")"; to="$(date_ago 3)"   # KRX 는 다음 영업일 아침에 공표(금요일 분은 월요일) — 사흘 안쪽은 매일 자동 수집(08:05)이 채운다
   kbj_step "시장 일봉 백필 $from ~ $to (거래일만, 최근부터)"
   kbj_compose exec -T -e MPLCONFIGDIR=/tmp/mpl scheduler python -m kbj.services.scheduler backfill market.backfill --from "$from" --to "$to" || rc=$?
   if (( rc == 0 )); then
