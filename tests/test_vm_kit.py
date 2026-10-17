@@ -484,7 +484,10 @@ def test_container_bind_allows_insecure_cookie_only_with_flag() -> None:
 
 
 def test_local_mode_does_not_require_telegram(vm_root: Path) -> None:
-    r = _lib(vm_root, 'KBJ_MODE=local; printf "%s\\n" "${KBJ_REQUIRED_KEYS[@]}"')
+    r = _bash(
+        'source scripts/vm/lib.sh; printf "%s\\n" "${KBJ_REQUIRED_KEYS[@]}"',
+        env={"HOME": str(vm_root), "KBJ_MODE": "local"},
+    )
     assert r.returncode == 0, r.stderr
     required = r.stdout.split()
     assert "KBJ_KIS_APP_KEY" in required and "KBJ_WEB_PASSWORD_HASH" in required
