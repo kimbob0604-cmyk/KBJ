@@ -38,6 +38,7 @@ from kbj.core.rows import (
     row_rank,
 )
 from kbj.core.time import KST
+from kbj.engines.board.kinds import of as _board_kind
 
 if TYPE_CHECKING:
     from kbj.engines.flows.checks import CheckSummary
@@ -439,6 +440,10 @@ def _make_row(
         uni.market if uni is not None else None
     )
     kind = (snap.kind if snap is not None else None) or (uni.kind if uni is not None else None)
+    if kind is None and uni is not None and uni.kind is None and name:
+        # KRX·KIS 는 종목 종류(보통·우선·스팩·리츠)를 주지 않는다 — 유니버스 행 kind 가 비면
+        # 이름·코드로 정한다(board 엔진과 같은 정본 `kinds.of`). ETF·ETN 은 유니버스가 kind 를 준다
+        kind = _board_kind(code, name)
 
     iv = investor_values(inv)
     if iv.invalid:

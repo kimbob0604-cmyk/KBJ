@@ -130,6 +130,33 @@ def test_이름_시장_종류는_유니버스로_채운다() -> None:
     assert (r.name, r.market, r.kind) == ("유니", "KOSDAQ", "pref")
 
 
+def test_krx_는_종류를_안_줘서_유니버스_kind_가_비면_이름으로_정한다() -> None:
+    """실제 KRX 수집: 스냅·유니버스 모두 kind=None — 시장폭이 종목을 하나도 못 세던 문제."""
+    snaps = [
+        snap("005930", D[0], kind=None, name="삼성전자", market="KOSPI"),
+        snap("005935", D[0], kind=None, name="삼성전자우", market="KOSPI"),
+        snap("123450", D[0], kind=None, name="미래에셋스팩3호", market="KOSDAQ"),
+    ]
+    uni = [
+        UniverseRow(c, D[0], n, "KR", None, None, "krx", Quality.OK)
+        for c, n in [
+            ("005930", "삼성전자"),
+            ("005935", "삼성전자우"),
+            ("123450", "미래에셋스팩3호"),
+        ]
+    ]
+    led = _ledger(snaps=snaps, uni=uni)
+    got = {c: led.get(c, D[0]).kind for c in ("005930", "005935", "123450")}  # type: ignore[union-attr]
+    assert got == {"005930": "common", "005935": "pref", "123450": "spac"}
+
+
+def test_유니버스가_etf_라고_하면_이름으로_바꾸지_않는다() -> None:
+    uni = [UniverseRow("069500", D[0], "KODEX 200", "KR", "etf", None, "krx", Quality.OK)]
+    led = _ledger(snaps=[snap("069500", D[0], kind=None, name="KODEX 200")], uni=uni)
+    r = led.get("069500", D[0])
+    assert r is not None and r.kind == "etf"
+
+
 def test_거래정지는_거래일이_아니다() -> None:
     led = _ledger(
         snaps=[
