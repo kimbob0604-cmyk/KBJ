@@ -308,6 +308,28 @@ def test_one_key_failing_does_not_stop_the_others() -> None:
     assert len(repos.market.snapshots(D, source="krx")) == 4
 
 
+def test_old_day_with_empty_main_stock_data_is_a_closed_day_not_a_wait() -> None:
+    """5일 넘게 지난 날의 유가·코스닥이 둘 다 빈 응답이면 휴장일 — '공표 전'으로 멈추지 않는다."""
+    old = date(2026, 7, 17)
+    fake = FakeKrx(Clock(NOW), stale="empty")  # 어느 날도 공표하지 않는다(휴장일 흉내)
+    repos = new_repos()
+    ks = keys(*ALL, as_of=old.isoformat())
+    res = krx_daily.run(
+        ctx("krx.daily", old.isoformat(), ks, now=NOW, repos=repos, krx=krx_client(fake),
+            krx_coverage=NO_FLOOR)
+    )  # fmt: skip
+    assert res.status == "ok", res.detail
+    assert res.detail["closed_day"] == "2026-07-17" and res.rows == 0
+    assert len(res.collected) == len(ks)
+    assert repos.market.snapshots(old) == []
+
+
+def test_recent_empty_day_is_still_not_ready_not_a_closed_day() -> None:
+    repos, fake = setup(publish=False)  # D 는 NOW 하루 전 — 아직 공표 전일 수 있다
+    res = run(repos, fake, keys())
+    assert res.status == "not_ready" and "closed_day" not in res.detail
+
+
 def test_unsubscribed_optional_dataset_does_not_block_the_day() -> None:
     """코넥스·ETN 은 이용신청이 없어도(401 Unauthorized API Call) 그날 수집을 막지 않는다."""
     repos, fake = setup()

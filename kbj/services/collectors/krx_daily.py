@@ -55,6 +55,7 @@ from typing import Any, Final
 from kbj.config.markets import EtfCfg
 from kbj.core.quality import Quality
 from kbj.core.rows import Bar, EtfDay, EtfMeta, IndexBar, Snap, UniverseRow
+from kbj.core.time import KST
 from kbj.data.private.krx.client import KrxClient, KrxNotSubscribed, StockMarket
 from kbj.data.private.krx.models import (
     KrxIndexDaily,
@@ -411,6 +412,34 @@ def _optional(c: _Ctx, ds: str) -> int:
         return 0
 
 
+# 주식 일별(유가·코스닥)이 이 일수 넘게 지난 날에도 빈 응답이면 '아직 공표 전'이 아니라 휴장일이다
+CLOSED_AFTER_DAYS: Final = 5
+MAIN_STOCK_DATASETS: Final = ("sto/stk_bydd_trd", "sto/ksq_bydd_trd")
+
+
+def _mark_closed_day(out: Outcome, keys: Sequence[DataKey], day: date, now: datetime) -> None:
+    """달력이 모르는 임시 휴장일(선거일·임시공휴일·새 공휴일) 자동 처리.
+
+    KRX 는 D+1 08:00 에 공표한다. 그런데 5일이 지난 날의 유가·코스닥 일별이 **둘 다** 빈 응답이면
+    공표가 늦은 것이 아니라 장이 열리지 않은 날이다 — 그 날의 못 받은 키를 0행으로 끝내
+    (`detail.closed_day`) 백필·재시도가 그 날에서 영원히 멈추지 않게 한다.
+    5일 안쪽은 건드리지 않는다(정말 공표 전일 수 있다 — 그런 날은
+    `config/holidays_override.yaml` 로 처리).
+    """
+    main = [k for k in keys if k.dataset in MAIN_STOCK_DATASETS]
+    if not main or (now.astimezone(KST).date() - day).days < CLOSED_AFTER_DAYS:
+        return
+    if not all(k.label() in out.not_ready for k in main) or out.errors:
+        return
+    for k in keys:
+        if out.not_ready.pop(k.label(), None) is not None:
+            out.collected.append(k)
+    out.detail["closed_day"] = day.isoformat()
+    log_event(
+        log, logging.INFO, "scheduler", "closed_day_detected", job=out.job, day=day.isoformat()
+    )
+
+
 def collect(
     keys: Sequence[DataKey],
     *,
@@ -442,6 +471,7 @@ def collect(
             out.run(key, lambda: _etf(c))
         else:
             out.errors[key.label()] = f"모르는 KRX 데이터셋: {ds}"
+    _mark_closed_day(out, keys, day, now)
     changes: list[tuple[str, list[str], list[str]]] = out.detail.pop("_notify", [])
     stock_done = any(k.dataset in STOCK for k in out.collected)
     if stock_done and reconcile_cfg is not None:
