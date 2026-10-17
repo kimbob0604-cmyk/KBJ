@@ -28,6 +28,16 @@ KBJ_REQUIRED_KEYS=(
 )
 # 있으면 좋은 이름(비면 그 작업이 키 없음으로 남는다 — 경고만)
 KBJ_OPTIONAL_KEYS=(KBJ_KRX_API_KEY KBJ_DART_API_KEY KBJ_DATAGO_KEY KBJ_ECOS_KEY KBJ_FRED_KEY KBJ_KOSIS_KEY)
+# 로컬(내 컴퓨터 한 대)은 텔레그램을 필수에서 뺀다(웹훅·공개 주소가 없다 — ADR 0041). keys.sh 등 어느 진입점에서든 같게 적용
+if [[ "$KBJ_MODE" == "local" ]]; then
+  KBJ_REQUIRED_KEYS=(
+    KBJ_POSTGRES_PASSWORD KBJ_REDIS_PASSWORD
+    KBJ_WEB_USER KBJ_WEB_PASSWORD_HASH
+    KBJ_KIS_APP_KEY KBJ_KIS_APP_SECRET
+    KBJ_PUBLIC_EXPORT_DATABASE_URL
+  )
+  KBJ_OPTIONAL_KEYS=(KBJ_TELEGRAM_BOT_TOKEN KBJ_TELEGRAM_CHAT_ID "${KBJ_OPTIONAL_KEYS[@]}")
+fi
 
 if [[ -t 1 ]]; then
   _c_ok=$'\e[32m' _c_warn=$'\e[33m' _c_err=$'\e[31m' _c_b=$'\e[1m' _c_0=$'\e[0m'

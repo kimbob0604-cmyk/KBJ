@@ -481,3 +481,11 @@ def test_container_bind_allows_insecure_cookie_only_with_flag() -> None:
     assert ok.web_cookie_secure is False
     # 기본값은 그대로 안전(TLS 뒤 __Host- 쿠키)
     assert Settings(_env_file=None).web_cookie_secure is True  # type: ignore[call-arg]
+
+
+def test_local_mode_does_not_require_telegram(vm_root: Path) -> None:
+    r = _lib(vm_root, 'KBJ_MODE=local; printf "%s\\n" "${KBJ_REQUIRED_KEYS[@]}"')
+    assert r.returncode == 0, r.stderr
+    required = r.stdout.split()
+    assert "KBJ_KIS_APP_KEY" in required and "KBJ_WEB_PASSWORD_HASH" in required
+    assert not [k for k in required if k.startswith("KBJ_TELEGRAM")]

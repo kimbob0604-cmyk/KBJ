@@ -19,15 +19,6 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/vm/lib.sh
 source "$here/../vm/lib.sh"
 
-# 로컬에서는 텔레그램을 안 써도 뜬다(받기는 공개 주소가 필요해 아예 쓰지 않는다 — 보내기만)
-KBJ_REQUIRED_KEYS=(
-  KBJ_POSTGRES_PASSWORD KBJ_REDIS_PASSWORD
-  KBJ_WEB_USER KBJ_WEB_PASSWORD_HASH
-  KBJ_KIS_APP_KEY KBJ_KIS_APP_SECRET
-  KBJ_PUBLIC_EXPORT_DATABASE_URL
-)
-KBJ_OPTIONAL_KEYS=(KBJ_TELEGRAM_BOT_TOKEN KBJ_TELEGRAM_CHAT_ID KBJ_KRX_API_KEY KBJ_DART_API_KEY KBJ_DATAGO_KEY KBJ_ECOS_KEY KBJ_FRED_KEY KBJ_KOSIS_KEY)
-
 URL="http://127.0.0.1:8000"
 AWAKE_PID_FILE="${KBJ_AWAKE_PID_FILE:-$HOME/.kbj-awake.pid}"
 
