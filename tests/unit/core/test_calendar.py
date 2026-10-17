@@ -519,3 +519,11 @@ def test_session_day_maps_night_to_its_evening(cal: TradingCalendar) -> None:
     assert cal.session_day(date(2026, 9, 21), "night") == date(2026, 9, 18)  # 금 저녁 → 월 귀속
     with pytest.raises(ValueError, match="거래일"):
         cal.session_day(date(2026, 9, 24), "day")  # 추석 휴장
+
+
+def test_shipped_override_knows_the_2026_special_closures() -> None:
+    """XKRX 가 모르는 2026 휴장(지방선거 06-03·제헌절 07-17) — 백필이 휴장일에서 멈췄다."""
+    c = TradingCalendar.from_override(load_override())
+    assert not c.is_trading_day(D(2026, 6, 3))
+    assert not c.is_trading_day(D(2026, 7, 17))
+    assert c.is_trading_day(D(2026, 7, 16)) and c.is_trading_day(D(2026, 7, 20))

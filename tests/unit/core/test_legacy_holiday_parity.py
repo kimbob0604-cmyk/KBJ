@@ -1,13 +1,13 @@
-"""SD 2026 휴장 하드코딩 대 정본 캘린더 — 차이 다섯 날 고정 (docs/p2_design.md §7.3).
+"""SD 2026 휴장 하드코딩 대 정본 캘린더 — 차이 여섯 날 고정 (docs/p2_design.md §7.3).
 
 SD `server.py:_KR_HOLIDAYS_2026`:17971(f46178c)·`_is_kr_holiday`:17987·
 `_next_trading_open_kst`:17994 는 legacy 재배선(묶음 H)에서 `kbj.core.calendar_compat` 로
 바뀐다. 이 시험은
 
 1. SD 하드코딩을 고정 사본(`SD_KR_HOLIDAYS_2026`)과 그 판정 규칙(주말 + 사본)으로 재현하고,
-2. 2026년 모든 날에서 SD 판정과 정본(XKRX + `config/holidays_override.yaml`)이 **정확히 다섯 날**만
+2. 2026년 모든 날에서 SD 판정과 정본(XKRX + `config/holidays_override.yaml`)이 **정확히 여섯 날**만
    다르다는 것(방향까지)을 고정하고,
-3. 바꾼 뒤의 호환 함수가 그 다섯 날에 정본 값을 낸다는 것을 고정한다.
+3. 바꾼 뒤의 호환 함수가 그 여섯 날에 정본 값을 낸다는 것을 고정한다.
 
 고정 사본이 기준이다. P9 LEGACY 가 legacy/stock_dashboard 를 지우며 '소스와 사본이 같은지' 보던
 시험(`test_frozen_copy_matches_legacy_source_while_it_exists` — 소스가 없으면 skip)을 지웠다. 소스는
@@ -51,6 +51,7 @@ SD_KR_HOLIDAYS_2026 = frozenset(
 EXPECTED_DIFF: dict[date, tuple[bool, bool]] = {
     D(2026, 5, 1): (True, False),  # 근로자의 날 — SD 누락
     D(2026, 6, 3): (True, False),  # 지방선거(덮어쓰기) — SD 누락
+    D(2026, 7, 17): (True, False),  # 제헌절(공휴일 복원, 덮어쓰기) — SD 누락
     D(2026, 8, 17): (True, False),  # 광복절 대체공휴일 — SD 누락
     D(2026, 9, 28): (False, True),  # 개장 — SD 가 추석 대체로 잘못 넣음
     D(2026, 10, 5): (True, False),  # 개천절 대체공휴일 — SD 누락
@@ -87,7 +88,7 @@ def _at(d: date, hh: int = 10) -> datetime:
     return datetime.combine(d, time(hh), tzinfo=KST)
 
 
-def test_sd_and_canonical_differ_on_exactly_five_days_in_2026() -> None:
+def test_sd_and_canonical_differ_on_exactly_six_days_in_2026() -> None:
     cal = TradingCalendar.default()
     diff = {
         d: (not cal.is_trading_day(d), sd_is_kr_holiday(_at(d)))
@@ -100,7 +101,7 @@ def test_sd_and_canonical_differ_on_exactly_five_days_in_2026() -> None:
 @pytest.mark.parametrize(("d", "expected"), sorted(EXPECTED_DIFF.items()))
 def test_each_difference_day_after_rewiring(d: date, expected: tuple[bool, bool]) -> None:
     canonical_closed, sd_closed = expected
-    assert d.weekday() < 5  # 다섯 날 모두 평일
+    assert d.weekday() < 5  # 여섯 날 모두 평일
     assert sd_is_kr_holiday(_at(d)) is sd_closed
     # 바꾼 뒤(H): legacy 함수 본문 = calendar_compat → 정본 값
     assert is_kr_holiday(_at(d)) is canonical_closed
@@ -108,13 +109,13 @@ def test_each_difference_day_after_rewiring(d: date, expected: tuple[bool, bool]
     assert is_kr_regular_hours(_at(d)) is (not canonical_closed)
 
 
-def test_only_the_election_comes_from_the_override_file() -> None:
-    """다섯 날 중 XKRX 자체가 아는 날은 넷, 지방선거(06-03)만 덮어쓰기에서 온다."""
+def test_only_the_election_and_constitution_day_come_from_the_override_file() -> None:
+    """여섯 날 중 XKRX 자체가 아는 날은 넷, 지방선거(06-03)·제헌절(07-17)만 덮어쓰기에서 온다."""
     xkrx = TradingCalendar()
     xkrx_disagrees = {
         d for d, (closed, _) in EXPECTED_DIFF.items() if closed is xkrx.is_trading_day(d)
     }
-    assert xkrx_disagrees == {D(2026, 6, 3)}
+    assert xkrx_disagrees == {D(2026, 6, 3), D(2026, 7, 17)}
 
 
 def test_compat_matches_canonical_on_every_day_of_2026() -> None:
@@ -135,7 +136,7 @@ def test_compat_matches_canonical_on_every_day_of_2026() -> None:
         (datetime(2026, 10, 2, 16, tzinfo=KST), (2026, 10, 5), (2026, 10, 6)),
     ],
 )
-def test_next_open_changes_around_the_five_days(
+def test_next_open_changes_around_the_six_days(
     now: datetime, sd_open: tuple[int, int, int], canonical_open: tuple[int, int, int]
 ) -> None:
     assert sd_next_trading_open_kst(now) == datetime(*sd_open, 9, tzinfo=KST)
@@ -143,7 +144,7 @@ def test_next_open_changes_around_the_five_days(
 
 
 def test_sd_rule_and_canonical_agree_elsewhere_in_2026() -> None:
-    """다섯 날을 빼면 SD 규칙과 정본이 같다 — 차이는 하드코딩 누락·오기뿐이다."""
+    """여섯 날을 빼면 SD 규칙과 정본이 같다 — 차이는 하드코딩 누락·오기뿐이다."""
     for d in _days(2026):
         if d not in EXPECTED_DIFF:
             assert sd_is_kr_holiday(_at(d)) is is_kr_holiday(d), d
