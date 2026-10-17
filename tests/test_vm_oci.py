@@ -307,6 +307,17 @@ def test_bad_args_and_branch(fake: dict[str, str]) -> None:
     assert "/main/scripts/vm/install.sh" in ud and '--branch "main"' in ud
 
 
+def test_empty_array_expansion_is_bash42_safe() -> None:
+    """Cloud Shell 의 옛 bash(4.2)는 set -u 에서 빈 배열 "${a[@]}" 를 unbound 로 본다."""
+    text = CREATE.read_text(encoding="utf-8")
+    empties = set(re.findall(r"\b(\w+)=\(\)", text))
+    assert {"OCI_GLOBAL", "pass"} <= empties
+    for name in empties:
+        # 안전한 형태 ${a[@]+"${a[@]}"} 안쪽의 "${a[@]}" 는 앞이 + 이므로 제외한다
+        bare = re.findall(r'(?<!\+)"\$\{' + re.escape(name) + r'\[@\]\}"', text)
+        assert not bare, f"{name}: 빈 배열 확장이 보호되지 않음"
+
+
 def test_guide_quick_path() -> None:
     guide = GUIDE.read_text(encoding="utf-8")
     head = guide.split("## ①", 1)[0]

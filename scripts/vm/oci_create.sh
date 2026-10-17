@@ -94,7 +94,7 @@ oci_call() {
     esac
     return 0
   fi
-  oci "${OCI_GLOBAL[@]}" "$@" >"$TMP/o" 2>"$TMP/e" || rc=$?
+  oci ${OCI_GLOBAL[@]+"${OCI_GLOBAL[@]}"} "$@" >"$TMP/o" 2>"$TMP/e" || rc=$?
   if (( rc == 0 )); then
     OCI_R="$(tr -d '\r' <"$TMP/o")"
     OCI_R="${OCI_R#"${OCI_R%%[![:space:]]*}"}"; OCI_R="${OCI_R%"${OCI_R##*[![:space:]]}"}"
@@ -349,7 +349,7 @@ check_free_limit() {
   fi
   ok "무료 A1 한도 안(다른 A1 VM: ${used_cpu} OCPU·${used_mem} GB)"
   # 블록 저장소(부트 + 블록 볼륨) 합계 — 넘으면 돈이 나갈 수 있어 경고
-  for ad in "${ADS[@]}"; do
+  for ad in ${ADS[@]+"${ADS[@]}"}; do
     oci_call bv boot-volume list --compartment-id "$TENANCY" --availability-domain "$ad" --all \
       --query "sum(data[?\"lifecycle-state\"!='TERMINATED'].\"size-in-gbs\")" --raw-output
     used_bv="$(awk -v a="$used_bv" -v b="${OCI_R:-0}" 'BEGIN { print a + b }')"
@@ -591,7 +591,7 @@ main() {
   [[ "$BRANCH" =~ ^[A-Za-z0-9._/-]+$ ]] || die "브랜치 이름 형식이 아니다: $BRANCH"
   [[ "$REPO_SLUG" =~ ^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$ ]] || die "KBJ_REPO_SLUG 형식이 아니다(주인/이름)"
   [[ "$OCPUS$MEMORY_GB$BOOT_GB$RETRY_INTERVAL$RETRY_MAX_MINUTES" =~ ^[0-9]+$ ]] || die "KBJ_OCPUS·KBJ_MEMORY_GB·KBJ_BOOT_GB·KBJ_RETRY_* 는 숫자"
-  if [[ "$mode" == "detach" ]]; then detach "${pass[@]}"; return 0; fi
+  if [[ "$mode" == "detach" ]]; then detach ${pass[@]+"${pass[@]}"}; return 0; fi
   if (( ! DRY_RUN )); then
     command -v oci >/dev/null 2>&1 || die "oci 명령이 없다 — 오라클 콘솔 오른쪽 위 Cloud Shell(>_)에서 붙여넣는다(내 PC 터미널이 아니라)"
   fi
