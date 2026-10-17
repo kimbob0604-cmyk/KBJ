@@ -72,6 +72,14 @@ case "$cmd" in
   "compute instance launch")
     n="$(st launches)"; n=$(( ${n:-0} + 1 )); printf '%s' "$n" > "$D/launches"
     [[ -n "$ud" ]] && cp "$ud" "$D/user_data"
+    if (( n <= ${FAKE_LIMIT_FAILS:-0} )); then
+      {
+        printf 'ServiceError:\n{\n    "code": "LimitExceeded",\n'
+        printf '    "message": "service limits were exceeded: standard-a1-core-count.",\n'
+        printf '    "status": 400\n}\n'
+      } >&2
+      exit 1
+    fi
     if (( n <= ${FAKE_CAPACITY_FAILS:-0} )); then
       {
         printf 'ServiceError:\n{\n    "code": "InternalError",\n'
@@ -232,6 +240,14 @@ def test_capacity_gives_up_after_deadline(fake: dict[str, str]) -> None:
     assert r.returncode != 0
     assert "자리가 나지 않았다" in r.stderr
     assert len([c for c in _calls(fake) if "instance launch" in c]) == 1
+
+
+def test_limit_exceeded_stops_after_three_with_message(fake: dict[str, str]) -> None:
+    r = _run(CREATE, {**fake, "FAKE_LIMIT_FAILS": "99", "KBJ_RETRY_INTERVAL": "0"})
+    out = r.stdout + r.stderr
+    assert r.returncode != 0
+    assert len([c for c in _calls(fake) if "instance launch" in c]) == 3
+    assert "standard-a1-core-count" in out and "계정 한도" in out
 
 
 def test_dry_run_calls_nothing(fake: dict[str, str]) -> None:

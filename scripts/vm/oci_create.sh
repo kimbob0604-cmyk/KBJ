@@ -400,7 +400,7 @@ ensure_instance() {
   fi
   check_free_limit
   make_user_data
-  local attempt=0 ad deadline now kind
+  local attempt=0 ad deadline now kind limit_hits=0
   deadline=$(( $(date +%s) + RETRY_MAX_MINUTES * 60 ))
   say "  무료 ARM 자리가 없으면 ${RETRY_INTERVAL}초마다 AD 를 바꿔 다시 시도한다(최대 ${RETRY_MAX_MINUTES}분)."
   say "  Cloud Shell 은 한동안 입력이 없으면 끊길 수 있다 — 오래 걸리면 Ctrl+C 뒤 뒤에서 돌리기:"
@@ -430,6 +430,14 @@ ensure_instance() {
       kind="$(grep -oiE 'out of (host )?capacity' "$TMP/e" | head -n 1 || true)"
       [[ -n "$kind" ]] || kind="$(grep -oE 'InternalError|LimitExceeded|TooManyRequests' "$TMP/e" | head -n 1 || true)"
       kind="자리 없음(${kind:-용량})"
+      # 같은 한도 오류(자리 문제가 아닌 LimitExceeded)가 3번 연속이면 기다려도 안 풀린다 — 원문을 보여 주고 멈춘다
+      if grep -q 'LimitExceeded' "$TMP/e" && ! grep -qiE 'out of (host )?capacity' "$TMP/e"; then
+        limit_hits=$((limit_hits + 1))
+        printf '  원문: %s\n' "$(grep -E '"message"' "$TMP/e" | head -n 1 | tr -s ' ' | cut -c1-260)" | mask
+        if (( limit_hits >= 3 )); then oci_explain "인스턴스 만들기"; exit 1; fi
+      else
+        limit_hits=0
+      fi
     else
       oci_explain "인스턴스 만들기"
       exit 1
