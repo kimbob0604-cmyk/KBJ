@@ -1,4 +1,5 @@
-"""`python -m kbj.services.scheduler [run | validate [경로] | run-once <작업> [--as-of 값] |
+"""`python -m kbj.services.scheduler [run | validate [경로] |
+run-once <작업> [--as-of 값] [--no-deps] |
 backfill <작업> (--from YYYY-MM-DD --to YYYY-MM-DD | --to-listing [--to YYYY-MM-DD])
 [--max-days N]]`.
 
@@ -6,6 +7,7 @@ backfill <작업> (--from YYYY-MM-DD --to YYYY-MM-DD | --to-listing [--to YYYY-M
   겹). 오류가 있으면 한 줄씩 찍고 종료 코드 1. Redis·DB·키가 없어도 된다(CI).
 - `run`: 서비스(세션 상태 발행 + 실행기). 등록부 검증이 실패하면 시작하지 않는다(종료 코드 2).
 - `run-once`: 작업 하나를 지금 한 번(조건 무시, `--as-of` 로 이벤트·백필 날짜). 기록 source=manual.
+  `--no-deps`: 의존 작업의 실행 기록을 보지 않는다(예: 백필이 받아 둔 날짜의 `board.confirm`).
   인증된 운영 화면은 P3(SD `POST /api/ops/cron/trigger` 폐지 — §6.8).
 - `backfill`(P3 — docs/p3_design.md §3.8): 백필 작업(`backfill_of` 가 있는 작업 —
   `market.backfill`)을 날짜 범위의 **거래일마다** `run-once --as-of <날짜>` 로 돌린다. **최근
@@ -260,6 +262,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     o = sub.add_parser("run-once", help="작업 하나를 지금 한 번")
     o.add_argument("job")
     o.add_argument("--as-of", dest="as_of", default=None)
+    o.add_argument(
+        "--no-deps",
+        dest="no_deps",
+        action="store_true",
+        help="의존 작업의 실행 기록을 보지 않는다(수동 — 다른 작업이 이미 받은 날짜의 재계산 등)",
+    )
     b = sub.add_parser("backfill", help="백필 작업을 날짜 범위의 거래일마다(최근부터 과거로)")
     b.add_argument("job")
     b.add_argument("--from", dest="start", type=date.fromisoformat, default=None)
@@ -294,7 +302,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         _svc, runner, _redis, close = _build(settings, inline=True)
         try:
             try:
-                events = runner.run_once(args.job, utcnow(), as_of=args.as_of)
+                events = runner.run_once(
+                    args.job, utcnow(), as_of=args.as_of, ignore_deps=args.no_deps
+                )
             except (KeyError, ValueError) as e:  # 없는 작업·external·as_of 를 정할 수 없음
                 print(f"오류: {e}")
                 return 1

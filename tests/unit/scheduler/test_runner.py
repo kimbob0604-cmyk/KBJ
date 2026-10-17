@@ -251,6 +251,30 @@ def test_hard_dependency_waits_then_runs() -> None:
     assert len(briefs) == 1 and briefs[0].as_of == "2026-10-06"
 
 
+def test_run_once_ignore_deps_skips_the_dependency_check() -> None:
+    briefs: list[JobContext] = []
+
+    def brief(ctx: JobContext) -> JobResult:
+        briefs.append(ctx)
+        return JobResult("ok")
+
+    rig = Rig(
+        close_and_brief(),
+        {"tests.fake:close": Publisher(None), "tests.fake:brief": brief},
+        kst(2026, 10, 6, 15, 30),
+    )
+    # 의존(market.close_collect@2026-10-06)이 없다 — 보통은 기다리다 실패한다
+    waiting = rig.runner.run_once("brief.closing", rig.now, as_of="2026-10-06")
+    assert not briefs and [e.kind for e in waiting][:1] == ["waiting"]
+    rig2 = Rig(
+        close_and_brief(),
+        {"tests.fake:close": Publisher(None), "tests.fake:brief": brief},
+        kst(2026, 10, 6, 15, 30),
+    )
+    events = rig2.runner.run_once("brief.closing", rig2.now, as_of="2026-10-06", ignore_deps=True)
+    assert [e.kind for e in events] == ["started", "ok"] and len(briefs) == 1
+
+
 def test_hard_dependency_failure_fails_the_dependent() -> None:
     rig = Rig(
         close_and_brief(),

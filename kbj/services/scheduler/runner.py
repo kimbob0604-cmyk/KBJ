@@ -138,6 +138,7 @@ class _Pending:
     waiting_logged: bool = False
     soft_since: datetime | None = None  # UTC — 굳은 의존이 다 준비된 때(무른 의존 wait_min 의 기준)
     soft_logged: bool = False
+    skip_deps: bool = False  # 수동 run-once --no-deps — 의존 작업 기록을 보지 않는다
 
 
 def _utc(ts: datetime) -> datetime:
@@ -265,10 +266,18 @@ class JobRunner:
         return events
 
     def run_once(
-        self, name: str, now: datetime, *, as_of: str | None = None, source: RunSource = "manual"
+        self,
+        name: str,
+        now: datetime,
+        *,
+        as_of: str | None = None,
+        source: RunSource = "manual",
+        ignore_deps: bool = False,
     ) -> list[RunEvent]:
         """작업 하나를 지금 한 번(조건은 보지 않는다).
 
+        `ignore_deps` 면 의존 작업의 실행 기록을 보지 않는다(수동 — 다른 작업이 같은 수집 키를 이미
+        받아 둔 날짜의 보드 재계산 같은 때. 필요한 데이터가 있는지는 처리기가 스스로 다시 확인한다).
         `as_of` 를 주면 실행·수집 키에 그 값을 쓴다. 주지 않았는데 지금 시각으로 as_of 를 정할 수
         없으면(휴장일의 trade_date, event) `AsOfUnavailable` — 조용히 끝나지 않는다.
         """
@@ -284,7 +293,16 @@ class JobRunner:
                     f"{name}: 지금은 as_of 를 정할 수 없다 — as_of 를 준다({e})"
                 ) from None
         events: list[RunEvent] = []
-        self._fire(job, now, now, events, as_of=as_of, source=source, check_when=False)
+        self._fire(
+            job,
+            now,
+            now,
+            events,
+            as_of=as_of,
+            source=source,
+            check_when=False,
+            skip_deps=ignore_deps,
+        )
         self._advance(now, events)
         self._collect(now, events)  # 그 자리에서 끝난 시도(inline)를 거둔다
         return events
@@ -375,6 +393,7 @@ class JobRunner:
         source: RunSource = "scheduler",
         check_when: bool = True,
         catch_up: bool = False,
+        skip_deps: bool = False,
     ) -> None:
         local_day = fire_at.astimezone(job.schedule.zone).date()
         if check_when and not holds(
@@ -439,6 +458,7 @@ class JobRunner:
             key_as_of=as_of if source == "manual" else None,
             attempt=attempt0,
             next_at=now,
+            skip_deps=skip_deps,
         )
         log_event(
             log, logging.INFO, SERVICE, "job_fired", job=job.name, as_of=as_of, catch_up=catch_up
@@ -478,6 +498,8 @@ class JobRunner:
         self._start(p, now, events)
 
     def _deps_ready(self, p: _Pending, now: datetime, events: list[RunEvent]) -> bool:
+        if p.skip_deps:
+            return True
         waiting: list[str] = []
         for d in p.job.depends_on:
             if not d.hard:
