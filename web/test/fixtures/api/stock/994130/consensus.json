@@ -90,13 +90,13 @@
     },
     "target": {
       "as_of": "2026-11-16",
-      "mean": 11873.333333333334,
-      "median": 11770.0,
-      "high": 12370.0,
-      "low": 11480.0,
+      "mean": 12210.0,
+      "median": 12100.0,
+      "high": 12720.0,
+      "low": 11810.0,
       "n_brokers": 3,
       "window_days": 90,
-      "upside_pct": 16.633922724296003,
+      "upside_pct": 21.613545816733073,
       "quality": "ok"
     },
     "opinions": {
@@ -306,8 +306,8 @@
         "metric": "target_mean",
         "fiscal_ym": "000000",
         "window_days": 7,
-        "current": 11873.333333333334,
-        "baseline": 11873.333333333334,
+        "current": 12210.0,
+        "baseline": 12210.0,
         "baseline_date": "2026-11-09",
         "pct": 0.0,
         "signal": "NEUTRAL",
@@ -318,10 +318,10 @@
         "metric": "target_mean",
         "fiscal_ym": "000000",
         "window_days": 30,
-        "current": 11873.333333333334,
-        "baseline": 11273.333333333334,
+        "current": 12210.0,
+        "baseline": 11266.666666666666,
         "baseline_date": "2026-10-17",
-        "pct": 5.322294500295683,
+        "pct": 8.372781065088763,
         "signal": "UP",
         "quality": "ok"
       }
@@ -332,7 +332,7 @@
         "opinion_date": "2026-10-29",
         "opinion": "매수",
         "opinion_prev": "매수",
-        "target_price": 11770.0,
+        "target_price": 12100.0,
         "quality": "ok"
       },
       {
@@ -340,7 +340,7 @@
         "opinion_date": "2026-10-29",
         "opinion": "매수",
         "opinion_prev": "매수",
-        "target_price": 11480.0,
+        "target_price": 11810.0,
         "quality": "ok"
       },
       {
@@ -348,7 +348,7 @@
         "opinion_date": "2026-10-26",
         "opinion": "매수",
         "opinion_prev": "매수",
-        "target_price": 12370.0,
+        "target_price": 12720.0,
         "quality": "ok"
       },
       {
@@ -356,7 +356,7 @@
         "opinion_date": "2026-09-23",
         "opinion": "매수",
         "opinion_prev": "매수",
-        "target_price": 10840.0,
+        "target_price": 10680.0,
         "quality": "ok"
       },
       {
@@ -364,7 +364,7 @@
         "opinion_date": "2026-09-22",
         "opinion": "매수",
         "opinion_prev": "매수",
-        "target_price": 11130.0,
+        "target_price": 11050.0,
         "quality": "ok"
       },
       {
@@ -372,7 +372,7 @@
         "opinion_date": "2026-09-17",
         "opinion": "매수",
         "opinion_prev": "매수",
-        "target_price": 11850.0,
+        "target_price": 12070.0,
         "quality": "ok"
       }
     ],

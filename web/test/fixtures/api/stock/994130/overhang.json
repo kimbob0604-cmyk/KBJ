@@ -11,7 +11,7 @@
   "data": {
     "code": "994130",
     "corp_code": "99400130",
-    "close": 10180.0,
+    "close": 10040.0,
     "close_date": "2026-11-13",
     "summary": {
       "as_of": "2026-11-16",
@@ -24,7 +24,7 @@
       "exercisable_ratio_pct": 7.74288,
       "listed_shares": 41250000,
       "login_ratio_pct": 9.08968,
-      "amount": 38169838740,
+      "amount": 37644909720,
       "itm_shares": 2638888,
       "quality": "ok",
       "notes": []
@@ -49,7 +49,7 @@
         "alloc_method": "사모",
         "lockup_end_est": null,
         "itm": false,
-        "amount": 5938329940,
+        "amount": 5856663320,
         "quality": "ok",
         "notes": [],
         "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20240315000001"
@@ -73,7 +73,7 @@
         "alloc_method": "사모",
         "lockup_end_est": null,
         "itm": true,
-        "amount": 21208329940,
+        "amount": 20916663320,
         "quality": "ok",
         "notes": [],
         "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20250120000001"
@@ -97,7 +97,7 @@
         "alloc_method": "사모",
         "lockup_end_est": null,
         "itm": false,
-        "amount": 5367628960,
+        "amount": 5293810880,
         "quality": "ok",
         "notes": [],
         "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20250701000001"
@@ -147,7 +147,7 @@
         "alloc_method": "사모",
         "lockup_end_est": null,
         "itm": true,
-        "amount": 5655549900,
+        "amount": 5577772200,
         "quality": "ok",
         "notes": [],
         "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260901000001"

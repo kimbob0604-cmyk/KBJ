@@ -13,7 +13,7 @@
     "metric": "per",
     "current": {
       "date": "2026-11-13",
-      "price": 2380.0,
+      "price": 2385.0,
       "ttm_ref": "2026Q2:CFS",
       "ev": null,
       "per": {
@@ -75,7 +75,7 @@
         "n_excluded": 1240,
         "current": null,
         "current_rank_pct": null,
-        "window_from": "2021-10-22",
+        "window_from": "2021-10-21",
         "applicable": false,
         "na_reason": "currency_mismatch",
         "quality": "ok"
@@ -94,7 +94,7 @@
         "n_excluded": 1240,
         "current": null,
         "current_rank_pct": null,
-        "window_from": "2021-10-22",
+        "window_from": "2021-10-21",
         "applicable": false,
         "na_reason": "currency_mismatch",
         "quality": "ok"
@@ -113,7 +113,7 @@
         "n_excluded": 1240,
         "current": null,
         "current_rank_pct": null,
-        "window_from": "2021-10-22",
+        "window_from": "2021-10-21",
         "applicable": false,
         "na_reason": "currency_mismatch",
         "quality": "ok"
@@ -132,7 +132,7 @@
         "n_excluded": 1240,
         "current": null,
         "current_rank_pct": null,
-        "window_from": "2021-10-22",
+        "window_from": "2021-10-21",
         "applicable": false,
         "na_reason": "currency_mismatch",
         "quality": "ok"
@@ -1360,104 +1360,104 @@
         "value": null
       },
       {
-        "date": "2026-07-17",
-        "price": 2340.0,
+        "date": "2026-07-16",
+        "price": 2410.0,
         "value": null
       },
       {
         "date": "2026-07-24",
-        "price": 2295.0,
-        "value": null
-      },
-      {
-        "date": "2026-07-31",
-        "price": 2225.0,
-        "value": null
-      },
-      {
-        "date": "2026-08-07",
-        "price": 2335.0,
-        "value": null
-      },
-      {
-        "date": "2026-08-14",
-        "price": 2190.0,
-        "value": null
-      },
-      {
-        "date": "2026-08-21",
-        "price": 2085.0,
-        "value": null
-      },
-      {
-        "date": "2026-08-28",
         "price": 2250.0,
         "value": null
       },
       {
-        "date": "2026-09-04",
-        "price": 2310.0,
-        "value": null
-      },
-      {
-        "date": "2026-09-11",
-        "price": 2285.0,
-        "value": null
-      },
-      {
-        "date": "2026-09-18",
-        "price": 2345.0,
-        "value": null
-      },
-      {
-        "date": "2026-09-23",
+        "date": "2026-07-31",
         "price": 2210.0,
         "value": null
       },
       {
+        "date": "2026-08-07",
+        "price": 2240.0,
+        "value": null
+      },
+      {
+        "date": "2026-08-14",
+        "price": 2255.0,
+        "value": null
+      },
+      {
+        "date": "2026-08-21",
+        "price": 2110.0,
+        "value": null
+      },
+      {
+        "date": "2026-08-28",
+        "price": 2215.0,
+        "value": null
+      },
+      {
+        "date": "2026-09-04",
+        "price": 2320.0,
+        "value": null
+      },
+      {
+        "date": "2026-09-11",
+        "price": 2275.0,
+        "value": null
+      },
+      {
+        "date": "2026-09-18",
+        "price": 2375.0,
+        "value": null
+      },
+      {
+        "date": "2026-09-23",
+        "price": 2275.0,
+        "value": null
+      },
+      {
         "date": "2026-10-02",
-        "price": 2105.0,
+        "price": 2135.0,
         "value": null
       },
       {
         "date": "2026-10-08",
-        "price": 2055.0,
+        "price": 2085.0,
         "value": null
       },
       {
         "date": "2026-10-16",
-        "price": 2190.0,
+        "price": 2215.0,
         "value": null
       },
       {
         "date": "2026-10-23",
-        "price": 2305.0,
+        "price": 2285.0,
         "value": null
       },
       {
         "date": "2026-10-30",
-        "price": 2400.0,
+        "price": 2390.0,
         "value": null
       },
       {
         "date": "2026-11-06",
-        "price": 2340.0,
+        "price": 2345.0,
         "value": null
       },
       {
         "date": "2026-11-13",
-        "price": 2380.0,
+        "price": 2385.0,
         "value": null
       }
     ],
-    "mktcap_company": 142800000000,
+    "mktcap_company": 143100000000,
     "classes": [
       {
         "code": "994180",
         "share_class": "common",
-        "close": 2380.0,
+        "close": 2385.0,
         "shares": 60000000,
-        "mktcap": 142800000000
+        "mktcap": 143100000000
       }
     ]
   }

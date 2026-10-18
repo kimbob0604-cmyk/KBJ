@@ -65,19 +65,19 @@
         "is_watch": true
       },
       {
-        "code": "994050",
-        "name": "모의리츠",
-        "market": "KOSPI",
-        "kind": "reit",
-        "corp_code": "99400050",
-        "is_watch": true
-      },
-      {
         "code": "994030",
         "name": "모의정밀",
         "market": "KOSDAQ",
         "kind": "common",
         "corp_code": "99400030",
+        "is_watch": true
+      },
+      {
+        "code": "994050",
+        "name": "모의리츠",
+        "market": "KOSPI",
+        "kind": "reit",
+        "corp_code": "99400050",
         "is_watch": true
       },
       {

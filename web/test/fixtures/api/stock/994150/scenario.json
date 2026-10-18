@@ -22,7 +22,7 @@
         "multiple": 20.824482448244826,
         "multiple_source": "5Y_P25",
         "tp": 5080.132493249325,
-        "upside_pct": -37.59050991094195,
+        "upside_pct": -36.49834383438343,
         "na_reason": null,
         "quality": "estimated"
       },
@@ -34,7 +34,7 @@
         "multiple": 21.723477594791266,
         "multiple_source": "5Y_P50",
         "tp": 7570.631941784756,
-        "upside_pct": -6.994693589867862,
+        "upside_pct": -5.367100727690543,
         "na_reason": null,
         "quality": "estimated"
       },
@@ -43,14 +43,14 @@
         "method": "PER",
         "eps": 418.2,
         "eps_source": "BASE_×1.2",
-        "multiple": 22.81188118811881,
+        "multiple": 22.806984351586504,
         "multiple_source": "5Y_P75",
-        "tp": 9539.928712871286,
-        "upside_pct": 17.19814143576519,
+        "tp": 9537.880855833475,
+        "upside_pct": 19.223510697918435,
         "na_reason": null,
         "quality": "estimated"
       }
     },
-    "price": 8140.0
+    "price": 8000.0
   }
 }

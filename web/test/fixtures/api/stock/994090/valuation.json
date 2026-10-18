@@ -13,9 +13,9 @@
     "metric": "per",
     "current": {
       "date": "2026-11-13",
-      "price": 2990.0,
+      "price": 3015.0,
       "ttm_ref": "2026Q2:OFS",
-      "ev": 19083000000,
+      "ev": 19233000000,
       "per": {
         "value": null,
         "applicable": false,
@@ -23,7 +23,7 @@
         "out_of_cap": false
       },
       "pbr": {
-        "value": 1.018739352640545,
+        "value": 1.0272572402044293,
         "applicable": true,
         "na_reason": null,
         "out_of_cap": false
@@ -75,7 +75,7 @@
         "n_excluded": 1240,
         "current": null,
         "current_rank_pct": null,
-        "window_from": "2021-10-22",
+        "window_from": "2021-10-21",
         "applicable": false,
         "na_reason": "missing_input",
         "quality": "ok"
@@ -84,17 +84,17 @@
         "metric": "pbr",
         "as_of": "2026-11-13",
         "p10": 0.9333802074178239,
-        "p25": 0.9650202144489366,
-        "p50": 1.0008756514726591,
+        "p25": 0.9649861918439567,
+        "p50": 1.0007552870090635,
         "p75": 1.0335735630163474,
         "p90": 1.0579216354344123,
         "min": 0.8923849814912744,
         "max": 1.1151056044167682,
         "n_days": 1240,
         "n_excluded": 0,
-        "current": 1.018739352640545,
-        "current_rank_pct": 64.59677419354838,
-        "window_from": "2021-10-22",
+        "current": 1.0272572402044293,
+        "current_rank_pct": 70.96774193548387,
+        "window_from": "2021-10-21",
         "applicable": true,
         "na_reason": null,
         "quality": "ok"
@@ -113,7 +113,7 @@
         "n_excluded": 1240,
         "current": null,
         "current_rank_pct": null,
-        "window_from": "2021-10-22",
+        "window_from": "2021-10-21",
         "applicable": false,
         "na_reason": "missing_input",
         "quality": "ok"
@@ -132,7 +132,7 @@
         "n_excluded": 1240,
         "current": null,
         "current_rank_pct": null,
-        "window_from": "2021-10-22",
+        "window_from": "2021-10-21",
         "applicable": false,
         "na_reason": "missing_input",
         "quality": "ok"
@@ -1360,104 +1360,104 @@
         "value": null
       },
       {
-        "date": "2026-07-17",
-        "price": 2920.0,
+        "date": "2026-07-16",
+        "price": 2900.0,
         "value": null
       },
       {
         "date": "2026-07-24",
-        "price": 2875.0,
+        "price": 2920.0,
         "value": null
       },
       {
         "date": "2026-07-31",
-        "price": 2870.0,
+        "price": 2885.0,
         "value": null
       },
       {
         "date": "2026-08-07",
-        "price": 2865.0,
+        "price": 2905.0,
         "value": null
       },
       {
         "date": "2026-08-14",
-        "price": 2985.0,
+        "price": 2975.0,
         "value": null
       },
       {
         "date": "2026-08-21",
-        "price": 3035.0,
+        "price": 3040.0,
         "value": null
       },
       {
         "date": "2026-08-28",
-        "price": 3040.0,
-        "value": null
-      },
-      {
-        "date": "2026-09-04",
-        "price": 3195.0,
-        "value": null
-      },
-      {
-        "date": "2026-09-11",
-        "price": 3055.0,
-        "value": null
-      },
-      {
-        "date": "2026-09-18",
-        "price": 3025.0,
-        "value": null
-      },
-      {
-        "date": "2026-09-23",
-        "price": 2980.0,
-        "value": null
-      },
-      {
-        "date": "2026-10-02",
-        "price": 3040.0,
-        "value": null
-      },
-      {
-        "date": "2026-10-08",
-        "price": 3145.0,
-        "value": null
-      },
-      {
-        "date": "2026-10-16",
-        "price": 3060.0,
-        "value": null
-      },
-      {
-        "date": "2026-10-23",
-        "price": 3050.0,
-        "value": null
-      },
-      {
-        "date": "2026-10-30",
         "price": 3075.0,
         "value": null
       },
       {
+        "date": "2026-09-04",
+        "price": 3205.0,
+        "value": null
+      },
+      {
+        "date": "2026-09-11",
+        "price": 3010.0,
+        "value": null
+      },
+      {
+        "date": "2026-09-18",
+        "price": 3055.0,
+        "value": null
+      },
+      {
+        "date": "2026-09-23",
+        "price": 3000.0,
+        "value": null
+      },
+      {
+        "date": "2026-10-02",
+        "price": 3005.0,
+        "value": null
+      },
+      {
+        "date": "2026-10-08",
+        "price": 3135.0,
+        "value": null
+      },
+      {
+        "date": "2026-10-16",
+        "price": 3055.0,
+        "value": null
+      },
+      {
+        "date": "2026-10-23",
+        "price": 3065.0,
+        "value": null
+      },
+      {
+        "date": "2026-10-30",
+        "price": 3080.0,
+        "value": null
+      },
+      {
         "date": "2026-11-06",
-        "price": 2985.0,
+        "price": 3005.0,
         "value": null
       },
       {
         "date": "2026-11-13",
-        "price": 2990.0,
+        "price": 3015.0,
         "value": null
       }
     ],
-    "mktcap_company": 17940000000,
+    "mktcap_company": 18090000000,
     "classes": [
       {
         "code": "994090",
         "share_class": "common",
-        "close": 2990.0,
+        "close": 3015.0,
         "shares": 6000000,
-        "mktcap": 17940000000
+        "mktcap": 18090000000
       }
     ]
   }

@@ -22,7 +22,7 @@
         "multiple": 24.647534000393605,
         "multiple_source": "5Y_P25",
         "tp": 1035.1964280165314,
-        "upside_pct": -90.65707194930928,
+        "upside_pct": -90.44139955663407,
         "na_reason": null,
         "quality": "estimated"
       },
@@ -34,7 +34,7 @@
         "multiple": 25.973454261885323,
         "multiple_source": "5Y_P50",
         "tp": 1558.4072557131194,
-        "upside_pct": -85.93495256576607,
+        "upside_pct": -85.61027464715495,
         "na_reason": null,
         "quality": "estimated"
       },
@@ -46,11 +46,11 @@
         "multiple": 27.360338649850327,
         "multiple_source": "5Y_P75",
         "tp": 1969.9443827892235,
-        "upside_pct": -82.22071856688427,
+        "upside_pct": -81.81030117461474,
         "na_reason": null,
         "quality": "estimated"
       }
     },
-    "price": 11080.0
+    "price": 10830.0
   }
 }

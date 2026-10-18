@@ -4,7 +4,7 @@ _source: "SYNTHETIC — tests/fixtures/synthetic/p7_world.py(고정 시드 생�
 seed: 20261201
 clock: "2026-12-10T14:00:00+09:00"     # 12월 월물 만기일(둘째 목요일) — 0DTE
 
-days: {n: 300, first: "2025-09-18", last: "2026-12-10"}
+days: {n: 300, first: "2025-09-17", last: "2026-12-10"}
 
 counts:
   # 주간 3사이클 × 4시리즈 × 17행사가 × 콜풋 2 = 408, 야간 1사이클 × 월물 2시리즈 × 17 × 2 = 68

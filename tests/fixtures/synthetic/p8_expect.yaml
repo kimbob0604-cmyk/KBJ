@@ -4,7 +4,7 @@ _source: "SYNTHETIC — tests/fixtures/synthetic/p8_world.py(고정 시드 생�
 seed: 20261102
 clock: "2026-10-30T16:00:00+09:00"
 
-days: {n: 320, first: "2025-07-10", last: "2026-10-30"}
+days: {n: 320, first: "2025-07-09", last: "2026-10-30"}
 
 counts:
   codes: 80

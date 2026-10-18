@@ -13,9 +13,9 @@
     "metric": "per",
     "current": {
       "date": "2026-11-13",
-      "price": 4860.0,
+      "price": 4835.0,
       "ttm_ref": "2026Q2:OFS",
-      "ev": 490974000000,
+      "ev": 488974000000,
       "per": {
         "value": null,
         "applicable": false,
@@ -23,7 +23,7 @@
         "out_of_cap": false
       },
       "pbr": {
-        "value": 0.9417418348463856,
+        "value": 0.9368974838440894,
         "applicable": true,
         "na_reason": null,
         "out_of_cap": false
@@ -75,7 +75,7 @@
         "n_excluded": 1240,
         "current": null,
         "current_rank_pct": null,
-        "window_from": "2021-10-22",
+        "window_from": "2021-10-21",
         "applicable": false,
         "na_reason": "missing_input",
         "quality": "ok"
@@ -92,9 +92,9 @@
         "max": 1.0073485288186281,
         "n_days": 1240,
         "n_excluded": 0,
-        "current": 0.9417418348463856,
-        "current_rank_pct": 57.82258064516129,
-        "window_from": "2021-10-22",
+        "current": 0.9368974838440894,
+        "current_rank_pct": 51.53225806451613,
+        "window_from": "2021-10-21",
         "applicable": true,
         "na_reason": null,
         "quality": "ok"
@@ -113,7 +113,7 @@
         "n_excluded": 1240,
         "current": null,
         "current_rank_pct": null,
-        "window_from": "2021-10-22",
+        "window_from": "2021-10-21",
         "applicable": false,
         "na_reason": "missing_input",
         "quality": "ok"
@@ -132,7 +132,7 @@
         "n_excluded": 1240,
         "current": null,
         "current_rank_pct": null,
-        "window_from": "2021-10-22",
+        "window_from": "2021-10-21",
         "applicable": false,
         "na_reason": "missing_input",
         "quality": "ok"
@@ -1360,58 +1360,58 @@
         "value": null
       },
       {
-        "date": "2026-07-17",
-        "price": 4685.0,
+        "date": "2026-07-16",
+        "price": 4615.0,
         "value": null
       },
       {
         "date": "2026-07-24",
-        "price": 4685.0,
+        "price": 4645.0,
         "value": null
       },
       {
         "date": "2026-07-31",
-        "price": 4700.0,
+        "price": 4675.0,
         "value": null
       },
       {
         "date": "2026-08-07",
-        "price": 4605.0,
+        "price": 4615.0,
         "value": null
       },
       {
         "date": "2026-08-14",
-        "price": 4590.0,
+        "price": 4585.0,
         "value": null
       },
       {
         "date": "2026-08-21",
-        "price": 4805.0,
+        "price": 4710.0,
         "value": null
       },
       {
         "date": "2026-08-28",
-        "price": 4720.0,
+        "price": 4730.0,
         "value": null
       },
       {
         "date": "2026-09-04",
-        "price": 4755.0,
+        "price": 4740.0,
         "value": null
       },
       {
         "date": "2026-09-11",
-        "price": 4770.0,
+        "price": 4775.0,
         "value": null
       },
       {
         "date": "2026-09-18",
-        "price": 4690.0,
+        "price": 4735.0,
         "value": null
       },
       {
         "date": "2026-09-23",
-        "price": 4770.0,
+        "price": 4705.0,
         "value": null
       },
       {
@@ -1421,43 +1421,43 @@
       },
       {
         "date": "2026-10-08",
-        "price": 4720.0,
+        "price": 4815.0,
         "value": null
       },
       {
         "date": "2026-10-16",
-        "price": 4605.0,
+        "price": 4645.0,
         "value": null
       },
       {
         "date": "2026-10-23",
-        "price": 4470.0,
+        "price": 4545.0,
         "value": null
       },
       {
         "date": "2026-10-30",
-        "price": 4650.0,
+        "price": 4645.0,
         "value": null
       },
       {
         "date": "2026-11-06",
-        "price": 4675.0,
+        "price": 4635.0,
         "value": null
       },
       {
         "date": "2026-11-13",
-        "price": 4860.0,
+        "price": 4835.0,
         "value": null
       }
     ],
-    "mktcap_company": 388800000000,
+    "mktcap_company": 386800000000,
     "classes": [
       {
         "code": "994050",
         "share_class": "common",
-        "close": 4860.0,
+        "close": 4835.0,
         "shares": 80000000,
-        "mktcap": 388800000000
+        "mktcap": 386800000000
       }
     ]
   }

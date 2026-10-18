@@ -18,9 +18,9 @@
         "market": "KOSPI",
         "kind": "common",
         "date": "2026-11-13",
-        "close": 73700.0,
-        "chg_pct": 0.55,
-        "mktcap": 29480000000000,
+        "close": 73300.0,
+        "chg_pct": 3.09,
+        "mktcap": 29320000000000,
         "quality": "ok"
       },
       {
@@ -33,9 +33,9 @@
         "market": "KOSPI",
         "kind": "pref",
         "date": "2026-11-13",
-        "close": 62400.0,
-        "chg_pct": 0.48,
-        "mktcap": 3744000000000,
+        "close": 62100.0,
+        "chg_pct": 3.5,
+        "mktcap": 3726000000000,
         "quality": "ok"
       },
       {
@@ -63,9 +63,9 @@
         "market": "KOSDAQ",
         "kind": "common",
         "date": "2026-11-13",
-        "close": 12670.0,
+        "close": 13370.0,
         "chg_pct": 0.0,
-        "mktcap": 380100000000,
+        "mktcap": 401100000000,
         "quality": "ok"
       },
       {
@@ -79,7 +79,7 @@
         "kind": "spac",
         "date": "2026-11-13",
         "close": 2140.0,
-        "chg_pct": 0.0,
+        "chg_pct": -0.47,
         "mktcap": 10700000000,
         "quality": "ok"
       },
@@ -93,9 +93,9 @@
         "market": "KOSPI",
         "kind": "reit",
         "date": "2026-11-13",
-        "close": 4860.0,
-        "chg_pct": 0.52,
-        "mktcap": 388800000000,
+        "close": 4835.0,
+        "chg_pct": 0.21,
+        "mktcap": 386800000000,
         "quality": "ok"
       },
       {
@@ -108,9 +108,9 @@
         "market": "KOSPI",
         "kind": "common",
         "date": "2026-11-13",
-        "close": 163600.0,
-        "chg_pct": 2.76,
-        "mktcap": 1963200000000,
+        "close": 159200.0,
+        "chg_pct": 1.21,
+        "mktcap": 1910400000000,
         "quality": "ok"
       },
       {
@@ -123,9 +123,9 @@
         "market": "KOSDAQ",
         "kind": "common",
         "date": "2026-11-13",
-        "close": 11080.0,
-        "chg_pct": 2.21,
-        "mktcap": 277000000000,
+        "close": 10830.0,
+        "chg_pct": -0.64,
+        "mktcap": 270750000000,
         "quality": "ok"
       },
       {
@@ -138,9 +138,9 @@
         "market": "KOSDAQ",
         "kind": "common",
         "date": "2026-11-13",
-        "close": 2180.0,
-        "chg_pct": 3.07,
-        "mktcap": 32700000000,
+        "close": 2115.0,
+        "chg_pct": 1.2,
+        "mktcap": 31725000000,
         "quality": "ok"
       },
       {
@@ -153,9 +153,9 @@
         "market": "KONEX",
         "kind": "common",
         "date": "2026-11-13",
-        "close": 2990.0,
-        "chg_pct": -0.83,
-        "mktcap": 17940000000,
+        "close": 3015.0,
+        "chg_pct": 0.84,
+        "mktcap": 18090000000,
         "quality": "ok"
       },
       {
@@ -168,9 +168,9 @@
         "market": "KOSPI",
         "kind": "common",
         "date": "2026-11-13",
-        "close": 64000.0,
-        "chg_pct": -0.16,
-        "mktcap": 19200000000000,
+        "close": 64100.0,
+        "chg_pct": 0.79,
+        "mktcap": 19230000000000,
         "quality": "ok"
       },
       {
@@ -183,9 +183,9 @@
         "market": "KOSDAQ",
         "kind": "common",
         "date": "2026-11-13",
-        "close": 8320.0,
-        "chg_pct": -2.58,
-        "mktcap": 166400000000,
+        "close": 8540.0,
+        "chg_pct": 0.0,
+        "mktcap": 170800000000,
         "quality": "ok"
       },
       {
@@ -198,9 +198,9 @@
         "market": "KOSDAQ",
         "kind": "common",
         "date": "2026-11-13",
-        "close": 520.0,
-        "chg_pct": -2.26,
-        "mktcap": 5200000000,
+        "close": 532.0,
+        "chg_pct": -3.1,
+        "mktcap": 5320000000,
         "quality": "ok"
       },
       {
@@ -213,9 +213,9 @@
         "market": "KOSDAQ",
         "kind": "common",
         "date": "2026-11-13",
-        "close": 10180.0,
-        "chg_pct": 1.39,
-        "mktcap": 419925000000,
+        "close": 10040.0,
+        "chg_pct": -1.28,
+        "mktcap": 414150000000,
         "quality": "ok"
       },
       {
@@ -228,9 +228,9 @@
         "market": "KOSPI",
         "kind": "common",
         "date": "2026-11-13",
-        "close": 123200.0,
-        "chg_pct": -1.99,
-        "mktcap": 6160000000000,
+        "close": 125700.0,
+        "chg_pct": 3.63,
+        "mktcap": 6285000000000,
         "quality": "ok"
       },
       {
@@ -243,9 +243,9 @@
         "market": "KOSPI",
         "kind": "common",
         "date": "2026-11-13",
-        "close": 28200.0,
-        "chg_pct": 1.81,
-        "mktcap": 2820000000000,
+        "close": 27700.0,
+        "chg_pct": 3.36,
+        "mktcap": 2770000000000,
         "quality": "ok"
       },
       {
@@ -258,9 +258,9 @@
         "market": "KOSDAQ",
         "kind": "common",
         "date": "2026-11-13",
-        "close": 9450.0,
-        "chg_pct": -1.97,
-        "mktcap": 207900000000,
+        "close": 9640.0,
+        "chg_pct": -0.31,
+        "mktcap": 212080000000,
         "quality": "ok"
       },
       {
@@ -273,9 +273,9 @@
         "market": "KOSDAQ",
         "kind": "common",
         "date": "2026-11-13",
-        "close": 2380.0,
-        "chg_pct": -0.21,
-        "mktcap": 142800000000,
+        "close": 2385.0,
+        "chg_pct": -0.42,
+        "mktcap": 143100000000,
         "quality": "ok"
       },
       {
@@ -288,9 +288,9 @@
         "market": "KOSDAQ",
         "kind": "common",
         "date": "2026-11-13",
-        "close": 540.0,
-        "chg_pct": -17.81,
-        "mktcap": 16200000000,
+        "close": 534.0,
+        "chg_pct": -19.09,
+        "mktcap": 16020000000,
         "quality": "ok"
       }
     ]

@@ -19,10 +19,10 @@
         "method": "PER",
         "eps": 219.79999999999998,
         "eps_source": "CONSENSUS_×0.7",
-        "multiple": 33.639881580555965,
+        "multiple": 33.63931386184515,
         "multiple_source": "5Y_P25",
-        "tp": 7394.045971406201,
-        "upside_pct": -27.366935447876216,
+        "tp": 7393.921186833564,
+        "upside_pct": -26.355366665004343,
         "na_reason": null,
         "quality": "estimated"
       },
@@ -31,10 +31,10 @@
         "method": "PER",
         "eps": 314.0,
         "eps_source": "CONSENSUS",
-        "multiple": 35.59236712184418,
+        "multiple": 35.59629853844158,
         "multiple_source": "5Y_P50",
-        "tp": 11176.00327625907,
-        "upside_pct": 9.783922163645098,
+        "tp": 11177.237741070656,
+        "upside_pct": 11.327069134169875,
         "na_reason": null,
         "quality": "estimated"
       },
@@ -43,14 +43,14 @@
         "method": "PER",
         "eps": 376.8,
         "eps_source": "BASE_×1.2",
-        "multiple": 37.57508778185232,
+        "multiple": 37.575375811411,
         "multiple_source": "5Y_P75",
-        "tp": 14158.293076201953,
-        "upside_pct": 39.07949976622744,
+        "tp": 14158.401605739666,
+        "upside_pct": 41.01993631214806,
         "na_reason": null,
         "quality": "estimated"
       }
     },
-    "price": 10180.0
+    "price": 10040.0
   }
 }

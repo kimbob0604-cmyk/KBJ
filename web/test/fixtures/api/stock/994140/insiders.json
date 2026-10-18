@@ -24,7 +24,7 @@
         "n_reporters": 2,
         "ratio_pct": -3.3000000000000003,
         "reason_known_pct": 100.0,
-        "amount": -202360000000,
+        "amount": -204760000000,
         "amount_missing": 0,
         "quality": "ok"
       },
@@ -38,7 +38,7 @@
         "n_reporters": 3,
         "ratio_pct": -3.8600000000000003,
         "reason_known_pct": 100.0,
-        "amount": -233526000000,
+        "amount": -235074000000,
         "amount_missing": 0,
         "quality": "ok"
       },
@@ -52,7 +52,7 @@
         "n_reporters": 4,
         "ratio_pct": -3.85,
         "reason_known_pct": 100.0,
-        "amount": -232908000000,
+        "amount": -234456000000,
         "amount_missing": 0,
         "quality": "ok"
       }

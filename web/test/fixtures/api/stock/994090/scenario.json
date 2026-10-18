@@ -20,10 +20,10 @@
         "method": "PBR",
         "eps": 2935.0,
         "eps_source": "BPS",
-        "multiple": 0.9650202144489366,
+        "multiple": 0.9649861918439567,
         "multiple_source": "PBR_5Y_P25",
-        "tp": 2832.334329407629,
-        "upside_pct": -5.273099350915422,
+        "tp": 2832.234473062013,
+        "upside_pct": -6.061874856981331,
         "na_reason": null,
         "quality": "estimated"
       },
@@ -32,10 +32,10 @@
         "method": "PBR",
         "eps": 2935.0,
         "eps_source": "BPS",
-        "multiple": 1.0008756514726591,
+        "multiple": 1.0007552870090635,
         "multiple_source": "PBR_5Y_P50",
-        "tp": 2937.5700370722543,
-        "upside_pct": -1.7535104658108924,
+        "tp": 2937.2167673716012,
+        "upside_pct": -2.5798750457180386,
         "na_reason": null,
         "quality": "estimated"
       },
@@ -47,11 +47,11 @@
         "multiple": 1.0335735630163474,
         "multiple_source": "PBR_5Y_P75",
         "tp": 3033.5384074529798,
-        "upside_pct": 1.4561340285277558,
+        "upside_pct": 0.6148725523376308,
         "na_reason": null,
         "quality": "estimated"
       }
     },
-    "price": 2990.0
+    "price": 3015.0
   }
 }

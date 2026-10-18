@@ -12,7 +12,7 @@
     "days": [
       {
         "date": "2026-10-19",
-        "turnover": 18507688,
+        "turnover": 17795084,
         "foreign": 0,
         "inst": 11000000,
         "other_corp": -1000000,
@@ -24,7 +24,7 @@
       },
       {
         "date": "2026-10-20",
-        "turnover": 36406593,
+        "turnover": 18507688,
         "foreign": -2000000,
         "inst": -3000000,
         "other_corp": 0,
@@ -36,7 +36,7 @@
       },
       {
         "date": "2026-10-21",
-        "turnover": 19160785,
+        "turnover": 36406593,
         "foreign": -3000000,
         "inst": 8000000,
         "other_corp": 0,
@@ -48,7 +48,7 @@
       },
       {
         "date": "2026-10-22",
-        "turnover": 16536961,
+        "turnover": 19160785,
         "foreign": -3000000,
         "inst": 17000000,
         "other_corp": -1000000,
@@ -60,7 +60,7 @@
       },
       {
         "date": "2026-10-23",
-        "turnover": 26413707,
+        "turnover": 16536961,
         "foreign": -3000000,
         "inst": -9000000,
         "other_corp": -1000000,
@@ -72,7 +72,7 @@
       },
       {
         "date": "2026-10-26",
-        "turnover": 34802093,
+        "turnover": 26413707,
         "foreign": 0,
         "inst": 5000000,
         "other_corp": 0,
@@ -84,7 +84,7 @@
       },
       {
         "date": "2026-10-27",
-        "turnover": 16256538,
+        "turnover": 34802093,
         "foreign": -2000000,
         "inst": 8000000,
         "other_corp": 0,
@@ -96,7 +96,7 @@
       },
       {
         "date": "2026-10-28",
-        "turnover": 10852445,
+        "turnover": 16256538,
         "foreign": -1000000,
         "inst": 1000000,
         "other_corp": -1000000,
@@ -108,7 +108,7 @@
       },
       {
         "date": "2026-10-29",
-        "turnover": 25144507,
+        "turnover": 10852445,
         "foreign": -2000000,
         "inst": 14000000,
         "other_corp": 0,
@@ -120,7 +120,7 @@
       },
       {
         "date": "2026-10-30",
-        "turnover": 14768143,
+        "turnover": 25144507,
         "foreign": 2000000,
         "inst": 0,
         "other_corp": 0,
@@ -132,7 +132,7 @@
       },
       {
         "date": "2026-11-02",
-        "turnover": 26594798,
+        "turnover": 14768143,
         "foreign": -2000000,
         "inst": -13000000,
         "other_corp": -1000000,
@@ -144,7 +144,7 @@
       },
       {
         "date": "2026-11-03",
-        "turnover": 10399300,
+        "turnover": 26594798,
         "foreign": -1000000,
         "inst": 0,
         "other_corp": 0,
@@ -156,7 +156,7 @@
       },
       {
         "date": "2026-11-04",
-        "turnover": 8925488,
+        "turnover": 10399300,
         "foreign": -3000000,
         "inst": 5000000,
         "other_corp": -1000000,
@@ -168,7 +168,7 @@
       },
       {
         "date": "2026-11-05",
-        "turnover": 28010713,
+        "turnover": 8925488,
         "foreign": 0,
         "inst": 2000000,
         "other_corp": 0,
@@ -180,7 +180,7 @@
       },
       {
         "date": "2026-11-06",
-        "turnover": 18660583,
+        "turnover": 28010713,
         "foreign": 2000000,
         "inst": 5000000,
         "other_corp": 0,
@@ -192,7 +192,7 @@
       },
       {
         "date": "2026-11-09",
-        "turnover": 14657885,
+        "turnover": 18660583,
         "foreign": -3000000,
         "inst": -6000000,
         "other_corp": -1000000,
@@ -204,7 +204,7 @@
       },
       {
         "date": "2026-11-10",
-        "turnover": 20792487,
+        "turnover": 14657885,
         "foreign": -3000000,
         "inst": 5000000,
         "other_corp": 0,
@@ -216,7 +216,7 @@
       },
       {
         "date": "2026-11-11",
-        "turnover": 17669278,
+        "turnover": 20792487,
         "foreign": 2000000,
         "inst": -2000000,
         "other_corp": 0,
@@ -228,7 +228,7 @@
       },
       {
         "date": "2026-11-12",
-        "turnover": 26578983,
+        "turnover": 17669278,
         "foreign": 1000000,
         "inst": 10000000,
         "other_corp": 0,
@@ -240,7 +240,7 @@
       },
       {
         "date": "2026-11-13",
-        "turnover": 13263350,
+        "turnover": 26578983,
         "foreign": -3000000,
         "inst": -5000000,
         "other_corp": -1000000,

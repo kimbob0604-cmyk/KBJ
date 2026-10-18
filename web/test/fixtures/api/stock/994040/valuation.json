@@ -72,7 +72,7 @@
         "min": null,
         "max": null,
         "n_days": 0,
-        "n_excluded": 413,
+        "n_excluded": 412,
         "current": null,
         "current_rank_pct": null,
         "window_from": "2025-03-10",
@@ -87,13 +87,13 @@
         "p25": 1.0244481837078097,
         "p50": 1.0318717212709096,
         "p75": 1.0410455177897038,
-        "p90": 1.0485782398016779,
+        "p90": 1.0484993043132578,
         "min": 0.9957077260930326,
         "max": 1.064512942106303,
-        "n_days": 372,
+        "n_days": 371,
         "n_excluded": 41,
         "current": 1.0548107255520505,
-        "current_rank_pct": 94.08602150537635,
+        "current_rank_pct": 94.33962264150944,
         "window_from": "2025-03-10",
         "applicable": true,
         "na_reason": null,
@@ -110,7 +110,7 @@
         "min": null,
         "max": null,
         "n_days": 0,
-        "n_excluded": 413,
+        "n_excluded": 412,
         "current": null,
         "current_rank_pct": null,
         "window_from": "2025-03-10",
@@ -129,7 +129,7 @@
         "min": null,
         "max": null,
         "n_days": 0,
-        "n_excluded": 413,
+        "n_excluded": 412,
         "current": null,
         "current_rank_pct": null,
         "window_from": "2025-03-10",
@@ -490,13 +490,13 @@
         "value": null
       },
       {
-        "date": "2026-07-17",
-        "price": 2090.0,
+        "date": "2026-07-16",
+        "price": 2085.0,
         "value": null
       },
       {
         "date": "2026-07-24",
-        "price": 2080.0,
+        "price": 2075.0,
         "value": null
       },
       {
@@ -506,12 +506,12 @@
       },
       {
         "date": "2026-08-07",
-        "price": 2100.0,
+        "price": 2080.0,
         "value": null
       },
       {
         "date": "2026-08-14",
-        "price": 2085.0,
+        "price": 2095.0,
         "value": null
       },
       {
@@ -521,12 +521,12 @@
       },
       {
         "date": "2026-08-28",
-        "price": 2080.0,
+        "price": 2085.0,
         "value": null
       },
       {
         "date": "2026-09-04",
-        "price": 2070.0,
+        "price": 2060.0,
         "value": null
       },
       {
@@ -536,12 +536,12 @@
       },
       {
         "date": "2026-09-18",
-        "price": 2085.0,
+        "price": 2095.0,
         "value": null
       },
       {
         "date": "2026-09-23",
-        "price": 2075.0,
+        "price": 2070.0,
         "value": null
       },
       {
@@ -561,17 +561,17 @@
       },
       {
         "date": "2026-10-23",
-        "price": 2090.0,
+        "price": 2100.0,
         "value": null
       },
       {
         "date": "2026-10-30",
-        "price": 2130.0,
+        "price": 2125.0,
         "value": null
       },
       {
         "date": "2026-11-06",
-        "price": 2155.0,
+        "price": 2150.0,
         "value": null
       },
       {

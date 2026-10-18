@@ -56,7 +56,7 @@ describe('페이지 8 — 진입과 머리(로그인)', () => {
     // 신고가 3축(ADR 0017) — 60일·252일 표기는 쓰지 않는다
     for (const s of ['신고가 120일', '120 KRX 거래일', '신고가 52주', '달력 364일', '신고가 역사적', '상장 이후']) expect(head).toContain(s);
     expect(head).not.toMatch(/60일|252일/);
-    expect(text(panelByTitle(root, '핵심 지표'))).toContain('15.3x');
+    expect(text(panelByTitle(root, '핵심 지표'))).toContain('15.2x');
     expect(root.querySelectorAll('.msg.err')).toHaveLength(0);
   });
 
@@ -193,7 +193,7 @@ describe('페이지 8 — 적용 불가·아직 없음·오류(로그인)', () =
     const card = text(panelByTitle(root, '핵심 지표'));
     expect(card).toContain('ROE');
     expect(card).toContain('9.2%');
-    expect(card).toContain('+18.3%');
+    expect(card).toContain('+18.9%');
     expect(card).toContain('불러오지 못함');
   });
 
