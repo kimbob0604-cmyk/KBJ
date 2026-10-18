@@ -13,6 +13,7 @@
 #   bash scripts/local/kbj.sh auto on|off|status    # 평일 06:00 맥 깨우기 + 도커·컨테이너 자동 시작 + 22:00 까지 깨어 있기(매일 손 안 대기)
 #   bash scripts/local/kbj.sh backfill [일수]   # 지난 N일(기본 21일) 시장 일봉을 KRX 에서 받아 채움(KRX 키 필요)
 #   bash scripts/local/kbj.sh reindex-idx [일수]   # 코스피·코스닥 지수 일별을 지난 N일(기본 400일) 다시 받아 새 코드 규칙으로 덮음(KRX 키 필요)
+#   bash scripts/local/kbj.sh fill-all          # 나머지 빈 칸(매크로·미국·신용·테마·진단 등)을 한 번에 채움 — 키가 없는 것은 건너뛰고 끝에 알려 준다
 #   bash scripts/local/kbj.sh fill-dart         # 종목 상세(8)의 재무·공시용: DART 회사코드·프로필·재무 5년 백필·밸류에이션 재계산(DART 키 필요)
 #   bash scripts/local/kbj.sh job <작업> [--as-of 값]   # 작업 하나를 지금 한 번(예: job market.close_collect)
 #   bash scripts/local/kbj.sh open         # 브라우저로 열기
@@ -27,7 +28,7 @@ source "$here/../vm/lib.sh"
 URL="http://127.0.0.1:8000"
 AWAKE_PID_FILE="${KBJ_AWAKE_PID_FILE:-$HOME/.kbj-awake.pid}"
 
-usage() { sed -n '2,20p' "$0"; }
+usage() { sed -n '2,21p' "$0"; }
 
 # 도커 설정 점검(메모리 5GB 미만이면 서비스가 죽을 수 있다 — 알려만 준다)
 check_docker_resources() {
@@ -266,6 +267,63 @@ cmd_fill_dart() {
   return "$rc_all"
 }
 
+# 가장 가까운 지난 평일(주말·월요일 아침이면 금요일) — 휴장일은 모른다
+last_weekday() {
+  local n=1 d dow
+  while :; do
+    d="$(date_ago "$n")"
+    dow="$(date -j -f %Y-%m-%d "$d" +%u 2>/dev/null || date -d "$d" +%u)"
+    if (( dow <= 5 )); then echo "$d"; return 0; fi
+    n=$((n + 1))
+  done
+}
+
+# 작업 하나를 돌리고 성공·실패를 판정한다. 날짜를 정할 수 없다고 하면 지난 평일로 한 번 더. 결과는 FILL_OK·FILL_FAIL 에 쌓는다
+FILL_OK=""
+FILL_FAIL=""
+fill_try() {
+  local job="$1" out
+  shift
+  out="$(kbj_compose exec -T -e MPLCONFIGDIR=/tmp/mpl scheduler python -m kbj.services.scheduler run-once "$job" "$@" 2>&1 || true)"
+  if [[ $# -eq 0 ]] && printf '%s\n' "$out" | grep -q "as_of"; then
+    out="$(kbj_compose exec -T -e MPLCONFIGDIR=/tmp/mpl scheduler python -m kbj.services.scheduler run-once "$job" --as-of "$FILL_DAY" 2>&1 || true)"
+  fi
+  if printf '%s\n' "$out" | grep -qE '^(failed|retry|오류)'; then
+    FILL_FAIL="$FILL_FAIL $job"
+    kbj_warn "$job — 실패: $(printf '%s\n' "$out" | grep -E '^(failed|retry|오류)' | head -1)"
+  else
+    FILL_OK="$FILL_OK $job"
+    kbj_ok "$job"
+  fi
+}
+
+# 매크로·미국·신용·테마·진단 같은 나머지 빈 칸을 순서대로 한 번씩 돌린다(한 작업이 실패해도 다음으로). 키가 없는 작업은 실패로 나온다
+cmd_fill_all() {
+  local k missing="" job
+  require_scheduler
+  FILL_DAY="$(last_weekday)"
+  kbj_step "필요한 선택 키 확인(이름만)"
+  for k in KBJ_ECOS_KEY KBJ_FRED_KEY KBJ_DATAGO_KEY KBJ_KOSIS_KEY KBJ_KRX_API_KEY KBJ_DART_API_KEY; do
+    kbj_env_has "$k" || missing="$missing $k"
+  done
+  if [[ -n "$missing" ]]; then kbj_warn "비어 있는 키:$missing — 해당 칸은 채워지지 않는다($(kbj_cmd keys) 이름 으로 넣는다)"; else kbj_ok "선택 키가 모두 있다"; fi
+  kbj_step "미국장·매크로·신용·테마·지도 수집(기준 날짜 $FILL_DAY)"
+  for job in us.universe us.eod macro.morning macro.morning_prv macro.monthly macro.monthly_prv \
+    macro.evening macro.evening_prv market_stats.kofia theme.master_sync theme.classes_sync trade.map_load; do
+    fill_try "$job"
+  done
+  kbj_step "진단·테마 감시(선행 작업 기록을 보지 않고 $FILL_DAY 기준으로)"
+  for job in diag.public diag.daily themes.monitor; do
+    fill_try "$job" --as-of "$FILL_DAY" --no-deps
+  done
+  kbj_say "성공:${FILL_OK:- 없음}"
+  if [[ -n "$FILL_FAIL" ]]; then
+    kbj_warn "실패:$FILL_FAIL — 대부분 키가 없거나(위 안내) 장이 열려야 값이 생기는 작업이다. 브라우저를 새로 고쳐 남은 빈 칸을 본다"
+    return 1
+  fi
+  kbj_ok "끝 — 브라우저를 새로 고친다"
+}
+
 cmd_update() {
   kbj_docker_init
   command -v git >/dev/null 2>&1 || kbj_die "git 이 없다"
@@ -290,6 +348,7 @@ main() {
     update) cmd_update ;;
     backfill) cmd_backfill "$@" ;;
     reindex-idx) cmd_reindex_idx "$@" ;;
+    fill-all) cmd_fill_all ;;
     fill-dart) cmd_fill_dart ;;
     job) cmd_job "$@" ;;
     awake) cmd_awake "$@" ;;
