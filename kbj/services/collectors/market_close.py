@@ -57,6 +57,7 @@ from kbj.data.private.kis.investors import (
     parse_market_investor,
     parse_stock_investor,
     prelim_days,
+    recent,
     unit_check,
 )
 from kbj.data.private.kis.parse import KisRejected
@@ -102,6 +103,7 @@ ORDER: Final[tuple[str, ...]] = (
 PERMANENT_MAX_RATIO: Final = 0.05  # 종목 고유 실패 허용 비율 [확인 필요]
 PERMANENT_MIN: Final = 3  # 작은 목록에서도 이만큼은 넘어간다
 SAMPLE_MAX: Final = 5
+HISTORY_DAYS: Final = 45  # 종목 TR 이 주는 최근 한 달 남짓을 같이 저장 — 20일 스크리너가 바로 찬다
 UNIVERSE_LOOKBACK: Final = 10  # 시장 하나가 빠진 날 더 이전 유니버스를 찾는 횟수 [확인 필요]
 
 
@@ -334,13 +336,14 @@ def _investors(c: _Ctx, venue: str, targets: Sequence[tuple[str, str | None]], l
         try:
             body = _get(c, "stock_investor", params_stock_investor(code, venue),
                         f"FHKST01010900 {code}")  # fmt: skip
-            today = on_day(parse_stock_investor(body, code, venue=venue), c.day)
+            parsed = parse_stock_investor(body, code, venue=venue)
+            today = on_day(parsed, c.day)
             if not today and code in no_trade:
                 tally.no_trade[code] = f"{c.day} 행 없음 — {no_trade[code]}"
                 continue
             if not today:
                 raise NotReady(f"FHKST01010900 {code}: {c.day} 행이 아직 없다")
-            rows += today
+            rows += recent(parsed, c.day, HISTORY_DAYS)
             for d, px in closes_of(body).items():
                 closes[(code, d)] = px
         except Exception as e:  # 종목 단위 격리

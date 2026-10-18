@@ -34,7 +34,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any, Final, Literal
 
 from kbj.core.quality import Quality
@@ -377,6 +377,12 @@ def prelim_days(rows: Sequence[IntradayInvestor], day: date) -> list[InvestorDay
 def on_day(rows: Sequence[InvestorDay], day: date) -> list[InvestorDay]:
     """그 날짜의 행만(기준일 뒤 날짜를 고르지 않는다 — ET stockflows `_latest`)."""
     return [r for r in rows if r.date == day]
+
+
+def recent(rows: Sequence[InvestorDay], day: date, span: int) -> list[InvestorDay]:
+    """기준일 포함 최근 `span` 일(달력) 안의 행 — 기준일 뒤 날짜는 고르지 않는다."""
+    lo = day - timedelta(days=span)
+    return [r for r in rows if lo <= r.date <= day]
 
 
 # ── 금액 자릿수 대조 (ET monitor/flow/kissrc.py:unit_check) ─────────────────────────────

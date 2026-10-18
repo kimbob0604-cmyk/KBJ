@@ -37,6 +37,7 @@ from kbj.data.private.kis.investors import (
     parse_market_investor,
     parse_stock_investor,
     prelim_days,
+    recent,
     unit_check,
 )
 from kbj.data.private.kis.parse import KisEmpty, KisParseError, KisShapeError
@@ -243,6 +244,16 @@ def test_market_all_three_zero_on_latest_day_is_not_a_fact() -> None:
     }
     with pytest.raises(KisEmpty, match="전부 0"):
         parse_market_investor(body, "0001")
+
+
+def test_recent_keeps_the_window_up_to_the_day_and_no_later() -> None:
+    rows = parse_stock_investor(stock_body(ROW_0916, ROW_0911), "003490")
+    assert {r.date for r in recent(rows, date(2026, 9, 16), 45)} == {
+        date(2026, 9, 16),
+        date(2026, 9, 11),
+    }
+    assert {r.date for r in recent(rows, date(2026, 9, 16), 2)} == {date(2026, 9, 16)}
+    assert {r.date for r in recent(rows, date(2026, 9, 12), 45)} == {date(2026, 9, 11)}
 
 
 def test_market_requested_day_is_checked_when_newer_zero_row_is_on_top() -> None:
