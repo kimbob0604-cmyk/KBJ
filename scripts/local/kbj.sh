@@ -11,6 +11,7 @@
 #   bash scripts/local/kbj.sh update       # 새 버전 받아 다시 띄움(먼저 백업)
 #   bash scripts/local/kbj.sh awake on|off|status   # 맥 잠자기 방지(수집은 맥이 깨어 있을 때만 돈다)
 #   bash scripts/local/kbj.sh backfill [일수]   # 지난 N일(기본 21일) 시장 일봉을 KRX 에서 받아 채움(KRX 키 필요)
+#   bash scripts/local/kbj.sh reindex-idx [일수]   # 코스피·코스닥 지수 일별을 지난 N일(기본 400일) 다시 받아 새 코드 규칙으로 덮음(KRX 키 필요)
 #   bash scripts/local/kbj.sh fill-dart         # 종목 상세(8)의 재무·공시용: DART 회사코드·프로필·재무 5년 백필·밸류에이션 재계산(DART 키 필요)
 #   bash scripts/local/kbj.sh job <작업> [--as-of 값]   # 작업 하나를 지금 한 번(예: job market.close_collect)
 #   bash scripts/local/kbj.sh open         # 브라우저로 열기
@@ -25,7 +26,7 @@ source "$here/../vm/lib.sh"
 URL="http://127.0.0.1:8000"
 AWAKE_PID_FILE="${KBJ_AWAKE_PID_FILE:-$HOME/.kbj-awake.pid}"
 
-usage() { sed -n '2,18p' "$0"; }
+usage() { sed -n '2,19p' "$0"; }
 
 # 도커 설정 점검(메모리 5GB 미만이면 서비스가 죽을 수 있다 — 알려만 준다)
 check_docker_resources() {
@@ -154,6 +155,21 @@ cmd_backfill() {
   return "$rc"
 }
 
+# 지수 일별 다시 받기 — 코스닥 업종이 코스피 업종과 이름이 같아 덮이던 것을 새 코드('코스닥' 접두어)로 바로잡는다.
+# 선점 표를 보지 않고 날짜마다 덮어쓴다(멱등). 하루 약 3건 × 거래일 — KRX 하루 한도 안
+cmd_reindex_idx() {
+  local days="${1:-400}" from to rc=0
+  [[ "$days" =~ ^[0-9]+$ ]] || kbj_die "일수는 1~1100 사이 숫자(기본 400)"
+  (( days >= 1 && days <= 1100 )) || kbj_die "일수는 1~1100 사이 숫자(기본 400)"
+  kbj_env_has KBJ_KRX_API_KEY || kbj_die "KBJ_KRX_API_KEY 가 비었다 — $(kbj_cmd keys) KBJ_KRX_API_KEY 로 넣고 $(kbj_cmd start) 를 다시"
+  require_scheduler
+  from="$(date_ago "$days")"; to="$(date_ago 3)"
+  kbj_step "지수 일별 다시 받기 $from ~ $to (거래일만, 최근부터)"
+  kbj_compose exec -T -e MPLCONFIGDIR=/tmp/mpl scheduler python -m kbj.services.scheduler reindex-idx --from "$from" --to "$to" || rc=$?
+  if (( rc == 0 )); then kbj_ok "지수 다시 받기 끝 — 브라우저를 새로 고친다"; else kbj_warn "중간에 멈췄다(종료 $rc). '멈춤:' 줄을 본다 — 같은 명령을 다시 하면 처음부터 덮어쓴다"; fi
+  return "$rc"
+}
+
 # 작업 하나를 지금 한 번(조건 무시). --as-of 로 과거 날짜·이벤트를 줄 수 있다
 cmd_job() {
   local job="${1:-}"
@@ -205,6 +221,7 @@ main() {
     backup) exec bash "$here/../vm/backup.sh" "$@" ;;
     update) cmd_update ;;
     backfill) cmd_backfill "$@" ;;
+    reindex-idx) cmd_reindex_idx "$@" ;;
     fill-dart) cmd_fill_dart ;;
     job) cmd_job "$@" ;;
     awake) cmd_awake "$@" ;;

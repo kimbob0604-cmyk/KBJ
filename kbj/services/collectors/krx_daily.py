@@ -11,7 +11,7 @@
   stock)·`stock_snapshot` — source `krx`, venue KRX
 - `sto/stk_isu_base_info`·`ksq_isu_base_info` → `prv_market.universe` — 상장일·주식종류(flags)
 - `idx/kospi_dd_trd`·`kosdaq_dd_trd`·`krx_dd_trd` → `daily_bar`(asset index) — 코드 = 공백 뺀 지수
-  이름
+  이름(코스닥 목록의 업종은 '코스닥' 접두어 — 코스피 업종과 이름이 같다)
 - `etp/etf_bydd_trd` → `prv_etf.etf_daily`·`meta`·`universe`(kind etf) — 메타는 이름·기초지수만 갱신
 - `etp/etn_bydd_trd` → `daily_bar`(asset etn)·`universe`(kind etn)
 
@@ -103,7 +103,8 @@ BASE_INFO: Final[Mapping[str, str]] = {
     "sto/stk_isu_base_info": "KOSPI",
     "sto/ksq_isu_base_info": "KOSDAQ",
 }
-INDEX: Final = ("idx/kospi_dd_trd", "idx/kosdaq_dd_trd", "idx/krx_dd_trd")
+KOSDAQ_INDEX: Final = "idx/kosdaq_dd_trd"
+INDEX: Final = ("idx/kospi_dd_trd", KOSDAQ_INDEX, "idx/krx_dd_trd")
 ETF: Final = "etp/etf_bydd_trd"
 ETN: Final = "etp/etn_bydd_trd"
 # 처리 순서 — 기본정보(유니버스) → 주식 → 지수 → ETP
@@ -146,11 +147,17 @@ class Coverage:
             )
 
 
-def index_code(name: str) -> str:
-    """KRX 지수 일별에는 코드 칸이 없다 [실측 필요] — 공백을 뺀 지수 이름을 코드로 쓴다."""
+def index_code(name: str, dataset: str = "") -> str:
+    """KRX 지수 일별에는 코드 칸이 없다 [실측 필요] — 공백을 뺀 지수 이름을 코드로 쓴다.
+
+    코스닥 지수 목록의 업종은 코스피 업종과 이름이 같다(건설·금융·제조 …). 이름만 코드로 쓰면
+    같은 날 한 줄이 다른 줄을 덮는다(2026-10 실측: 제조 거래대금이 코스닥 쪽 값) — 코스닥 목록에서
+    온 것은 이름이 '코스닥' 으로 시작하지 않으면 접두어를 붙인다(코스닥150 은 그대로)."""
     code = _SPACE.sub("", name)
     if not code:
         raise ValueError("지수 이름이 비었다")
+    if dataset == KOSDAQ_INDEX and not code.startswith("코스닥"):
+        return "코스닥" + code
     return code
 
 
@@ -289,16 +296,16 @@ def _index(c: _Ctx, dataset: str) -> int:
         raise NotReady(f"{dataset} {c.day} 아직 공표 전(빈 응답)")
     rows, bad = parse_index_rows(raw, endpoint="/" + dataset)
     _check_day(c.day, [r.as_of for r in rows], dataset)
-    bars = [_index_bar(r) for r in rows]
+    bars = [_index_bar(r, dataset) for r in rows]
     c.repos.market.upsert_index_bars(bars, loaded_by=c.job, received_at=c.now)
     if bad:
         c.detail.setdefault("bad_rows", {})[dataset] = len(bad)
     return len(bars)
 
 
-def _index_bar(r: KrxIndexDaily) -> IndexBar:
+def _index_bar(r: KrxIndexDaily, dataset: str = "") -> IndexBar:
     return IndexBar(
-        code=index_code(r.idx_nm), date=r.as_of, name=r.idx_nm, open=_f(r.opnprc_idx),
+        code=index_code(r.idx_nm, dataset), date=r.as_of, name=r.idx_nm, open=_f(r.opnprc_idx),
         high=_f(r.hgprc_idx), low=_f(r.lwprc_idx), close=_f(r.clsprc_idx), volume=r.acc_trdvol,
         turnover=r.acc_trdval, source=SOURCE, quality=r.quality,
     )  # fmt: skip

@@ -50,7 +50,8 @@ def test_repo_markets_has_the_design_defaults() -> None:
     assert m.etf.split_tol == 0.02 and 10 in m.etf.split_ratios
     assert m.reconcile.close_tol_pct == 0.0 and m.reconcile.turnover_tol_pct == 0.5
     assert set(m.market.intraday_indices) == {"0001", "1001", "2001"}
-    assert m.market.sector_indices == ()  # [실측 필요] — 지어내지 않는다
+    # KRX 지수 일별의 공백 뺀 이름(2026-10-18 DB 실측) — 이름이 겹치지 않는다
+    assert len(m.market.sector_indices) == 26 and "건설" in m.market.sector_indices
     assert m.ribbon.semis == ("005930", "000660")
 
 
@@ -62,7 +63,8 @@ def test_repo_markets_has_the_design_defaults() -> None:
         (("screen", "spike_min"), 1.0, "spike_min"),
         (("screen", "min_avg_turnover_krw"), 1.5e10, "min_avg_turnover_krw"),
         (("etf", "split_ratios"), [1, 10], "split_ratios"),
-        (("market", "sector_indices"), ["코스피"], "코드"),
+        (("market", "sector_indices"), ["코스 피"], "공백"),
+        (("market", "sector_indices"), ["건설", "건설"], "겹친다"),
         (("etf", "holdings", "qty_flor"), 100, "qty_flor"),  # 모르는 키(철자)
     ],
 )

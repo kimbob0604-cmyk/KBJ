@@ -95,10 +95,22 @@ class MarketCfg(_Model):
     sector_indices: tuple[str, ...] = ()  # [실측 필요] — 비어 있으면 히트맵은 '준비 중'
     limit_move_pct: float = Field(gt=0, le=30)
 
-    @field_validator("intraday_indices", "sector_indices")
+    @field_validator("intraday_indices")
     @classmethod
     def _check_codes(cls, v: Any) -> Any:
         _codes(v)
+        return v
+
+    @field_validator("sector_indices")
+    @classmethod
+    def _check_sector_codes(cls, v: tuple[str, ...]) -> tuple[str, ...]:
+        # KRX 지수 일별에는 코드 칸이 없어 공백 뺀 이름이 코드다(krx_daily.index_code) —
+        # KIS 업종 코드(대문자·숫자)도 같이 허용한다
+        for c in v:
+            if not c or any(ch.isspace() for ch in c):
+                raise ValueError(f"업종 코드는 비지 않고 공백이 없다: {c!r}")
+        if len(set(v)) != len(v):
+            raise ValueError("업종 코드가 겹친다")
         return v
 
 

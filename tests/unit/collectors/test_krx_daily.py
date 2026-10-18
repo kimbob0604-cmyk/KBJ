@@ -97,6 +97,16 @@ def test_full_run_writes_every_table() -> None:
     assert fake.calls() == len(ALL)
 
 
+def test_kosdaq_sector_names_get_a_prefix_so_they_do_not_overwrite_kospi_sectors() -> None:
+    from kbj.services.collectors.krx_daily import index_code
+
+    assert index_code("건설") == "건설"  # 코스피 목록 — 그대로
+    assert index_code("건설", "idx/kospi_dd_trd") == "건설"
+    assert index_code("건 설", "idx/kosdaq_dd_trd") == "코스닥건설"
+    assert index_code("코스닥 150", "idx/kosdaq_dd_trd") == "코스닥150"  # 이미 코스닥으로 시작
+    assert index_code("KRX 300", "idx/krx_dd_trd") == "KRX300"
+
+
 def test_empty_response_is_not_ready() -> None:
     repos, fake = setup(publish=False)
     res = run(repos, fake, keys("sto/stk_bydd_trd"))

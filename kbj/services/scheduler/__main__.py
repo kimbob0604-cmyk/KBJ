@@ -162,6 +162,51 @@ def backfill_days(cal: TradingCalendar, start: date, end: date, max_days: int) -
     return out
 
 
+def _reindex_idx(settings: Settings, start: date, end: date) -> int:
+    """지수 일별 두 목록만 다시 — 코드 규칙이 바뀐 뒤 지난 날을 새 코드로 채운다(멱등 덮어쓰기)."""
+    from kbj.data.private.krx.client import KrxClient
+    from kbj.data.ratelimit import Priority
+    from kbj.data.spec import DataKey
+    from kbj.services.collectors.krx_daily import INDEX, SOURCE, collect
+    from kbj.store.db import connect
+    from kbj.store.repos import pg_repos
+
+    if settings.redis_url is None or settings.database_url is None:
+        print("오류: KBJ_REDIS_URL·KBJ_DATABASE_URL 이 없다")
+        return 1
+    try:
+        days = backfill_days(_calendar(settings), start, end, 5000)
+    except ValueError as e:
+        print(f"오류: {e}")
+        return 1
+    redis = connect_redis(settings.redis_url)
+    repos = pg_repos(lambda: connect(settings, service=SERVICE))
+    client = KrxClient.from_settings(settings, redis, backfill=True, priority=Priority.P4)
+    job = "krx.reindex_idx"
+    stale = (
+        "DELETE FROM prv_market.daily_bar WHERE market = 'KR' AND asset = 'index' "
+        "AND source = %s AND trade_date = %s AND loaded_by <> %s"
+    )
+    try:
+        for i, d in enumerate(days, start=1):
+            keys = [DataKey("KRX", ds, d.isoformat()) for ds in INDEX]
+            out, _ = collect(
+                keys, r=repos, client=client, day=d, now=utcnow(), job=job, notify_changes=False
+            )  # fmt: skip
+            res = out.result()
+            print(f"[{i}/{len(days)}] {d} {res.status}")
+            if res.status != "ok":
+                print(f"멈춤: {d} {res.detail.get('reason', '')}".rstrip())
+                return 1
+            # 새 코드로 다시 쓴 날만 — 이번에 안 덮인(옛 이름 규칙의) 그날 지수 행을 지운다
+            with connect(settings, service=SERVICE) as conn:
+                conn.execute(stale, (SOURCE, d, job))
+        print(f"지수 다시 받기 끝: {len(days)}일")
+        return 0
+    finally:
+        redis.close()
+
+
 def listing_backfill_range(
     listed_on: Iterable[date | None], have_from: date | None, floor: date, today: date
 ) -> tuple[date, date] | None:
@@ -279,6 +324,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="상장일(또는 원천 바닥)까지 — 범위를 저장소에서 정하고 여러 날에 이어 받는다",
     )
     b.add_argument("--max-days", dest="max_days", type=int, default=BACKFILL_MAX_DAYS)
+    r = sub.add_parser(
+        "reindex-idx",
+        help="코스피·코스닥 지수 일별을 날짜 범위로 다시 받는다(선점 표를 보지 않고 덮어쓴다)",
+    )
+    r.add_argument("--from", dest="start", type=date.fromisoformat, required=True)
+    r.add_argument("--to", dest="end", type=date.fromisoformat, required=True)
     args = p.parse_args(argv)
     cmd = args.cmd or "run"
 
@@ -298,6 +349,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         for e in errs:
             log_event(log, logging.ERROR, SERVICE, "registry_invalid", error=e)
         return 2
+    if cmd == "reindex-idx":
+        return _reindex_idx(settings, args.start, args.end)
     if cmd == "run-once":
         _svc, runner, _redis, close = _build(settings, inline=True)
         try:
