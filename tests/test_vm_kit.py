@@ -492,3 +492,49 @@ def test_local_mode_does_not_require_telegram(vm_root: Path) -> None:
     required = r.stdout.split()
     assert "KBJ_KIS_APP_KEY" in required and "KBJ_WEB_PASSWORD_HASH" in required
     assert not [k for k in required if k.startswith("KBJ_TELEGRAM")]
+
+
+def test_local_auto_registers_wake_and_launchd_agents(tmp_path: Path) -> None:
+    """auto on = pmset(깨우기) + launchd 둘(자동 시작·잠자기 방지)을 올바른 모양으로 등록한다."""
+    import plistlib
+
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    log = tmp_path / "calls.log"
+    for name in ("pmset", "launchctl"):
+        (bin_dir / name).write_text(f'#!/bin/bash\necho "{name} $*" >> "{log}"\n', encoding="utf-8")
+    (bin_dir / "sudo").write_text('#!/bin/bash\nexec "$@"\n', encoding="utf-8")
+    for f in bin_dir.iterdir():
+        f.chmod(0o755)
+    home = tmp_path / "home"
+    home.mkdir()
+    env = {
+        **os.environ,
+        "HOME": str(home),
+        "PATH": f"{bin_dir}:{os.environ['PATH']}",
+        "KBJ_ENV_FILE": str(tmp_path / ".env"),
+    }
+    r = subprocess.run(  # noqa: S603
+        ["bash", str(LOCAL / "kbj.sh"), "auto", "on"],  # noqa: S607
+        capture_output=True, text=True, env=env, check=False,
+    )  # fmt: skip
+    assert r.returncode == 0, r.stderr + r.stdout
+    calls = log.read_text(encoding="utf-8")
+    assert "pmset repeat wakeorpoweron MTWRF 06:00:00" in calls
+    assert calls.count("launchctl load") == 2
+    agents = home / "Library" / "LaunchAgents"
+    up = plistlib.loads((agents / "com.kbj.autostart.plist").read_bytes())
+    assert up["RunAtLoad"] is True
+    assert up["ProgramArguments"][-1].endswith("scripts/local/autostart.sh")
+    assert [d["Weekday"] for d in up["StartCalendarInterval"]] == [1, 2, 3, 4, 5]
+    assert {(d["Hour"], d["Minute"]) for d in up["StartCalendarInterval"]} == {(6, 2)}
+    awake = plistlib.loads((agents / "com.kbj.awake.plist").read_bytes())
+    assert awake["ProgramArguments"][:2] == ["/usr/bin/caffeinate", "-i"]
+    assert awake["RunAtLoad"] is False and awake["ProgramArguments"][-1] == "57600"
+    off = subprocess.run(  # noqa: S603
+        ["bash", str(LOCAL / "kbj.sh"), "auto", "off"],  # noqa: S607
+        capture_output=True, text=True, env=env, check=False,
+    )  # fmt: skip
+    assert off.returncode == 0, off.stderr
+    assert not list(agents.glob("com.kbj.*.plist"))
+    assert "pmset repeat cancel" in log.read_text(encoding="utf-8")

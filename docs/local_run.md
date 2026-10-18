@@ -58,6 +58,7 @@ bash scripts/local/kbj.sh start
 
 | 하고 싶은 일 | 명령 |
 |---|---|
+| **평일 아침 자동 — 한 번만 켜 두면 매일 손댈 일 없음**(아래) | `bash scripts/local/kbj.sh auto on` / `auto off` / `auto status` |
 | 맥 잠자기 방지 켜기/끄기(전원 꽂고, 덮개는 열어 둠) | `bash scripts/local/kbj.sh awake on` / `awake off` |
 | 상태 점검(컨테이너·접속·운영 점검·백업) | `bash scripts/local/kbj.sh status` |
 | 멈추기 / 다시 시작 | `bash scripts/local/kbj.sh stop` / `start` |
@@ -70,6 +71,17 @@ bash scripts/local/kbj.sh start
 
 - 데이터는 도커 볼륨에 남는다. `stop` 이나 `--down` 으로는 지워지지 않는다(어느 명령도 데이터를 지우지 않는다).
 - 매일 새벽 3시의 자동 백업은 맥이 깨어 있어야 돈다. 일주일에 한 번 `backup --now` 를 해 두는 것을 권한다.
+
+### 평일 아침 자동 (`auto on`)
+
+한 번 켜면(맥 비밀번호를 한 번 묻는다) 평일마다:
+
+- **06:00** 맥이 스스로 깬다(`pmset`), **06:02** 도커가 꺼져 있으면 켜고 컨테이너를 올린다(로그인할 때도 한 번),
+  **06:05~22:05** 잠들지 않는다. 그동안 등록부 작업이 알아서 돈다 — 06:20 미국장·매크로, 07:00~ 공시, **08:05 KRX 전일 확정 일봉**
+  (지수·업종 포함), 08:50 밸류에이션, 15:35 장 마감 수집, 21:00 리포트.
+- 조건: **전원 어댑터를 꽂아 두고**, 맥은 **종료가 아니라 잠자기**로 둔다(덮개는 닫아도 된다). Docker Desktop 의
+  "Start Docker Desktop when you sign in" 도 켜 두면 더 안전하다.
+- 주말·밤에는 하지 않는다(필요하면 `awake on`). 끄려면 `auto off`.
 
 ## ⑦ 아직 안 되는 것 · 한계 (정직하게)
 

@@ -10,6 +10,7 @@
 #   bash scripts/local/kbj.sh backup [--now]   # 볼륨 밖(~/kbj-backup)으로 백업
 #   bash scripts/local/kbj.sh update       # 새 버전 받아 다시 띄움(먼저 백업)
 #   bash scripts/local/kbj.sh awake on|off|status   # 맥 잠자기 방지(수집은 맥이 깨어 있을 때만 돈다)
+#   bash scripts/local/kbj.sh auto on|off|status    # 평일 06:00 맥 깨우기 + 도커·컨테이너 자동 시작 + 22:00 까지 깨어 있기(매일 손 안 대기)
 #   bash scripts/local/kbj.sh backfill [일수]   # 지난 N일(기본 21일) 시장 일봉을 KRX 에서 받아 채움(KRX 키 필요)
 #   bash scripts/local/kbj.sh reindex-idx [일수]   # 코스피·코스닥 지수 일별을 지난 N일(기본 400일) 다시 받아 새 코드 규칙으로 덮음(KRX 키 필요)
 #   bash scripts/local/kbj.sh fill-dart         # 종목 상세(8)의 재무·공시용: DART 회사코드·프로필·재무 5년 백필·밸류에이션 재계산(DART 키 필요)
@@ -26,7 +27,7 @@ source "$here/../vm/lib.sh"
 URL="http://127.0.0.1:8000"
 AWAKE_PID_FILE="${KBJ_AWAKE_PID_FILE:-$HOME/.kbj-awake.pid}"
 
-usage() { sed -n '2,19p' "$0"; }
+usage() { sed -n '2,20p' "$0"; }
 
 # 도커 설정 점검(메모리 5GB 미만이면 서비스가 죽을 수 있다 — 알려만 준다)
 check_docker_resources() {
@@ -128,6 +129,73 @@ cmd_awake() {
   esac
 }
 
+# 평일 아침 자동 — 맥을 06:00 에 깨우고(pmset), 06:02 에 도커·컨테이너를 올리고(launchd), 06:05~22:05 잠들지 않게 한다.
+# 비밀번호는 pmset 한 번만 묻는다(sudo). 로그인 상태의 맥(잠자기만, 종료 아님)에서 돈다. 주말은 하지 않는다
+LAUNCH_DIR="$HOME/Library/LaunchAgents"
+AUTO_UP="com.kbj.autostart"
+AUTO_AWAKE="com.kbj.awake"
+
+plist_weekdays() {  # $1 시 $2 분 — 월~금
+  local d
+  for d in 1 2 3 4 5; do
+    printf '    <dict><key>Weekday</key><integer>%s</integer><key>Hour</key><integer>%s</integer><key>Minute</key><integer>%s</integer></dict>\n' "$d" "$1" "$2"
+  done
+}
+
+write_plist() {  # $1 라벨 $2 시 $3 분 $4 RunAtLoad(true|false) $5... 프로그램 인자
+  local label="$1" hh="$2" mm="$3" runload="$4" f arg
+  shift 4
+  f="$LAUNCH_DIR/$label.plist"
+  mkdir -p "$LAUNCH_DIR" "$HOME/Library/Logs"
+  {
+    printf '<?xml version="1.0" encoding="UTF-8"?>\n'
+    printf '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n'
+    printf '<plist version="1.0"><dict>\n'
+    printf '  <key>Label</key><string>%s</string>\n' "$label"
+    printf '  <key>ProgramArguments</key><array>\n'
+    for arg in "$@"; do printf '    <string>%s</string>\n' "$arg"; done
+    printf '  </array>\n'
+    printf '  <key>RunAtLoad</key><%s/>\n' "$runload"
+    printf '  <key>StartCalendarInterval</key><array>\n'
+    plist_weekdays "$hh" "$mm"
+    printf '  </array>\n'
+    printf '  <key>StandardOutPath</key><string>%s/Library/Logs/%s.log</string>\n' "$HOME" "$label"
+    printf '  <key>StandardErrorPath</key><string>%s/Library/Logs/%s.log</string>\n' "$HOME" "$label"
+    printf '</dict></plist>\n'
+  } > "$f"
+  launchctl unload "$f" >/dev/null 2>&1 || true
+  launchctl load "$f" || kbj_die "launchd 등록 실패: $f"
+}
+
+cmd_auto() {
+  command -v pmset >/dev/null 2>&1 || kbj_die "pmset 이 없다(맥 전용)"
+  case "${1:-status}" in
+    on)
+      kbj_step "맥을 평일 06:00 에 깨운다(맥 비밀번호를 한 번 묻는다)"
+      sudo pmset repeat wakeorpoweron MTWRF 06:00:00 || kbj_die "pmset 실패 — 맥 로그인 비밀번호가 맞는지 본다"
+      kbj_step "06:02 에 도커·컨테이너 자동 시작 + 로그인할 때도 한 번"
+      write_plist "$AUTO_UP" 6 2 true /bin/bash "$KBJ_ROOT/scripts/local/autostart.sh"
+      kbj_step "06:05 부터 16시간(22:05 까지) 잠들지 않게"
+      write_plist "$AUTO_AWAKE" 6 5 false /usr/bin/caffeinate -i -s -t 57600
+      kbj_ok "켰다 — 평일 아침 손댈 일이 없다. 조건: 전원 어댑터를 꽂아 두고, 맥은 '종료'가 아니라 잠자기로 둔다(덮개는 닫아도 된다)"
+      kbj_say "Docker Desktop → Settings → General → 'Start Docker Desktop when you sign in' 도 켜 두면 더 안전하다"
+      kbj_say "확인: $(kbj_cmd auto) status · 끄기: $(kbj_cmd auto) off" ;;
+    off)
+      sudo pmset repeat cancel || kbj_warn "pmset 해제 실패"
+      local l
+      for l in "$AUTO_UP" "$AUTO_AWAKE"; do
+        launchctl unload "$LAUNCH_DIR/$l.plist" >/dev/null 2>&1 || true
+        rm -f "$LAUNCH_DIR/$l.plist"
+      done
+      kbj_ok "껐다" ;;
+    status)
+      kbj_say "맥 깨우기 일정:"; pmset -g sched 2>/dev/null | sed 's/^/  /' || true
+      kbj_say "launchd:"; launchctl list 2>/dev/null | grep -E "com\.kbj\." | sed 's/^/  /' || kbj_say "  등록 없음"
+      kbj_say "로그: ~/Library/Logs/$AUTO_UP.log" ;;
+    *) kbj_die "on | off | status" ;;
+  esac
+}
+
 # N일 전 날짜(YYYY-MM-DD) — 맥(BSD date)과 리눅스(GNU date) 둘 다
 date_ago() { date -v-"$1"d +%Y-%m-%d 2>/dev/null || date -d "$1 days ago" +%Y-%m-%d; }
 
@@ -225,6 +293,7 @@ main() {
     fill-dart) cmd_fill_dart ;;
     job) cmd_job "$@" ;;
     awake) cmd_awake "$@" ;;
+    auto) cmd_auto "$@" ;;
     open)
       if command -v open >/dev/null 2>&1; then open "$URL"; else kbj_say "브라우저에서 $URL 을 연다"; fi ;;
     -h|--help|help|"") usage ;;
