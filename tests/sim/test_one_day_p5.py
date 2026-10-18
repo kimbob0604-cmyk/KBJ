@@ -106,9 +106,11 @@ def test_every_run_finished_and_p5_handlers_are_real(day: SimDay) -> None:
         assert not any(r.detail.get("sim") for r in runs), job  # 실제 처리기
     for job in FRED_LAG:
         assert [r.detail.get("result") for r in _runs(day, job)] == ["not_ready"], job
-    # 운영 등록부에서는 꺼진 채(D-P5-23) — 이 시뮬레이션만 사본에서 켰다
+    # 운영 등록부: macro.*·kofia·fsc_daily 는 2026-10-18 에 켰고, program.* 은 꺼진 채(D-P5-23)
     prod = load_registry()
-    assert not any(prod.by_name(n).enabled for n in ENABLE)
+    still_off = [n for n in ENABLE if n.startswith("program.")]
+    assert not any(prod.by_name(n).enabled for n in still_off)
+    assert all(prod.by_name(n).enabled for n in ENABLE if n not in still_off)
     assert not prod.by_name("themes.monitor").enabled  # 테마는 사용자 별도 진행
 
 

@@ -72,8 +72,8 @@ P4_ENABLED = {
 }
 # P5(docs/p5_design.md D-P5-23 — 웨이브 3 WRAP). 처리기가 있고 외부 호출이 없거나 응답 칸이
 # 실측·legacy 운영으로 확인된 작업만. 테마(themes.*)는 사전 통합을 사용자가 따로 진행해
-# P5 에서 뺐다(2026-10-13 Q1). 꺼진 채: macro.* 6(#43~#46·#49)·market_stats.kofia·
-# market.fsc_daily(#48)·program.* 다섯과 backfill(#40·#41)
+# P5 에서 뺐다(2026-10-13 Q1). 꺼진 채: program.* 다섯과 backfill(#40·#41).
+# macro.*·kofia·fsc_daily 는 2026-10-18 에 켰다(아래)
 P5_ENABLED = {
     "etf.report",
     "brief.morning",
@@ -82,6 +82,16 @@ P5_ENABLED = {
     "us.universe",  # 사용자 결정 Q6 — ET us-board 운영 파서
     "us.eod",
     "flows.market_minute",  # K2I 3조합만(GX 2026-09-28 실측)
+    # 2026-10-18 사용자(로컬 운영) 결정으로 켬 — 키를 넣었고 화면의 빈 칸을 채우려는 요청.
+    # 실측 번호(#43~#49)는 화면이 그대로 보인다. program.* 다섯은 아직 꺼진 채
+    "macro.morning",
+    "macro.morning_prv",
+    "macro.monthly",
+    "macro.monthly_prv",
+    "macro.evening",
+    "macro.evening_prv",
+    "market_stats.kofia",
+    "market.fsc_daily",
 }
 # P6(docs/p6_design.md D-P6-20 — 웨이브 3 WRAP). 외부 호출이 없는 세 작업만. 관세청 수집
 # 두 작업(trade.customs_*)은 키 수령·실측(#1~#6·#17·#55) 뒤 켠다

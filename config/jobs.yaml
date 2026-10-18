@@ -178,6 +178,7 @@ jobs:
   # pub_* 에 쓰지 않는다(ADR 0002). 설계 §6.7 의 macro.morning 한 줄을 둘로 나눴다.
   - name: macro.morning
     phase: P5
+    enabled: true               # 2026-10-18 로컬 운영에서 켬 — 키(ECOS·FRED·DATAGO)를 넣었고 빈 칸을 채우려는 사용자 요청
     owner: "kbj.services.collectors.macro:morning"
     schedule: {cron: "20 6 * * *", when: kr_or_after_us}
     retry: {max: 3, backoff_s: [600]}
@@ -192,6 +193,7 @@ jobs:
 
   - name: macro.morning_prv
     phase: P5
+    enabled: true               # 2026-10-18 로컬 운영에서 켬 — 키(ECOS·FRED·DATAGO)를 넣었고 빈 칸을 채우려는 사용자 요청
     owner: "kbj.services.collectors.macro_prv:morning"
     schedule: {cron: "20 6 * * *", when: kr_or_after_us}
     retry: {max: 3, backoff_s: [600]}
@@ -353,6 +355,7 @@ jobs:
 
   - name: macro.monthly
     phase: P5
+    enabled: true               # 2026-10-18 로컬 운영에서 켬 — 키(ECOS·FRED·DATAGO)를 넣었고 빈 칸을 채우려는 사용자 요청
     owner: "kbj.services.collectors.macro:monthly"
     schedule: {cron: "10 9 * * *", when: always}
     retry: {max: 1, backoff_s: [3600]}
@@ -376,6 +379,7 @@ jobs:
 
   - name: macro.monthly_prv
     phase: P5
+    enabled: true               # 2026-10-18 로컬 운영에서 켬 — 키(ECOS·FRED·DATAGO)를 넣었고 빈 칸을 채우려는 사용자 요청
     owner: "kbj.services.collectors.macro_prv:monthly"
     schedule: {cron: "15 9 * * *", when: always}
     retry: {max: 1, backoff_s: [3600]}
@@ -471,6 +475,7 @@ jobs:
 
   - name: market.fsc_daily
     phase: P5                 # D-P3-17 — KRX 대조 보조는 P5
+    enabled: true               # 2026-10-18 로컬 운영에서 켬 — 키(ECOS·FRED·DATAGO)를 넣었고 빈 칸을 채우려는 사용자 요청
     owner: "kbj.services.collectors.fsc_daily:run"
     schedule: {cron: "10 13 * * 1-5", when: trading_day}
     retry: {max: 3, backoff_s: [1800]}
@@ -484,6 +489,7 @@ jobs:
 
   - name: market_stats.kofia
     phase: P5
+    enabled: true               # 2026-10-18 로컬 운영에서 켬 — 키(ECOS·FRED·DATAGO)를 넣었고 빈 칸을 채우려는 사용자 요청
     owner: "kbj.services.collectors.kofia:run"
     schedule: {cron: "30 13 * * 1-5", when: trading_day}
     retry: {max: 3, backoff_s: [1800]}
@@ -830,6 +836,7 @@ jobs:
 
   - name: macro.evening
     phase: P5
+    enabled: true               # 2026-10-18 로컬 운영에서 켬 — 키(ECOS·FRED·DATAGO)를 넣었고 빈 칸을 채우려는 사용자 요청
     owner: "kbj.services.collectors.macro:evening"
     schedule: {cron: "0 17 * * 1-5", when: trading_day}
     retry: {max: 3, backoff_s: [1800]}
@@ -843,6 +850,7 @@ jobs:
 
   - name: macro.evening_prv
     phase: P5
+    enabled: true               # 2026-10-18 로컬 운영에서 켬 — 키(ECOS·FRED·DATAGO)를 넣었고 빈 칸을 채우려는 사용자 요청
     owner: "kbj.services.collectors.macro_prv:evening"
     schedule: {cron: "5 17 * * 1-5", when: trading_day}
     retry: {max: 3, backoff_s: [1800]}

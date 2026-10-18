@@ -281,6 +281,7 @@ last_weekday() {
 # 작업 하나를 돌리고 성공·실패를 판정한다. 날짜를 정할 수 없다고 하면 지난 평일로 한 번 더. 결과는 FILL_OK·FILL_FAIL 에 쌓는다
 FILL_OK=""
 FILL_FAIL=""
+FILL_SKIP=""
 fill_try() {
   local job="$1" out
   shift
@@ -291,6 +292,9 @@ fill_try() {
   if printf '%s\n' "$out" | grep -qE '^(failed|retry|오류)'; then
     FILL_FAIL="$FILL_FAIL $job"
     kbj_warn "$job — 실패: $(printf '%s\n' "$out" | grep -E '^(failed|retry|오류)' | head -1)"
+  elif printf '%s\n' "$out" | grep -qE '^skipped' && ! printf '%s\n' "$out" | grep -qE '^ok'; then
+    FILL_SKIP="$FILL_SKIP $job"   # 등록부에서 꺼진 작업('planned') 또는 할 일이 없음 — 성공으로 세지 않는다
+    kbj_warn "$job — 건너뜀(꺼진 작업이거나 할 일이 없다)"
   else
     FILL_OK="$FILL_OK $job"
     kbj_ok "$job"
@@ -308,15 +312,19 @@ cmd_fill_all() {
   done
   if [[ -n "$missing" ]]; then kbj_warn "비어 있는 키:$missing — 해당 칸은 채워지지 않는다($(kbj_cmd keys) 이름 으로 넣는다)"; else kbj_ok "선택 키가 모두 있다"; fi
   kbj_step "미국장·매크로·신용·테마·지도 수집(기준 날짜 $FILL_DAY)"
-  for job in us.universe us.eod macro.morning macro.morning_prv macro.monthly macro.monthly_prv \
-    macro.evening macro.evening_prv market_stats.kofia theme.master_sync theme.classes_sync trade.map_load; do
+  # 미국 유니버스는 기준일 날짜로 만들어 둬야 그날 일봉(us.eod)이 받는다
+  fill_try us.universe --as-of "$FILL_DAY"
+  fill_try us.eod --as-of "$FILL_DAY"
+  for job in macro.morning macro.morning_prv macro.monthly macro.monthly_prv \
+    macro.evening macro.evening_prv market_stats.kofia market.fsc_daily theme.master_sync theme.classes_sync trade.map_load; do
     fill_try "$job"
   done
-  kbj_step "진단·테마 감시(선행 작업 기록을 보지 않고 $FILL_DAY 기준으로)"
-  for job in diag.public diag.daily themes.monitor; do
+  kbj_step "진단(선행 작업 기록을 보지 않고 $FILL_DAY 기준으로)"
+  for job in diag.public diag.daily; do
     fill_try "$job" --as-of "$FILL_DAY" --no-deps
   done
   kbj_say "성공:${FILL_OK:- 없음}"
+  [[ -n "$FILL_SKIP" ]] && kbj_warn "건너뜀:$FILL_SKIP"
   if [[ -n "$FILL_FAIL" ]]; then
     kbj_warn "실패:$FILL_FAIL — 대부분 키가 없거나(위 안내) 장이 열려야 값이 생기는 작업이다. 브라우저를 새로 고쳐 남은 빈 칸을 본다"
     return 1

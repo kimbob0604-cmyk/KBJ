@@ -72,6 +72,14 @@ def seeded_runs() -> MemoryRunLog:
         ("etf.report", "2026-10-06"),  # 08:20
     ):
         runs.record(RunRecord(f"{job}:{as_of}:1", job, as_of, 1, "ok"))
+    # 2026-10-18 에 켠 매크로(06:20 아침 둘·09:10 월간·09:15 월간 로그인)
+    for job, as_of in (
+        ("macro.morning", "2026-10-06"),
+        ("macro.morning_prv", "2026-10-06"),
+        ("macro.monthly", "2026-10-06"),
+        ("macro.monthly_prv", "2026-09"),
+    ):
+        runs.record(RunRecord(f"{job}:{as_of}:1", job, as_of, 1, "ok"))
     # P6(웨이브 3 WRAP 이 켰다 — docs/p6_design.md D-P6-20): 매핑표 07:35. trade.derive 는
     # 14~20일만, trade.stock_index 는 21:00 이라 10:30 기준 끝났어야 할 실행이 없다
     runs.record(RunRecord("trade.map_load:2026-10-06:1", "trade.map_load", "2026-10-06", 1, "ok"))
@@ -169,6 +177,9 @@ def test_holiday_has_no_missed_trading_day_runs() -> None:
         ("filings.derive", "11:40"),
     ):
         as_of = f"2026-10-05T{hhmm}"
+        runs.record(RunRecord(f"{job}:{as_of}:1", job, as_of, 1, "ok"))
+    # 매크로 월간(when: always)은 휴장일에도 돈다 — 09:10 월간·09:15 월간 로그인(월 단위 as_of)
+    for job, as_of in (("macro.monthly", "2026-10-05"), ("macro.monthly_prv", "2026-09")):
         runs.record(RunRecord(f"{job}:{as_of}:1", job, as_of, 1, "ok"))
     notes = Notes()
     problems = wd.find_problems(REG, runs, [], healthy, KR, US, hol)
