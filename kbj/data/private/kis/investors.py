@@ -268,8 +268,10 @@ def parse_market_investor(
     latest = max(d for d, _ in dated)
     checked = day if day is not None and any(d == day for d, _ in dated) else latest
     if all(all_zero(r) for d, r in dated if d == checked):
+        live = sum(1 for _, r in dated if not all_zero(r))
         raise KisEmpty(
             f"{what}: {checked} 개인·외국인·기관 순매수가 전부 0 — 질의가 성립하지 않은 것으로 본다"
+            f"(응답 {len(dated)}행 {min(d for d, _ in dated)}~{latest}, 0 아닌 행 {live})"
         )
     kept = [(d, r) for d, r in dated if not all_zero(r)]
     return _days(market, kept, MARKET_FIELDS, source=source, venue=venue, quality=quality)
