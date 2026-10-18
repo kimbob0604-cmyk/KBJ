@@ -99,3 +99,10 @@ def test_summary_and_sectors_with_past_date(world: World, authed: TestClient) ->
         c["as_of"] is None or c["as_of"][:10] <= past.isoformat() for c in sec["data"]["cells"]
     )
     assert authed.get("/api/market/summary?date=2026-13-01").status_code == 422
+
+
+def test_sector_names_carry_the_market_for_krx_name_codes() -> None:
+    from kbj.services.api.readers.market import _sector_name
+
+    assert _sector_name("건설") == "코스피 건설"
+    assert _sector_name("코스닥건설") == "코스닥건설"

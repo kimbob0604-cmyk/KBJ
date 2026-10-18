@@ -126,6 +126,7 @@ def test_종목별_실패와_예산_닫힘() -> None:
     st.extra["dart"] = Broken(BudgetExhausted("dart", CLOCK.date(), 18000, 18000))
     res = job.run(st.ctx("reports.dart_excel"))
     assert res.status == "failed" and res.detail["stopped"] == "BudgetExhausted"
+    assert "BudgetExhausted" in res.detail["reason"]
     assert any(r.status == "failed" for r in st.claims.rows)
 
 
@@ -134,4 +135,5 @@ def test_엑셀_크기_상한() -> None:
     st.reports_cfg = st.reports_cfg.model_copy(update={"xlsx_max_bytes": 1000})
     res = job.run(st.ctx("reports.dart_excel"))
     assert res.status == "failed" and res.detail["failures"] == 2
+    assert "2종목 실패" in res.detail["reason"]
     assert st.repos.fin.report("994010") is None

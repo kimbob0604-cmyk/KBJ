@@ -309,4 +309,11 @@ def run(ctx: JobContext) -> JobResult:
     if stopped:
         detail["stopped"] = stopped
     status: Literal["ok", "failed"] = "failed" if tally.failures or stopped else "ok"
+    if status == "failed":
+        # 실행 기록(ops.job_run)에 사유가 남게 — 없으면 '키 0개를 받지 못했다' 만 보인다
+        detail["reason"] = (
+            f"중단: {stopped}(예산·한도 — 다음 실행이 이어 받는다)"
+            if stopped
+            else f"{len(tally.failures)}종목 실패: {', '.join(tally.failures[:3])}"
+        )
     return JobResult(status, collected=ctx.keys, rows=tally.counts.get("built", 0), detail=detail)

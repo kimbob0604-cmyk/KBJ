@@ -51,7 +51,7 @@ def test_repo_markets_has_the_design_defaults() -> None:
     assert m.reconcile.close_tol_pct == 0.0 and m.reconcile.turnover_tol_pct == 0.5
     assert set(m.market.intraday_indices) == {"0001", "1001", "2001"}
     # KRX 지수 일별의 공백 뺀 이름(2026-10-18 DB 실측) — 이름이 겹치지 않는다
-    assert len(m.market.sector_indices) == 26 and "건설" in m.market.sector_indices
+    assert len(m.market.sector_indices) == 46 and "코스닥건설" in m.market.sector_indices
     assert m.ribbon.semis == ("005930", "000660")
 
 

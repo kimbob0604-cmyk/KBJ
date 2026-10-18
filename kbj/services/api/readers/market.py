@@ -290,6 +290,10 @@ def market_summary(ctx: ReadContext, *, day: date | None = None) -> Envelope[Mar
     )
 
 
+def _sector_name(code: str) -> str:
+    return code if code.startswith("코스닥") else f"코스피 {code}"
+
+
 def market_sectors(
     ctx: ReadContext, *, period: int, day: date | None = None
 ) -> Envelope[SectorHeat]:
@@ -302,7 +306,9 @@ def market_sectors(
     end, with_live = _end_day(ctx, day)
     bars = ctx.repos.market.index_series(codes, end, period + 1)
     live = ctx.repos.market.sector_quotes(day_start(end), now) if with_live else []
-    cells = sector_heat(bars, live, codes, period)
+    # 코드가 KRX 지수 이름이면 화면 이름은 시장을 붙인다(접두어 없는 이름 = 코스피 목록)
+    names = {c: _sector_name(c) for c in codes if not c.isascii()}
+    cells = sector_heat(bars, live, codes, period, names=names)
     rows = [
         SectorCell(
             code=c.code,
