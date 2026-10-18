@@ -249,8 +249,13 @@ def parse_market_investor(
     venue: str = "KRX",
     source: str = SOURCE,
     quality: Quality = Quality.OK,
+    day: date | None = None,
 ) -> list[InvestorDay]:
-    """FHPTJ04040000 `output1`(없으면 `output`) → 시장 코드(0001·1001)를 code 로 한 행들."""
+    """FHPTJ04040000 `output1`(없으면 `output`) → 시장 코드(0001·1001)를 code 로 한 행들.
+
+    `day` 를 주면 '전부 0' 검사를 그 날짜 행에 한다(주말·휴일에 지난 거래일을 받을 때 응답 맨 위의
+    오늘 날짜 0 행이 지난 날을 막지 않게). 안 주면 응답에서 가장 최근 날짜.
+    """
     what = f"FHPTJ04040000 {market}"
     rows = rows_of(body, "output1", "output", what=what)
     if not rows:
@@ -264,9 +269,10 @@ def parse_market_investor(
         return bool(present) and all(v == 0 for v in present)
 
     latest = max(d for d, _ in dated)
-    if all(all_zero(r) for d, r in dated if d == latest):
+    checked = day if day is not None and any(d == day for d, _ in dated) else latest
+    if all(all_zero(r) for d, r in dated if d == checked):
         raise KisEmpty(
-            f"{what}: {latest} 개인·외국인·기관 순매수가 전부 0 — 질의가 성립하지 않은 것으로 본다"
+            f"{what}: {checked} 개인·외국인·기관 순매수가 전부 0 — 질의가 성립하지 않은 것으로 본다"
         )
     kept = [(d, r) for d, r in dated if not all_zero(r)]
     return _days(market, kept, MARKET_FIELDS, source=source, venue=venue, quality=quality)

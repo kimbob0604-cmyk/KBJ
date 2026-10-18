@@ -245,6 +245,21 @@ def test_market_all_three_zero_on_latest_day_is_not_a_fact() -> None:
         parse_market_investor(body, "0001")
 
 
+def test_market_requested_day_is_checked_when_newer_zero_row_is_on_top() -> None:
+    """주말에 금요일을 받을 때 맨 위 일요일 0 행이 금요일을 막지 않는다."""
+    body = {
+        **OK,
+        "output1": [
+            market_row("20261018", "0", "0", "0"),
+            market_row("20261016", "-1", "2", "-1"),
+        ],
+    }
+    rows = parse_market_investor(body, "0001", day=date(2026, 10, 16))
+    assert {r.date for r in rows} == {date(2026, 10, 16)}
+    with pytest.raises(KisEmpty, match="전부 0"):
+        parse_market_investor(body, "0001", day=date(2026, 10, 18))
+
+
 def test_market_older_all_zero_rows_are_dropped() -> None:
     body = {
         **OK,

@@ -264,7 +264,7 @@ def _market_investor(c: _Ctx, venue: str) -> int:
     for market in MARKETS:
         body = _get(c, "market_investor", params_market_investor(market, c.day, venue),
                     f"FHPTJ04040000 {market}")  # fmt: skip
-        today = on_day(parse_market_investor(body, market, venue=venue), c.day)
+        today = on_day(parse_market_investor(body, market, venue=venue, day=c.day), c.day)
         if not today:
             raise NotReady(f"FHPTJ04040000 {market}: {c.day} 행이 아직 없다")
         out += today
