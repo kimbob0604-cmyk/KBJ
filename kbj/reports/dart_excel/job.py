@@ -35,7 +35,7 @@ from kbj.config.fin import ReportsConfig, load_reports
 from kbj.core.fin_rows import ReportRow
 from kbj.core.time import KST
 from kbj.data.budget import BudgetExhausted
-from kbj.data.public.dart.client import DartClient, DartQuotaExceeded
+from kbj.data.public.dart.client import DartClient, DartError, DartQuotaExceeded
 from kbj.data.spec import DataKey
 from kbj.engines.financials.costs import find_periodic_reports, load_mapping
 from kbj.engines.financials.orders import CONTRACT_PATTERNS
@@ -60,6 +60,7 @@ ENGINE_VERSION: Final = "dart_excel/1"  # 빌더·파이프라인을 바꾸면 �
 SOURCE: Final = "DART"
 DATASET: Final = "report_inputs"
 _STOP: Final = (BudgetExhausted, DartQuotaExceeded)
+_NO_DATA: Final = frozenset({"013", "014"})  # 조회된 데이터 없음·파일 없음
 
 
 class ReportTooLarge(ValueError):
@@ -297,6 +298,13 @@ def run(ctx: JobContext) -> JobResult:
                 claims.fail(key, ctx.run_id, type(exc).__name__, now)
                 stopped = type(exc).__name__
                 break
+            except DartError as exc:
+                claims.fail(key, ctx.run_id, f"{type(exc).__name__}: {exc}"[:300], now)
+                if exc.code in _NO_DATA:
+                    # DART 에 그 원문·자료가 없다(013·014) — 그 종목만 건너뛴다. 내일 다시 본다
+                    tally.bump("skipped.dart_no_data")
+                else:
+                    tally.failures.append(f"{code}: {type(exc).__name__}")
             except Exception as exc:
                 claims.fail(key, ctx.run_id, f"{type(exc).__name__}: {exc}"[:300], now)
                 tally.failures.append(f"{code}: {type(exc).__name__}")

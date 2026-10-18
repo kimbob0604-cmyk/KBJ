@@ -130,6 +130,27 @@ def test_종목별_실패와_예산_닫힘() -> None:
     assert any(r.status == "failed" for r in st.claims.rows)
 
 
+def test_DART_자료_없음은_그_종목만_건너뛴다() -> None:
+    from kbj.data.public.dart.client import DartError
+
+    st = _state()
+    real = st.client
+
+    class NoFile:
+        def __getattr__(self, name: str) -> Any:
+            return getattr(real, name)
+
+        def disclosures(self, corp: str, *a: Any, **k: Any) -> Any:
+            if corp == "99400110":
+                raise DartError("014", "파일이 존재하지 않습니다.", "document.xml")
+            return real.disclosures(corp, *a, **k)
+
+    st.extra["dart"] = NoFile()
+    res = job.run(st.ctx("reports.dart_excel"))
+    assert res.status == "ok" and res.detail["skipped.dart_no_data"] == 1
+    assert any(r.status == "failed" for r in st.claims.rows)  # 내일 다시 본다
+
+
 def test_엑셀_크기_상한() -> None:
     st = _state()
     st.reports_cfg = st.reports_cfg.model_copy(update={"xlsx_max_bytes": 1000})
