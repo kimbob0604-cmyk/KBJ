@@ -276,6 +276,29 @@ def test_halted_stock_without_a_today_row_does_not_block_the_key() -> None:
     assert halted not in repos.flows.days([halted], DAY, DAY)
 
 
+def test_krx_zero_volume_without_a_today_row_does_not_block_the_key() -> None:
+    """KIS 마감 스냅이 없는 날에도 KRX 일별 거래량이 0 이면 '당일 행 없음'은 사실이다."""
+    from kbj.core.rows import Snap
+
+    quiet = SYMBOLS[5]
+
+    def hook(tr: str, params: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
+        if tr == "FHKST01010900" and params.get("FID_INPUT_ISCD") == quiet:
+            body["output"] = [r for r in body["output"] if r["stck_bsop_date"] != "20261007"]
+        return body
+
+    repos, _server, kis = setup(hook)
+    repos.market.upsert_snapshots(
+        [Snap(quiet, DAY, None, "KOSPI", None, 1.0, 0.0, 0, 0, False, None, None, None,
+              "krx", "KRX", Quality.OK)],
+        loaded_by="t",
+    )  # fmt: skip
+    res = run(repos, kis, keys("stock_investor_daily"))
+    assert res.status == "ok", res.detail
+    d = res.detail["stock_investor_daily"]
+    assert quiet in d["no_trade_sample"] and "KRX" in d["no_trade_sample"][quiet]
+
+
 def test_universe_takes_a_missing_market_from_an_older_day_and_says_so() -> None:
     """그날 코스닥 기본정보만 실패했다 — 코스닥이 조용히 빠지지 않고 전날 목록으로 받고 적는다.
     'KOSDAQ GLOBAL' 같은 소속 이름도 코스닥으로 센다(검증에서 찾은 경계)."""

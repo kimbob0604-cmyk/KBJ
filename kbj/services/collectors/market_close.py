@@ -309,7 +309,8 @@ def _no_trade_today(c: _Ctx, venue: str) -> dict[str, str]:
 
     거래정지(`halted`)이거나 거래량 0 인 종목은 투자자 일별에 당일 행이 오지 않을 수 있다
     [실측 필요 #22]. 그 종목의 '당일 행 없음'은 공표 지연이 아니라 사실이라 재시도로 기다리지
-    않는다(행은 만들지 않는다 — 0 으로 채우지 않는다). 스냅이 없으면 모른다 — 여기 넣지 않는다."""
+    않는다(행은 만들지 않는다 — 0 으로 채우지 않는다). 스냅이 없으면 모른다 — 여기 넣지 않는다.
+    KIS 스냅이 없어도 KRX 일별 거래량 0 이면 같다(지난 날 재수집·ETF)."""
     out: dict[str, str] = {}
     for s in c.repos.market.snapshots(c.day, source="kis"):
         if s.venue != venue:
@@ -318,6 +319,9 @@ def _no_trade_today(c: _Ctx, venue: str) -> dict[str, str]:
             out[s.code] = "거래정지(KIS 현재가 상태)"
         elif s.volume == 0:
             out[s.code] = "거래량 0(KIS 현재가)"
+    for s in c.repos.market.snapshots(c.day, source="krx"):
+        if s.code not in out and s.venue == venue and s.volume == 0:
+            out[s.code] = "거래량 0(KRX 일별)"  # KIS 스냅이 없는 날(지난 날 재수집·ETF)에도 안다
     return out
 
 
