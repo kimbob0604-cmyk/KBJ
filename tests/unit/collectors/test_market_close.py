@@ -8,7 +8,7 @@ test_자릿수가_틀리면_리포트를_쓰지_않는다 — 여기서는 '쓰�
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, timedelta
 from typing import Any, cast
 
 import pytest
@@ -53,9 +53,11 @@ def setup(hook: Any = None) -> tuple[Any, FakeKisServer, DirectKis]:
     return repos, server, DirectKis(server, hook=hook)
 
 
-def run(repos: Any, kis: DirectKis, ks: list[DataKey], attempt: int = 1) -> Any:
+def run(
+    repos: Any, kis: DirectKis, ks: list[DataKey], attempt: int = 1, now: datetime = NOW
+) -> Any:
     return market_close.run(
-        ctx("market.close_collect", AS_OF, ks, now=NOW, repos=repos, kis=kis, attempt=attempt)
+        ctx("market.close_collect", AS_OF, ks, now=now, repos=repos, kis=kis, attempt=attempt)
     )
 
 
@@ -212,6 +214,43 @@ def test_market_all_zero_is_a_failure() -> None:
     res = run(repos, kis, keys("market_investor_daily"))
     assert res.status == "failed"
     assert "KisEmpty" in res.detail["reason"]
+
+
+def test_market_zero_day_still_keeps_the_older_days_the_response_carries() -> None:
+    """그날이 0 이면 키는 실패지만(질의 불성립) 응답이 준 지난 날들은 사실이라 저장한다."""
+    zeroed = "20261007"
+
+    def hook(tr: str, params: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
+        if tr == "FHPTJ04040000":
+            for r in body["output1"]:
+                if r["stck_bsop_date"] == zeroed:
+                    for k in list(r):
+                        if k.endswith("_tr_pbmn"):
+                            r[k] = "0"
+        return body
+
+    repos, _server, kis = setup(hook)
+    res = run(repos, kis, keys("market_investor_daily"))
+    assert res.status == "failed"
+    assert "KisEmpty" in res.detail["reason"]
+    kept = {r.date for rows in repos.flows.market_days(DAY, 30).values() for r in rows}
+    assert kept and DAY not in kept
+
+
+def test_stale_day_without_a_row_is_no_trade_not_a_wait() -> None:
+    """이틀 넘게 지난 날의 '당일 행 없음'은 공표 지연이 아니라 사실이다."""
+    quiet = SYMBOLS[5]
+
+    def hook(tr: str, params: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
+        if tr == "FHKST01010900" and params.get("FID_INPUT_ISCD") == quiet:
+            body["output"] = [r for r in body["output"] if r["stck_bsop_date"] != "20261007"]
+        return body
+
+    repos, _server, kis = setup(hook)
+    late = NOW + timedelta(days=3)
+    res = run(repos, kis, keys("stock_investor_daily"), now=late)
+    assert res.status == "ok", res.detail
+    assert quiet in res.detail["stock_investor_daily"]["no_trade_sample"]
 
 
 def test_venue_outside_config_is_not_called() -> None:

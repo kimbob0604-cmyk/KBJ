@@ -44,10 +44,12 @@ from typing import Any, Final
 
 from kbj.config.markets import MarketsConfig
 from kbj.core.rows import Bar, IntradayInvestor, InvestorDay, Snap, UniverseRow
+from kbj.core.time import KST
 from kbj.data.limits import load_limits
 from kbj.data.private.kis.investors import (
     INST_FOREIGN_WHO,
     closes_of,
+    market_history,
     merge_inst_foreign,
     on_day,
     params_inst_foreign,
@@ -60,7 +62,7 @@ from kbj.data.private.kis.investors import (
     recent,
     unit_check,
 )
-from kbj.data.private.kis.parse import KisRejected
+from kbj.data.private.kis.parse import KisEmpty, KisRejected
 from kbj.data.private.kis.quotes import bar_from_quote, params_quote, parse_quote
 from kbj.data.private.kis.token import TokenError
 from kbj.data.ratelimit import Priority, RateLimitTimeout
@@ -103,6 +105,8 @@ ORDER: Final[tuple[str, ...]] = (
 PERMANENT_MAX_RATIO: Final = 0.05  # 종목 고유 실패 허용 비율 [확인 필요]
 PERMANENT_MIN: Final = 3  # 작은 목록에서도 이만큼은 넘어간다
 SAMPLE_MAX: Final = 5
+STALE_AFTER_DAYS: Final = 2  # 이만큼 지난 날의 '행 없음'은 공표 지연이 아니라 사실이다
+MARKET_HISTORY_DAYS: Final = 450  # 시장 TR 은 최근 300영업일을 준다 — 받은 만큼 저장
 HISTORY_DAYS: Final = 45  # 종목 TR 이 주는 최근 한 달 남짓을 같이 저장 — 20일 스크리너가 바로 찬다
 UNIVERSE_LOOKBACK: Final = 10  # 시장 하나가 빠진 날 더 이전 유니버스를 찾는 횟수 [확인 필요]
 
@@ -263,14 +267,25 @@ def _inst_foreign_top(c: _Ctx, venue: str) -> int:
 
 def _market_investor(c: _Ctx, venue: str) -> int:
     out: list[InvestorDay] = []
+    failure: Exception | None = None
     for market in MARKETS:
         body = _get(c, "market_investor", params_market_investor(market, c.day, venue),
                     f"FHPTJ04040000 {market}")  # fmt: skip
-        today = on_day(parse_market_investor(body, market, venue=venue, day=c.day), c.day)
+        try:
+            rows = parse_market_investor(body, market, venue=venue, day=c.day)
+        except KisEmpty as e:
+            # 그날이 0 이어도(주말·장 마감 직후) 응답이 준 지난 날들은 사실이라 저장한다
+            failure = failure or e
+            out += recent(market_history(body, market, venue=venue), c.day, MARKET_HISTORY_DAYS)
+            continue
+        today = on_day(rows, c.day)
         if not today:
-            raise NotReady(f"FHPTJ04040000 {market}: {c.day} 행이 아직 없다")
-        out += today
-    c.repos.flows.upsert_market_days(out, loaded_by=c.job, received_at=c.now)
+            failure = failure or NotReady(f"FHPTJ04040000 {market}: {c.day} 행이 아직 없다")
+        out += recent(rows, c.day, MARKET_HISTORY_DAYS)
+    if out:
+        c.repos.flows.upsert_market_days(out, loaded_by=c.job, received_at=c.now)
+    if failure is not None:
+        raise failure
     return len(out)
 
 
@@ -336,6 +351,7 @@ def _investors(c: _Ctx, venue: str, targets: Sequence[tuple[str, str | None]], l
     rows: list[InvestorDay] = []
     closes: dict[tuple[str, date], float] = {}
     no_trade = _no_trade_today(c, venue)
+    stale = (c.now.astimezone(KST).date() - c.day).days >= STALE_AFTER_DAYS
     for code, _name in todo:
         try:
             body = _get(c, "stock_investor", params_stock_investor(code, venue),
@@ -344,6 +360,9 @@ def _investors(c: _Ctx, venue: str, targets: Sequence[tuple[str, str | None]], l
             today = on_day(parsed, c.day)
             if not today and code in no_trade:
                 tally.no_trade[code] = f"{c.day} 행 없음 — {no_trade[code]}"
+                continue
+            if not today and stale:
+                tally.no_trade[code] = f"{c.day} 행 없음 — 이틀 넘게 지나도 공표가 없다"
                 continue
             if not today:
                 raise NotReady(f"FHKST01010900 {code}: {c.day} 행이 아직 없다")

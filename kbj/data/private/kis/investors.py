@@ -263,10 +263,7 @@ def parse_market_investor(
     dated = _dated(rows, what)
     _require_any([r for _, r in dated], MARKET_FIELDS, what)
 
-    def all_zero(r: Mapping[str, Any]) -> bool:
-        vals = [_values(r, STOCK_FIELDS[i])[0] for i in _THREE]
-        present = [v for v in vals if v is not None]
-        return bool(present) and all(v == 0 for v in present)
+    all_zero = _all_zero_three
 
     latest = max(d for d, _ in dated)
     checked = day if day is not None and any(d == day for d, _ in dated) else latest
@@ -276,6 +273,29 @@ def parse_market_investor(
         )
     kept = [(d, r) for d, r in dated if not all_zero(r)]
     return _days(market, kept, MARKET_FIELDS, source=source, venue=venue, quality=quality)
+
+
+def market_history(
+    body: Mapping[str, Any],
+    market: str,
+    *,
+    venue: str = "KRX",
+    source: str = SOURCE,
+    quality: Quality = Quality.OK,
+) -> list[InvestorDay]:
+    """FHPTJ04040000 응답에서 '전부 0' 아닌 날들만 — 최근 날이 0 이어도 지난 날을 건진다."""
+    rows = rows_of(body, "output1", "output", what=f"FHPTJ04040000 {market}")
+    if not rows:
+        return []
+    dated = _dated(rows, f"FHPTJ04040000 {market}")
+    kept = [(d, r) for d, r in dated if not _all_zero_three(r)]
+    return _days(market, kept, MARKET_FIELDS, source=source, venue=venue, quality=quality)
+
+
+def _all_zero_three(r: Mapping[str, Any]) -> bool:
+    vals = [_values(r, STOCK_FIELDS[i])[0] for i in _THREE]
+    present = [v for v in vals if v is not None]
+    return bool(present) and all(v == 0 for v in present)
 
 
 def parse_inst_foreign_total(
