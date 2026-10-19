@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(**/*token*.json)",
+      "Read(./state/**)",
+      "Read(./cache/**)",
+      "Bash(cat .env*)",
+      "Bash(bash scripts/local/kbj.sh keys*)",
+      "Bash(bash scripts/local/kbj.sh password*)",
+      "Bash(bash scripts/local/kbj.sh telegram enable-send*)"
+    ],
+    "allow": [
+      "Bash(bash scripts/local/kbj.sh status*)",
+      "Bash(bash scripts/local/kbj.sh audit*)",
+      "Bash(bash scripts/local/kbj.sh job *)",
+      "Bash(bash scripts/local/kbj.sh fill-all*)",
+      "Bash(bash scripts/local/kbj.sh probe-kosis*)",
+      "Bash(bash scripts/local/kbj.sh start*)",
+      "Bash(bash scripts/local/kbj.sh update*)",
+      "Bash(curl -s http://127.0.0.1:8000/*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git pull*)",
+      "Bash(uv run ruff *)",
+      "Bash(uv run pyright*)",
+      "Bash(uv run pytest *)",
+      "Bash(npm --prefix web run *)"
+    ]
+  }
+}

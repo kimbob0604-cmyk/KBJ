@@ -17,6 +17,7 @@
 #   bash scripts/local/kbj.sh probe-kosis       # 통계청(KOSIS) 표의 항목 코드표를 찍는다(키는 안 보임) — 매크로 KOSIS 칸을 켜는 데 쓴다
 #   bash scripts/local/kbj.sh fill-dart         # 종목 상세(8)의 재무·공시용: DART 회사코드·프로필·재무 5년 백필·밸류에이션 재계산(DART 키 필요)
 #   bash scripts/local/kbj.sh job <작업> [--as-of 값]   # 작업 하나를 지금 한 번(예: job market.close_collect)
+#   bash scripts/local/kbj.sh audit [--show 경로]   # 화면 API 전체 점검(상태·기준 시각·빈 칸) — 로그인 없이, 값은 --show 로 하나씩
 #   bash scripts/local/kbj.sh open         # 브라우저로 열기
 #
 # 맥 기본 bash(3.2)에서 돈다. 키 값은 화면·로그에 내지 않는다(lib.sh 규칙 그대로). 데이터 볼륨은 어느 명령도 지우지 않는다.
@@ -29,7 +30,7 @@ source "$here/../vm/lib.sh"
 URL="http://127.0.0.1:8000"
 AWAKE_PID_FILE="${KBJ_AWAKE_PID_FILE:-$HOME/.kbj-awake.pid}"
 
-usage() { sed -n '2,22p' "$0"; }
+usage() { sed -n '2,23p' "$0"; }
 
 # 도커 설정 점검(메모리 5GB 미만이면 서비스가 죽을 수 있다 — 알려만 준다)
 check_docker_resources() {
@@ -402,6 +403,11 @@ main() {
       kbj_compose exec -T -e MPLCONFIGDIR=/tmp/mpl scheduler python -m kbj.services.macro_probe
       ;;
     fill-dart) cmd_fill_dart ;;
+    audit)
+      kbj_docker_init
+      [[ -n "$(kbj_compose ps -q --status running api 2>/dev/null)" ]] || kbj_die "api 가 떠 있지 않다 — $(kbj_cmd start)"
+      kbj_compose exec -T api python -m kbj.services.api audit "$@"
+      ;;
     job) cmd_job "$@" ;;
     awake) cmd_awake "$@" ;;
     auto) cmd_auto "$@" ;;

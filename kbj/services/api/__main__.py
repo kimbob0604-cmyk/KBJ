@@ -118,6 +118,40 @@ def _serve() -> int:  # pragma: no cover — 운영 진입점(uvicorn·Postgres�
     return 0
 
 
+def _audit(args: argparse.Namespace, out: IO[str]) -> int:  # pragma: no cover — Postgres·Redis 필요
+    from dataclasses import asdict
+
+    from kbj.config.settings import Settings
+    from kbj.core.time import utcnow
+    from kbj.services.api.app import create_app
+    from kbj.services.api.audit import render, run_audit, show
+    from kbj.services.runtime.heartbeat import connect_redis
+    from kbj.store.db import connect
+    from kbj.store.repos import pg_repos
+
+    settings = Settings()
+    if settings.redis_url is None or settings.database_url is None:
+        print("KBJ_DATABASE_URL·KBJ_REDIS_URL 이 필요하다", file=sys.stderr)
+        return 2
+
+    def conn() -> Any:
+        return connect(settings, service=SERVICE)
+
+    app = create_app(
+        settings, redis=connect_redis(settings.redis_url), repos=pg_repos(conn), static_dir=False
+    )
+    if args.show:
+        print(show(app, args.show), file=out)
+        return 0
+    rows = run_audit(app, utcnow, args.code)
+    if args.json:
+        for r in rows:
+            print(json.dumps(asdict(r), ensure_ascii=False), file=out)
+    else:
+        print(render(rows), file=out)
+    return 1 if any(r.status >= 500 for r in rows) else 0
+
+
 def main(
     argv: Sequence[str] | None = None,
     *,
@@ -132,6 +166,10 @@ def main(
     op.add_argument("--check", action="store_true", help="낡았으면 종료 코드 1")
     op.add_argument("--out", help="쓸 경로(기본 web/src/api/openapi.json)")
     sub.add_parser("hash-password", help="KBJ_WEB_PASSWORD_HASH 값 만들기(stdout 에만)")
+    au = sub.add_parser("audit", help="화면 API 전체 점검(상태·기준 시각·품질·빈 칸)")
+    au.add_argument("--code", default="005930", help="{code} 경로에 넣을 종목")
+    au.add_argument("--show", help="이 경로 하나의 응답 전체를 찍는다(예 /api/market/summary)")
+    au.add_argument("--json", action="store_true", help="표 대신 JSON 줄")
     args = ap.parse_args(argv)
     o = out or sys.stdout
     e = err or sys.stderr
@@ -139,6 +177,8 @@ def main(
         return _openapi(args, o)
     if args.cmd == "hash-password":
         return _hash_password(o, e, ask)
+    if args.cmd == "audit":
+        return _audit(args, o)
     return _serve()
 
 
