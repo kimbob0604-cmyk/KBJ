@@ -12,8 +12,8 @@ describe('tidy', () => {
     expect(tidy('지수 2001 자료 없음')).toBe('지수 2001 자료 없음');
   });
 
-  it('꺼 둔 작업·개발 단계 문구는 통째로 한 줄', () => {
-    expect(tidy('아직 없음 — program.daily 15:50(확인 전 #40)')).toBe(NOT_PROVIDED);
+  it('개발 단계 문구는 통째로 한 줄, 꼬리표만 든 문구는 꼬리표만 지운다', () => {
+    expect(tidy('아직 없음 — program.daily 15:50(확인 전 #40)')).toBe('아직 없음 — 15:50');
     expect(tidy('확인 전 — 이 시장 조합은 실측(#39) 뒤에 켠다.')).toBe(NOT_PROVIDED);
   });
 
