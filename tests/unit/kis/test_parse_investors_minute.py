@@ -63,8 +63,14 @@ def test_tr_and_params() -> None:
         "FID_INPUT_ISCD": "K2I",
         "FID_INPUT_ISCD_2": "F001",
     }
-    with pytest.raises(ValueError, match="#39"):
+    with pytest.raises(ValueError, match="코드를 모르는"):
         params_market_minute("", "F001")
+    # 현물·주식선물 — KIS 공식 Postman 샘플의 코드 표
+    assert params_market_minute("KSP", "0001") == {
+        "FID_INPUT_ISCD": "KSP",
+        "FID_INPUT_ISCD_2": "0001",
+    }
+    assert params_market_minute("999", "S001")["FID_INPUT_ISCD"] == "999"
     assert VALUE_UNIT == "백만원"
 
 

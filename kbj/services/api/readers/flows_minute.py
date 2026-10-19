@@ -1,49 +1,57 @@
 """장중 투자자 1분 reader — `/api/flows/market-minute`(P5 F2 — docs/p5_design.md §5, F2 §0-1·§3.5).
 
 `prv_gex.investor_flow`(대금 **백만원** — GX 계약)를 읽어 **원**으로 바꾸고(D-P5-21 ②), 수집 범위
-분 축(개장 ~ 마감 + 10분)에 맞춰 선을 낸다. 빈 분은 `None`(잇지 않는다 — 보간 금지). 계산은 순수
-엔진 `kbj.engines.flows.minute`(7카드·검산 실패 분 제외)가 한다.
+분 축(개장 ~ 마감 + 10분)에 맞춰 선을 낸다. 빈 분은 `None`(서버는 값을 지어내지 않는다 — 앞뒤를
+잇는 것은 화면의 몫이고, 화면은 이은 구간을 점선으로 구분한다). 계산은 순수 엔진
+`kbj.engines.flows.minute`(7카드·검산 실패 분 제외)가 한다. KIS TR 이 분 이력을 주지 않아(오늘 누적
+한 줄) 못 받은 분은 뒤에서 채울 수 없다(`kbj.data.private.kis.investors_minute` 머리말).
 
 - `market` = 탭 id(`config/markets.yaml flows.minute.pairs[].tab`). 모르는 탭은 404 `unknown_code`.
 - 화면 상태(`status`):
-  - `not_confirmed` — 그 탭의 조합이 꺼져 있다(코드 [확인 필요 #39] — '확인 전'). 값을 지어내지
-    않는다.
+  - `not_confirmed` — 그 탭의 조합이 꺼져 있다('확인 전'). 값을 지어내지 않는다.
   - `holiday` — 오늘 휴장. 직전 거래일 선을 보인다(잠정 아님).
   - `before_open` — 오늘 개장 전. 직전 거래일 선을 보인다(잠정 아님).
-  - `ok` — 오늘 장중·마감 뒤(잠정). 오늘 행이 하나도 없으면 404 `no_data`(작업 이름·예정 시각).
+  - `ok` — 오늘 장중·마감 뒤(잠정). 오늘 행이 하나도 없으면 404 `no_data`(작업 이름·예정 시각 —
+    P5 404 계약, 화면이 사용자 문장으로 다듬는다).
+- 지수 겹침(`index`): 조합의 `index`(KIS 업종 코드)를 `prv_market.index_intraday`(장중 10분 —
+  `market.intraday`)에서 읽어 같은 분 축에 놓는다. 값이 없거나 정하지 않은 탭이면 None + 메모 한 줄.
 - 거래소: 이 TR 은 거래소 입력이 없다(F2 §1.3) → 응답 `venue` 는 언제나 `KRX`, `venue_locked`
   true. 다른 거래소를 물어도 KRX 값을 주고 메모로 알린다(통합 수치를 지어내지 않는다).
-- 품질: 제때 받은 분 `ok`, 늦게 받은 분 `estimated`, 검산 실패 분은 빼고 수를 메모로. 머리 꼬리표
-  `수집 HH:MM · 60초 갱신 · 잠정`(`collected_at`·`refresh_s`·`provisional`).
+- 메모(`notes`)는 짧은 사용자 문장(작업 이름·실측 번호 없음).
 """
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, timedelta
 from typing import Final, Literal
 
 from kbj.config.markets import MinutePair
 from kbj.core.quality import Quality
+from kbj.core.time import KST
 from kbj.engines.flows.minute import MinuteBoard, minute_axis, minute_board
 from kbj.services.api.models.common import Envelope
-from kbj.services.api.models.flows import MarketMinute, MinuteCard, MinuteLine
-from kbj.services.api.readers._common import NoData, ReadContext, UnknownCode, envelope
+from kbj.services.api.models.flows import MarketMinute, MinuteCard, MinuteIndex, MinuteLine
+from kbj.services.api.readers._common import NoData, ReadContext, UnknownCode, day_start, envelope
 
 __all__ = [
     "LOCKED_VENUE",
+    "NOT_CONFIRMED",
     "NO_DATA",
     "REFRESH_S",
     "SOURCE",
     "VENUE_NOTE",
+    "index_overlay",
     "market_minute",
     "pair_for_tab",
 ]
 
+# 404 계약(작업·시각 — P5 라우트 공통, 화면이 사용자 문장으로 다듬는다)
 NO_DATA: Final = "아직 없음 — flows.market_minute 09:00~15:40 매분"
 SOURCE: Final = "KIS"
 REFRESH_S: Final = 60
 LOCKED_VENUE: Final = "KRX"
-VENUE_NOTE: Final = "분 단위 선은 거래소 입력이 없는 TR — KIS 기본값 하나(KRX 표시, 통합 아님)"
+VENUE_NOTE: Final = "거래소 구분 없는 값(KRX 표시)"
+NOT_CONFIRMED: Final = "확인 전 — 이 시장은 아직 받지 않는다"
 Status = Literal["ok", "not_confirmed", "before_open", "holiday"]
 
 
@@ -63,7 +71,7 @@ def _empty(tab: str, day: date, status: Status) -> MarketMinute:
     )  # fmt: skip
 
 
-def _model(tab: str, board: MinuteBoard, status: Status) -> MarketMinute:
+def _model(tab: str, board: MinuteBoard, status: Status, index: MinuteIndex | None) -> MarketMinute:
     return MarketMinute(
         market=tab,
         venue=LOCKED_VENUE,
@@ -87,6 +95,7 @@ def _model(tab: str, board: MinuteBoard, status: Status) -> MarketMinute:
         refresh_s=REFRESH_S,
         provisional=status == "ok",
         status=status,
+        index=index,
     )
 
 
@@ -96,16 +105,55 @@ def _board(ctx: ReadContext, pair: MinutePair, day: date) -> MinuteBoard:
     return minute_board(rows, minute_axis(open_at, close_at), day)
 
 
-def _notes(board: MinuteBoard, venue: str) -> list[str]:
+def index_overlay(
+    ctx: ReadContext, code: str | None, day: date, axis: tuple[datetime, ...]
+) -> MinuteIndex | None:
+    """그날 장중 지수(10분 슬롯)를 분 축에 놓는다 — 슬롯 시작 분 자리에만 값(나머지 None). 값이
+    하나도 없으면 None(지어내지 않는다)."""
+    if code is None or not axis:
+        return None
+    start = day_start(day)
+    quotes = [
+        q
+        for q in ctx.repos.market.index_quotes(start, start + timedelta(days=1))
+        if q.code == code and q.value is not None
+    ]
+    if not quotes:
+        return None
+    pos = {ts.astimezone(KST).strftime("%H:%M"): i for i, ts in enumerate(axis)}
+    values: list[float | None] = [None] * len(axis)
+    for q in quotes:  # ts 순 — 같은 분이 둘이면 뒤의 것
+        i = pos.get(q.ts.astimezone(KST).strftime("%H:%M"))
+        if i is not None:
+            values[i] = q.value
+    last = quotes[-1]
+    return MinuteIndex(
+        code=code,
+        label=ctx.markets.market.intraday_indices.get(code) or last.name or code,
+        values=values,
+        last=last.value,
+        chg_pct=last.chg_pct,
+        as_of=last.ts,
+        quality=last.quality,
+    )
+
+
+def _notes(
+    board: MinuteBoard, venue: str, pair: MinutePair, index: MinuteIndex | None
+) -> list[str]:
     notes = [VENUE_NOTE]
     if venue != LOCKED_VENUE:
         notes.append(f"요청한 거래소 {venue} 값은 없다 — KRX 값을 보인다")
     if board.missing:
-        notes.append(f"빈 분 {board.missing}개 — 수집 실패(잇지 않는다, 뒤에서 채울 수 없다)")
+        notes.append(f"못 받은 {board.missing}분은 앞뒤를 점선으로 이었다")
     if board.invalid_slots:
-        notes.append(f"검산 실패 {board.invalid_slots}분 제외")
+        notes.append(f"합계가 맞지 않은 {board.invalid_slots}분은 뺐다(점선)")
     if board.quality == Quality.ESTIMATED:
-        notes.append("슬롯 + 45초 넘어 받은 분이 있다(그 분보다 뒤의 누적 — 추정)")
+        notes.append("늦게 받은 분이 섞여 있다(추정)")
+    if index is None:
+        notes.append(
+            "지수 선 없음" if pair.index is None else "지수 선 없음 — 장중 지수 값이 아직 없다"
+        )
     return notes
 
 
@@ -116,10 +164,9 @@ def market_minute(ctx: ReadContext, *, market: str, venue: str) -> Envelope[Mark
     now = ctx.now_kst()
     today = now.date()
     if not pair.enabled or pair.market is None or pair.sector is None:
-        note = f"확인 전 — {pair.label} 조합 코드 [확인 필요 #39]"
         return envelope(
             _empty(market, today, "not_confirmed"),
-            source=SOURCE, as_of=now, quality=None, notes=[note, VENUE_NOTE], generated_at=now,
+            source=SOURCE, as_of=now, quality=None, notes=[NOT_CONFIRMED], generated_at=now,
         )  # fmt: skip
     cal = ctx.cal
     status: Status = "ok"
@@ -131,11 +178,12 @@ def market_minute(ctx: ReadContext, *, market: str, venue: str) -> Envelope[Mark
     board = _board(ctx, pair, day)
     if status == "ok" and board.last_ts is None:
         raise NoData(NO_DATA)
+    index = index_overlay(ctx, pair.index, day, board.axis)
     return envelope(
-        _model(market, board, status),
+        _model(market, board, status, index),
         source=SOURCE,
         as_of=board.last_ts or now,
         quality=board.quality,
-        notes=_notes(board, venue),
+        notes=_notes(board, venue, pair, index),
         generated_at=now,
     )

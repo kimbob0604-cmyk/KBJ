@@ -139,8 +139,8 @@ _IDENT = re.compile(r"[a-z][a-z0-9_]*")
 class MinutePair(_Model):
     """장중 투자자 1분 조합 하나(P5 F2 — docs/p5_design.md §3.4, D-P5-21).
 
-    코드를 모르는 조합(현물 — [확인 필요 #39])은 market·sector 를 비우고 꺼 둔다(지어내지
-    않는다)."""
+    코드를 모르는 조합은 market·sector 를 비우고 꺼 둔다(지어내지 않는다). `index` = 차트에 겹칠
+    지수의 KIS 업종 코드(`market.intraday_indices` 의 키 — 없으면 지수 선 없음)."""
 
     id: str
     market: str | None
@@ -149,6 +149,7 @@ class MinutePair(_Model):
     tab: str
     label: str = Field(min_length=1)
     enabled: bool
+    index: str | None = None
     note: str = ""
 
     @field_validator("id", "tab")
@@ -220,6 +221,16 @@ class MarketsConfig(_Model):
     # P5(묶음 FND — docs/p5_design.md §3.6)
     flows: FlowsCfg
     program: ProgramCfg
+
+    @model_validator(mode="after")
+    def _minute_index_known(self) -> MarketsConfig:
+        known = set(self.market.intraday_indices)
+        bad = [
+            p.id for p in self.flows.minute.pairs if p.index is not None and p.index not in known
+        ]
+        if bad:
+            raise ValueError(f"flows.minute.pairs index 가 market.intraday_indices 에 없다: {bad}")
+        return self
 
 
 class CalendarEvent(_Model):

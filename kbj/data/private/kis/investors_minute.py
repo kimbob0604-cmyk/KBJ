@@ -4,16 +4,21 @@
 §21, ADR 0019(초안). 칸 이름은 GX `data/kis/models.py:InvestorRow`(실측 2026-09-28 — K2I 선물·콜·풋)
 그대로다.
 
-- TR 은 **호출 시점의 오늘 누적 한 줄**이다(분 이력 아님). 그래서 행 `ts` 는 부르는 쪽이 정한 **슬롯
-  분**(호출 시각이 아님 — metrics §21)을 그대로 받는다.
+- TR 은 **호출 시점의 오늘 누적 한 줄**이다(분 이력 아님 — 응답에 시각 칸이 없다). KIS 공식 예제
+  `examples_llm/domestic_stock/inquire_investor_time_by_market`
+  (koreainvestment/open-trading-api)의 설명이 "HTS [0403] 시장별 시간동향 의 **상단 표**"이고,
+  칸 표(COLUMN_MAPPING)에 시각 칸이 없다. 같은 계열의 FHPTJ04040000(시장별
+  투자자매매동향(일별) — [0404])은 날짜별이라, 분 이력을 주는 시장별 투자자 TR 은 공식 예제에
+  없다(2026-10-19 확인, 커밋 2077773). 그래서 못 받은 분은 뒤에서 채울 수 없고, 행 `ts` 는
+  부르는 쪽이 정한 **슬롯 분**(호출 시각이 아님 — metrics §21)을 그대로 받는다.
 - 투자자 12구분 `frgn·prsn·orgn·scrt·ivtr·pe_fund·bank·insu·mrbn·fund·etc_orgt·etc_corp` ×
   매도·매수·
   순매수 × 수량·대금. 순매수 수량 칸은 `pe_fund·etc_orgt·etc_corp` 가 `_ntby_vol`, 나머지는
   `_ntby_qty`(GX 실측) — 두 이름을 다 후보로 본다.
 - **단위**: 대금은 KIS 그대로 **백만원**, 수량은 계약·주(GX `prv_gex.investor_flow` 계약 — D-P5-21
   ②,
-  metrics §21 '원 저장'의 예외). 원으로 바꾸는 것은 API 다. 현물(코스피·코스닥) 응답의 금액 단위는
-  [확인 필요 #39].
+  metrics §21 '원 저장'의 예외). 원으로 바꾸는 것은 API 다. 현물(코스피 KSP·0001, 코스닥 KSQ·1001)
+  응답의 금액 단위도 백만원으로 본다 [확인 필요 — 마감 뒤 일별 확정과 대조(검산 ③)].
 - 빈 칸·`-` 는 None(0 으로 채우지 않는다). 한 구분의 여섯 칸이 모두 비면 그 구분은 행이 없다.
   12구분이 **하나도** 없으면 `KisShapeError`(칸 이름이 바뀐 날 — 사유에 받은 키 이름만).
 - 모든 값이 0(또는 빈 값)이면 질의가 아직 성립하지 않은 것(장 시작 전·휴장일 [확인 필요 #39 — 장전
@@ -53,7 +58,8 @@ __all__ = [
 TR_MARKET_MINUTE: Final = TrSpec(
     "FHPTJ04030000", "/uapi/domestic-stock/v1/quotations/inquire-investor-time-by-market"
 )
-# 대금 단위 — 백만원(GX 실측 K2I). 저장도 백만원 그대로(investor_flow 계약). 현물은 [확인 필요 #39]
+# 대금 단위 — 백만원(GX 실측 K2I). 저장도 백만원 그대로(investor_flow 계약).
+# 현물은 [확인 필요 — 검산 ③]
 VALUE_UNIT: Final = "백만원"
 
 # 측정값 → 칸 접미사 후보(앞에서부터). `<투자자>_<접미사>`.
@@ -75,10 +81,13 @@ def field_names(investor: str) -> dict[str, tuple[str, ...]]:
 def params_market_minute(market: str, sector: str) -> dict[str, str]:
     """FHPTJ04030000 입력 — 시장 코드(`FID_INPUT_ISCD`)·업종 코드(`FID_INPUT_ISCD_2`).
 
-    현물 코드 쌍(공식 예제 `999`·`S001` 의 뜻)·주식선물 코드는 [확인 필요 #39] — 설정
-    (`config/markets.yaml flows.minute.pairs`)에 켠 조합만 부른다."""
+    코드 표는 KIS 공식 Postman 샘플(open-trading-api
+    `legacy/postman/실전계좌_POSTMAN_샘플코드_v2.6.json`): 코스피 `KSP`·`0001`,
+    코스닥 `KSQ`·`1001`, 선물·콜·풋 `K2I`·`F001/OC01/OP01`, 주식선물 `999`·`S001`,
+    위클리 `WKM`·`OC05/OP05`·`WKI`·`OC04/OP04`. 설정(`config/markets.yaml
+    flows.minute.pairs`)에 켠 조합만 부른다."""
     if not market or not sector:
-        raise ValueError("시장·업종 코드가 비었다 — 코드를 모르는 조합은 부르지 않는다(#39)")
+        raise ValueError("시장·업종 코드가 비었다 — 코드를 모르는 조합은 부르지 않는다")
     return {"FID_INPUT_ISCD": market, "FID_INPUT_ISCD_2": sector}
 
 

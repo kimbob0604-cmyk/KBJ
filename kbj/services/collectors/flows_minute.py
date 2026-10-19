@@ -6,18 +6,24 @@
 
 한 실행 = 한 분(as_of `YYYY-MM-DDTHH:MM` KST — 등록부 `as_of: minute`, `equity {start: open, end:
 close+10, every_min: 1}`). 데이터 키 `KIS:market_investor_intraday@<분>` 하나.
-1. 조합 = `config/markets.yaml flows.minute.pairs` 의 켠 것(세션 day — 실측 전에는 GX 가 검증한 K2I
-   F001·OC01·OP01 셋만. 현물·주식선물은 코드 [확인 필요 #39] 라 꺼져 있다).
+1. 조합 = `config/markets.yaml flows.minute.pairs` 의 켠 것(세션 day). 코드 표는 KIS 공식 Postman
+   샘플(코스피 KSP·0001, 코스닥 KSQ·1001, K2I F001·OC01·OP01, 주식선물 999·S001, 위클리 WKM·WKI —
+   근거 URL 은 markets.yaml 주석).
 2. 조합마다 TR 한 번(오늘 누적 한 줄) → 12구분 행. 행 `ts` = **슬롯 분**(호출 시각이 아님). 슬롯 +
    45초 안에 받았으면 `ok`, 늦었으면 `estimated`(그 분보다 뒤의 누적 — 사유는 detail `late_s`).
-3. 검산 ①(현물만)·②를 분마다 하고, 어긋난 분의 행은 `invalid` 로 쓴다(지우지 않는다 — 수를 센다).
+3. 검산 ①(현물만)·②를 분마다 하고, 어긋난 분의 행은 `invalid` 로 쓴다(지우지 않는다 — 수를 센다,
+   어긋난 칸별 수는 detail `check_failed`).
 4. 같은 분 재실행은 같은 키(UNIQUE ts·시장·업종·투자자)를 덮는다(멱등). 재시도(attempt ≥ 2)는 그
    분에 이미 쓴 조합을 다시 부르지 않는다.
 5. 한 조합의 실패는 다른 조합을 멈추지 않는다(받은 것은 쓴다 — 절대 규칙 4). 하나라도 실패하면 키는
-   미완(실행기가 슬롯 안에서 한 번 다시 — `retry {max: 1}`). 못 받은 분은 영영 빈다(뒤에서 채울 수
-   없는
-   TR) — 화면은 선을 끊는다.
+   미완(실행기가 슬롯 안에서 한 번 다시 — `retry {max: 1}`).
 6. 모든 조합이 '값이 모두 0'(장 시작 전·휴장일)이면 `not_ready` — 0 을 사실로 쓰지 않는다.
+
+**뒤에서 채우기는 없다**(2026-10-19 KIS 공식 레포 확인 — `kbj.data.private.kis.investors_minute`
+머리말): FHPTJ04030000 은 HTS [0403] 의 '상단 표'(호출 순간 누적 한 줄, 시각 칸 없음)이고, 분 이력을
+주는 시장별 투자자 TR 은 공식 예제에 없다(FHPTJ04040000 은 일별). 그래서 맥이 잠들었던 분은
+영영 비고, 화면이 앞뒤 값을 이어(점선) 그린다. 실행기도 1분 작업은 따라잡지 않는다(지난 분을
+지금 누적으로 채우면 틀린 값 — `kbj.services.scheduler.runner._startup_catch_up`).
 
 자원: `repos`(없으면 `connect` 로 `pg_repos`), `kis`(없으면 `KisRestClient.for_service` — auth 토큰
 읽기만·앱키 리미터), `markets`(없으면 `load_markets`), `kis_priority`(시험용 — 없으면
@@ -151,6 +157,7 @@ def _collect(
     errors: dict[str, str] = {}
     empty: list[str] = []
     invalid_slots = 0
+    failed_checks: dict[str, int] = {}
     for p in pairs:
         if p.id in done:
             continue
@@ -174,7 +181,12 @@ def _collect(
                       pair=p.id, error=errors[p.id])  # fmt: skip
             continue
         checked, slots = apply_minute_checks(got, spot=p.id in SPOT_DAILY_MARKET)
-        invalid_slots += sum(1 for s in slots if not s.ok)
+        for c in slots:
+            if c.ok:
+                continue
+            invalid_slots += 1
+            for what in (["c1"] if c.c1_ok is False else []) + [f"c2:{m}" for m in c.c2_failed]:
+                failed_checks[f"{p.id}:{what}"] = failed_checks.get(f"{p.id}:{what}", 0) + 1
         rows += checked
     if rows:
         r.flows.put_investor_minutes(rows, loaded_by=LOADED_BY)
@@ -184,6 +196,7 @@ def _collect(
         detail["pairs_already"] = len(done)
     if invalid_slots:
         detail["invalid_slots"] = invalid_slots
+        detail["check_failed"] = dict(sorted(failed_checks.items()))
     if errors:
         detail["pair_errors"] = dict(sorted(errors.items()))
         raise PartialFailure(f"조합 {len(errors)}개 실패 — {next(iter(sorted(errors)))}")

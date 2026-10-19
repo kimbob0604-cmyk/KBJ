@@ -7,10 +7,12 @@
 (`tests/unit/api/test_routes_program.py`)도 같은 적재를 쓴다. 실데이터 없음(KIS — 로그인 원천,
 합성만).
 
-- 현물 조합(코스피·코스닥)은 운영 설정에서 꺼져 있다(코드 [확인 필요 #39]). 화면 시험용으로
-  **코스피만**
-  합성 자리표시 코드(`SYNK`·`SYN0`)로 켠 설정 사본(`f2_markets`)을 쓴다 — 코스닥은 꺼진 채('확인 전'
-  화면). 코스피는 10:00~10:04 다섯 분을 빼서 넣는다(끊긴 선 — 빈 분 화면).
+- 현물 조합(코스피 KSP·0001·코스닥 KSQ·1001)은 운영 설정에서 켜져 있다. 합성 세계의 1분 행은
+  자리표시 코드(`SYNK`·`SYN0`)라 설정 사본(`f2_markets`)에서 **코스피를** 그 코드로 바꾸고,
+  **코스닥은 꺼서** '확인 전' 화면을 남긴다(시험 전용 — 운영 값 아님). 코스피는 10:00~10:04 다섯
+  분을 빼서 넣는다(빈 분 — 화면이 점선으로 잇는다).
+- 겹칠 지수: 코스피(0001)·코스피200(2001) 장중 10분 값을 합성으로 넣는다(`INDEX_BASE` — 실데이터
+  아님).
 - 시계: 장중 13:00(오늘 장중 잠정), 마감 뒤 16:30(픽스처 기본), 마감 훑기 뒤 18:40, 장 시작 전
   08:30, 휴장일(토) 10:00. 파일마다 그 시각까지 있었을 행만 넣은 세계다.
 """
@@ -20,7 +22,7 @@ from __future__ import annotations
 import functools
 import json
 from dataclasses import dataclass, replace
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from typing import Any, Final
 
 import fakeredis
@@ -30,7 +32,7 @@ from kbj.config.markets import MarketsConfig, load_calendar_events, load_markets
 from kbj.core.calendar import TradingCalendar
 from kbj.core.p5_rows import InvestorMinute
 from kbj.core.quality import Quality
-from kbj.core.rows import UniverseRow
+from kbj.core.rows import IndexQuote, UniverseRow
 from kbj.core.time import KST
 from kbj.services.api.app import create_app
 from kbj.store.repos import MemoryRepos, memory_repos
@@ -59,6 +61,11 @@ INTRADAY: Final = datetime.combine(TODAY, time(13, 0), tzinfo=KST)
 BEFORE_OPEN: Final = datetime.combine(TODAY, time(8, 30), tzinfo=KST)
 SWEPT: Final = datetime.combine(TODAY, time(18, 40), tzinfo=KST)  # 마감 훑기(18:10) 뒤
 HOLIDAY: Final = datetime(2026, 11, 21, 10, 0, tzinfo=KST)  # 토요일
+# 합성 장중 지수(10분 슬롯) — (코드, 이름, 전일 종가, 슬롯마다 더하는 값)
+INDEX_BASE: Final[tuple[tuple[str, str, float, float], ...]] = (
+    ("0001", "코스피", 2600.0, 0.75),
+    ("2001", "코스피200", 350.0, 0.11),
+)
 
 # (파일, 경로, 시계)
 FILES: Final[tuple[tuple[str, str, datetime], ...]] = (
@@ -82,10 +89,30 @@ def f2_markets() -> MarketsConfig:
     data: dict[str, Any] = load_markets().model_dump(mode="json")
     for p in data["flows"]["minute"]["pairs"]:
         if p["id"] == "kospi":
-            p.update(
-                market="SYNK", sector="SYN0", enabled=True, note="합성 자리표시 [확인 필요 #39]"
-            )
+            p.update(market="SYNK", sector="SYN0", enabled=True, note="합성 자리표시")
+        if p["id"] == "kosdaq":
+            p.update(enabled=False, note="시험 — '확인 전' 화면")
     return parse_markets(data)
+
+
+def _index_quotes(upto: datetime | None) -> list[IndexQuote]:
+    """장중 10분 지수(09:00~15:30 슬롯, 그 시각까지) — 슬롯마다 조금씩 오르내리는 합성 값."""
+    out: list[IndexQuote] = []
+    t = datetime.combine(TODAY, time(9, 0), tzinfo=KST)
+    end = datetime.combine(TODAY, time(15, 30), tzinfo=KST)
+    k = 0
+    while t <= end and (upto is None or t <= upto):
+        for code, name, prev, step in INDEX_BASE:
+            v = round(prev + step * ((k % 7) - 2) + step * k / 3, 2)
+            out.append(
+                IndexQuote(
+                    code, t, name, v, round((v / prev - 1) * 100, 2), None, None, "kis",
+                    Quality.ESTIMATED,
+                )
+            )  # fmt: skip
+        t += timedelta(minutes=10)
+        k += 1
+    return out
 
 
 def _universe(w: P5World) -> list[UniverseRow]:
@@ -135,6 +162,7 @@ def load_f2_world(repos: MemoryRepos, w: P5World, *, upto: datetime | None = Non
         sweep = [r for r in w.program_stocks if r.scope == "sweep"]
         repos.program.put_stock_days(sweep, loaded_by=LOADED_BY, received_at=CLOCK)
     repos.market.upsert_universe(_universe(w), loaded_by=LOADED_BY, received_at=CLOCK)
+    repos.market.put_index_quotes(_index_quotes(upto), loaded_by=LOADED_BY, received_at=CLOCK)
 
 
 @dataclass
