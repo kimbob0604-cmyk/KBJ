@@ -1,8 +1,10 @@
 """`flows.market_minute` 처리기 — 가짜 KIS(1분마다 누적이 느는 장중) + 메모리 저장소(P5 F2 §4).
 
-정상 하루(정규장 391분) 빈 분 0, 실패한 분만 정확히 빈다(뒤에서 채울 수 없는 TR), 행 ts = 슬롯 분,
-제때 ok·45초 넘으면 estimated, 같은 분 재실행 멱등, 재시도는 못 받은 조합만, 장전은 not_ready,
-검산 실패 분은 invalid 로 쓴다.
+정상 하루(정규장 391분) 빈 분 0, 실패한 분만 정확히 빈다(뒤에서 채울 수 없는 TR — 오늘 누적 한 줄,
+맥이 잠든 동안의 분도 깨어난 뒤 지금 누적으로 채우지 않는다), 행 ts = 슬롯 분, 제때 ok·45초 넘으면
+estimated, 같은 분 재실행 멱등, 재시도는 못 받은 조합만, 장전은 not_ready, 검산 실패 분은 invalid 로
+쓰고 어긋난 칸별 수를 남긴다. 현물·주식선물 조합은 KIS 공식 코드(KSP·0001, KSQ·1001, 999·S001)로
+부른다.
 """
 
 from __future__ import annotations
@@ -59,10 +61,19 @@ def test_one_minute_writes_twelve_rows_per_on_pair_at_the_slot_minute() -> None:
     assert len(rows) == 3 * 12
     assert {r.ts for r in rows} == {kst(2026, 11, 17, 13, 0)}  # 호출 시각이 아니라 슬롯 분
     assert {r.quality for r in rows} == {Quality.OK}
-    # 켠 조합만 — K2I 3 + 위클리 4(P7 WRAP 이 켬, D-P7-6). 현물·주식선물·야간은 꺼짐
-    assert kis.count("FHPTJ04030000") == 7
+    # 켠 조합만 — K2I 3 + 현물 2 + 주식선물 1 + 위클리 4. 야간은 꺼짐
+    assert kis.count("FHPTJ04030000") == 10
     assert res.collected == (key(at(13, 0)),)
-    assert res.detail["pairs"] == 7 and res.detail["pairs_written"] == 7
+    assert res.detail["pairs"] == 10 and res.detail["pairs_written"] == 10
+
+
+def test_spot_and_stock_futures_use_official_kis_codes() -> None:
+    repos, _s, clock, kis = setup(kst(2026, 11, 17, 13, 0, 10))
+    run(repos, kis, at(13, 0), clock())
+    sent = {(c[1]["FID_INPUT_ISCD"], c[1]["FID_INPUT_ISCD_2"]) for c in kis.calls}
+    assert {("KSP", "0001"), ("KSQ", "1001"), ("999", "S001")} <= sent
+    spot = repos.flows.investor_minutes(DAY, [("KSP", "0001"), ("KSQ", "1001")])
+    assert len(spot) == 2 * 12 and {r.quality for r in spot} == {Quality.OK}  # 검산 ① 통과
 
 
 def test_late_minute_is_estimated_with_reason() -> None:
@@ -101,7 +112,7 @@ def test_pair_failure_is_isolated_and_retry_calls_only_missing_pairs() -> None:
     res2 = run(repos, kis, at(11, 0), clock(), attempt=2)
     assert res2.status == "ok", res2.detail
     assert kis.count("FHPTJ04030000") - before == 1  # 못 받은 조합 하나만
-    assert res2.detail["pairs_already"] == 6  # K2I 둘 + 위클리 넷
+    assert res2.detail["pairs_already"] == 9  # K2I 둘 + 현물 둘 + 주식선물 + 위클리 넷
     assert len(repos.flows.investor_minutes(DAY, K2I)) == 3 * 12
 
 
@@ -139,6 +150,28 @@ def test_spot_pair_check1_failure_marks_the_minute_invalid() -> None:
     assert len(spot) == 12 and {r.quality for r in spot} == {Quality.INVALID}
     assert {r.quality for r in repos.flows.investor_minutes(DAY, K2I)} == {Quality.OK}
     assert res.detail["invalid_slots"] == 1
+    assert res.detail["check_failed"] == {"kospi:c1": 1}  # 어긋난 칸별 수(운영 화면에서 원인 확인)
+
+
+def test_orgn_including_etc_orgt_is_not_marked_invalid() -> None:
+    """KIS 기관계가 기타단체를 넣은 정의여도 그 분을 빼지 않는다(기관 = 7세부 + 기타단체)."""
+
+    def with_etc(tr: str, params: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
+        if tr != "FHPTJ04030000":
+            return body
+        row = dict(body["output"][0])
+        for sfx in ("seln_vol", "shnu_vol", "seln_tr_pbmn", "shnu_tr_pbmn", "ntby_tr_pbmn"):
+            row[f"orgn_{sfx}"] = str(int(row[f"orgn_{sfx}"]) + int(row[f"etc_orgt_{sfx}"]))
+        row["orgn_ntby_qty"] = str(int(row["orgn_ntby_qty"]) + int(row["etc_orgt_ntby_vol"]))
+        # 개인은 그대로 — 기타단체가 기관계 안으로 옮겨 갔을 뿐 시장 합(0)은 같다
+        return {**body, "output": [row]}
+
+    repos, _s, clock, kis = setup(kst(2026, 11, 17, 12, 0, 5), hook=with_etc)
+    res = run(repos, kis, at(12, 0), clock())
+    assert res.status == "ok", res.detail
+    assert "invalid_slots" not in res.detail
+    rows = repos.flows.investor_minutes(DAY, [*K2I, ("KSP", "0001")])
+    assert {r.quality for r in rows} == {Quality.OK}
 
 
 def test_spot_pair_balanced_minute_passes_checks() -> None:
@@ -166,6 +199,18 @@ def _day(fail_at: set[str]) -> tuple[Any, int]:
 def test_full_session_has_no_empty_minute() -> None:
     _, minutes = _day(set())
     assert minutes == 391
+
+
+def test_asleep_minutes_stay_empty_and_wake_writes_only_its_own_slot() -> None:
+    """맥이 10:00~12:59 잠들었다가 13:00 에 깨어남 — 그 사이를 지금 누적으로 채우지 않는다."""
+    repos, _s, clock, kis = setup(kst(2026, 11, 17, 9, 0, 5))
+    t = kst(2026, 11, 17, 9, 0)
+    awake = [t + timedelta(minutes=i) for i in range(60)] + [kst(2026, 11, 17, 13, 0)]
+    for slot in awake:
+        clock.at = slot + timedelta(seconds=5)
+        run(repos, kis, slot.strftime("%Y-%m-%dT%H:%M"), clock())
+    got = sorted({r.ts for r in repos.flows.investor_minutes(DAY, [("K2I", "F001")])})
+    assert got == awake  # 빈 180분은 행이 없다(화면이 앞뒤를 점선으로 잇는다)
 
 
 def test_failed_minutes_stay_empty_exactly() -> None:

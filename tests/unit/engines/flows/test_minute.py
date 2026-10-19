@@ -72,9 +72,22 @@ def test_check_slot_hand_computed() -> None:
     # 선물·옵션은 ① 을 하지 않는다(정의 별도 — #39)
     fut = check_slot(slot(ts(10, 0), {**BAL, "prsn": 999}), spot=False)
     assert fut.c1_ok is None and fut.ok
-    # ② 기관 ≠ 7세부 합(허용 = 구분 수 백만원)
-    bad2 = check_slot(slot(ts(10, 0), {**BAL, "orgn": 22 + 8}), spot=False)
+    # ② 기관 ≠ 7세부 합(허용 = 구분 수 백만원) — 기타단체를 넣은 정의로도 안 맞으면 실패
+    bad2 = check_slot(slot(ts(10, 0), {**BAL, "orgn": 22 + 30}), spot=False)
     assert bad2.c2_ok is False and "net_value" in bad2.c2_failed
+    assert bad2.orgn_has_etc_orgt is False
+
+
+def test_check2_accepts_orgn_that_includes_etc_orgt_and_check1_follows() -> None:
+    """KIS 기관계가 기타단체를 넣은 정의여도 통과 — 그때 ① 은 기타단체를 두 번 더하지 않는다."""
+    bal = {**BAL, "etc_orgt": 40, "orgn": 22 + 40}
+    bal["prsn"] = -(bal["frgn"] + bal["orgn"] + bal["etc_corp"])  # 합 0(기타단체는 기관계 안)
+    c = check_slot(slot(ts(10, 0), bal), spot=True)
+    assert c.c2_ok is True and c.orgn_has_etc_orgt is True
+    assert c.c1_ok is True and c.c1_residual == 0
+    # 7세부 합 정의(기존)는 그대로 통과·① 은 기타단체를 더한다
+    plain = check_slot(slot(ts(10, 0), BAL), spot=True)
+    assert plain.orgn_has_etc_orgt is False and plain.c1_residual == 0
 
 
 def test_missing_term_means_check_not_possible() -> None:

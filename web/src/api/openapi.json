@@ -21356,6 +21356,16 @@
               "holiday"
             ],
             "title": "Status"
+          },
+          "index": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MinuteIndex"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,
@@ -21589,6 +21599,89 @@
           "quality"
         ],
         "title": "MinuteCard"
+      },
+      "MinuteIndex": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "values": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Values"
+          },
+          "last": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last"
+          },
+          "chg_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chg Pct"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "label",
+          "values",
+          "last",
+          "chg_pct",
+          "as_of",
+          "quality"
+        ],
+        "title": "MinuteIndex",
+        "description": "수급 차트에 겹칠 지수(장중 10분 값 — `prv_market.index_intraday`). 축과 같은 길이, 값이 있는\n분은 10분 슬롯뿐(나머지 None — 화면이 잇는다)."
       },
       "MinuteLine": {
         "properties": {

@@ -1,6 +1,7 @@
 """`/api/flows/market-minute`·`/api/program/{daily,top}` 라우트 — 합성 세계(P5 F2 §3.5·§4).
 
 리더 본문(F2): 분 축 401칸(빈 분 None)·원 단위(백만원 × 1e6)·7카드(사모 제외)·거래소 잠금·
+겹칠 지수(장중 10분 → 분 축, 없으면 메모)·짧은 사용자 메모(작업 이름·실측 번호 없음)·
 상태(확인 전·장 시작 전·휴장일)·범위 꼬리표(장중·마감)·검산 ④ 실패 일 제외·빈 저장소 404·
 모르는 탭 404.
 """
@@ -63,7 +64,29 @@ def test_minute_line_in_won_with_gap_and_cards() -> None:
     assert d["collected_at"].startswith("2026-11-17T13:00")
     assert {ln["investor"] for ln in d["lines"] if ln["default_on"]} == {"prsn", "frgn", "orgn"}
     notes = " ".join(body["notes"])
-    assert "빈 분 5개" in notes and "KRX" in notes and body["source"] == "KIS"
+    assert "못 받은 5분" in notes and "KRX" in notes and body["source"] == "KIS"
+    assert "flows." not in notes and "#" not in notes  # 작업 이름·실측 번호 없음
+
+
+def test_minute_index_overlay_on_ten_minute_slots() -> None:
+    body = get(program_api_world(at=INTRADAY), "/api/flows/market-minute?market=kospi")
+    d = body["data"]
+    idx = d["index"]
+    assert idx["code"] == "0001" and idx["label"] == "코스피"
+    axis = d["axis"]
+    assert len(idx["values"]) == len(axis)
+    have = [axis[i] for i, v in enumerate(idx["values"]) if v is not None]
+    assert have[0] == "09:00" and have[-1] == "13:00" and "09:10" in have and "09:05" not in have
+    assert idx["last"] == idx["values"][axis.index("13:00")] and idx["chg_pct"] is not None
+    fut = get(program_api_world(at=INTRADAY), "/api/flows/market-minute?market=k200_fut")
+    assert fut["data"]["index"]["code"] == "2001"
+    assert not any("지수" in n for n in fut["notes"])
+
+
+def test_minute_without_index_values_says_so_in_one_note() -> None:
+    pre = get(program_api_world(at=BEFORE_OPEN), "/api/flows/market-minute?market=k200_fut")
+    assert pre["data"]["index"] is None  # 직전 거래일 지수 값이 없다 — 지어내지 않는다
+    assert sum("지수 선 없음" in n for n in pre["notes"]) == 1
 
 
 def test_minute_other_venue_still_krx_locked_with_note() -> None:
@@ -91,7 +114,7 @@ def test_minute_unknown_tab_and_empty_store() -> None:
     empty = program_api_world(empty=True, at=INTRADAY)
     r = empty.authed().get("/api/flows/market-minute?market=k200_fut")
     assert r.status_code == 404 and r.json()["code"] == "no_data"
-    assert "flows.market_minute" in r.json()["message"]
+    assert "flows.market_minute" in r.json()["message"]  # 404 계약(작업·시각)
 
 
 def test_program_daily_bars_sixty_days() -> None:

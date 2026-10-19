@@ -20,6 +20,7 @@ __all__ = [
     "InvestorTotals",
     "MarketMinute",
     "MinuteCard",
+    "MinuteIndex",
     "MinuteLine",
     "RankItem",
     "ScreenResponse",
@@ -154,6 +155,19 @@ class MinuteLine(ApiModel):
     values: list[int | None]  # 분 축과 같은 길이 — 빈 분은 None(잇지 않는다, 보간 금지)
 
 
+class MinuteIndex(ApiModel):
+    """수급 차트에 겹칠 지수(장중 10분 값 — `prv_market.index_intraday`). 축과 같은 길이, 값이 있는
+    분은 10분 슬롯뿐(나머지 None — 화면이 잇는다)."""
+
+    code: str  # KIS 업종 코드(0001 코스피·1001 코스닥·2001 코스피200)
+    label: str
+    values: list[float | None]
+    last: float | None  # 마지막 값
+    chg_pct: float | None  # 마지막 값의 전일 대비 %
+    as_of: AwareDatetime | None
+    quality: Quality | None
+
+
 class MarketMinute(ApiModel):
     market: str  # 탭 id(config/markets.yaml flows.minute.pairs[].tab)
     venue: str  # 분 선은 KIS 기본값 하나 — 'KRX' 표시(F2 §1.3)
@@ -166,3 +180,4 @@ class MarketMinute(ApiModel):
     refresh_s: int  # 60초 갱신
     provisional: bool  # 장중 잠정
     status: Literal["ok", "not_confirmed", "before_open", "holiday"]
+    index: MinuteIndex | None = None  # 겹칠 지수 — 그 탭에 정한 지수가 없거나 값이 없으면 None

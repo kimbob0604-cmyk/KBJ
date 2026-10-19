@@ -1,28 +1,30 @@
-// 페이지 1 '장중 투자자 수급' — 1분 누적 순매수 선·카드 7(docs/p5_flow_program_prompt.md §0-1, metrics §21 — 로그인).
+// 페이지 1 '장중 투자자 수급' — 1분 누적 순매수 선 + 지수 선·카드 7(docs/p5_flow_program_prompt.md §0-1, metrics §21 — 로그인).
 //
-// - API `flows/market-minute?market=<탭>`(원 단위 — 서버가 백만원 → 원). 빈 분은 null — 선을 끊는다(잇지 않음).
+// - API `flows/market-minute?market=<탭>`(원 단위 — 서버가 백만원 → 원). 못 받은 분은 null — 차트가 앞뒤 값을
+//   옅은 점선으로 잇는다(HTS 처럼 끊김 없는 선, 이은 구간은 구분 — flows_minute_chart.ts).
+// - 지수 선: 응답 `index`(장중 10분 값)를 따로 정규화한 축으로 겹친다. 없으면 선 없이 메모 한 줄(서버).
 // - 카드 7: 개인·외국인·기관 합계·금융투자·투신(사모 제외 — 사용자 결정 Q7)·연기금·기타법인. 억원.
-// - 선 토글: 기본 개인·외국인·기관, 세부(금융투자·투신·사모·은행·보험·종금·연기금·기타단체)·기타법인은 끔.
+// - 선 토글: 기본 개인·외국인·기관계·지수, 세부(금융투자·투신·사모·은행·보험·종금·연기금·기타단체)·기타법인은 끔.
 //   켜고 끈 상태와 시장 탭은 URL 쿼리(f2m·f2l).
 // - 머리 꼬리표 `수집 HH:MM · 60초 갱신 · 잠정` + 거래소 `KRX(잠금)` — 이 TR 에는 거래소 입력이 없다(F2 §1.3).
-// - 상태를 따로 보인다: 확인 전(꺼진 조합 — #39)·장 시작 전·휴장일(직전 거래일 선)·아직 없음(404).
+// - 상태를 따로 보인다: 확인 전(꺼진 조합)·장 시작 전·휴장일(직전 거래일 선)·아직 없음(404).
 import type { components } from "../../api/types.gen";
 import type { PageContext } from "../../app/types";
 import type { Envelope } from "../../data/source";
 import { h } from "../../ui/dom";
 import { DASH, eok, kstTime, shortDate, signClass } from "../../ui/fmt";
-import { lineChart } from "../../ui/line";
 import type { Panel } from "../../ui/panel";
 import { markQuality } from "../../ui/quality";
 import { type Option, seg } from "../../ui/seg";
 import { fill, filters } from "../p1_market";
+import { INDEX_ID, minuteChart, type MinuteSeries } from "./flows_minute_chart";
 import { readList, readParam, writeParams } from "./state";
 
 type S = components["schemas"];
 export type MarketMinute = S["MarketMinute"];
 
 export const MINUTE_TITLE = "장중 투자자 수급";
-export const MINUTE_HINT = "flows.market_minute 09:00~15:40 매분";
+export const MINUTE_HINT = "장중 09:00~15:40 1분마다";
 export const MINUTE_REFRESH_MS = 60_000;
 
 export type MinuteTab =
@@ -32,7 +34,7 @@ export type MinuteTab =
   | "k200_call"
   | "k200_put"
   | "stock_fut";
-/** 시장 탭(F2 §0-1 — 주식선물은 실측 #39 뒤). 기본은 GX 가 실측한 코스피200 선물 */
+/** 시장 탭(F2 §0-1). 기본은 코스피200 선물 */
 export const MINUTE_TABS: readonly Option<MinuteTab>[] = [
   { value: "kospi", label: "코스피" },
   { value: "kosdaq", label: "코스닥" },
@@ -55,8 +57,27 @@ export const LINE_IDS = [
   "fund",
   "etc_orgt",
   "etc_corp",
+  INDEX_ID,
 ] as const;
 export type LineId = (typeof LINE_IDS)[number];
+
+/** 선 색 — HTS 관례(개인 주황·외국인 파랑·기관계 초록). CSS 변수로 바꿀 수 있다 */
+export const LINE_COLOR: Record<string, string> = {
+  prsn: "var(--f2-prsn, #e8740c)",
+  frgn: "var(--f2-frgn, #3d7eff)",
+  orgn: "var(--f2-orgn, #1fa45a)",
+  scrt: "var(--f2-scrt, #b06fd8)",
+  ivtr: "var(--f2-ivtr, #d4a017)",
+  pe_fund: "var(--f2-pe-fund, #4fb3bf)",
+  bank: "var(--f2-bank, #c0504d)",
+  insu: "var(--f2-insu, #7fa650)",
+  mrbn: "var(--f2-mrbn, #c98b5a)",
+  fund: "var(--f2-fund, #e05d9b)",
+  etc_orgt: "var(--f2-etc-orgt, #8c8c8c)",
+  etc_corp: "var(--f2-etc-corp, #6a8caf)",
+};
+/** 화면 이름(HTS 표기) — 서버 이름과 다른 것만 */
+const LINE_NAME: Record<string, string> = { orgn: "기관계" };
 
 const STATUS_TEXT: Record<string, string> = {
   before_open: "장 시작 전 — 09:00부터 매분 수집. 아래는 직전 거래일 선",
@@ -114,7 +135,7 @@ export function drawMinute(
       h(
         "p",
         { class: "msg f2-state", data: { status: d.status } },
-        `확인 전 — 이 시장 조합은 실측(#39) 뒤에 켠다. 값을 지어내지 않는다.`,
+        "확인 전 — 이 시장은 아직 받지 않는다.",
       ),
     );
     p.setSource({ ...env, quality: env.quality });
@@ -146,29 +167,41 @@ export function drawMinute(
     );
   p.body.append(cards(d));
   const want = new Set(
-    on ?? d.lines.filter((l) => l.default_on).map((l) => l.investor),
+    on ?? [
+      ...d.lines.filter((l) => l.default_on).map((l) => l.investor),
+      INDEX_ID,
+    ],
   );
-  const chart = lineChart({
-    label: "투자자별 누적 순매수(분, 억원)",
-    x: d.axis,
-    series: d.lines.map((l) => ({
-      label: l.label,
-      values: l.values.map((v) => (v === null ? null : v / 1e8)),
-    })),
-    zero: true,
-    toggle: true,
-    hidden: d.lines.filter((l) => !want.has(l.investor)).map((l) => l.label),
-    format: (v) =>
-      `${v >= 0 ? "+" : ""}${Math.round(v).toLocaleString("ko-KR")}억`,
+  const series: MinuteSeries[] = d.lines.map((l) => ({
+    id: l.investor,
+    label: LINE_NAME[l.investor] ?? l.label,
+    color: LINE_COLOR[l.investor] ?? "var(--accent)",
+    values: l.values.map((v) => (v === null ? null : v / 1e8)),
+  }));
+  const idx = d.index ?? null;
+  const chart = minuteChart({
+    label: "투자자별 누적 순매수(분, 억원)와 지수",
+    axis: d.axis,
+    series,
+    hidden: [...series.map((sr) => sr.id), INDEX_ID].filter(
+      (id) => !want.has(id),
+    ),
+    index: idx
+      ? {
+          label: idx.label,
+          values: idx.values,
+          last: idx.last,
+          chgPct: idx.chg_pct,
+        }
+      : null,
+    date: shortDate(d.trade_date),
+    updated: d.collected_at ? kstTime(d.collected_at) : null,
   });
   chart.el.dataset.lines = "minute";
-  chart.el.addEventListener("click", () => {
-    onToggle?.(
-      chart
-        .visible()
-        .map((k) => d.lines[k]?.investor ?? "")
-        .filter(Boolean),
-    );
+  chart.el.querySelector(".legend")?.addEventListener("click", () => {
+    // 지수가 없는 탭(주식선물)에서 고쳐도 다른 탭의 지수 켬 상태는 그대로 둔다
+    const keep = !idx && want.has(INDEX_ID) ? [INDEX_ID] : [];
+    onToggle?.([...chart.visible(), ...keep]);
   });
   p.body.append(chart.el);
   p.setSource(env);
@@ -211,7 +244,7 @@ export function mountMinute(ctx: PageContext, p: Panel): () => Promise<void> {
     }).el,
   );
   p.setDef(
-    "그날 누적 순매수(1분마다 받아 쌓음 — 못 받은 분은 빈칸으로 끊는다). 투신은 사모 제외(KRX 표기). 기관 세부·기타법인 선은 범례로 켠다.",
+    "그날 누적 순매수(1분마다 받아 쌓음 — 못 받은 분은 앞뒤를 점선으로 잇는다). 지수는 따로 맞춘 축(왼쪽 눈금). 투신은 사모 제외(KRX 표기). 기관 세부·기타법인 선은 범례로 켠다.",
   );
   return load;
 }
