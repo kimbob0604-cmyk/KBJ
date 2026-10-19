@@ -21,6 +21,7 @@ from datetime import date, datetime, timedelta
 from typing import Any, Final
 
 from kbj.core.calendar import State, state_at
+from kbj.core.gex.records import FuturesRecord
 from kbj.core.quality import Quality, Sourced
 from kbj.core.rows import IndexBar, IndexQuote
 from kbj.core.time import KST
@@ -95,6 +96,7 @@ FX_SERIES: Final = (  # 앞에서부터 값이 있는 첫 시리즈(한은 종�
     ("prv", "YAHOO:KRW=X"),
 )
 VKOSPI_CODE: Final = "VKOSPI"
+NIGHT_CODE: Final = "K200N"  # 코스피200 야간선물(GEX 선물 전광판 — 근월물)
 AUX_LOOKBACK_DAYS: Final = 45  # 보조 타일 스파크 창(달력일 — 20영업일 + 공표 지연)
 
 
@@ -193,6 +195,49 @@ def _vkospi_tile(ctx: ReadContext, today: date) -> IndexTile | None:
         if r.close is not None
     ]
     return _daily_tile(VKOSPI_CODE, "VKOSPI", pts)
+
+
+def _near_future(rows: Sequence[FuturesRecord]) -> FuturesRecord | None:
+    """근월물(남은 날 적은 것) — 전광판 행을 단건 현재가보다 먼저."""
+    priced = [r for r in rows if r.price is not None and r.market == "F" and r.quality != "invalid"]
+    priced.sort(
+        key=lambda r: (
+            r.remaining_days if r.remaining_days is not None else 10**6,
+            r.source != "board",
+            r.code,
+        )
+    )
+    return priced[0] if priced else None
+
+
+def _night_tile(ctx: ReadContext, today: date) -> IndexTile | None:
+    """코스피200 야간선물 — 그 밤은 다음 거래일 night 태그(GX 규칙). 등락은 같은 종목 주간
+    마지막 값 대비."""
+    upto = ctx.now()
+    for d in (ctx.cal.next_trading_day(today), today):
+        fut = _near_future(ctx.repos.gex.futures_latest(d, "night", upto))
+        if fut is not None and fut.price is not None:
+            break
+    else:
+        return None
+    price = float(fut.price)
+    day = _near_future(
+        [r for r in ctx.repos.gex.futures_latest(ctx.cal.prev_trading_day(d), "day", upto)
+         if r.code == fut.code]
+    )  # fmt: skip
+    base = float(day.price) if day is not None and day.price else None
+    live = state_at(ctx.now_kst(), ctx.cal).state is State.NIGHT
+    return IndexTile(
+        code=NIGHT_CODE,
+        name="K200 야간선물",
+        value=price,
+        chg_pct=(price / base - 1) * 100 if base else None,
+        spark=[v for v in (base, price) if v is not None],
+        live=live,
+        source="KIS",
+        as_of=fut.ts,
+        quality=Quality.ESTIMATED if live else Quality.OK,
+    )
 
 
 def _breadth(ctx: ReadContext, ledger: Ledger) -> Breadth | None:
@@ -296,7 +341,7 @@ def market_summary(ctx: ReadContext, *, day: date | None = None) -> Envelope[Mar
             notes.append(f"지수 {code} 자료 없음")
         else:
             tiles.append(t)
-    for aux in (_vkospi_tile(ctx, today), _fx_tile(ctx, today)):
+    for aux in (_night_tile(ctx, now.date()), _vkospi_tile(ctx, today), _fx_tile(ctx, today)):
         if aux is not None:
             tiles.append(aux)
     ledger: Ledger | None

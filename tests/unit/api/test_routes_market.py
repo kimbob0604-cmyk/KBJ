@@ -145,3 +145,30 @@ def test_summary_adds_fx_and_vkospi_tiles_when_data_exists(
     assert fx["name"] == "원/달러" and fx["value"] == 1424.1 and fx["spark"] == [1400, 1410, 1424.1]
     assert round(fx["chg_pct"], 4) == round((1424.1 / 1410 - 1) * 100, 4)
     assert idx["VKOSPI"]["value"] == 22 and not idx["VKOSPI"]["live"]
+
+
+def test_summary_adds_k200_night_futures_tile(world: World, authed: TestClient) -> None:
+    from datetime import UTC, timedelta
+    from decimal import Decimal
+
+    from kbj.core.gex.records import FuturesRecord
+    from kbj.core.time import KST
+
+    now = world.clock()
+    night = world.cal.next_trading_day(now.astimezone(KST).date())  # 그 밤 = 다음 거래일 night 태그
+    ts = now.astimezone(UTC) - timedelta(minutes=1)
+
+    def fut(d, session, price, days=30, code="A0166"):  # type: ignore[no-untyped-def]
+        at = ts if session == "night" else ts - timedelta(hours=3)  # 주간은 15:45 마감 전 시각
+        return FuturesRecord(ts=at, trade_date=d, session=session, code=code, market="F",
+                             source="board", price=Decimal(price), remaining_days=days)  # fmt: skip
+
+    world.repos.gex.seed_futures([
+        fut(night, "night", "400.0"),
+        fut(night, "night", "410.0", days=120, code="A0169"),  # 원월물은 고르지 않는다
+        fut(world.cal.prev_trading_day(night), "day", "392.0"),
+    ])  # fmt: skip
+    idx = {x["code"]: x for x in authed.get("/api/market/summary").json()["data"]["indices"]}
+    k = idx["K200N"]
+    assert k["name"] == "K200 야간선물" and k["value"] == 400.0
+    assert round(k["chg_pct"], 4) == round((400 / 392 - 1) * 100, 4)
