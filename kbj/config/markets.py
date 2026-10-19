@@ -119,11 +119,17 @@ class RibbonCfg(_Model):
     cyclical: tuple[str, ...] = ()
     defensive: tuple[str, ...] = ()
 
-    @field_validator("semis", "cyclical", "defensive")
+    @field_validator("semis")
     @classmethod
     def _check_codes(cls, v: tuple[str, ...]) -> tuple[str, ...]:
         _codes(v)
         return v
+
+    @field_validator("cyclical", "defensive")
+    @classmethod
+    def _check_sector_codes(cls, v: tuple[str, ...]) -> tuple[str, ...]:
+        # 업종 지수 코드 — market.sector_indices 와 같은 규칙(KRX 는 공백 뺀 이름이 코드)
+        return MarketCfg._check_sector_codes(v)
 
 
 _PAIR_CODE = re.compile(r"[0-9A-Z]{3,4}")

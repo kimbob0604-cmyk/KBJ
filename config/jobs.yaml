@@ -68,7 +68,7 @@ services:
     phase: P9
     heartbeat_s: 60
     heartbeat_key: gex-poller           # 프로세스 SERVICE 이름(compose healthcheck 와 같다)
-    enabled: false              # P9 GXI(D-P9-7) — 켜기는 WRAP(§9 R2 — GX → KBJ 전환 순서, 런북 ④)
+    enabled: true               # 2026-10-20 켬 — 사용자 요청 "꺼 둔 것도 전부 활성화"(실측 전 항목은 실패하면 운영 페이지 13에 사유가 남는다)
     writes: [prv_gex.chain_snapshots, prv_gex.fut_board, prv_gex.series_expiries]
     collects:
       - {source: KIS, dataset: option_chain_live, as_of: minute}
@@ -207,7 +207,7 @@ jobs:
 
   - name: gex.night_minutes
     phase: P9
-    enabled: false              # P9 GXI — 켜기는 WRAP(§9 R2)
+    enabled: true               # 2026-10-20 켬 — 사용자 요청 "꺼 둔 것도 전부 활성화"(실측 전 항목은 실패하면 운영 페이지 13에 사유가 남는다)
     owner: "kbj.services.collectors.gex_minutes:run_night"
     schedule: {cron: "10 6 * * 1-5", when: trading_day}
     retry: {every_s: 300, until: "08:00"}     # GX MinuteDaily — 5분 뒤 다시, 창 끝 08:00
@@ -231,7 +231,7 @@ jobs:
 
   - name: kis.master
     phase: P9
-    enabled: false              # P9 GXI — 켜기는 WRAP(§9 R2)
+    enabled: true               # 2026-10-20 켬 — 사용자 요청 "꺼 둔 것도 전부 활성화"(실측 전 항목은 실패하면 운영 페이지 13에 사유가 남는다)
     owner: "kbj.services.collectors.kis_master:run"
     schedule: {state_enter: [PRE_DAY], when: trading_day}
     retry: {every_s: 60, until: "08:45"}      # GX _master_step — 실패하면 60초 뒤 다시
@@ -243,7 +243,7 @@ jobs:
 
   - name: kis.master_night
     phase: P9
-    enabled: false              # P9 GXI — 켜기는 WRAP(§9 R2)
+    enabled: true               # 2026-10-20 켬 — 사용자 요청 "꺼 둔 것도 전부 활성화"(실측 전 항목은 실패하면 운영 페이지 13에 사유가 남는다)
     owner: "kbj.services.collectors.kis_master:run_night"
     schedule: {state_enter: [PRE_NIGHT], when: night_session}
     retry: {every_s: 60, until: "18:00"}
@@ -291,7 +291,7 @@ jobs:
 
   - name: gex.krx_derivatives
     phase: P9
-    enabled: false              # P9 GXI — 켜기는 WRAP(§9 R2)
+    enabled: true               # 2026-10-20 켬 — 사용자 요청 "꺼 둔 것도 전부 활성화"(실측 전 항목은 실패하면 운영 페이지 13에 사유가 남는다)
     owner: "kbj.services.collectors.gex_krx:run"
     schedule: {cron: "5 8 * * 1-5", when: trading_day}
     retry: {every_s: 600, until: "10:00"}
@@ -305,7 +305,7 @@ jobs:
 
   - name: gex.open_check_day
     phase: P9
-    enabled: false              # P9 GXI — 켜기는 WRAP(§9 R2)
+    enabled: true               # 2026-10-20 켬 — 사용자 요청 "꺼 둔 것도 전부 활성화"(실측 전 항목은 실패하면 운영 페이지 13에 사유가 남는다)
     owner: "kbj.services.collectors.gex_open_check:run_day"
     schedule: {cron: "49 8 * * 1-5", when: trading_day}
     retry: {every_s: 60, until: "15:45"}      # GX OpenCheck — 실패하면 1분 뒤 다시, 세션 끝 전까지
@@ -315,7 +315,7 @@ jobs:
 
   - name: gex.open_check_night
     phase: P9
-    enabled: false              # P9 GXI — 켜기는 WRAP(§9 R2)
+    enabled: true               # 2026-10-20 켬 — 사용자 요청 "꺼 둔 것도 전부 활성화"(실측 전 항목은 실패하면 운영 페이지 13에 사유가 남는다)
     owner: "kbj.services.collectors.gex_open_check:run_night"
     schedule: {cron: "4 18 * * 1-5", when: night_session}
     retry: {every_s: 60, until: "23:59"}
@@ -406,7 +406,7 @@ jobs:
 
   - name: trade.customs_tenday
     phase: P6
-    enabled: false              # P6 WRAP 도 꺼 둠 — 키 수령·실측 #6·#17·#55 뒤 켬
+    enabled: true               # 2026-10-20 켬 — 사용자 요청 "꺼 둔 것도 전부 활성화"(실측 전 항목은 실패하면 운영 페이지 13에 사유가 남는다)
     owner: "kbj.services.collectors.customs:tenday"
     schedule: {cron: "*/20 9-17 * * *", when: month_days, month_days: [1, 2, 3, 11, 12, 13, 21, 22, 23]}
     retry: {max: 0}             # 20분 폴링이 재시도다(D-P6-6)
@@ -423,7 +423,7 @@ jobs:
 
   - name: trade.customs_monthly
     phase: P6
-    enabled: false              # P6 WRAP 도 꺼 둠 — 키 수령·실측 #1~#5 뒤 켬
+    enabled: true               # 2026-10-20 켬 — 사용자 요청 "꺼 둔 것도 전부 활성화"(실측 전 항목은 실패하면 운영 페이지 13에 사유가 남는다)
     owner: "kbj.services.collectors.customs:monthly"
     schedule: {cron: "10 10,15 * * *", when: month_days, month_days: [14, 15, 16, 17, 18, 19, 20]}
     retry: {max: 0}
@@ -669,6 +669,7 @@ jobs:
 
   - name: program.intraday
     phase: P5
+    enabled: true               # 2026-10-20 켬 — 사용자 요청 "꺼 둔 것도 전부 활성화"(실측 전 항목은 실패하면 운영 페이지 13에 사유가 남는다)
     owner: "kbj.services.collectors.program:intraday"
     schedule: {equity: {start: open, end: "close+10", every_min: 1}, when: trading_day}
     retry: {max: 1, backoff_s: [15]}
@@ -681,6 +682,7 @@ jobs:
 
   - name: program.stock_scan
     phase: P5
+    enabled: true               # 2026-10-20 켬 — 사용자 요청 "꺼 둔 것도 전부 활성화"(실측 전 항목은 실패하면 운영 페이지 13에 사유가 남는다)
     owner: "kbj.services.collectors.program:scan"
     # P3 10분 슬롯(09:00·09:10…)과 5분 엇갈려 같은 KIS 버킷이 겹치지 않게(§3.4·R5)
     schedule: {equity: {start: "open+5", end: "close-5", every_min: 10}, when: trading_day}
@@ -712,7 +714,7 @@ jobs:
 
   - name: gex.day_minutes
     phase: P9
-    enabled: false              # P9 GXI — 켜기는 WRAP(§9 R2)
+    enabled: true               # 2026-10-20 켬 — 사용자 요청 "꺼 둔 것도 전부 활성화"(실측 전 항목은 실패하면 운영 페이지 13에 사유가 남는다)
     owner: "kbj.services.collectors.gex_minutes:run_day"
     schedule: {cron: "0 16 * * 1-5", when: trading_day}
     retry: {every_s: 300, until: "17:50"}     # GX MinuteDaily — 5분 뒤 다시, 창 끝 17:50
@@ -770,7 +772,7 @@ jobs:
 
   - name: consensus.snapshot
     phase: P4
-    enabled: false               # 실데이터 확인(probe #29) 전까지 꺼 둔다 — 웨이브 3 에도 켜지 않는다(D-P4-10)
+    enabled: true               # 2026-10-20 켬 — 사용자 요청 "꺼 둔 것도 전부 활성화"(실측 전 항목은 실패하면 운영 페이지 13에 사유가 남는다)
     owner: "kbj.services.collectors.consensus:run"
     schedule: {cron: "0 16 * * 1-5", when: trading_day}
     retry: {max: 2, backoff_s: [1800]}
@@ -801,6 +803,7 @@ jobs:
 
   - name: program.daily
     phase: P5
+    enabled: true               # 2026-10-20 켬 — 사용자 요청 "꺼 둔 것도 전부 활성화"(실측 전 항목은 실패하면 운영 페이지 13에 사유가 남는다)
     owner: "kbj.services.collectors.program:daily"
     schedule: {equity: {start: "close+20"}, when: trading_day}    # 평소 15:50(수능일 16:50)
     retry: {max: 3, backoff_s: [600]}
@@ -812,6 +815,7 @@ jobs:
 
   - name: program.stock_sweep
     phase: P5
+    enabled: true               # 2026-10-20 켬 — 사용자 요청 "꺼 둔 것도 전부 활성화"(실측 전 항목은 실패하면 운영 페이지 13에 사유가 남는다)
     owner: "kbj.services.collectors.program:sweep"
     schedule: {cron: "10 18 * * 1-5", when: trading_day}
     retry: {max: 2, backoff_s: [900]}
@@ -826,6 +830,7 @@ jobs:
 
   - name: program.backfill
     phase: P5
+    enabled: true               # 2026-10-20 켬 — 사용자 요청 "꺼 둔 것도 전부 활성화"(실측 전 항목은 실패하면 운영 페이지 13에 사유가 남는다)
     owner: "kbj.services.collectors.program:backfill"
     schedule: {manual: true}
     retry: {max: 2, backoff_s: [600]}
@@ -941,7 +946,7 @@ jobs:
   # 발표일 알림은 P8 규칙 알림). 켜기는 메인 결정(꺼진 채 등록 — 단계별 켜진 표 ENABLED_BY_PHASE 는 공유 시험).
   - name: index.calendar
     phase: P5
-    enabled: false              # P5 2차 IDX — 켜기는 메인(requests)
+    enabled: true               # 2026-10-20 켬 — 사용자 요청 "꺼 둔 것도 전부 활성화"(실측 전 항목은 실패하면 운영 페이지 13에 사유가 남는다)
     owner: "kbj.services.engine.index_review:calendar"
     schedule: {cron: "41 6 * * *", when: always}
     retry: {max: 1, backoff_s: [300]}
@@ -951,7 +956,7 @@ jobs:
 
   - name: index.predict
     phase: P5
-    enabled: false              # P5 2차 IDX — 켜기는 메인(requests)
+    enabled: true               # 2026-10-20 켬 — 사용자 요청 "꺼 둔 것도 전부 활성화"(실측 전 항목은 실패하면 운영 페이지 13에 사유가 남는다)
     owner: "kbj.services.engine.index_review:predict"
     schedule: {cron: "20 17 * * 1-5", when: trading_day}   # 16:00 발송 묶음 뒤(ADR 0018)
     retry: {max: 2, backoff_s: [600, 1800]}
@@ -992,7 +997,7 @@ jobs:
 
   - name: krx.vkospi
     phase: P7
-    enabled: false              # 고정 — VKOSPI 행·칸 실측(#P7-1) 전(D-P7-14). 켜기는 실측 뒤
+    enabled: true               # 2026-10-20 켬 — 사용자 요청 "꺼 둔 것도 전부 활성화"(실측 전 항목은 실패하면 운영 페이지 13에 사유가 남는다)
     owner: "kbj.services.collectors.krx_vkospi:run"
     schedule: {cron: "10 8 * * 1-5", when: trading_day}
     retry: {every_s: 600, until: "10:00"}

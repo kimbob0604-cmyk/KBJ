@@ -106,3 +106,42 @@ def test_sector_names_carry_the_market_for_krx_name_codes() -> None:
 
     assert _sector_name("건설") == "코스피 건설"
     assert _sector_name("코스닥건설") == "코스닥건설"
+
+
+def test_summary_adds_fx_and_vkospi_tiles_when_data_exists(
+    world: World, authed: TestClient
+) -> None:
+    from datetime import timedelta
+    from decimal import Decimal
+
+    from kbj.core.p5_rows import MacroSeriesRow
+    from kbj.core.p7_rows import VolIndexRow
+    from kbj.core.quality import Quality
+
+    now = world.clock()
+    last = world.market.last_day
+    days = [last - timedelta(days=i) for i in (2, 1, 0)]
+    codes = {x["code"] for x in authed.get("/api/market/summary").json()["data"]["indices"]}
+    assert "USDKRW" not in codes and "VKOSPI" not in codes  # 원천 없음 → 타일 없음('준비 중')
+
+    world.repos.macro_prv.upsert_series(
+        [
+            MacroSeriesRow(series_id="YAHOO:KRW=X", period=d.isoformat(), value=Decimal(v),
+                           unit="원", source="YAHOO", as_of=now, quality=Quality.OK)
+            for d, v in zip(days, ("1400", "1410", "1424.1"), strict=True)
+        ],
+        loaded_by="test", received_at=now,
+    )  # fmt: skip
+    world.repos.diag.upsert_vol_index(
+        [
+            VolIndexRow(trade_date=d, index_id="vkospi", close=Decimal(v), source="KRX",
+                        as_of=now, quality=Quality.OK)
+            for d, v in zip(days, ("20", "21", "22"), strict=True)
+        ],
+        received_at=now, loaded_by="test",
+    )  # fmt: skip
+    idx = {x["code"]: x for x in authed.get("/api/market/summary").json()["data"]["indices"]}
+    fx = idx["USDKRW"]
+    assert fx["name"] == "원/달러" and fx["value"] == 1424.1 and fx["spark"] == [1400, 1410, 1424.1]
+    assert round(fx["chg_pct"], 4) == round((1424.1 / 1410 - 1) * 100, 4)
+    assert idx["VKOSPI"]["value"] == 22 and not idx["VKOSPI"]["live"]

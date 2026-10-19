@@ -69,6 +69,7 @@ P4_ENABLED = {
     "earnings.backfill",
     "fin.valuation_band",
     "reports.dart_excel",
+    "consensus.snapshot",  # 2026-10-20 사용자 요청 — 꺼 둔 작업 전부 켬
 }
 # P5(docs/p5_design.md D-P5-23 — 웨이브 3 WRAP). 처리기가 있고 외부 호출이 없거나 응답 칸이
 # 실측·legacy 운영으로 확인된 작업만. 테마(themes.*)는 사전 통합을 사용자가 따로 진행해
@@ -92,13 +93,28 @@ P5_ENABLED = {
     "macro.evening_prv",
     "market_stats.kofia",
     "market.fsc_daily",
+    # 2026-10-20 사용자 요청 "꺼 둔 것도 전부 활성화" — 실측 전(#40·#41·#50~#53)이라도 켠다.
+    # 남는 꺼짐은 처리기·표가 없는 themes.monitor 하나
+    "program.intraday",
+    "program.stock_scan",
+    "program.daily",
+    "program.stock_sweep",
+    "program.backfill",
+    "index.calendar",
+    "index.predict",
 }
 # P6(docs/p6_design.md D-P6-20 — 웨이브 3 WRAP). 외부 호출이 없는 세 작업만. 관세청 수집
 # 두 작업(trade.customs_*)은 키 수령·실측(#1~#6·#17·#55) 뒤 켠다
-P6_ENABLED = {"trade.map_load", "trade.derive", "trade.stock_index"}
+P6_ENABLED = {
+    "trade.map_load",
+    "trade.derive",
+    "trade.stock_index",
+    "trade.customs_tenday",  # 2026-10-20 사용자 요청으로 켬
+    "trade.customs_monthly",
+}
 # P7(docs/p7_design.md §1.7-1 — 웨이브 3 WRAP). 외부 호출이 없는 세 작업. krx.vkospi 는 VKOSPI 행·칸
 # 실측(#P7-1) 전까지 꺼진 채(D-P7-14). 서비스 gex.engine·ws_gateway·recorder 는 P7_SERVICES(아래)
-P7_ENABLED = {"diag.public", "diag.daily", "gex.alert"}
+P7_ENABLED = {"diag.public", "diag.daily", "gex.alert", "krx.vkospi"}  # vkospi 2026-10-20 켬
 # P8(docs/p8_design.md §1.6-1 — 웨이브 3 WRAP). 외부 호출이 없는 세 작업(원장만) + rules.intraday
 # (사용자 요청 2026-10-14 — ADR 0031 §6: TR 칸·가집계 회차·순위 목록은 공식 KIS 예제로 확인, 남은
 # 확인 #65·#66 은 장중 하루 실측)
@@ -109,7 +125,18 @@ P8_ENABLED = {"rules.close", "rules.outcome", "rules.backtest_nightly", "rules.i
 # 페이지 9(ADR 0039 — 사용자 결정 2026-10-15): 테마 마스터 두 작업 켬(외부 키 불필요 — 공개
 # GitHub raw 파일). 로그인 theme.master_sync(prv_themes) → 공개 theme.classes_sync(pub_themes —
 # 굳은 의존)
-P9_ENABLED: set[str] = {"theme.master_sync", "theme.classes_sync"}
+# 2026-10-20 사용자 요청으로 GX 수집 일곱과 gex.poller 도 켬(로컬 운영 — 옛 GX 는 돌지 않는다)
+P9_ENABLED: set[str] = {
+    "theme.master_sync",
+    "theme.classes_sync",
+    "gex.day_minutes",
+    "gex.night_minutes",
+    "gex.krx_derivatives",
+    "kis.master",
+    "kis.master_night",
+    "gex.open_check_day",
+    "gex.open_check_night",
+}
 # 단계별 켜진 작업(웨이브 3 묶음이 P3~P7 을 켰다). 새 단계가 작업을 켜면 이 표에 한 줄 더한다.
 ENABLED_BY_PHASE = {
     "P2": P2_ENABLED,
@@ -181,6 +208,7 @@ def test_enabled_jobs_by_phase_and_core_services() -> None:  # §6.6-10, §6.9, 
         "auth", "notifier", "scheduler",
         # P7 WRAP(D-P7-10) — KBJ 로 옮긴 GEX 상시 프로세스
         "gex.engine", "gex.ws_gateway", "gex.recorder",
+        "gex.poller",  # 2026-10-20 사용자 요청으로 켬
     }  # fmt: skip
     assert all(not j.enabled for j in REG.jobs if j.external)
     # P4 이후 단계는 아직 하나도 켜지 않는다(처리기 없음)
@@ -565,7 +593,7 @@ def test_kis_venues_match_markets_config() -> None:
                 continue
             checked += 1
             assert tuple(v.value for v in c.venues) == want, (j.name, c.dataset_id)
-    assert checked == 7  # close_collect 5 + flows.intraday 2
+    assert checked == 12  # close_collect 5 + flows.intraday 2 + program.* 5(2026-10-20 켬)
 
 
 def test_p3_writes_and_collects_follow_the_design() -> None:
@@ -649,9 +677,9 @@ def test_p4_jobs_are_registered_with_design_owners() -> None:
         assert p4[name].owner == owner, name
     # 처리기는 웨이브 2 — 웨이브 3(S)이 ENABLED_BY_PHASE["P4"] 와 함께 켰다. consensus.snapshot 은
     # 실데이터 확인(#29) 전까지 꺼 둔다(D-P4-10)
-    assert {n for n, j in p4.items() if j.enabled} == set(P4_JOBS) - {"consensus.snapshot"}
-    assert ENABLED_BY_PHASE["P4"] == set(P4_JOBS) - {"consensus.snapshot"}
-    assert not REG.by_name("consensus.snapshot").enabled
+    # 실데이터 확인(#29) 전이지만 2026-10-20 사용자 요청으로 켰다 — 열 작업 전부
+    assert {n for n, j in p4.items() if j.enabled} == set(P4_JOBS)
+    assert ENABLED_BY_PHASE["P4"] == set(P4_JOBS)
 
 
 def test_p4_jobs_follow_the_runner_semantics() -> None:  # D-P4-25
@@ -1120,7 +1148,7 @@ def test_p7_jobs_and_services_are_registered_with_design_owners() -> None:
         assert p7[name].owner == owner and p7[name].phase == "P7", name
         assert set(p7[name].writes) == P7_WRITES[name], name
     # VKOSPI 는 실측 #P7-1 전까지 꺼진 채 고정(D-P7-14)
-    assert not p7["krx.vkospi"].enabled and "#P7-1" in (p7["krx.vkospi"].note or "")
+    assert p7["krx.vkospi"].enabled and "#P7-1" in (p7["krx.vkospi"].note or "")  # 2026-10-20 켬
     services = {s.name: s for s in REG.services}
     for name, owner in P7_SERVICES.items():
         s = services[name]
@@ -1167,7 +1195,7 @@ def test_p9_gex_ingest_is_registered_with_kbj_owners_and_off() -> None:
 
     for name, owner in P9_GXI_JOBS.items():
         j = REG.by_name(name)
-        assert (j.owner, j.runner, j.phase, j.enabled) == (owner, "kbj", "P9", False), name
+        assert (j.owner, j.runner, j.phase, j.enabled) == (owner, "kbj", "P9", True), name
         assert set(j.writes) == P9_GXI_WRITES[name], name
         handler = resolve(owner)  # 처리기가 import 된다(켜지 않아도)
         assert callable(handler), name
@@ -1176,7 +1204,7 @@ def test_p9_gex_ingest_is_registered_with_kbj_owners_and_off() -> None:
         "kbj.services.gex_poller",
         "kbj",
         "P9",
-        False,
+        True,  # 2026-10-20 사용자 요청으로 켬
     )
     assert poller.beat_name == HEARTBEAT == "gex-poller" and poller.heartbeat_s == 60
     assert set(poller.writes) == {

@@ -79,6 +79,8 @@ export function panel(viewer: Tier, opts: PanelOptions): Panel {
     if (opts.pending) src.textContent = `준비 중(${opts.pending}) · 로그인`;
   } else if (pending) {
     el.classList.add('is-pending');
+    // 로그인 화면은 원천이 아직 없는 자리를 그리지 않는다(미완성처럼 보인다 — 사용자 요청 2026-10-20). 공개 데모는 단계 안내를 남긴다
+    if (viewer === 'login') el.hidden = true;
     el.append(
       h(
         'div',

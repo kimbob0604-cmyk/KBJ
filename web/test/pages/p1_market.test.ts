@@ -32,6 +32,17 @@ async function mountLogin(over: Parameters<typeof apiHarness>[0] = {}) {
 }
 
 describe('페이지 1 시장 — 로그인', () => {
+  it('보조 타일(원/달러·VKOSPI)은 서버가 보낼 때만 그린다 — 준비 중 자리는 없다', async () => {
+    const summary = fixture<{ data: { indices: object[] } }>('market_summary');
+    const base = summary.data.indices[0] as Record<string, unknown>;
+    summary.data.indices.push({ ...base, code: 'USDKRW', name: '원/달러', value: 1424.1, live: false });
+    const { root } = await mountLogin({ market_summary: summary });
+    const idx = panelByTitle(root, '지수');
+    expect(idx.querySelector('[data-code="USDKRW"]')).not.toBeNull();
+    expect(idx.querySelectorAll('[data-pending]')).toHaveLength(0);
+    expect(text(idx)).not.toContain('VKOSPI');
+  });
+
   it('요약·업종·투자자를 한 번씩 부르고 위젯을 그린다', async () => {
     const { hz, root } = await mountLogin();
     expect(hz.paths().sort()).toEqual([
@@ -45,12 +56,12 @@ describe('페이지 1 시장 — 로그인', () => {
 
     const idx = panelByTitle(root, '지수');
     const tiles = idx.querySelectorAll('.tile');
-    expect(tiles).toHaveLength(2 + PENDING_TILES.length);
+    expect(tiles).toHaveLength(2); // 원천이 없는 보조 타일(PENDING_TILES)은 그리지 않는다
     expect(text(tiles[0])).toContain('코스피');
     expect(text(tiles[0])).toContain('20,050.76');
     expect(tiles[0]?.querySelector('svg[role="img"]')?.getAttribute('aria-label')).toBe('코스피 추이');
-    expect(text(idx)).toContain('준비 중(P7)');
-    expect(text(idx)).toContain('원/달러');
+    expect(text(idx)).not.toContain('준비 중');
+    expect(PENDING_TILES.map((t) => t.code)).toEqual(['K200N', 'VKOSPI', 'USDKRW']);
     // 지수 2001 결측 메모는 지수 패널로
     expect(text(idx.querySelector('.notes'))).toContain('지수 2001 자료 없음');
 

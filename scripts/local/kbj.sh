@@ -14,6 +14,7 @@
 #   bash scripts/local/kbj.sh backfill [일수]   # 지난 N일(기본 21일) 시장 일봉을 KRX 에서 받아 채움(KRX 키 필요)
 #   bash scripts/local/kbj.sh reindex-idx [일수]   # 코스피·코스닥 지수 일별을 지난 N일(기본 400일) 다시 받아 새 코드 규칙으로 덮음(KRX 키 필요)
 #   bash scripts/local/kbj.sh fill-all          # 나머지 빈 칸(매크로·미국·신용·테마·진단 등)을 한 번에 채움 — 키가 없는 것은 건너뛰고 끝에 알려 준다
+#   bash scripts/local/kbj.sh probe-kosis       # 통계청(KOSIS) 표의 항목 코드표를 찍는다(키는 안 보임) — 매크로 KOSIS 칸을 켜는 데 쓴다
 #   bash scripts/local/kbj.sh fill-dart         # 종목 상세(8)의 재무·공시용: DART 회사코드·프로필·재무 5년 백필·밸류에이션 재계산(DART 키 필요)
 #   bash scripts/local/kbj.sh job <작업> [--as-of 값]   # 작업 하나를 지금 한 번(예: job market.close_collect)
 #   bash scripts/local/kbj.sh open         # 브라우저로 열기
@@ -28,7 +29,7 @@ source "$here/../vm/lib.sh"
 URL="http://127.0.0.1:8000"
 AWAKE_PID_FILE="${KBJ_AWAKE_PID_FILE:-$HOME/.kbj-awake.pid}"
 
-usage() { sed -n '2,21p' "$0"; }
+usage() { sed -n '2,22p' "$0"; }
 
 # 도커 설정 점검(메모리 5GB 미만이면 서비스가 죽을 수 있다 — 알려만 준다)
 check_docker_resources() {
@@ -278,6 +279,22 @@ last_weekday() {
   done
 }
 
+# 미국장 기준 날짜 — 뉴욕 시각 17시(마감·데이터 반영) 전이면 그 전 평일. 장중에 오늘 날짜로 받으면 '공표 전'으로 헛돈다
+last_us_day() {
+  local d dow h n=0
+  h="$(TZ=America/New_York date +%H)"
+  d="$(TZ=America/New_York date +%Y-%m-%d)"
+  if (( 10#$h < 17 )); then n=1; fi
+  while :; do
+    if (( n > 0 )); then
+      d="$(TZ=America/New_York date -v-"$n"d +%Y-%m-%d 2>/dev/null || TZ=America/New_York date -d "$n days ago" +%Y-%m-%d)"
+    fi
+    dow="$(date -j -f %Y-%m-%d "$d" +%u 2>/dev/null || date -d "$d" +%u)"
+    if (( dow <= 5 )); then echo "$d"; return 0; fi
+    n=$((n + 1))
+  done
+}
+
 # 작업 하나를 돌리고 성공·실패를 판정한다. 날짜를 정할 수 없다고 하면 지난 평일로 한 번 더. 결과는 FILL_OK·FILL_FAIL 에 쌓는다
 FILL_OK=""
 FILL_FAIL=""
@@ -285,6 +302,7 @@ FILL_SKIP=""
 fill_try() {
   local job="$1" out
   shift
+  kbj_say "… $job 도는 중"
   out="$(kbj_compose exec -T -e MPLCONFIGDIR=/tmp/mpl scheduler python -m kbj.services.scheduler run-once "$job" "$@" 2>&1 || true)"
   if [[ $# -eq 0 ]] && printf '%s\n' "$out" | grep -q "as_of"; then
     out="$(kbj_compose exec -T -e MPLCONFIGDIR=/tmp/mpl scheduler python -m kbj.services.scheduler run-once "$job" --as-of "$FILL_DAY" 2>&1 || true)"
@@ -311,10 +329,7 @@ cmd_fill_all() {
     kbj_env_has "$k" || missing="$missing $k"
   done
   if [[ -n "$missing" ]]; then kbj_warn "비어 있는 키:$missing — 해당 칸은 채워지지 않는다($(kbj_cmd keys) 이름 으로 넣는다)"; else kbj_ok "선택 키가 모두 있다"; fi
-  kbj_step "미국장·매크로·신용·테마·지도 수집(기준 날짜 $FILL_DAY)"
-  # 미국 유니버스는 기준일 날짜로 만들어 둬야 그날 일봉(us.eod)이 받는다
-  fill_try us.universe --as-of "$FILL_DAY"
-  fill_try us.eod --as-of "$FILL_DAY"
+  kbj_step "매크로·신용·테마·지도 수집(기준 날짜 $FILL_DAY)"
   for job in macro.morning macro.morning_prv macro.monthly macro.monthly_prv \
     macro.evening macro.evening_prv market_stats.kofia market.fsc_daily theme.master_sync theme.classes_sync trade.map_load; do
     fill_try "$job"
@@ -323,6 +338,12 @@ cmd_fill_all() {
   for job in diag.public diag.daily; do
     fill_try "$job" --as-of "$FILL_DAY" --no-deps
   done
+  # 미국 일봉은 맨 뒤 — 약 1,700종목을 하나씩 받아(초당 2개 한도) 처음엔 15~60분 걸린다. 다음부터는 최근 90일만 받아 빠르다.
+  # 유니버스는 기준일 날짜로 만들어 둬야 그날 일봉(us.eod)이 받는다
+  US_DAY="$(last_us_day)"
+  kbj_step "미국장(기준 날짜 $US_DAY — 뉴욕 마감 기준) — 처음엔 15~60분, 그동안 화면이 조용해도 정상이다"
+  fill_try us.universe --as-of "$US_DAY"
+  fill_try us.eod --as-of "$US_DAY"
   kbj_say "성공:${FILL_OK:- 없음}"
   [[ -n "$FILL_SKIP" ]] && kbj_warn "건너뜀:$FILL_SKIP"
   if [[ -n "$FILL_FAIL" ]]; then
@@ -357,6 +378,10 @@ main() {
     backfill) cmd_backfill "$@" ;;
     reindex-idx) cmd_reindex_idx "$@" ;;
     fill-all) cmd_fill_all ;;
+    probe-kosis)
+      require_scheduler
+      kbj_compose exec -T -e MPLCONFIGDIR=/tmp/mpl scheduler python -m kbj.services.macro_probe
+      ;;
     fill-dart) cmd_fill_dart ;;
     job) cmd_job "$@" ;;
     awake) cmd_awake "$@" ;;

@@ -92,6 +92,16 @@ def seeded_runs() -> MemoryRunLog:
     # 16:00 이라 10:30 기준 끝났어야 할 실행이 없다
     for job in ("rules.outcome", "rules.backtest_nightly"):
         runs.record(RunRecord(f"{job}:2026-10-02:1", job, "2026-10-02", 1, "ok"))
+    # 2026-10-20 사용자 요청으로 켠 작업 — 10:30 기준 끝났어야 할 실행(VKOSPI·KRX 파생은 전 거래일
+    # 10-02, GX 밤 분봉은 06:10 그날, 지수 일정은 when: always 06:41 — 10-05 휴장일에도 돈다)
+    for job, as_of in (
+        ("krx.vkospi", "2026-10-02"),
+        ("gex.krx_derivatives", "2026-10-02"),
+        ("gex.night_minutes", "2026-10-06"),
+        ("index.calendar", "2026-10-06"),
+        ("gex.open_check_day", "2026-10-06"),  # 08:49 개장 확인
+    ):
+        runs.record(RunRecord(f"{job}:{as_of}:1", job, as_of, 1, "ok"))
     # P9 WRAP: 워치독 자신은 5분마다(마감 10분) — 10:30 기준 끝났어야 할 마지막 발화는 10:20
     runs.record(
         RunRecord("ops.watchdog:2026-10-06T10:20:1", "ops.watchdog", "2026-10-06T10:20", 1, "ok")
@@ -179,7 +189,11 @@ def test_holiday_has_no_missed_trading_day_runs() -> None:
         as_of = f"2026-10-05T{hhmm}"
         runs.record(RunRecord(f"{job}:{as_of}:1", job, as_of, 1, "ok"))
     # 매크로 월간(when: always)은 휴장일에도 돈다 — 09:10 월간·09:15 월간 로그인(월 단위 as_of)
-    for job, as_of in (("macro.monthly", "2026-10-05"), ("macro.monthly_prv", "2026-09")):
+    for job, as_of in (
+        ("macro.monthly", "2026-10-05"),
+        ("macro.monthly_prv", "2026-09"),
+        ("index.calendar", "2026-10-05"),  # 2026-10-20 켬 — when: always 06:41
+    ):
         runs.record(RunRecord(f"{job}:{as_of}:1", job, as_of, 1, "ok"))
     notes = Notes()
     problems = wd.find_problems(REG, runs, [], healthy, KR, US, hol)

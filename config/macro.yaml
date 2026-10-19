@@ -24,21 +24,21 @@ tabs:
   - {id: market, title: 시장, public: false}
 
 series:
-  # ── ECOS 한은 작성 표(공개 — probe_results §4.3) ──
-  - {id: "ECOS:722Y001:base", dataset: "ECOS:722Y001", item: null, probe: "#43", title: 한국은행 기준금리, tab: rates, unit: "%", freq: D, tier: public, brief: true}
-  - {id: "ECOS:817Y002:ktb3y", dataset: "ECOS:817Y002", item: null, probe: "#43", title: 국고채 3년, tab: rates, unit: "%", freq: D, tier: public, brief: true}
-  - {id: "ECOS:817Y002:ktb10y", dataset: "ECOS:817Y002", item: null, probe: "#43", title: 국고채 10년, tab: rates, unit: "%", freq: D, tier: public, brief: false}
-  - {id: "ECOS:817Y002:corp_aa3y", dataset: "ECOS:817Y002", item: null, probe: "#43", title: 회사채 3년 AA-, tab: rates, unit: "%", freq: D, tier: public, brief: false}
-  - {id: "ECOS:817Y002:corp_bbb3y", dataset: "ECOS:817Y002", item: null, probe: "#43", title: 회사채 3년 BBB-, tab: rates, unit: "%", freq: D, tier: public, brief: false}
-  - {id: "ECOS:721Y001:cd91", dataset: "ECOS:721Y001", item: null, probe: "#43", title: CD 91일(월평균), tab: rates, unit: "%", freq: M, tier: public, brief: false}
-  - {id: "ECOS:161Y005:m2", dataset: "ECOS:161Y005", item: null, probe: "#43", title: M2 평잔(계절조정), tab: rates, unit: 십억원, freq: M, tier: public, brief: false}
-  - {id: "ECOS:404Y014:ppi", dataset: "ECOS:404Y014", item: null, probe: "#43", title: 생산자물가지수, tab: prices, unit: "2020=100", freq: M, tier: public, brief: false}
-  - {id: "ECOS:402Y014:export_px", dataset: "ECOS:402Y014", item: null, probe: "#43", title: 수출물가지수, tab: prices, unit: "2020=100", freq: M, tier: public, brief: false}
-  - {id: "ECOS:401Y015:import_px", dataset: "ECOS:401Y015", item: null, probe: "#43", title: 수입물가지수, tab: prices, unit: "2020=100", freq: M, tier: public, brief: false}
-  - {id: "ECOS:200Y102:gdp", dataset: "ECOS:200Y102", item: null, probe: "#43", title: 실질 GDP 성장률(전기비), tab: growth, unit: "%", freq: Q, tier: public, brief: false}
-  - {id: "ECOS:513Y001:esi", dataset: "ECOS:513Y001", item: null, probe: "#43", title: 경제심리지수, tab: growth, unit: pt, freq: M, tier: public, brief: false}
-  - {id: "ECOS:301Y013:current", dataset: "ECOS:301Y013", item: null, probe: "#43", title: 경상수지, tab: external, unit: 백만달러, freq: M, tier: public, brief: false}
-  - {id: "ECOS:731Y003:usdkrw", dataset: "ECOS:731Y003", item: null, probe: "#43", title: 원/달러 환율(매매기준율), tab: external, unit: 원, freq: D, tier: public, brief: false}
+  # ── ECOS 한은 작성 표(공개 — probe_results §4.3). 항목 코드는 2026-10-20 ECOS 예시 키 StatisticSearch 로 값이 나오는지 확인 ──
+  - {id: "ECOS:722Y001:base", dataset: "ECOS:722Y001", item: "0101000", probe: "#43", title: 한국은행 기준금리, tab: rates, unit: "%", freq: D, tier: public, brief: true}
+  - {id: "ECOS:817Y002:ktb3y", dataset: "ECOS:817Y002", item: "010200000", probe: "#43", title: 국고채 3년, tab: rates, unit: "%", freq: D, tier: public, brief: true}
+  - {id: "ECOS:817Y002:ktb10y", dataset: "ECOS:817Y002", item: "010210000", probe: "#43", title: 국고채 10년, tab: rates, unit: "%", freq: D, tier: public, brief: false}
+  - {id: "ECOS:817Y002:corp_aa3y", dataset: "ECOS:817Y002", item: "010300000", probe: "#43", title: 회사채 3년 AA-, tab: rates, unit: "%", freq: D, tier: public, brief: false}
+  - {id: "ECOS:817Y002:corp_bbb3y", dataset: "ECOS:817Y002", item: "010320000", probe: "#43", title: 회사채 3년 BBB-, tab: rates, unit: "%", freq: D, tier: public, brief: false}
+  - {id: "ECOS:721Y001:cd91", dataset: "ECOS:721Y001", item: "2010000", probe: "#43", title: CD 91일(월평균), tab: rates, unit: "%", freq: M, tier: public, brief: false}
+  - {id: "ECOS:161Y005:m2", dataset: "ECOS:161Y005", item: "BBHS00", probe: "#43", title: M2 평잔(계절조정), tab: rates, unit: 십억원, freq: M, tier: public, brief: false}
+  - {id: "ECOS:404Y014:ppi", dataset: "ECOS:404Y014", item: "*AA", probe: "#43", title: 생산자물가지수, tab: prices, unit: "2020=100", freq: M, tier: public, brief: false}
+  - {id: "ECOS:402Y014:export_px", dataset: "ECOS:402Y014", item: "*AA/W", probe: "#43", title: 수출물가지수(원화), tab: prices, unit: "2020=100", freq: M, tier: public, brief: false}
+  - {id: "ECOS:401Y015:import_px", dataset: "ECOS:401Y015", item: "*AA/W", probe: "#43", title: 수입물가지수(원화), tab: prices, unit: "2020=100", freq: M, tier: public, brief: false}
+  - {id: "ECOS:200Y102:gdp", dataset: "ECOS:200Y102", item: "10111", probe: "#43", title: 실질 GDP 성장률(전기비), tab: growth, unit: "%", freq: Q, tier: public, brief: false}
+  - {id: "ECOS:513Y001:esi", dataset: "ECOS:513Y001", item: "E1000", probe: "#43", title: 경제심리지수, tab: growth, unit: pt, freq: M, tier: public, brief: false}
+  - {id: "ECOS:301Y013:current", dataset: "ECOS:301Y013", item: "000000", probe: "#43", title: 경상수지, tab: external, unit: 백만달러, freq: M, tier: public, brief: false}
+  - {id: "ECOS:731Y003:usdkrw", dataset: "ECOS:731Y003", item: "0000003", probe: "#43", title: 원/달러 종가(15:30), tab: external, unit: 원, freq: D, tier: public, brief: false}
   # ── KOSIS(공개) ──
   - {id: "KOSIS:DT_1C8015:leading", dataset: "KOSIS:DT_1C8015", item: null, probe: "#44", title: 선행지수 순환변동치, tab: growth, unit: pt, freq: M, tier: public, brief: false}
   - {id: "KOSIS:DT_1C8015:coincident", dataset: "KOSIS:DT_1C8015", item: null, probe: "#44", title: 동행지수 순환변동치, tab: growth, unit: pt, freq: M, tier: public, brief: false}
@@ -62,10 +62,10 @@ series:
   - {id: "NYFED:SOFR", dataset: "NYFED:rates", item: null, probe: "#45", title: SOFR, tab: us, unit: "%", freq: D, tier: public, brief: false}
   - {id: "NYFED:EFFR", dataset: "NYFED:rates", item: null, probe: "#45", title: EFFR, tab: us, unit: "%", freq: D, tier: public, brief: false}
   # ── 로그인: ECOS 타기관 표(DATA_TIERS §1) ──
-  - {id: "ECOS:802Y001:kospi", dataset: "ECOS:802Y001", item: null, probe: "#43", title: 코스피(한국거래소), tab: market, unit: pt, freq: D, tier: private, brief: false}
-  - {id: "ECOS:731Y001:usdkrw_close", dataset: "ECOS:731Y001", item: null, probe: "#43", title: 원/달러 종가(서울외국환중개), tab: market, unit: 원, freq: D, tier: private, brief: false}
-  - {id: "ECOS:901Y056:deposit", dataset: "ECOS:901Y056", item: null, probe: "#43", title: 투자자예탁금(금투협), tab: market, unit: 십억원, freq: M, tier: private, brief: false}
-  - {id: "ECOS:901Y009:cpi", dataset: "ECOS:901Y009", item: null, probe: "#43", title: 소비자물가(901Y009 — 공개 판정 전), tab: market, unit: "2020=100", freq: M, tier: private, brief: false}
+  - {id: "ECOS:802Y001:kospi", dataset: "ECOS:802Y001", item: "0001000", probe: "#43", title: 코스피(한국거래소), tab: market, unit: pt, freq: D, tier: private, brief: false}
+  - {id: "ECOS:731Y001:usdkrw_close", dataset: "ECOS:731Y001", item: "0000001", probe: "#43", title: 원/달러 매매기준율(서울외국환중개), tab: market, unit: 원, freq: D, tier: private, brief: false}
+  - {id: "ECOS:901Y056:deposit", dataset: "ECOS:901Y056", item: "S23A", probe: "#43", title: 투자자예탁금(금투협), tab: market, unit: 원, freq: M, tier: private, brief: false}
+  - {id: "ECOS:901Y009:cpi", dataset: "ECOS:901Y009", item: "0", probe: "#43", title: 소비자물가(901Y009 — 공개 판정 전), tab: market, unit: "2020=100", freq: M, tier: private, brief: false}
   # ── 로그인: Yahoo 12종(SD _MACRO_TICKERS — 단위 그대로) ──
   - {id: "YAHOO:KRW=X", dataset: "YAHOO:macro", item: "KRW=X", probe: "#46", title: USD/KRW, tab: market, unit: 원, freq: D, tier: private, brief: true}
   - {id: "YAHOO:JPY=X", dataset: "YAHOO:macro", item: "JPY=X", probe: "#46", title: USD/JPY, tab: market, unit: 엔, freq: D, tier: private, brief: false}

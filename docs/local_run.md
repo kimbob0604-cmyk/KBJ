@@ -65,7 +65,8 @@ bash scripts/local/kbj.sh start
 | 백업 지금 | `bash scripts/local/kbj.sh backup --now` (`~/kbj-backup` 에 7일 보관) |
 | 새 버전 받기 | `bash scripts/local/kbj.sh update` (먼저 자동 백업) |
 | 지난 3주 시장 일봉 채우기(KRX 키 필요, 처음 한 번) | `bash scripts/local/kbj.sh backfill` (기본 21일. 더 길게는 `backfill 120`) |
-| 나머지 빈 칸(매크로·미국·신용·테마·진단) 한 번에 채우기 | `bash scripts/local/kbj.sh fill-all` (키가 없는 작업은 실패로 나오니 끝에 나오는 목록을 본다) |
+| 나머지 빈 칸(매크로·미국·신용·테마·진단) 한 번에 채우기 | `bash scripts/local/kbj.sh fill-all` (키가 없는 작업은 실패로 나오니 끝에 나오는 목록을 본다. 미국 일봉은 맨 끝 — 처음엔 약 1,700종목을 받느라 15~60분 조용하다) |
+| 통계청(KOSIS) 항목 코드표 보기 | `bash scripts/local/kbj.sh probe-kosis` (키는 안 보인다 — 출력을 그대로 보내 주면 매크로 KOSIS 칸을 켠다) |
 | 종목 상세(8번) 재무·공시 채우기(DART 키 필요, 처음 한 번 + 며칠) | `bash scripts/local/kbj.sh fill-dart` |
 | 작업 하나 지금 돌리기 | `bash scripts/local/kbj.sh job market.close_collect` (`--as-of 2026-10-16` 로 날짜 지정) |
 | 문제가 있는 서비스 로그 | `bash scripts/local/kbj.sh status --logs api` |

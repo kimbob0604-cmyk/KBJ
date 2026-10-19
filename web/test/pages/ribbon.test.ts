@@ -80,7 +80,8 @@ describe('상단 띠 — 로그인', () => {
     expect(semi.title).toBe('005930 값 없음');
     // 준비 중
     expect(el.querySelectorAll('.chip.pending')).toHaveLength(4); // 수출 속보(P6)는 단계 표시 없이 값·사유
-    expect(text(chipByKey(el, 'gex_flip').querySelector('.v'))).toBe('준비 중(P7)');
+    // 로그인 화면은 단계 표시 없이 '—'(미완성처럼 보인다 — 2026-10-20). 공개 데모는 '준비 중(Pn)'
+    expect(text(chipByKey(el, 'gex_flip').querySelector('.v'))).toBe('—');
     expect(el.querySelectorAll('.chip.locked')).toHaveLength(0);
 
     expect(every.map((e) => e.ms)).toEqual([RIBBON_REFRESH_MS]);

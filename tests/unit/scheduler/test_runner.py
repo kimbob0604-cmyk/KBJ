@@ -16,6 +16,7 @@ from typing import Any
 
 import pytest
 
+from kbj.config.settings import Settings
 from kbj.core.calendar import State, TradingCalendar, us_calendar
 from kbj.core.time import KST
 from kbj.data.catalog import all_datasets
@@ -56,6 +57,7 @@ class Rig:
         kr: TradingCalendar = KR,
         submit: Any = inline_submit,
         registry: Registry | None = None,
+        settings: Settings | None = None,
     ) -> None:
         self.registry = registry or Registry.parse({"version": 1, "jobs": jobs})
         self.claims = MemoryClaimStore()
@@ -75,6 +77,7 @@ class Rig:
             health=self.health,
             submit=submit,
             notify=self.notes,
+            settings=settings,
         )
 
     def tick(self) -> list[RunEvent]:
@@ -430,6 +433,57 @@ def test_catch_up_after_restart_and_not_after_deadline() -> None:
     assert done.kinds("brief.closing") == []
 
 
+def _woke_jobs() -> list[dict[str, Any]]:
+    board = {
+        "name": "board.daily",
+        "phase": "P3",
+        "owner": "tests.fake:board",
+        "schedule": {"cron": "0 16 * * 1-5", "when": "trading_day"},
+        "retry": {"max": 0},
+        "depends_on": [{"job": "market.close_collect", "hard": True}],
+    }
+    # 따라잡기는 켜진 작업만 본다(등록부 기본값은 꺼짐)
+    return [{**j, "enabled": True} for j in (*close_and_brief(depends_on=[]), board)]
+
+
+def _woke_handlers(seen: list[tuple[str, str]]) -> dict[str, Callable[[JobContext], JobResult]]:
+    def h(name: str) -> Callable[[JobContext], JobResult]:
+        def run(ctx: JobContext) -> JobResult:
+            seen.append((name, ctx.as_of))
+            return JobResult("ok", collected=ctx.keys, rows=1)
+
+        return run
+
+    return {f"tests.fake:{n}": h(n) for n in ("close", "brief", "board")}
+
+
+def test_startup_catch_up_runs_missed_close_jobs_when_enabled() -> None:
+    # 맥이 10/06 장 마감 전에 꺼졌다가 다음 날 06:00 에 켜졌다 — 놓친 마감 수집·보드를 한 번씩 돈다
+    seen: list[tuple[str, str]] = []
+    on = Settings.model_construct(scheduler_catch_up_h=20)
+    rig = Rig(_woke_jobs(), _woke_handlers(seen), kst(2026, 10, 7, 6, 0), settings=on)
+    rig.run_until(kst(2026, 10, 7, 6, 10))
+    assert sorted(seen) == [
+        ("board", "2026-10-06"),
+        ("brief", "2026-10-06"),
+        ("close", "2026-10-06"),
+    ]
+
+    seen.clear()  # 꺼 둔 기본값(VM)은 따라잡지 않는다 — catch_up_until 이 있는 작업만 그 시각까지
+    off = Rig(_woke_jobs(), _woke_handlers(seen), kst(2026, 10, 7, 6, 0))
+    off.run_until(kst(2026, 10, 7, 6, 10))
+    assert seen == []
+
+
+def test_startup_catch_up_skips_the_close_after_the_next_open() -> None:
+    # 다음 거래일 개장 뒤에는 마감 수집을 따라잡지 않는다(그날 시세가 섞인다)
+    seen: list[tuple[str, str]] = []
+    on = Settings.model_construct(scheduler_catch_up_h=20)
+    rig = Rig(_woke_jobs(), _woke_handlers(seen), kst(2026, 10, 7, 9, 30), settings=on)
+    rig.run_until(kst(2026, 10, 7, 9, 35))
+    assert ("close", "2026-10-06") not in seen
+
+
 def test_same_job_and_as_of_runs_once() -> None:
     calls: list[JobContext] = []
 
@@ -744,6 +798,10 @@ def test_real_registry_one_day_runs_only_enabled_jobs() -> None:
     assert set(ran) == enabled - {
         "market.backfill", "fin.backfill", "filings.company_profile", "us.universe",
         "trade.derive", "theme.master_sync", "theme.classes_sync",
+        # 2026-10-20 켬 — 장 상태 진입(PRE_OPEN·PRE_NIGHT)에만 돈다(이 시험은 상태 전이 없음)
+        "kis.master_night", "kis.master",
+        # 관세청은 공표일(1·11·21일 뒤)·월중(14~20일)만, 프로그램 백필은 수동
+        "trade.customs_tenday", "trade.customs_monthly", "program.backfill",
     }  # fmt: skip
     # P6 웨이브 3 이 켠 매핑표·종목 수출 지수는 매일 돈다(외부 호출 없음)
     assert ran.count("trade.map_load") == ran.count("trade.stock_index") == 1
@@ -765,7 +823,9 @@ def test_real_registry_one_day_runs_only_enabled_jobs() -> None:
     planned = {r.job for r in rig.runs.records.values() if r.detail.get("reason") == "planned"}
     # P5 에서 꺼진 채 남은 것(실측 전 — D-P5-23)은 계획됨으로만
     # (macro.*·market_stats.kofia·market.fsc_daily 는 2026-10-18 에 켰다 — 아래 매일 도는 집합)
-    assert {"program.daily", "program.stock_sweep", "themes.monitor"} <= planned
+    # 2026-10-20 사용자 요청으로 꺼 둔 작업을 전부 켰다 — 계획됨은 처리기가 없는 themes.monitor 하나
+    assert "themes.monitor" in planned
+    assert {"program.daily", "program.stock_sweep"} <= set(ran)
     assert {"macro.morning", "macro.evening", "market_stats.kofia", "market.fsc_daily"} <= set(ran)
     # P5 웨이브 3 이 켠 것은 돈다 — us.eod 는 10-05(월) 뉴욕장 → 10-06 KST
     assert {"brief.morning", "brief.closing", "flows.report", "us.eod"} <= set(ran)

@@ -2,7 +2,7 @@
 //
 // - 로그인: `market/summary`(지수·거래대금·시장폭 — 한 번에), `market/sectors`(기간 1·5·20), `flows/investors`.
 // - 공개: 지수 자리는 TradingView 위젯(DATA_TIERS §2 — 시세는 TradingView 로만), 나머지는 자물쇠(요청 없음).
-// - 아직 원천이 없는 것: K200 야간선물·VKOSPI(P7), 원/달러(P5), 신용잔고·예탁금·펀드 자금(P5 — 공개 등급).
+// - 보조 타일: VKOSPI(krx.vkospi)·원/달러(macro.*)는 서버가 값을 보내면 그리고, 없으면 '준비 중'. K200 야간선물(P7)은 아직 원천 없음.
 // - 금액은 원 단위 → 화면에서만 억·조. 값이 없으면 '—'(0 으로 그리지 않는다). 검산 불가는 사유와 함께.
 // - P5 묶음 F2(이 파일은 F2 만 고친다 — 패널 고리): 장중 투자자 수급(1분 선·카드 7 — ./p1/flows_minute.ts)·
 //   프로그램매매(일별 60거래일·상위 20 — ./p1/program.ts). 로그인 전용(KIS — 공개판은 자물쇠), 60초 갱신.
@@ -38,11 +38,11 @@ export const INVESTOR_LABEL: Record<string, string> = {
   individual: '개인',
 };
 
-/** 아직 원천이 없는 타일(§6.5) */
-export const PENDING_TILES: readonly { name: string; phase: string }[] = [
-  { name: 'K200 야간선물', phase: 'P7' },
-  { name: 'VKOSPI', phase: 'P7' },
-  { name: '원/달러', phase: 'P5' },
+/** 원천이 아직 없을 수 있는 타일(§6.5) — 서버가 같은 code 의 타일을 보내면 그 타일로 갈아 끼운다 */
+export const PENDING_TILES: readonly { code: string; name: string; phase: string }[] = [
+  { code: 'K200N', name: 'K200 야간선물', phase: 'P7' },
+  { code: 'VKOSPI', name: 'VKOSPI', phase: 'P7' },
+  { code: 'USDKRW', name: '원/달러', phase: 'P5' },
 ];
 
 /** 공개판 지수 자리 TradingView 심볼 [확인 필요 — R14] */
@@ -123,15 +123,6 @@ export function indexTile(t: Tile): HTMLElement {
   );
 }
 
-function pendingTile(name: string, phase: string): HTMLElement {
-  return h(
-    'div',
-    { class: 'tile', data: { pending: phase } },
-    h('div', { class: 'n' }, name),
-    h('div', { class: 'p dim' }, `준비 중(${phase})`),
-  );
-}
-
 function drawIndices(p: Panel, env: Envelope<Summary>): void {
   const { rows, invalid } = visibleRows(env.data.indices);
   p.body.append(
@@ -139,7 +130,8 @@ function drawIndices(p: Panel, env: Envelope<Summary>): void {
       'div',
       { class: 'idx' },
       rows.map(indexTile),
-      PENDING_TILES.map((t) => pendingTile(t.name, t.phase)),
+      // 원천이 없는 보조 타일(PENDING_TILES)은 그리지 않는다 — 서버가 값을 보내면 그 타일이 나타난다
+      // (미완성처럼 보이는 '준비 중' 자리 — 사용자 요청 2026-10-20)
     ),
   );
   const q: Quality = rows.length ? worstQuality(rows.map((r) => r.quality)) : env.quality;

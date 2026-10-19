@@ -42,6 +42,7 @@ from collections.abc import Callable, Iterable, Mapping
 from concurrent.futures import Future
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
+from datetime import time as dtime
 from typing import Any, Final, Literal
 
 from kbj.config.settings import Settings
@@ -235,6 +236,7 @@ class JobRunner:
         last = self._last
         if last is None:
             last = now.replace(second=0, microsecond=0) - timedelta(microseconds=1)
+            self._startup_catch_up(now, events)
         if now > last:
             for job in self.registry.jobs:
                 if job.external:
@@ -352,18 +354,90 @@ class JobRunner:
             t += timedelta(minutes=eq.every_min)
         return out
 
-    def _catch_up(self, job: JobSpec, now: datetime, events: list[RunEvent]) -> None:
+    def _startup_catch_up(self, now: datetime, events: list[RunEvent]) -> None:
+        """켜진 직후 한 번 — 꺼져 있던 동안 놓친 켜진 작업을 작업마다 가장 최근 회차만(설정
+        `scheduler_catch_up_h` 시간 안, 기록 없을 때). cron 작업과 하루 한 번 도는 정규장 기준
+        작업(마감 수집)만 — 장중 슬롯(every_min)은 지난 슬롯을 지금 값으로 채우게 되어 뺀다."""
+        hours = self._settings.scheduler_catch_up_h if self._settings is not None else 0
+        if hours <= 0:
+            return
+        window = timedelta(hours=hours)
+        for job in self.registry.jobs:
+            if job.external or not job.enabled:
+                continue
+            try:
+                if job.schedule.cron is not None:
+                    self._catch_up(job, now, events, window=window)
+                elif job.schedule.equity is not None and job.schedule.equity.every_min is None:
+                    self._catch_up_equity(job, now, events, window=window)
+            except Exception as e:  # 격리 — 한 작업의 실패가 다른 작업의 따라잡기를 막지 않는다
+                self._job_error(now, "job_fire_failed", job.name, e)
+
+    def _catch_up_equity(
+        self, job: JobSpec, now: datetime, events: list[RunEvent], *, window: timedelta
+    ) -> None:
+        """하루 한 번 도는 정규장 기준 작업(예: 마감 +5분 수집)의 놓친 회차. 다음 거래일 개장 뒤에는
+        그날 시세가 섞이므로 따라잡지 않는다(지난 날짜를 지금 값으로 채우지 않는다)."""
+        day = now.astimezone(KST).date()
+        due: datetime | None = None
+        d = day
+        while now - _utc(datetime.combine(d, dtime.min, KST)) <= window + timedelta(days=1):
+            times = [t for t in self._equity_times(job, d) if t <= now]
+            if times:
+                due = times[-1]
+                break
+            d -= timedelta(days=1)
+        if due is None or now - due > window:
+            return
+        nxt = self.kr.next_trading_day(due.astimezone(KST).date())
+        if now >= _utc(equity_anchor(nxt, parse_anchor("open"), self.kr)):
+            return
+        try:
+            as_of = resolve_as_of(job.run_as_of(), due, self.kr, self.us)
+        except AsOfUnavailable:
+            return
+        if (job.name, as_of) in self._caught or (job.name, as_of) in self._pending:
+            return
+        self._caught.add((job.name, as_of))
+        if self.runs.latest(job.name, as_of) is None:
+            self._fire(job, due, now, events, catch_up=True)
+
+    def _catch_up(
+        self,
+        job: JobSpec,
+        now: datetime,
+        events: list[RunEvent],
+        *,
+        window: timedelta | None = None,
+    ) -> None:
         spec = job.schedule.cron_spec()
         cu = job.schedule.catch_up_until
-        if spec is None or cu is None:
+        if spec is None or (cu is None and window is None):
             return
         local = now.astimezone(job.schedule.zone)
-        if local.time() > hhmm_time(cu):
+        if window is None and cu is not None and local.time() > hhmm_time(cu):
             return
-        due = spec.prev_at_or_before(local)
+        if window is None:
+            due = spec.prev_at_or_before(local)
+        else:  # 켜질 때 따라잡기 — 그 앞 날짜로 거슬러 가며 `when` 이 맞는 마지막 회차
+            due = None
+            d = local.date()
+            while due is None and (
+                local - datetime.combine(d + timedelta(days=1), dtime.min, local.tzinfo) <= window
+            ):
+                for t in reversed(spec.times_on(d)):
+                    at = datetime.combine(d, t, local.tzinfo)
+                    if at <= local and holds(
+                        job.schedule.when, d, self.kr, self.us, month_days=job.schedule.month_days
+                    ):
+                        due = at
+                        break
+                d -= timedelta(days=1)
         if due is None:
             return
         fire_at = _utc(due)
+        if window is not None and now - fire_at > window:
+            return
         if not holds(
             job.schedule.when,
             due.date(),
@@ -448,6 +522,9 @@ class JobRunner:
             )
             wait_until = max(cu_at, fire_at)
             deadline = max(deadline, cu_at + timedelta(minutes=job.deadline_min))
+        if catch_up:  # 늦게 깨어나 따라잡는 회차 — 시한은 지금부터(예정 시각 기준이면 이미 지났다)
+            wait_until = max(wait_until, now + timedelta(minutes=job.deadline_min))
+            deadline = max(deadline, now + timedelta(minutes=job.deadline_min))
         self._pending[key] = _Pending(
             job=job,
             as_of=as_of,

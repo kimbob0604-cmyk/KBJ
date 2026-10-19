@@ -117,7 +117,7 @@ def test_one_unknown_symbol_fails_the_key_after_writing_the_rest() -> None:
 
 
 def test_monthly_prv_ecos_restricted_tables() -> None:
-    cfg = cfg_with(**{"ECOS:901Y056:deposit": "S23A"})
+    cfg = cfg_with(**{"ECOS:901Y056:deposit": "S23A", "ECOS:901Y009:cpi": None})
     repos = memory_repos()
     ecos = _Ecos({"901Y056": [("202609", "55000"), ("202610", "56000")]})
     keys = [key("ECOS:901Y056", "2026-10"), key("ECOS:901Y009", "2026-10")]

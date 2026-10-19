@@ -27,7 +27,8 @@ export function chip(viewer: Tier, o: ChipOptions): HTMLDivElement {
   const state: ChipState = locked ? 'locked' : (o.state ?? 'live');
   let value: string;
   if (state === 'locked') value = '로그인 필요';
-  else if (state === 'pending') value = o.phase ? `준비 중(${o.phase})` : '준비 중';
+  // 로그인 화면은 원천이 아직 없는 칩을 '—'로(단계 표시는 미완성처럼 보인다 — 사용자 요청 2026-10-20). 공개 데모는 단계를 남긴다
+  else if (state === 'pending') value = viewer === 'login' ? '—' : o.phase ? `준비 중(${o.phase})` : '준비 중';
   else value = o.value ?? '—';
   const tail = TAIL[state];
   return h(

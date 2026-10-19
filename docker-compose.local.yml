@@ -28,3 +28,7 @@ services:
       KBJ_WEB_COOKIE_SECURE: "false"
       # 로그인 출처 검사는 요청 자신의 주소와 비교한다(공개 주소 없음 — 127.0.0.1·localhost 둘 다 된다)
       KBJ_PUBLIC_BASE_URL: ""
+  scheduler:
+    environment:
+      # 맥이 잠들거나 꺼져 있던 동안 놓친 정규 작업(마감 수집·보드·리포트…)을 켜질 때 따라잡는다(20시간 안)
+      KBJ_SCHEDULER_CATCH_UP_H: "20"

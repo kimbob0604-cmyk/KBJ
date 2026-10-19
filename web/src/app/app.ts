@@ -6,6 +6,7 @@ import type { TradingViewMount } from '../pages/tradingview';
 import { chip } from '../ui/chip';
 import { h, replace } from '../ui/dom';
 import { panel } from '../ui/panel';
+import { tidyDom } from '../ui/tidy';
 import { type PageLoader, pageDef, pageLoaders, PAGES } from './pages';
 import { createPager, type Pager } from './pager';
 import { createScheduler } from './refresh';
@@ -149,6 +150,8 @@ export function mountApp(root: HTMLElement, o: MountOptions): AppHandle {
   );
   root.classList.add('app');
   root.dataset.tier = o.tier;
+  // 로그인 화면은 개발용 표시(작업 이름·실측 번호·'준비 중')를 사용자 문장으로 바꾼다 — 공개 데모는 단계 안내를 남긴다
+  if (o.tier === 'login') cleanups.push(tidyDom(root));
 
   // ── 상단 띠 ──────────────────────────────────────────────
   const ribbonLoader = o.ribbon === undefined ? RIBBON['./ribbon.ts'] : o.ribbon;

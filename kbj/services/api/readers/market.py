@@ -85,6 +85,17 @@ FLASH_LOOKBACK_MONTHS: Final = 14  # 띠 수출 속보 입력 창(최신 구간 
 KOFIA_OPEN: Final = (13, 30)  # 금투협 통계 D+1 13시 개방 + 수집 13:30(market_stats.kofia)
 SPARK_N: Final = 20
 KOSPI: Final = "0001"
+KOSPI_KRX: Final = "코스피"  # KRX 지수 일별의 코드(공백 뺀 이름 — krx_daily.index_code)
+# 지수 타일 옆 보조 타일(§6.5 — 원천이 생기면 '준비 중' 자리를 갈아 끼운다).
+# 코드는 웹 PENDING_TILES 와 같다
+FX_CODE: Final = "USDKRW"
+FX_SERIES: Final = (  # 앞에서부터 값이 있는 첫 시리즈(한은 종가 15:30 → 매매기준율 → 야후)
+    ("pub", "ECOS:731Y003:usdkrw"),
+    ("prv", "ECOS:731Y001:usdkrw_close"),
+    ("prv", "YAHOO:KRW=X"),
+)
+VKOSPI_CODE: Final = "VKOSPI"
+AUX_LOOKBACK_DAYS: Final = 45  # 보조 타일 스파크 창(달력일 — 20영업일 + 공표 지연)
 
 
 def _sourced_int(v: Sourced[int] | None) -> SourcedInt | None:
@@ -136,6 +147,52 @@ def _index_tile(
         as_of=close_as_of(last.date),
         quality=last.quality,
     )
+
+
+def _daily_tile(
+    code: str, name: str, points: Sequence[tuple[float, str, datetime, Quality]]
+) -> IndexTile | None:
+    """일별 값(오름차순 — 값·원천·기준 시각·품질)으로 확정 타일 하나. 쓸 값이 없으면 None."""
+    good = [p for p in points if p[3].usable][-SPARK_N:]
+    if not good:
+        return None
+    last = good[-1]
+    prev = good[-2][0] if len(good) > 1 else None
+    return IndexTile(
+        code=code,
+        name=name,
+        value=last[0],
+        chg_pct=(last[0] / prev - 1) * 100 if prev else None,
+        spark=[p[0] for p in good],
+        live=False,
+        source=label([last[1]]),
+        as_of=last[2],
+        quality=last[3],
+    )
+
+
+def _fx_tile(ctx: ReadContext, today: date) -> IndexTile | None:
+    start = (today - timedelta(days=AUX_LOOKBACK_DAYS)).isoformat()
+    for repo, sid in FX_SERIES:
+        src = ctx.repos.macro_prv if repo == "prv" else ctx.repos.macro
+        rows = src.series([sid], start, today.isoformat()).get(sid, [])
+        pts = [(float(r.value), r.source, r.as_of, r.quality) for r in rows if r.value is not None]
+        tile = _daily_tile(FX_CODE, "원/달러", pts)
+        if tile is not None:
+            return tile
+    return None
+
+
+def _vkospi_tile(ctx: ReadContext, today: date) -> IndexTile | None:
+    rows = ctx.repos.diag.vol_index_history(
+        "vkospi", today - timedelta(days=AUX_LOOKBACK_DAYS), today
+    )
+    pts = [
+        (float(r.close), r.source, r.as_of, r.quality)
+        for r in sorted(rows, key=lambda r: r.trade_date)
+        if r.close is not None
+    ]
+    return _daily_tile(VKOSPI_CODE, "VKOSPI", pts)
 
 
 def _breadth(ctx: ReadContext, ledger: Ledger) -> Breadth | None:
@@ -239,6 +296,9 @@ def market_summary(ctx: ReadContext, *, day: date | None = None) -> Envelope[Mar
             notes.append(f"지수 {code} 자료 없음")
         else:
             tiles.append(t)
+    for aux in (_vkospi_tile(ctx, today), _fx_tile(ctx, today)):
+        if aux is not None:
+            tiles.append(aux)
     ledger: Ledger | None
     try:
         ledger = ctx.ledger(today)
@@ -363,7 +423,8 @@ def _p5_chips(ctx: ReadContext, now: datetime) -> dict[str, EngineChip]:
     )
     if bal is not None:
         out[bal.key] = bal
-    kospi = ctx.repos.market.index_series([KOSPI], today, 5).get(KOSPI, [])
+    both = ctx.repos.market.index_series([KOSPI, KOSPI_KRX], today, 5)
+    kospi = both.get(KOSPI) or both.get(KOSPI_KRX, [])
     us = ctx.repos.us.daily(list(US_INDEX), today, 5)
     kvg = kr_vs_global_chip(kospi, us)
     if kvg is not None:

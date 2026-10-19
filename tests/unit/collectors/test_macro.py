@@ -42,8 +42,8 @@ class _Lim:
         return 0.5
 
 
-def cfg_with(**items: str) -> MacroConfig:
-    """실측 뒤처럼 item 을 채운 설정(시험 전용 — config/macro.yaml 은 바꾸지 않는다)."""
+def cfg_with(**items: str | None) -> MacroConfig:
+    """item 을 바꾼 설정(시험 전용 — config/macro.yaml 은 그대로). None = 실측 전처럼 비움."""
     raw = copy.deepcopy(RAW)
     for s in raw["series"]:
         if s["id"] in items:
@@ -201,6 +201,7 @@ def test_evening_ecos_uses_items_and_period_formats() -> None:
             "ECOS:817Y002:ktb3y": "010200000",
             "ECOS:817Y002:corp_aa3y": "010300000",
             "ECOS:722Y001:base": "0101000",
+            "ECOS:731Y003:usdkrw": None,  # 항목 코드를 모르는 시리즈는 건너뛴다(#43)
         }
     )
     repos = memory_public_repos()
