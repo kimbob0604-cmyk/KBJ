@@ -150,7 +150,8 @@ def test_p4_consensus_datasets(dataset_id: str, store: str) -> None:
 
 
 def test_invest_opinion_is_collected_by_consensus_snapshot_only() -> None:
-    """등록부: 두 데이터셋을 consensus.snapshot 한 작업만 받는다(꺼진 채 — D-P4-10)."""
+    """등록부: 두 데이터셋을 consensus.snapshot 한 작업만 받는다(2026-10-20 사용자 요청으로 켬 —
+    전에는 D-P4-10)."""
     from kbj.services.scheduler.registry import Registry
 
     reg = Registry.load(Path(__file__).resolve().parents[3] / "config" / "jobs.yaml")
@@ -164,7 +165,8 @@ def test_invest_opinion_is_collected_by_consensus_snapshot_only() -> None:
         ("KIS:consensus_estimate", "trade_date"): "consensus.snapshot",
         ("KIS:invest_opinion", "trade_date"): "consensus.snapshot",
     }
-    assert not reg.by_name("consensus.snapshot").enabled  # 실측 #29 전까지 꺼짐
+    # 2026-10-20 사용자 요청으로 켬(전에는 실측 #29 전까지 꺼짐)
+    assert reg.by_name("consensus.snapshot").enabled
 
 
 # ── P5 F2 프로그램매매 데이터셋(docs/p5_design.md §1.1·§1.7, F2 프롬프트 §1.4) ──

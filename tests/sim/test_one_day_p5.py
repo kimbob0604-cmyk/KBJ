@@ -4,8 +4,8 @@
 창: 서머타임 끝(11-01) 뒤라 `us.eod` 06:10 KST. 합성 P5 세계
 (`tests/fixtures/synthetic/p5_world.py`)를 창 앞 저장소에 싣고(하네스 머리말), 등록부에서
 **켜진 P5 작업**(`etf.report`·`brief.*`·`flows.report`·`us.*`·`flows.market_minute`)과
-실측 전이라 운영에서 꺼진 P5 작업(`macro.*`·`market_stats.kofia`·`market.fsc_daily`·
-`program.*` — **이 시뮬레이션의 등록부 사본에서만** 켬)은 실제 처리기, P3·P4 작업은
+실측 전이라 운영에서 꺼 두었던 P5 작업(`macro.*`·`market_stats.kofia`·`market.fsc_daily`·
+`program.*` — 2026-10-20 사용자 요청으로 운영에서도 켬)은 실제 처리기, P3·P4 작업은
 시뮬레이션 처리기(같은 KIS 버킷·같은 선점 장부). `public.export` 는 실제 처리기
 (P5 공개 파일). 테마(`themes.*`)는 사전 통합을 사용자가 따로 진행해(2026-10-13 Q1)
 P5 에서 뺐다 — 꺼진 채.
@@ -48,7 +48,8 @@ pytestmark = pytest.mark.sim
 
 START = at(11, 17, 5)
 TODAY = date(2026, 11, 17)
-# 운영 등록부에서 꺼진 P5 작업(실측 #39~#49 전) — 이 시뮬레이션의 등록부 사본에서만 켠다
+# 실측 #39~#49 전이라 꺼 두었던 P5 작업 — 운영도 2026-10-18·2026-10-20(사용자 요청)에 켰다.
+# 사본에서도 켠다
 ENABLE = (
     "macro.morning", "macro.morning_prv", "macro.monthly", "macro.monthly_prv", "macro.evening",
     "macro.evening_prv", "market_stats.kofia", "market.fsc_daily", "program.intraday",
@@ -106,11 +107,10 @@ def test_every_run_finished_and_p5_handlers_are_real(day: SimDay) -> None:
         assert not any(r.detail.get("sim") for r in runs), job  # 실제 처리기
     for job in FRED_LAG:
         assert [r.detail.get("result") for r in _runs(day, job)] == ["not_ready"], job
-    # 운영 등록부: macro.*·kofia·fsc_daily 는 2026-10-18 에 켰고, program.* 은 꺼진 채(D-P5-23)
+    # 운영 등록부: macro.*·kofia·fsc_daily 는 2026-10-18 에 켰고, program.* 도 2026-10-20
+    # 사용자 요청 "꺼 둔 것도 전부 활성화"로 켰다(전에는 D-P5-23 으로 꺼진 채)
     prod = load_registry()
-    still_off = [n for n in ENABLE if n.startswith("program.")]
-    assert not any(prod.by_name(n).enabled for n in still_off)
-    assert all(prod.by_name(n).enabled for n in ENABLE if n not in still_off)
+    assert all(prod.by_name(n).enabled for n in ENABLE)
     assert not prod.by_name("themes.monitor").enabled  # 테마는 사용자 별도 진행
 
 

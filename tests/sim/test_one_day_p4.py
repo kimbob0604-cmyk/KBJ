@@ -5,9 +5,9 @@
 가짜 DART·KIS 는 합성 20종목 세계(`tests/fixtures/synthetic/p4_world.py`)를 서빙한다. 켜진 P4 작업
 (`filings.dart_feed`·`fin.quarterly`·`filings.derive`·`earnings.alerts`·`earnings.backfill`·
 `fin.valuation_band`·`reports.dart_excel`)과 `public.export` 는 실제 처리기, `consensus.snapshot`
-은 운영 등록부에서 꺼져 있으므로(D-P4-10 — 실측 #29 전) **이 시뮬레이션의 등록부 사본에서만**
-켠다. 나머지 작업은 P2 시뮬레이션 처리기(같은 KIS 버킷·같은 선점 장부). 창 앞 이력·재무 5년 백필은
-하네스 머리말.
+은 운영 등록부에서도 2026-10-20 사용자 요청으로 켰다(전에는 D-P4-10 — 실측 #29 전 꺼짐,
+이 시뮬레이션의 등록부 사본에서만 켰다). 나머지 작업은 P2 시뮬레이션 처리기(같은 KIS 버킷·
+같은 선점 장부). 창 앞 이력·재무 5년 백필은 하네스 머리말.
 
 단언(§8.5)
 - DART: `filings.dart_feed` 780회(평일 07:00~19:59 매분) 모두 ok, 데이터 키(분·다시 훑기·
@@ -107,8 +107,9 @@ def test_every_run_finished_without_failure(day: SimDay) -> None:
 
 
 def test_consensus_is_enabled_only_in_this_simulation(day: SimDay) -> None:
-    """운영 등록부는 consensus.snapshot 이 꺼진 채(D-P4-10) — 이 시뮬레이션만 사본에서 켰다."""
-    assert not load_registry().by_name("consensus.snapshot").enabled
+    """운영 등록부의 consensus.snapshot 은 2026-10-20 사용자 요청으로 켰다(전에는 D-P4-10 으로
+    꺼진 채 — 이 시뮬레이션만 사본에서 켰다). 사본도 켜진 채다."""
+    assert load_registry().by_name("consensus.snapshot").enabled
     assert day.registry.by_name("consensus.snapshot").enabled
     assert [r.as_of for r in _runs(day, "consensus.snapshot")] == [TODAY.isoformat()]
 

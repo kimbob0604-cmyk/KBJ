@@ -81,13 +81,13 @@ def test_every_run_finished_and_p7_handlers_are_real(day: SimDay) -> None:
         runs = _runs(day, job)
         assert runs, job
         assert not any(r.detail.get("sim") for r in runs), job  # 실제 처리기
-    # 운영 등록부에서 켜진 P7 작업(WRAP — §1.7-1). VKOSPI 는 실측 #P7-1 전 꺼짐
+    # 운영 등록부에서 켜진 P7 작업(WRAP — §1.7-1). VKOSPI 는 2026-10-20 사용자 요청으로 켰다
+    # (전에는 실측 #P7-1 전 꺼짐 — 하네스가 시뮬레이션 처리기로 돌렸다). 이제 실제 수집기
     prod = load_registry()
     assert all(prod.by_name(n).enabled for n in P7_REAL)
-    assert not prod.by_name("krx.vkospi").enabled
-    # 하네스는 꺼진 작업도 시뮬레이션 처리기로 돌린다(KIS·KRX 버킷 셈 — 하네스 머리말) —
-    # 실제 수집기는 아니다
-    assert all(r.detail.get("sim") for r in _runs(day, "krx.vkospi"))
+    assert prod.by_name("krx.vkospi").enabled
+    vk = _runs(day, "krx.vkospi")
+    assert vk and not any(r.detail.get("sim") for r in vk)
 
 
 def test_diag_jobs_run_once_at_their_times(day: SimDay) -> None:

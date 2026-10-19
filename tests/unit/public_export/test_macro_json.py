@@ -68,8 +68,11 @@ def test_spread_and_latest_match_the_engine(built: tuple[dict, object]) -> None:
     eng = {p.period: p.value for p in spread(w.series(CREDIT_AA), w.series(CREDIT_KTB))}  # type: ignore[attr-defined]
     for p in pub["points"][-5:]:
         assert p["value"] == pytest.approx(eng[p["period"]])
-    assert series["ECOS:817Y002:ktb10y"]["na_reason"] == "확인 전(#43)"  # 실측 전 — 값 없음
+    # ECOS 항목 코드는 2026-10-20 채웠다(config/macro.yaml) — 합성 세계에 값이 없으면 '아직 없음'
+    ktb10y = series["ECOS:817Y002:ktb10y"]
+    assert ktb10y["latest"] is None and ktb10y["na_reason"].startswith("아직 없음")
     us = {s["series_id"]: s for s in files["macro/us.json"]["data"]["series"]}  # type: ignore[index]
+    assert us["NYFED:EFFR"]["na_reason"] == "확인 전(#45)"  # 항목 실측 전 — 값 없음
     dgs2 = us["FRED:DGS2"]
     assert any(p["value"] is None for p in dgs2["points"])  # 결측은 null(0 아님)
     assert dgs2["latest"]["value"] is not None and dgs2["change"] is not None

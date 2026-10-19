@@ -422,7 +422,12 @@ def test_local_and_vm_scripts_are_bash32_safe() -> None:
 def test_local_overlay_publishes_loopback_only_without_secrets() -> None:
     text = LOCAL_OVERLAY.read_text(encoding="utf-8")
     data = yaml.safe_load(text.replace("!reset null", "null"))
-    assert set(data["services"]) == {"api"}
+    # scheduler 는 놓친 작업 따라잡기(KBJ_SCHEDULER_CATCH_UP_H) 한 줄만 더한다 —
+    # 게시·네트워크 변경 없음
+    assert set(data["services"]) == {"api", "scheduler"}
+    sched = data["services"]["scheduler"]
+    assert set(sched) == {"environment"}
+    assert sched["environment"] == {"KBJ_SCHEDULER_CATCH_UP_H": "20"}
     api = data["services"]["api"]
     assert api["ports"] == ["127.0.0.1:8000:8000"], "호스트 쪽은 127.0.0.1 에만 게시"
     assert "!reset null" in text and "network_mode" in api

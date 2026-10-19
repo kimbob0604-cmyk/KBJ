@@ -50,6 +50,7 @@
 | `KBJ_WEB_COOKIE_SECURE` | 쿠키 Secure·`__Host-` 접두사(기본 true — TLS 역방향 프록시 뒤). false 는 `KBJ_API_HOST` 가 루프백일 때만(개발) | — | 설정 | services.api |
 | `KBJ_API_CONTAINER_BIND` | 로컬 도커(Mac) 전용 — 컨테이너 안 0.0.0.0 바인딩을 루프백으로 본다(호스트 쪽은 127.0.0.1 게시만). 기본 false, 이때만 `KBJ_WEB_COOKIE_SECURE=false` 허용 | — | 설정 | services.api |
 | `KBJ_WEB_DIST_DIR` | 로그인 SPA 빌드 폴더(기본 `web/dist-login`) — api 가 같은 출처로 내보낸다 | — | 설정 | services.api |
+| `KBJ_SCHEDULER_CATCH_UP_H` | 스케줄러가 켜질 때 지난 N시간 안에 놓친 작업(기록 없음)을 작업마다 최근 회차 한 번씩 돌린다(0~72, 기본 0 — VM 상시 가동). 로컬은 `docker-compose.local.yml` 이 20 | — | 설정 | services.scheduler |
 | `KBJ_PUBLIC_EXPORT_DATABASE_URL` | 공개 내보내기 전용 접속 문자열 — `kbj_public_export`(pub_* SELECT 만) 구성원 로그인 역할, `default_transaction_read_only=on`(ADR 0002 §2.2). 앱 DSN(`KBJ_DATABASE_URL`)은 쓰지 않는다 | 운영 배포에서 역할 생성 | 운영 | services.public_export(P3) |
 | `KBJ_PUBLIC_PUSH_ENABLED` | public-data 브랜치 푸시·Pages 디스패치 켜기(기본 false). **[사용자 승인 필요]** | — | 설정 | services.public_export |
 | `KBJ_PUBLIC_DEPLOY_KEY_PATH` | public-data 브랜치에 강제 푸시할 배포 키 **파일 경로**(키는 VM 에만, 레포·이미지에 없음). **[사용자 승인 필요]** — 발급·등록 전엔 비워 둔다 | GitHub 레포 Deploy keys(쓰기) | 운영 | services.public_export |

@@ -122,9 +122,10 @@ def test_열_구성이_바뀌면_그_종류만_실패하고_옛_값_유지() -> 
 
 
 def test_시뮬레이션_등록부는_운영_한_줄() -> None:
-    """이 창은 운영 등록부의 같은 줄(cron·month_days·as_of)을 쓴다 — 켠 것은 이 사본뿐."""
+    """이 창은 운영 등록부의 같은 줄(cron·month_days·as_of)을 쓴다 — 운영도 2026-10-20
+    사용자 요청으로 켰다."""
     from kbj.services.scheduler.registry import Registry
 
     prod = Registry.load(ROOT / "config" / "jobs.yaml").by_name(JOB)
-    assert not prod.enabled  # 운영은 키 수령·실측 뒤
+    assert prod.enabled  # 2026-10-20 사용자 요청 "꺼 둔 것도 전부 활성화"(전에는 키 수령·실측 뒤)
     assert prod.run_as_of() == "ten_day"

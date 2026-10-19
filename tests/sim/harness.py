@@ -1069,6 +1069,9 @@ class SimDay:
             "markets": self.markets(),
             "diag_config": load_diag(settings=self.sched_settings),
             "gex_config": load_gex(settings=self.sched_settings),
+            # krx.vkospi(2026-10-20 사용자 요청으로 켬 — 실제 처리기)는 가짜 시계의 scheduler KRX
+            # 클라이언트를 쓴다(없으면 처리기가 벽시계 리미터를 만들어 같은 버킷을 44일 앞으로 본다)
+            "krx": self.sched_krx,
         }
 
     def _p5_resources(self) -> dict[str, Any]:
