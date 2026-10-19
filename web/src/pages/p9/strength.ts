@@ -129,7 +129,7 @@ export async function fillMembers(t: P9Ctx, p: Panel, id: string): Promise<void>
     h(
       'p',
       { class: 'dim', data: { section: 'members-head' } },
-      `${d.section}${d.valuechain ? ` · ${d.valuechain}` : ''} · 원본 테마 ${num(d.naver.length)}개 · 종목 ${num(d.members.length)}`,
+      `${d.section}${d.valuechain ? ` · ${d.valuechain}` : ''} · 원본 테마 ${num(d.naver.length)}개 · 종목 ${num(d.members.length)} · ${asOfDay(d.trade_date)}`,
     ),
     h('div', { class: 'theme-chips' }, ...d.naver.map((n) => h('span', { class: 'tag dim' }, `${n.name} ${num(n.n_members)}`))),
     table<Member>({ columns: memberColumns(naver), rows: d.members, rowKey: (r) => r.code, empty: '편입 종목 없음' }).el,
@@ -137,8 +137,14 @@ export async function fillMembers(t: P9Ctx, p: Panel, id: string): Promise<void>
   p.setSource(env);
 }
 
-function drawHeat(p: Panel, rows: readonly Row[], period: Period): void {
+/** 시세 기준 날 한 줄 — 서버가 고른 마지막 보드 날(오늘 보드 전이면 지난 거래일) */
+export function asOfDay(day: string | null | undefined): string {
+  return day ? `시세 ${day} 마감` : '시세 없음(보드 전)';
+}
+
+function drawHeat(p: Panel, rows: readonly Row[], period: Period, day: string): void {
   p.clearBody();
+  p.body.append(h('p', { class: 'dim', data: { section: 'asof' } }, asOfDay(day)));
   const items = rows.map((r) => ({ id: r.id, label: r.name, size: r.stats.mktcap, color: periodValue(r.stats, period) }));
   p.body.append(
     treemap({
@@ -197,12 +203,12 @@ export async function fillStrength(t: P9Ctx, p: StrengthPanels, pick: (fn: (id: 
       selected,
       empty: '대테마 없음',
     });
-    p.rank.body.append(toggle.el, h('p', { class: 'dim' }, `${d.trade_date} 마감 · 대테마 ${num(d.rows.length)}`), tb.el);
+    p.rank.body.append(toggle.el, h('p', { class: 'dim', data: { section: 'asof' } }, `${asOfDay(d.trade_date)} · 대테마 ${num(d.rows.length)}`), tb.el);
     p.rank.setSource(env);
-    drawHeat(p.heat, d.rows, period);
+    drawHeat(p.heat, d.rows, period, d.trade_date);
     p.heat.setSource(env);
     p.chains.clearBody();
-    p.chains.body.append(table<ChainRow>({ columns: chainColumns(), rows: d.chains, rowKey: (r) => r.key, empty: '밸류체인 없음' }).el);
+    p.chains.body.append(h('p', { class: 'dim', data: { section: 'asof' } }, asOfDay(d.trade_date)), table<ChainRow>({ columns: chainColumns(), rows: d.chains, rowKey: (r) => r.key, empty: '밸류체인 없음' }).el);
     p.chains.setSource(env);
     if (selected === null && d.rows[0]) choose(d.rows[0].id);
   };

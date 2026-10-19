@@ -240,13 +240,29 @@ cmd_reindex_idx() {
   return "$rc"
 }
 
+# run-once 가 'waiting' 만 찍고 0 으로 끝났다 = 굳은 의존(config/jobs.yaml depends_on hard)이 같은 날짜에 성공한
+# 기록이 없어 처리기가 돌지 않았다(예: theme.classes_sync 는 그날 theme.master_sync 가 ok 여야 돈다)
+WAIT_HINT="돌지 않았다 — 먼저 끝나야 하는 작업(config/jobs.yaml depends_on)이 같은 날짜(KST)에 성공한 기록이 없다. 그 작업을 먼저 같은 날 돌리거나(예: job theme.master_sync 뒤 바로 job theme.classes_sync), 의존을 보지 않으려면 --no-deps"
+
 # 작업 하나를 지금 한 번(조건 무시). --as-of 로 과거 날짜·이벤트를 줄 수 있다
 cmd_job() {
-  local job="${1:-}"
+  local job="${1:-}" line rc=0 waited=0
   [[ "$job" =~ ^[a-z][a-z0-9_.]*$ ]] || kbj_die "작업 이름이 필요하다 (예: $(kbj_cmd job) market.close_collect). 목록은 config/jobs.yaml 의 name"
   shift
   require_scheduler
-  kbj_compose exec -T -e MPLCONFIGDIR=/tmp/mpl scheduler python -m kbj.services.scheduler run-once "$job" "$@"
+  while IFS= read -r line; do
+    case "$line" in
+      __kbj_rc=*) rc="${line#__kbj_rc=}"; continue ;;
+      waiting\ *) waited=1 ;;
+    esac
+    printf '%s\n' "$line"
+  done < <(kbj_compose exec -T -e MPLCONFIGDIR=/tmp/mpl scheduler python -m kbj.services.scheduler run-once "$job" "$@" 2>&1 \
+    && echo "__kbj_rc=0" || echo "__kbj_rc=$?")
+  if [[ "$rc" == 0 && "$waited" == 1 ]]; then
+    kbj_warn "$job $WAIT_HINT"
+    return 1
+  fi
+  return "$rc"
 }
 
 # 종목 상세(8번)의 재무·공시·밸류에이션은 DART 가 있어야 채워진다. 순서대로 한 번씩 돌린다(한 단계가 실패해도 다음으로).
@@ -310,6 +326,9 @@ fill_try() {
   if printf '%s\n' "$out" | grep -qE '^(failed|retry|오류)'; then
     FILL_FAIL="$FILL_FAIL $job"
     kbj_warn "$job — 실패: $(printf '%s\n' "$out" | grep -E '^(failed|retry|오류)' | head -1)"
+  elif printf '%s\n' "$out" | grep -qE '^waiting' && ! printf '%s\n' "$out" | grep -qE '^ok'; then
+    FILL_FAIL="$FILL_FAIL $job"   # 성공으로 세지 않는다 — 처리기가 돌지 않았다
+    kbj_warn "$job — $WAIT_HINT"
   elif printf '%s\n' "$out" | grep -qE '^skipped' && ! printf '%s\n' "$out" | grep -qE '^ok'; then
     FILL_SKIP="$FILL_SKIP $job"   # 등록부에서 꺼진 작업('planned') 또는 할 일이 없음 — 성공으로 세지 않는다
     kbj_warn "$job — 건너뜀(꺼진 작업이거나 할 일이 없다)"

@@ -124,6 +124,39 @@ describe('페이지 9 — 로그인판', () => {
     expect(err(root)).toBe(0);
   });
 
+  it('강도 셋·편입 종목은 서버가 고른 시세 날(마지막 보드 날)을 보인다 — 오늘 보드 전이면 지난 거래일', async () => {
+    const DAY = '2026-09-11'; // 주말·오늘 보드 전 — 서버가 지난 보드 날을 골랐다
+    const strength = (): Response => {
+      const b = fx<{ data: { trade_date: string } }>('strength_1');
+      b.data.trade_date = DAY;
+      return json(b);
+    };
+    const detail = (): Response => {
+      const b = fx<{ data: { trade_date: string | null } }>('detail');
+      b.data.trade_date = DAY;
+      return json(b);
+    };
+    const s1 = fx<{ data: { rows: { id: string }[] } }>('strength_1');
+    const first = s1.data.rows[0]?.id ?? '?';
+    const hz = loginHarness({ 'themes/strength': strength, [`themes/${first}`]: detail });
+    const { ctx, root } = pageCtx(9, 'login', hz.source, { now: NOW });
+    await p9.mount(ctx);
+    await flush();
+    for (const id of ['rank', 'heat', 'chain_strength']) {
+      expect(text(root.querySelector(`#p9-${id} [data-section="asof"]`))).toContain(`시세 ${DAY} 마감`);
+    }
+    expect(text(root.querySelector('#p9-members [data-section="members-head"]'))).toContain(`시세 ${DAY} 마감`);
+    expect(err(root)).toBe(0);
+    // 상세에 시세가 없으면(보드 전) 그렇게 적는다
+    const plain = fx<{ data: { trade_date: string | null } }>('detail_plain');
+    plain.data.trade_date = null;
+    const hz2 = loginHarness({ [`themes/${first}`]: () => json(plain) });
+    const c2 = pageCtx(9, 'login', hz2.source, { now: NOW });
+    await p9.mount(c2.ctx);
+    await flush();
+    expect(text(c2.root.querySelector('#p9-members [data-section="members-head"]'))).toContain('시세 없음');
+  });
+
   it('수집 전 404 는 안내 줄(.msg — 작업 이름), 진짜 실패만 .msg.err', async () => {
     const none = (): Response => json(fx('none'), 404);
     const hz = loginHarness({ themes: none, 'themes/strength': () => json(fx('strength_none'), 404) });

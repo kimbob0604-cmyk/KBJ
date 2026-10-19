@@ -48,7 +48,7 @@ describe('페이지 6 — 로그인', () => {
     expect(text(spread)).toContain('파생');
     const unprobed = card(series, 'ECOS:817Y002:ktb10y');
     expect(text(unprobed.querySelector('.p .v'))).toBe('—'); // 0 이 아니다
-    expect(text(unprobed.querySelector('.na'))).toBe('확인 전(#43)');
+    expect(text(unprobed.querySelector('.na'))).toBe('아직 없음 — macro.morning·monthly·evening'); // 항목 코드를 채운 뒤(0d7ab8a) — 값이 없으면 수집 안내
     expect(series.querySelector('a[href*="bok.or.kr"]')).not.toBeNull(); // 보고서 지표 원문 링크(Q2)
     const market = panelByTitle(root, P6_TITLES.market);
     expect(market.classList.contains('locked')).toBe(false);

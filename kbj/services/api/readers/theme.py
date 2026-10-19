@@ -73,6 +73,8 @@ NOTE_METHOD: Final = (
 )
 NOTE_MISMATCH: Final = "공개 분류 판과 편입 판의 기준 시각이 다르다 — 다음 theme.*_sync 뒤 맞춰진다"
 _STALE_FALLBACK_DAYS: Final = 15
+# 강도의 시세 날: 종목 하루가 빈 보드 날을 건너뛰며 거슬러 볼 최대 보드 날 수(약 2주)
+_BOARD_LOOKBACK: Final = 10
 
 
 @functools.cache
@@ -142,13 +144,22 @@ def _master(ctx: ReadContext) -> MasterLoad:
 
 
 def _board_day(ctx: ReadContext, *, required: bool) -> tuple[date | None, dict[str, StockDay]]:
-    day = ctx.repos.board.last_day(ctx.today())
-    days = ctx.repos.board.stock_days(day) if day is not None else {}
-    if not days:
-        if required:
-            raise NoData(NO_BOARD)
-        return None, {}
-    return day, days
+    """오늘 이하에서 종목 하루가 있는 가장 최근 보드 날(주말·휴장·오늘 보드 전이면 지난 거래일).
+
+    산출 JSON 만 있고 종목 하루가 빈 날(중간에 멈춘 실행 등)은 건너뛰고 그 앞 보드 날을 본다 —
+    최대 `_BOARD_LOOKBACK` 보드 날까지. 화면은 응답의 `trade_date`·notes 로 기준 날을 보인다."""
+    upto = ctx.today()
+    for _ in range(_BOARD_LOOKBACK):
+        day = ctx.repos.board.last_day(upto)
+        if day is None:
+            break
+        days = ctx.repos.board.stock_days(day)
+        if days:
+            return day, days
+        upto = day - timedelta(days=1)
+    if required:
+        raise NoData(NO_BOARD)
+    return None, {}
 
 
 def _board_as_of(ctx: ReadContext, day: date) -> datetime:

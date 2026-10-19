@@ -4,8 +4,10 @@
 
 from __future__ import annotations
 
+import dataclasses
 import json
-from datetime import timedelta
+from collections.abc import Iterable
+from datetime import UTC, timedelta
 from typing import Any
 
 import pytest
@@ -15,7 +17,11 @@ from kbj.core.theme_rows import SOURCE_LOGIN, SOURCE_MASTER
 from kbj.services.api.models.common import Envelope, NoDataBody
 from kbj.services.api.models.theme import ThemeCatalog, ThemeDetail, ThemeStrength
 from kbj.services.api.readers.theme import NO_BOARD, NO_CLASSES, NO_MASTER, NOT_A_THEME
-from tests.unit.api.api_world import World
+from kbj.services.collectors import theme_classes, theme_master
+from kbj.services.scheduler.handlers import JobContext
+from tests.fixtures.synthetic.theme_master import build_files
+from tests.unit.api.api_world import World, build_world
+from tests.unit.api.theme_world import golden_names, seed_board
 from tests.unit.api.web_fixtures_p9 import themes as fx
 
 PATHS = ("/api/themes", "/api/themes/strength", "/api/themes/syn_1_1")
@@ -102,6 +108,80 @@ def test_empty_states_are_404_with_job_hint() -> None:
     assert _get(no_board, "/api/themes/strength")[1]["message"] == NO_BOARD
     code, body = _get(no_board, "/api/themes/syn_1_1")  # 상세는 시세 없이도
     assert code == 200 and body["data"]["stats"] is None and body["data"]["trade_date"] is None
+
+
+def test_strength_reads_the_last_board_day_before_today() -> None:
+    """오늘 보드가 아직 없어도(주말·월요일 아침·16:00 전) 지난 보드 날로 계산하고 그 날을 보인다.
+    산출 JSON 만 있고 종목 하루가 빈 날은 건너뛴다."""
+    w = fx.build()
+    day = w.repos.board.last_day(w.clock().date())
+    assert day is not None
+    w.clock.set(w.clock() + timedelta(days=4))  # 보드는 나흘 전 거래일뿐
+    code, body = _get(w, "/api/themes/strength")
+    assert code == 200
+    env = Envelope[ThemeStrength].model_validate(body)
+    assert env.data.trade_date == day and env.as_of.date() == day
+    assert f"시세 {day.isoformat()} 마감(보드)" in env.notes
+    assert all(r.stats.n_priced > 0 for r in env.data.rows)
+    # 그 뒤 날에 산출 JSON 만 있고 종목 하루가 없다 — 앞 보드 날을 쓴다(목록·상세 모두)
+    later = day + timedelta(days=1)
+    for (d, name), art in list(w.repos.board.artifact_rows.items()):
+        if d == day:
+            w.repos.board.artifact_rows[(later, name)] = dataclasses.replace(art, trade_date=later)
+    assert w.repos.board.last_day(w.clock().date()) == later
+    code, body = _get(w, "/api/themes/strength")
+    assert code == 200 and body["data"]["trade_date"] == day.isoformat()
+    code, body = _get(w, "/api/themes/syn_1_1")
+    assert code == 200 and body["data"]["trade_date"] == day.isoformat()
+    assert body["data"]["stats"] is not None
+
+
+class _Files:
+    """theme_master_client 대역 — 받은 파일 이름을 남긴다."""
+
+    def __init__(self, files: dict[str, bytes]) -> None:
+        self.files = files
+        self.seen: list[str] = []
+
+    def fetch(self, name: str) -> bytes:
+        self.seen.append(name)
+        return self.files[name]
+
+    def fetch_all(self, names: Iterable[str]) -> dict[str, bytes]:
+        return {n: self.fetch(n) for n in names}
+
+    def close(self) -> None:  # 작업이 만든 클라이언트만 닫는다 — 주입한 것은 부르지 않는다
+        raise AssertionError("주입한 클라이언트를 닫았다")
+
+
+def test_jobs_write_what_page9_reads() -> None:
+    """두 작업 처리기(theme.master_sync → theme.classes_sync)가 쓴 표를 API 가 그대로 읽는다 —
+    보드는 앞선 거래일 하루뿐(사용자 로컬 상황: 작업을 손으로 돌린 주말·월요일 아침)."""
+    w = build_world()
+    day = w.repos.board.last_day(w.clock().date())
+    assert day is not None
+    seed_board(w.repos, day)
+    now = w.clock() + timedelta(days=3)
+    w.clock.set(now)
+    # 수집 전 — 분류·강도 모두 '아직 없음'(분류가 먼저)
+    assert _get(w, "/api/themes")[1]["message"] == NO_CLASSES
+    assert _get(w, "/api/themes/strength")[1]["message"] == NO_CLASSES
+    raw = _Files(build_files(anchor_names=golden_names(), built_at=now - timedelta(days=1)))
+    for mod in (theme_master, theme_classes):
+        ctx = JobContext(
+            job=mod.JOB, as_of=now.date().isoformat(), run_id="r1", attempt=1,
+            now=now.astimezone(UTC), keys=(),
+            resources={"repos": w.repos, "theme_master_client": raw},
+        )  # fmt: skip
+        res = mod.run(ctx)
+        assert res.status == "ok" and res.detail["changed"] is True, (mod.JOB, res.detail)
+    code, body = _get(w, "/api/themes")
+    assert code == 200 and body["data"]["n_themes"] == 36 and body["quality"] == "ok"
+    code, body = _get(w, "/api/themes/strength?period=5")
+    assert code == 200, body
+    env = Envelope[ThemeStrength].model_validate(body)
+    assert env.data.trade_date == day and len(env.data.rows) == 36
+    assert not any("기준 시각이 다르다" in n for n in env.notes)  # 두 판의 built_at 이 같다
 
 
 def test_stale_and_mismatched_builds() -> None:

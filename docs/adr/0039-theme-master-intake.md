@@ -31,7 +31,9 @@ ADR 0002(등급은 스키마로), ADR 0025(공개 JS 예산), docs/metrics.md §
    테마·없어진 번호·이름 바뀜은 경고만(적재 기록 `warnings`).
 5. **테마 강도는 저장하지 않는다** — 로그인 API 가 읽을 때 보드 종목 하루(`prv_board.stock_day` — KRX/KIS 정본 일봉에서
    보드가 계산한 등락·5일·21거래일 수익률·시총·신고가 라벨)로 계산한다. 집계는 보드 테마 집계와 같은 롤업(시총 가중 평균,
-   `kbj.engines.board.aggregate.rollup` 재사용 — 두 벌 금지). 옛 계획 작업 `themes.monitor`(prv_themes.strength)는 꺼진 채.
+   `kbj.engines.board.aggregate.rollup` 재사용 — 두 벌 금지). 옛 계획 작업 `themes.monitor`(prv_themes.strength)는
+   등록부에서 뺐다(2026-10-19 — 흡수하던 ET `kr.yml:build` 는 retired). 시세 날은 오늘 이하에서 종목 하루가 있는
+   가장 최근 보드 날(오늘 보드 전·주말이면 지난 거래일 — 응답 `trade_date`·화면 '시세 … 마감').
 6. **화면** — 페이지 9 mixed: 공개판은 대테마 분류·밸류체인(공개 파일), 로그인 패널 넷(강도 순위·히트맵·밸류체인 강도·
    편입 종목)은 자물쇠·요청 0. 로그인 본문(`p9/strength.ts`)은 공개 번들에서 뺀다(번들 검사 needle '편입 사유').
 7. **공개 레포** — 실제 stock-dashboard 마스터 내용은 넣지 않는다. 시험·웹 픽스처·데모는 고정 시드 합성
@@ -42,5 +44,7 @@ ADR 0002(등급은 스키마로), ADR 0025(공개 JS 예산), docs/metrics.md §
 - 경계: import-linter 계약 ㉑(공개 분류 쪽은 로그인 원천·테마 로그인 모듈·로그인 저장소를 모른다), 공개 작업 SQL 시험
   (`test_public_writers` P9_PUBLIC_JOBS), 공개 파일 내용 검사(`manifest.theme_problems` — naver·members·reason·code 키 0).
 - API: `/api/themes`(분류 — 공개 파일과 같은 모양)·`/api/themes/strength?period=1|5|20`·`/api/themes/{id}`.
-- 남은 것: ① PR 머지가 늦으면 다음 주 반영(바로는 `run-once theme.master_sync` → `theme.classes_sync`) ② 문턱 숫자 실측
+- 남은 것: ① PR 머지가 늦으면 다음 주 반영(바로는 `run-once theme.master_sync` → `theme.classes_sync` 를 **같은 날(KST)
+  차례로** — 굳은 의존이라 그날 master 성공 기록이 없으면 classes 는 'waiting' 만 찍고 돌지 않는다; 로컬
+  `kbj.sh job` 은 이때 실패로 알린다) ② 문턱 숫자 실측
   [확인 필요] ③ 원천 파일 칸이 바뀌면 검증이 실패로 알린다(조용히 넘기지 않는다).

@@ -19,7 +19,7 @@
             "tier": "public",
             "source": "ECOS:722Y001",
             "dataset": "ECOS:722Y001",
-            "ready": false,
+            "ready": true,
             "probe": "#43"
           },
           {
@@ -30,7 +30,7 @@
             "tier": "public",
             "source": "ECOS:817Y002",
             "dataset": "ECOS:817Y002",
-            "ready": false,
+            "ready": true,
             "probe": "#43"
           },
           {
@@ -41,7 +41,7 @@
             "tier": "public",
             "source": "ECOS:817Y002",
             "dataset": "ECOS:817Y002",
-            "ready": false,
+            "ready": true,
             "probe": "#43"
           },
           {
@@ -52,7 +52,7 @@
             "tier": "public",
             "source": "ECOS:817Y002",
             "dataset": "ECOS:817Y002",
-            "ready": false,
+            "ready": true,
             "probe": "#43"
           },
           {
@@ -63,7 +63,7 @@
             "tier": "public",
             "source": "ECOS:817Y002",
             "dataset": "ECOS:817Y002",
-            "ready": false,
+            "ready": true,
             "probe": "#43"
           },
           {
@@ -74,7 +74,7 @@
             "tier": "public",
             "source": "ECOS:721Y001",
             "dataset": "ECOS:721Y001",
-            "ready": false,
+            "ready": true,
             "probe": "#43"
           },
           {
@@ -85,7 +85,7 @@
             "tier": "public",
             "source": "ECOS:161Y005",
             "dataset": "ECOS:161Y005",
-            "ready": false,
+            "ready": true,
             "probe": "#43"
           },
           {
@@ -96,7 +96,7 @@
             "tier": "public",
             "source": "ECOS:817Y002",
             "dataset": "DERIVED",
-            "ready": false,
+            "ready": true,
             "probe": "#43"
           },
           {
@@ -107,7 +107,7 @@
             "tier": "public",
             "source": "ECOS:817Y002",
             "dataset": "DERIVED",
-            "ready": false,
+            "ready": true,
             "probe": "#43"
           },
           {
@@ -136,29 +136,29 @@
             "tier": "public",
             "source": "ECOS:404Y014",
             "dataset": "ECOS:404Y014",
-            "ready": false,
+            "ready": true,
             "probe": "#43"
           },
           {
             "series_id": "ECOS:402Y014:export_px",
-            "title": "수출물가지수",
+            "title": "수출물가지수(원화)",
             "unit": "2020=100",
             "freq": "M",
             "tier": "public",
             "source": "ECOS:402Y014",
             "dataset": "ECOS:402Y014",
-            "ready": false,
+            "ready": true,
             "probe": "#43"
           },
           {
             "series_id": "ECOS:401Y015:import_px",
-            "title": "수입물가지수",
+            "title": "수입물가지수(원화)",
             "unit": "2020=100",
             "freq": "M",
             "tier": "public",
             "source": "ECOS:401Y015",
             "dataset": "ECOS:401Y015",
-            "ready": false,
+            "ready": true,
             "probe": "#43"
           },
           {
@@ -198,7 +198,7 @@
             "tier": "public",
             "source": "ECOS:200Y102",
             "dataset": "ECOS:200Y102",
-            "ready": false,
+            "ready": true,
             "probe": "#43"
           },
           {
@@ -209,7 +209,7 @@
             "tier": "public",
             "source": "ECOS:513Y001",
             "dataset": "ECOS:513Y001",
-            "ready": false,
+            "ready": true,
             "probe": "#43"
           },
           {
@@ -289,18 +289,18 @@
             "tier": "public",
             "source": "ECOS:301Y013",
             "dataset": "ECOS:301Y013",
-            "ready": false,
+            "ready": true,
             "probe": "#43"
           },
           {
             "series_id": "ECOS:731Y003:usdkrw",
-            "title": "원/달러 환율(매매기준율)",
+            "title": "원/달러 종가(15:30)",
             "unit": "원",
             "freq": "D",
             "tier": "public",
             "source": "ECOS:731Y003",
             "dataset": "ECOS:731Y003",
-            "ready": false,
+            "ready": true,
             "probe": "#43"
           }
         ]

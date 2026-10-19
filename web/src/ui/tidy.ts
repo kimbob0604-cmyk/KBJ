@@ -6,8 +6,6 @@ export const NOT_PROVIDED = '아직 제공되지 않는 항목입니다';
 
 // 꼬리표를 지운 뒤에도 남는 개발 단계 문구
 const STAGE = /확인 전|실측|준비 중|결정 필요|모르는 (?:탭|시리즈)/;
-// 등록부(config/jobs.yaml)에서 꺼 둔 작업 — 이 이름이 든 '아직 없음'은 기다려도 채워지지 않는다. 켜면 여기서 뺀다
-const OFF_JOBS = /\bthemes\.monitor\b/;
 
 // [확인 필요 — 현금 원장 없음] 은 안의 설명만 남기고, [확인 필요 #39] 처럼 번호뿐이면 지운다
 const TAG = /\s*\[(?:확인 필요|실측 필요|추정|제안|결정 필요)\s*(?:—|-|:)?\s*([^\]]*)\]/g;
@@ -22,7 +20,6 @@ const STRIP: readonly RegExp[] = [
 
 /** 메시지·주석 한 줄 정리. 개발 단계 문구면 NOT_PROVIDED, 지우고 남는 게 없으면 '' */
 export function tidy(text: string): string {
-  if (OFF_JOBS.test(text)) return NOT_PROVIDED;
   let t = text.replace(TAG, (_m, inner: string) => {
     const keep = inner.replace(/#[\w-]+(?:\s*[~·]\s*#?[\w-]+)*/g, '').replace(/^[\s—·:-]+|[\s—·:-]+$/g, '');
     return keep ? ` (${keep})` : '';

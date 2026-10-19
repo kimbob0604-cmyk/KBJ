@@ -111,7 +111,8 @@ def test_every_run_finished_and_p5_handlers_are_real(day: SimDay) -> None:
     # 사용자 요청 "꺼 둔 것도 전부 활성화"로 켰다(전에는 D-P5-23 으로 꺼진 채)
     prod = load_registry()
     assert all(prod.by_name(n).enabled for n in ENABLE)
-    assert not prod.by_name("themes.monitor").enabled  # 테마는 사용자 별도 진행
+    # 테마 강도는 API 가 읽을 때 계산(ADR 0039) — 옛 계획 작업 themes.monitor 는 등록부에서 뺐다
+    assert "themes.monitor" not in {j.name for j in prod.jobs}
 
 
 def test_data_keys_done_once_and_kis_limits(day: SimDay) -> None:
