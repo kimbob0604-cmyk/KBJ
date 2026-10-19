@@ -40,8 +40,9 @@ def test_tabs_follow_config_and_mark_login_and_unprobed(loaded: TestClient) -> N
     market = next(t for t in tabs if t["id"] == "market")
     assert market["public"] is False and all(s["tier"] == "private" for s in market["series"])
     rates = {s["series_id"]: s for s in tabs[0]["series"]}
+    # 항목 코드를 채운 뒤(0d7ab8a — config/macro.yaml item)라 ready, 실측 번호는 남는다
     assert (
-        rates["ECOS:817Y002:ktb3y"]["ready"] is False
+        rates["ECOS:817Y002:ktb3y"]["ready"] is True
         and rates["ECOS:817Y002:ktb3y"]["probe"] == "#43"
     )
     assert rates["DERIVED:credit_aa"]["dataset"] == "DERIVED"

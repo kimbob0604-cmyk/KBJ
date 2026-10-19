@@ -123,6 +123,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/market/credit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Credit
+         * @description 페이지 1 신용잔고·예탁금·펀드 자금(금투협 — 수집이 바뀌면 macro 영역 캐시가 비워진다).
+         */
+        get: operations["credit_api_market_credit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/board/newhigh": {
         parameters: {
             query?: never;
@@ -2644,6 +2664,53 @@ export interface components {
             /** Matrix */
             matrix: (number | null)[][];
         };
+        /** CreditLine */
+        CreditLine: {
+            /**
+             * Key
+             * @enum {string}
+             */
+            key: "credit_balance" | "investor_deposit" | "fund_nav";
+            /** Label */
+            label: string;
+            /**
+             * Freq
+             * @enum {string}
+             */
+            freq: "D" | "M";
+            /** Value */
+            value: number | null;
+            /** Date */
+            date: string | null;
+            /** Change */
+            change: number | null;
+            /** Prev Date */
+            prev_date: string | null;
+            /** Spark */
+            spark: components["schemas"]["CreditPoint"][];
+            /** Source */
+            source: string;
+            /** As Of */
+            as_of: string | null;
+            quality: components["schemas"]["Quality"] | null;
+            /** Note */
+            note: string | null;
+        };
+        /** CreditPanel */
+        CreditPanel: {
+            /** Lines */
+            lines: components["schemas"]["CreditLine"][];
+        };
+        /** CreditPoint */
+        CreditPoint: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Value */
+            value: number | null;
+        };
         /** CsrfResponse */
         CsrfResponse: {
             /** Csrf Token */
@@ -3320,6 +3387,25 @@ export interface components {
              */
             generated_at: string;
             data: components["schemas"]["Correlation"];
+        };
+        /** Envelope[CreditPanel] */
+        Envelope_CreditPanel_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["CreditPanel"];
         };
         /** Envelope[Deleted] */
         Envelope_Deleted_: {
@@ -8820,6 +8906,62 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_Ribbon_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    credit_api_market_credit_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_CreditPanel_"];
                 };
             };
             /** @description 세션 없음·만료 */

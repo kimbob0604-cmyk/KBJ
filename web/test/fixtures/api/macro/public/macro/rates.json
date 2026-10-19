@@ -3,10 +3,10 @@
   "as_of": "2026-11-17T06:00:00+09:00",
   "quality": "ok",
   "notes": [
-    "국고채 10년: 확인 전(#43)",
-    "회사채 3년 BBB-: 확인 전(#43)",
-    "CD 91일(월평균): 확인 전(#43)",
-    "M2 평잔(계절조정): 확인 전(#43)",
+    "국고채 10년: 아직 없음 — macro.morning·monthly·evening",
+    "회사채 3년 BBB-: 아직 없음 — macro.morning·monthly·evening",
+    "CD 91일(월평균): 아직 없음 — macro.morning·monthly·evening",
+    "M2 평잔(계절조정): 아직 없음 — macro.morning·monthly·evening",
     "신용스프레드 BBB-: 아직 없음 — macro.morning·monthly·evening",
     "실질 기준금리: 공개판 미제공 — 로그인 화면에서 계산(공개 내보내기는 엔진을 쓰지 않는다)"
   ],
@@ -670,7 +670,7 @@
         "change_pct": null,
         "points": [],
         "derived": false,
-        "na_reason": "확인 전(#43)"
+        "na_reason": "아직 없음 — macro.morning·monthly·evening"
       },
       {
         "series_id": "ECOS:817Y002:corp_aa3y",
@@ -1002,7 +1002,7 @@
         "change_pct": null,
         "points": [],
         "derived": false,
-        "na_reason": "확인 전(#43)"
+        "na_reason": "아직 없음 — macro.morning·monthly·evening"
       },
       {
         "series_id": "ECOS:721Y001:cd91",
@@ -1018,7 +1018,7 @@
         "change_pct": null,
         "points": [],
         "derived": false,
-        "na_reason": "확인 전(#43)"
+        "na_reason": "아직 없음 — macro.morning·monthly·evening"
       },
       {
         "series_id": "ECOS:161Y005:m2",
@@ -1034,7 +1034,7 @@
         "change_pct": null,
         "points": [],
         "derived": false,
-        "na_reason": "확인 전(#43)"
+        "na_reason": "아직 없음 — macro.morning·monthly·evening"
       },
       {
         "series_id": "DERIVED:credit_aa",

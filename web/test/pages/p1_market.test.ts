@@ -1,7 +1,8 @@
 // 페이지 1 시장 — A 의 합성 응답 픽스처로 위젯 렌더·기간 토글·품질 표시·검산 줄·공개판 자물쇠(§6.8 pages/*.test).
 import { describe, expect, it, vi } from 'vitest';
-import page, { PENDING_TILES, REFRESH_MS } from '../../src/pages/p1_market';
+import page, { CREDIT_TITLE, PENDING_TILES, REFRESH_MS } from '../../src/pages/p1_market';
 import { MINUTE_REFRESH_MS } from '../../src/pages/p1/flows_minute';
+import { macPublicHarness, macroFixture } from '../fixtures/api/macro/harness';
 import { json } from '../helpers';
 import {
   apiHarness,
@@ -48,6 +49,7 @@ describe('페이지 1 시장 — 로그인', () => {
     expect(hz.paths().sort()).toEqual([
       'flows/investors',
       'flows/market-minute?market=k200_fut',
+      'market/credit',
       'market/sectors?period=1',
       'market/summary',
       'program/daily?days=60&market=K',
@@ -87,8 +89,8 @@ describe('페이지 1 시장 — 로그인', () => {
     expect(text(inv)).toContain('-11'); // 외국인 -1,143,000,000원 → -11억
     expect(inv.querySelector('[data-check]')?.getAttribute('data-check')).toBe('ok');
 
-    // 공개 등급 빈 자리
-    expect(text(panelByTitle(root, '신용잔고 · 예탁금 · 펀드 자금'))).toContain('P5');
+    // 금투협 신용 패널(합성 MAC 세계 — market/credit)
+    expect(panelByTitle(root, CREDIT_TITLE).querySelectorAll('.tile')).toHaveLength(3);
     expect(root.querySelectorAll('.msg.err')).toHaveLength(0);
   });
 
@@ -169,7 +171,7 @@ describe('페이지 1 시장 — 로그인', () => {
     const before = hz.calls.length;
     every[0]?.fn();
     await flush();
-    expect(hz.calls.length).toBe(before + 3);
+    expect(hz.calls.length).toBe(before + 4); // 요약·업종·투자자·신용
   });
 });
 
@@ -190,7 +192,7 @@ describe('페이지 1 시장 — 공개', () => {
     const tv = vi.fn(() => () => undefined);
     const { ctx, root } = pageCtx(1, 'public', hz.source, { tradingview: tv });
     await page.mount(ctx);
-    expect(hz.calls).toHaveLength(0);
+    expect(hz.paths()).toEqual(['./data/credit.json']); // 공개 파일 하나(금투협 — 공개 등급), 로그인 API 0
     expect(tv).toHaveBeenCalledTimes(3);
     expect(tv.mock.calls.map((c) => (c as unknown[])[1])).toEqual([
       'mini-symbol-overview',
@@ -199,7 +201,10 @@ describe('페이지 1 시장 — 공개', () => {
     ]);
     expect(root.querySelectorAll('.panel.locked')).toHaveLength(4 + 3); // + F2 투자자 수급·프로그램 2
     expect(text(panelByTitle(root, '시장 거래대금'))).toContain('LOGIN');
-    expect(text(panelByTitle(root, '신용잔고 · 예탁금 · 펀드 자금'))).toContain('준비 중');
+    // 공개 파일이 없으면(수집 전) 패널 안 안내 — '준비 중' 상자는 없다
+    const credit = panelByTitle(root, CREDIT_TITLE);
+    expect(credit.classList.contains('locked')).toBe(false);
+    expect(text(credit.querySelector('.msg'))).toContain('아직 없음');
   });
 
   it('TradingView 가 없으면 패널 안 안내', async () => {
@@ -207,5 +212,107 @@ describe('페이지 1 시장 — 공개', () => {
     const { ctx, root } = pageCtx(1, 'public', hz.source);
     await page.mount(ctx);
     expect(text(panelByTitle(root, '지수'))).toContain('TradingView 위젯을 불러오지 못함');
+  });
+});
+
+// ── 신용잔고 · 예탁금 · 펀드 자금(금투협 종합통계 — 합성 MAC 세계 test/fixtures/api/macro/market_credit.json) ──
+
+type CreditFx = { quality: string; data: { lines: Record<string, unknown>[] } };
+
+function tileOf(root: HTMLElement, key: string): HTMLElement {
+  const el = panelByTitle(root, CREDIT_TITLE).querySelector<HTMLElement>(`.tile[data-key="${key}"]`);
+  if (!el) throw new Error(`신용 타일 없음: ${key}`);
+  return el;
+}
+
+describe('페이지 1 신용잔고 · 예탁금 · 펀드 자금 — 로그인', () => {
+  it('마지막 값(조·억)·전일 대비·20일 추이, 늦은 값은 지연 표시, 없는 값은 —', async () => {
+    const { root } = await mountLogin();
+    const p = panelByTitle(root, CREDIT_TITLE);
+    expect(p.querySelector('[data-pending]')).toBeNull();
+    expect(text(p)).not.toContain('준비 중');
+
+    const cb = tileOf(root, 'credit_balance');
+    expect(text(cb.querySelector('.n'))).toContain('신용잔고');
+    expect(text(cb.querySelector('.p'))).toContain('17.5조'); // 17,534,979,000,000원 → 화면에서만 조
+    expect(cb.querySelector('.p .q-stale')).not.toBeNull(); // 하루 늦게 공표(D+1) — stale
+    expect(text(cb.querySelector('.down'))).toBe('전일 대비 -286억'); // -28,570,000,000원
+    expect(cb.querySelector('svg')?.getAttribute('aria-label')).toBe('신용잔고 20영업일 추이');
+    expect(cb.querySelectorAll('svg polyline')).toHaveLength(1);
+
+    const dep = tileOf(root, 'investor_deposit');
+    expect(text(dep.querySelector('.p'))).toBe('55.3조');
+    expect(text(dep.querySelector('.up'))).toBe('전일 대비 +2,133억');
+
+    const fund = tileOf(root, 'fund_nav');
+    expect(text(fund.querySelector('.p'))).toBe('—'); // 수집 전 — 0 이 아니다
+    expect(fund.querySelector('svg')).toBeNull();
+    const notes = text(p.querySelector('.notes'));
+    expect(notes).toContain('펀드 순자산: 아직 없음');
+    expect(notes).toContain('신용잔고: 공표 지연');
+    expect(text(p.querySelector('h3 .src'))).toContain('DATAGO');
+    expect(text(p)).not.toMatch(/NaN|undefined/);
+  });
+
+  it('값·변화가 null 이면 0 대신 —, 추이의 빈 날은 건너뛴다', async () => {
+    const fx = macroFixture<CreditFx>('market_credit');
+    const dep = fx.data.lines[1] as { value: unknown; change: unknown; quality: unknown; spark: { value: unknown }[] };
+    dep.value = null;
+    dep.change = null;
+    dep.quality = null;
+    for (const pt of dep.spark) pt.value = null;
+    const { root } = await mountLogin({ market_credit: fx });
+    const t = tileOf(root, 'investor_deposit');
+    expect(text(t.querySelector('.p'))).toBe('—');
+    expect(text(t.querySelector('.dim'))).toBe('—');
+    expect(t.querySelector('svg polyline')).toBeNull();
+  });
+
+  it('예탁금이 ECOS 월별로 대신 채워지면 전월 대비·개월 추이', async () => {
+    const fx = macroFixture<CreditFx>('market_credit');
+    Object.assign(fx.data.lines[1] ?? {}, { freq: 'M', source: 'ECOS:901Y056', note: '월별(ECOS 901Y056) — 금투협 일별 값 없음' });
+    const { root } = await mountLogin({ market_credit: fx });
+    const t = tileOf(root, 'investor_deposit');
+    expect(text(t)).toContain('전월 대비');
+    expect(t.querySelector('svg')?.getAttribute('aria-label')).toContain('개월 추이');
+    expect(text(panelByTitle(root, CREDIT_TITLE).querySelector('.notes'))).toContain('월별(ECOS 901Y056)');
+  });
+
+  it('404(수집 전): 패널 안 서버 안내, 다른 패널은 계속(격리)', async () => {
+    const msg = '아직 없음 — market_stats.kofia 13:30(D+1 개방)';
+    const { root } = await mountLogin({ market_credit: () => notFound(msg) });
+    expect(text(panelByTitle(root, CREDIT_TITLE).querySelector('.msg'))).toBe(msg);
+    expect(panelByTitle(root, '시장 투자자 수급').querySelectorAll('tbody tr')).toHaveLength(4);
+  });
+});
+
+describe('페이지 1 신용잔고 · 예탁금 — 공개(credit.json)', () => {
+  async function mountPublic(over: Parameters<typeof macPublicHarness>[0] = {}) {
+    const hz = macPublicHarness(over);
+    const { ctx, root } = pageCtx(1, 'public', hz.source, { tradingview: vi.fn(() => () => undefined) });
+    await page.mount(ctx);
+    return { hz, root };
+  }
+
+  it('공개 칩(백만원) → 원으로 바꿔 조·억, 추이 없이 직전 대비만', async () => {
+    const { hz, root } = await mountPublic();
+    expect(hz.paths()).toEqual(['./data/credit.json']);
+    const cb = tileOf(root, 'credit_balance');
+    expect(text(cb.querySelector('.p'))).toContain('17.5조');
+    expect(text(cb.querySelector('.down'))).toBe('전일 대비 -286억');
+    expect(text(tileOf(root, 'investor_deposit').querySelector('.p'))).toBe('55.3조');
+    const p = panelByTitle(root, CREDIT_TITLE);
+    expect(p.querySelectorAll('.tile')).toHaveLength(2); // 펀드 순자산은 공개 파일에 없다
+    expect(p.querySelector('svg')).toBeNull();
+    expect(text(p.querySelector('.notes'))).toContain('20일 추이는 로그인');
+  });
+
+  it('모르는 단위는 값을 지어내지 않고 —', async () => {
+    const credit = macroFixture<{ data: { chips: { key: string; detail: Record<string, unknown> }[] } }>('public/credit');
+    for (const c of credit.data.chips) c.detail.unit = '좌';
+    const { root } = await mountPublic({ credit: () => json(credit) });
+    const cb = tileOf(root, 'credit_balance');
+    expect(text(cb.querySelector('.p'))).toBe('—');
+    expect(text(panelByTitle(root, CREDIT_TITLE).querySelector('.notes'))).toContain('단위 확인 필요');
   });
 });

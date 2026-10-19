@@ -1,7 +1,9 @@
 // 페이지 1 시장(docs/p3_design.md §4.4·§6.5) — 지수 타일·시장 거래대금·업종 히트맵·시장폭·시장 투자자 수급.
 //
 // - 로그인: `market/summary`(지수·거래대금·시장폭 — 한 번에), `market/sectors`(기간 1·5·20), `flows/investors`.
-// - 공개: 지수 자리는 TradingView 위젯(DATA_TIERS §2 — 시세는 TradingView 로만), 나머지는 자물쇠(요청 없음).
+// - 공개: 지수 자리는 TradingView 위젯(DATA_TIERS §2 — 시세는 TradingView 로만), 신용잔고·예탁금은 공개 파일
+//   `credit`(공개 내보내기 credit.json — 마지막 값·직전 대비만), 나머지는 자물쇠(요청 없음).
+// - 신용잔고 · 예탁금 · 펀드 자금(금투협 종합통계 — 공개 등급 원천): 로그인은 `market/credit`(20일 추이까지).
 // - 보조 타일: VKOSPI(krx.vkospi)·원/달러(macro.*)는 서버가 값을 보내면 그리고, 없으면 '준비 중'. K200 야간선물(P7)은 아직 원천 없음.
 // - 금액은 원 단위 → 화면에서만 억·조. 값이 없으면 '—'(0 으로 그리지 않는다). 검산 불가는 사유와 함께.
 // - P5 묶음 F2(이 파일은 F2 만 고친다 — 패널 고리): 장중 투자자 수급(1분 선·카드 7 — ./p1/flows_minute.ts)·
@@ -27,6 +29,8 @@ const NOOP = (): Promise<void> => Promise.resolve();
 type S = components['schemas'];
 type Summary = S['MarketSummary'];
 type Tile = S['IndexTile'];
+type CreditLine = S['CreditLine'];
+type ApiChip = S['Chip'];
 
 /** 장중 위젯 새로 고침 — 10분 슬롯 + 30초 여유(§6.9) */
 export const REFRESH_MS = 630_000;
@@ -136,6 +140,85 @@ function drawIndices(p: Panel, env: Envelope<Summary>): void {
   );
   const q: Quality = rows.length ? worstQuality(rows.map((r) => r.quality)) : env.quality;
   p.setSource({ ...env, quality: q, notes: notesWith(env.notes, ['지수']) }, invalid);
+}
+
+// ── 신용잔고 · 예탁금 · 펀드 자금(금투협 종합통계) ─────────────
+
+export const CREDIT_TITLE = '신용잔고 · 예탁금 · 펀드 자금';
+const CREDIT_HINT = 'market_stats.kofia 13:30(D+1)';
+
+/** 신용 타일 하나: 이름·기준일 / 마지막 값(조·억) / 직전 대비 / 추이. 값이 없으면 '—'(0 으로 그리지 않는다) */
+export function creditTile(ln: CreditLine): HTMLElement {
+  const v = ln.value === null || ln.quality === null ? null : qValue(joEok(ln.value), ln.quality, ln.as_of);
+  const per = ln.freq === 'M' ? '전월' : '전일';
+  const n = ln.spark.length;
+  return h(
+    'div',
+    { class: 'tile', data: { key: ln.key }, attrs: { title: ln.source } },
+    h('div', { class: 'n' }, ln.label, ln.date ? ` · ${shortDate(ln.date)}` : ''),
+    h('div', { class: 'p' }, v ?? DASH),
+    h(
+      'div',
+      { class: signClass(ln.change), attrs: ln.prev_date ? { title: `${shortDate(ln.prev_date)} 대비` } : undefined },
+      ln.change === null ? DASH : `${per} 대비 ${joEok(ln.change, true)}`,
+    ),
+    n ? sparkline(ln.spark.map((p) => p.value), { label: `${ln.label} ${n}${ln.freq === 'M' ? '개월' : '영업일'} 추이` }) : null,
+  );
+}
+
+/** 줄들을 그리고 원천 줄을 채운다(줄마다의 사유는 '이름: 사유'로 notes 줄에) */
+function drawCreditLines(p: Panel, env: Envelope<unknown>, lines: readonly CreditLine[], extra: readonly string[] = []): void {
+  p.body.append(h('div', { class: 'idx' }, lines.map(creditTile)));
+  const got = lines.filter((l) => l.value !== null && l.quality !== null);
+  const q: Quality = got.length ? worstQuality(got.map((l) => l.quality ?? 'invalid')) : env.quality;
+  const notes = lines.filter((l) => l.note).map((l) => `${l.label}: ${l.note ?? ''}`);
+  p.setSource({ ...env, quality: q, notes: [...env.notes, ...notes, ...extra] });
+}
+
+export function drawCredit(p: Panel, env: Envelope<S['CreditPanel']>): null {
+  drawCreditLines(p, env, env.data.lines);
+  return null;
+}
+
+/** 공개 파일 credit.json 칩 단위 → 원 배수(모르는 단위는 값을 비운다 — 서버 market_credit.UNIT_WON 과 같다) */
+const UNIT_WON: Record<string, number> = { 원: 1, 천원: 1e3, 백만원: 1e6, 억원: 1e8, 십억원: 1e9, 조원: 1e12 };
+const PUBLIC_CREDIT_KEYS = ['credit_balance', 'investor_deposit'] as const;
+
+/** 공개 칩(credit.json — API 띠 칩과 같은 모양) → 신용 줄(추이 없음) */
+export function creditLineOfChip(c: ApiChip): CreditLine {
+  const d = c.detail as Record<string, unknown>;
+  const k = typeof d.unit === 'string' ? UNIT_WON[d.unit] : undefined;
+  const toWon = (x: unknown): number | null =>
+    k === undefined || typeof x !== 'number' || !Number.isFinite(x) ? null : Math.round(x * k);
+  const value = c.value && typeof c.value.value === 'number' ? toWon(c.value.value) : null;
+  return {
+    key: c.key === 'credit_balance' ? 'credit_balance' : 'investor_deposit',
+    label: c.label,
+    freq: 'D',
+    value,
+    date: typeof d.date === 'string' ? d.date : null,
+    change: value === null ? null : toWon(d.change),
+    prev_date: typeof d.prev_date === 'string' ? d.prev_date : null,
+    spark: [],
+    source: c.value?.source ?? '',
+    as_of: c.value?.as_of ?? null,
+    quality: value === null ? null : (c.value?.quality ?? null),
+    note: [c.note, k === undefined ? '단위 확인 필요 — 값을 비운다' : null].filter(Boolean).join(' · ') || null,
+  };
+}
+
+export function drawCreditPublic(p: Panel, env: Envelope<{ chips?: ApiChip[] }>): null {
+  const chips = Array.isArray(env.data.chips) ? env.data.chips : [];
+  const lines = PUBLIC_CREDIT_KEYS.flatMap((key) => {
+    const c = chips.find((x) => x.key === key && x.tier === 'public');
+    return c ? [creditLineOfChip(c)] : [];
+  });
+  if (lines.length === 0) {
+    p.showMessage(`아직 없음 — ${CREDIT_HINT}`);
+    return null;
+  }
+  drawCreditLines(p, env, lines, ['공개판은 마지막 값·직전 대비만(20일 추이는 로그인)']);
+  return null;
 }
 
 // ── 시장 거래대금 ──────────────────────────────────────────
@@ -321,13 +404,8 @@ async function mount(ctx: PageContext): Promise<void> {
   const pHeat = panel(tier, { title: '업종 히트맵', tier: 'login', span: 8, lock: 'krx' });
   const pBreadth = panel(tier, { title: '시장폭', tier: 'login', span: 4, lock: 'quote_based' });
   const pInv = panel(tier, { title: '시장 투자자 수급', tier: 'login', span: 6, lock: 'investor' });
-  const pCredit = panel(tier, {
-    title: '신용잔고 · 예탁금 · 펀드 자금',
-    tier: 'public',
-    span: 6,
-    pending: 'P5',
-    pendingNote: '금융위 금투협 종합통계(공개 등급) — market_stats.kofia',
-  });
+  // 금투협 종합통계(공개 등급) — 공개는 credit.json(마지막 값), 로그인은 market/credit(20일 추이)
+  const pCredit = panel(tier, { title: CREDIT_TITLE, tier: 'public', span: 6 });
   // P5 F2 — 장중 투자자 수급·프로그램매매(KIS — 로그인 전용)
   const pMin = panel(tier, { title: MINUTE_TITLE, tier: 'login', span: 12, lock: 'kis' });
   const pPgmDaily = panel(tier, { title: DAILY_TITLE, tier: 'login', span: 6, lock: 'kis' });
@@ -336,6 +414,9 @@ async function mount(ctx: PageContext): Promise<void> {
 
   pTurn.setDef(
     '코스피+코스닥 주식(ETF·ETN·리츠 제외) 거래대금. 막대 = 일별, 점선 = 20일 평균. 장중 값은 지수 누적 기준(잠정).',
+  );
+  pCredit.setDef(
+    '금투협 종합통계(D+1 13시 공표). 신용잔고 = 신용거래융자 전체(없으면 유가+코스닥). 예탁금 = 투자자예탁금. 펀드 자금 = 펀드 순자산. 선 = 최근 20개 값.',
   );
   pBreadth.setDef(
     '상승·보합·하락은 보드 유니버스 종목 수. 신고가 = 보드 종가 기준 라벨. 상·하한가 = 등락률 ±29.5% 이상.',
@@ -355,6 +436,12 @@ async function mount(ctx: PageContext): Promise<void> {
     } else {
       pIdx.showMessage('TradingView 위젯을 불러오지 못함');
     }
+    await fill(
+      pCredit,
+      () => ctx.source.get<{ chips?: ApiChip[] }>('credit'),
+      (env) => drawCreditPublic(pCredit, env),
+      CREDIT_HINT,
+    );
     return;
   }
 
@@ -403,16 +490,25 @@ async function mount(ctx: PageContext): Promise<void> {
       'market.close_collect 15:35',
     );
 
+  const loadCredit = (): Promise<void> =>
+    fill(
+      pCredit,
+      () => ctx.source.get<S['CreditPanel']>('market/credit'),
+      (env) => drawCredit(pCredit, env),
+      CREDIT_HINT,
+    );
+
   const loadMinute = LOGIN_F2 ? LOGIN_F2.mountMinute(ctx, pMin) : NOOP;
   const loadProgram = LOGIN_F2 ? LOGIN_F2.mountProgram(ctx, pPgmDaily, pPgmTop) : NOOP;
 
-  await Promise.all([loadSummary(), loadSectors(), loadInvestors(), loadMinute(), loadProgram()]);
+  await Promise.all([loadSummary(), loadSectors(), loadInvestors(), loadCredit(), loadMinute(), loadProgram()]);
   // 첫 불러오기 중에 앱이 내려갔으면(격자가 문서에서 빠짐) 주기 작업을 걸지 않는다
   if (root.isConnected) {
     ctx.every(REFRESH_MS, () => {
       void loadSummary();
       void loadSectors();
       void loadInvestors();
+      void loadCredit();
     });
     // F2 — 60초 폴링(웹소켓 아님, F2 §3.6)
     ctx.every(MINUTE_REFRESH_MS, () => {
