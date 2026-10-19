@@ -94,7 +94,7 @@ P5_ENABLED = {
     "market_stats.kofia",
     "market.fsc_daily",
     # 2026-10-20 사용자 요청 "꺼 둔 것도 전부 활성화" — 실측 전(#40·#41·#50~#53)이라도 켠다.
-    # 남는 꺼짐은 처리기·표가 없는 themes.monitor 하나
+    # (처리기·표가 없던 themes.monitor 는 ADR 0039 로 등록부에서 뺐다 — P5 꺼짐 0)
     "program.intraday",
     "program.stock_scan",
     "program.daily",
@@ -829,7 +829,6 @@ P5_JOBS = {
     "macro.monthly_prv": "kbj.services.collectors.macro_prv:monthly",
     "macro.evening": "kbj.services.collectors.macro:evening",
     "macro.evening_prv": "kbj.services.collectors.macro_prv:evening",
-    "themes.monitor": "kbj.services.engine.themes:monitor",
     "etf.report": "kbj.reports.etf:report",
     "brief.morning": "kbj.reports.briefs:morning",
     "brief.closing": "kbj.reports.briefs:closing",
@@ -864,13 +863,16 @@ def test_p5_jobs_are_registered_with_design_owners_and_wave3_enables() -> None:
         assert p5[name].owner == owner, name
     # 켜기는 웨이브 3(WRAP — ENABLED_BY_PHASE["P5"], D-P5-23)
     assert {n for n, j in p5.items() if j.enabled} == P5_ENABLED
-    # 꺼진 채 남는 작업은 노트에 막는 실측 번호(#39~#49, IDX #50~#54)를 적는다 — 테마 강도는
-    # 2026-10-15 사용자 결정(ADR 0039)으로 API 가 읽을 때 계산해 themes.monitor 는 꺼진 채(표 없음)
+    # 꺼진 채 남는 작업은 노트에 막는 실측 번호(#39~#49, IDX #50~#54)를 적는다
     for name, j in p5.items():
-        if not j.enabled and name != "themes.monitor":
+        if not j.enabled:
             assert j.note and re.search(r"#(39|4\d|5[0-4])", j.note), name
-    assert "ADR 0039" in (p5["themes.monitor"].note or "")
-    assert not p5["themes.monitor"].enabled
+    # 테마 강도는 2026-10-15 사용자 결정(ADR 0039)으로 로그인 API 가 읽을 때 보드 종목 하루로
+    # 계산한다 — 옛 계획 작업 themes.monitor(prv_themes.strength)는 처리기·표 없이 꺼져 있다가
+    # 등록부에서 뺐고, 흡수하던 ET kr.yml build 는 retired 로
+    assert "themes.monitor" not in {j.name for j in REG.jobs}
+    retired = {r.legacy: r.reason for r in REG.retired}
+    assert "ADR 0039" in retired["ET:kr.yml:build"]
     # 계약 ⑨ — 엔진은 순수(저장소 금지): 처리기는 kbj.services·kbj.reports 에(D-P5-7)
     assert all(not o.startswith("kbj.engines.") for o in P5_JOBS.values())
     # 공개·로그인 매크로 수집은 모듈이 다르다(계약 ⑭ — D-P5-7)
@@ -895,7 +897,7 @@ def test_p5_collects_and_writes_follow_the_design() -> None:
     assert not {w for n in ("macro.morning_prv", "macro.monthly_prv", "macro.evening_prv")
                 for w in writes[n] if not w.startswith("prv_")}  # fmt: skip
     assert writes["us.eod"] == {"prv_market.daily_bar", "prv_board.artifact"}  # D-P5-18
-    assert writes["themes.monitor"] == {"prv_themes.strength"}
+    assert not [n for n, w in writes.items() if "prv_themes.strength" in w]  # 강도 저장 표 없음
     # 장중 투자자 1분은 flows.market_minute 하나만(ADR 0019 — gex.poller 에서 옮겼다, D-P5-21 ①)
     assert ("KIS:market_investor_intraday", "minute") in coll["flows.market_minute"]
     assert ("KIS:market_investor_intraday", "minute") not in coll["gex.poller"]
@@ -924,7 +926,6 @@ def test_p5_schedules_follow_the_design() -> None:
     assert sweep_deps == [("market.close_collect", True)]
     backfill = REG.by_name("program.backfill")
     assert backfill.schedule.manual and backfill.backfill_of == ("program.daily",)
-    assert sched("themes.monitor").cron == "50 16 * * 1-5"
     etf = REG.by_name("etf.report")
     assert etf.schedule.cron == "20 8 * * 1-5" and etf.notify is not None
     assert etf.notify.kind == "etf.report" and POLICIES["etf.report"] == "daily"
@@ -933,7 +934,7 @@ def test_p5_schedules_follow_the_design() -> None:
     ]  # fmt: skip
     # 브리핑은 그대로(ADR 0018 — 시각·의존·캐치업), etf·themes 를 무른 의존에 더하지 않는다
     morning = {d.job for d in REG.by_name("brief.morning").depends_on}
-    assert not morning & {"etf.collect", "etf.report", "themes.monitor", "guru.research"}
+    assert not morning & {"etf.collect", "etf.report", "guru.research"}
 
 
 def test_p5_sends_keep_the_1600_rule_and_one_brief_each() -> None:  # ADR 0018, U2
@@ -957,7 +958,7 @@ def test_p5_sends_keep_the_1600_rule_and_one_brief_each() -> None:  # ADR 0018, 
 
 
 def test_p5_jobs_never_run_on_holidays() -> None:
-    for name in (*F2_JOBS, "etf.report", "themes.monitor", "brief.closing", "flows.report"):
+    for name in (*F2_JOBS, "etf.report", "brief.closing", "flows.report"):
         assert REG.by_name(name).schedule.when == "trading_day", name
 
 

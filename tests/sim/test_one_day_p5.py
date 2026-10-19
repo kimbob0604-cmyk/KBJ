@@ -111,7 +111,8 @@ def test_every_run_finished_and_p5_handlers_are_real(day: SimDay) -> None:
     still_off = [n for n in ENABLE if n.startswith("program.")]
     assert not any(prod.by_name(n).enabled for n in still_off)
     assert all(prod.by_name(n).enabled for n in ENABLE if n not in still_off)
-    assert not prod.by_name("themes.monitor").enabled  # 테마는 사용자 별도 진행
+    # 테마 강도는 API 가 읽을 때 계산(ADR 0039) — 옛 계획 작업 themes.monitor 는 등록부에서 뺐다
+    assert "themes.monitor" not in {j.name for j in prod.jobs}
 
 
 def test_data_keys_done_once_and_kis_limits(day: SimDay) -> None:

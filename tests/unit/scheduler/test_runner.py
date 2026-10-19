@@ -823,8 +823,10 @@ def test_real_registry_one_day_runs_only_enabled_jobs() -> None:
     planned = {r.job for r in rig.runs.records.values() if r.detail.get("reason") == "planned"}
     # P5 에서 꺼진 채 남은 것(실측 전 — D-P5-23)은 계획됨으로만
     # (macro.*·market_stats.kofia·market.fsc_daily 는 2026-10-18 에 켰다 — 아래 매일 도는 집합)
-    # 2026-10-20 사용자 요청으로 꺼 둔 작업을 전부 켰다 — 계획됨은 처리기가 없는 themes.monitor 하나
-    assert "themes.monitor" in planned
+    # 2026-10-20 사용자 요청으로 꺼 둔 작업을 전부 켰다. 마지막 꺼짐이던 themes.monitor(처리기·표
+    # 없음)는 테마 강도를 API 가 읽을 때 계산하므로(ADR 0039) 등록부에서 뺐다 — 계획됨 0
+    assert "themes.monitor" not in {j.name for j in reg.jobs}
+    assert planned == set()
     assert {"program.daily", "program.stock_sweep"} <= set(ran)
     assert {"macro.morning", "macro.evening", "market_stats.kofia", "market.fsc_daily"} <= set(ran)
     # P5 웨이브 3 이 켠 것은 돈다 — us.eod 는 10-05(월) 뉴욕장 → 10-06 KST

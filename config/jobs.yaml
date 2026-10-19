@@ -791,16 +791,6 @@ jobs:
               "SD:mac-crontab:consensus_collector"]
     note: "⚠ 대체 출처 미확인(conflict_map §1.13, R20) — KIS TR 실측 뒤 확정. 리비전 알림(alert.revision) 16:00(ADR 0018) — 마감 수집이 끝난 뒤 약 640호출(4/s 로 약 3분)을 받고 보내므로 평소 16:00~16:05. 수집과 알림은 한 작업이다(SD 처럼 14:30 수집·16:00 발송으로 나누면 장중 KIS 버킷과 겹친다 — p4_design §3.6)"
 
-  - name: themes.monitor
-    phase: P5
-    owner: "kbj.services.engine.themes:monitor"   # D-P5-7 — 순수 계산은 kbj.engines.themes(계약 ⑨)
-    schedule: {cron: "50 16 * * 1-5", when: trading_day}
-    retry: {max: 1, backoff_s: [600]}
-    depends_on: [{job: market.close_collect, hard: true}]
-    writes: [prv_themes.strength]
-    absorbs: ["ET:kr.yml:build"]
-    note: "꺼짐(처리기·표 없음). 페이지 9 테마 강도는 2026-10-15 사용자 결정(ADR 0039)으로 로그인 API 가 읽을 때 보드 종목 하루(prv_board.stock_day)로 계산한다(/api/themes/strength — 저장 표 없음). 강도 이력을 쌓을 일이 생기면 이 작업이 prv_themes.strength 를 쓴다(그때 마이그레이션). ET kr.yml 09:30·15:30 — 장중판은 폐지 [제안], 마감 뒤 1회. 텔레그램 아님(ADR 0018 대상 아님)"
-
   - name: program.daily
     phase: P5
     enabled: true               # 2026-10-20 켬 — 사용자 요청 "꺼 둔 것도 전부 활성화"(실측 전 항목은 실패하면 운영 페이지 13에 사유가 남는다)
@@ -1055,6 +1045,7 @@ retired:
   - {legacy: "SD:workflow:wake.yml", reason: "Render 전용(D2)"}
   - {legacy: "SD:tg_reports", reason: "네이버 리서치 — 대체 없음(conflict_map §1.13)"}
   - {legacy: "SD:gen_themes_mapping", reason: "네이버 테마 크롤(U4) → P5 분류 사전"}
+  - {legacy: "ET:kr.yml:build", reason: "ET 테마 강도 빌드(09:30·15:30) — 페이지 9 테마 강도는 로그인 API 가 읽을 때 보드 종목 하루로 계산(ADR 0039, 저장 표 없음). 옛 계획 작업 themes.monitor 는 등록부에서 뺐다(2026-10-19)"}
   - {legacy: "SD:refresh_options", reason: "yfinance 옵션 — 쓰는 화면 재검토 전 폐지 [제안]"}
   - {legacy: "SD:data_json_close", reason: "data.json 정적 산출 폐지"}
   - {legacy: "SD:data_json_evening", reason: "data.json 정적 산출 폐지"}
