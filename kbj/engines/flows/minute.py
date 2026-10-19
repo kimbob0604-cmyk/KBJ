@@ -18,11 +18,14 @@ frozen dataclass(대금 **원** — 화면·API 가 쓰는 단위). I/O 없음(�
   뒤의 누적이다), 검산 실패 분은 `invalid`(선·카드에서 빼고 수를 보인다). 화면의 '잠정' 꼬리표는
   장중
   내내(값 품질과 별개).
-- 검산 ①(현물만): `prsn + frgn + orgn + etc_corp + etc_orgt` 순매수 대금 = 0 ± `C1_TOL_MILLION`
-  (백만원 반올림 × 5 [확인 필요]). 선물·옵션은 정의 별도(#39 뒤) — 하지 않는다(불가로 센다).
-- 검산 ②: `orgn = scrt + ivtr + pe_fund + bank + insu + mrbn + fund`(대금은 ± 구분 수 백만원 —
-  반올림,
-  수량은 0). `etc_orgt` 를 기관에 넣는지는 [실측 필요 #39] — 지금은 넣지 않는다.
+- 검산 ②: `orgn = scrt + ivtr + pe_fund + bank + insu + mrbn + fund`(대금은 ± 구분 수
+  백만원 — 반올림, 수량은 0). KIS '기관계'가 기타단체(`etc_orgt`)를 넣는지는 공식 문서에 없다
+  [실측 필요] — 7세부 합으로 맞지 않으면 `+ etc_orgt` 로도 본다(둘 중 하나가 맞으면 통과,
+  `orgn_has_etc_orgt`). 정의 하나만 받으면 기타단체가 거래한 뒤의 분이 줄줄이 빠질 수 있다
+  (누적 매도·매수 칸은 줄지 않는다).
+- 검산 ①(현물만): `prsn + frgn + orgn + etc_corp (+ etc_orgt — 기관계에 들지 않았을 때만)`
+  순매수 대금 = 0 ± `C1_TOL_MILLION`(백만원 반올림 × 5 [확인 필요]). 선물·옵션은 정의 별도 —
+  하지 않는다(불가).
 - 검산 ③: 마감 뒤 마지막 분 값(× 1,000,000) 대 `prv_flows.market_investor_daily`(원). 차이는
   기록(잔차)하고 quality 로 표시한다. 현물 조합만 — 시장 코드 대응 `SPOT_DAILY_MARKET` [확인 필요
   #23·#39].
@@ -136,43 +139,65 @@ class SlotCheck:
     """한 분의 검산. c1/c2 = None 이면 불가(구분이 빠졌거나 현물이 아님)."""
 
     ts: datetime
-    c1_residual: int | None  # 백만원 — prsn+frgn+orgn+etc_corp+etc_orgt 순매수 대금
+    c1_residual: int | None  # 백만원 — 검산 ① 의 합(0 이어야 한다)
     c1_ok: bool | None
-    c2_failed: tuple[str, ...]  # 어긋난 측정값 이름
+    c2_failed: tuple[str, ...]  # 어긋난 측정값 이름(두 정의 다 안 맞을 때 — 7세부 합 기준)
     c2_ok: bool | None
+    orgn_has_etc_orgt: bool | None = None  # 기관계가 기타단체를 넣은 정의로 맞았다(None = 모름)
 
     @property
     def ok(self) -> bool:
         return self.c1_ok is not False and self.c2_ok is not False
 
 
+def _orgn_failed(
+    by_investor: Mapping[str, InvestorMinute], parts: Sequence[str]
+) -> list[str] | None:
+    """기관계 = parts 합인지 — 어긋난 측정값 이름(빈 목록 = 맞음). 볼 측정값이 없으면 None."""
+    orgn = by_investor.get("orgn")
+    if orgn is None or not all(p in by_investor for p in parts):
+        return None
+    failed: list[str] = []
+    checked = False
+    for m in _MEASURES:
+        total = getattr(orgn, m)
+        vals = [getattr(by_investor[p], m) for p in parts]
+        if total is None or any(x is None for x in vals):
+            continue
+        checked = True
+        tol = len(parts) if m.endswith("_value") else 0
+        if abs(total - sum(x for x in vals if x is not None)) > tol:
+            failed.append(m)
+    return failed if checked else None
+
+
 def check_slot(
     by_investor: Mapping[str, InvestorMinute], *, spot: bool, ts: datetime | None = None
 ) -> SlotCheck:
-    """한 분(같은 ts)의 12구분 → 검산 ①(현물만)·②."""
+    """한 분(같은 ts)의 12구분 → 검산 ②(기관계 두 정의)·①(현물만)."""
     stamp = ts if ts is not None else next(iter(by_investor.values())).ts
+    failed = _orgn_failed(by_investor, ORGN_PARTS)
+    with_etc: bool | None = None
+    if failed is not None:
+        with_etc = False
+        etc = by_investor.get("etc_orgt")
+        etc_zero = etc is None or all(getattr(etc, m) in (None, 0) for m in _MEASURES)
+        if failed and not etc_zero:  # 기타단체가 0 이면 두 정의가 같다(허용폭만 커질 뿐)
+            alt = _orgn_failed(by_investor, (*ORGN_PARTS, "etc_orgt"))
+            if alt is not None and not alt:
+                failed, with_etc = [], True
+            elif alt is None:
+                with_etc = None
+    c2_ok = None if failed is None else not failed
     c1_res: int | None = None
     c1_ok: bool | None = None
     if spot:
-        vals = [by_investor[t].net_value if t in by_investor else None for t in C1_TERMS]
+        terms = tuple(t for t in C1_TERMS if not (with_etc and t == "etc_orgt"))
+        vals = [by_investor[t].net_value if t in by_investor else None for t in terms]
         if all(v is not None for v in vals):
             c1_res = sum(v for v in vals if v is not None)
             c1_ok = abs(c1_res) <= C1_TOL_MILLION
-    failed: list[str] = []
-    checked = False
-    orgn = by_investor.get("orgn")
-    if orgn is not None and all(p in by_investor for p in ORGN_PARTS):
-        for m in _MEASURES:
-            total = getattr(orgn, m)
-            parts = [getattr(by_investor[p], m) for p in ORGN_PARTS]
-            if total is None or any(x is None for x in parts):
-                continue
-            checked = True
-            tol = len(ORGN_PARTS) if m.endswith("_value") else 0
-            if abs(total - sum(x for x in parts if x is not None)) > tol:
-                failed.append(m)
-    c2_ok = (not failed) if checked else None
-    return SlotCheck(stamp, c1_res, c1_ok, tuple(failed), c2_ok)
+    return SlotCheck(stamp, c1_res, c1_ok, tuple(failed or ()), c2_ok, with_etc)
 
 
 def _by_ts(rows: Iterable[InvestorMinute]) -> dict[datetime, dict[str, InvestorMinute]]:

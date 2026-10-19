@@ -141,13 +141,18 @@ def test_briefs_reject_bad_files(mutate: Any, match: str) -> None:
 def test_minute_pairs_start_with_the_three_gx_measured_k2i_pairs() -> None:
     m = load_markets()
     assert m.flows.minute.enabled_pairs()[:3] == (("K2I", "F001"), ("K2I", "OC01"), ("K2I", "OP01"))
+    # 현물·주식선물은 KIS 공식 Postman 샘플 v2.6 의 코드 표(open-trading-api — 주석에 URL).
     # 위클리 4조합은 P7 WRAP 이 켰다(D-P7-6 — GX 실측 #13). 야간은 꺼진 채(#P7-2)
     assert m.flows.minute.enabled_pairs()[3:] == (
+        ("KSP", "0001"), ("KSQ", "1001"), ("999", "S001"),
         ("WKM", "OC05"), ("WKM", "OP05"), ("WKI", "OC04"), ("WKI", "OP04"),
     )  # fmt: skip
     assert m.flows.minute.enabled_pairs("night") == ()
-    spot = [p for p in m.flows.minute.pairs if p.id in {"kospi", "kosdaq", "stock_fut"}]
-    assert spot and all(not p.enabled and p.market is None for p in spot)  # 코드를 지어내지 않는다
+    # 차트에 겹칠 지수 — 현물은 그 시장 지수, K2I·위클리는 코스피200, 주식선물은 없음
+    idx = {p.id: p.index for p in m.flows.minute.pairs if p.session == "day"}
+    assert (idx["kospi"], idx["kosdaq"], idx["k200_fut"], idx["stock_fut"]) == (
+        "0001", "1001", "2001", None,
+    )  # fmt: skip
     assert (m.program.scan_top_n, m.program.daily_days, m.program.top_n) == (30, 60, 20)
 
 
@@ -155,8 +160,17 @@ def test_unknown_pair_codes_cannot_be_enabled() -> None:
     data = copy.deepcopy(_yaml("markets.yaml"))
     for p in data["flows"]["minute"]["pairs"]:
         if p["id"] == "kospi":
-            p["enabled"] = True
+            p.update(market=None, sector=None, enabled=True)
     with pytest.raises(ConfigFileError, match="켤 수 없다"):
+        parse_markets(data)
+
+
+def test_minute_index_must_be_a_configured_intraday_index() -> None:
+    data = copy.deepcopy(_yaml("markets.yaml"))
+    for p in data["flows"]["minute"]["pairs"]:
+        if p["id"] == "kospi":
+            p["index"] = "9999"
+    with pytest.raises(ConfigFileError, match="intraday_indices"):
         parse_markets(data)
 
 

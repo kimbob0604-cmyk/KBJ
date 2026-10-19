@@ -5862,6 +5862,7 @@ export interface components {
              * @enum {string}
              */
             status: "ok" | "not_confirmed" | "before_open" | "holiday";
+            index?: components["schemas"]["MinuteIndex"] | null;
         };
         /** MarketSummary */
         MarketSummary: {
@@ -5928,6 +5929,26 @@ export interface components {
             label: string;
             /** Net Value */
             net_value: number | null;
+            quality: components["schemas"]["Quality"] | null;
+        };
+        /**
+         * MinuteIndex
+         * @description 수급 차트에 겹칠 지수(장중 10분 값 — `prv_market.index_intraday`). 축과 같은 길이, 값이 있는
+         *     분은 10분 슬롯뿐(나머지 None — 화면이 잇는다).
+         */
+        MinuteIndex: {
+            /** Code */
+            code: string;
+            /** Label */
+            label: string;
+            /** Values */
+            values: (number | null)[];
+            /** Last */
+            last: number | null;
+            /** Chg Pct */
+            chg_pct: number | null;
+            /** As Of */
+            as_of: string | null;
             quality: components["schemas"]["Quality"] | null;
         };
         /** MinuteLine */

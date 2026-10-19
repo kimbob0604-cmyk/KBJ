@@ -981,15 +981,16 @@ def _kis_daily_estimate() -> dict[str, int]:
 
 def test_p5_kis_daily_calls_fit_the_soft_cap() -> None:  # §3.4
     est = _kis_daily_estimate()
-    # K2I 3조합 + 위클리 4조합(P7 WRAP 이 켬 — D-P7-6, GX 실측 #13). 현물은 #39 뒤
-    assert est["flows.market_minute"] == 7 * 401
+    # K2I 3조합 + 현물 2(KSP·KSQ) + 주식선물 1(999·S001 — KIS 공식 Postman 샘플 코드 표) +
+    # 위클리 4조합(P7 WRAP 이 켬 — D-P7-6, GX 실측 #13)
+    assert est["flows.market_minute"] == 10 * 401
     assert est["program.intraday"] == 2 * 401
     assert est["program.daily"] == 4
     total = sum(est.values()) + KIS_P3_P4_DAILY
     cap = load_limits().source("kis").daily_soft_cap
     assert cap is not None and total <= cap, (total, cap)
-    # 현물 2조합을 켜고(#39 뒤) 거래소를 둘로 늘려도(#25) 상한 안인지 — 예산이 막는 기준을 본다
-    worst = total + 2 * 401 + est["program.intraday"] + est["program.stock_scan"] + SWEEP_UNIVERSE
+    # 거래소를 둘로 늘려도(#25) 상한 안인지 — 예산이 막는 기준을 본다(현물 2조합은 이미 켜져 있다)
+    worst = total + est["program.intraday"] + est["program.stock_scan"] + SWEEP_UNIVERSE
     assert worst <= cap * 1.2, worst  # 넘으면 limits.yaml daily_soft_cap 을 다시 정한다 [제안]
 
 
