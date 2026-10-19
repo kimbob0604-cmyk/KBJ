@@ -3,9 +3,9 @@
   "as_of": "2026-10-05T08:00:00+09:00",
   "quality": "ok",
   "notes": [
-    "생산자물가지수: 확인 전(#43)",
-    "수출물가지수: 확인 전(#43)",
-    "수입물가지수: 확인 전(#43)"
+    "생산자물가지수: 아직 없음 — macro.morning·monthly·evening",
+    "수출물가지수(원화): 아직 없음 — macro.morning·monthly·evening",
+    "수입물가지수(원화): 아직 없음 — macro.morning·monthly·evening"
   ],
   "generated_at": "2026-11-17T16:30:00+09:00",
   "data": {
@@ -25,11 +25,11 @@
         "change_pct": null,
         "points": [],
         "derived": false,
-        "na_reason": "확인 전(#43)"
+        "na_reason": "아직 없음 — macro.morning·monthly·evening"
       },
       {
         "series_id": "ECOS:402Y014:export_px",
-        "title": "수출물가지수",
+        "title": "수출물가지수(원화)",
         "unit": "2020=100",
         "freq": "M",
         "tier": "public",
@@ -41,11 +41,11 @@
         "change_pct": null,
         "points": [],
         "derived": false,
-        "na_reason": "확인 전(#43)"
+        "na_reason": "아직 없음 — macro.morning·monthly·evening"
       },
       {
         "series_id": "ECOS:401Y015:import_px",
-        "title": "수입물가지수",
+        "title": "수입물가지수(원화)",
         "unit": "2020=100",
         "freq": "M",
         "tier": "public",
@@ -57,7 +57,7 @@
         "change_pct": null,
         "points": [],
         "derived": false,
-        "na_reason": "확인 전(#43)"
+        "na_reason": "아직 없음 — macro.morning·monthly·evening"
       },
       {
         "series_id": "KOSIS:DT_1J22003:cpi",

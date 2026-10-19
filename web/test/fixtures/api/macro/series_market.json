@@ -3,9 +3,9 @@
   "as_of": "2026-11-17T06:00:00+09:00",
   "quality": "ok",
   "notes": [
-    "코스피(한국거래소): 확인 전(#43)",
-    "원/달러 종가(서울외국환중개): 확인 전(#43)",
-    "소비자물가(901Y009 — 공개 판정 전): 확인 전(#43)",
+    "코스피(한국거래소): 아직 없음 — macro.morning_prv·monthly_prv",
+    "원/달러 매매기준율(서울외국환중개): 아직 없음 — macro.morning_prv·monthly_prv",
+    "소비자물가(901Y009 — 공개 판정 전): 아직 없음 — macro.morning_prv·monthly_prv",
     "USD/JPY: 아직 없음 — macro.morning_prv·monthly_prv",
     "EUR/USD: 아직 없음 — macro.morning_prv·monthly_prv",
     "USD/CNY: 아직 없음 — macro.morning_prv·monthly_prv",
@@ -34,11 +34,11 @@
         "change_pct": null,
         "points": [],
         "derived": false,
-        "na_reason": "확인 전(#43)"
+        "na_reason": "아직 없음 — macro.morning_prv·monthly_prv"
       },
       {
         "series_id": "ECOS:731Y001:usdkrw_close",
-        "title": "원/달러 종가(서울외국환중개)",
+        "title": "원/달러 매매기준율(서울외국환중개)",
         "unit": "원",
         "freq": "D",
         "tier": "private",
@@ -50,12 +50,12 @@
         "change_pct": null,
         "points": [],
         "derived": false,
-        "na_reason": "확인 전(#43)"
+        "na_reason": "아직 없음 — macro.morning_prv·monthly_prv"
       },
       {
         "series_id": "ECOS:901Y056:deposit",
         "title": "투자자예탁금(금투협)",
-        "unit": "십억원",
+        "unit": "원",
         "freq": "M",
         "tier": "private",
         "source": "ECOS:901Y056",
@@ -267,7 +267,7 @@
         "change_pct": null,
         "points": [],
         "derived": false,
-        "na_reason": "확인 전(#43)"
+        "na_reason": "아직 없음 — macro.morning_prv·monthly_prv"
       },
       {
         "series_id": "YAHOO:KRW=X",

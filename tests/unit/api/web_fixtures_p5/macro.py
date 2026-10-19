@@ -40,6 +40,8 @@ ROUTES: Final[tuple[tuple[str, str, int], ...]] = (
     ("series_one_dgs10.json", "/api/macro/series/FRED:DGS10?from=2026-10-01", 200),
     ("calendar.json", "/api/macro/calendar", 200),
     ("ribbon.json", "/api/market/ribbon", 200),
+    # 페이지 1 '신용잔고 · 예탁금 · 펀드 자금' 패널(금투협 — 같은 세계의 market_stats)
+    ("market_credit.json", "/api/market/credit", 200),
 )
 Reader = Callable[[Query, Mapping[str, object]], list[dict[str, Any]]]
 

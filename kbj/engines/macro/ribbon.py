@@ -28,9 +28,12 @@ from kbj.engines.flows.ledger import close_as_of
 from kbj.engines.market.ribbon import Chip
 
 __all__ = [
+    "BALANCE_PARTS",
+    "BALANCE_TOTAL",
     "CREDIT_AA",
     "CREDIT_KTB",
     "US_INDEX",
+    "balance_on",
     "credit_balance_chip",
     "credit_spread_chip",
     "kr_vs_global_chip",
@@ -77,7 +80,8 @@ def credit_spread_chip(aa: Sequence[MacroSeriesRow], ktb: Sequence[MacroSeriesRo
     )  # fmt: skip
 
 
-def _balance_on(rows: Sequence[MarketStatRow], d: date) -> tuple[float, Quality, datetime] | None:
+def balance_on(rows: Sequence[MarketStatRow], d: date) -> tuple[float, Quality, datetime] | None:
+    """그날 신용거래융자 잔고(전체, 없으면 유가+코스닥 둘 다 있을 때 합) — 띠 칩·페이지 1 공용."""
     by = {r.item: r for r in rows if r.date == d and r.value is not None}
     if BALANCE_TOTAL in by:
         r = by[BALANCE_TOTAL]
@@ -97,7 +101,7 @@ def credit_balance_chip(rows: Sequence[MarketStatRow], *, expected: date | None)
     days = sorted({r.date for r in rows if r.stat == "credit_balance"}, reverse=True)
     got: list[tuple[date, tuple[float, Quality, datetime]]] = []
     for d in days:
-        b = _balance_on([r for r in rows if r.stat == "credit_balance"], d)
+        b = balance_on([r for r in rows if r.stat == "credit_balance"], d)
         if b is not None:
             got.append((d, b))
         if len(got) == 2:

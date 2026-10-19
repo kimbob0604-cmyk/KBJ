@@ -14,6 +14,9 @@ from kbj.services.api.models.flows import InvestorTotals
 __all__ = [
     "Breadth",
     "Chip",
+    "CreditLine",
+    "CreditPanel",
+    "CreditPoint",
     "DayValue",
     "IndexTile",
     "MarketSummary",
@@ -110,3 +113,30 @@ class Chip(ApiModel):
 
 class Ribbon(ApiModel):
     chips: list[Chip]
+
+
+# ── 페이지 1 '신용잔고 · 예탁금 · 펀드 자금'(금투협 종합통계 — 공개 등급 원천, 로그인 API) ──
+
+
+class CreditPoint(ApiModel):
+    date: date
+    value: int | None  # 원(출처 단위를 원으로 바꾼 값). 없으면 None — 0 으로 그리지 않는다
+
+
+class CreditLine(ApiModel):
+    key: Literal["credit_balance", "investor_deposit", "fund_nav"]
+    label: str
+    freq: Literal["D", "M"]  # 금투협 일별, 예탁금이 ECOS 월별로 대신 채워지면 M
+    value: int | None  # 마지막 값(원)
+    date: date | None
+    change: int | None  # 직전 값 대비(원)
+    prev_date: date | None
+    spark: list[CreditPoint]  # 최근 20개(오름차순)
+    source: str
+    as_of: AwareDatetime | None
+    quality: Quality | None
+    note: str | None  # 값이 없거나 늦은 사유
+
+
+class CreditPanel(ApiModel):
+    lines: list[CreditLine]
