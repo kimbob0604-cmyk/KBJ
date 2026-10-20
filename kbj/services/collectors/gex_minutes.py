@@ -888,7 +888,11 @@ def run(ctx: JobContext) -> JobResult:
             detail["error"] = "무결측 판정 실패 — 다시"
             return JobResult("failed", detail=detail)
         return JobResult("ok", collected=tuple(ctx.keys), rows=int(detail["bars"]), detail=detail)
-    detail["error"] = "분봉 적재를 끝내지 못했다(health minute_bars_failed·missing)"
+    # 상태·봉·호출 수를 사유에 싣는다(운영 페이지에 '키 1개를 받지 못했다'만 보였다 — 2026-10-20)
+    detail["error"] = (
+        f"분봉 적재를 끝내지 못했다 — {job.session} {job.trade_date} 상태 {job.status}, "
+        f"봉 {detail['bars']}개·호출 {detail['calls']}회(health minute_bars_failed·missing)"
+    )
     return JobResult("failed", detail=detail)
 
 

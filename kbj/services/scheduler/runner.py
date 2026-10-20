@@ -801,7 +801,9 @@ class JobRunner:
             events.append(RunEvent("skipped", p.job.name, p.as_of, now, p.attempt, detail))
             del self._pending[(p.job.name, p.as_of)]
             return
-        why = str(result.detail.get("reason", "")) or (
+        # 처리기가 사유를 'error' 에 두기도 한다(GEX 수집) — 없으면 그것을 사유로(2026-10-20: 운영
+        # 페이지에 '키 1개를 받지 못했다'만 보였다)
+        why = str(result.detail.get("reason", "") or result.detail.get("error", "")) or (
             "아직 공표 전" if result.status == "not_ready" else f"키 {len(missing)}개를 받지 못했다"
         )
         self._after_failure(

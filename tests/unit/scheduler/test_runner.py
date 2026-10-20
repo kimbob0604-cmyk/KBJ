@@ -853,3 +853,21 @@ def test_real_registry_one_day_runs_only_enabled_jobs() -> None:
     assert DataKey("DART", "corpCode", "2026-10-06") in done
     owners = {c.dataset_id: j.name for j in reg.jobs for c in j.collects}
     assert {owners[k.dataset_id] for k in done} <= enabled
+
+
+def test_failure_reason_falls_back_to_detail_error() -> None:
+    """처리기가 사유를 detail.error 에 두면(GEX 수집) 그것을 실행 기록 사유로 — '키 1개를 받지
+    못했다'만 남던 것(2026-10-20 gex.night_minutes)."""
+    rig = Rig(
+        [krx_like(retry={"max": 0, "backoff_s": [60]})],
+        {
+            "tests.fake:krx": lambda ctx: JobResult(
+                "failed", detail={"error": "분봉 적재 실패 — 봉 0개"}
+            )
+        },
+        kst(2026, 10, 6, 8, 0),
+    )
+    rig.run_until(kst(2026, 10, 6, 8, 10))
+    rec = rig.runs.latest("krx.daily", "2026-10-02")
+    assert rec is not None and rec.status == "failed"
+    assert "분봉 적재 실패" in str(rec.detail.get("reason"))
