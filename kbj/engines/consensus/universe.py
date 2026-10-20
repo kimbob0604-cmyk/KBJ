@@ -16,8 +16,10 @@ from typing import Final
 
 from kbj.core.fin_rows import NaReason
 from kbj.core.rows import UniverseRow
+from kbj.engines.board import kinds as board_kinds
+from kbj.engines.board.kinds import COMMON
 
-__all__ = ["STOCK_MARKETS", "consensus_na", "market_of"]
+__all__ = ["STOCK_MARKETS", "consensus_na", "kind_of", "market_of"]
 
 STOCK_MARKETS: Final = frozenset({"KOSPI", "KOSDAQ"})
 
@@ -33,6 +35,15 @@ def consensus_na(u: UniverseRow) -> NaReason | None:
     market = market_of(u)
     if market == "KONEX":
         return NaReason.KONEX_NO_CONSENSUS
-    if market not in STOCK_MARKETS or u.kind != "common":
+    if market not in STOCK_MARKETS or kind_of(u) != COMMON:
         return NaReason.NOT_IN_CONSENSUS_UNIVERSE
     return None
+
+
+def kind_of(u: UniverseRow) -> str:
+    """종목 종류 — 원천이 준 것, 없으면 보드 정본 분류(`board.kinds.of` — 이름·코드). KRX 기본정보는
+    종류를 비워 두는데(krx_daily `kind=None`) `!= "common"` 으로 거르면 전 종목이 빠져 컨센서스 수집
+    대상이 0 이었다(2026-10-20)."""
+    if u.kind is not None:
+        return u.kind
+    return board_kinds.of(u.code, u.name)
