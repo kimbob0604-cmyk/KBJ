@@ -292,7 +292,7 @@ class OverhangRecentRow(ApiModel):
     shares: int | None
     exercise_start: date | None
     exercise_end: date | None
-    ratio_pct: float | None  # 회사 오버행 비율(최근 요약 — 공개 분모)
+    ratio_pct: float | None  # 회사 오버행 비율(최근 요약 — 공개 분모, 없으면 KRX 상장주식수)
     is_watch: bool
     quality: Quality
     link: str

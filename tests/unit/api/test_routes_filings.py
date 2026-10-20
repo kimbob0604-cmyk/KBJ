@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import date
 from typing import Any
 
@@ -18,8 +19,8 @@ from kbj.services.api.models.filings import (
     InsiderRecent,
     OverhangRecent,
 )
-from kbj.store.repos import memory_repos
-from tests.unit.api.api_world_p4 import P4ApiWorld, expect, shared
+from kbj.store.repos import MemoryRepos, memory_repos
+from tests.unit.api.api_world_p4 import P4ApiWorld, build_p4_api_world, expect, shared
 
 FILINGS_ROUTES: list[tuple[str, type[Any]]] = [
     ("/api/filings/feed", FilingsFeed),
@@ -205,3 +206,27 @@ def test_schedule_rows(c: TestClient) -> None:
     for s in data["schedule"]:
         if s["kind"] == "statutory":
             assert s["quality"] == "estimated"
+
+
+def test_ratios_fall_back_to_krx_listed_shares_without_dart_share_count() -> None:
+    """DART 주식총수(공개 분모)가 없으면(실측 2026-10-20: 상세 대상 밖 회사는 늘 비었다) 오버행·
+    내부자 비율은 로그인 분모 — 전 거래일 KRX 상장주식수 — 로 낸다."""
+
+    def change(repos: MemoryRepos) -> None:
+        repos.filings.share_t.rows.clear()
+        for st in repos.filings.summary_t.rows.values():
+            st.row = replace(
+                st.row, ratio_pct=None, exercisable_ratio_pct=None, denominator=None,
+                denom_source=None,
+            )  # fmt: skip
+
+    pw = build_p4_api_world(valuation=False, transform=change)
+    c = pw.authed()
+    snaps, _ = pw.repos.market.snapshot(pw.clock().date())
+    ins = c.get("/api/filings/insiders?days=30").json()["data"]
+    row = next(r for r in ins["rows"] if r["stock_code"] == "994140")
+    listed = snaps["994140"].shares
+    assert listed and row["ratio_pct"] == pytest.approx(row["net_shares"] / listed * 100)
+    oh = c.get("/api/filings/overhang?days=90").json()["data"]["rows"]
+    with_summary = [r for r in oh if pw.repos.filings.overhang_summary(r["corp_code"])]
+    assert with_summary and all(r["ratio_pct"] is not None for r in with_summary)

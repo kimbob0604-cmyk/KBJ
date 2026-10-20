@@ -605,10 +605,15 @@ def filings_overhang(
     rows: list[OverhangRecentRow] = []
     ratios: dict[str, float | None] = {}
     for e in sorted(events, key=lambda x: x.rcept_no, reverse=True):
+        hit = lk.stock_of_corp.get(e.corp_code)
         if e.corp_code not in ratios:
             s = f.overhang_summary(e.corp_code)
-            ratios[e.corp_code] = s.ratio_pct if s is not None else None
-        hit = lk.stock_of_corp.get(e.corp_code)
+            r = s.ratio_pct if s is not None else None
+            if s is not None and r is None and hit is not None:
+                # 공개 분모(DART 주식총수)가 아직 없으면 로그인 분모(전 거래일 KRX 상장주식수)로
+                snap = lk.snap(hit[0])
+                r = oh.login_ratio(s, snap.shares if snap is not None else None)
+            ratios[e.corp_code] = r
         rows.append(
             OverhangRecentRow(
                 rcept_no=e.rcept_no,
@@ -788,10 +793,14 @@ def filings_insiders(
         sell = -sum(x for x in deltas if x < 0)
         sc = f.latest_share_count(corp, upto=t)
         den = sc.common_issued if sc is not None else None
+        hit = lk.stock_of_corp.get(corp)
+        if not den and hit is not None:
+            # 공개 분모(DART 주식총수)가 아직 없으면 로그인 분모(전 거래일 KRX 상장주식수)로
+            snap = lk.snap(hit[0])
+            den = snap.shares if snap is not None else None
         ratio = (buy - sell) / den * 100 if den else None
         if min_ratio_pct is not None and (ratio is None or abs(ratio) < min_ratio_pct):
             continue
-        hit = lk.stock_of_corp.get(corp)
         unknown = len(inside) - len(deltas)
         rows.append(
             InsiderRecentRow(
