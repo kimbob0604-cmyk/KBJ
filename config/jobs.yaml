@@ -154,7 +154,10 @@ jobs:
     owner: "kbj.services.collectors.us:eod"
     # 16:10 뉴욕 = 서머타임 끝(11-01) 전 05:10 KST, 뒤 06:10 KST
     schedule: {cron: "10 16 * * 1-5", tz: America/New_York, when: us_trading_day}
-    retry: {max: 3, backoff_s: [600]}
+    # 공표 전이면 앞 종목 확인에서 1분 안에 끝난다 — 간격을 두고 여러 번, 전 종목 받기(약 70분)가
+    # 들어갈 시한(2026-10-20 점검: 120분 시한을 첫 받기가 다 써 재시도가 40분 만에 끊겼다)
+    retry: {max: 5, backoff_s: [900, 900, 1200, 1800]}
+    deadline_min: 180
     depends_on: [{job: us.universe, hard: false}]
     collects:
       - {source: NASDAQ, dataset: daily, as_of: us_trade_date}

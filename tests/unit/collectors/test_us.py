@@ -20,6 +20,8 @@ import unittest
 from datetime import UTC, date, datetime
 from typing import Any
 
+import pytest
+
 from kbj.core.p5_rows import UsUniverseRow
 from kbj.core.quality import Quality
 from kbj.data.private.nasdaq.client import NasdaqClient
@@ -31,6 +33,7 @@ from kbj.engines.us import brief as BR
 from kbj.engines.us import engine as E
 from kbj.engines.us.config import load_us
 from kbj.services.collectors import us as P
+from kbj.services.collectors._p3 import NotReady
 from kbj.services.scheduler.handlers import JobContext
 from kbj.store.repos.memory import memory_repos
 from tests.fakes.nasdaq_server import FakeNasdaq, FakeStooq, StubLimiter
@@ -265,6 +268,20 @@ def test_그날_봉이_아직_없으면_공표_전() -> None:
     # 재시도 한 번이 120분 마감을 다 썼다)
     hist = [c for c in nq.calls if "fromdate" in c.get("params", {})]
     assert len(hist) <= P.FRESH_PROBE_N
+
+
+def test_앞_종목이_하나라도_그날_봉이_없으면_공표_전() -> None:
+    """공표가 막 시작돼 앞 종목 일부만 그날 봉이 있으면 전 종목을 받지 않는다(2026-10-20 점검 —
+    하나만 보고 통과해 67분 받고 다시 '공표 전'이었다)."""
+    day = date(2026, 10, 19)
+    bars = {
+        "A": [{"asof": "2026-10-19"}],
+        "B": [{"asof": "2026-10-16"}],
+        "C": [{"asof": "2026-10-19"}],
+    }
+    with pytest.raises(NotReady, match="B"):
+        P._require_day_bar(["A", "B", "C"], lambda t: bars[t], day)  # pyright: ignore[reportPrivateUsage]
+    P._require_day_bar(["A", "C"], lambda t: bars[t], day)  # pyright: ignore[reportPrivateUsage]
 
 
 def test_유니버스가_없으면_공표_전() -> None:

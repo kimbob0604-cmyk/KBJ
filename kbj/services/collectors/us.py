@@ -363,22 +363,21 @@ def universe(ctx: JobContext) -> JobResult:
 def _require_day_bar(
     tickers: Sequence[str], fetch: Callable[[str], list[dict[str, Any]]], day: date
 ) -> None:
-    """앞 몇 종목으로 그날 봉이 공표됐는지 먼저 본다 — 하나도 없으면 바로 '공표 전'.
+    """앞 몇 종목으로 그날 봉이 공표됐는지 먼저 본다 — 받은 종목이 **모두** 그날 봉을 가져야 통과.
 
     전에는 1,700여 종목을 다 받은 뒤(약 1시간)에야 그날 봉이 없음을 알아, 재시도 한 번이 마감
-    (120분)을 다 써 미국 보드가 이틀 묵었다(2026-10-19 — 16:12 ET 에 아직 없었다). 받기 자체가
-    실패한 종목은 판정하지 않는다(전 종목 받기로 넘어간다)."""
-    seen_any = False
+    (120분)을 다 써 미국 보드가 이틀 묵었다(2026-10-19 — 16:12 ET 에 아직 없었다). 하나만 있어도
+    통과시키면 공표가 막 시작된 때 전 종목을 받고(67분) 다수 기준일이 전날이라 다시 '공표 전'이
+    됐다(2026-10-20 점검). 받기 자체가 실패한 종목은 판정하지 않는다."""
+    seen = 0
     for t in tickers[:FRESH_PROBE_N]:
         try:
             rows = fetch(t)
         except FetchError:
             continue
-        seen_any = True
-        if any(r.get("asof") == day.isoformat() for r in rows):
-            return
-    if seen_any:
-        raise NotReady(f"기준일 {day} 봉이 아직 없다(앞 {FRESH_PROBE_N}종목 확인)")
+        seen += 1
+        if not any(r.get("asof") == day.isoformat() for r in rows):
+            raise NotReady(f"기준일 {day} 봉이 아직 없다(앞 종목 {t} 확인)")
 
 
 def _daily_key(
