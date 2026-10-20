@@ -399,12 +399,12 @@ API(읽기) ← 신호·성과·백테스트·일지·포트폴리오 / API(쓰�
 | E2 | MACD 골든크로스 | close | `macd.line cross_above macd.signal` |
 | E3 | 볼린저 하단 터치 | close | `low <= bb(20,2).lower` |
 | E4 | 20일선 돌파 | close | `close cross_above sma(20)` |
-| E5 | 외국인 3일 연속 | close | `foreign_streak >= 3` |
-| E6 | 반도체 과매도 반등(REBUILD_BRIEF §6.4) | close | `all(rsi<30, sma5 cross_above sma20, foreign_streak>=3)` |
+| E5 | 외국인 3일 이상 연속 순매수 | close | `foreign_streak >= 3` |
+| E6 | 과매도 반등 + 외국인 3일 순매수(REBUILD_BRIEF §6.4 '반도체 과매도 반등' — 대상은 관심종목, 2026-10-20 이름 정정) | close | `all(rsi<30, sma5 cross_above sma20, foreign_streak>=3)` |
 | E7 | 추세 강함 | close | `all(adx>25, adx.pdi > adx.mdi, close > sma(60))` |
 | E8 | 거래량 급증 양봉 | intraday | `all(vol_ratio(20) >= 2, change_pct > 0)` |
 | E9 | 장중 급등 | intraday | `all(change_pct >= 5, vol_ratio >= 1.5)` |
-| E10 | 신고가 근접 쌍끌이 | intraday | `all(close >= high_n(250) × 0.97 — ref 배수 `scale: 0.97`, any(foreign_streak>=1, inst_streak>=1))` |
+| E10 | 신고가 근접 + 외국인·기관 중 하나 순매수(any — 2026-10-20 이름 정정, '쌍끌이'는 둘 다를 뜻해 맞지 않았다) | intraday | `all(close >= high_n(250) × 0.97 — ref 배수 `scale: 0.97`, any(foreign_streak>=1, inst_streak>=1))` |
 
 합성 세계가 각 규칙이 참이 되는 패턴을 심어 신호가 0 이 아니게 하고(`p8_expect.yaml` 기대 수), OR·AND 중첩·크로스·워밍업·정지·분할 사례를 모두 지나게 한다.
 

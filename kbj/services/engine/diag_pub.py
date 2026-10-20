@@ -98,15 +98,22 @@ class PublicOut:
     event_end: date
 
 
-def _macro_avail(r: MacroSeriesRow) -> datetime:
-    """이 값을 알 수 있게 된 시각 — 기록된 공표·받은 시각과 공표 일정(그날 MACRO_AT) 중 이른 것.
+BACKFILL_GAP: Final = timedelta(days=3)  # 공표 일정보다 이만큼 넘게 늦게 적힌 시각 = 백필로 받은 것
+
+
+def _avail(seen: datetime, sched: datetime) -> datetime:
+    """이 값을 알 수 있게 된 시각. 적힌 시각이 공표 일정보다 `BACKFILL_GAP` 넘게 늦으면 백필로 받은
+    것 — 공표 일정을 쓴다. 그 안이면 실제 공표 지연일 수 있어 적힌 시각 그대로(→ stale 규칙).
 
     백필한 행은 공표 시각 칸이 '받은 시각'(백필한 날)이라 그대로 쓰면 지난날 진단에서 모두 '아직
-    공표 전'으로 빠졌다(2026-10-20 점검: 신용스프레드·금리 방향이 날마다 '입력 없음'). ECOS 일별
-    시장금리는 그날 MACRO_AT 까지 나온다 — 그보다 늦게 적힌 시각은 받은 시각일 뿐이다."""
-    seen = r.released_at or r.as_of
+    공표 전'으로 빠졌다(2026-10-20 점검: 공공지표 다섯이 날마다 '입력 없음')."""
+    return sched if seen - sched > BACKFILL_GAP else seen
+
+
+def _macro_avail(r: MacroSeriesRow) -> datetime:
+    """ECOS 일별 시장금리 — 공표 일정 그날 MACRO_AT(`_avail`)."""
     sched = datetime.combine(date.fromisoformat(r.period), MACRO_AT, tzinfo=KST)
-    return min(seen, sched)
+    return _avail(r.released_at or r.as_of, sched)
 
 
 def _macro_obs(rows: Sequence[MacroSeriesRow], cutoff: datetime) -> list[MacroSeriesRow]:
@@ -132,7 +139,8 @@ def _stat_obs(
     for r in rows:
         avail = r.as_of
         if cal is not None:
-            avail = min(avail, datetime.combine(cal.next_trading_day(r.date), KOFIA_AT, tzinfo=KST))
+            sched = datetime.combine(cal.next_trading_day(r.date), KOFIA_AT, tzinfo=KST)
+            avail = _avail(avail, sched)
         if r.item in items and avail <= cutoff:
             by_day.setdefault(r.date, {})[r.item] = r
     out: list[Obs] = []
