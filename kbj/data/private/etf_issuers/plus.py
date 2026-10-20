@@ -93,8 +93,8 @@ class Plus:
                     x.get("jmNm"),
                     parse_num(x.get("amount")),
                     parse_num(x.get("ratio")),
-                    0.0,
-                )  # 평가금액은 응답에 없다
+                    None,
+                )  # 평가금액은 응답에 없다 — 모름(0 이 아니다)
             pg += 1
             total = (j or {}).get("totalPages") or 1
             if len(items) < self.PAGE or pg >= total or pg > self.PDF_PAGES:

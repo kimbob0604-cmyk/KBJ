@@ -196,9 +196,10 @@ def source_of(issuer: str) -> str:
 
 
 def holding(
-    issuer: str, code: str, name: str | None, qty: float, wt: float, val: float
+    issuer: str, code: str, name: str | None, qty: float, wt: float, val: float | None
 ) -> HoldingRow:
-    """어댑터가 만드는 구성종목 행 — source `ETF_ISSUERS:<운용사>`, 품질 ok."""
+    """어댑터가 만드는 구성종목 행 — source `ETF_ISSUERS:<운용사>`, 품질 ok. 응답에 평가금액이 없는
+    운용사는 val=None(0 이 아니다 — 화면에 '0원'으로 나오지 않게)."""
     nm = (name or "").strip() or None
     return HoldingRow(code=code, name=nm, qty=qty, wt=wt, val=val, source=source_of(issuer),
                       quality=Quality.OK)  # fmt: skip
@@ -214,7 +215,7 @@ def add_holding(rows: dict[str, HoldingRow], h: HoldingRow) -> None:
         old,
         qty=(old.qty or 0.0) + (h.qty or 0.0),
         wt=(old.wt or 0.0) + (h.wt or 0.0),
-        val=(old.val or 0.0) + (h.val or 0.0),
+        val=None if old.val is None and h.val is None else (old.val or 0.0) + (h.val or 0.0),
     )
 
 

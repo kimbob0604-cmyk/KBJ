@@ -107,6 +107,14 @@ def test_fallback_issuers_report_real_date(key: str) -> None:
     assert rows and real == FRI
 
 
+def test_plus_value_is_unknown_not_zero() -> None:
+    """PLUS 응답에는 평가금액이 없다 — 0원이 아니라 모름(None)."""
+    _, ads, _ = setup(latest=FRI)
+    rows, _ = ads["plus"].holdings(funds_of("plus")[0].key, FRI)
+    assert rows and all(h.val is None for h in rows.values())
+    assert all(h.qty is not None and h.wt is not None for h in rows.values())
+
+
 @pytest.mark.parametrize(("key", "back"), [("tiger", 7), ("ace", 5), ("hanaro", 7)])
 def test_exact_date_issuers_walk_back(key: str, back: int) -> None:
     _, ads, _ = setup(latest=FRI, today=MON)
