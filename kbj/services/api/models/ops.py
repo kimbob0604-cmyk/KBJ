@@ -55,6 +55,8 @@ class OpsJobRow(ApiModel):
     started_at: AwareDatetime | None
     finished_at: AwareDatetime | None
     retried_ok: bool
+    reason: str | None = None  # 마지막 시도의 사유(가린 짧은 문장 — 실패·건너뜀·시간 초과)
+    manual: bool = False  # 마지막 시도가 수동 실행(kbj.sh job)
 
 
 class OpsJobs(ApiModel):

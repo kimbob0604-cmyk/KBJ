@@ -8,6 +8,7 @@ import type { components } from '../../api/types.gen';
 import type { PageContext } from '../../app/types';
 import { DataError, LockedError } from '../../data/source';
 import { h } from '../../ui/dom';
+import { toggle } from '../../ui/form';
 import { kstClock, kstStamp, num } from '../../ui/fmt';
 import { errorText, type Panel } from '../../ui/panel';
 import { type Column, table } from '../../ui/table';
@@ -100,10 +101,25 @@ export async function fillStatus(ctx: PageContext, p: Panel): Promise<void> {
   );
 }
 
+/** 손볼 것 — 마지막 시도가 실패·시간 초과·도는 중·대기, 또는 다시 해서 성공한 것 */
+export function isProblem(r: OpsJobRow): boolean {
+  return r.status !== 'ok' && r.status !== 'skipped' ? true : r.retried_ok;
+}
+
+const PROBLEM_ORDER: Readonly<Record<string, number>> = { failed: 0, timeout: 0, running: 1, queued: 1 };
+
+/** 실패·시간 초과 → 도는 중 → 나머지(시각순) */
+export function sortJobs(rows: readonly OpsJobRow[]): OpsJobRow[] {
+  return [...rows].sort((a, b) => (PROBLEM_ORDER[a.status] ?? 2) - (PROBLEM_ORDER[b.status] ?? 2));
+}
+
+// 패널마다 '문제만 보기' 상태(1분마다 다시 그려도 유지)
+const problemsOnly = new WeakMap<Panel, boolean>();
+
 export async function fillJobs(ctx: PageContext, p: Panel): Promise<void> {
   let env;
   try {
-    env = await ctx.source.get<OpsJobs>('ops/jobs') // 날짜 없음 = 서버 시계의 KST 오늘;
+    env = await ctx.source.get<OpsJobs>('ops/jobs'); // 날짜 없음 = 서버 시계의 KST 오늘
   } catch (err) {
     failOps(p, err);
     return;
@@ -111,26 +127,69 @@ export async function fillJobs(ctx: PageContext, p: Panel): Promise<void> {
   p.setSource(env);
   const d = env.data;
   const columns: Column<OpsJobRow>[] = [
-    { key: 'start', label: '시작', align: 'l', cell: (r) => (r.started_at ? kstClock(r.started_at) : null) },
-    { key: 'job', label: '작업', align: 'l', cell: (r) => r.job },
+    { key: 'start', label: '시작', align: 'l', cell: (r) => (r.started_at ? kstClock(r.started_at) : '시작 못 함') },
+    { key: 'job', label: '작업', align: 'l', cell: (r) => (r.as_of.length > 10 ? `${r.job} @ ${r.as_of.slice(11)}` : r.job) },
     {
       key: 'status',
       label: '상태',
       align: 'l',
-      cell: (r) => `${JOB_STATUS[r.status] ?? r.status}${r.retried_ok ? ' (재시도)' : ''}`,
+      cell: (r) => `${JOB_STATUS[r.status] ?? r.status}${r.retried_ok ? ' (재시도)' : ''}${r.manual ? ' · 수동' : ''}`,
       cls: (r) => badCls(r.status),
     },
     { key: 'try', label: '시도', cell: (r) => num(r.attempts, 0) },
+    { key: 'why', label: '사유', align: 'l', cell: (r) => (r.status === 'ok' ? null : (r.reason ?? null)) },
   ];
-  p.clearBody();
-  p.body.append(
-    h('p', { class: 'dim' }, `${d.date} · ${num(d.total, 0)}건 · 실패 ${num(d.failed, 0)} · 재시도 성공 ${num(d.retried_ok, 0)}`),
-    table({
-      columns,
-      rows: d.rows,
-      rowKey: (r) => `${r.job}|${r.as_of}`,
-      empty: '이날 실행 기록 없음',
-    }).el,
+  const draw = (): void => {
+    const only = problemsOnly.get(p) ?? true;
+    const rows = only ? sortJobs(d.rows.filter(isProblem)) : sortJobs(d.rows);
+    const empty = only && d.rows.length > 0 ? '손볼 작업 없음 — 모두 성공·건너뜀' : '이날 실행 기록 없음';
+    const tg = toggle({
+      label: '문제만 보기',
+      value: only,
+      onChange: (v) => {
+        problemsOnly.set(p, v);
+        draw();
+      },
+    });
+    p.clearBody();
+    p.body.append(
+      h('p', { class: 'dim' }, `${d.date} · ${num(d.total, 0)}건 · 실패 ${num(d.failed, 0)} · 재시도 성공 ${num(d.retried_ok, 0)}`),
+      tg.el,
+      table({ columns, rows, rowKey: (r) => `${r.job}|${r.as_of}`, empty }).el,
+    );
+  };
+  draw();
+}
+
+export interface NotifyGroup {
+  kind: string;
+  status: string;
+  reason: string | null;
+  n: number;
+  first: string;
+  last: string;
+  parts: number;
+}
+
+const NOTIFY_ORDER: Readonly<Record<string, number>> = { failed: 0, sent: 1, queued: 2 };
+
+/** 같은 (종류, 상태, 사유)를 한 줄로 — 쿨다운·억제가 수백 줄 되풀이되지 않게. 실패 → 보냄 → 나머지 */
+export function groupNotify(rows: readonly OpsNotifyRow[]): NotifyGroup[] {
+  const by = new Map<string, NotifyGroup>();
+  for (const r of rows) {
+    const key = `${r.kind}|${r.status}|${r.reason ?? ''}`;
+    const g = by.get(key);
+    if (g === undefined) {
+      by.set(key, { kind: r.kind, status: r.status, reason: r.reason ?? null, n: 1, first: r.requested_at, last: r.requested_at, parts: r.parts ?? 0 });
+    } else {
+      g.n += 1;
+      g.parts += r.parts ?? 0;
+      if (r.requested_at < g.first) g.first = r.requested_at;
+      if (r.requested_at > g.last) g.last = r.requested_at;
+    }
+  }
+  return [...by.values()].sort(
+    (a, b) => (NOTIFY_ORDER[a.status] ?? 3) - (NOTIFY_ORDER[b.status] ?? 3) || b.n - a.n || a.kind.localeCompare(b.kind),
   );
 }
 
@@ -144,26 +203,29 @@ export async function fillNotify(ctx: PageContext, p: Panel): Promise<void> {
   }
   p.setSource(env);
   const d = env.data;
-  const columns: Column<OpsNotifyRow>[] = [
-    { key: 'at', label: '요청', align: 'l', cell: (r) => kstClock(r.requested_at) },
-    { key: 'kind', label: '종류', align: 'l', cell: (r) => r.kind },
+  const columns: Column<NotifyGroup>[] = [
+    { key: 'kind', label: '종류', align: 'l', cell: (g) => g.kind },
     {
       key: 'status',
       label: '상태',
       align: 'l',
-      cell: (r) => `${NOTIFY_STATUS[r.status] ?? r.status}${r.reason ? ` · ${r.reason}` : ''}`,
-      cls: (r) => badCls(r.status),
+      cell: (g) => `${NOTIFY_STATUS[g.status] ?? g.status}${g.reason ? ` · ${g.reason}` : ''}`,
+      cls: (g) => badCls(g.status),
     },
-    { key: 'parts', label: '조각', cell: (r) => (r.parts === null ? null : num(r.parts, 0)) },
+    { key: 'n', label: '건수', cell: (g) => num(g.n, 0) },
+    { key: 'when', label: '시각', align: 'l', cell: (g) => (g.n > 1 ? `${kstClock(g.first)}~${kstClock(g.last)}` : kstClock(g.first)) },
   ];
+  const groups = groupNotify(d.rows);
+  const held = d.rows.length - d.sent - d.failed;
   p.clearBody();
   p.body.append(
-    h('p', { class: 'dim' }, `${d.date} · 보냄 ${num(d.sent, 0)} · 실패 ${num(d.failed, 0)}`),
+    h('p', { class: 'dim' }, `${d.date} · 보냄 ${num(d.sent, 0)} · 실패 ${num(d.failed, 0)} · 안 보냄(억제·쿨다운·중복) ${num(held, 0)}`),
     table({
       columns,
-      rows: d.rows,
-      rowKey: (r) => `${r.kind}|${r.requested_at}`,
+      rows: groups,
+      rowKey: (g) => `${g.kind}|${g.status}|${g.reason ?? ''}`,
       empty: '이날 발송 기록 없음',
     }).el,
+    h('p', { class: 'def' }, '같은 종류·상태·사유는 한 줄로 묶었다. 억제 = 발송 꺼짐(KBJ_NOTIFY_ENABLED), 쿨다운·중복 = 같은 알림을 이미 보냈거나 대기 중 — 실패가 아니다.'),
   );
 }

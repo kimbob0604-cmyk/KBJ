@@ -17,7 +17,9 @@
         "status": "ok",
         "started_at": "2026-10-16T03:00:00+09:00",
         "finished_at": "2026-10-16T03:02:00+09:00",
-        "retried_ok": false
+        "retried_ok": false,
+        "reason": null,
+        "manual": false
       },
       {
         "job": "brief.morning",
@@ -26,7 +28,9 @@
         "status": "ok",
         "started_at": "2026-10-16T08:10:00+09:00",
         "finished_at": "2026-10-16T08:12:00+09:00",
-        "retried_ok": false
+        "retried_ok": false,
+        "reason": null,
+        "manual": false
       },
       {
         "job": "board.daily",
@@ -35,7 +39,9 @@
         "status": "ok",
         "started_at": "2026-10-16T15:50:00+09:00",
         "finished_at": "2026-10-16T15:52:00+09:00",
-        "retried_ok": true
+        "retried_ok": true,
+        "reason": null,
+        "manual": false
       },
       {
         "job": "brief.closing",
@@ -44,7 +50,9 @@
         "status": "ok",
         "started_at": "2026-10-16T16:00:00+09:00",
         "finished_at": "2026-10-16T16:02:00+09:00",
-        "retried_ok": false
+        "retried_ok": false,
+        "reason": null,
+        "manual": false
       }
     ]
   }

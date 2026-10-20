@@ -6261,6 +6261,13 @@ export interface components {
             finished_at: string | null;
             /** Retried Ok */
             retried_ok: boolean;
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Manual
+             * @default false
+             */
+            manual: boolean;
         };
         /** OpsJobs */
         OpsJobs: {

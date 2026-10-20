@@ -141,6 +141,24 @@ def test_job_outcomes_final_attempt_and_retry() -> None:
     assert outs["brief.closing"].final_failure and outs["brief.closing"].attempts == 2
 
 
+def test_job_outcomes_manual_rerun_success_is_final() -> None:
+    """실행기가 실패한 뒤 수동(kbj.sh job)으로 다시 돌려 성공했으면 성공 — 수동만 돈 작업은 빼고."""
+    from dataclasses import replace
+
+    d = date(2026, 10, 14)
+    runs = [
+        replace(run_row("board.daily", d, time(15, 45), "failed", 1), reason="굳은 의존 실패"),
+        replace(run_row("board.daily", d, time(17, 30), "ok", 2), source="manual"),
+        replace(run_row("brief.closing", d, time(16, 0), "failed", 1), reason="의존 실패"),
+        replace(run_row("brief.morning", d, time(8, 10), "ok", 1), source="manual"),  # 수동만
+    ]
+    outs = {o.job: o for o in job_outcomes(runs, EXPECT.jobs)}
+    assert set(outs) == {"board.daily", "brief.closing"}
+    assert outs["board.daily"].status == "ok" and outs["board.daily"].manual
+    assert not outs["board.daily"].final_failure and outs["board.daily"].retried_ok
+    assert outs["brief.closing"].final_failure and outs["brief.closing"].reason == "의존 실패"
+
+
 # ── check ────────────────────────────────────────────────────────────────────────────
 
 

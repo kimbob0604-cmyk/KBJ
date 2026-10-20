@@ -171,6 +171,8 @@ class JobOutcome:
     started_at: datetime | None
     finished_at: datetime | None
     day: date  # 마지막 시도를 센 날(KST)
+    reason: str | None = None  # 마지막 시도의 사유(실패·건너뜀 — 가린 짧은 문장)
+    manual: bool = False  # 마지막 시도가 수동(kbj.sh job)
 
     @property
     def final_failure(self) -> bool:
@@ -182,14 +184,19 @@ class JobOutcome:
 
 
 def job_outcomes(runs: Iterable[JobRunRow], enabled: Iterable[str]) -> list[JobOutcome]:
-    """실행기(scheduler)가 켜진 작업을 돌린 기록만 — (작업, as_of) 마다 시도 번호가 가장 큰 줄."""
+    """실행기(scheduler)가 켜진 작업을 돌린 (작업, as_of) 만 — 마지막 시도(시도 번호가 가장 큰
+    줄)는 출처를 가리지 않는다: 실행기가 실패한 뒤 수동으로 다시 돌려 성공했으면 성공이다
+    (2026-10-20 점검 — 수동 재실행을 빼고 보아 고친 실패가 '실패'로 남았다)."""
     on = frozenset(enabled)
     last: dict[tuple[str, str], JobRunRow] = {}
     tries: dict[tuple[str, str], int] = defaultdict(int)
+    by_scheduler: set[tuple[str, str]] = set()
     for r in runs:
-        if r.job not in on or r.source != "scheduler":
+        if r.job not in on:
             continue
         key = (r.job, r.as_of)
+        if r.source == "scheduler":
+            by_scheduler.add(key)
         tries[key] += 1
         cur = last.get(key)
         if cur is None or (r.attempt, r.at) > (cur.attempt, cur.at):
@@ -197,9 +204,10 @@ def job_outcomes(runs: Iterable[JobRunRow], enabled: Iterable[str]) -> list[JobO
     out = [
         JobOutcome(
             r.job, r.as_of, max(r.attempt, tries[k]), r.status, r.started_at, r.finished_at,
-            _kst_day(r.at),
+            _kst_day(r.at), r.reason, r.source != "scheduler",
         )
         for k, r in last.items()
+        if k in by_scheduler
     ]  # fmt: skip
     floor = datetime.min.replace(tzinfo=KST)
     return sorted(out, key=lambda o: (o.started_at or floor, o.job, o.as_of))

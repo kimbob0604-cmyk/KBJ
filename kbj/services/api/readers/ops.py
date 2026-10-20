@@ -121,6 +121,8 @@ def ops_jobs(read: ReadContext, ops: OpsContext, day: date | None = None) -> Env
             started_at=o.started_at,
             finished_at=o.finished_at,
             retried_ok=o.retried_ok,
+            reason=None if o.reason is None else mask_text(o.reason),
+            manual=o.manual,
         )
         for o in outs
     ]

@@ -22389,6 +22389,22 @@
           "retried_ok": {
             "type": "boolean",
             "title": "Retried Ok"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "manual": {
+            "type": "boolean",
+            "title": "Manual",
+            "default": false
           }
         },
         "additionalProperties": false,

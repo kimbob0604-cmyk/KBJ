@@ -116,6 +116,29 @@ describe('페이지 13 — 표 셋', () => {
     expect(body).toContain('재시도 성공 1');
   });
 
+  it('② 문제만 보기(기본) — 실패가 위·사유 칸·수동 재실행 표시, 끄면 전체', async () => {
+    const p = mkPanel('오늘 작업');
+    const base = fx('ops_jobs') as { data: { rows: unknown[] } };
+    const rows = [
+      { job: 'diag.daily', as_of: '2026-10-16', attempts: 1, status: 'ok', started_at: '2026-10-16T07:00:00Z', finished_at: null, retried_ok: false, reason: null, manual: false },
+      { job: 'brief.closing', as_of: '2026-10-16', attempts: 1, status: 'failed', started_at: null, finished_at: null, retried_ok: false, reason: '굳은 의존 board.daily 가 failed', manual: false },
+      { job: 'board.daily', as_of: '2026-10-16', attempts: 2, status: 'ok', started_at: '2026-10-16T08:30:00Z', finished_at: null, retried_ok: true, reason: null, manual: true },
+    ];
+    const hz = harness({ 'ops/jobs': () => json({ ...base, data: { ...base.data, rows } }) });
+    const { ctx } = pageCtx(13, 'login', hz.source, { now: NOW });
+    await fillJobs(ctx, p);
+    const trs = [...p.el.querySelectorAll('tbody tr')];
+    expect(trs).toHaveLength(2); // diag.daily(그냥 성공)는 숨긴다
+    expect(text(trs[0])).toContain('brief.closing');
+    expect(text(trs[0])).toContain('시작 못 함');
+    expect(text(trs[0])).toContain('굳은 의존 board.daily 가 failed');
+    expect(text(trs[1])).toContain('성공 (재시도) · 수동');
+    const sw = p.el.querySelector<HTMLButtonElement>('button[role="switch"]');
+    if (!sw) throw new Error('문제만 보기 토글 없음');
+    sw.click();
+    expect(p.el.querySelectorAll('tbody tr')).toHaveLength(3);
+  });
+
   it('② 빈 날은 표 안내', async () => {
     const p = mkPanel('오늘 작업');
     const hz = harness({ 'ops/jobs': () => json(fx('ops_jobs_empty')) });
@@ -132,6 +155,27 @@ describe('페이지 13 — 표 셋', () => {
     expect(body).toContain('brief.closing');
     expect(body).toContain('실패 · telegram 429');
     expect(p.el.querySelectorAll('td.down').length).toBeGreaterThan(0);
+  });
+
+  it('③ 같은 종류·상태·사유는 한 줄로 묶고 건수·시각 범위 — 실패가 위', async () => {
+    const p = mkPanel('발송 기록');
+    const base = fx('ops_notify') as { data: Record<string, unknown> };
+    const row = (status: string, reason: string | null, at: string) => ({ kind: 'ops.watchdog', status, requested_at: at, sent_at: null, parts: 0, reason });
+    const rows = [
+      row('cooldown', '같은 키', '2026-10-16T01:00:00Z'),
+      row('cooldown', '같은 키', '2026-10-16T02:00:00Z'),
+      row('cooldown', '같은 키', '2026-10-16T03:00:00Z'),
+      row('failed', 'KBJ_TELEGRAM_CHAT_ID 가 없다', '2026-10-16T04:00:00Z'),
+    ];
+    const hz = harness({ 'ops/notify': () => json({ ...base, data: { ...base.data, sent: 0, failed: 1, rows } }) });
+    const { ctx } = pageCtx(13, 'login', hz.source, { now: NOW });
+    await fillNotify(ctx, p);
+    const trs = [...p.el.querySelectorAll('tbody tr')];
+    expect(trs).toHaveLength(2);
+    expect(text(trs[0])).toContain('실패 · KBJ_TELEGRAM_CHAT_ID 가 없다');
+    expect(text(trs[1])).toContain('쿨다운');
+    expect(text(trs[1])).toContain('3');
+    expect(text(p.el)).toContain('안 보냄(억제·쿨다운·중복) 3');
   });
 
   it('404 는 .msg(오류 아님), 그 밖 실패만 .msg.err — 한 패널 실패가 다른 패널을 막지 않는다', async () => {

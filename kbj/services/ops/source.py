@@ -130,7 +130,7 @@ def load_expect(path: Path) -> Expect:
 
 @dataclass(frozen=True)
 class JobRunRow:
-    """`ops.job_run` 한 줄(상세·사유 없음 — 상태와 시각만)."""
+    """`ops.job_run` 한 줄(상태·시각 + 짧은 사유 — 값·키 없음, 실행기가 가려 적은 detail.reason)."""
 
     job: str
     as_of: str
@@ -140,6 +140,7 @@ class JobRunRow:
     finished_at: datetime | None
     created_at: datetime
     source: str = "scheduler"
+    reason: str | None = None
 
     @property
     def at(self) -> datetime:
@@ -245,7 +246,8 @@ class MemoryOpsSource:
 # ── Postgres ─────────────────────────────────────────────────────────────────────────────
 
 _Q_RUNS: Final = sql.SQL(
-    "SELECT job, as_of, attempt, status, started_at, finished_at, created_at, source "
+    "SELECT job, as_of, attempt, status, started_at, finished_at, created_at, source, "
+    "left(detail->>'reason', 300) "
     "FROM ops.job_run WHERE COALESCE(started_at, created_at) >= %s "
     "AND COALESCE(started_at, created_at) < %s"
 )
@@ -313,7 +315,7 @@ class PgOpsSource:
 
     def job_runs(self, start: datetime, end: datetime) -> list[JobRunRow]:
         rows = self._fetch(_Q_RUNS, (_aware(start), _aware(end)))
-        return [JobRunRow(r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7]) for r in rows]
+        return [JobRunRow(r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8]) for r in rows]
 
     def notifies(self, start: datetime, end: datetime) -> list[NotifyRow]:
         rows = self._fetch(_Q_NOTIFY, (_aware(start), _aware(end)))
