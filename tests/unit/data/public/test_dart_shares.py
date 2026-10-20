@@ -86,3 +86,17 @@ def test_voting_share_labels_with_line_breaks_read_as_common_and_pref() -> None:
     ]}  # fmt: skip
     got = S.parse_share_count(js, "99400130")
     assert got is not None and (got.common_issued, got.treasury_common) == (8_592_896, 1_238_725)
+
+
+@pytest.mark.parametrize(
+    ("se", "want"),
+    [
+        ("보통주", "common"), ("의결권 있는\n주식", "common"),
+        ("의결권이 있는주식(보통주)", "common"), ("의결권 있는\n보통주", "common"),
+        ("우선주", "pref"), ("의결권이 없는주식(우선주)", "pref"), ("의결권 없는\n우선주", "pref"),
+        ("종류주식", "pref"), ("합계", None), ("비고", None),
+    ],
+)  # fmt: skip
+def test_class_labels_vary_by_company(se: str, want: str | None) -> None:
+    """회사마다 표기가 다르다(실측 2026-10-20 — 삼성전기·신한지주 등) — 모두 보통주·우선주로."""
+    assert S.class_of(se) == want

@@ -42,6 +42,22 @@ def _norm(s: object) -> str:
     return "".join(str(s or "").split())  # 공백·줄바꿈 모두
 
 
+def class_of(se: object) -> str | None:
+    """행 이름 → common·pref(합계·비고 등은 None). 회사마다 표기가 제각각이다(실측 2026-10-20:
+    '보통주'·'의결권 있는 주식'·'의결권이 있는주식(보통주)' 등) — 정확히 맞추지 않고
+    '우선주·종류주·의결권 없는' → pref, '보통주·의결권 있는' → common 으로 읽는다."""
+    t = _norm(se)
+    if t in CLASS_LABELS["common"]:
+        return "common"
+    if t in CLASS_LABELS["pref"]:
+        return "pref"
+    if "우선주" in t or "종류주" in t or ("의결권" in t and "없는" in t):
+        return "pref"
+    if "보통주" in t or ("의결권" in t and "있는" in t):
+        return "common"
+    return None
+
+
 def _counts(row: Mapping[str, Any] | None) -> tuple[int | None, int | None]:
     """(발행 주식 수, 자기주식 수). 발행 수가 있는 행의 자기주식 '-' 는 0."""
     if row is None:
@@ -63,10 +79,9 @@ def parse_share_count(
     rows = [cast(Mapping[str, Any], r) for r in cast(list[object], raw) if isinstance(r, Mapping)]
     by_class: dict[str, Mapping[str, Any]] = {}
     for r in rows:
-        se = _norm(r.get(FIELDS["class"]))
-        for cls, labels in CLASS_LABELS.items():
-            if se in labels and cls not in by_class:
-                by_class[cls] = r
+        cls = class_of(r.get(FIELDS["class"]))
+        if cls is not None and cls not in by_class:
+            by_class[cls] = r
     common = by_class.get("common")
     if common is None:
         raise ParseError(f"{corp_code}: 주식총수 응답에 보통주 행이 없다")
