@@ -32,7 +32,7 @@ def u(market: str | None, kind: str | None) -> UniverseRow:
         ("KOSPI", "reit", NaReason.NOT_IN_CONSENSUS_UNIVERSE),
         ("KOSPI", "pref", NaReason.NOT_IN_CONSENSUS_UNIVERSE),  # 부르는 쪽이 보통주로 바꾼다
         ("KOSPI", "etf", NaReason.NOT_IN_CONSENSUS_UNIVERSE),
-        # KRX 기본정보는 종류를 비워 둔다 — 보드 정본 분류(이름·코드)로 본다(2026-10-20: 0종목이던 것)
+        # KRX 기본정보는 종류를 비운다 — 보드 정본 분류로 본다(2026-10-20: 0종목이던 것)
         ("KOSPI", None, None),
         (None, "common", NaReason.NOT_IN_CONSENSUS_UNIVERSE),
     ],
