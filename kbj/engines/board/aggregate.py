@@ -206,6 +206,7 @@ def detect(rows, cfg, prev_near=None):
             and x["giveback"] >= gb["ratio"]
             and chg < gb["max_chg_pct"]
             and pp >= gb.get("min_pp", 0)
+            and (x.get("high_chg_pct") or 0) >= gb.get("min_high_chg_pct", 0)
         ):
             ev.append(
                 dict(

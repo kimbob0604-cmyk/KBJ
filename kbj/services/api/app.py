@@ -231,8 +231,16 @@ def create_app(
         resp = await call_next(request)
         for k, v in SECURITY_HEADERS.items():
             resp.headers.setdefault(k, v)
-        if request.url.path.startswith(("/api/", "/telegram/")):
+        path = request.url.path
+        if path.startswith(("/api/", "/telegram/")):
             resp.headers.setdefault("Cache-Control", "no-store")
+        elif path.startswith("/assets/"):
+            # 빌드 해시가 붙은 파일 — 이름이 바뀌면 새 파일이라 오래 둬도 된다
+            resp.headers.setdefault("Cache-Control", "public, max-age=31536000, immutable")
+        else:
+            # index.html 등 — 다시 빌드하면 화면 파일 이름(해시)이 바뀐다. 옛 index.html 을 들고
+            # 있으면 지워진 옛 파일을 찾다 404 로 페이지 5~13 이 '그리지 못했다'(2026-10-20)
+            resp.headers.setdefault("Cache-Control", "no-cache")
         return resp
 
     routers = (

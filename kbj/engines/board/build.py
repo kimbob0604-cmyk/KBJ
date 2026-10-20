@@ -920,7 +920,9 @@ def compute_day(inp: BoardInputs, cfg: Mapping[str, Any]) -> BoardDay:
     # ── events ────────────────────────────────────────────
     events = dict(
         **prov,
-        events=agg.detect(rows, cfg, dict(inp.prev_near)),
+        # 보드에 올린 모집단(시총 하한 이상)에서만 탐지한다 — 전 종목으로 하면 시총 몇백억짜리가
+        # 이벤트를 채웠다(2026-10-20: 재료 반납 1,073건 중 하한 미만 507건)
+        events=agg.detect(board_rows, cfg, dict(inp.prev_near)),
         note="뉴스·수급·전일 주장을 요구하는 탐지기(1·2·5·7·8)는 입력 데이터 미확보로 미포함",
     )
 

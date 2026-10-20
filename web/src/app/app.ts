@@ -115,6 +115,7 @@ export function mountApp(root: HTMLElement, o: MountOptions): AppHandle {
       .catch((err: unknown) => {
         // 이 페이지만 오류 줄 — 다른 페이지·띠는 계속(절대 규칙 4)
         console.error(`[kbj] 페이지 ${n} 오류`, err);
+        if (staleBuild(err) && reloadOnce()) return; // 다시 빌드돼 옛 화면 파일이 없어졌다 — 새로 받는다
         const p = panel(o.tier, { title: `${def.n} ${def.title}`, tier: 'public', span: 12 });
         p.showMessage('이 페이지를 그리지 못했습니다. 다른 페이지는 계속 쓸 수 있습니다.');
         replace(grid, p.el);
@@ -198,4 +199,40 @@ export function mountApp(root: HTMLElement, o: MountOptions): AppHandle {
       replace(root);
     },
   };
+}
+
+/** 페이지 파일(해시 이름)을 못 받았다 — 화면을 열어 둔 사이 다시 빌드돼 옛 파일이 지워진 경우
+ *  (2026-10-20: 페이지 5~13 이 '그리지 못했다'). 브라우저마다 문구가 다르다. */
+export function staleBuild(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /dynamically imported module|Importing a module script failed|error loading dynamically imported module/i.test(
+    msg,
+  );
+}
+
+const RELOAD_KEY = 'kbj:stale-reload-at';
+
+/** 한 번만 새로 고친다(1분 안에 또 실패하면 고치지 않고 오류 줄 — 무한 새로 고침 방지). */
+export function reloadOnce(
+  store: Pick<Storage, 'getItem' | 'setItem'> | null = safeSession(),
+  now: number = Date.now(),
+  reload: () => void = () => window.location.reload(),
+): boolean {
+  try {
+    const last = Number(store?.getItem(RELOAD_KEY) ?? 0);
+    if (now - last < 60_000) return false;
+    store?.setItem(RELOAD_KEY, String(now));
+  } catch {
+    return false;
+  }
+  reload();
+  return true;
+}
+
+function safeSession(): Storage | null {
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
 }

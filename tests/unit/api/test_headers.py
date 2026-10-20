@@ -85,6 +85,19 @@ def test_static_spa_same_origin(world: World, tmp_path: Path) -> None:
     assert c.get("/api/market/summary").status_code == 401
 
 
+def test_index_is_revalidated_and_hashed_assets_are_immutable(world: World, tmp_path: Path) -> None:
+    """다시 빌드하면 화면 파일 이름(해시)이 바뀐다 — 옛 index.html 을 들고 있으면 지워진 파일을 찾다
+    404 로 페이지 5~13 이 '그리지 못했다'(2026-10-20). index 는 매번 확인, 해시 파일은 오래."""
+    (tmp_path / "index.html").write_text("<!doctype html><title>KBJ</title>", encoding="utf-8")
+    (tmp_path / "assets").mkdir()
+    (tmp_path / "assets" / "p8_stock-abc123.js").write_text("export{}", encoding="utf-8")
+    c = world.client(static_dir=tmp_path)
+    assert c.get("/").headers["cache-control"] == "no-cache"
+    assert c.get("/?f2m=kospi").headers["cache-control"] == "no-cache"
+    assert "immutable" in c.get("/assets/p8_stock-abc123.js").headers["cache-control"]
+    assert c.get("/api/health").headers["cache-control"] == "no-store"
+
+
 def test_missing_static_dir_is_not_fatal(world: World, tmp_path: Path) -> None:
     c = world.client(static_dir=tmp_path / "nope")
     assert c.get("/api/health").status_code == 200

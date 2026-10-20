@@ -56,7 +56,7 @@ SECTIONS: Final[Mapping[str, frozenset[str]]] = {
     "proximity": frozenset({"max_gap_pct", "min_mktcap_eok", "narrow_days"}),
     "volume": frozenset({"avg_days"}),
     "resistance": frozenset({"thin_below", "thick_above"}),
-    "giveback": frozenset({"ratio", "max_chg_pct", "min_pp"}),
+    "giveback": frozenset({"ratio", "max_chg_pct", "min_pp", "min_high_chg_pct"}),
     "themes": frozenset({"seed_confidence", "min_confidence_for_narration", "unmapped_bucket"}),
     "display": frozenset(
         {
