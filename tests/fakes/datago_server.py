@@ -5,7 +5,7 @@
 기간 거르기를 통과하게.
 
 - 경로 끝(오퍼레이션)으로 고른다: 금투협 4종(`getGrantingOfCreditBalanceInfo` …), 금융위
-  주식 V2(`getStockPriceInfo_V2`)·지수(`getStockMarketIndex`), 관세청(XML fixture 그대로).
+  주식 V2(`getStockPriceInfo_V2`)·지수 V2(`getStockMarketIndex_V2`), 관세청(XML fixture 그대로).
 - 관세청 가지(P6 COL): `FakeDatago(now, customs=CustomsWorld())` 이면 관세청 8개 오퍼레이션을
   합성 세계에서 파라미터·공표 시각대로 만든다(`tests/fakes/customs_world.py`). 없으면 예전처럼
   XML fixture 그대로.
@@ -151,7 +151,7 @@ class FakeDatago:
             first = sorted(k for k in block if k.isdigit())[0]
             items = _with_day(block[first], day)
             return 200, json.dumps(_envelope(items), ensure_ascii=False), "json"
-        if op == "getStockMarketIndex":
+        if op == "getStockMarketIndex_V2":
             name = params.get("idxNm", "")
             items = [r for r in _json("krx/fsc_index_price.json")["items"] if r["idxNm"] == name]
             items = _with_day(items[:1], day)

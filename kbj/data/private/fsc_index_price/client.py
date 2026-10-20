@@ -3,12 +3,11 @@
 승격 원본: ETF-Traker `board/ingest/datago.py`(`INDEX`:30, `fetch_index`:169). 설계
 `docs/p2_design.md` §1.5.
 
-- **데이터셋 ID [확인 필요]**: DATA_TIERS·probe_results 에 지수시세정보 ID 가 없다. 포털의
-  '금융위원회_지수시세정보' 를 `15094807` 로 두었다(주식시세 15094808 과 같은 묶음 [추정]) — 키를
-  받은 뒤 활용신청 목록에서 확인하고 고친다(ET `board/CLAUDE.md:251` — 같은 키로 지수 API 가 403
-  이었던 것은 활용신청을 따로 안 했기 때문이다).
-- 경로는 ET 가 쓰던 V1(`/1160100/service/GetMarketIndexInfoService/getStockMarketIndex`)이다.
-  주식시세가 V2 로 옮겨 갔듯(F7) 지수도 V2 가 있는지 [실측 필요].
+- 데이터셋 ID `15094807` = 포털 '금융위원회_지수시세정보'(포털 페이지 제목으로 확인 2026-10-20).
+- 경로는 V2 `/1160100/GetMarketIndexInfoService_V2/getStockMarketIndex_V2`(실측 2026-10-20 — 활용
+  승인된 키로 ET 가 쓰던 V1 `/1160100/service/GetMarketIndexInfoService/getStockMarketIndex` 는
+  HTTP 403 'GW 99', V2 는 정상. 응답 칸 이름은 V1 과 같다: basDt·idxNm·idxCsf·clpr·vs·fltRt·mkp·
+  hipr·lopr·trqu·trPrc·lstgMrktTotAmt 외).
 - 전송·키·리미터·예산·게이트웨이 오류는 `kbj.data.datago.DatagoTransport`(묶음 C). 쪽 넘기기·행
   격리는 주식시세와 같은 도우미(`fsc_stock_price.client.fetch_pages`·`parse_checked`)를 쓴다.
 - **`endBasDt` 는 '미만'**(금융위 공통 문서 표기) — 하루 더해 부르고 [start, end] 로 다시 거른다
@@ -31,9 +30,9 @@ from kbj.data.datago import DatagoKeyError, DatagoTransport
 from kbj.data.private.fsc_stock_price.client import fetch_pages, parse_checked, ymd
 from kbj.data.private.krx.models import Num, OptText, Qty, RowError, Text, Won, Ymd
 
-DATASET_ID: Final = "15094807"  # [확인 필요] — 머리말
+DATASET_ID: Final = "15094807"  # 금융위원회_지수시세정보(포털 확인 2026-10-20)
 SOURCE: Final = f"DATAGO:{DATASET_ID}"
-PATH: Final = "/1160100/service/GetMarketIndexInfoService/getStockMarketIndex"
+PATH: Final = "/1160100/GetMarketIndexInfoService_V2/getStockMarketIndex_V2"  # V1 은 403(실측)
 PAGE_MAX: Final = 1_000
 
 
