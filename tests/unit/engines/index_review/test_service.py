@@ -251,3 +251,30 @@ def test_stock_kind_fills_missing_kind_preferred_and_listed_funds() -> None:
     assert svc.stock_kind("088980", "맥쿼리인프라", None) == svc.FUND
     assert svc.stock_kind("005930", "삼성전자", None) == "common"
     assert svc.stock_kind("005930", "삼성전자", "pref") == "pref"  # 원천 값이 우선
+
+
+def test_fif_raw_subtracts_largest_holder_and_reads_pref_class() -> None:
+    """최대주주 현황(그룹 대표 5% 보고는 두 번 빼지 않는다)·우선주는 우선주 수로(2026-10-21 — MSCI
+    경계에 대형주·우선주가 '유동비율 없음'으로 올랐다)."""
+    from kbj.core.fin_rows import LargestHolder, MajorHolderReport, ShareCount
+
+    repos = memory_repos()
+    f, corp, rc, now = repos.filings, "00000001", "20260814000001", CLOCK
+    d0, end = date(2026, 8, 14), date(2026, 6, 30)
+    sc = ShareCount(corp, end, rc, 1000, 100, 10, 5, rcept_dt=d0)
+    lh = LargestHolder(corp, end, rc, 400, 20, ("합성지주㈜",), rcept_dt=d0)
+    f.put_share_counts([sc], loaded_by="t", now=now)
+    f.put_largest_holders([lh], loaded_by="t", now=now)
+    f.put_major_holder_reports([
+        MajorHolderReport("20260105000001", corp, date(2026, 1, 5), "합성지주", None, 400,
+                          None, None, None),
+        MajorHolderReport("20260105000002", corp, date(2026, 1, 5), "다른회사", None, 50,
+                          None, None, None),
+    ], loaded_by="t", now=now)  # fmt: skip
+    cfg = build_index_world().config
+    day = date(2026, 10, 20)
+    fif = svc._fif_raw  # pyright: ignore[reportPrivateUsage]
+    assert fif(repos, corp, day, cfg) == pytest.approx(1 - (10 + 400 + 50) / 1000)
+    assert fif(repos, corp, day, cfg, pref=True) == pytest.approx(1 - (5 + 20) / 100)
+    assert fif(repos, corp, date(2026, 8, 1), cfg) is None  # 접수 전(PIT)
+    assert svc._common_code("005387") == "005380"  # pyright: ignore[reportPrivateUsage]

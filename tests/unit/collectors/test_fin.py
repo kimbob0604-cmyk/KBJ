@@ -251,3 +251,9 @@ def test_백필은_주식총수가_없는_상세_대상_회사에_최근_보고�
     fin.backfill(st.ctx("fin.backfill", run_id="run-2"))
     after = [c for c in st.dart.calls if c[0] == "stockTotqySttus.json"]
     assert len(after) - n <= 3 * (len(DETAIL_CORPS) - len(got))  # 있는 회사는 다시 부르지 않는다
+    # 최대주주 현황(2026-10-21 — 지수 유동비율의 전략적 보유)도 같은 회사에 들어간다
+    for c in got:
+        lh = st.repos.filings.latest_largest_holder(c, upto=CLOCK.date())
+        sc = st.repos.filings.latest_share_count(c)
+        assert lh is not None and sc is not None and sc.common_issued is not None
+        assert lh.common_held == sc.common_issued * 3 // 10

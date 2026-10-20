@@ -563,9 +563,10 @@ jobs:
       - {source: DART, dataset: fnlttSinglAcntAll, as_of: event}
       - {source: DART, dataset: fnlttMultiAcnt, as_of: event}
       - {source: DART, dataset: stockTotqySttus, as_of: event}
+      - {source: DART, dataset: hyslrSttus, as_of: event}
     budget: dart
     writes: [pub_fin.statement_raw, pub_fin.quarterly, pub_fin.ratio, pub_filings.share_count,
-             pub_filings.disclosure]
+             pub_filings.largest_holder, pub_filings.disclosure]
     absorbs: ["SD:mac-crontab:dart_collector", "ET:board/ingest/financials", "ET:dart-report 수집부"]
     note: "재무 2층(D-P4-5): 상세 대상(관심종목 ∪ 컨센서스 유니버스 ∪ 공개 데모)은 전체 재무제표(CFS→OFS), 나머지는 07:30 뒤 첫 실행의 주요계정 묶음. statement_raw → normalize(to_quarterly 하나) → quarterly·ratio, 적재한 공시는 disclosure.fin_loaded_at"
 
@@ -653,7 +654,7 @@ jobs:
       - {source: KIS, dataset: index_quote_intraday, as_of: slot10m}
       - {source: KIS, dataset: sector_quote_intraday, as_of: slot10m}
     writes: [prv_market.index_intraday, prv_market.sector_intraday]
-    note: "D-P3-14 신규 — 장중 지수 3·업종 2 호출(슬롯당 5건). 페이지 1 지수 타일·업종 히트맵·장중 시장 거래대금(지수 기준, estimated)"
+    note: "D-P3-14 신규 — 장중 지수 3·업종 목록 3(코스피 1·코스닥 소속 3·1)·코스닥 업종 한 건씩 최대 4. 페이지 1 지수 타일·업종 히트맵·장중 시장 거래대금(지수 기준, estimated)"
 
   # ── P5 F2 장중 투자자 수급·프로그램매매(docs/p5_flow_program_prompt.md §3.4, docs/p5_design.md §0.4·§3.4) ──
   # 1분 작업은 정규장 + 장 마감 단일가 15:40 까지(close+10). 빈 분은 채우지 않는다(보간 금지 — 행 없음).
@@ -908,7 +909,8 @@ jobs:
     deadline_min: 360
     backfill_of: [fin.quarterly]
     budget: dart
-    writes: [pub_fin.statement_raw, pub_fin.quarterly, pub_fin.ratio, pub_filings.share_count]
+    writes: [pub_fin.statement_raw, pub_fin.quarterly, pub_fin.ratio, pub_filings.share_count,
+             pub_filings.largest_holder]
     note: "python -m kbj.services.scheduler run-once fin.backfill --as-of <YYYY-MM-DDTHH:MM> — 시작 연도·층은 config/fin.yaml backfill(스케줄러 backfill 명령은 거래일 펼치기라 쓰지 않는다 — §0.4). 이미 받은 statement_raw 는 건너뛰어 여러 날에 나눠 돈다. DART 백필 상한 dart.backfill_cap(DartClient.from_settings(backfill=True), 우선순위 P4 — 장중 피드에 양보). run-once 는 fin.quarterly 의 데이터셋마다 <데이터셋>@<as_of> 실행 키를 하나씩 잡는다 — 처리기는 그 키(ctx.keys)를 collected 로 돌려준다"
 
   # ── 장중 운영 감시·수동 ─────────────────────────────────────────────────────────────────

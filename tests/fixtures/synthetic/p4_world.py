@@ -23,7 +23,8 @@
 - DART 응답: 고유번호 zip(`corpCode.xml`), 공시 목록(`list.json` — 쪽·기간·회사·유형 거르기, 시각
   `now` 이전에 '접수'된 것만), 주요사항
   구조화(`cvbdIsDecsn`·`bdwtIsDecsn`·`piicDecsn`·`tsstkAqDecsn`
-  …), 소유보고(`elestock`·`majorstock`), 주식총수(`stockTotqySttus`), 기업개황(`company`), 재무제표
+  …), 소유보고(`elestock`·`majorstock`), 주식총수(`stockTotqySttus`)·최대주주 현황(`hyslrSttus`),
+  기업개황(`company`), 재무제표
   (`fnlttSinglAcntAll` — 전체, `fnlttMultiAcnt` — 주요계정), 원문 zip(`document.xml` — 잠정실적 5열·
   2열 폼, CB·BW·유상 결정, 전환청구·행사·전환가 조정, 소유보고, 공급계약, 정기보고서 주석(G2 회사 둘
   —
@@ -801,6 +802,8 @@ class P4World:
             return self._ownership(name, params.get("corp_code", ""), now)
         if name == "stockTotqySttus":
             return self._share_total(params, now)
+        if name == "hyslrSttus":
+            return self._largest_holder(params, now)
         if name == "fnlttSinglAcntAll":
             return self._single_all(params, now)
         if name == "fnlttMultiAcnt":
@@ -965,6 +968,25 @@ class P4World:
         total_treas = (sc.treasury_common or 0) + (sc.treasury_pref or 0)
         rows.append(_share_row(c, rcept, "합계", total_issued, total_treas, sc.period_end))
         return _ok(rows)
+
+    def _largest_holder(self, p: Mapping[str, str], now: datetime) -> dict[str, Any]:
+        """최대주주 현황 — 최대주주 하나가 보통주 30%(합성), 종류별 '계' 행(실측 모양 10-21)."""
+        corp = p.get("corp_code", "")
+        r = self._report_visible(corp, int(p.get("bsns_year") or 0), p.get("reprt_code", ""), now)
+        if r is None:
+            return _no_data()
+        c = self.corp(corp)
+        sc = next(x for x in self.share_counts if x.rcept_no == self.rcept(r.ident))
+        held = _comma((sc.common_issued or 0) * 3 // 10) if sc.common_issued else "-"
+        base = {"rcept_no": self._report_rcept(r, now), "corp_cls": c.corp_cls,
+                "corp_code": c.corp_code, "corp_name": c.corp_name,
+                "stlm_dt": sc.period_end.isoformat()}  # fmt: skip
+        return _ok([
+            {**base, "nm": "합성최대주주", "relate": "본인", "stock_knd": "보통주",
+             "trmend_posesn_stock_co": held},
+            {**base, "nm": "계", "relate": "-", "stock_knd": "보통주",
+             "trmend_posesn_stock_co": held},
+        ])  # fmt: skip
 
     def _single_all(self, p: Mapping[str, str], now: datetime) -> dict[str, Any]:
         corp = p.get("corp_code", "")

@@ -186,13 +186,25 @@ def stock_kind(code: str, name: str | None, kind: str | None) -> str:
 
 
 def _fif_raw(
-    repos: IndexRepos, corp: str | None, day: date, cfg: IndexReviewsConfig
+    repos: IndexRepos,
+    corp: str | None,
+    day: date,
+    cfg: IndexReviewsConfig,
+    *,
+    pref: bool = False,
 ) -> float | None:
+    """DART 로 유동비율 raw(metrics §24.2). 보통주 = 자기주식 + 최대주주 현황 + 그 밖의 5% 보고,
+    우선주(`pref`) = 우선주 자기주식 + 최대주주 우선주 보유(5% 보고는 의결권 주식이라 안 쓴다)."""
     if corp is None:
         return None
     sc = repos.filings.latest_share_count(corp, upto=day)
     if sc is None:
         return None
+    lh = repos.filings.latest_largest_holder(corp, upto=day)
+    if pref:
+        return estimate_fif_raw(
+            sc.pref_issued, sc.treasury_pref, [], (), group=lh.pref_held if lh else None
+        )
     last: dict[str, tuple[date, str, int]] = {}
     for r in repos.filings.major_holder_reports(corp, end=day):
         if r.shares is None:
@@ -202,8 +214,14 @@ def _fif_raw(
             last[r.reporter] = (r.rcept_dt, r.rcept_no, r.shares)
     holders = [(k, v[2]) for k, v in last.items()]
     return estimate_fif_raw(
-        sc.common_issued, sc.treasury_common, holders, cfg.fif_estimate.financial_holder_patterns
-    )
+        sc.common_issued, sc.treasury_common, holders, cfg.fif_estimate.financial_holder_patterns,
+        group=lh.common_held if lh else None, group_names=lh.holders if lh else (),
+    )  # fmt: skip
+
+
+def _common_code(code: str) -> str:
+    """우선주 코드 → 보통주 코드(앞 5자리 + '0' — 005935 → 005930, 005387 → 005380)."""
+    return code[:5] + "0"
 
 
 def gather(
@@ -235,19 +253,30 @@ def gather(
     top_n = cfg.fif_estimate.top_n
     estimate_codes = {s.code for s in by_cap[:top_n]} | set(member_fif)
     profiles = repos.filings.profiles(
-        [corp_of[c] for c in estimate_codes if c in corp_of]
-    )  # 업종코드
+        sorted(
+            {
+                corp_of.get(c) or corp_of[_common_code(c)]
+                for c in estimate_codes
+                if c in corp_of or _common_code(c) in corp_of
+            }
+        )
+    )  # 업종코드(우선주는 보통주 회사의 것)
     stocks: list[StockIn] = []
     n_skipped = 0
     for s in by_cap:
-        corp = corp_of.get(s.code)
-        raw = _fif_raw(repos, corp, snap_day, cfg) if s.code in estimate_codes else None
+        kind = stock_kind(s.code, s.name, s.kind)
+        is_pref = kind == "pref" and s.code not in corp_of
+        corp = corp_of.get(_common_code(s.code) if is_pref else s.code)
+        raw = (
+            _fif_raw(repos, corp, snap_day, cfg, pref=is_pref)
+            if s.code in estimate_codes else None
+        )  # fmt: skip
         if s.code not in estimate_codes:
             n_skipped += 1
         prof = profiles.get(corp) if corp else None
         u = universe.get(s.code)
         stocks.append(StockIn(
-            code=s.code, name=s.name, market=s.market, kind=stock_kind(s.code, s.name, s.kind),
+            code=s.code, name=s.name, market=s.market, kind=kind,
             sector=cfg.sectors.sector_of(prof.induty_code if prof else None),
             listed_on=u.listed_on if u else None, mktcap=s.mktcap, adv_won=adv.get(s.code),
             fif_raw=raw, fif_prev=member_fif.get(s.code), fif_source="DART" if raw else None,

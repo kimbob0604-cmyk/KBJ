@@ -61,6 +61,7 @@ from kbj.data.budget import BudgetExhausted
 from kbj.data.public.dart.client import DartClient, DartQuotaExceeded
 from kbj.data.public.dart.disclosures import DartJson
 from kbj.data.public.dart.doctext import ParseError
+from kbj.data.public.dart.largest_holder import fetch_largest_holder
 from kbj.data.public.dart.shares import fetch_share_count
 from kbj.data.ratelimit import Priority
 from kbj.data.spec import DataKey
@@ -376,6 +377,20 @@ def _load_full(run: FinRun, job: _Job, profile: CorpProfile | None) -> bool:
             raise
         except Exception as exc:
             run.fail(skey, exc)
+    hkey = run.claim("hyslrSttus", f"{corp}:{d.rcept_no}")
+    if hkey is not None:
+        try:
+            lh = fetch_largest_holder(
+                cast(DartJson, run.client), corp, job.year, job.reprt, rcept_dt=d.rcept_dt
+            )
+            if lh is not None:
+                run.repos.filings.put_largest_holders([lh], loaded_by=run.job, now=run.now)
+            run.done(hkey, 0 if lh is None else 1)
+        except _STOP:
+            run.fail(hkey, RuntimeError("예산 닫힘·한도 초과"))
+            raise
+        except Exception as exc:
+            run.fail(hkey, exc)
     nq, nr = renormalize(run, corp, profile)
     run.bump("quarters", nq)
     run.bump("ratios", nr)
@@ -519,21 +534,26 @@ def _ended(run: FinRun, year: int, reprt: str, profile: CorpProfile | None) -> b
 SHARE_TRIES: Final = 3  # 회사마다 최근 보고서부터 몇 개까지 주식총수를 찾아볼지
 
 
+def _recent_periods(run: FinRun, prof: CorpProfile | None) -> list[tuple[int, str]]:
+    """기간이 끝난 정기보고서(연도, 보고서) — 최근부터 SHARE_TRIES 개."""
+    periods = sorted(
+        ((y, r) for y in _years(run) for r in REPRT if _ended(run, y, r, prof)),
+        key=lambda p: (p[0], quarter_of_reprt(p[1])),
+        reverse=True,
+    )
+    return periods[:SHARE_TRIES]
+
+
 def _backfill_shares(run: FinRun, profiles: Mapping[str, CorpProfile]) -> None:
     """상세 대상 회사 중 주식총수가 없는 회사 — 기간이 끝난 최근 정기보고서부터 찾아 하나 넣는다.
 
     분기 증분(`_load_full`)은 새 정기보고서가 올 때만 주식총수를 받아, 이미 지난 보고서의 회사는
-    다음 분기 공시(11월 중순)까지 비었다(2026-10-20 — 오버행·내부자 비율, 지수 유동비율)."""
+    다음 분기 공시(11월 중순)까지 비었다(2026-10-20 — 오버행·내부자 비율, 지수 유동비율).
+    최대주주 현황(2026-10-21 — 지수 유동비율의 전략적 보유)도 같은 방식으로 채운다."""
     for corp in sorted(detail_corps(run)):
         if run.repos.filings.latest_share_count(corp) is not None:
             continue
-        prof = profiles.get(corp)
-        periods = sorted(
-            ((y, r) for y in _years(run) for r in REPRT if _ended(run, y, r, prof)),
-            key=lambda p: (p[0], quarter_of_reprt(p[1])),
-            reverse=True,
-        )
-        for year, reprt in periods[:SHARE_TRIES]:
+        for year, reprt in _recent_periods(run, profiles.get(corp)):
             try:
                 sc = fetch_share_count(cast(DartJson, run.client), corp, year, reprt)
             except ParseError as e:  # 그 회사만 — 다음 회사는 계속(격리)
@@ -548,6 +568,21 @@ def _backfill_shares(run: FinRun, profiles: Mapping[str, CorpProfile]) -> None:
                 break
         else:
             run.bump("shares.none")
+    for corp in sorted(detail_corps(run)):
+        if run.repos.filings.latest_largest_holder(corp) is not None:
+            continue
+        for year, reprt in _recent_periods(run, profiles.get(corp)):
+            try:
+                lh = fetch_largest_holder(cast(DartJson, run.client), corp, year, reprt)
+            except ParseError as e:
+                run.failures.append(f"hyslrSttus@{corp}: {e}"[:200])
+                break
+            if lh is not None:
+                run.repos.filings.put_largest_holders([lh], loaded_by=run.job, now=run.now)
+                run.bump("holders")
+                break
+        else:
+            run.bump("holders.none")
 
 
 def _backfill_full(run: FinRun, profiles: Mapping[str, CorpProfile]) -> None:

@@ -163,3 +163,20 @@ def test_estimate_from_dart_holdings() -> None:
     assert estimate_fif_raw(1000, 100, holders, ("국민연금", "자산운용")) == pytest.approx(0.5)
     assert estimate_fif_raw(None, 0, [], ()) is None
     assert estimate_fif_raw(1000, 600, [("A", 500)], ()) is None  # 비유동 ≥ 발행 — 자료 불일치
+
+
+def test_estimate_with_largest_holder_group() -> None:
+    """최대주주 현황('계')을 빼고, 같은 그룹의 5% 보고(명단에 있거나 ±3%)는 두 번 빼지 않는다."""
+    # 5% 보고 없이 최대주주만 — 자기주식만 빠지던 회사(2026-10-21)
+    assert estimate_fif_raw(1000, 0, [], (), group=388) == pytest.approx(0.612)
+    # 그룹 대표 보고(이름이 명단에 — ㈜·공백 차이는 같은 이름) → 더하지 않는다
+    assert estimate_fif_raw(
+        1000, 10, [("합성물산", 200)], (), group=200, group_names=("합성물산㈜", "임원갑")
+    ) == pytest.approx(0.79)
+    # 이름은 다르지만 보유가 '계'의 ±3% 안 → 같은 지분
+    assert estimate_fif_raw(1000, 0, [("대표보고자", 205)], (), group=200) == pytest.approx(0.8)
+    # 그룹 밖 전략적 보유자는 더하고, 재무적 투자자는 빼지 않는다
+    holders = [("다른회사", 100), ("국민연금공단", 80)]
+    assert estimate_fif_raw(
+        1000, 0, holders, ("국민연금",), group=200, group_names=("합성지주",)
+    ) == pytest.approx(0.7)

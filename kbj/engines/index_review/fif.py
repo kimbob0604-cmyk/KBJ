@@ -13,7 +13,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from decimal import ROUND_CEILING, ROUND_HALF_UP, Decimal
+from typing import Final
 
 from kbj.config.index_reviews import FifBand, FifRule, FolCfg
 
@@ -143,24 +145,48 @@ def room_factor(
     return float(mid), True, f"{tag} — 기존 조정계수 {float(mid):g}"
 
 
+_CORP_MARKS: Final = ("㈜", "(주)", "주식회사")
+SAME_GROUP_TOL: Final = 0.03  # 5% 보고 보유가 최대주주 '계'의 ±3% 안이면 같은 지분(그룹 대표 보고)
+
+
+def _holder_key(name: str) -> str:
+    t = "".join(name.split())
+    for m in _CORP_MARKS:
+        t = t.replace(m, "")
+    return t
+
+
+def _in_group(reporter: str, shares: int, group: int | None, names: Sequence[str]) -> bool:
+    key = _holder_key(reporter)
+    if key and any(key == _holder_key(n) for n in names):
+        return True
+    return bool(group) and abs(shares - (group or 0)) <= SAME_GROUP_TOL * (group or 0)
+
+
 def estimate_fif_raw(
     issued: int | None,
     treasury: int | None,
     holders: list[tuple[str, int]],
     financial_patterns: tuple[str, ...],
+    *,
+    group: int | None = None,
+    group_names: Sequence[str] = (),
 ) -> float | None:
     """DART 지분 공시로 유동비율 추정(반올림 전) — 1 − (자기주식 + 전략적 보유) ÷ 발행주식.
 
-    holders = (보고자, 최근 보유 주식) — 5% 대량보유 보고의 보고자별 마지막 값. 보고자 이름이 재무적
-    투자자 패턴(설정 — 연기금·운용사 등)에 맞으면 빼지 않는다(유동으로 본다). 발행주식을 모르면
-    None.
-    비유동이 발행주식 이상이면 None(자료가 서로 맞지 않는다 — 지어내지 않는다). 정의는 [확인
-    필요]."""
+    전략적 보유 = 최대주주 + 특수관계인 기말 보유(`group` — 정기보고서 최대주주 현황)
+    + 그 밖의 5% 대량보유 보고자(`holders` = (보고자, 최근 보유) — 보고자별 마지막 값).
+    5% 보고자가 최대주주 명단에 있거나 보유가 `group` 의 ±3% 안이면 이미 센 지분(그룹 대표
+    보고)이라 더하지 않는다. 보고자 이름이 재무적 투자자 패턴(설정 — 연기금·운용사 등)에
+    맞으면 빼지 않는다(유동으로 본다). 발행주식을 모르면 None. 비유동이 발행주식 이상이면
+    None(자료가 서로 맞지 않는다 — 지어내지 않는다). 정의는 [확인 필요]."""
     if not issued or issued <= 0:
         return None
-    locked = treasury or 0
+    locked = (treasury or 0) + max(group or 0, 0)
     for reporter, shares in holders:
         if any(p in reporter for p in financial_patterns):
+            continue
+        if _in_group(reporter, shares, group, group_names):
             continue
         locked += max(shares, 0)
     if locked >= issued:

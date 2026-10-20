@@ -721,7 +721,7 @@ def test_p4_collects_and_writes_follow_the_design() -> None:
     assert {d for d, a in feed if a == "event"} == {f"DART:{d}" for d in DART_EVENT_FEED}
     assert coll["fin.quarterly"] == {
         ("DART:fnlttSinglAcntAll", "event"), ("DART:fnlttMultiAcnt", "event"),
-        ("DART:stockTotqySttus", "event"),
+        ("DART:stockTotqySttus", "event"), ("DART:hyslrSttus", "event"),
     }  # fmt: skip
     assert coll["reports.dart_excel"] == {("DART:report_inputs", "event")}
     assert coll["filings.company_profile"] == {("DART:company", "run_date")}
@@ -737,7 +737,8 @@ def test_p4_collects_and_writes_follow_the_design() -> None:
     }  # fmt: skip
     assert w["filings.company_profile"] == {"pub_filings.corp_profile"}
     assert {"pub_fin.statement_raw", "pub_fin.quarterly", "pub_fin.ratio",
-            "pub_filings.share_count"} <= w["fin.quarterly"]  # fmt: skip
+            "pub_filings.share_count", "pub_filings.largest_holder",
+            } <= w["fin.quarterly"]  # fmt: skip
     assert w["filings.derive"] >= {
         "pub_filings.overhang_state", "pub_filings.overhang_summary",
         "pub_filings.insider_window", "pub_filings.earnings_schedule",
@@ -812,7 +813,7 @@ def test_p4_event_keys_are_not_preclaimed_by_the_runner() -> None:
     manual = runner.run_once("fin.quarterly", now, as_of="2026-11-16T09:31")
     assert [e.kind for e in manual][-1] == "ok"
     assert {k.dataset for k in seen[-1].keys} == {
-        "fnlttSinglAcntAll", "fnlttMultiAcnt", "stockTotqySttus",
+        "fnlttSinglAcntAll", "fnlttMultiAcnt", "stockTotqySttus", "hyslrSttus",
     }  # fmt: skip
     assert {k.as_of for k in seen[-1].keys} == {"2026-11-16T09:31"}
 

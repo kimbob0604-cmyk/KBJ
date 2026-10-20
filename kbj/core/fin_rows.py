@@ -58,6 +58,7 @@ __all__ = [
     "InsiderReport",
     "InsiderWindow",
     "Instrument",
+    "LargestHolder",
     "MajorHolderReport",
     "NaReason",
     "OpinionRow",
@@ -966,6 +967,35 @@ class ShareCount:
         if self.common_issued is None or self.treasury_common is None:
             return None
         return self.common_issued - self.treasury_common
+
+
+@dataclass(frozen=True)
+class LargestHolder:
+    """정기보고서 최대주주 현황(`pub_filings.largest_holder` — hyslrSttus.json, 실측 2026-10-21).
+
+    `common_held`·`pref_held` = 최대주주 + 특수관계인 기말 보유 주식(종류별 '계' 행) — 지수 유동비율
+    추정의 전략적 보유(metrics §24.2). `holders` = 명단(5% 대량보유 보고와 겹침을 가린다).
+    """
+
+    corp_code: str
+    period_end: date
+    rcept_no: str
+    common_held: int | None
+    pref_held: int | None
+    holders: tuple[str, ...] = ()
+    rcept_dt: date | None = None
+    source: str = DART_SOURCE
+    quality: Quality = Quality.OK
+
+    def __post_init__(self) -> None:
+        _corp("corp_code", self.corp_code)
+        _day("period_end", self.period_end)
+        _rcept("rcept_no", self.rcept_no)
+        for n in ("common_held", "pref_held"):
+            _won(n, getattr(self, n), nonneg=True)
+        _day("rcept_dt", self.rcept_dt, optional=True)
+        _dart_source(self.source)
+        _quality(self)
 
 
 # ── 재무(0011 pub_fin — 공개, 원천 DART) ──────────────────────────────────────────────────

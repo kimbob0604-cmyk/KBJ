@@ -483,3 +483,11 @@ P6 관세청 수집(`trade.customs_tenday`·`trade.customs_monthly`)을 막는 �
   다르면 스크리너를 버리고 종목마다 받는다(detail `screener_note`) — 첫 실행(10-21 05:10 KST)의 기록으로 확인한다.
 - 등락률이 (스크리너 종가 ÷ 저장된 전일 종가 − 1) 과 2%p 넘게 다르면(분할·병합) 그 종목만 일봉으로. 금요일 회차는 전 종목 일봉
   (고저가·수정주가 다시 맞춤). 같은 날 일봉(`nasdaq`)이 있으면 그것이 이긴다(`US_SOURCE_RANK`).
+
+## DART 최대주주 현황(hyslrSttus) — 지수 유동비율 (2026-10-21, 로컬)
+
+- 2026 반기보고서(11012)를 5개 회사로 불렀다(값은 커밋하지 않는다 — 공개 등급이지만 실값 fixture 대신 합성 시험).
+- 필드: `rcept_no`·`corp_cls`·`corp_code`·`corp_name`·`nm`(성명)·`relate`(관계)·`stock_knd`(주식 종류)·`bsis_posesn_stock_co`·`bsis_posesn_stock_qota_rt`(기초)·`trmend_posesn_stock_co`·`trmend_posesn_stock_qota_rt`(기말)·`rm`·`stlm_dt`.
+- 사람·종류마다 한 행 + 종류마다 `nm='계'` 합계 행(관계 칸 비어 있음). 종류 표기는 주식총수처럼 회사마다 다르다 — '보통주'·'우선주', '의결권 있는 주식'·'의결권 없는 주식'(줄바꿈 포함). 종류가 없는 '계' 행은 `stock_knd='-'`, 값 '-'.
+- 5% 대량보유 보고는 그룹 대표(예: 지주·계열사)가 그룹 전체 지분을 보고한다 — 최대주주 현황 '계'와 거의 같은 수라 둘을 더하면 이중 계산(metrics §24.2 겹침 규칙).
+- 쓰는 곳: `fin.quarterly`(정기보고서 접수 뒤 `DART:hyslrSttus @ <corp>:<접수번호>`)·`fin.backfill`(없는 상세 대상 회사), 지수 정기변경 유동비율 추정.

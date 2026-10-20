@@ -217,6 +217,14 @@ def case_insiders_buybacks_and_share_counts(r: Repos) -> None:
     assert f.latest_share_count(CORP) == sc2
     assert f.latest_share_count(CORP, upto=date(2026, 11, 1)) == sc1  # PIT
     assert f.latest_share_count(CORP2) is None
+    lh1 = fr.LargestHolder(CORP, date(2026, 6, 30), rc(1, date(2026, 8, 14)), 4_000_000, None,
+                           ("합성지주", "임원갑"), rcept_dt=date(2026, 8, 14))  # fmt: skip
+    lh2 = fr.LargestHolder(CORP, date(2026, 9, 30), rc(1), 4_100_000, 1_000, ("합성지주",),
+                           rcept_dt=D)  # fmt: skip
+    f.put_largest_holders([lh2, lh1], loaded_by=JOB, now=NOW)
+    assert f.latest_largest_holder(CORP) == lh2
+    assert f.latest_largest_holder(CORP, upto=date(2026, 11, 1)) == lh1  # PIT, 명단은 튜플로
+    assert f.latest_largest_holder(CORP2) is None
 
 
 # ── 재무 ─────────────────────────────────────────────────────────────────────────────────

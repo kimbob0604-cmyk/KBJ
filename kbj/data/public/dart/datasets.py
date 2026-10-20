@@ -155,6 +155,17 @@ DATASETS: Final[tuple[DatasetSpec, ...]] = (
         ),
     ),
     _dart(
+        "hyslrSttus",
+        as_of="event",
+        store="pub_filings.largest_holder",
+        published="정기보고서 접수 뒤",
+        notes=(
+            "정기보고서 주요정보 — 최대주주 현황(최대주주 + 특수관계인 기말 보유, 종류별 '계' 행 — "
+            "실측 2026-10-21). 지수 유동비율 추정의 전략적 보유(metrics §24.2). 데이터 키 = "
+            "<corp_code>:<접수번호>. 작업 fin.quarterly"
+        ),
+    ),
+    _dart(
         "company",
         as_of="run_date",
         store="pub_filings.corp_profile",

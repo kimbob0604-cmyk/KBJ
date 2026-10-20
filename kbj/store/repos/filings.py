@@ -39,6 +39,7 @@ from kbj.core.fin_rows import (
     DisclosureRow,
     InsiderReport,
     InsiderWindow,
+    LargestHolder,
     MajorHolderReport,
     OverhangAdjust,
     OverhangEvent,
@@ -129,6 +130,13 @@ SHARE_COUNT: Final = Table(
     ShareCount,
     key=("corp_code", "period_end", "rcept_no"),
     extra=_RECEIVED,
+)
+LARGEST: Final = Table(
+    "pub_filings.largest_holder",
+    LargestHolder,
+    key=("corp_code", "period_end", "rcept_no"),
+    extra=_RECEIVED,
+    json_cols=frozenset({"holders"}),
 )
 
 
@@ -327,6 +335,17 @@ class FilingsRepo(Protocol):
         ...
 
     def latest_share_count(self, corp_code: str, upto: date | None = None) -> ShareCount | None:
+        """가장 최근(period_end, 접수번호) 행. `upto` 를 주면 rcept_dt ≤ upto 인 것만(PIT)."""
+        ...
+
+    # ── 최대주주 현황 ──
+    def put_largest_holders(
+        self, rows: Sequence[LargestHolder], *, loaded_by: str, now: datetime
+    ) -> int: ...
+
+    def latest_largest_holder(
+        self, corp_code: str, upto: date | None = None
+    ) -> LargestHolder | None:
         """가장 최근(period_end, 접수번호) 행. `upto` 를 주면 rcept_dt ≤ upto 인 것만(PIT)."""
         ...
 
@@ -733,6 +752,23 @@ class PgFilingsRepo:
         )
         return got[0] if got else None
 
+    def put_largest_holders(
+        self, rows: Sequence[LargestHolder], *, loaded_by: str, now: datetime
+    ) -> int:
+        return self._put(LARGEST, rows, loaded_by, now)
+
+    def latest_largest_holder(
+        self, corp_code: str, upto: date | None = None
+    ) -> LargestHolder | None:
+        got: list[LargestHolder] = self._get(
+            LARGEST,
+            "corp_code = %s AND (%s::date IS NULL OR (rcept_dt IS NOT NULL AND rcept_dt <= %s))",
+            (corp_code, upto, upto),
+            "period_end DESC, rcept_no DESC",
+            1,
+        )
+        return got[0] if got else None
+
 
 # ── 메모리 ─────────────────────────────────────────────────────────────────────────────
 
@@ -758,6 +794,7 @@ class MemoryFilingsRepo:
         self.window_t = MemoryTable(WINDOW)
         self.buyback_t = MemoryTable(BUYBACK)
         self.share_t = MemoryTable(SHARE_COUNT)
+        self.largest_t = MemoryTable(LARGEST)
         # P2 pub_filings.corp_code(읽기만 — 시험·세계가 채운다): {종목코드: (corp_code, 회사명)}
         self.corp_codes: dict[str, tuple[str, str]] = {}
 
@@ -1045,6 +1082,22 @@ class MemoryFilingsRepo:
 
     def latest_share_count(self, corp_code: str, upto: date | None = None) -> ShareCount | None:
         rows = self.share_t.where(
+            lambda r: (
+                r.corp_code == corp_code
+                and (upto is None or (r.rcept_dt is not None and r.rcept_dt <= upto))
+            )
+        )
+        return max(rows, key=lambda r: (r.period_end, r.rcept_no)) if rows else None
+
+    def put_largest_holders(
+        self, rows: Sequence[LargestHolder], *, loaded_by: str, now: datetime
+    ) -> int:
+        return self._put(self.largest_t, rows, loaded_by, now)
+
+    def latest_largest_holder(
+        self, corp_code: str, upto: date | None = None
+    ) -> LargestHolder | None:
+        rows = self.largest_t.where(
             lambda r: (
                 r.corp_code == corp_code
                 and (upto is None or (r.rcept_dt is not None and r.rcept_dt <= upto))

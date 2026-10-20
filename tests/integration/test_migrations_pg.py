@@ -64,6 +64,9 @@ P2 = [
     "0021_rules_journal.sql",
     "0022_gex_ingest.sql",
     "0023_themes.sql",
+    "0024_trade_country_code.sql",
+    "0025_index_constituent_etf.sql",
+    "0026_largest_holder.sql",
 ]  # 이름은 P2 시험 그대로 — 0001~0023 전부(P3 0007~0009, P4 0010~0013, P5 0014~0017,
 #   P5 2차 IDX 0018, P6 0019, P7 0020, P8 0021, P9 GXI 0022 — 쓰기 주인 COMMENT 만,
 #   페이지 9 테마 0023 — ADR 0039)
@@ -407,8 +410,8 @@ P4_PUB = {
     "pub_filings.earnings_schedule", "pub_filings.overhang_event", "pub_filings.overhang_adjust",
     "pub_filings.overhang_state", "pub_filings.overhang_summary", "pub_filings.insider_report",
     "pub_filings.major_holder_report", "pub_filings.insider_window", "pub_filings.buyback_event",
-    "pub_filings.share_count", "pub_fin.statement_raw", "pub_fin.quarterly", "pub_fin.ratio",
-    "pub_fin.report", "pub_fin.segment",
+    "pub_filings.share_count", "pub_filings.largest_holder", "pub_fin.statement_raw",
+    "pub_fin.quarterly", "pub_fin.ratio", "pub_fin.report", "pub_fin.segment",
 }  # fmt: skip
 P4_PRV = {
     "prv_fin.consensus_snapshot", "prv_fin.invest_opinion", "prv_fin.target_consensus",
