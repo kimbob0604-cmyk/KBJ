@@ -242,3 +242,12 @@ def test_user_list_is_not_overwritten_by_proxy() -> None:
     svc.run_predict(repos, _proxy_cfg(None), BASE, now=CLOCK, loaded_by="t")
     after = {(r.code, r.source) for r in repos.index_review.constituents("kospi200", BASE)}
     assert after == before
+
+
+def test_stock_kind_fills_missing_kind_preferred_and_listed_funds() -> None:
+    """KRX 기본정보는 종류를 비운다 — 우선주·인프라 투자회사가 KOSPI200 후보로 올랐다(10-20)."""
+    assert svc.stock_kind("005935", "삼성전자우", None) == "pref"
+    assert svc.stock_kind("005387", "현대차2우B", None) == "pref"
+    assert svc.stock_kind("088980", "맥쿼리인프라", None) == svc.FUND
+    assert svc.stock_kind("005930", "삼성전자", None) == "common"
+    assert svc.stock_kind("005930", "삼성전자", "pref") == "pref"  # 원천 값이 우선

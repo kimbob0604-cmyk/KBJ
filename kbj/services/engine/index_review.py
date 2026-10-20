@@ -63,6 +63,7 @@ from kbj.core.index_rows import (
 from kbj.core.masking import safe_snippet
 from kbj.core.quality import Quality
 from kbj.core.time import KST
+from kbj.engines.board import kinds as board_kinds
 from kbj.engines.index_review.backtest import score
 from kbj.engines.index_review.fif import estimate_fif_raw
 from kbj.engines.index_review.krx import predict_krx
@@ -167,6 +168,23 @@ def _avg_mcap(
     return out
 
 
+# 상장 투자회사(인프라·선박 투융자 — 지수 대상 아님). 보드 분류(`board.kinds`)는 리츠만 따로 둔다
+_FUND_NAME: Final = re.compile(r"(인프라|투융자|선박투자|해운투자)$")
+FUND: Final = "fund"
+
+
+def stock_kind(code: str, name: str | None, kind: str | None) -> str:
+    """원천이 준 종류, 없으면 보드 정본 분류(이름·코드 — 우선주·스팩·리츠) + 상장 투자회사는 fund.
+
+    KRX 기본정보는 종류를 비워(kind None) `kinds: [common]` 이 아무것도 거르지 못해 KOSPI200 편입
+    후보에 우선주·인프라 투자회사가 올랐다(2026-10-20)."""
+    if kind is not None:
+        return kind
+    if name and _FUND_NAME.search(name):
+        return FUND
+    return board_kinds.of(code, name or "")
+
+
 def _fif_raw(
     repos: IndexRepos, corp: str | None, day: date, cfg: IndexReviewsConfig
 ) -> float | None:
@@ -229,7 +247,7 @@ def gather(
         prof = profiles.get(corp) if corp else None
         u = universe.get(s.code)
         stocks.append(StockIn(
-            code=s.code, name=s.name, market=s.market, kind=s.kind,
+            code=s.code, name=s.name, market=s.market, kind=stock_kind(s.code, s.name, s.kind),
             sector=cfg.sectors.sector_of(prof.induty_code if prof else None),
             listed_on=u.listed_on if u else None, mktcap=s.mktcap, adv_won=adv.get(s.code),
             fif_raw=raw, fif_prev=member_fif.get(s.code), fif_source="DART" if raw else None,
