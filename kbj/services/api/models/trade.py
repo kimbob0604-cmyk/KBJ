@@ -134,7 +134,7 @@ class TradeItemSeries(ApiModel):
 
 
 class TradeItemCountryRow(ApiModel):
-    country: str = Field(pattern=r"^[A-Z]{2}$")
+    country: str = Field(pattern=r"^[A-Z0-9]{2}$")  # 관세청 특수 코드 'Z1'(실측 2026-10-20)
     country_name: str | None
     usd: int | None
     yoy: float | None
@@ -150,7 +150,7 @@ class TradeItemCountries(ApiModel):
 
 
 class TradeCountryRow(ApiModel):
-    country: str = Field(pattern=r"^[A-Z]{2}$")
+    country: str = Field(pattern=r"^[A-Z0-9]{2}$")  # 관세청 특수 코드 'Z1'(실측 2026-10-20)
     country_name: str
     exp_usd: int | None
     imp_usd: int | None
@@ -167,7 +167,7 @@ class TradeCountries(ApiModel):
 
 
 class TradeCountryItems(ApiModel):
-    country: str = Field(pattern=r"^[A-Z]{2}$")
+    country: str = Field(pattern=r"^[A-Z0-9]{2}$")  # 관세청 특수 코드 'Z1'(실측 2026-10-20)
     country_name: str | None
     ym: str
     flow: FlowT

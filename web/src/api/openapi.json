@@ -5445,7 +5445,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "pattern": "^[A-Z]{2}$",
+              "pattern": "^[A-Z0-9]{2}$",
               "title": "Cc"
             }
           },
@@ -27808,7 +27808,7 @@
         "properties": {
           "country": {
             "type": "string",
-            "pattern": "^[A-Z]{2}$",
+            "pattern": "^[A-Z0-9]{2}$",
             "title": "Country"
           },
           "country_name": {
@@ -27857,7 +27857,7 @@
         "properties": {
           "country": {
             "type": "string",
-            "pattern": "^[A-Z]{2}$",
+            "pattern": "^[A-Z0-9]{2}$",
             "title": "Country"
           },
           "country_name": {
@@ -28341,7 +28341,7 @@
         "properties": {
           "country": {
             "type": "string",
-            "pattern": "^[A-Z]{2}$",
+            "pattern": "^[A-Z0-9]{2}$",
             "title": "Country"
           },
           "country_name": {
