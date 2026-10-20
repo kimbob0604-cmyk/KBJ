@@ -132,6 +132,8 @@ class FinRun:
     detail_source: str  # 'resource' | 'public_demo_only'
     counts: dict[str, int] = field(default_factory=lambda: defaultdict(int))
     failures: list[str] = field(default_factory=list[str])
+    # 응답 모양을 못 읽은 회사(백필 주식총수·최대주주 — 다시 받아도 같다): 실패로 세지 않고 적기만
+    unparsed: list[str] = field(default_factory=list[str])
 
     @property
     def kst(self) -> datetime:
@@ -472,6 +474,10 @@ def _result(
     }
     if run.failures:
         detail["failed_keys"] = run.failures[:10]
+        detail["reason"] = f"{len(run.failures)}건 실패 — 첫 {run.failures[0]}"[:200]
+    if run.unparsed:  # 회사 하나의 응답 모양 — 재시도로 바뀌지 않아 실패로 두지 않는다
+        detail["unparsed"] = run.unparsed[:10]
+        detail["n_unparsed"] = len(run.unparsed)
     if stopped:
         detail["stopped"] = stopped
     status: Literal["ok", "failed"] = "ok"
@@ -557,7 +563,7 @@ def _backfill_shares(run: FinRun, profiles: Mapping[str, CorpProfile]) -> None:
             try:
                 sc = fetch_share_count(cast(DartJson, run.client), corp, year, reprt)
             except ParseError as e:  # 그 회사만 — 다음 회사는 계속(격리)
-                run.failures.append(f"stockTotqySttus@{corp}: {e}"[:200])
+                run.unparsed.append(f"stockTotqySttus@{corp}: {e}"[:200])
                 break
             if sc is not None:
                 if sc.rcept_dt is None:  # 접수일 = 접수번호 앞 8자리(없으면 PIT 읽기에서 빠진다)
@@ -575,7 +581,7 @@ def _backfill_shares(run: FinRun, profiles: Mapping[str, CorpProfile]) -> None:
             try:
                 lh = fetch_largest_holder(cast(DartJson, run.client), corp, year, reprt)
             except ParseError as e:
-                run.failures.append(f"hyslrSttus@{corp}: {e}"[:200])
+                run.unparsed.append(f"hyslrSttus@{corp}: {e}"[:200])
                 break
             if lh is not None:
                 run.repos.filings.put_largest_holders([lh], loaded_by=run.job, now=run.now)

@@ -257,3 +257,31 @@ def test_백필은_주식총수가_없는_상세_대상_회사에_최근_보고�
         sc = st.repos.filings.latest_share_count(c)
         assert lh is not None and sc is not None and sc.common_issued is not None
         assert lh.common_held == sc.common_issued * 3 // 10
+
+
+def test_백필의_응답_모양_실패는_작업_실패가_아니다(monkeypatch: pytest.MonkeyPatch) -> None:
+    """회사 하나의 주식총수·최대주주 응답을 못 읽으면 적기만 하고 작업은 ok(2026-10-21 — 실패로
+    두어 '키 0개를 받지 못했다'로 재시도가 돌았다, 다시 받아도 같다)."""
+    from kbj.data.public.dart.doctext import ParseError
+
+    bad = min(DETAIL_CORPS)
+    real_sc, real_lh = fin.fetch_share_count, fin.fetch_largest_holder
+
+    def sc(client: Any, corp: str, *a: Any, **kw: Any) -> Any:
+        if corp == bad:
+            raise ParseError(f"{corp}: 주식총수 응답에 보통주 행이 없다")
+        return real_sc(client, corp, *a, **kw)
+
+    def lh(client: Any, corp: str, *a: Any, **kw: Any) -> Any:
+        if corp == bad:
+            raise ParseError(f"{corp}: 최대주주 현황 응답의 접수번호가 이상하다")
+        return real_lh(client, corp, *a, **kw)
+
+    monkeypatch.setattr(fin, "fetch_share_count", sc)
+    monkeypatch.setattr(fin, "fetch_largest_holder", lh)
+    st = _state()
+    res = fin.backfill(st.ctx("fin.backfill"))
+    assert res.status == "ok", res.detail
+    assert res.detail["n_unparsed"] == 2 and "failed_keys" not in res.detail
+    assert st.repos.filings.latest_share_count(bad) is None
+    assert any(st.repos.filings.latest_share_count(c) for c in DETAIL_CORPS - {bad})
