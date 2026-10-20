@@ -200,8 +200,8 @@ def _put_proxy(repos: MemoryRepos, codes: list[str]) -> None:
 
 
 def test_proxy_etf_fills_constituents_and_predicts() -> None:
-    """목록을 올리지 않아도 완전 복제 ETF 의 구성종목 공시로 구성종목을 맞추고 예측한다(2026-10-20 — 늘
-    '구성종목 목록 없음'이던 것)."""
+    """목록을 올리지 않아도 완전 복제 ETF 의 구성종목 공시로 구성종목을 맞추고 예측한다
+    (2026-10-20 — 늘 '구성종목 목록 없음'이던 것)."""
     members = sorted(r.code for r in world_repos().index_review.constituents("kospi200", BASE))
     repos = world_repos(members=False)
     _put_proxy(repos, members)

@@ -137,6 +137,9 @@ def _build(settings: Settings, *, inline: bool = False) -> tuple[Any, Any, Any, 
             "claims": claims,
             # P9 WRAP(ADR 0037 §3): ops.watchdog 가 지금 끊긴 서비스를 ops.health_events 에 남긴다
             "ops_gaps": PgOpsSource(connect_fn),
+            # 상세 재무 대상(관심종목 ∪ 시총 상위 ∪ 공개 데모 — D-P4-5). 연결되지 않아 주식총수가
+            # 비었다(2026-10-20 — 오버행·내부자 비율, 지수 정기변경 유동비율)
+            "detail_universe": _detail_universe(settings, connect_fn),
         },
     )
     svc = SchedulerService(redis, runner, kr, PgSessionLogStore(connect_fn), health=health)
@@ -155,6 +158,18 @@ def abandon_orphans(runs: Any, boot: datetime) -> list[str]:
     뒤 us.eod·program.stock_sweep·earnings.alerts 등 7건). 반환 = 닫은 실행의 'job@as_of'."""
     closed = runs.abandon_running(boot, boot, ABANDON_REASON)
     return [f"{r.job}@{r.as_of}" for r in closed]
+
+
+def _detail_universe(
+    settings: Settings, connect_fn: Callable[[], Any]
+) -> Callable[[date], set[str]]:
+    from kbj.config.fin import load_fin, load_reports
+    from kbj.services.engine.detail_universe import provider
+    from kbj.store.repos import pg_repos
+
+    return provider(
+        pg_repos(connect_fn), load_fin(settings=settings), load_reports(settings=settings)
+    )
 
 
 BACKFILL_MAX_DAYS = 1000  # 한 번에 펼칠 최대 거래일 수 [제안 — §3.8 '하루 최대 1,000일치']

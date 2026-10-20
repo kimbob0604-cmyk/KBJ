@@ -463,7 +463,11 @@ def sync_from_proxy(
     (멱등). 지수 크기(size)에서 ±PROXY_SIZE_TOL 넘게 벗어나면 표본 복제로 보고 쓰지 않는다."""
     if idx.proxy_etf is None:
         return None
-    held = [h for h in repos.etf.holdings_of(idx.proxy_etf, as_of) if (h.wt or 0) > 0]
+    held = [
+        h
+        for h in repos.etf.holdings_of(idx.proxy_etf, as_of)
+        if (h.qty or 0) > 0 or (h.wt or 0) > 0
+    ]
     if not held:
         return f"대리 ETF {idx.proxy_etf} 구성종목 공시 없음"
     asof = max(h.asof for h in held)
