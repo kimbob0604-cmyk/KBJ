@@ -232,3 +232,18 @@ def test_백필_상한에_닿으면_멈추고_ok() -> None:
     st.client = Capped()  # type: ignore[assignment]
     res = fin.backfill(st.ctx("fin.backfill"))
     assert res.status == "ok" and res.detail["stopped"] == "BudgetExhausted"
+
+
+def test_백필은_주식총수가_없는_상세_대상_회사에_최근_보고서의_주식총수를_넣는다() -> None:
+    """분기 증분은 새 정기보고서가 올 때만 주식총수를 받아 지난 보고서의 회사는 비었다(2026-10-20 —
+    오버행·내부자 비율, 지수 유동비율). 백필이 최근 보고서부터 찾아 하나 넣고, 이미 있으면 다시
+    부르지 않는다."""
+    st = _state()
+    assert all(st.repos.filings.latest_share_count(c) is None for c in DETAIL_CORPS)
+    fin.backfill(st.ctx("fin.backfill"))
+    got = {c for c in DETAIL_CORPS if st.repos.filings.latest_share_count(c) is not None}
+    assert got  # 합성 세계에 주식총수가 있는 상세 회사
+    n = len([c for c in st.dart.calls if c[0] == "stockTotqySttus.json"])
+    fin.backfill(st.ctx("fin.backfill", run_id="run-2"))
+    after = [c for c in st.dart.calls if c[0] == "stockTotqySttus.json"]
+    assert len(after) - n <= 3 * (len(DETAIL_CORPS) - len(got))  # 있는 회사는 다시 부르지 않는다

@@ -515,6 +515,33 @@ def _ended(run: FinRun, year: int, reprt: str, profile: CorpProfile | None) -> b
     return fiscal_period(year, reprt, acc_mt).end < run.kst.date()
 
 
+SHARE_TRIES: Final = 3  # 회사마다 최근 보고서부터 몇 개까지 주식총수를 찾아볼지
+
+
+def _backfill_shares(run: FinRun, profiles: Mapping[str, CorpProfile]) -> None:
+    """상세 대상 회사 중 주식총수가 없는 회사 — 기간이 끝난 최근 정기보고서부터 찾아 하나 넣는다.
+
+    분기 증분(`_load_full`)은 새 정기보고서가 올 때만 주식총수를 받아, 이미 지난 보고서의 회사는
+    다음 분기 공시(11월 중순)까지 비었다(2026-10-20 — 오버행·내부자 비율, 지수 유동비율)."""
+    for corp in sorted(detail_corps(run)):
+        if run.repos.filings.latest_share_count(corp) is not None:
+            continue
+        prof = profiles.get(corp)
+        periods = sorted(
+            ((y, r) for y in _years(run) for r in REPRT if _ended(run, y, r, prof)),
+            key=lambda p: (p[0], quarter_of_reprt(p[1])),
+            reverse=True,
+        )
+        for year, reprt in periods[:SHARE_TRIES]:
+            sc = fetch_share_count(cast(DartJson, run.client), corp, year, reprt)
+            if sc is not None:
+                run.repos.filings.put_share_counts([sc], loaded_by=run.job, now=run.now)
+                run.bump("shares")
+                break
+        else:
+            run.bump("shares.none")
+
+
 def _backfill_full(run: FinRun, profiles: Mapping[str, CorpProfile]) -> None:
     corps = sorted(detail_corps(run))
     for corp in corps:
@@ -586,6 +613,7 @@ def backfill(ctx: JobContext) -> JobResult:
         profiles = run.repos.filings.profiles()
         stopped: str | None = None
         try:
+            _backfill_shares(run, profiles)
             if run.fin_cfg.backfill.tier == "full":
                 _backfill_full(run, profiles)
             else:
