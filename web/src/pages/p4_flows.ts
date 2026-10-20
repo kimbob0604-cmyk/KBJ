@@ -301,6 +301,19 @@ export const INTRADAY_ORDERS: readonly Option<IntradayOrder>[] = [
 ];
 let intradayOrder: IntradayOrder = 'value';
 
+/** 가집계 방향 — 순매수 상위 또는 순매도 상위(급락일에 순매수만 보이면 오해를 산다 — 2026-10-20 점검) */
+export type IntradaySide = 'buy' | 'sell';
+export const INTRADAY_SIDES: readonly Option<IntradaySide>[] = [
+  { value: 'buy', label: '순매수' },
+  { value: 'sell', label: '순매도' },
+];
+let intradaySide: IntradaySide = 'buy';
+
+/** 마지막 슬롯이 15:30 KST(장 마감 회차) — 15:30 슬롯은 장이 끝난 뒤에만 생긴다 */
+export function isAfterClose(slot: string): boolean {
+  return kstTime(slot) >= '15:30';
+}
+
 /** 시총 대비(%) — 0.123% 처럼. 시총을 모르면 '—' */
 export function capPct(v: number | null | undefined): string {
   return v === null || v === undefined ? DASH : `${v >= 0 ? '+' : ''}${v.toFixed(3)}%`;
@@ -309,7 +322,16 @@ export function capPct(v: number | null | undefined): string {
 export function drawIntraday(p: Panel, env: Envelope<S['IntradayFlows']>, names: Map<string, string>): number {
   const d = env.data;
   for (const r of d.turnover_rank) if (r.name) names.set(r.code, r.name);
-  for (const r of [...d.top_foreign, ...d.top_inst, ...(d.top_foreign_by_cap ?? []), ...(d.top_inst_by_cap ?? [])])
+  const sellF = d.sell_foreign ?? [];
+  const sellI = d.sell_inst ?? [];
+  for (const r of [
+    ...d.top_foreign,
+    ...d.top_inst,
+    ...(d.top_foreign_by_cap ?? []),
+    ...(d.top_inst_by_cap ?? []),
+    ...sellF,
+    ...sellI,
+  ])
     if (r.name) names.set(r.code, r.name);
   const est = (text: string): HTMLElement | null => qValue(text, 'estimated');
   const topCols = (label: string): Column<S['IntradayRow']>[] => [
@@ -323,21 +345,24 @@ export function drawIntraday(p: Panel, env: Envelope<S['IntradayFlows']>, names:
     intradayOrder === 'cap' && byCap ? byCap.map((r, i) => ({ ...r, rank: i + 1 })) : byValue;
   const tops = h('div', { class: 'grid' });
   const renderTops = (): void => {
+    const sell = intradaySide === 'sell';
+    const side = sell ? '순매도' : '순매수';
+    const tail = `${side} 상위${intradayOrder === 'cap' ? ' · 시총 대비' : ''}`;
     tops.replaceChildren(
       box(
         table({
-          caption: `외국인 가집계 상위${intradayOrder === 'cap' ? ' · 시총 대비' : ''}`,
+          caption: `외국인 가집계 ${tail}`,
           columns: topCols('외국인'),
-          rows: pick(d.top_foreign, d.top_foreign_by_cap),
+          rows: sell ? pick(sellF, d.sell_foreign_by_cap) : pick(d.top_foreign, d.top_foreign_by_cap),
           pageSize: 10,
           empty: '없음',
         }).el,
       ),
       box(
         table({
-          caption: `기관 가집계 상위${intradayOrder === 'cap' ? ' · 시총 대비' : ''}`,
+          caption: `기관 가집계 ${tail}`,
           columns: topCols('기관'),
-          rows: pick(d.top_inst, d.top_inst_by_cap),
+          rows: sell ? pick(sellI, d.sell_inst_by_cap) : pick(d.top_inst, d.top_inst_by_cap),
           pageSize: 10,
           empty: '없음',
         }).el,
@@ -360,8 +385,24 @@ export function drawIntraday(p: Panel, env: Envelope<S['IntradayFlows']>, names:
     );
   };
   renderTops();
+  const closed = isAfterClose(d.slot);
   p.body.append(
-    h('p', { class: 'dim' }, `${kstTime(d.slot)} 슬롯 · 장중 잠정 — 15:35 마감 뒤 확정`),
+    h(
+      'p',
+      { class: closed ? 'warn' : 'dim' },
+      closed
+        ? `${kstTime(d.slot)} 슬롯(장 마감 전 마지막 가집계) — 확정 수급은 위 '종목 스크리너'(외국인·기관 순매수, 기간 1일)`
+        : `${kstTime(d.slot)} 슬롯 · 장중 잠정 — 15:35 마감 뒤 확정`,
+    ),
+    seg<IntradaySide>({
+      label: '가집계 방향',
+      options: INTRADAY_SIDES,
+      value: intradaySide,
+      onChange: (v) => {
+        intradaySide = v;
+        renderTops();
+      },
+    }).el,
     seg<IntradayOrder>({
       label: '가집계 순서',
       options: INTRADAY_ORDERS,
@@ -374,7 +415,7 @@ export function drawIntraday(p: Panel, env: Envelope<S['IntradayFlows']>, names:
     h(
       'p',
       { class: 'def' },
-      '시총 대비 = 가집계 순매수 ÷ 시가총액(전일 마감). 금액순은 대형주만 위에 오고, 시총 대비순은 종목 크기에 비해 얼마나 샀는지를 본다(시총 1,000억·순매수 10억 이상만). 대상은 증권사 가집계 순위표에 오른 종목(외국인·기관 각 200여 종목)이지 시장 전체가 아니다.',
+      '시총 대비 = 가집계 순매수(순매도는 음수) ÷ 시가총액(전일 마감). 금액순은 대형주만 위에 오고, 시총 대비순은 종목 크기에 비해 얼마나 샀는지를 본다(시총 1,000억·순매수 10억 이상만). 대상은 증권사 가집계 순위표에 오른 종목(외국인·기관 각 200여 종목)이지 시장 전체가 아니다.',
     ),
     tops,
   );

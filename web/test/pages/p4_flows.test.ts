@@ -170,6 +170,21 @@ describe('페이지 4 수급 — 로그인', () => {
     expect(vals).toEqual([...vals].sort((a, b) => b - a));
   });
 
+  it('순매도 상위로 바꿔 본다 — 마감 뒤(15:30 슬롯)는 확정 수급 안내', async () => {
+    const base = fixture<{ data: Record<string, unknown> }>('flows_intraday');
+    const sellRow = { rank: 1, code: '000660', value: -50_000_000_000, qty: -200_000, name: 'SK하이닉스', mktcap: 100_000_000_000_000, pct_of_mktcap: -0.05 };
+    const body = { ...base, data: { ...base.data, slot: '2026-10-20T15:30:00+09:00', sell_foreign: [sellRow], sell_inst: [] } };
+    const { root } = await mountLogin({ flows_intraday: body });
+    const p = panelByTitle(root, '장중 잠정');
+    expect(text(p)).toContain('확정 수급은 위');
+    click(buttonByText(p, '금액순')); // 앞 시험이 시총 대비순으로 바꿔 둔 페이지 상태
+    click(buttonByText(p, '순매도'));
+    expect(text(p.querySelector('caption'))).toContain('외국인 가집계 순매도 상위');
+    const first = p.querySelector('tbody tr');
+    expect(text(first)).toContain('SK하이닉스');
+    expect(text(first)).toContain('-500');
+  });
+
   it('누적 합 — 값이 없는 날은 끊고 이어서 더한다', () => {
     expect(cumulative([1, 2, null, 3])).toEqual([1, 3, null, 6]);
   });

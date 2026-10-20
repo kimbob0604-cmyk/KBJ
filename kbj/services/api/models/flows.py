@@ -140,6 +140,11 @@ class IntradayFlows(ApiModel):
     # 같은 가집계를 순매수 ÷ 시총 순으로(시총 모르는 종목 제외) — 금액 순위는 대형주만 보인다
     top_foreign_by_cap: list[IntradayRow] = Field(default_factory=list[IntradayRow])
     top_inst_by_cap: list[IntradayRow] = Field(default_factory=list[IntradayRow])
+    # 순매도 상위(가집계 순매도 순위 — 금액·시총 대비 오름차순). 급락일에 순매수만 보이던 것
+    sell_foreign: list[IntradayRow] = Field(default_factory=list[IntradayRow])
+    sell_inst: list[IntradayRow] = Field(default_factory=list[IntradayRow])
+    sell_foreign_by_cap: list[IntradayRow] = Field(default_factory=list[IntradayRow])
+    sell_inst_by_cap: list[IntradayRow] = Field(default_factory=list[IntradayRow])
 
 
 # ── P5 F2(docs/p5_design.md §5, F2 §0-1 — `/api/flows/market-minute`) ────────────────────────────

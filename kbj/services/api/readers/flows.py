@@ -280,11 +280,18 @@ def flows_intraday(ctx: ReadContext) -> Envelope[IntradayFlows]:
             return cap, None
         return cap, round(value / cap * 100, 4)
 
-    def top(who: Investor, by_cap: bool = False) -> list[IntradayRow]:
+    def top(who: Investor, by_cap: bool = False, sell: bool = False) -> list[IntradayRow]:
         # KIS 가집계 순위는 시장(코스피·코스닥)마다 1위부터라 섞으면 1·1·2·2 가 된다 — 금액 순으로
-        # 합쳐 다시 매긴다(2026-10-20 화면). 이름은 KRX 기본정보(코드만 보이던 줄)
-        rows = [r for r in inv if r.ts == slot and r.investor is who and r.quality.usable]
-        rows.sort(key=lambda r: (-(r.net_value or 0), r.code))
+        # 합쳐 다시 매긴다(2026-10-20 화면). 이름은 KRX 기본정보(코드만 보이던 줄). sell = 순매도
+        # 상위(가집계는 순매도 순위도 받는다 — 순매수만 보여 급락일에 오해를 샀다)
+        sign = -1 if sell else 1
+        rows = [
+            r
+            for r in inv
+            if r.ts == slot and r.investor is who and r.quality.usable
+            and (r.net_value or 0) * sign > 0
+        ]  # fmt: skip
+        rows.sort(key=lambda r: (-sign * (r.net_value or 0), r.code))
         if by_cap:  # 시총 대비 — 시총을 모르는 종목은 뺀다(0 으로 줄 세우지 않는다)
             pcts = {r.code: cap_pct(r.code, r.net_value)[1] for r in rows}
             # 하한(보드와 같은 시총 1,000억·순매수 10억) — 없으면 시총 200억대 소형주가 1~4억으로
@@ -296,7 +303,7 @@ def flows_intraday(ctx: ReadContext) -> Envelope[IntradayFlows]:
                 and (cap_pct(r.code, r.net_value)[0] or 0) >= CAP_MIN_WON
                 and abs(r.net_value or 0) >= CAP_NET_MIN_WON
             ]
-            rows.sort(key=lambda r: (-(pcts[r.code] or 0.0), r.code))
+            rows.sort(key=lambda r: (-sign * (pcts[r.code] or 0.0), r.code))
         out: list[IntradayRow] = []
         for i, r in enumerate(rows[:INTRADAY_TOP_N], start=1):
             cap, pct = cap_pct(r.code, r.net_value)
@@ -319,6 +326,10 @@ def flows_intraday(ctx: ReadContext) -> Envelope[IntradayFlows]:
         top_inst=top(Investor.INSTITUTION),
         top_foreign_by_cap=top(Investor.FOREIGN, by_cap=True),
         top_inst_by_cap=top(Investor.INSTITUTION, by_cap=True),
+        sell_foreign=top(Investor.FOREIGN, sell=True),
+        sell_inst=top(Investor.INSTITUTION, sell=True),
+        sell_foreign_by_cap=top(Investor.FOREIGN, by_cap=True, sell=True),
+        sell_inst_by_cap=top(Investor.INSTITUTION, by_cap=True, sell=True),
         turnover_rank=[
             RankItem(
                 market=r.market,

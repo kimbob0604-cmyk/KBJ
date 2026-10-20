@@ -20639,6 +20639,34 @@
             },
             "type": "array",
             "title": "Top Inst By Cap"
+          },
+          "sell_foreign": {
+            "items": {
+              "$ref": "#/components/schemas/IntradayRow"
+            },
+            "type": "array",
+            "title": "Sell Foreign"
+          },
+          "sell_inst": {
+            "items": {
+              "$ref": "#/components/schemas/IntradayRow"
+            },
+            "type": "array",
+            "title": "Sell Inst"
+          },
+          "sell_foreign_by_cap": {
+            "items": {
+              "$ref": "#/components/schemas/IntradayRow"
+            },
+            "type": "array",
+            "title": "Sell Foreign By Cap"
+          },
+          "sell_inst_by_cap": {
+            "items": {
+              "$ref": "#/components/schemas/IntradayRow"
+            },
+            "type": "array",
+            "title": "Sell Inst By Cap"
           }
         },
         "additionalProperties": false,

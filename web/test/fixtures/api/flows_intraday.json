@@ -192,6 +192,10 @@
         "pct_of_mktcap": 0.0085
       }
     ],
-    "top_inst_by_cap": []
+    "top_inst_by_cap": [],
+    "sell_foreign": [],
+    "sell_inst": [],
+    "sell_foreign_by_cap": [],
+    "sell_inst_by_cap": []
   }
 }

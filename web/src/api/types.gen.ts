@@ -5720,6 +5720,14 @@ export interface components {
             top_foreign_by_cap?: components["schemas"]["IntradayRow"][];
             /** Top Inst By Cap */
             top_inst_by_cap?: components["schemas"]["IntradayRow"][];
+            /** Sell Foreign */
+            sell_foreign?: components["schemas"]["IntradayRow"][];
+            /** Sell Inst */
+            sell_inst?: components["schemas"]["IntradayRow"][];
+            /** Sell Foreign By Cap */
+            sell_foreign_by_cap?: components["schemas"]["IntradayRow"][];
+            /** Sell Inst By Cap */
+            sell_inst_by_cap?: components["schemas"]["IntradayRow"][];
         };
         /** IntradayRow */
         IntradayRow: {
