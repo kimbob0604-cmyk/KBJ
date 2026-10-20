@@ -100,7 +100,7 @@ def test_item_country_checks_period_and_codes_before_calling() -> None:
     c, server = _client(synth("customs_item_country.xml"))
     with pytest.raises(ValueError, match="12개월"):
         c.item_country("202501", "202601", "US")  # 13개월
-    with pytest.raises(ValueError, match="ISO"):
+    with pytest.raises(ValueError, match="2자리"):
         c.item_country("202601", "202601", "USA")
     with pytest.raises(ValueError, match="HS"):
         c.item_country("202601", "202601", "US", hs="85A2")

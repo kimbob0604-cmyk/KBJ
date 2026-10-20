@@ -102,8 +102,9 @@ def _hs_param(hs: str | None, *, exact: int | None = None) -> str | None:
 
 
 def _country_param(country: str) -> str:
-    if len(country) != 2 or not country.isascii() or not country.isalpha():
-        raise ValueError(f"국가 코드는 ISO 2자리 영문: {country!r}")
+    # 관세청 특수 코드에 숫자가 섞인다('Z1' — 실측 2026-10-20). 영문·숫자 두 자리
+    if len(country) != 2 or not country.isascii() or not country.isalnum():
+        raise ValueError(f"국가 코드는 2자리 영문·숫자: {country!r}")
     return country.upper()
 
 
