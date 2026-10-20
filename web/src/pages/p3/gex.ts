@@ -219,13 +219,26 @@ async function drawExt(ctx: PageContext, p: Panel): Promise<void> {
   replace(p.body, kv(items));
 }
 
+// 패널 설명 — GEX 를 처음 보는 사람이 읽는 법(2026-10-20 사용자 '설명이 부족하다')
+export const PROFILE_DEF =
+  '코스피200 옵션 미결제약정으로 추정한 행사가별 감마 노출(GEX) — 지수가 1% 움직일 때 딜러가 헤지로 사고팔아야 할 금액(원/1%). ' +
+  '+막대 구간에서는 딜러가 오르면 팔고 내리면 사서 움직임을 누르고(변동성 억제), −막대 구간에서는 따라 사고팔아 움직임을 키운다. ' +
+  '세로선 = 현재가(선물)·Flip. 가정: 딜러가 콜을 들고 풋을 판 상태(naive) — 한국은 개인 콜 매수가 많아 이 가정이 틀릴 수 있고, 틀리면 콜 쪽 부호가 뒤집힌다.';
+export const LEVELS_DEF =
+  'Flip = 순GEX 부호가 바뀌는 지수(현재가가 위면 변동성 억제, 아래면 확대 구간). 콜월 = 콜 GEX 가 가장 큰 행사가(저항으로 자주 읽는다), ' +
+  '풋월 = 풋 GEX 가 가장 큰 행사가(지지). 절대감마 = 감마가 가장 몰린 행사가(만기 무렵 가격이 붙기 쉽다). ' +
+  '±1σ = ATM 내재변동성으로 본 이번 세션 기대 변동폭(약 68% 범위). 야간에는 직전 주간 값.';
+export const EXT_DEF =
+  `VEX = 변동성이 1%p 바뀔 때 딜러 헤지 변화, CEX = 하루 지날 때 헤지 변화, 25Δ 스큐 = 풋 IV − 콜 IV(높을수록 하락 대비 수요), ` +
+  `HIRO = 오늘 옵션 체결로 생긴 딜러 헤지 수요. 값 검증(1주 섀도 운영) 뒤 표시 — 그 전엔 '${SHADOW_TEXT}'.`;
+
 /** ④ GEX 레벨(로그인) */
 /** ④ GEX 패널 셋(틀만 — 공개 빌드는 이 틀만 쓰고 본문 mountGex 는 번들에서 빠진다, P8 WRAP) */
 export function gexPanels(ctx: PageContext): { prof: Panel; lvls: Panel; ext: Panel } {
   const common = { tier: 'login' as const, lock: 'options', src: GEX_SOURCE };
-  const prof = panel(ctx.tier, { ...common, title: TITLES.profile, span: 6, def: '막대 = 행사가별 GEX(원/1% — 콜 롱·풋 숏 naive 딜러), 세로선 = 현재가·Flip' });
-  const lvls = panel(ctx.tier, { ...common, title: TITLES.levels, span: 6 });
-  const ext = panel(ctx.tier, { ...common, title: TITLES.ext, span: 12, def: `확장 지표는 1주 섀도 운영 뒤 표시 — 그 전엔 '${SHADOW_TEXT}'` });
+  const prof = panel(ctx.tier, { ...common, title: TITLES.profile, span: 6, def: PROFILE_DEF });
+  const lvls = panel(ctx.tier, { ...common, title: TITLES.levels, span: 6, def: LEVELS_DEF });
+  const ext = panel(ctx.tier, { ...common, title: TITLES.ext, span: 12, def: EXT_DEF });
   ctx.root.append(prof.el, lvls.el, ext.el);
   return { prof, lvls, ext };
 }

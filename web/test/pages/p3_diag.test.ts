@@ -72,7 +72,8 @@ describe('페이지 3 진단 — 로그인', () => {
     const f = panelByTitle(root, TITLES.fear);
     expect(f.querySelector('.gauge svg')).not.toBeNull();
     expect(text(f)).toContain(`${(d.fear_greed?.score ?? 0).toFixed(1)} · 중립`);
-    expect(text(f)).toContain('빠진 성분: vol');
+    expect(text(f)).toContain('빠진 성분: 변동성(뒤집음)'); // 영문 키가 아니라 화면 이름(2026-10-20)
+    expect(text(f)).not.toContain('export_momentum');
   });
 
   it('공공지표 진단 — .lvl 행 다섯·게이지, 값 없는 지표는 사유(0 아님)', async () => {

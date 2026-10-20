@@ -101,6 +101,12 @@ const COMPONENTS: Readonly<Record<string, string>> = {
   credit_spread: '신용스프레드(뒤집음)',
 };
 
+/** 서버 사유 문구 속 영문 키(성분 없음: fear_greed, credit_spread …)를 화면 이름으로 */
+export function koReason(text: string): string {
+  return text.replace(/\b[a-z][a-z0-9_]*\b/g, (k) => NAMES[k] ?? COMPONENTS[k] ?? GEX_KEYS[k] ?? k);
+}
+const GEX_KEYS: Readonly<Record<string, string>> = { gex_regime: 'GEX 체제', gex: 'GEX 체제' };
+
 function finite(v: number | null | undefined): v is number {
   return typeof v === 'number' && Number.isFinite(v);
 }
@@ -125,7 +131,7 @@ function labelCls(label: string): string {
 /** 지표 카드 한 칸 — 값·구간·백분위(값 없으면 사유) */
 export function indicatorItem(c: Indicator): KvItem {
   const name = NAMES[c.key] ?? c.key;
-  if (!finite(c.value)) return { label: name, na: c.reasons?.[0] ?? '값 없음' };
+  if (!finite(c.value)) return { label: name, na: c.reasons?.[0] ? koReason(c.reasons[0]) : '값 없음' };
   const state = c.state ? (STATES[c.state] ?? c.state) : '구간 없음';
   const pct = finite(c.pct_rank) ? ` · ${num(c.pct_rank, 0)}%ile` : '';
   const flags = (c.flags ?? []).map((f) => FLAGS[f] ?? f).join('·');
@@ -191,9 +197,9 @@ export function verdictPanels(ctx: PageContext): { vp: Panel; fp: Panel } {
   const vp = panel(ctx.tier, {
     ...common,
     title: TITLES.verdict,
-    def: '공포탐욕·신용스프레드·시장폭·한국 대 글로벌·수급·GEX 체제 점수 합 — ≥2 위험 선호, ≤−2 위험 회피',
+    def: '여섯 신호(공포탐욕·신용스프레드·시장폭·한국 대 글로벌·외국인 수급·GEX 체제)를 각각 +1(위험 선호)·0·−1(위험 회피)로 매겨 더한다. +2 이상 위험 선호, −2 이하 위험 회피, 신호가 4개 미만이면 보류. 매수·매도 신호가 아니라 지금 분위기가 최근 1년 중 어느 쪽인지의 요약이며, 과거 수익률로 검증되지 않았다.',
   });
-  const fp = panel(ctx.tier, { ...common, title: TITLES.fear, def: '다섯 성분 250거래일 백분위 평균(0~100) — 성분 4개 미만이면 값 없음' });
+  const fp = panel(ctx.tier, { ...common, title: TITLES.fear, def: '0(극단적 공포)~100(극단적 탐욕). 변동성(VKOSPI — 높을수록 공포)·20일선 위 종목 비율·신용잔고 증가 속도·외국인 20일 순매수·회사채 스프레드(넓을수록 공포)가 각각 최근 1년(최대 250거래일) 중 몇 % 위치인지를 평균한다. 성분 4개 미만이면 값 없음. 극단 구간은 흔히 역발상 참고로 쓴다.' });
   ctx.root.append(vp.el, fp.el);
   return { vp, fp };
 }
@@ -211,8 +217,9 @@ export async function mountVerdict(ctx: PageContext): Promise<void> {
     return;
   }
   const d = env.data;
-  vp.setSource(env);
-  fp.setSource(env);
+  const koEnv = { ...env, notes: env.notes.map(koReason) }; // '값 없음: export_momentum…' → 화면 이름
+  vp.setSource(koEnv);
+  fp.setSource(koEnv);
   const v = d.verdict;
   if (!v) vp.showMessage(`판정 아직 없음 — ${DIAG_HINT.daily}`);
   else {
@@ -225,7 +232,7 @@ export async function mountVerdict(ctx: PageContext): Promise<void> {
         { layout: 'rows' },
       ),
       d.caution ? h('p', { class: 'warn' }, '이벤트 주의 ', tags) : null,
-      v.reasons?.length ? h('p', { class: 'dim' }, v.reasons.join(' · ')) : null,
+      v.reasons?.length ? h('p', { class: 'dim' }, v.reasons.map(koReason).join(' · ')) : null,
     );
   }
   const f = d.fear_greed;
@@ -236,7 +243,7 @@ export async function mountVerdict(ctx: PageContext): Promise<void> {
       fp.body,
       gauge({ label: '국장 공포탐욕(0~100)', value: f.score ?? null, edges: FEAR_EDGES, bands: FEAR_BANDS }),
       kv(comps, { layout: 'rows' }),
-      f.reasons?.length ? h('p', { class: 'dim' }, f.reasons.join(' · ')) : null,
+      f.reasons?.length ? h('p', { class: 'dim' }, f.reasons.map(koReason).join(' · ')) : null,
     );
   }
 }
@@ -244,7 +251,7 @@ export async function mountVerdict(ctx: PageContext): Promise<void> {
 /** ② 공공지표 진단 — .lvl 행 다섯 + 매크로 위험 게이지(공개) + 추이(반폭) */
 export async function mountPublic(ctx: PageContext): Promise<void> {
   const common = { tier: 'public' as const, span: 6 as const, src: DIAG_SOURCE };
-  const p = panel(ctx.tier, { ...common, title: TITLES.public, def: '공공데이터만으로 만든 판정 — 신용스프레드·신용잔고·예탁금·수출 모멘텀·금리 방향' });
+  const p = panel(ctx.tier, { ...common, title: TITLES.public, def: '공개 통계로 본 거시 환경. 스프레드가 좁으면 신용 불안이 낮다, 신용잔고·예탁금이 늘면 개인 자금이 들어온다, 수출 증가율은 기업 이익의 선행 지표, 금리 하락은 완화 쪽. 각 값을 과거와 비교해 다섯 칸(극단 낮음~극단 높음)으로 나눈다 — 비교할 과거가 60일 미만이면 이력 부족.' });
   const hp = panel(ctx.tier, { ...common, title: TITLES.publicHist });
   ctx.root.append(p.el, hp.el);
   let env: Envelope<DiagSummary | PublicSummary>;
@@ -304,7 +311,7 @@ export async function mountPublic(ctx: PageContext): Promise<void> {
 /** ③ 시장 진단 패널 둘(틀만 — verdictPanels 와 같은 까닭) */
 export function marketPanels(ctx: PageContext): { p: Panel; hp: Panel } {
   const common = { tier: 'login' as const, lock: 'quote_based', span: 6 as const, src: DIAG_SOURCE };
-  const p = panel(ctx.tier, { ...common, title: TITLES.market, def: '250거래일 백분위 다섯 칸 — 반도체 쏠림 극단 높음은 취약 꼬리표(점수 밖)' });
+  const p = panel(ctx.tier, { ...common, title: TITLES.market, def: '각 값이 최근 1년(최대 250거래일) 중 어디쯤인지(백분위)를 다섯 칸으로 나눈다. 높음일수록 그 지표가 위험 선호 쪽으로 강하다. 반도체 쏠림(삼성전자·SK하이닉스 대 코스피)이 극단이면 소수 종목 의존이라 취약 꼬리표(점수 밖). 지수 일봉은 다음 날 아침에 들어와 그날 값은 다음 날 채워진다.' });
   const hp = panel(ctx.tier, { ...common, title: TITLES.marketHist });
   ctx.root.append(p.el, hp.el);
   return { p, hp };
