@@ -191,3 +191,17 @@ def test_backfill_fills_history_in_order() -> None:
     assert [x["day"] for x in res] == [
         d.isoformat() for d in (date(2026, 12, n) for n in range(1, 11)) if CAL.is_trading_day(d)
     ]
+
+
+def test_kospi_bars_found_under_the_krx_name_code() -> None:
+    """원장 코스피 일봉은 KRX 이름 코드('코스피')로만 들어온다 — 0001 로만 찾아 반도체 쏠림·한국 대
+    글로벌이 늘 '값 없음'이었다(2026-10-20)."""
+    from kbj.core.rows import IndexBar
+
+    r = memory_repos()
+    days = [DAY - timedelta(days=i) for i in range(5, -1, -1)]
+    bars = [IndexBar("코스피", d, None, 1.0, 1.0, 1.0, 100.0 + i, None, None, "krx", Quality.OK)
+            for i, d in enumerate(days)]  # fmt: skip
+    r.market.upsert_index_bars(bars, loaded_by="t", received_at=NOW)
+    got = diag._kospi_bars(r, DAY, 10)  # pyright: ignore[reportPrivateUsage]
+    assert [b.close for b in got] == [100.0 + i for i in range(6)]

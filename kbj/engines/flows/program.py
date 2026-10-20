@@ -4,8 +4,9 @@
 `kbj.core.p5_rows.ProgramMarketRow`·`ProgramStockRow`(금액 **원**). I/O 없음(계약 ⑨).
 
 - 검산 ④: 한 (날짜·시장·거래소·슬롯) 묶음에서 측정값마다 `전체 = 차익 + 비차익`(위탁·자기·합계
-  각각), `합계 = 위탁 + 자기`(차익·비차익·전체 각각). 허용 0(합성 원장 — 실데이터는 단위 반올림이
-  있으면 [실측 필요 #42]). 항이 빠지면 그 식은 **불가**(세기만 — 0 으로 채우지 않는다). 실패 묶음의
+  각각), `합계 = 위탁 + 자기`(차익·비차익·전체 각각). 허용 = KIS 표기 단위 1(`CHECK4_TOL` — 대금
+  백만원·수량 1): 칸마다 따로 반올림돼 실데이터 잔차가 ±1 단위로 온다(실측 2026-10-20 — 허용 0 이면
+  매일 invalid 였다). 항이 빠지면 그 식은 **불가**(세기만 — 0 으로 채우지 않는다). 실패 묶음의
   행은 `invalid`(집계 제외 — 수는 보인다).
 - 일별 막대: 순매수 = 전체(whol) 합계(smtn) 순매수 대금. 상세 = 차익·비차익(합계) × 위탁·자기(전체).
 - 상위 표: 순매수 상위 = 순매수 대금 > 0 을 큰 순, 순매도 상위 = 순매수 대금 < 0 을 작은 순(같으면
@@ -28,6 +29,7 @@ from kbj.core.quality import Quality
 from kbj.core.rows import UniverseRow
 
 __all__ = [
+    "CHECK4_TOL",
     "MARKET_NAME",
     "MEASURES",
     "SWEEP_SKIP_KINDS",
@@ -50,6 +52,11 @@ MEASURES: Final[tuple[str, ...]] = (
 # 프로그램 시장(K·Q) → 유니버스·거래대금 순위의 시장 이름
 MARKET_NAME: Final[Mapping[str, str]] = {"K": "KOSPI", "Q": "KOSDAQ"}
 SWEEP_SKIP_KINDS: Final = frozenset({"etf", "etn"})  # 마감 훑기에서 빼는 종류(주식 프로그램 TR)
+# 검산 ④ 허용 잔차(원·주) — KIS 시장 프로그램 표기 단위 1(대금 백만원 — `kis.program`
+# MARKET_VALUE_UNIT_KRW, 수량 그대로). 세 칸이 따로 반올림돼 |잔차| ≤ 1 단위
+CHECK4_TOL: Final[Mapping[str, int]] = {
+    m: (1_000_000 if m.endswith("_value") else 1) for m in MEASURES
+}
 GroupKey = tuple[date, str, str, datetime | None]  # (날짜, 시장, 거래소, 슬롯 — 일별은 None)
 Side = Literal["buy", "sell"]
 Scope = Literal["intraday", "close"]
@@ -91,7 +98,7 @@ def _check_group(
                 na += 1
                 continue
             checked += 1
-            if w != a + n:
+            if abs(w - (a + n)) > CHECK4_TOL[m]:
                 fails.append(Check4Failure(key, "whol=arbt+nabt", side, m, w - (a + n)))
         for kind in PROGRAM_KINDS:
             t, e, o = (_get(g, kind, s, m) for s in ("smtn", "entm", "onsl"))
@@ -99,7 +106,7 @@ def _check_group(
                 na += 1
                 continue
             checked += 1
-            if t != e + o:
+            if abs(t - (e + o)) > CHECK4_TOL[m]:
                 fails.append(Check4Failure(key, "smtn=entm+onsl", kind, m, t - (e + o)))
     return fails, checked, na
 

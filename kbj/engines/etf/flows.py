@@ -4,6 +4,8 @@
 
 - 순유입 = (Sₜ − Sₜ₋₁) × NAVₜ — 가격이 올라 늘어난 순자산은 넣지 않는다
 - 가격효과 = Sₜ₋₁ × (NAVₜ − NAVₜ₋₁)
+- 좌수 = 유효 좌수(`effective_shares` — 상장좌수가 설정·환매를 하루 늦게 싣는 ETF 를 보고 순자산
+  ÷ NAV 로 맞춘다, metrics §4)
 - 검산 ③ = 순자산 변화 − (순유입 + 가격효과). 계산 순자산(S×NAV)으로는 항등식이라 잔차 0(부동소수
   오차뿐). **보고 순자산**(KRX `INVSTASST_NETASST_TOTAMT` → `EtfDay.net_asset`)이 두 날 다 있으면
   그것으로 대조하고, 허용오차 = 0.005원 × (Sₜ + Sₜ₋₁) + 공표 단위(`unit`, 기본 1원 —
@@ -29,7 +31,7 @@
 from __future__ import annotations
 
 from collections.abc import Collection, Iterable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime
 from itertools import pairwise
 from typing import Any, Final, Literal
@@ -50,6 +52,7 @@ __all__ = [
     "c3_tol",
     "check3",
     "daily_flow",
+    "effective_shares",
     "period_totals",
     "type_of",
     "window_flows",
@@ -189,6 +192,43 @@ def daily_flow(
     )  # fmt: skip
 
 
+def _shares_tol(s: int, nav: float, unit: float) -> float:
+    """함의 좌수(보고 순자산 ÷ NAV)와 상장좌수의 허용 차(좌) — NAV 반올림·순자산 공표 단위."""
+    return (NAV_ROUND_KRW * s + unit) / nav + 1.0
+
+
+def effective_shares(rows: Sequence[EtfDay], *, unit: float = 1.0) -> list[EtfDay]:
+    """행마다 그날의 유효 좌수(metrics §4) — 상장좌수가 하루 늦게 반영되는 ETF 를 맞춘다.
+
+    KRX 상장좌수는 그날 설정·환매를 다음 거래일에 싣는 ETF 가 많다(국내형 — 실측 2026-10-20: 보고
+    순자산 ÷ NAV 가 다음 날 상장좌수와 같다). 그대로 쓰면 순유입이 하루 밀리고, 보고 순자산과의
+    검산 ③ 이 깨져 그날 흐름이 invalid 로 빠졌다(국내 대표지수 한 주 순유입 0억). 함의 좌수가
+    그날 상장좌수와 같으면 그대로, 다음 행 상장좌수와 같으면 그것으로 바꾼다. 다음 행이 없는 마지막
+    날에 다르면 함의 좌수(반올림)를 쓰고 `estimated`. 어느 쪽과도 다르면 그대로(검산 ③ 이
+    잡는다)."""
+    out: list[EtfDay] = []
+    for i, cur in enumerate(rows):
+        s, nav, na = cur.list_shrs, cur.nav, cur.net_asset
+        if s is None or na is None or nav is None or nav <= 0 or cur.quality is Quality.INVALID:
+            out.append(cur)
+            continue
+        implied = na / nav
+        if abs(implied - s) <= _shares_tol(s, nav, unit):
+            out.append(cur)
+            continue
+        nxt = rows[i + 1] if i + 1 < len(rows) else None
+        if nxt is None:
+            q = _worst(cur.quality, Quality.ESTIMATED)
+            out.append(replace(cur, list_shrs=round(implied), quality=q))
+            continue
+        s2 = nxt.list_shrs
+        if s2 is not None and abs(implied - s2) <= _shares_tol(s2, nav, unit):
+            out.append(replace(cur, list_shrs=s2))
+        else:
+            out.append(cur)
+    return out
+
+
 def check3(flow: EtfFlow, tol: float | None = None) -> bool | None:
     """검산 ③ — |잔차| ≤ 허용오차면 True. 검산할 수 없는 흐름(신규·입력 결측)은 None(0 으로 바꾸지
     않는다)."""
@@ -246,7 +286,9 @@ def window_flows(
             raise ValueError(f"한 ETF 의 행만 받는다: {code} ≠ {b.code}")
         if b.date <= a.date:
             raise ValueError("행은 날짜 오름차순이고 겹치지 않아야 한다")
-    rows = [d for d in days if delisted_on is None or d.date < delisted_on]
+    rows = effective_shares(
+        [d for d in days if delisted_on is None or d.date < delisted_on], unit=unit
+    )
     events = _events_by_date(code, splits)
 
     def one(prev: EtfDay | None, cur: EtfDay) -> EtfFlow:

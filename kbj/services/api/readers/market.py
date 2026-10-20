@@ -107,8 +107,15 @@ def _sourced_int(v: Sourced[int] | None) -> SourcedInt | None:
 
 
 def _index_tile(
-    code: str, name: str | None, bars: Sequence[IndexBar], quotes: Sequence[IndexQuote]
+    code: str,
+    name: str | None,
+    bars: Sequence[IndexBar],
+    quotes: Sequence[IndexQuote],
+    *,
+    open_now: bool = True,
 ) -> IndexTile | None:
+    """KRX 일별(D+1)보다 새 장중 값이 있으면 그것(잠정). `open_now` 가 False(장 마감 뒤)면 같은
+    잠정 값이라도 '장중'(live)이라 하지 않는다 — 마감 뒤에 '장중'이 보였다(2026-10-20)."""
     good = [b for b in sorted(bars, key=lambda b: b.date) if b.quality.usable and b.close]
     live = [q for q in quotes if q.code == code and q.quality.usable and q.value is not None]
     q = max(live, key=lambda x: x.ts) if live else None
@@ -124,7 +131,7 @@ def _index_tile(
             value=q.value,
             chg_pct=q.chg_pct,
             spark=[*spark[-(SPARK_N - 1) :], q.value],
-            live=True,
+            live=open_now,
             source=label([q.source]),
             as_of=slot_end(q.ts),
             quality=Quality.ESTIMATED,
@@ -320,6 +327,15 @@ def _end_day(ctx: ReadContext, day: date | None) -> tuple[date, bool]:
     return day, False
 
 
+def _equity_open(ctx: ReadContext, now: datetime) -> bool:
+    """지금이 그날 정규장(개장~마감) 안인가."""
+    d = now.date()
+    if not ctx.cal.is_trading_day(d):
+        return False
+    start, end = ctx.cal.equity_bounds(d)
+    return start <= now < end
+
+
 def market_summary(ctx: ReadContext, *, day: date | None = None) -> Envelope[MarketSummary]:
     cfg = ctx.markets.market
     now = ctx.now_kst()
@@ -335,8 +351,11 @@ def market_summary(ctx: ReadContext, *, day: date | None = None) -> Envelope[Mar
     quotes = ctx.repos.market.index_quotes(day_start(today), now) if with_live else []
     notes: list[str] = []
     tiles: list[IndexTile] = []
+    open_now = with_live and _equity_open(ctx, now)
     for code in codes:
-        t = _index_tile(code, cfg.intraday_indices.get(code), bars.get(code, []), quotes)
+        t = _index_tile(
+            code, cfg.intraday_indices.get(code), bars.get(code, []), quotes, open_now=open_now
+        )
         if t is None:
             notes.append(f"지수 {code} 자료 없음")
         else:

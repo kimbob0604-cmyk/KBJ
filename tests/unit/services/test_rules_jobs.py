@@ -288,7 +288,8 @@ def test_intraday_no_rules_calls_no_kis_and_holiday_skips() -> None:
     server, kis = kis_for(W, clock)
     before = len(server.calls)
     res = R.intraday(job_ctx("rules.intraday", slot_as_of(ts), now=clock(), repos=repos, kis=kis))
-    assert res.status == "ok" and res.detail["rules"] == 0
+    # 'ok' 면 선점한 시세 키를 안 받아 실행기가 실패로 센다(2026-10-20 — 10분마다 실패)
+    assert res.status == "skipped" and "규칙 없음" in res.detail["reason"]
     assert len(server.calls) == before
     sat = TradingCalendar.default().next_weekday(W.days[-1])  # 다음 평일 — 휴장 아님일 수 있다
     hol = W.days[-1] + timedelta(days=1)  # 토요일

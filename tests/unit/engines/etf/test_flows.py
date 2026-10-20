@@ -316,3 +316,33 @@ def test_broken_row_is_only_that_row_invalid() -> None:
     # k 일 보고 순자산이 틀리면 k 일(전날 대비)과 k+1 일(그날 대비) 대조가 깨진다
     assert bad == [rows[k].date, rows[k + 1].date]
     assert len(c3_checks(flows, datetime(2026, 10, 7, tzinfo=UTC))) == 2
+
+
+# ── 유효 좌수(상장좌수가 하루 늦는 ETF — 실측 2026-10-20) ──
+
+
+def test_listing_lag_is_aligned_by_reported_net_asset() -> None:
+    """국내형 다수는 그날 설정을 다음 날 상장좌수에 싣는다 — 보고 순자산 ÷ NAV = 다음 날 상장좌수.
+    그대로면 순유입이 하루 밀리고 검산 ③ 이 깨져 흐름이 빠졌다(국내 대표지수 한 주 0억)."""
+    d = tdays(4)
+    navs = [10_000.0, 10_100.0, 9_900.0, 10_050.0]
+    # 둘째 날 +20만 좌 설정, 셋째 날 −5만 환매
+    true_s = [1_000_000, 1_000_000, 1_200_000, 1_150_000]
+    listed = [true_s[0], true_s[0], true_s[1], true_s[2]]  # 상장좌수는 하루 늦다
+    rows = [day("E9", d[i], listed[i], navs[i], na=round(true_s[i] * navs[i])) for i in range(4)]
+    flows = window_flows(rows, 3, trading_days=d)
+    assert [f.status for f in flows] == ["ok", "ok", "ok"]
+    assert flows[0].net_inflow == pytest.approx(0.0)
+    assert flows[1].net_inflow == pytest.approx(200_000 * navs[2])  # 설정한 날에 잡힌다
+    assert flows[2].net_inflow == pytest.approx(-50_000 * navs[3])
+    assert flows[2].quality is Quality.ESTIMATED  # 마지막 날 — 다음 날 상장좌수로 확인 전
+
+
+def test_same_day_listing_is_left_as_is() -> None:
+    d = tdays(3)
+    rows = [day("E8", d[0], 1_000_000, 10_000.0), day("E8", d[1], 1_100_000, 10_000.0),
+            day("E8", d[2], 1_100_000, 10_100.0)]  # fmt: skip
+    flows = window_flows(rows, 2, trading_days=d)
+    assert [f.status for f in flows] == ["ok", "ok"]
+    assert flows[0].net_inflow == pytest.approx(100_000 * 10_000.0)
+    assert all(f.quality is OK for f in flows)

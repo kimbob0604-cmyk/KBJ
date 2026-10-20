@@ -49,6 +49,14 @@ def test_turnover_tolerance_boundary_is_inclusive() -> None:
     assert bad[("A", "turnover")] == "mismatch"
 
 
+def test_turnover_below_krx_is_after_hours_not_a_mismatch() -> None:
+    """KIS 15:35 스냅에는 시간외·대량매매가 없다 — KRX 확정보다 작으면 정상, 크면 불일치."""
+    low = verdicts([snap("A", 1.0, 80, None, "kis")], [snap("A", 1.0, 1_000, None, "krx")])
+    assert low[("A", "turnover")] == "ok"
+    high = verdicts([snap("A", 1.0, 1_100, None, "kis")], [snap("A", 1.0, 1_000, None, "krx")])
+    assert high[("A", "turnover")] == "mismatch"
+
+
 def test_one_side_only_and_missing_fields() -> None:
     v = verdicts(
         [snap("A", 1.0, None, None, "kis"), snap("K", 1.0, 1, 1, "kis")],

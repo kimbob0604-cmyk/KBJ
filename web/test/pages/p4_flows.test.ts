@@ -116,12 +116,21 @@ describe('페이지 4 수급 — 로그인', () => {
     expect(text(p.querySelector('.body'))).not.toContain('검산 ②');
   });
 
-  it('검산 잔차가 0 이 아니면 경고 표시', async () => {
+  it('검산 잔차가 반올림 범위를 넘으면 경고 표시', async () => {
     const inv = fixture<InvFx>('flows_investors');
-    inv.data.check2_residual = 1_000_000;
+    inv.data.check2_residual = 50_000_000;
     const { root } = await mountLogin({ flows_investors: inv });
     const fail = panelByTitle(root, '투자자별 순매수').querySelector('[data-check="fail"]');
-    expect(text(fail)).toBe('검산 ② 7구분 합 − 기관 차이 +1,000,000원 (0 이어야 정상)');
+    expect(text(fail)).toContain('검산 ② 7구분 합 − 기관 차이 +50,000,000원 (반올림 범위 ±');
+  });
+
+  it('KIS 백만원 반올림 안의 잔차는 정상(실측 2026-10-20 -1,000,000원)', async () => {
+    const inv = fixture<InvFx>('flows_investors');
+    inv.data.check2_residual = -1_000_000;
+    const { root } = await mountLogin({ flows_investors: inv });
+    const p = panelByTitle(root, '투자자별 순매수');
+    expect(p.querySelector('[data-check="fail"]')).toBeNull();
+    expect(text(p)).toContain('원천 단위 반올림 범위');
   });
 
   it('invalid 행은 그리지 않고 수만 적는다', async () => {
@@ -135,14 +144,16 @@ describe('페이지 4 수급 — 로그인', () => {
     expect(text(p)).not.toContain('합성10');
   });
 
-  it('장중 잠정: 세 표 모두 잠정 배지, 이름은 순위 응답·스크리너에서', async () => {
+  it('장중 잠정: 세 표 모두 잠정 배지, 이름은 응답(기본정보)·순위·스크리너에서', async () => {
     const { root } = await mountLogin();
     const p = panelByTitle(root, '장중 잠정');
     expect(p.querySelectorAll('table')).toHaveLength(3);
     expect(text(p.querySelector('h3 .src'))).toContain('잠정');
     expect(text(p)).toContain('10:00 슬롯 · 장중 잠정 — 15:35 마감 뒤 확정');
     expect(p.querySelectorAll('.q-badge').length).toBeGreaterThanOrEqual(15);
-    expect(text(p.querySelector('tbody tr'))).toContain('합성Q00000');
+    // 가집계 상위 줄에도 서버가 붙인 이름(코드만 보이던 줄 — 2026-10-20)
+    expect(text(p.querySelector('tbody tr'))).toContain('합성00');
+    expect(text(p.querySelector('tbody tr'))).toContain('Q00000');
   });
 
   it('누적 합 — 값이 없는 날은 끊고 이어서 더한다', () => {

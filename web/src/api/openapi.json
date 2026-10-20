@@ -20665,6 +20665,17 @@
               }
             ],
             "title": "Qty"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
           }
         },
         "additionalProperties": false,

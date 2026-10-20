@@ -90,25 +90,36 @@ export function notesLine(notes: readonly string[], invalidRows = 0): HTMLParagr
 
 /**
  * 검산 줄. residual 이 null·undefined 면 '검산 불가: 사유'(0 으로 그리지 않는다).
- * 숫자면 '<label> 차이 <b>n</b>' — 0 이 아니면 경고 표시.
+ * 숫자면 '<label> 차이 <b>n</b>' — |n| 이 tol 을 넘으면 경고 표시. tol 은 원천 표기 단위의
+ * 반올림 범위(예: KIS 시장 투자자는 칸마다 백만원 반올림 — 0 < |n| ≤ tol 이면 '반올림 범위').
  */
 export function checkLine(
   label: string,
   residual: number | null | undefined,
-  opts: { reason?: string; unit?: string; digits?: number } = {},
+  opts: { reason?: string; unit?: string; digits?: number; tol?: number } = {},
 ): HTMLDivElement {
   if (residual === null || residual === undefined || !Number.isFinite(residual)) {
     return h('div', { class: 'check', data: { check: 'unavailable' } }, `검산 불가: ${opts.reason ?? '입력 부족'}`);
   }
-  const bad = residual !== 0;
+  const tol = opts.tol ?? 0;
+  const bad = Math.abs(residual) > tol;
+  const rounded = !bad && residual !== 0;
   return h(
     'div',
     { class: bad ? 'check fail' : 'check', data: { check: bad ? 'fail' : 'ok' } },
     `${label} 차이 `,
     h('b', null, num(residual, opts.digits ?? 0, true)),
     opts.unit ?? '',
-    bad ? ' (0 이어야 정상)' : '',
+    bad ? (tol ? ` (반올림 범위 ±${num(tol, 0)} 밖)` : ' (0 이어야 정상)') : rounded ? ' (원천 단위 반올림 범위)' : '',
   );
+}
+
+/** KIS 시장 투자자(FHPTJ04040000)는 칸마다 백만원 반올림 — 시장 2 × 칸 수만큼 어긋날 수 있다. */
+export const KIS_MARKET_ROUND_WON = 1_000_000;
+
+/** 시장 투자자 합계 검산의 반올림 허용(원) — 칸 수 × 시장 수 × 백만원. */
+export function roundTol(d: { by_market: Record<string, unknown> }, cells: number): number {
+  return KIS_MARKET_ROUND_WON * cells * Math.max(1, Object.keys(d.by_market).length);
 }
 
 /** 빈 데이터 문구: '아직 없음 — krx.daily 08:05' */

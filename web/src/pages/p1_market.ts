@@ -14,7 +14,7 @@ import { DataError, type Envelope, type Quality, worstQuality } from '../data/so
 import { h } from '../ui/dom';
 import { DASH, eok, joEok, num, pct, shortDate, signClass, times } from '../ui/fmt';
 import { type Panel, panel } from '../ui/panel';
-import { checkLine, qValue, visibleRows } from '../ui/quality';
+import { checkLine, qValue, roundTol, visibleRows } from '../ui/quality';
 import { seg } from '../ui/seg';
 import { barChart, heatColor, level, sparkline } from '../ui/svg';
 import { table } from '../ui/table';
@@ -351,6 +351,14 @@ function sumRecent(recent: readonly S['DayTotals'][], key: string, n: number): n
   return s;
 }
 
+// 시장 열 — 서버는 KIS 업종 코드(0001·1001)를 준다(market_investor_daily.market_code)
+const MARKET_LABEL: Readonly<Record<string, string>> = {
+  KOSPI: '코스피',
+  KOSDAQ: '코스닥',
+  '0001': '코스피',
+  '1001': '코스닥',
+};
+
 export function drawInvestors(p: Panel, env: Envelope<S['InvestorTotals']>): null {
   const d = env.data;
   const markets = Object.keys(d.by_market).sort();
@@ -371,7 +379,7 @@ export function drawInvestors(p: Panel, env: Envelope<S['InvestorTotals']>): nul
     },
     ...markets.map((m) => ({
       key: m,
-      label: `${m === 'KOSPI' ? '코스피' : m === 'KOSDAQ' ? '코스닥' : m}(억)`,
+      label: `${MARKET_LABEL[m] ?? m}(억)`,
       cell: (k: string) => eok(d.by_market[m]?.[k], 0, true),
       cls: (k: string) => signClass(d.by_market[m]?.[k]),
     })),
@@ -384,6 +392,7 @@ export function drawInvestors(p: Panel, env: Envelope<S['InvestorTotals']>): nul
           ? '기타법인 미제공'
           : '4구분 입력 부족',
       unit: '원',
+      tol: roundTol(d, 4),
     }),
   );
   p.setSource({ ...env, notes: [...new Set([...env.notes, ...d.notes])] });

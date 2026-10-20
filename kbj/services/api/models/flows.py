@@ -30,7 +30,7 @@ __all__ = [
 
 
 class ScreenRow(ApiModel):
-    rank: int
+    rank: int  # 두 시장을 합친 거래대금 순(시장 칸은 그대로)
     code: str
     name: str | None
     market: str | None
@@ -114,15 +114,16 @@ class StockFlowDetail(ApiModel):
 
 
 class IntradayRow(ApiModel):
-    rank: int | None
+    rank: int | None  # 코스피·코스닥을 합쳐 순매수 금액 순(KIS 순위는 시장마다 따로다)
     code: str
     value: int | None  # 순매수 금액(원) — 증권사 가집계(잠정)
     qty: int | None
+    name: str | None = None  # 종목 이름(최근 KRX 기본정보 — 모르면 None)
 
 
 class RankItem(ApiModel):
     market: str
-    rank: int
+    rank: int  # 두 시장을 합친 거래대금 순(시장 칸은 그대로)
     code: str
     name: str | None
     turnover: int | None

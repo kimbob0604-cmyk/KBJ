@@ -44,7 +44,7 @@ from kbj.config.markets import MarketsConfig, load_markets
 from kbj.core.calendar import TradingCalendar
 from kbj.core.p7_rows import DiagIndicatorRow, FearGreedRow, VerdictRow
 from kbj.core.quality import Quality
-from kbj.core.rows import Investor
+from kbj.core.rows import IndexBar, Investor
 from kbj.core.time import KST
 from kbj.engines.diagnosis.bands import Obs, pct_rank, worst
 from kbj.engines.diagnosis.events import caution_days
@@ -85,6 +85,16 @@ __all__ = [
 JOB: Final = "diag.daily"
 SOURCE: Final = "KBJ:diag.daily"
 KOSPI: Final = "0001"  # KIS 업종 코드(코스피 지수 — readers.market 과 같은 값)
+KOSPI_KRX: Final = "코스피"  # KRX 지수 일별의 코드(공백 뺀 이름 — krx_daily.index_code)
+
+
+def _kospi_bars(repos: Repos, day: date, n: int) -> list[IndexBar]:
+    """코스피 일봉 — KIS 코드(0001)로 쌓인 것이 없으면 KRX 일별(코스피). 원장은 KRX 이름 코드로만
+    들어와 0001 로만 찾으면 늘 비었다(2026-10-20 — 반도체 쏠림·한국 대 글로벌 '값 없음')."""
+    got = repos.market.index_series([KOSPI, KOSPI_KRX], day, n)
+    return got.get(KOSPI) or got.get(KOSPI_KRX, [])
+
+
 SPOT_MARKETS: Final[tuple[str, ...]] = (
     "0001",
     "1001",
@@ -165,15 +175,14 @@ def _market_values(
     out: dict[str, TodayValue] = {}
     ledger = _load_ledger(repos, day, LEDGER_N)
     rcfg = markets.ribbon
-    idx = repos.market.index_series([KOSPI, *rcfg.cyclical, *rcfg.defensive], day, n + 5)
+    idx = repos.market.index_series([*rcfg.cyclical, *rcfg.defensive], day, n + 5)
+    kospi_bars = _kospi_bars(repos, day, n + 5)
     if ledger is None or ledger.last_day != day:
         why = "원장 없음 — market.close_collect·krx.daily"
         for k in ("semis_concentration", "breadth_ma20", "breadth_new_high"):
             out[k] = TodayValue(None, None, "", why)
     else:
-        semi = semi_skew_from_ledger(
-            ledger, idx.get(KOSPI, []), day, semis=list(rcfg.semis), period=n
-        )
+        semi = semi_skew_from_ledger(ledger, kospi_bars, day, semis=list(rcfg.semis), period=n)
         out["semis_concentration"] = TodayValue(
             _dec(semi.value), semi.quality, semi.source, semi.reason
         )
@@ -204,9 +213,7 @@ def _market_values(
 
 
 def _kr_vs_global(repos: Repos, day: date, n: int) -> TodayValue:
-    kospi = [
-        b for b in repos.market.index_series([KOSPI], day, n + 1).get(KOSPI, []) if b.date <= day
-    ]
+    kospi = [b for b in _kospi_bars(repos, day, n + 1) if b.date <= day]
     us = repos.us.daily(list(US_INDEX), day, n + 1)
     if len(kospi) < n + 1 or kospi[-1].date != day:
         return TodayValue(None, None, "", f"코스피 {n + 1}일 봉 없음")

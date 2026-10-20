@@ -155,6 +155,17 @@ describe('페이지 1 시장 — 로그인', () => {
     expect(text(p.querySelector('[data-check]'))).toBe('검산 불가: 기타법인 미제공');
   });
 
+  it('시장 열 이름 — 서버가 KIS 업종 코드(0001·1001)로 줘도 코스피·코스닥(실데이터 2026-10-20)', async () => {
+    const inv = fixture<{ data: { by_market: Record<string, unknown> } }>('flows_investors');
+    const { KOSPI: k, KOSDAQ: q } = inv.data.by_market;
+    inv.data.by_market = { '0001': k, '1001': q };
+    const { root } = await mountLogin({ flows_investors: inv });
+    const head = text(panelByTitle(root, '시장 투자자 수급').querySelector('thead'));
+    expect(head).toContain('코스피(억)');
+    expect(head).toContain('코스닥(억)');
+    expect(head).not.toContain('0001');
+  });
+
   it('invalid 지수는 그리지 않고 수를 적는다', async () => {
     const s = fixture<{ data: { indices: { quality: string }[] } }>('market_summary');
     const first = s.data.indices[0];

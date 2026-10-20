@@ -10,6 +10,7 @@ from kbj.core.p5_rows import ProgramMarketRow, ProgramStockRow
 from kbj.core.quality import Quality
 from kbj.core.rows import UniverseRow
 from kbj.engines.flows.program import (
+    CHECK4_TOL,
     apply_program_checks,
     check4,
     day_bars,
@@ -49,16 +50,24 @@ def group(d: date = DAY, nudge: int = 0) -> list[ProgramMarketRow]:
 
 def test_check4_hand_computed() -> None:
     assert check4(group()) == []
-    fails = check4(group(nudge=1))
+    over = CHECK4_TOL["net_value"] + 1
+    fails = check4(group(nudge=over))
     assert {(f.rule, f.at, f.measure, f.residual) for f in fails} == {
-        ("whol=arbt+nabt", "smtn", "net_value", 1),
-        ("smtn=entm+onsl", "whol", "net_value", 1),
+        ("whol=arbt+nabt", "smtn", "net_value", over),
+        ("smtn=entm+onsl", "whol", "net_value", over),
     }
+
+
+def test_check4_allows_one_unit_of_kis_rounding() -> None:
+    """KIS 는 칸마다 백만원으로 반올림한다 — 잔차 ±1 단위는 통과(실측 2026-10-20: 72,944 +
+    (-280,794) = -207,850 대 전체 -207,849)."""
+    assert check4(group(nudge=CHECK4_TOL["net_value"])) == []
+    assert check4(group(nudge=-CHECK4_TOL["net_value"])) == []
     # buy_value 도 바뀌었으면 그 칸도 센다 — 여기선 net 만 바꿨다
 
 
 def test_apply_checks_marks_whole_group_invalid_and_bar_has_no_value() -> None:
-    rows = group(date(2026, 11, 16)) + group(nudge=5)
+    rows = group(date(2026, 11, 16)) + group(nudge=5 * CHECK4_TOL["net_value"])
     checked, fails = apply_program_checks(rows)
     assert fails and {r.quality for r in checked if r.trade_date == DAY} == {Quality.INVALID}
     bars = day_bars(checked)

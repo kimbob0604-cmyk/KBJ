@@ -268,16 +268,24 @@ def flows_intraday(ctx: ReadContext) -> Envelope[IntradayFlows]:
         raise NoData("아직 없음 — flows.intraday(장중 10분 슬롯)")
     slot = max(stamps)
 
+    names = {u.code: u.name for u in ctx.repos.market.universe(now.date()) if u.name}
+
     def top(who: Investor) -> list[IntradayRow]:
+        # KIS 가집계 순위는 시장(코스피·코스닥)마다 1위부터라 섞으면 1·1·2·2 가 된다 — 금액 순으로
+        # 합쳐 다시 매긴다(2026-10-20 화면). 이름은 KRX 기본정보(코드만 보이던 줄)
         rows = [r for r in inv if r.ts == slot and r.investor is who and r.quality.usable]
-        rows.sort(key=lambda r: (r.rank if r.rank is not None else 10**9, -(r.net_value or 0)))
+        rows.sort(key=lambda r: (-(r.net_value or 0), r.code))
         return [
-            IntradayRow(rank=r.rank, code=r.code, value=r.net_value, qty=r.net_qty)
-            for r in rows[:INTRADAY_TOP_N]
+            IntradayRow(
+                rank=i, code=r.code, value=r.net_value, qty=r.net_qty, name=names.get(r.code)
+            )
+            for i, r in enumerate(rows[:INTRADAY_TOP_N], start=1)
         ]
 
+    # 거래대금 순위도 두 시장을 합쳐 금액 순 — 시장 순으로 붙이면 화면 앞 10줄이 코스닥만이었다
     rk = sorted(
-        (r for r in ranks if r.ts == slot and r.quality.usable), key=lambda r: (r.market, r.rank)
+        (r for r in ranks if r.ts == slot and r.quality.usable),
+        key=lambda r: (-(r.turnover or 0), r.market, r.rank),
     )
     data = IntradayFlows(
         slot=slot,
@@ -286,13 +294,13 @@ def flows_intraday(ctx: ReadContext) -> Envelope[IntradayFlows]:
         turnover_rank=[
             RankItem(
                 market=r.market,
-                rank=r.rank,
+                rank=i,
                 code=r.code,
                 name=r.name,
                 turnover=r.turnover,
                 chg_pct=r.chg_pct,
             )
-            for r in rk
+            for i, r in enumerate(rk, start=1)
         ],
     )
     used = [r.source for r in inv if r.ts == slot] + [r.source for r in rk]

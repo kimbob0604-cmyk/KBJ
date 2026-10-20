@@ -12,7 +12,7 @@ import type { Envelope, Quality } from '../data/source';
 import { h } from '../ui/dom';
 import { DASH, eok, eokNum, kstTime, num, pct, shortDate, signClass, times } from '../ui/fmt';
 import { type Panel, panel } from '../ui/panel';
-import { checkLine, qValue, visibleRows } from '../ui/quality';
+import { checkLine, qValue, roundTol, visibleRows } from '../ui/quality';
 import { type Option, seg, select } from '../ui/seg';
 import { centerLevel, s, svgBox } from '../ui/svg';
 import { type Column, table } from '../ui/table';
@@ -156,6 +156,7 @@ export function drawInvestorBlock(p: Panel, env: Envelope<S['InvestorTotals']>):
             .join('·')} 미제공`
         : '입력 부족',
       unit: '원',
+      tol: roundTol(d, 4),
     }),
   );
   if (d.inst7) {
@@ -172,7 +173,11 @@ export function drawInvestorBlock(p: Panel, env: Envelope<S['InvestorTotals']>):
           { class: 'levels' },
           entries.map(([k, v]) => centerLevel(INST7_LABEL[k] ?? k, v, m7, eok(v, 0, true))),
         ),
-        checkLine('검산 ② 7구분 합 − 기관', d.check2_residual, { reason: '기관 합계 없음', unit: '원' }),
+        checkLine('검산 ② 7구분 합 − 기관', d.check2_residual, {
+          reason: '기관 합계 없음',
+          unit: '원',
+          tol: roundTol(d, 8),
+        }),
       ),
     );
   }
@@ -291,6 +296,7 @@ export function drawDetail(p: Panel, env: Envelope<S['StockFlowDetail']>): numbe
 export function drawIntraday(p: Panel, env: Envelope<S['IntradayFlows']>, names: Map<string, string>): number {
   const d = env.data;
   for (const r of d.turnover_rank) if (r.name) names.set(r.code, r.name);
+  for (const r of [...d.top_foreign, ...d.top_inst]) if (r.name) names.set(r.code, r.name);
   const est = (text: string): HTMLElement | null => qValue(text, 'estimated');
   const topCols = (label: string): Column<S['IntradayRow']>[] => [
     { key: 'rank', label: '#', cell: (r) => num(r.rank) },

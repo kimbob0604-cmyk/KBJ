@@ -320,7 +320,11 @@ def intraday(ctx: JobContext) -> JobResult:
     cfg = _cfg(ctx)
     rules, bad = active_rules(repos.rules, cfg, modes=("intraday", "both"))
     if not rules:
-        return JobResult("ok", rows=0, detail={"rules": 0, "dsl_invalid": len(bad)})
+        # 'ok' 로 끝내면 선점한 시세 키(watch_quotes_intraday)를 안 받은 것이 실패로 세진다 —
+        # 규칙이 없는 날 10분마다 실패가 쌓였다(2026-10-20). 할 일이 없다고 한다.
+        return JobResult(
+            "skipped", rows=0, detail={"reason": "켜진 장중 규칙 없음", "dsl_invalid": len(bad)}
+        )
     run = _Run("intraday", ctx.job or JOB_INTRADAY, ts, day)
     upto = cal.prev_trading_day(day)
     hold = holdings(repos.journal.trades(), upto)

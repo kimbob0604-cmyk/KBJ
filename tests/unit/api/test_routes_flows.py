@@ -112,5 +112,12 @@ def test_intraday_estimated(world: World, authed: TestClient) -> None:
     assert body["quality"] == "estimated"
     d = body["data"]
     assert [x["rank"] for x in d["top_foreign"]] == [1, 2, 3, 4, 5]
+    # 두 시장을 합쳐 금액 순으로 다시 매긴다(KIS 순위는 시장마다 1위부터 — 2026-10-20 1·1·2·2)
+    vals = [x["value"] for x in d["top_foreign"]]
+    assert vals == sorted(vals, reverse=True)
+    assert all(x["name"] for x in d["top_foreign"])  # 코드만 보이던 줄 — 기본정보 이름을 붙인다
     assert len(d["turnover_rank"]) == 5
+    tv = [x["turnover"] for x in d["turnover_rank"]]
+    assert tv == sorted(tv, reverse=True)
+    assert [x["rank"] for x in d["turnover_rank"]] == [1, 2, 3, 4, 5]
     assert body["as_of"].endswith("10:10:00+09:00")

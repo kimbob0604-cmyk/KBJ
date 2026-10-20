@@ -9,7 +9,9 @@ board 엔진의 몫이라 여기 옮기지 않는다), ET `board/ingest/pipeline
   `ReconcileRow`. 판정: 둘 다 있으면 상대 차이(%) ≤ 허용치면 ok, 아니면 mismatch. 한쪽에만 있으면
   missing_kis·missing_krx. 종가 허용치 0 = 정확히 같아야 한다. 시가총액은 KIS 가 억원 단위로 주므로
   (`quotes.MKTCAP_UNIT_KRW` [실측 필요 #22]) 차이가 그 단위 미만이면 ok(소형주의 반올림이 불일치로
-  KIS 행을 무효로 만들지 않게).
+  KIS 행을 무효로 만들지 않게). 거래대금은 **한쪽만** 본다: KIS 마감 스냅(15:35)에는 그 뒤 시간외
+  종가·단일가·대량매매가 없어 KRX 확정보다 작은 것이 정상이다(실측 2026-10-19 — 2,761 종목 중 2,180
+  이 KIS 쪽이 작았고 클 때는 없었다, 종가는 전부 일치). KIS 가 허용치보다 **클 때만** 불일치.
 - 기록 `record(repos, day, now, cfg)`: 그날 KIS 스냅(source kis·ok·거래소 KRX — KRX OpenAPI 는 KRX
   체결분 [실측 필요])과 KRX 스냅(source krx)을 읽어 대조하고 `prv_market.eod_reconcile` 에 쓴다.
   불일치 종목의 KIS 스냅은 `invalid` + 사유(필드·차이). 원장은 krx 행을 고른다(D-P3-7). KIS 마감값이
@@ -101,6 +103,8 @@ def reconcile(
                 same = kv == rv if tol == 0 else diff is not None and abs(diff) <= tol
                 if f == "mktcap" and abs(kv - rv) < MKTCAP_UNIT_KRW:
                     same = True  # KIS 시총은 억원 단위(hts_avls) — 단위 미만 차이는 표기 차이
+                if f == "turnover" and kv < rv:
+                    same = True  # KIS 는 15:35 스냅 — 그 뒤 시간외·대량매매는 KRX 확정에만 있다
                 verdict = "ok" if same else "mismatch"
             out.append(ReconcileRow(day, code, f, kv, rv, diff, verdict, checked_at))
     return out

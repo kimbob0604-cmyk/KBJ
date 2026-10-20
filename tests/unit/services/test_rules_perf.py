@@ -112,7 +112,7 @@ def test_outcome_rows_hand_check(world: World) -> None:
         due = w.days[-30 + h]
         assert r.due_date == due
         assert r.ret == pytest.approx(bars[due].close / sig.entry_price - 1)  # type: ignore[operator]
-        assert r.excess is not None and r.index_code in ("1001", "2001")
+        assert r.excess is not None and r.index_code in ("코스피", "코스닥")
     near = [r for r in rows if r.signal_id != sig.signal_id and r.due_date > day]
     assert near == []  # 미도래 칸은 만들지 않는다
 

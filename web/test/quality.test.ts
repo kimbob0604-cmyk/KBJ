@@ -93,6 +93,15 @@ describe('검산 줄', () => {
     expect(el.textContent).toContain('0 이어야 정상');
   });
 
+  it('원천 단위 반올림 범위 안이면 정상, 밖이면 경고(KIS 백만원 반올림 — 2026-10-20 -1,000,000원)', () => {
+    const ok = checkLine('7구분 합 − 기관', -1_000_000, { unit: '원', tol: 16_000_000 });
+    expect(ok.dataset.check).toBe('ok');
+    expect(ok.textContent).toContain('반올림 범위');
+    const bad = checkLine('7구분 합 − 기관', -20_000_000, { unit: '원', tol: 16_000_000 });
+    expect(bad.dataset.check).toBe('fail');
+    expect(bad.textContent).toContain('밖');
+  });
+
   it('검산 불가: 사유를 쓰고 0 으로 그리지 않는다', () => {
     const el = checkLine('4구분 합', null, { reason: '기타법인 미제공' });
     expect(el.dataset.check).toBe('unavailable');

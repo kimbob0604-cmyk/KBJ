@@ -641,7 +641,9 @@ jobs:
     phase: P3
     enabled: true               # 웨이브 3(묶음 S) — 처리기 import 검증 통과
     owner: "kbj.services.collectors.market_intraday:market"
-    schedule: {equity: {start: open, end: close, every_min: 10}, when: trading_day}
+    # close+10: 15:30 슬롯은 마감 동시호가 결과 전(15:30:00 에 받는다)이라 15:20 값이 남는다 —
+    # 15:40 슬롯이 종가를 받는다(2026-10-20 코스피 5,539.05 로 남고 종가 5,552.74 를 못 받았다)
+    schedule: {equity: {start: open, end: "close+10", every_min: 10}, when: trading_day}
     retry: {max: 2, backoff_s: [20, 40]}      # D-P3-14
     deadline_min: 9
     collects:

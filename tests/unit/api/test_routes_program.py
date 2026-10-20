@@ -17,6 +17,7 @@ import pytest
 from kbj.core.quality import Quality
 from kbj.core.rows import UniverseRow
 from kbj.core.time import KST
+from kbj.engines.flows.program import CHECK4_TOL
 from tests.fixtures.synthetic.p5_world import TODAY
 from tests.unit.api.web_fixtures_p5.program import (
     BEFORE_OPEN,
@@ -132,7 +133,7 @@ def test_program_daily_marks_check4_failures() -> None:
     api = program_api_world()
     assert api.world is not None
     bad = [
-        replace(r, net_value=(r.net_value or 0) + 1)
+        replace(r, net_value=(r.net_value or 0) + 2 * CHECK4_TOL["net_value"])
         for r in api.world.program_days
         if r.trade_date == TODAY and r.market == "K" and (r.kind, r.side) == ("whol", "smtn")
     ]

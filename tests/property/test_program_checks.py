@@ -13,7 +13,7 @@ from kbj.core.p5_rows import MINUTE_INVESTORS, InvestorMinute, ProgramMarketRow
 from kbj.core.quality import Quality
 from kbj.core.time import KST
 from kbj.engines.flows.minute import ORGN_PARTS, check_slot, minute_axis, minute_board
-from kbj.engines.flows.program import check4
+from kbj.engines.flows.program import CHECK4_TOL, check4
 
 DAY = date(2026, 11, 17)
 T0 = datetime(2026, 11, 17, 9, 0, tzinfo=KST)
@@ -107,7 +107,8 @@ def test_program_group_balanced_has_zero_check4(vals: list[tuple[int, int]]) -> 
 
 
 @settings(max_examples=60, deadline=None)
-@given(st.lists(flow, min_size=4, max_size=4), st.integers(0, 8), st.integers(1, 1_000))
+@given(st.lists(flow, min_size=4, max_size=4), st.integers(0, 8),
+       st.integers(CHECK4_TOL["sell_value"] + 1, 10**9))  # fmt: skip
 def test_program_one_cell_drift_is_caught(vals: list[tuple[int, int]], i: int, d: int) -> None:
     rows = program_group(vals)
     rows[i] = replace(rows[i], sell_value=(rows[i].sell_value or 0) + d)

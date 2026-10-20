@@ -10,6 +10,7 @@ from datetime import date
 
 from kbj.core.quality import Quality
 from kbj.core.rows import Investor, InvestorDay
+from kbj.engines.flows.program import CHECK4_TOL
 from kbj.services.engine import verify as V
 from kbj.store.repos import MemoryRepos, memory_repos
 from tests.fixtures.synthetic.p5_world import CLOCK, TODAY, build_world
@@ -24,7 +25,7 @@ def _repos(*, drift: bool = False):
     days = list(w.program_days)
     if drift:
         days = [
-            replace(r, net_value=(r.net_value or 0) + 1)
+            replace(r, net_value=(r.net_value or 0) + 2 * CHECK4_TOL["net_value"])  # 허용 밖
             if r.trade_date == TODAY and r.market == "Q" and (r.kind, r.side) == ("whol", "smtn")
             else r
             for r in days

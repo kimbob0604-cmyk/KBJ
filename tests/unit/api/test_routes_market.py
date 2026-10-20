@@ -44,6 +44,15 @@ def test_summary_intraday_uses_index_turnover(world: World, authed: TestClient) 
     assert body["quality"] == "estimated"
 
 
+def test_summary_after_close_same_day_is_not_called_live(world: World, authed: TestClient) -> None:
+    """KRX 확정(D+1) 전 저녁 — 장중 값을 쓰되 '장중'이라 하지 않는다(2026-10-20 마감 뒤 '장중')."""
+    world.clock.set(world.slot.replace(hour=17, minute=0))
+    body = authed.get("/api/market/summary").json()
+    kospi = next(x for x in body["data"]["indices"] if x["code"] == "0001")
+    assert kospi["value"] == 2650.5 and kospi["quality"] == "estimated"
+    assert not kospi["live"]
+
+
 def test_sectors(world: World, authed: TestClient) -> None:
     body = authed.get("/api/market/sectors?period=5").json()
     cells = body["data"]["cells"]

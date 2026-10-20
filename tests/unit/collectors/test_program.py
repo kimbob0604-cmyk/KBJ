@@ -57,7 +57,7 @@ def test_intraday_check4_failure_writes_invalid() -> None:
         if tr == "FHPPG04600101" and params["FID_MRKT_CLS_CODE"] == "Q":
             rows = [dict(r) for r in body["output"]]
             for r in rows:
-                r["whol_smtn_ntby_tr_pbmn"] = str(int(r["whol_smtn_ntby_tr_pbmn"]) + 1)
+                r["whol_smtn_ntby_tr_pbmn"] = str(int(r["whol_smtn_ntby_tr_pbmn"]) + 2)  # 허용 넘게
             return {**body, "output": rows}
         return body
 

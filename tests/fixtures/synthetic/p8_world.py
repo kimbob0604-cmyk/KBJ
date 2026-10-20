@@ -447,8 +447,9 @@ def build_world(seed: int = SEED) -> P8World:
         bars[code] = out
         flows[code] = fl
     index_bars: dict[str, list[IndexBar]] = {}
-    for icode in ("1001", "2001"):
-        path = _path(seed, f"idx{icode}", DAYS)
+    # 원장 지수 코드 = KRX 지수 일별 코드(공백 뺀 이름 — krx_daily.index_code). 값의 씨앗은 그대로
+    for icode, seed_name in (("코스피", "1001"), ("코스닥", "2001")):
+        path = _path(seed, f"idx{seed_name}", DAYS)
         index_bars[icode] = [
             IndexBar(
                 icode,

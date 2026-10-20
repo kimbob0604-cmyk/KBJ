@@ -5727,6 +5727,8 @@ export interface components {
             value: number | null;
             /** Qty */
             qty: number | null;
+            /** Name */
+            name?: string | null;
         };
         /** InvestorTotals */
         InvestorTotals: {
