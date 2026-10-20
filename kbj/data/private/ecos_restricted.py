@@ -140,8 +140,8 @@ def _ecos(stat_code: str, *, as_of: AsOfKind, published: str, notes: str) -> Dat
 DATASETS: Final[tuple[DatasetSpec, ...]] = (
     _ecos(
         "802Y001",
-        as_of="trade_date",
-        published="일별 — 반영 시각 [실측 필요]",
+        as_of="prev_trading_day",
+        published="일별 — 다음 날 올라온다(실측 2026-10-20 20:17 — 마지막 기간 전 거래일)",
         notes="주식시장(일) — 코스피 0001000·외국인 순매수 0030000(억원)",
     ),
     _ecos(

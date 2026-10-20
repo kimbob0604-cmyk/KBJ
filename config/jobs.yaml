@@ -842,7 +842,8 @@ jobs:
     retry: {max: 3, backoff_s: [1800]}
     collects:
       - {source: ECOS, dataset: 817Y002, as_of: trade_date}
-      - {source: ECOS, dataset: 722Y001, as_of: trade_date}
+      # 기준금리 일별은 다음 날 올라온다(실측 2026-10-20 20:17 — 마지막 기간 10-19) — 전 거래일까지
+      - {source: ECOS, dataset: 722Y001, as_of: prev_trading_day}
       - {source: ECOS, dataset: 731Y003, as_of: trade_date}
     writes: [pub_macro.series]
     absorbs: ["ET:bok.yml@16:30", "ET:bok.yml@22:00"]
@@ -855,7 +856,7 @@ jobs:
     schedule: {cron: "5 17 * * 1-5", when: trading_day}
     retry: {max: 3, backoff_s: [1800]}
     collects:
-      - {source: ECOS, dataset: 802Y001, as_of: trade_date}
+      - {source: ECOS, dataset: 802Y001, as_of: prev_trading_day}   # 다음 날 올라온다(실측 2026-10-20)
       - {source: ECOS, dataset: 731Y001, as_of: trade_date}
     writes: [prv_macro.series]
     note: "꺼짐(WRAP) — 막는 실측 #43(docs/probe_results.md §7), 키 수령·확인 뒤 켬. ECOS 타기관 작성 표(한국거래소·서울외국환중개) — 로그인(DATA_TIERS §1)"
