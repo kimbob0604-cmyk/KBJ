@@ -2,7 +2,7 @@
 // 시리즈 카드(최신값·변화·출처·quality)·확인 전 시리즈는 '—' + 실측 번호·탭마다 오류 격리·공개판은 로그인 API 0회.
 import { describe, expect, it } from 'vitest';
 import page, { P6_TITLES } from '../../src/pages/p6_macro';
-import { changeText, seriesKey } from '../../src/pages/p6/common';
+import { changeText, krwCompact, seriesCard, seriesKey } from '../../src/pages/p6/common';
 import { json } from '../helpers';
 import { MAC_NOW, macLoginHarness, macPublicHarness } from '../fixtures/api/macro/harness';
 import { flush, pageCtx, panelByTitle, text } from './support';
@@ -109,5 +109,18 @@ describe('도우미', () => {
     expect(changeText({ change: 0.05, change_pct: 1.2, unit: '%' })).toBe('+0.05%p');
     expect(changeText({ change: -1200, change_pct: -0.8, unit: '천명' })).toBe('-1,200 (-0.80%)');
     expect(changeText({ change: null, change_pct: null, unit: '%' })).toBe('—');
+  });
+});
+
+describe('페이지 6 카드 숫자 — 카드를 넘치지 않게', () => {
+  it('큰 원화는 조·억, 지수 기준(2020=100)은 값 옆이 아니라 출처 줄', () => {
+    expect(krwCompact(104_664_400_150_814)).toBe('104.66조 원');
+    expect(krwCompact(4_959_968_638_979, true)).toBe('+4.96조 원');
+    expect(krwCompact(49_600_000_000)).toBe('496억 원');
+    expect(krwCompact(1_332)).toBe('1,332 원');
+    const base = { series_id: 'X', title: 'CPI', unit: '2020=100', freq: 'M', source: 'ECOS', tier: 'public', derived: false, quality: 'ok', as_of: null, na_reason: null, change: 0.38, change_pct: 0.32, points: [], latest: { period: '2026-09', value: 120.43 } };
+    const card = seriesCard(base as unknown as Parameters<typeof seriesCard>[0]);
+    expect(card.querySelector('.v')?.textContent).toBe('120.43');
+    expect(card.querySelector('.src')?.textContent).toContain('지수 2020=100');
   });
 });

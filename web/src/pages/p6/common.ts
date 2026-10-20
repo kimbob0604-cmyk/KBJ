@@ -31,9 +31,28 @@ export const MACRO_HINT = 'macro.morning 06:20 · macro.monthly 09:10 · macro.e
 /** 카드 차트의 최근 점 수(일별 약 1년, 월·분기는 전부) */
 export const CHART_POINTS: Record<string, number> = { D: 260, W: 104, M: 120, Q: 40, A: 20 };
 
-function unitText(v: number, unit: string, digits: number): string {
-  if (unit === '%' || unit === '%p') return `${num(v, digits)}${unit}`;
-  return `${num(v, digits)} ${unit}`;
+/** 원화 단위 → 원으로의 배수. 큰 원화 값은 조·억으로 줄여 쓴다(104,664,400,150,814 원이 카드를 넘쳤다 — 2026-10-20) */
+const KRW_SCALE: Readonly<Record<string, number>> = { 원: 1, 천원: 1e3, 백만원: 1e6, 억원: 1e8, 십억원: 1e9, 조원: 1e12 };
+
+/** 원 → '104.66조 원'·'4,960억 원'·'1,332 원' */
+export function krwCompact(won: number, signed = false): string {
+  const a = Math.abs(won);
+  if (a >= 1e12) return `${num(won / 1e12, 2, signed)}조 원`;
+  if (a >= 1e8) return `${num(won / 1e8, 0, signed)}억 원`;
+  return `${num(won, 0, signed)} 원`;
+}
+
+/** '2020=100' 같은 지수 기준 — 값 옆이 아니라 출처 줄에 쓴다(카드 폭을 넘쳤다) */
+export function isIndexBase(unit: string): boolean {
+  return unit.includes('=');
+}
+
+function unitText(v: number, unit: string, digits: number, signed = false): string {
+  const k = KRW_SCALE[unit];
+  if (k !== undefined && Math.abs(v * k) >= 1e8) return krwCompact(v * k, signed);
+  if (unit === '%' || unit === '%p') return `${num(v, digits, signed)}${unit}`;
+  if (isIndexBase(unit)) return num(v, digits, signed);
+  return `${num(v, digits, signed)} ${unit}`;
 }
 
 function digitsOf(unit: string, v: number): number {
@@ -47,7 +66,9 @@ export function changeText(s: Pick<MacroSeries, 'change' | 'change_pct' | 'unit'
   if (typeof c !== 'number' || !Number.isFinite(c)) return DASH;
   if (s.unit === '%' || s.unit === '%p') return `${num(c, 2, true)}%p`;
   const pct = s.change_pct;
-  const head = num(c, digitsOf(s.unit, c), true);
+  const k = KRW_SCALE[s.unit];
+  const head =
+    k !== undefined && Math.abs(c * k) >= 1e8 ? krwCompact(c * k, true) : num(c, digitsOf(s.unit, c), true);
   return typeof pct === 'number' && Number.isFinite(pct) ? `${head} (${num(pct, 2, true)}%)` : head;
 }
 
@@ -58,6 +79,7 @@ export function seriesCard(s: MacroSeries): HTMLElement {
   const value = has ? unitText(v, s.unit, digitsOf(s.unit, v)) : DASH;
   const meta = [
     s.source,
+    isIndexBase(s.unit) ? `지수 ${s.unit}` : null,
     s.latest ? `기준 ${s.latest.period}` : null,
     s.as_of ? `받음 ${kstStamp(s.as_of)}` : null,
     s.quality && s.quality !== 'ok' ? QUALITY_LABEL[s.quality] : null,

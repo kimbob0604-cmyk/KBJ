@@ -303,6 +303,8 @@
   padding: 8px 10px;
   display: grid;
   gap: 4px;
+  min-width: 0; /* 격자 칸보다 긴 숫자가 옆 칸으로 넘치지 않게 */
+  overflow: hidden;
 }
 .tile .n {
   font-size: 11px;
@@ -312,6 +314,16 @@
 .tile .p {
   font-size: 18px;
   font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.mcard .p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 6px;
+}
+.mcard .p .chg {
+  font-size: 13px;
 }
 .tile svg {
   width: 100%;
