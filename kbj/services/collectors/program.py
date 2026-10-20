@@ -439,4 +439,7 @@ def sweep(ctx: JobContext) -> JobResult:
         detail["failed"] = len(failed)
         detail["reason"] = f"종목 {len(failed)}개 실패 — {failed[0]}(다음 실행이 이어서 받는다)"
         return JobResult("failed", rows=rows, detail=detail)
-    return JobResult("ok", rows=rows, detail=detail)
+    # 수동 실행(run-once --as-of)은 실행기가 event 수집마다 실행 키를 잡는다 — 받은 키를 돌려줘야
+    # ok(fin.backfill 과 같은 계약). 정시 발화는 ctx.keys 가 비어 그대로다(2026-10-20: 수동 재실행이
+    # 늘 '키 1개를 받지 못했다'로 실패했다)
+    return JobResult("ok", rows=rows, detail=detail, collected=ctx.keys)

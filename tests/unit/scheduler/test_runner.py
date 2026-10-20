@@ -853,27 +853,3 @@ def test_real_registry_one_day_runs_only_enabled_jobs() -> None:
     assert DataKey("DART", "corpCode", "2026-10-06") in done
     owners = {c.dataset_id: j.name for j in reg.jobs for c in j.collects}
     assert {owners[k.dataset_id] for k in done} <= enabled
-
-
-def test_manual_run_does_not_claim_event_keys_of_a_dated_job() -> None:
-    """event 키(종목 단위 — 처리기가 직접 잡는다)는 수동 실행(--as-of 날짜)에서도 실행기가 잡지 않는다.
-    날짜를 event 키에 씌우면 처리기가 돌려주지 않는 키가 생겨 늘 실패했다(2026-10-20
-    program.stock_sweep 수동 재실행 — '키 1개를 받지 못했다')."""
-    job = {
-        "name": "program.stock_sweep",
-        "phase": "P5",
-        "owner": "tests.fake:sweep",
-        "schedule": {"cron": "10 18 * * 1-5", "when": "trading_day"},
-        "as_of": "trade_date",
-        "collects": [
-            {"source": "KIS", "dataset": "program_stock_daily", "as_of": "event", "venues": ["KRX"]}
-        ],  # fmt: skip
-        "writes": ["prv_flows.program_stock_day"],
-    }
-    rig = Rig([job], {"tests.fake:sweep": lambda ctx: JobResult("ok", rows=3)},
-              kst(2026, 10, 6, 19, 0))  # fmt: skip
-    events = rig.runner.run_once("program.stock_sweep", rig.now, as_of="2026-10-06")
-    assert [e.kind for e in events][-1] == "ok"
-    rec = rig.runs.latest("program.stock_sweep", "2026-10-06")
-    assert rec is not None and rec.status == "ok"
-    assert rig.claims.rows == [] or all(k.status != "claimed" for k in rig.claims.rows)

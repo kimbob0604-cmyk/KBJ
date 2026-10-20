@@ -245,6 +245,19 @@ def test_sweep_resumes_after_failures_with_per_stock_claims() -> None:
     assert len(rows) == 20 and {(r.scope, r.quality) for r in rows} == {("sweep", Quality.OK)}
 
 
+def test_manual_sweep_returns_the_run_key_it_was_given() -> None:
+    """수동 실행(run-once --as-of 날짜)은 실행기가 event 수집마다 실행 키를 하나 잡는다 — 처리기가
+    그 키를 collected 로 돌려줘야 ok(fin.backfill 과 같은 계약). 돌려주지 않아 수동 재실행이 늘
+    '키 1개를 받지 못했다'로 실패했다(2026-10-20)."""
+    repos, _s, clock, kis = setup(kst(2026, 11, 17, 18, 10, 5))
+    seed_universe(repos, DAY)
+    run_key = DataKey("KIS", "program_stock_daily", DAY.isoformat(), "KRX")
+    c = ctx("program.stock_sweep", DAY.isoformat(), [run_key], now=clock(), repos=repos, kis=kis,
+            claims=MemoryClaimStore())  # fmt: skip
+    res = program.sweep(c)
+    assert res.status == "ok" and res.collected == (run_key,)
+
+
 def test_sweep_skips_keys_claimed_by_someone_else() -> None:
     repos, _s, clock, kis = setup(kst(2026, 11, 17, 18, 10, 5))
     seed_universe(repos, DAY)

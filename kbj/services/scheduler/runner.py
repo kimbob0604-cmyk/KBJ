@@ -669,11 +669,6 @@ class JobRunner:
             spec = self.catalog[c.dataset_id]
             if not claimable(spec):
                 continue
-            if c.as_of == "event" and p.job.run_as_of() != "event":
-                # event 키(종목·접수번호 단위)는 처리기가 직접 잡는다 — 수동 실행의 날짜를 event 키에
-                # 씌우면 처리기가 돌려주지 않는 키가 생겨 늘 '키 1개를 받지 못했다'로 실패했다
-                # (2026-10-20 program.stock_sweep 수동 재실행)
-                continue
             if p.key_as_of is not None:
                 key_as_of = p.key_as_of
             else:
