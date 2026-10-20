@@ -207,6 +207,8 @@ def datasets_for(kind: str, title: str) -> tuple[str, ...]:
     안 함."""
     if kind == "prelim":
         return (DOC_DATASET,) if prelim_doc.classify(title) not in (None, "PRE_ANNOUNCE") else ()
+    if kind in ("overhang_exercise", "price_adjust") and "전환주식" in title.replace(" ", ""):
+        return ()  # 전환우선주의 전환·가액 조정 — 사채(CB·BW·EB)가 아니라 오버행 추적 대상 아님
     if kind in ("pre_announce", "overhang_exercise", "price_adjust"):
         return (DOC_DATASET,)
     if kind in ("overhang", "buyback"):

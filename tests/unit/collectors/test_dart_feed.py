@@ -358,6 +358,10 @@ def test_missing_claims_resource_is_an_error() -> None:
         ("major_holder", "주식등의대량보유상황보고서(일반)", ("majorstock",)),
         ("periodic", "분기보고서 (2026.09)", ()),
         ("other", "기타시장안내", ()),
+        ("price_adjust", "전환가액의조정 (제9회차)", ("document",)),
+        ("overhang_exercise", "전환청구권행사", ("document",)),
+        ("price_adjust", "전환주식의전환가액조정 (전환우선주)", ()),  # 사채가 아니다
+        ("overhang_exercise", "전환주식의전환청구권행사 (상환전환우선주)", ()),
     ],
 )
 def test_datasets_for(kind: str, title: str, want: tuple[str, ...]) -> None:
