@@ -346,3 +346,25 @@ def test_same_day_listing_is_left_as_is() -> None:
     assert [f.status for f in flows] == ["ok", "ok"]
     assert flows[0].net_inflow == pytest.approx(100_000 * 10_000.0)
     assert all(f.quality is OK for f in flows)
+
+
+def test_overseas_listing_lag_up_to_three_days_is_aligned() -> None:
+    """해외 자산 ETF 는 상장좌수가 2~3거래일 늦다(결제 T+2~T+3 — 실측 2026-10-20 0040S0). 하루만
+    맞추면 검산 ③ 이 깨져 빠졌다(남은 515일의 83%)."""
+    d = tdays(7)
+    nav = 10_000.0
+    true_s = [1_000_000, 1_000_000, 1_200_000, 1_200_000, 1_200_000, 1_200_000, 1_200_000]
+    listed = [
+        1_000_000,
+        1_000_000,
+        1_000_000,
+        1_000_000,
+        1_000_000,
+        1_200_000,
+        1_200_000,
+    ]  # 3일 늦다
+    rows = [day("E7", d[i], listed[i], nav, na=round(true_s[i] * nav)) for i in range(7)]
+    flows = window_flows(rows, 6, trading_days=d)
+    assert [f.status for f in flows] == ["ok"] * 6
+    assert flows[1].net_inflow == pytest.approx(200_000 * nav)  # 설정한 날(d2)에 잡힌다
+    assert sum(f.net_inflow or 0 for f in flows) == pytest.approx(200_000 * nav)

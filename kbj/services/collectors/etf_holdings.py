@@ -46,7 +46,7 @@ from kbj.core.rows import Change, EtfMeta, EtfType, Fund, HoldingRow
 from kbj.core.time import kst_date
 from kbj.data.private.etf_issuers.base import FundRef, IssuerAdapter, IssuerHttp, source_of
 from kbj.data.private.etf_issuers.registry import build
-from kbj.engines.etf.flows import c3_checks, window_flows
+from kbj.engines.etf.flows import LAG_MAX, c3_checks, window_flows
 from kbj.engines.etf.holdings import analyze, fund_pairs
 from kbj.engines.etf.types import classify, etf_type, is_active, typed_meta
 from kbj.services.collectors._p3 import RepoSet, markets, reason, repos
@@ -304,15 +304,15 @@ def record_flow_checks(
     KRX ETF 일별(`krx.daily` 의 `etp/etf_bydd_trd`)을 쓴 뒤 부르는 자리다(묶음 C 요청 — 이 모듈은
     함수만 둔다). 원장에 그날과 그 전 거래일이 둘 다 있어야 한다(없으면 0건). 멱등이다.
 
-    검산 ③ 은 **전 거래일** 흐름을 기록한다 — 상장좌수가 설정을 하루 늦게 싣는 ETF 는 그날 행만으로
-    유효 좌수를 확정할 수 없어(`flows.effective_shares` — 마지막 날은 estimated) 다음 날 행이 와야
-    가려진다(metrics §4 유효 좌수). 분할·병합 감지는 그날이다.
+    검산 ③ 은 **`LAG_MAX` 거래일 전** 흐름을 기록한다 — 상장좌수가 설정을 1~3거래일 늦게 싣는 ETF
+    는 그 뒤 행들이 와야 유효 좌수가 확정된다(`flows.effective_shares` — 최근 날은 estimated,
+    metrics §4 유효 좌수). 분할·병합 감지는 그날이다.
     """
-    by_code = rs.etf.etf_days(day, 3)
+    by_code = rs.etf.etf_days(day, LAG_MAX + 2)
     tdays = sorted({d.date for rows in by_code.values() for d in rows})
     if len(tdays) < 2 or tdays[-1] != day:
         return {"flows": 0, "split_detected": 0, "c3_failed": 0}
-    check_day = tdays[-2] if len(tdays) >= 3 else None
+    check_day = tdays[-(LAG_MAX + 1)] if len(tdays) >= LAG_MAX + 2 else None
     meta = rs.etf.meta()
     events = rs.etf.split_events()
     flows = []
@@ -321,7 +321,7 @@ def record_flow_checks(
     for code in sorted(by_code):
         m = meta.get(code)
         for f in window_flows(
-            by_code[code], 2, trading_days=tdays, splits=events.get(code, ()), tol=tol,
+            by_code[code], LAG_MAX + 1, trading_days=tdays, splits=events.get(code, ()), tol=tol,
             ratios=ratios, unit=unit, listed_on=None if m is None else m.listed_on,
             delisted_on=None if m is None else m.delisted_on,
         ):  # fmt: skip

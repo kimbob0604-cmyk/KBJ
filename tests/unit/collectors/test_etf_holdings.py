@@ -181,24 +181,25 @@ def _eday(code: str, d: date, s: int, nav: float, extra: int = 0) -> EtfDay:
 
 
 def test_record_flow_checks_writes_c3_and_detected_splits(repos: MemoryRepos) -> None:
-    """분할 감지는 그날(d2), 검산 ③ 은 전 거래일(d1 — 다음 날 행으로 유효 좌수가 확정된 날)."""
-    d0, d1, d2 = date(2026, 10, 2), date(2026, 10, 5), date(2026, 10, 6)
+    """분할 감지는 그날(d4), 검산 ③ 은 LAG_MAX(3) 거래일 전(d1 — 뒤 3거래일 상장좌수로 유효 좌수가
+    확정된 날 — metrics §4)."""
+    d0, d1, d2, d3, d4 = (date(2026, 9, 30), date(2026, 10, 1), date(2026, 10, 2),
+                          date(2026, 10, 5), date(2026, 10, 6))  # fmt: skip
+    flat = lambda code: [_eday(code, d, 1_000_000, 10_000.0) for d in (d0, d1, d2, d3)]  # noqa: E731
     rows = [
-        _eday("E1", d0, 1_000_000, 10_000.0), _eday("E1", d1, 1_000_000, 10_000.0),
-        _eday("E1", d2, 1_050_000, 10_010.0),
-        _eday("E2", d0, 1_000_000, 10_000.0), _eday("E2", d1, 1_000_000, 10_000.0),
-        _eday("E2", d2, 10_000_000, 1_000.0),  # 1:10
-        # d1 보고 순자산이 같은 날·다음 날 좌수 어느 쪽과도 맞지 않는다 → d1 검산 ③ 실패
+        *flat("E1"), _eday("E1", d4, 1_050_000, 10_010.0),
+        *flat("E2"), _eday("E2", d4, 10_000_000, 1_000.0),  # 1:10
+        # d1 보고 순자산이 그날·뒤 3거래일 상장좌수 어느 것과도 맞지 않는다 → d1 검산 ③ 실패
         _eday("E3", d0, 1_000_000, 10_000.0), _eday("E3", d1, 1_000_000, 10_000.0, 10**9),
-        _eday("E3", d2, 1_000_000, 10_000.0),
-        _eday("E4", d0, 1_000_000, 10_000.0), _eday("E4", d1, 1_000_000, 10_000.0),
-        _eday("E4", d2, 2_000_000, 5_000.0),  # 수동 1:2
+        _eday("E3", d2, 1_000_000, 10_000.0), _eday("E3", d3, 1_000_000, 10_000.0),
+        _eday("E3", d4, 1_000_000, 10_000.0),
+        *flat("E4"), _eday("E4", d4, 2_000_000, 5_000.0),  # 수동 1:2
     ]  # fmt: skip
     repos.etf.upsert_etf_days(rows, loaded_by="test")
-    manual = SplitEvent("E4", d2, 2.0, "manual", "공시", "manual", Quality.OK)
+    manual = SplitEvent("E4", d4, 2.0, "manual", "공시", "manual", Quality.OK)
     repos.etf.put_split_event(manual, loaded_by="test", now=kst(2026, 10, 6))
     now = kst(2026, 10, 7, 8, 30)
-    out = etf_holdings.record_flow_checks(repos, d2, now=now, loaded_by="krx.daily", tol=0.02,
+    out = etf_holdings.record_flow_checks(repos, d4, now=now, loaded_by="krx.daily", tol=0.02,
                                           ratios=(2, 3, 4, 5, 10))  # fmt: skip
     assert out == {"flows": 4, "split_detected": 1, "c3_failed": 1}
     ev = repos.etf.split_events()
@@ -206,7 +207,7 @@ def test_record_flow_checks_writes_c3_and_detected_splits(repos: MemoryRepos) ->
     assert ev["E4"] == [manual]  # 수동 표는 그대로
     [chk] = repos.flows.checks(d1, "etf")
     assert (chk.code, chk.check_id) == ("E3", "c3")
-    again = etf_holdings.record_flow_checks(repos, d2, now=now, loaded_by="krx.daily", tol=0.02,
+    again = etf_holdings.record_flow_checks(repos, d4, now=now, loaded_by="krx.daily", tol=0.02,
                                             ratios=(2, 3, 4, 5, 10))  # fmt: skip
     assert again["c3_failed"] == 1 and len(repos.flows.checks(d1, "etf")) == 1  # 멱등
     empty = etf_holdings.record_flow_checks(repos, date(2026, 10, 9), now=now, loaded_by="x",

@@ -197,15 +197,19 @@ def _shares_tol(s: int, nav: float, unit: float) -> float:
     return (NAV_ROUND_KRW * s + unit) / nav + 1.0
 
 
-def effective_shares(rows: Sequence[EtfDay], *, unit: float = 1.0) -> list[EtfDay]:
-    """행마다 그날의 유효 좌수(metrics §4) — 상장좌수가 하루 늦게 반영되는 ETF 를 맞춘다.
+LAG_MAX: Final = 3  # 상장좌수가 설정·환매를 싣기까지 볼 거래일(해외 자산 T+2~T+3 — 실측 2026-10-20)
 
-    KRX 상장좌수는 그날 설정·환매를 다음 거래일에 싣는 ETF 가 많다(국내형 — 실측 2026-10-20: 보고
-    순자산 ÷ NAV 가 다음 날 상장좌수와 같다). 그대로 쓰면 순유입이 하루 밀리고, 보고 순자산과의
-    검산 ③ 이 깨져 그날 흐름이 invalid 로 빠졌다(국내 대표지수 한 주 순유입 0억). 함의 좌수가
-    그날 상장좌수와 같으면 그대로, 다음 행 상장좌수와 같으면 그것으로 바꾼다. 다음 행이 없는 마지막
-    날에 다르면 함의 좌수(반올림)를 쓰고 `estimated`. 어느 쪽과도 다르면 그대로(검산 ③ 이
-    잡는다)."""
+
+def effective_shares(rows: Sequence[EtfDay], *, unit: float = 1.0) -> list[EtfDay]:
+    """행마다 그날의 유효 좌수(metrics §4) — 보고 순자산 ÷ NAV(함의 좌수)가 기준.
+
+    KRX 상장좌수는 그날 설정·환매를 늦게 싣는다 — 국내형은 다음 거래일, 해외 자산 ETF 는 2~3거래일
+    (결제 T+2~T+3), 미결제 설정 단위가 상장좌수에만 먼저 잡히는 것도 있다(실측 2026-10-20: 국내형
+    2,378행이 다음 날 좌수와 같았고, 하루만 맞추자 남은 검산 실패 515일의 83% 가 해외주식이었다).
+    함의 좌수가 그날 또는 `LAG_MAX` 거래일 안의 상장좌수와 같으면 그 좌수(확인 — 품질 그대로). 뒤
+    거래일이 모자라 확인할 수 없는 최근 날은 함의 좌수(반올림)를 `estimated` 로. 뒤 거래일이 다
+    있는데 어느 것과도 안 맞으면 보고값이 의심스럽다 — 상장좌수 그대로 두어 검산 ③ 이 잡는다.
+    보고 순자산·NAV 가 없으면 상장좌수 그대로."""
     out: list[EtfDay] = []
     for i, cur in enumerate(rows):
         s, nav, na = cur.list_shrs, cur.nav, cur.net_asset
@@ -216,16 +220,16 @@ def effective_shares(rows: Sequence[EtfDay], *, unit: float = 1.0) -> list[EtfDa
         if abs(implied - s) <= _shares_tol(s, nav, unit):
             out.append(cur)
             continue
-        nxt = rows[i + 1] if i + 1 < len(rows) else None
-        if nxt is None:
+        ahead = [r.list_shrs for r in rows[i + 1 : i + 1 + LAG_MAX] if r.list_shrs is not None]
+        hit = next((x for x in ahead if abs(implied - x) <= _shares_tol(x, nav, unit)), None)
+        if hit is not None:
+            out.append(replace(cur, list_shrs=hit))
+        elif len(ahead) < LAG_MAX:
+            # 아직 뒤 거래일이 모자라 확인할 수 없다(최근 날) — 함의 좌수로, 확인 전
             q = _worst(cur.quality, Quality.ESTIMATED)
             out.append(replace(cur, list_shrs=round(implied), quality=q))
-            continue
-        s2 = nxt.list_shrs
-        if s2 is not None and abs(implied - s2) <= _shares_tol(s2, nav, unit):
-            out.append(replace(cur, list_shrs=s2))
         else:
-            out.append(cur)
+            out.append(cur)  # 3거래일 안 어느 상장좌수와도 안 맞다 — 보고값 의심, 검산 ③ 이 잡는다
     return out
 
 
