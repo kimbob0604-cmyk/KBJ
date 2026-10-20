@@ -212,3 +212,25 @@ def test_empty_store_answers_404_with_the_job() -> None:
 
 def test_the_world_is_deterministic() -> None:
     assert build_world().digest() == build_world().digest()
+
+
+def test_night_cycle_without_walls_falls_back_to_the_last_day_levels() -> None:
+    """야간은 옵션 호가가 얇아 벽·Flip 이 모두 invalid — 주간 마지막 사이클 레벨을 stale 로 보인다
+    (2026-10-20: 야간에 기대변동폭만 보이고 나머지는 사라졌다)."""
+    aw = gex_api_world()
+    night = LAST + timedelta(seconds=30)
+    base = dict(ts=night, trade_date=TODAY, session="night", scope="all", flag="visible")
+    aw.repos.gex.write_levels(
+        [
+            LevelRecord.model_validate({**base, "name": n, "value": 1.0, "quality": "invalid"})
+            for n in ("call_wall", "put_wall", "flip")
+        ]
+        + [LevelRecord.model_validate({**base, "name": "expected_move_calendar", "value": 9.0,
+                                       "quality": "estimated"})]
+    )  # fmt: skip
+    body = _get(aw.authed(), "/api/gex/levels?scope=all")
+    lv = _levels(body)
+    assert body["data"]["session"] == "night"
+    assert lv["expected_move_calendar"]["value"] == 9.0  # 야간 값
+    assert lv["call_wall"]["quality"] == "stale" and lv["call_wall"]["value"] is not None
+    assert any("주간 마지막 사이클" in n for n in body["notes"])

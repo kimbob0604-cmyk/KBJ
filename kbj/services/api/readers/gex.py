@@ -105,7 +105,13 @@ def _level_of(rows: Sequence[LevelRecord], name: str) -> LevelRecord | None:
 
 
 def _near_futures(rows: Sequence[FuturesRecord]) -> FuturesRecord | None:
-    priced = [r for r in rows if r.price is not None and r.market == "F" and r.source == "board"]
+    # 주간 = 전광판(market F·source board), 야간 = 단건 시세(market CM·source single) — 야간은
+    # F·board 가 없어 '현재가 없음'이었다(2026-10-20)
+    priced = [
+        r
+        for r in rows
+        if r.price is not None and r.market in ("F", "CM") and r.source in ("board", "single")
+    ]
     priced.sort(key=lambda r: (r.remaining_days if r.remaining_days is not None else 10**6, r.code))
     return priced[0] if priced else None
 
@@ -139,12 +145,33 @@ def _stale(ctx: ReadContext, cycle_at: datetime, session_open: bool) -> tuple[bo
     return True, f"엔진 지연 — 마지막 사이클 {at} KST({int(age.total_seconds() // 60)}분 전)"
 
 
+CORE_LEVELS: Final = ("call_wall", "put_wall", "flip")
+NIGHT_FALLBACK_NOTE: Final = (
+    "야간: 옵션 호가가 얇아 야간 레벨을 낼 수 없다 — 주간 마지막 사이클({at}) 레벨(벽·Flip)을 "
+    "보인다(stale). 현재가·기대변동폭은 야간 값"
+)
+
+
 def gex_levels(ctx: ReadContext, *, scope: GexScopeT) -> Envelope[GexLevels]:
     rows = _latest_levels(ctx, scope)
     head = rows[0]
     kept = [r for r in rows if r.flag != "off"]
     invalid = sum(1 for r in kept if r.quality == "invalid")
     shown = [r for r in kept if r.quality != "invalid"]
+    fallback_note: str | None = None
+    price_rows: Sequence[LevelRecord] = shown or rows
+    if head.session == "night" and not any(r.name in CORE_LEVELS for r in shown):
+        # 야간 사이클은 벽·Flip 이 모두 invalid(옵션 전부 제외) — 주간 마지막 사이클 값을 stale 로
+        day = [
+            r
+            for r in ctx.repos.gex.levels_latest(scope, upto=ctx.now(), session="day")
+            if r.flag != "off" and r.quality != "invalid" and r.name not in {x.name for x in shown}
+        ]  # fmt: skip
+        if day:
+            shown = [*shown, *(r.model_copy(update={"quality": "stale"}) for r in day)]
+            at = day[0].ts.astimezone(ctx.now_kst().tzinfo).strftime("%m/%d %H:%M")
+            fallback_note = NIGHT_FALLBACK_NOTE.format(at=at)
+            invalid = 0
     levels = [
         GexLevel(
             name=r.name,
@@ -156,10 +183,12 @@ def gex_levels(ctx: ReadContext, *, scope: GexScopeT) -> Envelope[GexLevels]:
         )
         for r in sorted(shown, key=lambda r: r.name)
     ]
-    price, price_q, price_notes = _price(ctx, shown or rows)
+    price, price_q, price_notes = _price(ctx, price_rows)
     open_ = _session_open(ctx)
     stale, reason = _stale(ctx, head.ts, open_)
     notes = [_invalid_note(invalid, "레벨"), *price_notes]
+    if fallback_note:
+        notes.append(fallback_note)
     if any(r.flag == "shadow" for r in shown):
         notes.append(SHADOW_NOTE)
     if stale and reason:

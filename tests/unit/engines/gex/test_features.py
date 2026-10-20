@@ -59,13 +59,13 @@ PHASE2 = {
 # ── 저장소의 플래그 파일 ──
 
 
-def test_the_repository_file_keeps_phase2_visible_and_phase3_shadow() -> None:
+def test_the_repository_file_shows_every_metric() -> None:
+    """2026-10-20 사용자 요청 — 섀도 운영을 끝내고 확장 지표도 visible(다시 숨기려면 shadow)."""
     f = load_features(FEATURES_PATH)
     got = f.resolved()
     assert set(got) == {s.name for s in CATALOG}
-    assert {n for n, v in got.items() if v == "visible"} == PHASE2 == CORE_NAMES
-    assert {n for n, v in got.items() if v != "visible"} == {s.name for s in CATALOG if not s.core}
-    assert set(got.values()) == {"visible", "shadow"}
+    assert PHASE2 == CORE_NAMES and all(got[n] == "visible" for n in PHASE2)
+    assert set(got.values()) == {"visible"}
     # 기본값에 기대지 않고 이름을 다 적어 둔다 — 파일만 봐도 무엇이 켜졌는지 안다
     assert set(f.metrics) == {s.name for s in CATALOG}
     assert (f.widgets, f.alerts, f.strategies) == ({}, {}, {})

@@ -20,24 +20,25 @@ features:
     flip_distance: visible  # §G3.5
     expected_move: visible  # §G3.8 expected_move_calendar·expected_move_trading
     top_levels: visible     # §G3.9 기대범위 내 상위 GEX 레벨
-    # ── Phase 3 확장 지표 — 1주 섀도 운영 전까지 shadow ──
-    vex: shadow             # §G4.1 Vanna 익스포저
-    cex: shadow             # §G4.2 Charm 익스포저
-    gex_pc: shadow          # §G4.3 GEX P/C
-    iv_term: shadow         # §G5.2 IV 기간구조
-    skew_25d: shadow        # §G5.3 25Δ 스큐
-    atm_iv_daily: shadow    # §G5.4 일별 월물 ATM IV (IV 랭크 입력)
-    iv_rank: shadow         # §G5.4
-    iv_percentile: shadow   # §G5.4
-    iv_hv: shadow           # §G5.5 IV − HV20
-    hiro: shadow            # §G6.1 HIRO-lite
-    investor_flow: shadow   # §G6.2 투자자별 순매수
-    dealer_check: shadow    # §G6.3 딜러 가정 점검
-    block_trades: shadow    # §G6.4 대량 체결
-    pcr: shadow             # §G6.5 pcr_oi·pcr_volume
-    max_pain: shadow        # §G6.6
-    oi_changes: shadow      # §G6.7 OI 증감 히트맵
-    futures: shadow         # §G7 선물 베이시스 등
+    # ── Phase 3 확장 지표 — 2026-10-20 사용자 요청으로 visible("섀도란 식으로만 적혀있음"). 이력이
+    #    모자란 지표(IV 랭크·백분위·IV−HV 등)는 값 대신 사유가 보인다. 다시 숨기려면 shadow ──
+    vex: visible             # §G4.1 Vanna 익스포저
+    cex: visible             # §G4.2 Charm 익스포저
+    gex_pc: visible          # §G4.3 GEX P/C
+    iv_term: visible         # §G5.2 IV 기간구조
+    skew_25d: visible        # §G5.3 25Δ 스큐
+    atm_iv_daily: visible    # §G5.4 일별 월물 ATM IV (IV 랭크 입력)
+    iv_rank: visible         # §G5.4
+    iv_percentile: visible   # §G5.4
+    iv_hv: visible           # §G5.5 IV − HV20
+    hiro: visible            # §G6.1 HIRO-lite
+    investor_flow: visible   # §G6.2 투자자별 순매수
+    dealer_check: visible    # §G6.3 딜러 가정 점검
+    block_trades: visible    # §G6.4 대량 체결
+    pcr: visible             # §G6.5 pcr_oi·pcr_volume
+    max_pain: visible        # §G6.6
+    oi_changes: visible      # §G6.7 OI 증감 히트맵
+    futures: visible         # §G7 선물 베이시스 등
   widgets: {}
   alerts: {}
   strategies: {}

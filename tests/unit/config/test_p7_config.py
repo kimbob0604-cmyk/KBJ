@@ -27,12 +27,12 @@ def _yaml(name: str) -> dict[str, Any]:
 
 def test_gex_config_loads_and_keeps_gx_flags() -> None:
     g = load_gex()
-    # GX features.yaml 그대로 — Phase 2 핵심은 visible, 확장 지표는 shadow(D-P7-11, §10 Q3)
+    # Phase 2 핵심은 visible. 확장 지표도 2026-10-20 사용자 요청으로 visible(섀도 운영 끝 — §10 Q3)
     core = ("net_gex", "dex", "atm_iv", "call_wall", "put_wall", "flip", "flip_distance",
             "expected_move", "top_levels", "expiry_gamma", "abs_gamma")  # fmt: skip
     assert all(g.features.flag(n) == "visible" for n in core)
     for n in ("vex", "cex", "skew_25d", "iv_term", "iv_rank", "hiro", "oi_changes", "futures"):
-        assert g.features.flag(n) == "shadow", n
+        assert g.features.flag(n) == "visible", n
     assert g.features.flag("nope") is None
     # GX 엔진 상수 그대로
     assert (g.engine.catchup_s, g.engine.grace_s, g.engine.daily_retry_s) == (10, 35, 60)
@@ -46,7 +46,7 @@ def test_gex_config_loads_and_keeps_gx_flags() -> None:
 
 def test_gex_off_is_read_as_text_and_unknown_keys_fail() -> None:
     raw = (ROOT / "config" / "gex.yaml").read_text(encoding="utf-8")
-    data = yaml.load(raw.replace("vex: shadow", "vex: off"), Loader=yaml.BaseLoader)  # noqa: S506
+    data = yaml.load(raw.replace("vex: visible", "vex: off"), Loader=yaml.BaseLoader)  # noqa: S506
     data["version"] = int(data["version"])
     assert parse_gex(data).features.flag("vex") == "off"  # YAML 1.1 false 로 읽지 않는다
     with pytest.raises(ConfigFileError, match=r"gex\.yaml"):

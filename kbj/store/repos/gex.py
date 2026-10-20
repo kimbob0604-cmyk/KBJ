@@ -412,8 +412,11 @@ class GexRepo(Protocol):
         ...
 
     # 화면 읽기(API — 계약 ⑩: DB 만)
-    def levels_latest(self, scope: LevelScope, upto: datetime | None = None) -> list[LevelRecord]:
-        """범위 하나의 가장 늦은 사이클(ts) 레벨 전부(플래그 무관 — 리더가 visible 만 싣는다)."""
+    def levels_latest(
+        self, scope: LevelScope, upto: datetime | None = None, session: str | None = None
+    ) -> list[LevelRecord]:
+        """범위 하나의 가장 늦은 사이클(ts) 레벨 전부(플래그 무관 — 리더가 visible 만 싣는다).
+        session 을 주면 그 세션(day·night)의 가장 늦은 사이클."""
         ...
 
     def strike_profile(self, ts: datetime) -> list[StrikeGexRecord]:
@@ -645,9 +648,14 @@ class PgGexRepo:
         return (str(before[0][0]) if before else None), [(ts, str(k)) for ts, k in rows]
 
     # 화면 읽기
-    def levels_latest(self, scope: LevelScope, upto: datetime | None = None) -> list[LevelRecord]:
+    def levels_latest(
+        self, scope: LevelScope, upto: datetime | None = None, session: str | None = None
+    ) -> list[LevelRecord]:
         cond = "scope = %s" + (" AND ts <= %s" if upto is not None else "")
         params: tuple[object, ...] = (scope,) if upto is None else (scope, _utc(upto))
+        if session is not None:
+            cond += " AND session = %s"
+            params = (*params, session)
         q = sql.SQL(
             "SELECT {cols} FROM {t} WHERE scope = %s AND ts = (SELECT max(ts) FROM {t} WHERE "  # noqa: S608
             + cond
@@ -977,8 +985,15 @@ class MemoryGexRepo:
             out.append(LevelRecord.model_validate(d))
         return out
 
-    def levels_latest(self, scope: LevelScope, upto: datetime | None = None) -> list[LevelRecord]:
-        rows = [r for r in self._levels() if r.scope == scope and (upto is None or r.ts <= upto)]
+    def levels_latest(
+        self, scope: LevelScope, upto: datetime | None = None, session: str | None = None
+    ) -> list[LevelRecord]:
+        rows = [
+            r
+            for r in self._levels()
+            if r.scope == scope and (upto is None or r.ts <= upto)
+            and (session is None or r.session == session)
+        ]  # fmt: skip
         if not rows:
             return []
         last = max(r.ts for r in rows)
