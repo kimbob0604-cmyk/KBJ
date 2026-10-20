@@ -10,7 +10,7 @@
 // - 상태를 따로 보인다: 확인 전(꺼진 조합)·장 시작 전·휴장일(직전 거래일 선)·아직 없음(404).
 import type { components } from "../../api/types.gen";
 import type { PageContext } from "../../app/types";
-import type { Envelope } from "../../data/source";
+import { DataError, type Envelope } from "../../data/source";
 import { h } from "../../ui/dom";
 import { DASH, eok, kstTime, shortDate, signClass } from "../../ui/fmt";
 import type { Panel } from "../../ui/panel";
@@ -208,6 +208,58 @@ export function drawMinute(
   return null;
 }
 
+type InvestorTotals = S["InvestorTotals"];
+/** 현물 탭 → 시장 투자자 일별(`flows/investors` by_market)의 시장 키(서버는 KIS 업종 코드) */
+export const SPOT_DAILY_KEYS: Partial<Record<MinuteTab, readonly string[]>> = {
+  kospi: ["0001", "KOSPI"],
+  kosdaq: ["1001", "KOSDAQ"],
+};
+const DAILY_CARDS: readonly [string, string][] = [
+  ["individual", "개인"],
+  ["foreign", "외국인"],
+  ["institution", "기관 합계"],
+  ["other_corp", "기타법인"],
+];
+
+type MinuteView =
+  | { kind: "minute"; minute: MarketMinute }
+  | { kind: "daily"; daily: InvestorTotals; market: string };
+
+/** 현물 탭에 1분 자료가 없을 때(수집 전·놓친 날) 그 시장의 마감 확정 순매수를 대신 보인다 —
+ *  빈 '아직 없음' 대신(2026-10-20 — 현물 조합이 켜지기 전 하루 종일 비었다). 값은 일별 원장 그대로. */
+export function drawDailyFallback(
+  p: Panel,
+  env: Envelope<InvestorTotals>,
+  market: string,
+): number | null {
+  const vals = env.data.by_market[market] ?? {};
+  p.body.append(
+    h(
+      "p",
+      { class: "f2-status", data: { status: "daily_fallback" } },
+      `장중 1분 자료 없음 — ${shortDate(env.data.date)} 마감 확정 순매수(시장 투자자 일별)`,
+    ),
+    h(
+      "div",
+      {
+        class: "f2-cards",
+        attrs: { role: "list", "aria-label": "투자자별 마감 확정 순매수(억원)" },
+      },
+      DAILY_CARDS.map(([k, label]) => {
+        const v = vals[k] ?? null;
+        return h(
+          "div",
+          { class: "f2-card", attrs: { role: "listitem" }, data: { investor: k } },
+          h("span", null, label),
+          h("b", { class: signClass(v) }, eok(v, 0, true)),
+        );
+      }),
+    ),
+  );
+  p.setSource(env);
+  return null;
+}
+
 /** 패널에 시장 탭을 달고, 불러오기 함수를 돌려준다(p1_market 의 60초 갱신이 부른다). */
 export function mountMinute(ctx: PageContext, p: Panel): () => Promise<void> {
   const q = {
@@ -218,16 +270,30 @@ export function mountMinute(ctx: PageContext, p: Panel): () => Promise<void> {
       ) ?? DEFAULT_TAB,
     lines: readList<LineId>("f2l", LINE_IDS) as string[] | null,
   };
+  const get = async (): Promise<Envelope<MinuteView>> => {
+    try {
+      const env = await ctx.source.get<MarketMinute>("flows/market-minute", { market: q.tab });
+      return { ...env, data: { kind: "minute", minute: env.data } };
+    } catch (err) {
+      const keys = SPOT_DAILY_KEYS[q.tab];
+      if (!keys || !(err instanceof DataError) || err.status !== 404) throw err;
+      const inv = await ctx.source.get<InvestorTotals>("flows/investors");
+      const market = keys.find((k) => k in inv.data.by_market);
+      if (market === undefined) throw err; // 일별에도 그 시장이 없다 — 원래 '아직 없음'
+      return { ...inv, data: { kind: "daily", daily: inv.data, market } };
+    }
+  };
   const load = (): Promise<void> =>
     fill(
       p,
-      () =>
-        ctx.source.get<MarketMinute>("flows/market-minute", { market: q.tab }),
+      get,
       (env) =>
-        drawMinute(p, env, q.lines, (ids) => {
-          q.lines = ids;
-          writeParams({ f2l: ids.join(",") });
-        }),
+        env.data.kind === "daily"
+          ? drawDailyFallback(p, { ...env, data: env.data.daily }, env.data.market)
+          : drawMinute(p, { ...env, data: env.data.minute }, q.lines, (ids) => {
+              q.lines = ids;
+              writeParams({ f2l: ids.join(",") });
+            }),
       MINUTE_HINT,
     );
   filters(

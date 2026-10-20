@@ -3,7 +3,7 @@
 // SVG 는 viewBox 만(고정 폭 없음 — 모바일 가로 넘침 없음), axe 심각 위반 0.
 import axe from 'axe-core';
 import { describe, expect, it } from 'vitest';
-import { barsChart, barsLayout } from '../src/ui/bars';
+import { barsChart, barsLayout, MIN_SLOTS } from '../src/ui/bars';
 import { lineChart, lineRange, lineRuns } from '../src/ui/line';
 import { fitLabel, squarify, textWidth, treeColor, treemap } from '../src/ui/treemap';
 
@@ -135,6 +135,15 @@ describe('bars: 양·음 막대·막대 위 상세', () => {
     expect(up!.y + up!.height).toBeCloseTo(lay.zeroY);
     expect(down!.y).toBeCloseTo(lay.zeroY);
     expect(up!.height / down!.height).toBeCloseTo(2); // 높이는 값에 비례
+  });
+
+  it('칸이 적으면 막대가 폭을 다 덮지 않고 오른쪽(최근)에 붙는다(하루치 막대 — 2026-10-20)', () => {
+    const lay = barsLayout([-1953], { w: 640, h: 200 });
+    const [r] = lay.rects;
+    expect(r!.width).toBeLessThan(640 / MIN_SLOTS);
+    expect(r!.x).toBeGreaterThan(600);
+    const many = barsLayout(Array.from({ length: 60 }, (_, i) => i - 30), { w: 640, h: 200 });
+    expect(many.rects[0]!.x).toBeLessThan(20); // 칸이 많으면 그대로 폭 전체
   });
 
   it('막대를 누르거나 초점을 주면 상세 줄에 이름·값·상세', () => {

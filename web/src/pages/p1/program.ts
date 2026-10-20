@@ -68,6 +68,18 @@ export function dayLine(b: DayBar): string {
   ].join(" · ");
 }
 
+/** 막대 아래 표 — 날짜별 합계·차익·비차익·위탁·자기(막대만으로는 값이 안 보인다 — 2026-10-20). */
+export const RECENT_ROWS = 5;
+const eokCell = (v: number | null) => h("span", { class: signClass(v) }, eokNum(v, 0, true));
+export const DAY_COLUMNS: readonly Column<DayBar>[] = [
+  { key: "date", label: "날짜", align: "l", cell: (b) => b.date },
+  { key: "net", label: "합계", cell: (b) => eokCell(b.net) },
+  { key: "arbt", label: "차익", cell: (b) => eokCell(b.arbt_net) },
+  { key: "nabt", label: "비차익", cell: (b) => eokCell(b.nabt_net) },
+  { key: "entm", label: "위탁", cell: (b) => eokCell(b.entm_net) },
+  { key: "onsl", label: "자기", cell: (b) => eokCell(b.onsl_net) },
+];
+
 export function drawDaily(p: Panel, env: Envelope<ProgramDaily>): number {
   const d = env.data;
   const shown = d.rows.map((b) =>
@@ -87,6 +99,15 @@ export function drawDaily(p: Panel, env: Envelope<ProgramDaily>): number {
   );
   const last = [...d.rows].reverse().find((b) => b.quality !== "invalid");
   if (last) p.body.append(h("p", { class: "f2-dayline" }, dayLine(last)));
+  const recent = [...shown].reverse().slice(0, RECENT_ROWS);
+  p.body.append(
+    table<DayBar>({
+      caption: `최근 ${String(recent.length)}거래일 프로그램 순매수(억)`,
+      columns: DAY_COLUMNS,
+      rows: recent,
+      rowKey: (b) => b.date,
+    }).el,
+  );
   return d.rows.filter((b) => b.quality === "invalid").length;
 }
 

@@ -71,6 +71,11 @@ describe('프로그램매매 — 로그인', () => {
     rect?.dispatchEvent(new Event('focus'));
     rect?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(text(daily.querySelector('.bars-detail'))).toMatch(/차익 .+ · 비차익 .+ · 위탁 .+ · 자기 /);
+    // 막대만으로는 값이 안 보인다 — 아래 표에 최근 거래일(최신이 위)
+    const rows = daily.querySelectorAll('table tbody tr');
+    expect(rows).toHaveLength(5);
+    expect(text(rows[0])).toContain('2026-11-17');
+    expect(text(daily.querySelector('table thead'))).toMatch(/합계.*차익.*비차익.*위탁.*자기/);
   });
 
   it('상위 표는 범위를 숨기지 않는다 — 장중 "거래대금 상위 N + 관심종목"', async () => {

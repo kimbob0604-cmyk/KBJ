@@ -38,11 +38,15 @@ function ok(v: Num): v is number {
   return typeof v === 'number' && Number.isFinite(v);
 }
 
-/** 막대 위치(순수 계산 — 시험용). 0 은 높이 0.5 의 평평한 막대, 없는 값은 빠진다. */
+/** 칸이 이보다 적어도 이만큼의 폭으로 나눠 그린다 — 하루치 막대가 폭 전체를 덮지 않게(2026-10-20). */
+export const MIN_SLOTS = 20;
+
+/** 막대 위치(순수 계산 — 시험용). 0 은 높이 0.5 의 평평한 막대, 없는 값은 빠진다.
+ *  칸이 `MIN_SLOTS` 보다 적으면 그 폭으로 나누고 오른쪽(최근)에 붙인다. */
 export function barsLayout(
   values: readonly Num[],
   box: { w: number; h: number; top?: number; bottom?: number; left?: number; right?: number },
-): { rects: BarRect[]; zeroY: number; missing: number } {
+): { rects: BarRect[]; zeroY: number; missing: number; step: number; offset: number } {
   const top = box.top ?? 8;
   const bottom = box.bottom ?? 20;
   const left = box.left ?? 8;
@@ -54,7 +58,9 @@ export function barsLayout(
   const plotH = box.h - top - bottom;
   const y = (v: number): number => top + (1 - (v - lo) / span) * plotH;
   const n = values.length;
-  const step = n ? (box.w - left - right) / n : 0;
+  const slots = Math.max(n, MIN_SLOTS);
+  const step = n ? (box.w - left - right) / slots : 0;
+  const offset = left + (slots - n) * step; // 칸이 적으면 오른쪽(최근)에 붙인다
   const rects: BarRect[] = [];
   let missing = 0;
   values.forEach((v, i) => {
@@ -66,14 +72,14 @@ export function barsLayout(
     const y1 = y(v);
     rects.push({
       index: i,
-      x: left + i * step + step * 0.15,
+      x: offset + i * step + step * 0.15,
       y: Math.min(y0, y1),
       width: Math.max(step * 0.7, 0.5),
       height: Math.max(Math.abs(y1 - y0), 0.5),
       sign: v > 0 ? 'up' : v < 0 ? 'down' : 'flat',
     });
   });
-  return { rects, zeroY: y(0), missing };
+  return { rects, zeroY: y(0), missing, step, offset };
 }
 
 const FILL = { up: 'var(--up)', down: 'var(--down)', flat: 'var(--dim)' } as const;
@@ -125,10 +131,11 @@ export function barsChart(o: BarsOptions): HTMLDivElement {
     rect.addEventListener('focus', show);
   }
   const n = o.items.length;
-  const step = (W - 16) / n;
+  const { step, offset } = lay;
   for (const i of [...new Set([0, n - 1])]) {
-    const anchor = n === 1 ? 'middle' : i === 0 ? 'start' : 'end';
-    s('text', { x: 8 + i * step + (n === 1 ? step / 2 : i === 0 ? 0 : step), y: H - 6, 'text-anchor': anchor }, box, o.items[i]?.label ?? '');
+    const anchor = n === 1 ? 'end' : i === 0 ? 'start' : 'end';
+    const x = n === 1 ? W - 8 : i === 0 ? offset : offset + n * step;
+    s('text', { x, y: H - 6, 'text-anchor': anchor }, box, o.items[i]?.label ?? '');
   }
   if (lay.missing > 0) wrap.append(h('p', { class: 'def' }, `값 없는 ${lay.missing}칸은 비움`));
   return wrap;

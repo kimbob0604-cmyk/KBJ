@@ -211,6 +211,17 @@ describe('장중 투자자 수급 — 로그인', () => {
     expect(text(none.p)).toContain('아직 없음');
   });
 
+  it('현물 탭에 1분 자료가 없으면 그 시장의 마감 확정 순매수를 대신 보인다(빈 화면 대신 — 2026-10-20)', async () => {
+    window.history.replaceState(null, '', '/?f2m=kospi');
+    const { hz, p } = await mountLogin({ 'flows_market-minute': () => notFound('아직 없음 — flows.market_minute 09:00~15:40 매분') });
+    expect(hz.paths()).toContain('flows/investors');
+    expect(p.querySelector('[data-status="daily_fallback"]')).not.toBeNull();
+    expect(text(p)).toContain('장중 1분 자료 없음');
+    const cards = [...p.querySelectorAll('.f2-card')].map((c) => text(c.querySelector('span')));
+    expect(cards).toEqual(['개인', '외국인', '기관 합계', '기타법인']);
+    expect(text(p)).not.toContain('아직 없음 —');
+  });
+
   it('60초 갱신을 따로 건다(웹소켓 아님)', async () => {
     const { hz, every } = await mountLogin();
     expect(every.map((e) => e.ms)).toContain(MINUTE_REFRESH_MS);
