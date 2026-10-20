@@ -3365,12 +3365,22 @@
             }
           },
           {
+            "name": "listed_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Listed Only"
+            }
+          },
+          {
             "name": "limit",
             "in": "query",
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 200,
+              "maximum": 1000,
               "minimum": 1,
               "default": 100,
               "title": "Limit"

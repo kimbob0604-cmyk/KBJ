@@ -192,6 +192,19 @@ def stock_disclosures(
     )
 
 
+LISTED_CLS: Final = frozenset({"Y", "K", "N"})  # DART corp_cls — 유가·코스닥·코넥스(E = 기타)
+# 상장사 소식이 아니라 증권 발행 서류(투자자 모집용) — 피드 기본에서 뺀다
+ISSUE_DOCS: Final = (
+    "투자설명서", "일괄신고", "채무증권", "파생결합", "집합투자", "증권발행실적", "기업어음",
+    "단기사채", "유동화",
+)  # fmt: skip
+
+
+def _listed_news(corp_cls: str | None, title: str | None) -> bool:
+    t = (title or "").replace(" ", "")
+    return corp_cls in LISTED_CLS and not any(w in t for w in ISSUE_DOCS)
+
+
 def filings_feed(
     ctx: ReadContext,
     *,
@@ -201,8 +214,13 @@ def filings_feed(
     market: Market | None,
     watch_only: bool,
     limit: int,
+    listed_only: bool = True,
 ) -> Envelope[FilingsFeed]:
-    """페이지 5 공시 피드 — 하루치(기본 오늘). 일반 공시는 push 하지 않는다(D-P4-14)."""
+    """페이지 5 공시 피드 — 하루치(기본 오늘). 일반 공시는 push 하지 않는다(D-P4-14).
+
+    `listed_only`(기본): 상장사(유가·코스닥·코넥스) 공시만, 발행 서류(펀드 투자설명서·채무증권·
+    파생결합증권 일괄신고 등)는 뺀다 — 하루 공시의 40% 넘게가 이것이라 피드가 잡음으로 찼다
+    (2026-10-20 점검: 544건 중 비상장 227건, 펀드 투자설명서 123건)."""
     lk = Lookup(ctx)
     d = day or lk.today
     rows = ctx.repos.filings.disclosures(start=d, end=d)
@@ -221,6 +239,7 @@ def filings_feed(
         and (level is None or v.importance == level)
         and (cls is None or v.corp_cls == cls)
         and (not watch_only or v.is_watch)
+        and (not listed_only or _listed_news(v.corp_cls, v.title))
     ]
     picked.sort(key=lambda v: (v.first_seen_at, v.rcept_no), reverse=True)
     data = FilingsFeed(

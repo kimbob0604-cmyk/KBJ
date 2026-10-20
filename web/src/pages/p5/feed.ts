@@ -74,7 +74,7 @@ export function createFeed(c: P5Ctx): Widget {
       ? '중요도 = 제목 키워드 + 관심종목 + 시총 가산. 일반 공시는 텔레그램으로 보내지 않는다.'
       : '중요도는 제목 키워드 점수만(관심종목·시총 가산은 로그인 화면).',
   );
-  const q = { day: '0', kind: '', level: '', market: '', watch: false, sort: 'time' as Sort };
+  const q = { day: '0', kind: '', level: '', market: '', watch: false, all: false, sort: 'time' as Sort };
   const count = h('span', { class: 'count', attrs: { 'aria-live': 'polite' } });
 
   const load = (): Promise<void> =>
@@ -89,7 +89,9 @@ export function createFeed(c: P5Ctx): Widget {
             importance: q.level || null,
             market: q.market || null,
             watch_only: q.watch,
-            limit: 200,
+            // 기본은 상장사 소식만(펀드 투자설명서·채무증권 일괄신고 등 발행 서류 제외 — 2026-10-20 점검: 하루 40% 넘게가 이것)
+            listed_only: !q.all,
+            limit: 1000, // 하루치를 다(전엔 200 에서 잘려 장중 공시가 기본 화면에서 안 보였다)
           });
           return { ...env, data: { day: env.data.date, rows: env.data.rows } };
         }
@@ -134,6 +136,15 @@ export function createFeed(c: P5Ctx): Widget {
       },
     },
   });
+  const allBox = h('input', {
+    attrs: { type: 'checkbox' },
+    on: {
+      change: () => {
+        q.all = allBox.checked;
+        void load();
+      },
+    },
+  });
   filters(
     p,
     seg({
@@ -160,7 +171,7 @@ export function createFeed(c: P5Ctx): Widget {
         void load();
       },
     }).el,
-    ...(login ? [h('label', null, box, '관심종목만')] : []),
+    ...(login ? [h('label', null, box, '관심종목만'), h('label', null, allBox, '비상장·발행 서류 포함')] : []),
     count,
   );
   return { panel: p, load };

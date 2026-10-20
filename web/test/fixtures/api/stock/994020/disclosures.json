@@ -42,7 +42,7 @@
         "corp_name": "모의바이오",
         "corp_cls": "K",
         "title": "증권발행실적보고서",
-        "kind": "earnings",
+        "kind": "other",
         "is_correction": false,
         "kw_score": 6,
         "kw_matched": [

@@ -124,9 +124,14 @@ def test_earnings_section(c: TestClient, pw: P4ApiWorld) -> None:
 
 
 def test_feed_filters(c: TestClient) -> None:
-    all_ = c.get("/api/filings/feed?limit=200").json()["data"]
+    all_ = c.get("/api/filings/feed?limit=200&listed_only=false").json()["data"]
     assert all_["date"] == "2026-11-16"
     assert sum(all_["by_kind"].values()) == all_["n_total"] >= len(all_["rows"]) == 200
+    # 기본은 상장사 소식만 — 비상장(E)·발행 서류(투자설명서 등)는 뺀다(2026-10-20)
+    listed = c.get("/api/filings/feed?limit=1000").json()["data"]
+    assert listed["n_total"] < all_["n_total"]
+    assert all(r["corp_cls"] in ("Y", "K", "N") for r in listed["rows"])
+    assert not any("투자설명서" in (r["title"] or "") for r in listed["rows"])
     seen = [r["first_seen_at"] for r in all_["rows"]]
     assert seen == sorted(seen, reverse=True)
     watch = c.get("/api/filings/feed?watch_only=true").json()["data"]
@@ -136,7 +141,7 @@ def test_feed_filters(c: TestClient) -> None:
     hi = c.get("/api/filings/feed?importance=high").json()["data"]
     assert all(r["importance"] == "high" for r in hi["rows"])
     lim = c.get("/api/filings/feed?limit=3").json()["data"]
-    assert len(lim["rows"]) == 3 and lim["n_total"] == all_["n_total"]
+    assert len(lim["rows"]) == 3 and lim["n_total"] == listed["n_total"]
     day = c.get("/api/filings/feed?date=2026-11-13").json()["data"]
     assert day["date"] == "2026-11-13" and all(r["rcept_dt"] == "2026-11-13" for r in day["rows"])
 

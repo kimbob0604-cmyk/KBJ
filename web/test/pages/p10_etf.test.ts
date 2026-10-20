@@ -64,7 +64,7 @@ describe('페이지 10 ETF — 로그인', () => {
     expect(text(ty)).toContain('검사 55행 · 실패 0 · 불가 0');
 
     const pr = panelByTitle(root, '괴리율 경고');
-    expect(pr.querySelectorAll('tbody tr')).toHaveLength(3);
+    expect(pr.querySelectorAll('tbody tr')).toHaveLength(2); // 합성ETF02 는 해외형(기준 2%) — 1.2% 는 경고가 아니다
     expect(pr.querySelector('tbody td.warn')).not.toBeNull();
     // 표 머리는 요청이 아니라 응답의 basis 를 따른다(픽스처는 장중 iNAV 응답)
     expect(text(pr.querySelector('caption'))).toBe('장중 iNAV(잠정) 기준 · 검사 3개');

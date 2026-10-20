@@ -47,7 +47,8 @@ def feed(
     importance: Annotated[Literal["critical", "high", "medium", "low"] | None, Query()] = None,
     market: Annotated[Literal["KOSPI", "KOSDAQ", "KONEX"] | None, Query()] = None,
     watch_only: Annotated[bool, Query()] = False,
-    limit: Annotated[int, Query(ge=1, le=200)] = 100,
+    listed_only: Annotated[bool, Query()] = True,
+    limit: Annotated[int, Query(ge=1, le=1000)] = 100,
 ) -> Response:
     st = get_state(request)
     return cached_json(
@@ -62,6 +63,7 @@ def feed(
             market=market,
             watch_only=watch_only,
             limit=limit,
+            listed_only=listed_only,
         ),
     )
 

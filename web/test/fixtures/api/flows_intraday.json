@@ -192,52 +192,6 @@
         "pct_of_mktcap": 0.0085
       }
     ],
-    "top_inst_by_cap": [
-      {
-        "rank": 1,
-        "code": "Q00000",
-        "value": 500000000,
-        "qty": 500,
-        "name": "합성00",
-        "mktcap": 996384000000,
-        "pct_of_mktcap": 0.0502
-      },
-      {
-        "rank": 2,
-        "code": "Q00001",
-        "value": 400000000,
-        "qty": 500,
-        "name": "합성01",
-        "mktcap": 14486546000000,
-        "pct_of_mktcap": 0.0028
-      },
-      {
-        "rank": 3,
-        "code": "Q00004",
-        "value": 200000000,
-        "qty": 500,
-        "name": "합성04",
-        "mktcap": 14220765000000,
-        "pct_of_mktcap": 0.0014
-      },
-      {
-        "rank": 4,
-        "code": "Q00002",
-        "value": 300000000,
-        "qty": 500,
-        "name": "합성02",
-        "mktcap": 30371680000000,
-        "pct_of_mktcap": 0.001
-      },
-      {
-        "rank": 5,
-        "code": "Q00005",
-        "value": 100000000,
-        "qty": 500,
-        "name": "합성05",
-        "mktcap": 11703652000000,
-        "pct_of_mktcap": 0.0009
-      }
-    ]
+    "top_inst_by_cap": []
   }
 }

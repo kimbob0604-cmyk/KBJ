@@ -10928,6 +10928,7 @@ export interface operations {
                 importance?: ("critical" | "high" | "medium" | "low") | null;
                 market?: ("KOSPI" | "KOSDAQ" | "KONEX") | null;
                 watch_only?: boolean;
+                listed_only?: boolean;
                 limit?: number;
             };
             header?: never;

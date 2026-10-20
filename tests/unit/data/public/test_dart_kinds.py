@@ -74,3 +74,22 @@ def test_world_kinds_agree_with_the_feed() -> None:
             assert D.feed_kind(d.title) == d.kind, (d.ident, d.title)
         elif d.kind == "outlook":
             assert D.feed_kind(d.title) == "earnings"
+
+
+@pytest.mark.parametrize(
+    ("title", "want"),
+    [
+        # 2026-10-20 공시 피드 점검에서 틀리던 것(합성 제목 — 실제 회사명 아님)
+        ("[기재정정]투자설명서(합성PTR특허가치나스닥액티브증권자투자신탁)", "other"),  # '허가' 아님
+        ("증권발행실적보고서", "other"),  # '실적' 아님
+        ("증권신고서(지분증권)", "other"),  # '지분' 아님
+        ("주식소각결정", "buyback"),
+        ("품목허가 취득", "clinical"),
+    ],
+)
+def test_kind_false_positives_fixed(title: str, want: str) -> None:
+    assert D.kind_of(title) == want
+
+
+def test_price_adjust_with_mixed_separators() -> None:
+    assert D.feed_kind("전환가액ㆍ행사가액 조정") == "price_adjust"

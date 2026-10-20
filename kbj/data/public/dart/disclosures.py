@@ -66,7 +66,7 @@ ACTION_WINDOW: Final = 400
 # 하지 않는다
 KINDS: Final[tuple[tuple[str, tuple[str, ...]], ...]] = (
     ("inquiry", ("조회공시", "풍문", "현저한시황변동", "시황변동")),
-    ("buyback", ("자기주식", "자사주")),
+    ("buyback", ("자기주식", "자사주", "주식소각")),
     (
         "capital",
         (
@@ -87,7 +87,8 @@ KINDS: Final[tuple[tuple[str, tuple[str, ...]], ...]] = (
         "owner",
         ("최대주주", "주식등의대량보유", "임원ㆍ주요주주", "임원·주요주주", "경영권", "지분"),
     ),
-    ("clinical", ("임상", "품목허가", "승인", "허가")),
+    # '허가'·'승인' 만으로는 펀드명 '특허가치'·'변경승인' 등에 걸렸다(2026-10-20) — 맥락 있는 말만
+    ("clinical", ("임상", "품목허가", "품목승인", "시판허가", "판매허가", "허가신청", "시판승인")),
     ("earnings", ("영업(잠정)실적", "잠정실적", "매출액또는손익", "실적", "결산")),
     ("contract", ("공급계약", "단일판매", "수주", "판매ㆍ공급", "판매·공급", "계약")),
 )
@@ -166,9 +167,21 @@ class DartJson(Protocol):
     ) -> dict[str, Any]: ...
 
 
+# 종류 판정 전에 지울 말 — 다른 종류의 낱말을 품었지만 그 뜻이 아니다(2026-10-20 점검: 증권발행실적
+# 보고서가 '실적'으로, 증권신고서(지분증권)가 '지분'으로 분류됐다)
+_NOT_KIND: Final = ("증권발행실적", "지분증권", "특허가치")
+
+
+def _clean(title: str | None) -> str:
+    t = (title or "").replace("ㆍ", "·")
+    for w in _NOT_KIND:
+        t = t.replace(w, "")
+    return t
+
+
 def kind_of(title: str | None) -> str:
     """공시 제목의 종류. `KINDS` 순서대로 처음 걸리는 것."""
-    t = title or ""
+    t = _clean(title)
     for kind, words in KINDS:
         if any(w in t for w in words):
             return kind
@@ -177,7 +190,9 @@ def kind_of(title: str | None) -> str:
 
 def feed_kind(title: str | None) -> str:
     """피드 종류(P4) — `FEED_KINDS`(공백을 지운 제목) 먼저, 안 걸리면 `kind_of`."""
-    t = (title or "").replace(" ", "")
+    t = (title or "").replace(" ", "").replace("ㆍ", "·")
+    if "가액" in t and "조정" in t:
+        return "price_adjust"  # '전환가액·행사가액 조정' 처럼 표기가 섞여도(2026-10-20 점검)
     for kind, words in FEED_KINDS:
         if any(w in t for w in words):
             return kind

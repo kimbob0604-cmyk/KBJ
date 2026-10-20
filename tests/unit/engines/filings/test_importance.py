@@ -34,9 +34,14 @@ SD_TABLE = {
 }  # fmt: skip
 
 
-def test_config_keywords_are_the_sd_table() -> None:
-    assert dict(KW) == SD_TABLE
-    assert list(KW) == list(SD_TABLE)  # 순서도 같다(맞은 키워드는 표 순서로 남긴다)
+# SD 표에 KBJ 가 더한 것 — 상장 유지 위험이 low 로 나왔고 주식소각이 빠져 있었다(2026-10-20 점검)
+KBJ_ADDED = {"불성실공시": 10, "관리종목": 10, "상장적격성": 10, "실질심사": 10, "주식소각": 6}
+
+
+def test_config_keywords_are_the_sd_table_plus_kbj_additions() -> None:
+    assert {k: v for k, v in KW.items() if k not in KBJ_ADDED} == SD_TABLE
+    assert [k for k in KW if k in SD_TABLE] == list(SD_TABLE)  # SD 순서 그대로(맞은 키워드 표 순서)
+    assert {k: KW[k] for k in KBJ_ADDED} == KBJ_ADDED
 
 
 @pytest.mark.parametrize(

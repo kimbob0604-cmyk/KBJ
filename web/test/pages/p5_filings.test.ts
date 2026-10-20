@@ -48,7 +48,7 @@ describe('페이지 5 — 로그인', () => {
     expect(hz.paths().sort()).toEqual(
       [
         'filings/earnings?from=2026-11-10&to=2026-11-16',
-        'filings/feed?date=2026-11-16&limit=200&watch_only=false',
+        'filings/feed?date=2026-11-16&limit=1000&listed_only=true&watch_only=false',
         'filings/insiders?days=7',
         'filings/overhang?days=7',
         'filings/schedule?days=14',
@@ -70,7 +70,7 @@ describe('페이지 5 — 로그인', () => {
     const feed = panelByTitle(root, '공시 피드');
     click(buttonByText(feed, '어제'));
     await flush();
-    expect(hz.paths().at(-1)).toBe('filings/feed?date=2026-11-15&limit=200&watch_only=false');
+    expect(hz.paths().at(-1)).toBe('filings/feed?date=2026-11-15&limit=1000&listed_only=true&watch_only=false');
     choose(selectByLabel(feed, '종류'), 'prelim');
     choose(selectByLabel(feed, '중요도'), 'critical');
     choose(selectByLabel(feed, '시장'), 'KOSDAQ');
@@ -79,7 +79,7 @@ describe('페이지 5 — 로그인', () => {
     box.checked = true;
     box.dispatchEvent(new Event('change'));
     await flush();
-    expect(hz.paths().at(-1)).toBe('filings/feed?date=2026-11-15&importance=critical&kind=prelim&limit=200&market=KOSDAQ&watch_only=true');
+    expect(hz.paths().at(-1)).toBe('filings/feed?date=2026-11-15&importance=critical&kind=prelim&limit=1000&listed_only=true&market=KOSDAQ&watch_only=true');
   });
 
   it('공시 피드: 중요도순 정렬 — 매우 중요가 먼저, 같으면 최신', async () => {

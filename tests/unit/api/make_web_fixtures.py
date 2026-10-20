@@ -117,7 +117,7 @@ P4_SECTIONS: Final[tuple[tuple[str, str], ...]] = (
 )
 P4_OTHER: Final[tuple[tuple[str, str], ...]] = (
     ("stock/search.json", "/api/stock/search?q=%EB%AA%A8%EC%9D%98"),
-    ("filings/feed.json", "/api/filings/feed?limit=40"),
+    ("filings/feed.json", "/api/filings/feed?limit=40&listed_only=false"),
     ("filings/earnings.json", "/api/filings/earnings?from=2026-11-10&to=2026-11-16"),
     ("filings/overhang.json", "/api/filings/overhang?days=90"),
     ("filings/insiders.json", "/api/filings/insiders?days=30"),
