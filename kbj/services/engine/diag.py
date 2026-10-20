@@ -90,9 +90,64 @@ KOSPI_KRX: Final = "코스피"  # KRX 지수 일별의 코드(공백 뺀 이름 
 
 def _kospi_bars(repos: Repos, day: date, n: int) -> list[IndexBar]:
     """코스피 일봉 — KIS 코드(0001)로 쌓인 것이 없으면 KRX 일별(코스피). 원장은 KRX 이름 코드로만
-    들어와 0001 로만 찾으면 늘 비었다(2026-10-20 — 반도체 쏠림·한국 대 글로벌 '값 없음')."""
+    들어와 0001 로만 찾으면 늘 비었다(2026-10-20 — 반도체 쏠림·한국 대 글로벌 '값 없음'). 그날 봉이
+    아직 없으면(KRX 는 D+1 08:00) 마감 뒤 KIS 마지막 시세로 잠정 봉을 붙인다(`_with_today`)."""
     got = repos.market.index_series([KOSPI, KOSPI_KRX], day, n)
-    return got.get(KOSPI) or got.get(KOSPI_KRX, [])
+    bars = got.get(KOSPI) or got.get(KOSPI_KRX, [])
+    return _with_today({KOSPI_KRX: bars}, day, _today_closes(repos, day))[KOSPI_KRX]
+
+
+CLOSE_FROM: Final = time(15, 30)  # 이 시각 뒤 KIS 장중 시세 = 그날 잠정 종가
+_KRX_OF_KIS: Final = {"0001": "코스피", "1001": "코스닥", "2001": "코스피200"}
+
+
+def _today_closes(repos: Repos, day: date) -> dict[str, tuple[float, int | None]]:
+    """그날 15:30 뒤 KIS 마지막 지수·코스피 업종 시세 → {KRX 코드·정규화 업종 이름: (값, 거래대금)}.
+
+    diag.daily 는 16:00 에 돈다 — KRX 지수 일별은 D+1 08:00 이라 그날 봉이 없어 코스피·업종 수익률
+    지표가 모두 '봉 없음'이었다(2026-10-20). 그날 D 는 estimated 로 내고 다음 날 D−1 재계산이 KRX
+    확정 봉으로 덮는다(작업 설계 그대로)."""
+    start = datetime.combine(day, CLOSE_FROM, tzinfo=KST)
+    end = datetime.combine(day + timedelta(days=1), time(0), tzinfo=KST)
+    best: dict[str, tuple[datetime, float, int | None]] = {}
+
+    def keep(key: str, ts: datetime, value: float | None, turnover: int | None) -> None:
+        if value is None or value <= 0:
+            return
+        cur = best.get(key)
+        if cur is None or ts > cur[0]:
+            best[key] = (ts, value, turnover)
+
+    for q in repos.market.index_quotes(start, end):
+        krx = _KRX_OF_KIS.get(q.code)
+        if krx is not None and q.quality.usable:
+            keep(krx, q.ts, q.value, q.turnover)
+    for s in repos.market.sector_quotes(start, end):
+        if s.market == "KOSPI" and s.code.startswith("0") and s.quality.usable:
+            keep(_norm_sector(s.name or ""), s.ts, s.value, s.turnover)
+    return {k: (v[1], v[2]) for k, v in best.items()}
+
+
+def _norm_sector(name: str) -> str:
+    return "".join(ch for ch in name if ch not in " ·").upper()
+
+
+def _with_today(
+    series: Mapping[str, Sequence[IndexBar]],
+    day: date,
+    closes: Mapping[str, tuple[float, int | None]],
+) -> dict[str, list[IndexBar]]:
+    """그날 봉이 없는 코드에 KIS 잠정 봉(estimated)을 붙인다 — KRX 이름 코드·코스피 업종 이름."""
+    out: dict[str, list[IndexBar]] = {}
+    for code, bars in series.items():
+        rows = list(bars)
+        if not rows or rows[-1].date < day:
+            got = closes.get(code) or closes.get(_norm_sector(code))
+            if got is not None:
+                rows.append(IndexBar(code, day, None, None, None, None, got[0], None, got[1],
+                                     "KIS(잠정)", Quality.ESTIMATED))  # fmt: skip
+        out[code] = rows
+    return out
 
 
 SPOT_MARKETS: Final[tuple[str, ...]] = (
@@ -175,7 +230,9 @@ def _market_values(
     out: dict[str, TodayValue] = {}
     ledger = _load_ledger(repos, day, LEDGER_N)
     rcfg = markets.ribbon
-    idx = repos.market.index_series([*rcfg.cyclical, *rcfg.defensive], day, n + 5)
+    sectors = [*rcfg.cyclical, *rcfg.defensive]
+    got_idx = repos.market.index_series(sectors, day, n + 5)
+    idx = _with_today({c: got_idx.get(c, []) for c in sectors}, day, _today_closes(repos, day))
     kospi_bars = _kospi_bars(repos, day, n + 5)
     if ledger is None or ledger.last_day != day:
         why = "원장 없음 — market.close_collect·krx.daily"

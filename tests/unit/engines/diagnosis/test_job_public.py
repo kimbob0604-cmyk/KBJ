@@ -5,7 +5,8 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+import dataclasses
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from kbj.config.diag import load_diag
@@ -17,7 +18,7 @@ from kbj.core.time import KST
 from kbj.core.trade_rows import TenDayRow
 from kbj.engines.diagnosis.public import READY_EXPORT
 from kbj.services.engine import diag_pub
-from kbj.services.engine.diag_pub import KTB3Y, compute_public
+from kbj.services.engine.diag_pub import AA3Y, KTB3Y, compute_public
 from kbj.services.scheduler.handlers import JobContext
 from kbj.store.repos.memory import memory_repos
 from kbj.store.repos.trade import MemoryTradeRepo
@@ -128,3 +129,24 @@ def test_export_momentum_from_flash_yoy() -> None:
     flash = [e for e in out.events if e.kind == "export_flash"]
     assert [e.date for e in flash] == [date(2026, 12, 11), date(2026, 12, 21), date(2027, 1, 1)]
     assert all("seen_at" not in e.detail for e in flash)
+
+
+def test_backfilled_rows_count_from_their_publication_schedule() -> None:
+    """백필 행은 받은 시각이 백필한 날이다 — 그대로 공표 시각으로 쓰면 지난날 진단에서 모두 빠져
+    신용스프레드·금리 방향이 날마다 '입력 없음'이었다(2026-10-20). ECOS 일별은 그날 18:00, 금투협은
+    다음 거래일 13:30 공표 일정과 받은 시각 중 이른 것을 쓴다."""
+    r = _seeded()
+    mpc = load_calendar_events()
+    first = compute_public(r.public(), None, day=DAY, cutoff=AT, cfg=CFG, cal=CAL, mpc=mpc)
+    later = AT + timedelta(days=30)  # 한 달 뒤 백필로 받은 것처럼
+    for sid in (KTB3Y, AA3Y):
+        rows = r.macro.series([sid], "2000-01-01", DAY.isoformat())[sid]
+        r.macro.upsert_series(
+            [dataclasses.replace(x, as_of=later, released_at=later) for x in rows],
+            loaded_by="t", received_at=later,
+        )  # fmt: skip
+    again = compute_public(r.public(), None, day=DAY, cutoff=AT, cfg=CFG, cal=CAL, mpc=mpc)
+    by0 = {x.key: x for x in first.indicators}
+    by1 = {x.key: x for x in again.indicators}
+    assert by1["credit_spread"].value == by0["credit_spread"].value is not None
+    assert by1["rate_direction"].value == by0["rate_direction"].value

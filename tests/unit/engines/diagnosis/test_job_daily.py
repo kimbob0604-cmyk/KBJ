@@ -205,3 +205,37 @@ def test_kospi_bars_found_under_the_krx_name_code() -> None:
     r.market.upsert_index_bars(bars, loaded_by="t", received_at=NOW)
     got = diag._kospi_bars(r, DAY, 10)  # pyright: ignore[reportPrivateUsage]
     assert [b.close for b in got] == [100.0 + i for i in range(6)]
+
+
+def test_today_bar_from_kis_close_when_krx_daily_not_yet() -> None:
+    """diag.daily(16:00)는 KRX 지수 일별(D+1 08:00)보다 먼저 돈다 — 그날 봉이 없으면 15:30 뒤 KIS
+    마지막 지수·코스피 업종 시세로 잠정 봉(estimated)을 붙인다(2026-10-20: 코스피·업종 지표가 모두
+    '봉 없음'이었다). 15:30 전 시세는 쓰지 않는다."""
+    from kbj.core.rows import IndexBar, IndexQuote, SectorQuote
+
+    r = memory_repos()
+    prev = [DAY - timedelta(days=i) for i in range(5, 0, -1)]
+    r.market.upsert_index_bars(
+        [IndexBar("코스피", d, None, 1.0, 1.0, 1.0, 100.0, None, None, "krx", Quality.OK)
+         for d in prev]
+        + [IndexBar("화학", d, None, 1.0, 1.0, 1.0, 50.0, None, None, "krx", Quality.OK)
+           for d in prev],
+        loaded_by="t", received_at=NOW,
+    )  # fmt: skip
+    at = lambda h, m: datetime.combine(DAY, time(h, m), tzinfo=KST)  # noqa: E731
+    r.market.put_index_quotes(
+        [IndexQuote("0001", at(14, 0), "코스피", 99.0, None, None, None, "kis", Quality.ESTIMATED),
+         IndexQuote("0001", at(15, 40), "코스피", 97.0, None, 7, None, "kis", Quality.ESTIMATED)],
+        loaded_by="t", received_at=NOW,
+    )  # fmt: skip
+    r.market.put_sector_quotes(
+        [SectorQuote("KOSPI", "0008", at(15, 40), "화학", 47.0, -6.0, 5, "kis",
+                     Quality.ESTIMATED)],
+        loaded_by="t", received_at=NOW,
+    )  # fmt: skip
+    got = diag._kospi_bars(r, DAY, 10)  # pyright: ignore[reportPrivateUsage]
+    assert got[-1].date == DAY and got[-1].close == 97.0 and got[-1].quality is Quality.ESTIMATED
+    closes = diag._today_closes(r, DAY)  # pyright: ignore[reportPrivateUsage]
+    series = r.market.index_series(["화학"], DAY, 10)
+    ext = diag._with_today(series, DAY, closes)  # pyright: ignore[reportPrivateUsage]
+    assert ext["화학"][-1].date == DAY and ext["화학"][-1].close == 47.0

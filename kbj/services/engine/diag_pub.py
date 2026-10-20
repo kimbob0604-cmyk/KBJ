@@ -98,8 +98,19 @@ class PublicOut:
     event_end: date
 
 
+def _macro_avail(r: MacroSeriesRow) -> datetime:
+    """이 값을 알 수 있게 된 시각 — 기록된 공표·받은 시각과 공표 일정(그날 MACRO_AT) 중 이른 것.
+
+    백필한 행은 공표 시각 칸이 '받은 시각'(백필한 날)이라 그대로 쓰면 지난날 진단에서 모두 '아직
+    공표 전'으로 빠졌다(2026-10-20 점검: 신용스프레드·금리 방향이 날마다 '입력 없음'). ECOS 일별
+    시장금리는 그날 MACRO_AT 까지 나온다 — 그보다 늦게 적힌 시각은 받은 시각일 뿐이다."""
+    seen = r.released_at or r.as_of
+    sched = datetime.combine(date.fromisoformat(r.period), MACRO_AT, tzinfo=KST)
+    return min(seen, sched)
+
+
 def _macro_obs(rows: Sequence[MacroSeriesRow], cutoff: datetime) -> list[MacroSeriesRow]:
-    return [r for r in rows if (r.released_at or r.as_of) <= cutoff and len(r.period) == 10]
+    return [r for r in rows if len(r.period) == 10 and _macro_avail(r) <= cutoff]
 
 
 def _to_obs(points: Sequence[tuple[str, object, Quality]], source: str) -> list[Obs]:
@@ -109,11 +120,20 @@ def _to_obs(points: Sequence[tuple[str, object, Quality]], source: str) -> list[
     ]
 
 
-def _stat_obs(rows: Sequence[MarketStatRow], items: Sequence[str], cutoff: datetime) -> list[Obs]:
-    """항목들의 같은 날 합(하나라도 없으면 그날 점 없음)."""
+def _stat_obs(
+    rows: Sequence[MarketStatRow],
+    items: Sequence[str],
+    cutoff: datetime,
+    cal: TradingCalendar | None = None,
+) -> list[Obs]:
+    """항목들의 같은 날 합(하나라도 없으면 그날 점 없음). 알 수 있게 된 시각 = 받은 시각과 공표
+    일정(다음 거래일 KOFIA_AT — 금투협 D+1 13:30) 중 이른 것(백필 행 — `_macro_avail` 참고)."""
     by_day: dict[date, dict[str, MarketStatRow]] = {}
     for r in rows:
-        if r.item in items and r.as_of <= cutoff:
+        avail = r.as_of
+        if cal is not None:
+            avail = min(avail, datetime.combine(cal.next_trading_day(r.date), KOFIA_AT, tzinfo=KST))
+        if r.item in items and avail <= cutoff:
             by_day.setdefault(r.date, {})[r.item] = r
     out: list[Obs] = []
     for d in sorted(by_day):
@@ -193,8 +213,8 @@ def compute_public(
     export_obs, seen = _export_obs(ten, cutoff)
     inp = PublicInputs(
         credit_spread=cs, ktb3y=ktb_obs,
-        credit_loan=_stat_obs(credit, ("loan_kospi", "loan_kosdaq"), cutoff),
-        deposits=_stat_obs(capital, ("investor_deposit",), cutoff),
+        credit_loan=_stat_obs(credit, ("loan_kospi", "loan_kosdaq"), cutoff, cal),
+        deposits=_stat_obs(capital, ("investor_deposit",), cutoff, cal),
         export_yoy=export_obs, export_ready=bool(ten),
         expected=_expected(day, cutoff, cal),
     )  # fmt: skip
