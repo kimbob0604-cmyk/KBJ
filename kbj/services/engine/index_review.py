@@ -435,16 +435,50 @@ class PredictReport:
     rows: int = 0
     by_index: dict[str, str] = field(default_factory=dict[str, str])
     failed: dict[str, str] = field(default_factory=dict[str, str])
+    proxy_notes: dict[str, str] = field(default_factory=dict[str, str])  # 대리 ETF 를 못 쓴 사유
 
     def detail(self) -> dict[str, Any]:
         return {"runs": self.runs, "rows": self.rows, "by_index": self.by_index,
-                "failed": dict(list(self.failed.items())[:5])}  # fmt: skip
+                "failed": dict(list(self.failed.items())[:5]),
+                "proxy_notes": self.proxy_notes}  # fmt: skip
 
 
 def _user_cutoff(repos: IndexRepos, index_id: str, review_id: str) -> int | None:
     for ev in repos.index_review.calendar(index_id):
         if ev.review_id == review_id:
             return ev.user_cutoff_won
+    return None
+
+
+PROXY_SIZE_TOL: Final = 2  # 대리 ETF 종목 수가 지수 크기 ± 이만큼 밖이면 쓰지 않는다
+PROXY_SOURCE: Final = "etf"  # 대리 ETF 로 맞춘 구성종목 행의 source(사용자·보도 목록은 덮지 않음)
+
+
+def sync_from_proxy(
+    repos: IndexRepos, idx: IndexCfg, as_of: date, *, now: datetime, loaded_by: str
+) -> str | None:
+    """대리 ETF(완전 복제)의 as_of 이하 마지막 구성종목 공시로 구성종목을 맞춘다(반환 = 안 쓴 사유).
+
+    사용자·보도 목록(source user·press)이 지금 유효하면 덮지 않는다. 같은 종목 집합이면 쓰지 않는다
+    (멱등). 지수 크기(size)에서 ±PROXY_SIZE_TOL 넘게 벗어나면 표본 복제로 보고 쓰지 않는다."""
+    if idx.proxy_etf is None:
+        return None
+    held = [h for h in repos.etf.holdings_of(idx.proxy_etf, as_of) if (h.wt or 0) > 0]
+    if not held:
+        return f"대리 ETF {idx.proxy_etf} 구성종목 공시 없음"
+    asof = max(h.asof for h in held)
+    held = [h for h in held if h.asof == asof]
+    if idx.size is not None and abs(len(held) - idx.size) > PROXY_SIZE_TOL:
+        return f"대리 ETF {idx.proxy_etf} {len(held)}종목 — 지수 {idx.size}종목과 달라 쓰지 않는다"
+    active = repos.index_review.constituents(idx.id, asof)
+    if any(r.source != PROXY_SOURCE for r in active):
+        return None  # 사용자·보도 목록이 있다 — 그것이 우선
+    if {r.code for r in active} == {h.code for h in held}:
+        return None
+    load_constituents(
+        repos, idx.id, [(h.code, h.name, None) for h in held], asof,
+        PROXY_SOURCE, now=now, loaded_by=loaded_by,
+    )  # fmt: skip
     return None
 
 
@@ -458,6 +492,9 @@ def run_predict(
             rep.by_index[idx.id] = "no_review"  # 일정 표를 더 적어야 한다
             continue
         try:
+            why = sync_from_proxy(repos, idx, as_of, now=now, loaded_by=loaded_by)
+            if why is not None:
+                rep.proxy_notes[idx.id] = why
             user = _user_cutoff(repos, idx.id, review.id) if idx.family == "msci" else None
             c = compute(
                 repos, cfg, idx, review, as_of, now=now, loaded_by=loaded_by, user_cutoff=user

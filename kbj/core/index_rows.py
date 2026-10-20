@@ -46,7 +46,8 @@ CUTOFF_KINDS: Final[tuple[str, ...]] = ("model", "user")
 RUN_STATUSES: Final[tuple[str, ...]] = ("ok", "no_constituents", "no_data")
 # user = 사용자가 VM 에 올린 목록, press = 운용사·거래소 보도자료(리뷰 결과 공지)를 사람이 반영,
 # synthetic = 합성 세계(시험·데모)
-CONSTITUENT_SOURCES: Final[tuple[str, ...]] = ("user", "press", "synthetic")
+# etf = 대리 ETF(완전 복제 — config/index_reviews.yaml proxy_etf)의 구성종목 공시로 맞춘 목록(추정).
+CONSTITUENT_SOURCES: Final[tuple[str, ...]] = ("user", "press", "synthetic", "etf")
 EVIDENCE_KEYS: Final[tuple[str, ...]] = (
     "mktcap", "ff_mcap", "fif", "fif_raw", "fif_how", "gap_mcap", "gap_ff", "condition_met",
     "required_rise", "required_basis", "passive_won", "adv_won", "adv_multiple", "rank",

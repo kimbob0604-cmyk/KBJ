@@ -70,6 +70,11 @@ class IndexCfg(_Model):
     enabled: bool
     order: int = Field(ge=1)
     markets: tuple[Literal["KOSPI", "KOSDAQ"], ...] = Field(min_length=1)
+    # 구성종목 대리(완전 복제 ETF 상장 코드) — 그 ETF 의 마지막 구성종목 공시를 그날 구성종목으로
+    # 쓴다(2026-10-20 — 목록을 올리지 않아 '구성종목 목록 없음'으로 예측이 늘 비었다). size = 지수
+    # 종목 수(대리 목록이 size ± 2 밖이면 쓰지 않는다 — 표본 복제 ETF). None = 크기 검사 없음
+    proxy_etf: str | None = Field(default=None, pattern=r"^[0-9A-Z]{6}$")
+    size: int | None = Field(default=None, ge=1)
 
     @field_validator("id")
     @classmethod

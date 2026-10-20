@@ -175,3 +175,70 @@ def test_cli_backtest_scores_past_review() -> None:
     # 기준일 뒤(효력 전) 리뷰는 백테스트하지 않는다 — 기록이 없으면 no_history
     code, out = _cli(["backtest", "--index", "kospi200"], repos)
     assert code == 1 and out == []
+
+
+def _proxy_cfg(size: int | None) -> Any:
+    cfg = build_index_world().config
+    idxs = [
+        i.model_copy(update={"proxy_etf": "990200", "size": size}) if i.id == "kospi200" else i
+        for i in cfg.indexes
+    ]
+    return cfg.model_copy(update={"indexes": tuple(idxs)})
+
+
+def _put_proxy(repos: MemoryRepos, codes: list[str]) -> None:
+    from kbj.core.rows import Fund, HoldingRow
+
+    repos.etf.upsert_funds(
+        [Fund("rise:PX", "합성운용", "PX", "990200", "합성 200", "시장대표", True, "full", True, 0,
+              "ETF_ISSUERS:합성운용")],
+        loaded_by="t", now=CLOCK,
+    )  # fmt: skip
+    rows = [HoldingRow(c, f"합성{c}", 100.0, 0.5, 1e6, "ETF_ISSUERS:합성운용", Quality.OK)
+            for c in codes]  # fmt: skip
+    repos.etf.put_holdings("rise:PX", BASE, rows, loaded_by="t", received_at=CLOCK)
+
+
+def test_proxy_etf_fills_constituents_and_predicts() -> None:
+    """목록을 올리지 않아도 완전 복제 ETF 의 구성종목 공시로 구성종목을 맞추고 예측한다(2026-10-20 — 늘
+    '구성종목 목록 없음'이던 것)."""
+    members = sorted(r.code for r in world_repos().index_review.constituents("kospi200", BASE))
+    repos = world_repos(members=False)
+    _put_proxy(repos, members)
+    cfg = _proxy_cfg(len(members))
+    rep = svc.run_predict(repos, cfg, BASE, now=CLOCK, loaded_by="t")
+    assert rep.by_index["kospi200"] == "ok", rep.detail()
+    got = repos.index_review.constituents("kospi200", BASE)
+    assert sorted(r.code for r in got) == members
+    assert {r.source for r in got} == {"etf"}
+    # 다시 돌려도 같은 집합이면 쓰지 않는다(멱등)
+    assert (
+        svc.sync_from_proxy(
+            repos,
+            cfg.indexes[1]
+            if cfg.indexes[1].id == "kospi200"
+            else next(i for i in cfg.indexes if i.id == "kospi200"),
+            BASE,
+            now=CLOCK,
+            loaded_by="t",
+        )
+        is None
+    )
+
+
+def test_proxy_size_mismatch_is_not_used() -> None:
+    members = sorted(r.code for r in world_repos().index_review.constituents("kospi200", BASE))
+    repos = world_repos(members=False)
+    _put_proxy(repos, members[:-5])  # 표본 복제처럼 5종목 모자람
+    rep = svc.run_predict(repos, _proxy_cfg(len(members)), BASE, now=CLOCK, loaded_by="t")
+    assert "지수" in rep.proxy_notes["kospi200"]
+    assert repos.index_review.constituents("kospi200", BASE) == []
+
+
+def test_user_list_is_not_overwritten_by_proxy() -> None:
+    repos = world_repos()  # 사용자 목록(합성 세계 source)이 있다
+    before = {(r.code, r.source) for r in repos.index_review.constituents("kospi200", BASE)}
+    _put_proxy(repos, sorted(c for c, _ in before)[:-1])
+    svc.run_predict(repos, _proxy_cfg(None), BASE, now=CLOCK, loaded_by="t")
+    after = {(r.code, r.source) for r in repos.index_review.constituents("kospi200", BASE)}
+    assert after == before

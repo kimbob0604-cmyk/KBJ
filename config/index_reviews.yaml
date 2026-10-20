@@ -22,18 +22,23 @@ indexes:
     enabled: true
     order: 1
     markets: [KOSPI, KOSDAQ]
+    proxy_etf: "310970"   # TIGER MSCI Korea TR — 구성종목 대리(2026-10-20 보유 74종목 — 완전 복제인지 [확인 필요])
   - id: kospi200
     title: "KOSPI200"
     family: krx
     enabled: true
     order: 2
     markets: [KOSPI]
+    proxy_etf: "148020"   # KBSTAR 200 — 구성종목 대리(완전 복제, 2026-10-20 보유 200종목)
+    size: 200
   - id: kosdaq150
     title: "KOSDAQ150"
     family: krx
     enabled: true
     order: 3
     markets: [KOSDAQ]
+    proxy_etf: "270810"   # KBSTAR 코스닥150 — 구성종목 대리(완전 복제, 2026-10-20 보유 150종목)
+    size: 150
   - id: ftse_korea
     title: "FTSE Korea(GEIS)"
     family: msci             # 같은 컷오프·배수 틀 — FTSE 규칙 값은 [확인 필요] 이라 꺼 둔다
@@ -46,6 +51,8 @@ indexes:
     enabled: false
     order: 5
     markets: [KOSPI, KOSDAQ]
+    proxy_etf: "292050"   # KBSTAR KRX300 — 구성종목 대리(완전 복제, 2026-10-20 보유 300종목)
+    size: 300
 
 # ── 유동비율(FIF) 반올림 — 리뷰 날짜로 규칙을 고른다 ─────────────────────────────────────────────
 # 리뷰의 announce 날짜 ≥ from 인 규칙 가운데 from 이 가장 늦은 것(from: null = 그 이전 전부).

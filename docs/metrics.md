@@ -548,6 +548,8 @@ ET monitor/kr 의 확정 식(`monitor/kr/README.md` '무엇을 되살렸나'): �
 시계·설정 주입), 작업 `kbj/services/engine/index_review.py`, 표 0018 `prv_index.*`, API `/api/index-review*`.
 구성종목 목록·컷오프 추정·예측은 **로그인 등급**(공개 빌드·내보내기·레포 픽스처에 실자료 0 — 합성만).
 
+구성종목(2026-10-20): 사용자·보도 목록이 없으면 지수마다 정한 대리 ETF(완전 복제 — `config/index_reviews.yaml proxy_etf`: KOSPI200 = KBSTAR 200, KOSDAQ150 = KBSTAR 코스닥150, MSCI Korea = TIGER MSCI Korea TR [확인 필요: 완전 복제], KRX300 = KBSTAR KRX300)의 마지막 구성종목 공시를 그날 목록으로 쓴다(source `etf`, FIF 모름 → DART 추정). 종목 수가 지수 크기(`size`) ±2 밖이면 표본 복제로 보고 쓰지 않는다. 사용자·보도 목록이 있으면 그것이 우선.
+
 개정(2026-10-14 — 공개 출처 점검): MSCI 규칙을 **GIMI 2026-08판** 원문으로 맞췄다. 2023-02 부터 2·5·8·11월 리뷰가
 모두 Quarterly Comprehensive Review 라 정기 리뷰 편입 배수는 비구성종목 시총 1.0×·하위 세그먼트(Small Cap) 이동
 1.5×·유동 0.5×(§3.1.5·§3.1.6), 유지 ⅔·⅓ 그대로, FIF < 15% 종목은 유동 0.9×(신규)·0.6×(유지)다. 옛 1.8×·0.9× 는
