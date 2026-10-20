@@ -71,6 +71,7 @@ INDEX: Final = "YAHOO:us_index_daily"
 UNIVERSE_SOURCE: Final = "nasdaq"
 INDEX_RANGE: Final = "1mo"
 FAIL_HEAD: Final = 3
+FRESH_PROBE_N: Final = 3  # 전 종목을 받기 전에 그날 봉이 나왔는지 먼저 볼 종목 수
 
 
 # ── 순수 도우미(ET pipeline 본문) ─────────────────────────────────────────────────────────
@@ -359,6 +360,27 @@ def universe(ctx: JobContext) -> JobResult:
 # ── us.eod ──────────────────────────────────────────────────────────────────────────────
 
 
+def _require_day_bar(
+    tickers: Sequence[str], fetch: Callable[[str], list[dict[str, Any]]], day: date
+) -> None:
+    """앞 몇 종목으로 그날 봉이 공표됐는지 먼저 본다 — 하나도 없으면 바로 '공표 전'.
+
+    전에는 1,700여 종목을 다 받은 뒤(약 1시간)에야 그날 봉이 없음을 알아, 재시도 한 번이 마감
+    (120분)을 다 써 미국 보드가 이틀 묵었다(2026-10-19 — 16:12 ET 에 아직 없었다). 받기 자체가
+    실패한 종목은 판정하지 않는다(전 종목 받기로 넘어간다)."""
+    seen_any = False
+    for t in tickers[:FRESH_PROBE_N]:
+        try:
+            rows = fetch(t)
+        except FetchError:
+            continue
+        seen_any = True
+        if any(r.get("asof") == day.isoformat() for r in rows):
+            return
+    if seen_any:
+        raise NotReady(f"기준일 {day} 봉이 아직 없다(앞 {FRESH_PROBE_N}종목 확인)")
+
+
 def _daily_key(
     ctx: JobContext, cfg: Mapping[str, Any], repos: Repos, key: DataKey, detail: dict[str, Any]
 ) -> int:
@@ -379,6 +401,7 @@ def _daily_key(
         start = day - timedelta(days=days)
         return lambda t: history(t, cfg, nasdaq=nasdaq, stooq=stooq, start=start, end=day)
 
+    _require_day_bar(known or tickers, fetcher(10), day)
     probe = adjust_probe(fetcher(int(src.get("history_days_known", 90))))
     adjusted = adjusted_flag(probe)
     series: dict[str, list[dict[str, Any]]] = {}

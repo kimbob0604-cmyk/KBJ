@@ -261,6 +261,10 @@ def test_그날_봉이_아직_없으면_공표_전() -> None:
     assert res.status == "not_ready"
     assert "2026-08-31" in res.detail["reason"]
     assert repos.board.us_artifact(date(2026, 8, 31), "us_summary") is None
+    # 전 종목을 받기 전에 앞 몇 종목으로 알아챈다 — 1,700종목을 다 받고서야 알던 것(2026-10-19 —
+    # 재시도 한 번이 120분 마감을 다 썼다)
+    hist = [c for c in nq.calls if "fromdate" in c.get("params", {})]
+    assert len(hist) <= P.FRESH_PROBE_N
 
 
 def test_유니버스가_없으면_공표_전() -> None:

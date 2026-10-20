@@ -71,3 +71,16 @@ def test_not_ready_when_the_day_has_no_rows_and_fund_is_skipped() -> None:
 
 def test_rows_of_drops_other_days() -> None:
     assert K.rows_of("credit", [_row("credit", date(2026, 11, 13))], D) == []
+
+
+def test_late_portal_still_fills_earlier_days_and_waits_for_the_day() -> None:
+    """포털이 2영업일쯤 늦다(실측 2026-10-20 — 15시에 최신이 전전 거래일). 그날 하루만 부르면 표가
+    한 번도 차지 않았다 — 창 안의 지난 날은 넣고, 그날은 공표 전으로 기다린다."""
+    repos = memory_public_repos()
+    older = date(2026, 11, 12)
+    k = _Kofia({"credit": [_row("credit", older, crdTrFingWhl="19000000000000")]})
+    res = K.run(_ctx(["credit"], k, repos))
+    assert res.status == "not_ready"
+    assert "공표 전" in res.detail["reason"]
+    got = {r.item: r for r in repos.market_stats.series("credit_balance")}
+    assert got["loan_total"].value == Decimal("19000000000000")

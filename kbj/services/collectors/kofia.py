@@ -3,9 +3,9 @@
 근거: docs/p5_design.md §1.2·§3.2, D-P5-20. 상단 띠 신용잔고·예탁금(공개 칩 — `credit.json`)의 원천.
 어댑터 `kbj.data.public.fsc_kofia_stats`(15094809 — 공개, 공공누리 1유형).
 
-- 데이터 키 `DATAGO:15094809/<credit|capital|fund|cma>@<전 거래일>` 마다 그날 하루를 받는다(한 키의
-  실패가 다른 키를 멈추지 않는다). 그날 행이 없으면 공표 전(`not_ready` — D+1 13시 개방 [실측 필요
-  #48]).
+- 데이터 키 `DATAGO:15094809/<credit|capital|fund|cma>@<전 거래일>` 마다 그날까지 최근
+  `LOOKBACK_DAYS` 를 받아 있는 날은 다 넣는다(한 키의 실패가 다른 키를 멈추지 않는다). 그날 행이
+  없으면 공표 전(`not_ready`) — 포털은 실제로 2영업일쯤 늦다(실측 2026-10-20, #48).
 - 열 → 항목 이름(`ITEMS` — 0016 `item` 은 소문자 식별자). 응답 열 이름·단위는 [실측 필요 #48]. 값이
   빈 칸은 None + invalid(0 금지). 단위는 '원'으로 적는다 [실측 필요 #48].
 - 구분 열이 있는 오퍼레이션(cma — 운용 대상·투자자 구분)은 항목 이름에 구분의 짧은 해시를 붙인다
@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Mapping
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from typing import Final, Literal
 
 from kbj.core.p5_rows import MarketStatRow
@@ -35,6 +35,7 @@ from kbj.store.repos.public import PublicRepos, pg_public_repos
 __all__ = ["ITEMS", "STATS", "rows_of", "run"]
 
 UNIT: Final = "원"  # [실측 필요 #48]
+LOOKBACK_DAYS: Final = 10  # 공표가 늦은 날까지 함께 받는 창(달력일)
 Stat = Literal["credit_balance", "market_capital", "fund_nav", "cma"]
 STATS: Final[Mapping[str, Stat]] = {
     "credit": "credit_balance",
@@ -119,11 +120,20 @@ def _one(ctx: JobContext, repos: PublicRepos, key: DataKey) -> int:
         raise NotConfigured("펀드 순자산 — ctg·tstMthdCtg 값 목록 실측 전(#48)")
     day = date.fromisoformat(key.as_of[:10])
     k = _client(ctx)
-    fetched = {"credit": k.credit_balance, "capital": k.market_capital, "cma": k.cma}[op](day, day)
-    rows = rows_of(op, fetched, day)
-    if not rows:
-        raise NotReady(f"{day} 행 없음(D+1 13시 개방 — #48)")
-    return repos.market_stats.upsert(rows, loaded_by=ctx.job, received_at=ctx.now)
+    fetch = {"credit": k.credit_balance, "capital": k.market_capital, "cma": k.cma}[op]
+    # 실측(2026-10-20): 포털은 2영업일쯤 늦게 연다(10/20 15시에 최신 10/16). 그날 하루만 부르면
+    # 늘 '공표 전'으로 끝나 표가 한 번도 차지 않았다 — 최근 창을 받아 있는 날은 다 넣는다
+    fetched = fetch(day - timedelta(days=LOOKBACK_DAYS), day)
+    days = sorted({r.bas_dt for r in fetched})
+    n = 0
+    for d in days:
+        rows = rows_of(op, [r for r in fetched if r.bas_dt == d], d)
+        if rows:
+            n += repos.market_stats.upsert(rows, loaded_by=ctx.job, received_at=ctx.now)
+    if day not in days:
+        last = days[-1].isoformat() if days else "없음"
+        raise NotReady(f"{day} 행 없음(포털 공표 지연 — 받은 최신 {last}, #48)")
+    return n
 
 
 def run(ctx: JobContext) -> JobResult:
