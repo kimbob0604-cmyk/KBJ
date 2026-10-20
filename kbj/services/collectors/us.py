@@ -34,11 +34,12 @@ from collections.abc import Callable, Mapping, Sequence
 from datetime import date, datetime, timedelta
 from typing import Any, Final
 
+from kbj.core.calendar import TradingCalendar, us_calendar
 from kbj.core.p5_rows import UsArtifact, UsDailyRow, UsUniverseRow
 from kbj.core.quality import Quality
 from kbj.data.http import FetchError
 from kbj.data.private.nasdaq.client import ROW_SOURCE as NASDAQ_SOURCE
-from kbj.data.private.nasdaq.client import NasdaqClient, NasdaqThrottled
+from kbj.data.private.nasdaq.client import SCREENER_SOURCE, NasdaqClient, NasdaqThrottled
 from kbj.data.private.nasdaq.history import adjust_probe, adjusted_flag, history
 from kbj.data.private.stooq.client import StooqClient
 from kbj.data.private.yahoo.client import YahooClient, YahooError
@@ -72,6 +73,15 @@ UNIVERSE_SOURCE: Final = "nasdaq"
 INDEX_RANGE: Final = "1mo"
 FAIL_HEAD: Final = 3
 FRESH_PROBE_N: Final = 3  # 전 종목을 받기 전에 그날 봉이 나왔는지 먼저 볼 종목 수
+# 스크리너 한 번으로 그날 종가를 붙이는 길(2026-10-20 사용자 결정 — 신고가는 종가 기준이라 고가·
+# 저가 없이도 판정이 같다). 종목마다 90일씩 받던 것(약 70분)을 거래소 셋 호출로.
+SCREENER_TOL_PCT: Final = (
+    0.2  # 앞 종목 일봉 종가와 스크리너 종가 차 허용(%) — 넘으면 스크리너를 버린다
+)
+SPLIT_GAP_PP: Final = (
+    2.0  # (스크리너 종가 ÷ 저장된 전일 종가 − 1) − 스크리너 등락률 이 넘으면 분할 의심
+)
+FULL_REFRESH_WEEKDAY: Final = 4  # 금요일 회차는 전 종목 일봉(고가·저가·수정주가 다시 맞춤)
 
 
 # ── 순수 도우미(ET pipeline 본문) ─────────────────────────────────────────────────────────
@@ -362,22 +372,83 @@ def universe(ctx: JobContext) -> JobResult:
 
 def _require_day_bar(
     tickers: Sequence[str], fetch: Callable[[str], list[dict[str, Any]]], day: date
-) -> None:
+) -> dict[str, list[dict[str, Any]]]:
     """앞 몇 종목으로 그날 봉이 공표됐는지 먼저 본다 — 받은 종목이 **모두** 그날 봉을 가져야 통과.
 
     전에는 1,700여 종목을 다 받은 뒤(약 1시간)에야 그날 봉이 없음을 알아, 재시도 한 번이 마감
     (120분)을 다 써 미국 보드가 이틀 묵었다(2026-10-19 — 16:12 ET 에 아직 없었다). 하나만 있어도
     통과시키면 공표가 막 시작된 때 전 종목을 받고(67분) 다수 기준일이 전날이라 다시 '공표 전'이
     됐다(2026-10-20 점검). 받기 자체가 실패한 종목은 판정하지 않는다."""
-    seen = 0
+    got: dict[str, list[dict[str, Any]]] = {}
     for t in tickers[:FRESH_PROBE_N]:
         try:
             rows = fetch(t)
         except FetchError:
             continue
-        seen += 1
         if not any(r.get("asof") == day.isoformat() for r in rows):
             raise NotReady(f"기준일 {day} 봉이 아직 없다(앞 종목 {t} 확인)")
+        got[t] = rows
+    return got
+
+
+def screener_matches(
+    snap: Mapping[str, Mapping[str, Any]],
+    probe: Mapping[str, Sequence[Mapping[str, Any]]],
+    day: date,
+) -> str | None:
+    """스크리너 종가가 그날 일봉 종가와 맞는지(앞 종목) — 맞으면 None, 아니면 사유.
+
+    스크리너에는 날짜가 없다 — 휴장·공표 전이면 전날 값이다. 앞 종목의 그날 일봉과 대조해야 그날
+    값으로 쓸 수 있다."""
+    checked = 0
+    for t, rows in probe.items():
+        bar = next((r for r in rows if r.get("asof") == day.isoformat()), None)
+        sc = (snap.get(t) or {}).get("close")
+        if bar is None or bar.get("close") is None or sc is None:
+            continue
+        checked += 1
+        diff = abs(sc / bar["close"] - 1) * 100
+        if diff > SCREENER_TOL_PCT:
+            return f"스크리너 종가가 {t} 일봉과 {diff:.2f}% 다르다"
+    return None if checked else "대조할 앞 종목이 없다"
+
+
+def screener_bars(
+    known: Sequence[str],
+    have: Mapping[str, Sequence[Any]],
+    snap: Mapping[str, Mapping[str, Any]],
+    day: date,
+    prev_day: date,
+) -> tuple[dict[str, list[dict[str, Any]]], list[str]]:
+    """저장된 이력이 전 거래일까지 이어진 종목에 스크리너 그날 봉(종가·거래량)을 붙인다.
+
+    반환 (종목 → [그날 봉], 일봉으로 따로 받을 종목). 이미 그날 봉이 있으면 빈 목록(다시 받지
+    않는다). 전 거래일이 비었거나·스크리너에 없거나·분할 의심이면 따로 받는다."""
+    out: dict[str, list[dict[str, Any]]] = {}
+    refetch: list[str] = []
+    for t in known:
+        bars = list(have.get(t, ()))
+        last = bars[-1] if bars else None
+        if last is not None and last.date == day:
+            out[t] = []
+            continue
+        row = snap.get(t)
+        if last is None or last.date != prev_day or row is None or not last.close:
+            refetch.append(t)
+            continue
+        close, chg = row.get("close"), row.get("chg_pct")
+        if close is None or chg is None:
+            refetch.append(t)
+            continue
+        implied = (close / last.close - 1) * 100
+        if abs(implied - chg) > SPLIT_GAP_PP:
+            refetch.append(t)  # 분할·병합·배당락 조정 — 일봉(수정주가)으로 다시
+            continue
+        out[t] = [
+            dict(asof=day.isoformat(), open=None, high=None, low=None, close=close,
+                 volume=row.get("volume"), source=SCREENER_SOURCE)
+        ]  # fmt: skip
+    return out, refetch
 
 
 def _daily_key(
@@ -400,11 +471,32 @@ def _daily_key(
         start = day - timedelta(days=days)
         return lambda t: history(t, cfg, nasdaq=nasdaq, stooq=stooq, start=start, end=day)
 
-    _require_day_bar(known or tickers, fetcher(10), day)
+    probe_rows = _require_day_bar(known or tickers, fetcher(10), day)
     probe = adjust_probe(fetcher(int(src.get("history_days_known", 90))))
     adjusted = adjusted_flag(probe)
     series: dict[str, list[dict[str, Any]]] = {}
     fails: list[tuple[str, str]] = []
+    us: TradingCalendar = ctx.resources.get("us") or us_calendar()
+    by_screener: dict[str, list[dict[str, Any]]] = {}
+    note: str | None = None
+    if (
+        known
+        and day.weekday() != FULL_REFRESH_WEEKDAY
+        and src.get("daily_mode", "screener") == "screener"
+    ):
+        try:
+            snap = {r["ticker"]: r for r in nasdaq.screener(cfg)[0]}
+        except FetchError as e:
+            snap, note = {}, f"스크리너 실패 — 일봉으로({e})"[:200]
+        if snap:
+            note = screener_matches(snap, probe_rows, day)
+            if note is None:
+                by_screener, _refetch = screener_bars(
+                    known, have, snap, day, us.prev_trading_day(day)
+                )
+    series.update({t: b for t, b in by_screener.items() if b})
+    known = [t for t in known if t not in by_screener]
+    detail.update(screener=len(by_screener), screener_note=note)
     for group, days in ((known, int(src.get("history_days_known", 90))),
                         (fresh, int(src.get("history_days_new", 760)))):  # fmt: skip
         if not group:

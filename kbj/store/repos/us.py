@@ -34,7 +34,10 @@ from kbj.store.repos._table import MemoryTable, Table, delete, select, upsert
 __all__ = ["US_SOURCE_RANK", "MemoryUsRepo", "PgUsRepo", "UsRepo", "best_us_bars"]
 
 US_MARKET: Final = "US"
-US_SOURCE_RANK: Final[Mapping[str, int]] = MappingProxyType({"nasdaq": 0, "yahoo": 1, "stooq": 2})
+# nasdaq-screener = 스크리너로 붙인 그날 종가(고저가 없음) — 같은 날 일봉이 있으면 일봉이 이긴다
+US_SOURCE_RANK: Final[Mapping[str, int]] = MappingProxyType(
+    {"nasdaq": 0, "yahoo": 1, "stooq": 2, "nasdaq-screener": 3}
+)
 UNIVERSE: Final = Table(
     "prv_market.us_universe", UsUniverseRow, key=("symbol", "as_of"),
     extra=("received_at", "loaded_by"),

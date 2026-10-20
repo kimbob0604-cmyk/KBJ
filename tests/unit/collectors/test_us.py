@@ -352,3 +352,68 @@ def test_P5_합성_세계의_심은_신고가_보류_펀드() -> None:
     assert w52 == want["new_highs"]
     assert info["pending"] == len(want["held"])
     assert not set(want["funds"]) & {r["ticker"] for r in summary.payload["rows"]}
+
+
+# ── 스크리너로 그날 종가 붙이기(2026-10-20 — 신고가는 종가 기준, 종목마다 90일씩 받던 약 70분) ──
+THU = "2026-08-27"
+
+
+def _screener_world(
+    n: int = 8, *, bump: dict[str, float] | None = None, chg_shift: dict[str, float] | None = None
+) -> tuple[Any, FakeNasdaq, dict[str, Any]]:
+    """이력은 08-26 까지 저장, 스크리너·일봉 서버는 08-27(목)까지. bump = 스크리너 종가 배수,
+    chg_shift = 스크리너 등락률에 더할 %p(분할 흉내)."""
+    series, snaps, _ = demo.make(n_tickers=n, seed=3)
+    upto = {t: [b for b in bars if b["asof"] <= THU] for t, bars in series.items()}
+    snap27: dict[str, Any] = {}
+    for t, bars in upto.items():
+        last, prev = bars[-1], bars[-2]
+        close = last["close"] * (bump or {}).get(t, 1.0)
+        chg = (last["close"] / prev["close"] - 1) * 100 + (chg_shift or {}).get(t, 0.0)
+        snap27[t] = {**snaps[t], "close": close, "chg_pct": chg, "volume": last["volume"]}
+    repos = memory_repos()
+    nq = FakeNasdaq.from_series(upto, snap27)
+    P.universe(ctx([key("NASDAQ:screener", THU)], resources(repos, nq), job="us.universe"))
+    repos.us.upsert_daily(
+        [P._daily_row(t, r, True) for t, bars in upto.items() for r in bars if r["asof"] < THU],  # pyright: ignore[reportPrivateUsage]
+        loaded_by="seed", received_at=NOW,
+    )  # fmt: skip
+    nq.calls.clear()
+    return repos, nq, upto
+
+
+def _hist(nq: FakeNasdaq) -> set[str]:
+    return {c["symbol"] for c in nq.calls if c["kind"] == "history"}
+
+
+def test_이력이_이어진_종목은_스크리너_한_번으로_그날_종가() -> None:
+    repos, nq, upto = _screener_world()
+    res = P.eod(ctx([key("NASDAQ:daily", THU)], resources(repos, nq)))
+    assert res.status == "ok", res.detail
+    assert res.detail["screener"] == len(upto) and res.detail["screener_note"] is None
+    # 일봉은 앞 종목 확인(3)·수정주가 확인만 — 나머지 종목은 부르지 않는다
+    assert len(_hist(nq) & set(upto)) <= P.FRESH_PROBE_N
+    t = sorted(upto)[-1]
+    bar = repos.us.daily([t], date(2026, 8, 27), 1)[t][-1]
+    assert bar.close == pytest.approx(upto[t][-1]["close"], abs=0.01)  # 스크리너는 센트 단위
+    assert bar.source == "nasdaq-screener" and bar.high is None
+
+
+def test_스크리너_종가가_일봉과_다르면_버리고_종목마다_받는다() -> None:
+    series, _snaps, _ = demo.make(n_tickers=8, seed=3)
+    probe = sorted(series)[0]  # 유니버스 앞 종목(앞 종목 확인 대상) 하나만 1% 어긋나게
+    repos, nq, upto = _screener_world(bump={probe: 1.01})
+    res = P.eod(ctx([key("NASDAQ:daily", THU)], resources(repos, nq)))
+    assert res.status == "ok", res.detail
+    assert res.detail["screener"] == 0 and "다르다" in str(res.detail["screener_note"])
+    assert _hist(nq) >= set(upto)
+
+
+def test_분할_의심_종목만_일봉으로_다시() -> None:
+    series, _snaps, _ = demo.make(n_tickers=8, seed=3)
+    odd = sorted(series)[-1]
+    repos, nq, upto = _screener_world(chg_shift={odd: 50.0})
+    res = P.eod(ctx([key("NASDAQ:daily", THU)], resources(repos, nq)))
+    assert res.status == "ok", res.detail
+    assert res.detail["screener"] == len(upto) - 1
+    assert odd in _hist(nq)
