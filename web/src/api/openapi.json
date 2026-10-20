@@ -20615,6 +20615,20 @@
             },
             "type": "array",
             "title": "Turnover Rank"
+          },
+          "top_foreign_by_cap": {
+            "items": {
+              "$ref": "#/components/schemas/IntradayRow"
+            },
+            "type": "array",
+            "title": "Top Foreign By Cap"
+          },
+          "top_inst_by_cap": {
+            "items": {
+              "$ref": "#/components/schemas/IntradayRow"
+            },
+            "type": "array",
+            "title": "Top Inst By Cap"
           }
         },
         "additionalProperties": false,
@@ -20676,6 +20690,28 @@
               }
             ],
             "title": "Name"
+          },
+          "mktcap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mktcap"
+          },
+          "pct_of_mktcap": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pct Of Mktcap"
           }
         },
         "additionalProperties": false,

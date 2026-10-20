@@ -6,7 +6,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Literal
 
-from pydantic import AwareDatetime
+from pydantic import AwareDatetime, Field
 
 from kbj.core.quality import Quality
 from kbj.services.api.models.common import ApiModel
@@ -119,6 +119,8 @@ class IntradayRow(ApiModel):
     value: int | None  # 순매수 금액(원) — 증권사 가집계(잠정)
     qty: int | None
     name: str | None = None  # 종목 이름(최근 KRX 기본정보 — 모르면 None)
+    mktcap: int | None = None  # 시가총액(원 — 그날 이하 최근 마감 스냅, 장중엔 전일)
+    pct_of_mktcap: float | None = None  # 순매수 ÷ 시총 × 100(%) — 크기가 다른 종목을 같은 잣대로
 
 
 class RankItem(ApiModel):
@@ -135,6 +137,9 @@ class IntradayFlows(ApiModel):
     top_foreign: list[IntradayRow]
     top_inst: list[IntradayRow]
     turnover_rank: list[RankItem]
+    # 같은 가집계를 순매수 ÷ 시총 순으로(시총 모르는 종목 제외) — 금액 순위는 대형주만 보인다
+    top_foreign_by_cap: list[IntradayRow] = Field(default_factory=list[IntradayRow])
+    top_inst_by_cap: list[IntradayRow] = Field(default_factory=list[IntradayRow])
 
 
 # ── P5 F2(docs/p5_design.md §5, F2 §0-1 — `/api/flows/market-minute`) ────────────────────────────

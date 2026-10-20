@@ -293,34 +293,54 @@ export function drawDetail(p: Panel, env: Envelope<S['StockFlowDetail']>): numbe
 
 // ── 장중 잠정 ──────────────────────────────────────────────
 
+/** 가집계 상위 표 순서 — 금액(대형주만 보인다) 또는 시총 대비(순매수 ÷ 시총 — 2026-10-20 사용자 요청) */
+export type IntradayOrder = 'value' | 'cap';
+export const INTRADAY_ORDERS: readonly Option<IntradayOrder>[] = [
+  { value: 'value', label: '금액순' },
+  { value: 'cap', label: '시총 대비순' },
+];
+let intradayOrder: IntradayOrder = 'value';
+
+/** 시총 대비(%) — 0.123% 처럼. 시총을 모르면 '—' */
+export function capPct(v: number | null | undefined): string {
+  return v === null || v === undefined ? DASH : `${v >= 0 ? '+' : ''}${v.toFixed(3)}%`;
+}
+
 export function drawIntraday(p: Panel, env: Envelope<S['IntradayFlows']>, names: Map<string, string>): number {
   const d = env.data;
   for (const r of d.turnover_rank) if (r.name) names.set(r.code, r.name);
-  for (const r of [...d.top_foreign, ...d.top_inst]) if (r.name) names.set(r.code, r.name);
+  for (const r of [...d.top_foreign, ...d.top_inst, ...(d.top_foreign_by_cap ?? []), ...(d.top_inst_by_cap ?? [])])
+    if (r.name) names.set(r.code, r.name);
   const est = (text: string): HTMLElement | null => qValue(text, 'estimated');
   const topCols = (label: string): Column<S['IntradayRow']>[] => [
     { key: 'rank', label: '#', cell: (r) => num(r.rank) },
     { key: 'name', label: '종목', align: 'l', cls: () => 'nm', cell: (r) => nameCell(names.get(r.code), r.code) },
     { key: 'v', label: `${label}(억)`, cell: (r) => est(eokNum(r.value, 0, true)), cls: (r) => signClass(r.value) },
+    { key: 'cap', label: '시총 대비', cell: (r) => capPct(r.pct_of_mktcap), cls: (r) => signClass(r.pct_of_mktcap) },
   ];
   const box = (t: HTMLElement): HTMLElement => h('div', { class: 'span-4' }, t);
-  p.body.append(
-    h('p', { class: 'dim' }, `${kstTime(d.slot)} 슬롯 · 장중 잠정 — 15:35 마감 뒤 확정`),
-    h(
-      'div',
-      { class: 'grid' },
+  const pick = (byValue: S['IntradayRow'][], byCap: S['IntradayRow'][] | undefined): S['IntradayRow'][] =>
+    intradayOrder === 'cap' && byCap ? byCap.map((r, i) => ({ ...r, rank: i + 1 })) : byValue;
+  const tops = h('div', { class: 'grid' });
+  const renderTops = (): void => {
+    tops.replaceChildren(
       box(
         table({
-          caption: '외국인 가집계 상위',
+          caption: `외국인 가집계 상위${intradayOrder === 'cap' ? ' · 시총 대비' : ''}`,
           columns: topCols('외국인'),
-          rows: d.top_foreign,
+          rows: pick(d.top_foreign, d.top_foreign_by_cap),
           pageSize: 10,
           empty: '없음',
         }).el,
       ),
       box(
-        table({ caption: '기관 가집계 상위', columns: topCols('기관'), rows: d.top_inst, pageSize: 10, empty: '없음' })
-          .el,
+        table({
+          caption: `기관 가집계 상위${intradayOrder === 'cap' ? ' · 시총 대비' : ''}`,
+          columns: topCols('기관'),
+          rows: pick(d.top_inst, d.top_inst_by_cap),
+          pageSize: 10,
+          empty: '없음',
+        }).el,
       ),
       box(
         table<S['RankItem']>({
@@ -337,7 +357,26 @@ export function drawIntraday(p: Panel, env: Envelope<S['IntradayFlows']>, names:
           empty: '없음',
         }).el,
       ),
+    );
+  };
+  renderTops();
+  p.body.append(
+    h('p', { class: 'dim' }, `${kstTime(d.slot)} 슬롯 · 장중 잠정 — 15:35 마감 뒤 확정`),
+    seg<IntradayOrder>({
+      label: '가집계 순서',
+      options: INTRADAY_ORDERS,
+      value: intradayOrder,
+      onChange: (v) => {
+        intradayOrder = v;
+        renderTops();
+      },
+    }).el,
+    h(
+      'p',
+      { class: 'def' },
+      '시총 대비 = 가집계 순매수 ÷ 시가총액(전일 마감). 금액순은 대형주만 위에 오고, 시총 대비순은 종목 크기에 비해 얼마나 샀는지를 본다.',
     ),
+    tops,
   );
   return 0;
 }

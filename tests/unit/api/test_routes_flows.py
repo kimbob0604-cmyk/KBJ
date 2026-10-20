@@ -116,6 +116,12 @@ def test_intraday_estimated(world: World, authed: TestClient) -> None:
     vals = [x["value"] for x in d["top_foreign"]]
     assert vals == sorted(vals, reverse=True)
     assert all(x["name"] for x in d["top_foreign"])  # 코드만 보이던 줄 — 기본정보 이름을 붙인다
+    # 시총 대비(순매수 ÷ 시총 × 100) — 금액 순위는 대형주만 보인다(2026-10-20 사용자 요청)
+    for x in d["top_foreign"]:
+        if x["mktcap"]:
+            assert x["pct_of_mktcap"] == round(x["value"] / x["mktcap"] * 100, 4)
+    caps = [x["pct_of_mktcap"] for x in d["top_foreign_by_cap"]]
+    assert caps and caps == sorted(caps, reverse=True)
     assert len(d["turnover_rank"]) == 5
     tv = [x["turnover"] for x in d["turnover_rank"]]
     assert tv == sorted(tv, reverse=True)

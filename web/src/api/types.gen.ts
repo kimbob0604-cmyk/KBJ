@@ -5716,6 +5716,10 @@ export interface components {
             top_inst: components["schemas"]["IntradayRow"][];
             /** Turnover Rank */
             turnover_rank: components["schemas"]["RankItem"][];
+            /** Top Foreign By Cap */
+            top_foreign_by_cap?: components["schemas"]["IntradayRow"][];
+            /** Top Inst By Cap */
+            top_inst_by_cap?: components["schemas"]["IntradayRow"][];
         };
         /** IntradayRow */
         IntradayRow: {
@@ -5729,6 +5733,10 @@ export interface components {
             qty: number | null;
             /** Name */
             name?: string | null;
+            /** Mktcap */
+            mktcap?: number | null;
+            /** Pct Of Mktcap */
+            pct_of_mktcap?: number | null;
         };
         /** InvestorTotals */
         InvestorTotals: {

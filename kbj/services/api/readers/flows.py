@@ -269,18 +269,34 @@ def flows_intraday(ctx: ReadContext) -> Envelope[IntradayFlows]:
     slot = max(stamps)
 
     names = {u.code: u.name for u in ctx.repos.market.universe(now.date()) if u.name}
+    snaps, _ = ctx.repos.market.snapshot(now.date())  # 장중엔 전일 마감 스냅 — 시총 잣대
 
-    def top(who: Investor) -> list[IntradayRow]:
+    def cap_pct(code: str, value: int | None) -> tuple[int | None, float | None]:
+        s = snaps.get(code)
+        cap = None if s is None else s.mktcap
+        if cap is None or cap <= 0 or value is None:
+            return cap, None
+        return cap, round(value / cap * 100, 4)
+
+    def top(who: Investor, by_cap: bool = False) -> list[IntradayRow]:
         # KIS 가집계 순위는 시장(코스피·코스닥)마다 1위부터라 섞으면 1·1·2·2 가 된다 — 금액 순으로
         # 합쳐 다시 매긴다(2026-10-20 화면). 이름은 KRX 기본정보(코드만 보이던 줄)
         rows = [r for r in inv if r.ts == slot and r.investor is who and r.quality.usable]
         rows.sort(key=lambda r: (-(r.net_value or 0), r.code))
-        return [
-            IntradayRow(
-                rank=i, code=r.code, value=r.net_value, qty=r.net_qty, name=names.get(r.code)
-            )
-            for i, r in enumerate(rows[:INTRADAY_TOP_N], start=1)
-        ]
+        if by_cap:  # 시총 대비 — 시총을 모르는 종목은 뺀다(0 으로 줄 세우지 않는다)
+            pcts = {r.code: cap_pct(r.code, r.net_value)[1] for r in rows}
+            rows = [r for r in rows if pcts[r.code] is not None]
+            rows.sort(key=lambda r: (-(pcts[r.code] or 0.0), r.code))
+        out: list[IntradayRow] = []
+        for i, r in enumerate(rows[:INTRADAY_TOP_N], start=1):
+            cap, pct = cap_pct(r.code, r.net_value)
+            out.append(
+                IntradayRow(
+                    rank=i, code=r.code, value=r.net_value, qty=r.net_qty,
+                    name=names.get(r.code), mktcap=cap, pct_of_mktcap=pct,
+                )
+            )  # fmt: skip
+        return out
 
     # 거래대금 순위도 두 시장을 합쳐 금액 순 — 시장 순으로 붙이면 화면 앞 10줄이 코스닥만이었다
     rk = sorted(
@@ -291,6 +307,8 @@ def flows_intraday(ctx: ReadContext) -> Envelope[IntradayFlows]:
         slot=slot,
         top_foreign=top(Investor.FOREIGN),
         top_inst=top(Investor.INSTITUTION),
+        top_foreign_by_cap=top(Investor.FOREIGN, by_cap=True),
+        top_inst_by_cap=top(Investor.INSTITUTION, by_cap=True),
         turnover_rank=[
             RankItem(
                 market=r.market,

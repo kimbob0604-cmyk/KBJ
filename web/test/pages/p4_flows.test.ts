@@ -156,6 +156,19 @@ describe('페이지 4 수급 — 로그인', () => {
     expect(text(p.querySelector('tbody tr'))).toContain('Q00000');
   });
 
+  it('가집계 상위를 시총 대비순으로 바꿔 본다(순매수 ÷ 시총 — 금액순은 대형주만 위에)', async () => {
+    const { root } = await mountLogin();
+    const p = panelByTitle(root, '장중 잠정');
+    expect(text(p.querySelector('thead'))).toContain('시총 대비');
+    const btn = [...p.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent === '시총 대비순');
+    btn?.click();
+    expect(text(p.querySelector('caption'))).toContain('시총 대비');
+    const cells = [...p.querySelectorAll('table')][0]?.querySelectorAll('tbody tr td:last-child') ?? [];
+    const vals = [...cells].map((c) => Number((c.textContent ?? '').replace('%', '')));
+    expect(vals.length).toBeGreaterThan(0);
+    expect(vals).toEqual([...vals].sort((a, b) => b - a));
+  });
+
   it('누적 합 — 값이 없는 날은 끊고 이어서 더한다', () => {
     expect(cumulative([1, 2, null, 3])).toEqual([1, 3, null, 6]);
   });
