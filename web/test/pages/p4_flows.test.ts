@@ -163,7 +163,8 @@ describe('페이지 4 수급 — 로그인', () => {
     const btn = [...p.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent === '시총 대비순');
     btn?.click();
     expect(text(p.querySelector('caption'))).toContain('시총 대비');
-    const cells = [...p.querySelectorAll('table')][0]?.querySelectorAll('tbody tr td:last-child') ?? [];
+    const cells = p.querySelectorAll('table')[0]?.querySelectorAll('tbody tr td:last-child');
+    if (!cells) throw new Error('표가 없다');
     const vals = [...cells].map((c) => Number((c.textContent ?? '').replace('%', '')));
     expect(vals.length).toBeGreaterThan(0);
     expect(vals).toEqual([...vals].sort((a, b) => b - a));
