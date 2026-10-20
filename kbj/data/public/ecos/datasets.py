@@ -2,8 +2,9 @@
 
 저장 표는 `pub_macro.series`(마이그레이션 0011, P5 — 시리즈 단위 등급). 타기관 작성 표(802Y001·
 731Y001·901Y056·901Y009)는 로그인 등급이라 여기 없다(`kbj.data.private.ecos_restricted` — 묶음 D,
-`prv_macro.series`). 수집 작업: `macro.evening`(17:00 — 817Y002 @ trade_date·722Y001 @ prev_trading_day),
-`macro.monthly`(09:10 — 월간 표 @ month), P5. 표·항목 코드는 `docs/probe_results.md` §4.3.
+`prv_macro.series`). 수집 작업: `macro.evening`(17:00 — 817Y002 @ trade_date·722Y001 @
+prev_trading_day), `macro.monthly`(09:10 — 월간 표 @ month), P5. 표·항목 코드는
+`docs/probe_results.md` §4.3.
 """
 
 from __future__ import annotations
@@ -50,7 +51,7 @@ DATASETS: Final[tuple[DatasetSpec, ...]] = (
     _ecos(
         "722Y001",
         as_of="prev_trading_day",
-        published="금통위 결정일 반영(일·월·분기·연 주기) — 일별 값은 다음 날 올라온다(실측 2026-10-20)",
+        published="금통위 결정일 반영(일·월·분기·연 주기) — 일별은 다음 날 올라온다(실측 10-20)",
         notes="한국은행 기준금리 및 여수신금리 — 기준금리 0101000",
     ),
     _ecos(
