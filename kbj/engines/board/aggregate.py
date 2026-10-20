@@ -233,7 +233,7 @@ def detect(rows, cfg, prev_near=None):
                     tickers=[x["code"]],
                     names=[x.get("name")],
                     severity=round(x["vol_mult"], 2),
-                    # 방향(등락)·거래대금이 없으면 급락일 투매와 재료성 급등을 가를 수 없다(2026-10-20)
+                    # 방향(등락)·거래대금이 없으면 투매와 재료성 급등을 가를 수 없다(2026-10-20)
                     evidence=dict(
                         vol_mult=x["vol_mult"],
                         volume=x.get("volume"),
