@@ -467,6 +467,15 @@ def _decision(env: _Env, d: DisclosureRow) -> tuple[int, str | None]:
                 ev = _from_document(d, inst, doc)
                 if not doc:
                     raise ParseError("구조화 응답에도 원문에도 결정 내용이 없다")
+                last = d.parse_tries + 1 >= env.cfg.filings.feed.retry_parse_max
+                if structured.missing(ev) and not last:
+                    # 구조화 응답은 늦게 붙는다(정정 공시는 원문에 바뀐 칸만 있다 — 실측 2026-10-20:
+                    # 나흘 뒤 구조화 응답에 권면·가액이 다 있었다). 빈 행을 쓰지 않고 다음에 다시 —
+                    # 마지막 시도에만 원문으로 읽은 만큼 쓴다
+                    raise ParseError(
+                        f"구조화 응답에 아직 없고 원문에 필수 칸이 없다"
+                        f"({'·'.join(structured.missing(ev))}) — 반영 지연, 다시 시도"
+                    )
             else:
                 ev = structured.supplement(got, doc, source="원문")
         else:

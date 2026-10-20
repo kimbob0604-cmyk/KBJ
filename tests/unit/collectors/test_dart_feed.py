@@ -13,7 +13,7 @@ from __future__ import annotations
 import io
 import zipfile
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timedelta
 from typing import Any
 
@@ -48,6 +48,7 @@ class Patched:
     world: P4World
     bad_docs: set[str] = field(default_factory=set[str])
     empty_json: set[str] = field(default_factory=set[str])
+    thin_docs: set[str] = field(default_factory=set[str])  # 정정 공시처럼 바뀐 칸(만기)만 있는 원문
 
     def dart_json(
         self, endpoint: str, params: Mapping[str, str], *, now: datetime
@@ -63,6 +64,12 @@ class Patched:
             buf = io.BytesIO()
             with zipfile.ZipFile(buf, "w") as zf:
                 zf.writestr("x.xml", "<html><body><p>표가 없는 원문</p></body></html>")
+            return buf.getvalue()
+        if endpoint == "document.xml" and params.get("rcept_no") in self.thin_docs:
+            buf = io.BytesIO()
+            with zipfile.ZipFile(buf, "w") as zf:
+                zf.writestr("x.xml", "<table><tr><td>5. 사채만기일</td><td>2031년 11월 13일</td>"
+                                     "</tr></table>")  # fmt: skip
             return buf.getvalue()
         return self.world.dart_bytes(endpoint, params, now=now)
 
@@ -241,6 +248,28 @@ def test_decision_absent_from_the_structured_reply_is_read_from_the_document() -
     for name in ("face_value", "price", "shares", "exercise_start", "exercise_end", "maturity",
                  "refix_floor", "seq", "alloc_method"):  # fmt: skip
         assert getattr(ev, name) == getattr(t, name), name
+
+
+def test_decision_absent_from_structured_with_thin_document_waits_instead_of_blank_row() -> None:
+    """구조화 응답은 늦게 붙는다 — 정정 공시처럼 원문에 필수 칸이 없으면 빈 행을 쓰지 않고 다시
+    시도한다(실측 2026-10-20: 빈 오버행 행 21/23). 마지막 시도에만 원문으로 읽은 만큼 쓴다."""
+    w = build_world()
+    rc = w.rcept("e14.cb3")
+    d = Day(Patched(w, empty_json={"cvbdIsDecsn.json"}, thin_docs={rc}))
+    d.at(date(2026, 9, 1), "16:01")
+    assert d.repos.filings.event_t.get((rc,)) is None
+    row = d.repos.filings.disclosure(rc)
+    assert row is not None and (row.parse_state, row.parse_tries) == ("failed", 1)
+    assert "반영 지연" in (row.parse_note or "")
+    # 마지막 시도(6번째) — 원문으로 읽은 만큼(만기) 쓰고 끝낸다
+    stored = d.repos.filings.disclosure_t.rows[(rc,)]
+    stored.row = replace(stored.row, parse_tries=5)
+    d.at(date(2026, 9, 4), "16:01")
+    ev = d.repos.filings.event_t.get((rc,))
+    assert ev is not None and ev.parse_source == "document" and ev.face_value is None
+    assert ev.maturity == date(2031, 11, 13)
+    done = d.repos.filings.disclosure(rc)
+    assert done is not None and done.parse_state == "done"
 
 
 def test_buyback_decision_on_its_day() -> None:
