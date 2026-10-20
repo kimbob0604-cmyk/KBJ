@@ -184,7 +184,8 @@ describe('페이지 2 신고가 — 로그인', () => {
     const heat = panelByTitle(root, '테마 히트맵');
     click(buttonByText(heat, '섹터(board48)'));
     expect(text(heat)).toContain('전자제품');
-    expect(heat.querySelectorAll('.heat').length).toBeGreaterThan(0);
+    // 서버가 보낸 그룹을 모두(위·아래 반씩 — 앞 8개만 자르면 내린 그룹이 빠진다)
+    expect(heat.querySelectorAll('.heat')).toHaveLength(12);
   });
 });
 

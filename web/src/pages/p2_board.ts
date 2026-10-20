@@ -315,7 +315,9 @@ export function drawHeat(
   labels: Record<string, string>,
 ): number {
   const groups = (axis === 'theme' ? env.data.heatmap_theme : env.data.heatmap_sector) ?? [];
-  const shown = groups.filter(isObj).slice(0, 8);
+  // 서버가 등락률 위·아래에서 반씩 고른 그룹(board.yaml display.heatmap_groups) — 앞에서 자르면 내린
+  // 그룹이 거의 빠진다(2026-10-20 점검: 12개 중 8개만 그려 하락 그룹이 2개뿐이었다)
+  const shown = groups.filter(isObj);
   if (shown.length === 0) {
     p.showMessage(axis === 'theme' ? '테마 히트맵 없음 — config/knowledge 테마 사전' : '섹터 히트맵 없음');
     return 0;
