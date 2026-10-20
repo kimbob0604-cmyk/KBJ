@@ -41,6 +41,7 @@ from datetime import date, datetime, timedelta
 from typing import Any, Final, Protocol
 
 from kbj.config.macro import MacroConfig, SeriesCfg, load_macro
+from kbj.config.markets import load_calendar_events
 from kbj.core.p5_rows import CalendarEvent, MacroSeriesMeta, MacroSeriesRow
 from kbj.core.quality import Quality
 from kbj.core.time import KST
@@ -51,7 +52,12 @@ from kbj.data.public.kosis.client import KosisClient
 from kbj.data.public.nyfed.client import NyfedClient
 from kbj.data.public.treasury.client import TreasuryClient
 from kbj.data.spec import DataKey
-from kbj.engines.macro.calendar import attach_actuals, fred_release_events, manual_events
+from kbj.engines.macro.calendar import (
+    attach_actuals,
+    fred_release_events,
+    manual_events,
+    official_events,
+)
 from kbj.services.scheduler.handlers import JobContext, JobResult
 from kbj.store.repos.public import PublicRepos, pg_public_repos
 
@@ -342,6 +348,12 @@ def _fred_releases(ctx: JobContext, cfg: MacroConfig, repos: PublicRepos, key: D
     rel = fred.release_dates(start, end)
     events: list[CalendarEvent] = fred_release_events((r.name, r.date) for r in rel)
     events += [e for e in manual_events(cfg.calendar.manual) if start <= e.date <= end]
+    # 금통위 등 공식 일정 표(config/calendar_events.yaml) — 주석엔 같이 읽는다 했지만 읽지 않아
+    # 금통위가 경제 캘린더에서 빠졌다(2026-10-20)
+    official = load_calendar_events(settings=ctx.settings)
+    events += official_events(
+        (o.kind, o.date, o.title) for o in official.events if start <= o.date <= end
+    )
     ids = sorted({e.actual_series for e in events if e.actual_series})
     stored = repos.macro.series(ids) if ids else {}
     events = attach_actuals(events, stored, ctx.now)

@@ -31,6 +31,8 @@ __all__ = [
     "fred_release_events",
     "manual_events",
     "merge",
+    "official_events",
+    "period_start",
     "window",
 ]
 
@@ -99,29 +101,71 @@ def manual_events(items: Sequence[ManualEvent]) -> list[CalendarEvent]:
     return out
 
 
+def period_start(period: str) -> date | None:
+    """YYYY·YYYY-MM·YYYY-Qn·YYYY-MM-DD → 그 기간 첫날. 읽지 못하면 None."""
+    try:
+        if len(period) == 4:
+            return date(int(period), 1, 1)
+        if len(period) == 7 and period[4] == "-" and period[5] == "Q":
+            return date(int(period[:4]), (int(period[6]) - 1) * 3 + 1, 1)
+        if len(period) == 7:
+            return date(int(period[:4]), int(period[5:7]), 1)
+        return date.fromisoformat(period)
+    except ValueError:
+        return None
+
+
 def attach_actuals(
     events: Sequence[CalendarEvent],
     series: Mapping[str, Sequence[MacroSeriesRow]],
     now: datetime,
 ) -> list[CalendarEvent]:
-    """`actual_series` 가 있는 행에 그날 이후 처음 공표된 값을 붙인다(없으면 그대로 — None)."""
+    """`actual_series` 가 있는 행에 그 발표의 값을 붙인다(없으면 그대로 — None).
+
+    발표의 값 = 그날 이후(당일 포함) 공표된 행 가운데 **기간이 발표일보다 앞선 가장 최근 기간**.
+    예전엔 '그날 이후 처음 공표된 행'을 골라, 백필로 여러 기간이 같은 공표 시각(받은 시각)을 가진
+    시리즈에서 가장 오래된 기간이 붙었다(2026-10-14 미국 CPI 결과에 2023-10 값 — 2026-10-20)."""
     if now.tzinfo is None:
         raise ValueError("now 는 시간대가 있는 시각")
     out: list[CalendarEvent] = []
     for e in events:
         rows = series.get(e.actual_series or "", ())
-        hit: tuple[datetime, MacroSeriesRow] | None = None
+        hit: tuple[date, MacroSeriesRow] | None = None
         for r in rows:
             at = r.released_at
             if at is None or r.value is None or at > now or at.astimezone(KST).date() < e.date:
                 continue
-            if hit is None or at < hit[0]:
-                hit = (at, r)
+            start = period_start(r.period)
+            if start is None or start >= e.date:
+                continue  # 발표일 뒤 기간은 그 발표의 값이 아니다
+            if hit is None or start > hit[0]:
+                hit = (start, r)
         if hit is None:
             out.append(e)
         else:
             out.append(replace(e, actual=hit[1].value, unit=e.unit or hit[1].unit))
     return out
+
+
+def official_events(
+    items: Iterable[tuple[str, date, str]], *, country: str = "KR", source: str = "bok"
+) -> list[CalendarEvent]:
+    """공식 일정 표(`config/calendar_events.yaml` — 금통위 등: 종류·날짜·제목) → 공개 캘린더 행.
+    경제 캘린더가 이 표를 읽지 않아 금통위가 빠졌다(2026-10-20)."""
+    return [
+        CalendarEvent(
+            event_id(country, kind, d, source),
+            kind,
+            d,
+            None,
+            title,
+            country,
+            3,
+            source,
+            Quality.OK,
+        )
+        for kind, d, title in items
+    ]
 
 
 def _key(e: CalendarEvent) -> tuple[str, str, date]:

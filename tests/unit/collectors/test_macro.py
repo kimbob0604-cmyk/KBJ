@@ -103,13 +103,16 @@ def test_morning_writes_public_rows_and_skips_unprobed_sources() -> None:
     cpi = repos.macro.series(["FRED:CPIAUCSL"])["FRED:CPIAUCSL"]
     assert cpi and cpi[-1].period.count("-") == 1  # 월 기간 YYYY-MM
     cal = repos.macro.calendar(date(2026, 11, 1), date(2026, 12, 31))
-    assert cal and all(e.source == "fred" and e.forecast is None for e in cal)
+    assert cal and all(e.source in ("fred", "bok") and e.forecast is None for e in cal)
     assert {e.kind for e in cal} <= {
         "cpi",
         "payrolls",
         "gdp",
         "pce",
+        "bok_mpc",
     }  # 대응 없는 발표는 싣지 않는다
+    # 금통위(config/calendar_events.yaml)도 경제 캘린더에 — 빠져 있었다(2026-10-20)
+    assert any(e.kind == "bok_mpc" and e.date == date(2026, 11, 26) for e in cal)
 
 
 def test_all_sources_when_probed_and_rerun_keeps_first_seen_time() -> None:

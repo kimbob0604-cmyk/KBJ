@@ -18,6 +18,7 @@ from kbj.engines.macro.calendar import (
     fred_release_events,
     manual_events,
     merge,
+    official_events,
     window,
 )
 
@@ -88,6 +89,25 @@ def test_actual_is_first_value_released_on_or_after_the_event_and_not_in_future(
     assert none.actual is None  # 지어내지 않는다
     with pytest.raises(ValueError):
         attach_actuals([e], {}, datetime(2026, 11, 17))  # noqa: DTZ001
+
+
+def test_actual_is_latest_period_before_event_even_when_backfill_shares_release_time() -> None:
+    """백필로 모든 기간이 같은 공표 시각(받은 시각)이면 '처음 공표된 행'이 가장 오래된 기간이었다
+    (2026-10-14 미국 CPI 결과에 2023-10 값 — 2026-10-20). 발표일 앞선 가장 최근 기간을 고른다."""
+    (e,) = fred_release_events([("Consumer Price Index", date(2026, 11, 13))])
+    bulk = datetime(2026, 11, 15, 9, 0, tzinfo=KST)
+    rows = [
+        _row(p, v, bulk)
+        for p, v in (("2023-10", "307.7"), ("2026-09", "320.0"), ("2026-10", "321.0"))
+    ]
+    (got,) = attach_actuals([e], {"FRED:CPIAUCSL": rows}, NOW)
+    assert got.actual == Decimal("321.0")
+
+
+def test_official_events_from_calendar_table() -> None:
+    (mpc,) = official_events([("bok_mpc", date(2026, 11, 26), "금통위 통화정책방향 결정")])
+    assert (mpc.country, mpc.kind, mpc.source, mpc.importance) == ("KR", "bok_mpc", "bok", 3)
+    assert mpc.is_public
 
 
 def _ev(country: str, kind: str, d: date, src: str, fc: str | None = None) -> CalendarEvent:
