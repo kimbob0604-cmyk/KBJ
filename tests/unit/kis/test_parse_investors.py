@@ -310,6 +310,10 @@ def test_market_params_are_krx_only_until_probed() -> None:
     p = params_market_investor("0001", date(2026, 10, 7))
     assert p["FID_COND_MRKT_DIV_CODE"] == "U"
     assert p["FID_INPUT_DATE_1"] == "20261007"
+    # 둘을 비우면 투자자 칸이 전부 0 으로 온다(실측 2026-10-20)
+    assert (p["FID_INPUT_ISCD_1"], p["FID_INPUT_ISCD_2"]) == ("KSP", "0001")
+    q = params_market_investor("1001", date(2026, 10, 7))
+    assert (q["FID_INPUT_ISCD_1"], q["FID_INPUT_ISCD_2"]) == ("KSQ", "1001")
     with pytest.raises(ValueError, match="실측"):
         params_market_investor("0001", date(2026, 10, 7), "NXT")
 

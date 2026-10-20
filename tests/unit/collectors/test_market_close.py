@@ -338,6 +338,65 @@ def test_krx_zero_volume_without_a_today_row_does_not_block_the_key() -> None:
     assert quiet in d["no_trade_sample"] and "KRX" in d["no_trade_sample"][quiet]
 
 
+def _blank_today(body: dict[str, Any]) -> dict[str, Any]:
+    """거래 없는 ETF 에 KIS 가 주는 모양 — 당일 행은 있는데 투자자 칸이 빈 문자열(실측 10-20)."""
+    for r in body["output"]:
+        if r["stck_bsop_date"] == "20261007":
+            for k in list(r):
+                if k.endswith(("_qty", "_pbmn", "_vol")):
+                    r[k] = ""
+    return body
+
+
+def test_etf_without_trades_today_is_checked_by_quote_not_waited_for() -> None:
+    """ETF 는 오늘 스냅이 없다 — 남은 몇 개만 현재가로 보고 거래량 0 이면 기다리지 않는다
+    (거래 없는 채권 ETF 셋이 마감 수집 전체를 막아 보드·마감 요약이 멈췄다, 2026-10-19·20)."""
+    quiet = "995010"
+
+    def hook(tr: str, params: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
+        code = params.get("FID_INPUT_ISCD")
+        if tr == "FHKST01010900" and code == quiet:
+            return _blank_today(body)
+        if tr == "FHKST01010100" and code == quiet:
+            cast("dict[str, Any]", body["output"]).update(acml_vol="0", acml_tr_pbmn="0")
+        return body
+
+    repos, _server, kis = setup(hook)
+    res = run(repos, kis, keys("etf_investor_daily"))
+    assert res.status == "ok", res.detail
+    d = res.detail["etf_investor_daily"]
+    assert quiet in d["no_trade_sample"] and "거래량 0" in d["no_trade_sample"][quiet]
+    assert kis.count("FHKST01010100") == 1  # 남은 하나만 확인 조회
+    assert quiet not in repos.flows.days([quiet], DAY, DAY)  # 행은 만들지 않는다
+
+
+def test_etf_with_trades_but_no_row_yet_still_waits() -> None:
+    lagging = "995010"
+
+    def hook(tr: str, params: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
+        if tr == "FHKST01010900" and params.get("FID_INPUT_ISCD") == lagging:
+            return _blank_today(body)
+        return body
+
+    repos, _server, kis = setup(hook)
+    res = run(repos, kis, keys("etf_investor_daily"))
+    assert res.status == "failed"
+    assert res.detail["etf_investor_daily"]["retry_codes"] == 1
+    assert lagging in res.detail["reason"]
+
+
+def test_many_missing_rows_are_a_publish_delay_and_skip_the_quote_check() -> None:
+    """오늘 스냅이 없는 종목이 허용 수보다 많이 비었다 — 공표 지연이다. 현재가를 부르지 않는다."""
+
+    def hook(tr: str, params: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
+        return _blank_today(body) if tr == "FHKST01010900" else body
+
+    repos, _server, kis = setup(hook)
+    res = run(repos, kis, keys("stock_investor_daily"))  # 마감 스냅 없이 — 20종목 모두 모른다
+    assert res.status == "not_ready"  # 받은 종목 0·전부 '아직 없음'
+    assert kis.count("FHKST01010100") == 0
+
+
 def test_universe_takes_a_missing_market_from_an_older_day_and_says_so() -> None:
     """그날 코스닥 기본정보만 실패했다 — 코스닥이 조용히 빠지지 않고 전날 목록으로 받고 적는다.
     'KOSDAQ GLOBAL' 같은 소속 이름도 코스닥으로 센다(검증에서 찾은 경계)."""

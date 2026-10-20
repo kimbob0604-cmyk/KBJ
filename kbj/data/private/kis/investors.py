@@ -124,6 +124,9 @@ INST_FOREIGN_SIDES: Final[Mapping[Side, str]] = {"buy": "0", "sell": "1"}
 
 _THREE: Final = (Investor.INDIVIDUAL, Investor.FOREIGN, Investor.INSTITUTION)
 
+# 시장 투자자(FHPTJ04040000) `FID_INPUT_ISCD_1` — 업종 코드 → 시장(실측 2026-10-20)
+MARKET_ISCD: Final[Mapping[str, str]] = {"0001": "KSP", "1001": "KSQ"}
+
 
 # ── 파라미터 ─────────────────────────────────────────────────────────────────────────────
 
@@ -140,7 +143,10 @@ def _krx_only(venue: str, tr: str) -> None:
 
 def params_market_investor(market: str, day: date, venue: str = "KRX") -> dict[str, str]:
     """FHPTJ04040000 — 시장 구분 'U'(ET 실측 2026-09-17 — 'J' 는 거절), 날짜는 필수 칸이지만
-    무시되고 최근 300영업일이 온다(ET 실측). 투자자 구분 자리(`FID_INPUT_ISCD_1`)는 [실측 필요]."""
+    무시되고 최근 300영업일이 온다(ET 실측).
+
+    `FID_INPUT_ISCD_1` 은 시장(KSP 코스피·KSQ 코스닥), `FID_INPUT_ISCD_2` 는 업종 코드(실측
+    2026-10-20 — 둘을 비우면 300행이 오지만 투자자 칸이 **전부 0** 이다)."""
     _krx_only(venue, "FHPTJ04040000")
     d = f"{day:%Y%m%d}"
     return {
@@ -148,8 +154,8 @@ def params_market_investor(market: str, day: date, venue: str = "KRX") -> dict[s
         "FID_INPUT_ISCD": market,
         "FID_INPUT_DATE_1": d,
         "FID_INPUT_DATE_2": d,
-        "FID_INPUT_ISCD_1": "",
-        "FID_INPUT_ISCD_2": "",
+        "FID_INPUT_ISCD_1": MARKET_ISCD.get(market, ""),
+        "FID_INPUT_ISCD_2": market,
     }
 
 

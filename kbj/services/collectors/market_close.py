@@ -25,7 +25,9 @@
   미완으로 두고(받은 종목은 쓴다) 재시도가 **남은 종목만** 다시 받는다. **종목 고유 실패**(응답
   형식·빈 결과·거절)는 이름과 사유를 detail 에 남기고 넘어간다 — 단 전체의 5% 를 넘으면 체계적
   문제로 보고 키를 실패로 둔다. 오늘 KIS 마감 스냅이 **거래정지·거래량 0** 인 종목은 투자자 당일
-  행이 없어도 기다리지 않는다(`no_trade_codes` — 행은 만들지 않는다).
+  행이 없어도 기다리지 않는다(`no_trade_codes` — 행은 만들지 않는다). 오늘 스냅이 없는 종목(ETF)은
+  당일 행이 비어 남은 것이 허용 수 이하일 때만 현재가를 한 번 보고 같은 규칙을 쓴다(`_settle_unknown`
+  — 거래 없는 채권 ETF 셋이 마감 수집 전체와 보드를 막았다, 2026-10-19·20).
 - 투자자 금액은 쓰기 전에 **자릿수 대조**(`investors.unit_check` — 수량 × 종가)를 한다. 배수가 0.2~5
   밖이면 단위를 잘못 안 것으로 보고 **하나도 쓰지 않는다**(ET monitor/flow '자릿수가 틀리면 리포트를
   쓰지 않는다'). 대조할 규모가 모자라면 쓰되 `unit_check: unverified` 로 적는다(통과라고 하지
@@ -152,9 +154,12 @@ class _Tally:
             d["no_trade_sample"] = dict(sorted(self.no_trade.items())[:SAMPLE_MAX])
         return d
 
+    def cap(self) -> int:
+        return max(PERMANENT_MIN, int(self.total * PERMANENT_MAX_RATIO))
+
     def settle(self, what: str, done: int) -> None:
         """끝에 — 일시 실패가 있으면 미완, 고유 실패가 많으면 실패."""
-        cap = max(PERMANENT_MIN, int(self.total * PERMANENT_MAX_RATIO))
+        cap = self.cap()
         if len(self.permanent) > cap:
             first = next(iter(sorted(self.permanent.items())))
             raise PartialFailure(
@@ -340,6 +345,43 @@ def _no_trade_today(c: _Ctx, venue: str) -> dict[str, str]:
     return out
 
 
+def _snapped_today(c: _Ctx, venue: str) -> set[str]:
+    """오늘 스냅(KIS 마감·KRX 일별)이 있어 거래 여부를 아는 종목. ETF 는 KIS 스냅을 받지 않는다."""
+    return {
+        s.code
+        for src in ("kis", "krx")
+        for s in c.repos.market.snapshots(c.day, source=src)
+        if s.venue == venue
+    }
+
+
+def _settle_unknown(c: _Ctx, venue: str, codes: Sequence[str], tally: _Tally) -> None:
+    """당일 행이 비었는데 오늘 스냅이 없는 종목(대개 ETF — 거래 없는 채권 ETF 는 KIS 가 당일 행을
+    빈 칸으로 준다, 실측 2026-10-20). 남은 것이 허용 수 이하면 현재가(FHKST01010100)를 한 번씩 보고
+    거래량 0·거래정지면 '거래 없음'으로 넘긴다(행은 만들지 않는다). 많으면 공표 지연으로 보고
+    부르지 않는다 — 재시도가 다시 본다."""
+    if not codes:
+        return
+    if len(codes) > tally.cap():
+        for code in codes:
+            tally.fail(code, NotReady(f"FHKST01010900 {code}: {c.day} 행이 아직 없다"))
+        return
+    for code in codes:
+        try:
+            body = _get(c, "stock_quote", params_quote(code, venue), f"FHKST01010100 {code}")
+            s = parse_quote(body, code, day=c.day, venue=venue)
+        except Exception as e:  # 확인 못 함 — 기다린다
+            why = f"FHKST01010900 {code}: {c.day} 행 없음·현재가 확인 실패({reason(e)})"
+            tally.fail(code, NotReady(why))
+            continue
+        if s.status_flags is not None and "halted" in s.status_flags:
+            tally.no_trade[code] = f"{c.day} 행 없음 — 거래정지(KIS 현재가 확인)"
+        elif s.volume == 0:
+            tally.no_trade[code] = f"{c.day} 행 없음 — 거래량 0(KIS 현재가 확인)"
+        else:
+            tally.fail(code, NotReady(f"FHKST01010900 {code}: {c.day} 행이 아직 없다"))
+
+
 def _investors(c: _Ctx, venue: str, targets: Sequence[tuple[str, str | None]], label: str) -> int:
     done_codes = {
         code
@@ -351,6 +393,8 @@ def _investors(c: _Ctx, venue: str, targets: Sequence[tuple[str, str | None]], l
     rows: list[InvestorDay] = []
     closes: dict[tuple[str, date], float] = {}
     no_trade = _no_trade_today(c, venue)
+    snapped = _snapped_today(c, venue)
+    unknown: list[str] = []
     stale = (c.now.astimezone(KST).date() - c.day).days >= STALE_AFTER_DAYS
     for code, _name in todo:
         try:
@@ -364,6 +408,9 @@ def _investors(c: _Ctx, venue: str, targets: Sequence[tuple[str, str | None]], l
             if not today and stale:
                 tally.no_trade[code] = f"{c.day} 행 없음 — 이틀 넘게 지나도 공표가 없다"
                 continue
+            if not today and code not in snapped:
+                unknown.append(code)  # 오늘 거래가 있었는지 모른다 — 끝에 현재가로 확인
+                continue
             if not today:
                 raise NotReady(f"FHKST01010900 {code}: {c.day} 행이 아직 없다")
             rows += recent(parsed, c.day, HISTORY_DAYS)
@@ -371,6 +418,7 @@ def _investors(c: _Ctx, venue: str, targets: Sequence[tuple[str, str | None]], l
                 closes[(code, d)] = px
         except Exception as e:  # 종목 단위 격리
             tally.fail(code, e)
+    _settle_unknown(c, venue, unknown, tally)
     check = unit_check(rows, closes)
     detail: dict[str, Any] = {**tally.detail(), "had": len(done_codes)}
     detail["unit_check"] = "ok" if check.ok else ("unverified" if check.ratio is None else "bad")
