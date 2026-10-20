@@ -1,55 +1,59 @@
-"""KB자산운용 RISE(구 KBSTAR) — ET `etf_tracker_v9/adapters/rise.py:Rise`:27 승격.
+"""KB자산운용 RISE — 사이트 이전(2026-10) 뒤 kbam.co.kr JSON·엑셀 API.
 
-사이트 www.riseetf.co.kr(서버 렌더링 + jQuery ajax, JSON API 없음).
+옛 www.riseetf.co.kr(서버 렌더링 + jQuery POST)는 2026-10 부터 전부 302 → https://kbam.co.kr 로
+넘어간다(실측 2026-10-20 — etf.collect 가 '운용사 1곳 통째로 실패 — rise' 로 매일 실패했다). 새
+사이트는 Next.js 이고 화면이 JSON API 를 부른다(실측 2026-10-20, 값은 적지 않는다):
 
-- 목록: `POST /prod/finder/listJquery`(form, `page=N` 이 1~N 을 누적으로 돌려주는 '더보기' 방식) —
-  충분히 큰 page(50 → 600건)를 한 번 부르고, 응답의 '전체 N 건' 과 대조해 모자라면 page 를 키워
-  다시(최대 4번 — 유한 루프). 응답이 커서 시간 상한 180초(ET 그대로).
-- PDF: `POST /prod/finder/productViewSearchTabJquery3`(form `searchDate`·`fundCd`) → 표(번호·이름·
-  ISIN·수량·비중·평가금액).
+- 목록: `GET /api/products/etfs?page=N&page_size=20` → `{page_items:[{fund_cd, krx_cd, name, …}],
+  page_info:{total_count, total_page, next_page, …}}`. page_size 는 20 을 넘겨도 20 이다 —
+  `next_page` 가 None 이 될 때까지(최대 `MAX_PAGES` — 유한 루프).
+- 구성종목: `GET /api/products/etfs/{fund_cd}/holdings[?base_dt=YYYYMMDD]` → `{base_dt,
+  available_dates:[YYYYMMDD…], holding_count, total_count, items:[{rank, item_cd(ISIN), item_nm,
+  ratio, shares, unit_price, vamt}]}`. **상위 30줄만** 준다(total_count 가 전체 수). 공시가 없는 날
+  (주말·휴장·미래)을 주면 그 전날이 아니라 **최신 날**을 조용히 준다 — 그래서 `available_dates` 에서
+  요청일 이하 최신 날을 골라 다시 부른다(기준일 = 응답 `base_dt`).
+- 전체 구성종목: 같은 경로 `?download=xlsx&base_dt=…` → 엑셀(시트 하나, 머리 줄 `종목코드·종목명·
+  수량(주)·보유비중(%)·평가금액(원)`). 종목코드가 ISIN 이 아니라 **6자리로 줄인 값**이라 채권
+  (KR6…)·원화예금(KRD…)·설정현금(CASH…)도 주식 코드처럼 보인다 — 같은 날 JSON 상위 줄의 ISIN 이
+  KR7(주식·ETF)이 아닌 코드와 현금·채권·선물 이름(`_NOT_STOCK_NAMES`)은 거른다. 상위 30줄 밖의
+  비주식은 이름으로만 가린다(국내 주식형만 추적하므로 드물다 — `etf_holdings` 추적 대상).
 
-ET 원본의 실측 주의(요약):
-
-1. 종목코드가 12자리 ISIN — 국내 상장주식 KR7 + 코드6 + 체크3 만(우선주 보정 `isin_to_code`). KRD·
-   KR1/KR3/KR6·KR4·해외 ISIN 은 거른다.
-2. **응답 어디에도 기준일이 없고**, 휴장일을 요청하면 직전 영업일 자료로 조용히 대체한다 → 하루씩
-   거슬러 올라가며 **내용이 바뀌는 지점**을 찾아 실제 기준일을 확정한다(최대 `LOOKBACK` 12일 —
-   설·추석 최장 휴장 + 주말). 사이트 전체가 같은 달력을 쓰므로 요청일 단위로 캐시한다(실패도 캐시).
-   요청일이 미래면 시작점을 **KST 오늘**로 당긴다(오늘은 주입 — 벽시계 의존 금지). 못 찾으면 오늘
-   이하로 클램프한 요청일.
-
-인스턴스 하나는 한 스레드에서 쓴다(캐시 `_asof`).
+전체 줄이 JSON 에 다 있으면(total_count ≤ 받은 줄) 엑셀을 부르지 않는다. 엑셀을 못 받으면 JSON 상위
+30줄로 대신하고 행 품질을 `estimated`(일부만)로 둔다 — 조용히 '전체'인 척하지 않는다.
 """
 
 from __future__ import annotations
 
-import hashlib
-import html as _html
-import re
-from collections.abc import Callable
-from datetime import date, timedelta
-from typing import ClassVar, Final, Literal
+import io
+from collections.abc import Callable, Iterable, Mapping
+from dataclasses import replace
+from datetime import date
+from typing import Any, ClassVar, Final, Literal
 
+from openpyxl import load_workbook
+
+from kbj.core.quality import Quality
 from kbj.core.rows import HoldingRow
 from kbj.data.private.etf_issuers.base import (
     FundRef,
+    IssuerError,
     IssuerHttp,
+    add_holding,
     holding,
     is_kr_code,
     isin_to_code,
     parse_num,
-    table_cells,
     today_kst,
+    ymd,
 )
 
-_ISIN: Final = re.compile(r"KR7([0-9A-Z]{6})[0-9]{3}")
-_ITEM: Final = re.compile(
-    r'/prod/finderDetail/([0-9A-Z]{3,8})">([^<]*)</a>\s*</p>\s*'
-    r'<span class="code">\(([0-9A-Z]{6})\)',
-    re.S,
-)
-_TOTAL: Final = re.compile(r"전체\s*<span[^>]*>\s*([\d,]+)\s*</span>\s*건")
-_WS: Final = re.compile(r"\s+")
+MAX_PAGES: Final = 30  # 목록 쪽 상한(20 × 30 = 600 펀드)
+# 엑셀에서 주식 코드처럼 보이는 비주식 줄(실측 2026-10-20: 원화예금 010010·국고채권 03501G 등)
+_NOT_STOCK_NAMES: Final = (
+    "원화예금", "설정현금", "현금", "예금", "미수", "미지급", "증거금", "국고채", "채권", "통안",
+    "선물",
+)  # fmt: skip
+_HEAD: Final = ("종목코드", "종목명")
 
 
 class Rise:
@@ -57,97 +61,138 @@ class Rise:
     NAME: ClassVar[str] = "KB RISE"
     DEPTH: ClassVar[Literal["full", "top10"]] = "full"
     HISTORY: ClassVar[bool] = True
-    BASE: ClassVar[str] = "https://www.riseetf.co.kr"
-    LIST: ClassVar[str] = BASE + "/prod/finder/listJquery"
-    PDF: ClassVar[str] = BASE + "/prod/finder/productViewSearchTabJquery3"
-    PER_PAGE: ClassVar[int] = 12  # 목록 API 페이지당 건수(page=N 이 1~N 누적)
-    PAGE0: ClassVar[int] = 50  # 첫 시도 페이지 — 600건까지
-    LOOKBACK: ClassVar[int] = 12  # 기준일 역추적 최대 일수
-    LIST_TIMEOUT_S: ClassVar[float] = 180.0
+    BASE: ClassVar[str] = "https://kbam.co.kr"
+    API: ClassVar[str] = BASE + "/api/products/etfs"
+    PAGE_SIZE: ClassVar[int] = 20
 
     def __init__(self, http: IssuerHttp, *, today: Callable[[], date] = today_kst) -> None:
         self.http = http
         self.today = today
-        self.headers = {"X-Requested-With": "XMLHttpRequest", "Referer": self.BASE + "/prod/finder"}
-        self._asof: dict[date, date] = {}  # 요청일 → 실제 기준일
+        self.headers = {"Accept": "application/json", "Referer": self.BASE + "/find"}
 
     # ── 목록 ──
-    def _list(self, page: int) -> str:
-        data = {"searchText": "", "searchType1": "", "searchType2": "", "page": page,
-                "searchOrder": "", "searchBoardType": "", "searchFieldType": "list"}  # fmt: skip
-        return self.http.request(self.KEY, "POST", self.LIST, data=data, headers=self.headers,
-                                 total_s=self.LIST_TIMEOUT_S).text  # fmt: skip
-
     def universe(self) -> list[FundRef]:
-        page = self.PAGE0
         out: list[FundRef] = []
-        for _ in range(4):  # 유한 루프 — 무한 재시도 없음
-            t = self._list(page)
-            out, seen = [], set[str]()
-            for fund_key, name, ticker in _ITEM.findall(t):
-                if fund_key in seen:
-                    continue
-                seen.add(fund_key)
-                out.append(FundRef(fund_key, ticker, _html.unescape(name).strip()))
-            m = _TOTAL.search(t)
-            if not m:
-                break  # 총건수 표기가 사라졌으면 대조 불가 — 받은 만큼 사용
-            total = int(m.group(1).replace(",", ""))
-            if len(out) >= total:
+        seen: set[str] = set()
+        page: int | None = 1
+        for _ in range(MAX_PAGES):  # 유한 루프
+            if page is None:
                 break
-            page = max(page * 2, -(-total // self.PER_PAGE) + 2)
+            d = self.http.json(
+                self.KEY, self.API, params={"page": page, "page_size": self.PAGE_SIZE},
+                headers=self.headers,
+            )  # fmt: skip
+            for it in d.get("page_items") or []:
+                key = str(it.get("fund_cd") or "").strip()
+                if not key or key in seen:
+                    continue
+                seen.add(key)
+                ticker = str(it.get("krx_cd") or "").strip() or None
+                out.append(FundRef(key, ticker, str(it.get("name") or "").strip() or None))
+            nxt = (d.get("page_info") or {}).get("next_page")
+            page = int(nxt) if nxt else None
         return out
 
     # ── 구성종목 ──
-    def _pdf(self, fund_key: str, day: date) -> str:
-        return self.http.request(
-            self.KEY, "POST", self.PDF, headers=self.headers,
-            data={"searchDate": day.isoformat(), "fundCd": fund_key},
-        ).text  # fmt: skip
+    def _json(self, fund_key: str, day: date | None) -> Mapping[str, Any]:
+        params = {"base_dt": f"{day:%Y%m%d}"} if day is not None else None
+        return self.http.json(
+            self.KEY, f"{self.API}/{fund_key}/holdings", params=params, headers=self.headers
+        )
+
+    def _xlsx(self, fund_key: str, day: date) -> list[tuple[str, str, float, float, float]]:
+        reply = self.http.request(
+            self.KEY, "GET", f"{self.API}/{fund_key}/holdings",
+            params={"download": "xlsx", "base_dt": f"{day:%Y%m%d}"},
+        )  # fmt: skip
+        return xlsx_rows(reply.body)
 
     def holdings(self, fund_key: str, day: date) -> tuple[dict[str, HoldingRow], date]:
-        t = self._pdf(fund_key, day)
-        rows: dict[str, HoldingRow] = {}
-        for c in table_cells(t):
-            if len(c) < 6:  # 번호 종목명 종목코드 수량 비중 평가금액
+        want = min(day, self.today())  # 사이트 최신 자료는 KST 오늘을 넘을 수 없다
+        first = self._json(fund_key, None)
+        real = pick_date(first.get("available_dates") or [], want)
+        if real is None:
+            return {}, want
+        d = first if ymd(first.get("base_dt")) == real else self._json(fund_key, real)
+        got = ymd(d.get("base_dt"))
+        if got != real:
+            raise IssuerError(
+                self.KEY, 200, f"{fund_key}: 기준일 {real} 을 달라 했는데 {got} 이 왔다"
+            )
+        items = list(d.get("items") or [])
+        top, not_stock = json_rows(self.KEY, items)
+        total = int(d.get("total_count") or len(items))
+        if total <= len(items) or not top:
+            # 다 받았거나, 비중 상위 줄에 국내 주식이 하나도 없다(채권·해외형) — 엑셀의 줄임 코드는
+            # 채권도 주식처럼 보여(실측 136340 → 029788…) 부르지 않는다
+            return top, real
+        try:
+            lines = self._xlsx(fund_key, real)
+        except (IssuerError, ValueError) as e:
+            # 전체를 못 받았다 — 상위 줄만 쓰고 일부라고 적는다(조용히 '전체'인 척하지 않는다)
+            del e
+            return {c: replace(h, quality=Quality.ESTIMATED) for c, h in top.items()}, real
+        return xlsx_holdings(self.KEY, lines, not_stock), real
+
+
+def pick_date(available: Iterable[object], want: date) -> date | None:
+    """공시일 목록에서 want 이하 최신 날 — 없으면 None."""
+    days = [d for d in (ymd(x) for x in available) if d is not None and d <= want]
+    return max(days) if days else None
+
+
+def json_rows(
+    issuer: str, items: Iterable[Mapping[str, Any]]
+) -> tuple[dict[str, HoldingRow], set[str]]:
+    """JSON 상위 줄 → (국내 주식·ETF 행, 주식이 아닌 줄의 6자리 줄임 코드).
+
+    ISIN 이 KR7 이면 단축코드(우선주 보정 — `isin_to_code`). 그 밖(KR6 채권·KR4 선물·KRD 예금 등)은
+    엑셀의 줄임 코드(ISIN 3~8번째 자리)를 거르는 데 쓴다."""
+    rows: dict[str, HoldingRow] = {}
+    other: set[str] = set()
+    for it in items:
+        isin = str(it.get("item_cd") or "").strip().upper()
+        code = isin_to_code(isin)
+        if code is None:
+            if len(isin) == 12:
+                other.add(isin[3:9])
+            continue
+        qty, wt, val = (parse_num(it.get(k)) for k in ("shares", "ratio", "vamt"))
+        add_holding(rows, holding(issuer, code, it.get("item_nm"), qty, wt, val))
+    return rows, other
+
+
+def xlsx_rows(body: bytes) -> list[tuple[str, str, float, float, float]]:
+    """엑셀 → (코드, 이름, 수량, 비중, 금액) 줄. 머리 줄이 다르면 ValueError(모양이 바뀌었다)."""
+    wb = load_workbook(io.BytesIO(body), read_only=True, data_only=True)
+    try:
+        ws = wb.worksheets[0]
+        it = ws.iter_rows(values_only=True)
+        head = next(it, None)
+        if head is None or tuple(str(c or "").strip() for c in head[:2]) != _HEAD:
+            raise ValueError(f"RISE 엑셀 머리 줄이 다르다: {head!r}")
+        out: list[tuple[str, str, float, float, float]] = []
+        for r in it:
+            if not r or r[0] is None:
                 continue
-            code = self._code(c[2])
-            if not code:
-                continue
-            rows[code] = holding(
-                self.KEY,
-                code,
-                _html.unescape(c[1]),
-                parse_num(c[3]),
-                parse_num(c[4]),
-                parse_num(c[5]),
-            )  # 비중 25.04, 공란 '-' → 0
-        if not rows:  # 순수 해외·채권형이면 국내종목이 하나도 없다
-            return {}, self._asof.get(day, day)
-        return rows, self._real_date(fund_key, day, t)
+            cells = list(r) + [None] * (5 - len(r))
+            out.append((str(cells[0]).strip(), str(cells[1] or "").strip(), parse_num(cells[2]),
+                        parse_num(cells[3]), parse_num(cells[4])))  # fmt: skip
+        return out
+    finally:
+        wb.close()
 
-    @staticmethod
-    def _code(raw: str | None) -> str | None:
-        c = (raw or "").strip()
-        if _ISIN.fullmatch(c):
-            return isin_to_code(c)  # 우선주는 ISIN 본체와 단축코드가 다르다(005382 → 005387)
-        return c if is_kr_code(c) else None
 
-    @staticmethod
-    def _sig(t: str) -> str:
-        return hashlib.md5(_WS.sub("", t).encode(), usedforsecurity=False).hexdigest()
-
-    def _real_date(self, fund_key: str, day: date, text: str) -> date:
-        """내용이 바뀌는 지점을 찾아 실제 기준일을 잡는다. 평일 최신일이면 추가 요청 1번."""
-        if day in self._asof:
-            return self._asof[day]
-        today = self.today()
-        d0 = min(day, today)  # 사이트 최신 자료는 KST 오늘을 넘을 수 없다
-        sig = self._sig(text)
-        real = d0  # 못 찾으면 오늘 이하로 클램프한 요청일
-        for k in range(1, self.LOOKBACK + 1):
-            if self._sig(self._pdf(fund_key, d0 - timedelta(days=k))) != sig:
-                real = d0 - timedelta(days=k - 1)
-                break
-        self._asof[day] = real  # 실패 케이스도 캐시 — 펀드마다 반복 조회 방지
-        return real
+def xlsx_holdings(
+    issuer: str, lines: Iterable[tuple[str, str, float, float, float]], not_stock: set[str]
+) -> dict[str, HoldingRow]:
+    """엑셀 줄 → 국내 주식·ETF 행. 현금성 이름·JSON 이 주식이 아니라고 한 코드는 뺀다."""
+    rows: dict[str, HoldingRow] = {}
+    for code, name, qty, wt, val in lines:
+        c = code.upper()
+        if not is_kr_code(c) or c in not_stock:
+            continue
+        if any(k in name for k in _NOT_STOCK_NAMES):
+            continue
+        add_holding(rows, holding(issuer, c, name, qty, wt, val))
+    return rows

@@ -442,6 +442,7 @@ P6 관세청 수집(`trade.customs_tenday`·`trade.customs_monthly`)을 막는 �
 | FHPTJ04040000 시장 투자자 `FID_INPUT_ISCD_1`·`_2` | 둘을 비우면 300행이 오지만 투자자 칸이 **전부 0**. `KSP`(코스피)·`KSQ`(코스닥) + 업종 코드(0001·1001)면 값이 온다. 칸 이름은 `MARKET_FIELDS` 그대로 | `investors.params_market_investor`·`MARKET_ISCD` |
 | FHKST01010900 거래 없는 ETF | 당일 거래량 0 인 ETF(채권형)는 당일 행이 **빈 문자열 칸**으로 온다(공표 지연과 같은 모양). 응답에 거래량 칸은 없다 — 현재가(FHKST01010100 `acml_vol`)로만 안다 | `market_close._settle_unknown` |
 | KIS 마감 스냅 대 KRX 확정 거래대금 | 2026-10-19 2,761 종목 중 2,180 이 KIS 쪽이 **작고**(중앙 4.5%, 최대 92.7% — 시간외 대량매매), 큰 종목은 0. 종가는 전부 일치. KIS 스냅은 15:35 — 시간외 종가·단일가·대량매매가 빠진다 | `reconcile.reconcile` 거래대금 한쪽 검사 |
+| KB RISE 운용사 사이트 | www.riseetf.co.kr 전체가 302 → kbam.co.kr(2026-10). 새 JSON API: 목록 `/api/products/etfs?page=&page_size=`(쪽당 20 고정, `krx_cd` 있음), 구성종목 `/api/products/etfs/{fund_cd}/holdings?base_dt=`(상위 30줄·ISIN `item_cd`·`available_dates`; 공시 없는 날을 달라면 최신 날을 준다), 전체는 `?download=xlsx`(종목코드가 ISIN 을 6자리로 줄인 값 — 원화예금·채권도 코드처럼 보인다) | `etf_issuers.rise` |
 | 프로그램 시장 일별(검산 ④) | 잔차가 대금 ±1(백만원)·수량 ±1 — 칸마다 따로 반올림. 허용 0 이면 매일 invalid | `engines.flows.program.CHECK4_TOL` |
 
 ---

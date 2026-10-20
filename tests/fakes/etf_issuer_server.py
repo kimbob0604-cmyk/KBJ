@@ -15,9 +15,11 @@
 - 거를 것도 섞는다: 해외 티커('AAPL US')·원화예금(KRD…)·선물(A01690)·채권 분류코드(03502G)·
   ETF 를 담은 행(995010 — 분석에서 빠져야 한다). ISIN 으로 주는 운용사(HANARO·RISE·PLUS 일부)는
   우선주 ISIN(KR7990011003 → 990015)도 하나.
-- 날짜 처리는 운용사마다 실측 기록대로: KODEX·KoAct·TIMEFOLIO·PLUS·RISE 는 요청일 이하 최신으로
-  폴백(RISE 는 기준일을 알려주지 않는다), TIGER·ACE·HANARO 는 그날만(없으면 빈), HANARO 는
-  미래일 요청을 최신으로 클램프, SOL 은 날짜를 무시하고 최신.
+- 날짜 처리는 운용사마다 실측 기록대로: KODEX·KoAct·TIMEFOLIO·PLUS 는 요청일 이하 최신으로
+  폴백, TIGER·ACE·HANARO 는 그날만(없으면 빈), HANARO 는 미래일 요청을 최신으로 클램프, SOL 은
+  날짜를 무시하고 최신. RISE(kbam.co.kr — 2026-10 이전)는 공시일 목록(`available_dates`)을 주고,
+  공시가 없는 날을 달라면 **최신 날**을 준다(실측 2026-10-20). JSON 은 비중 상위 `rise_top` 줄만,
+  `download=xlsx` 는 전체를 엑셀로(종목코드는 ISIN 을 6자리로 줄인 값 — 비주식도 코드처럼 보인다).
 
 장애 심기: `fail[운용사] = 상태`(그 운용사 모든 요청), `flaky[운용사] = n`(처음 n 번 503),
 `challenge[운용사] = n`(처음 n 번 200 + HTML — Cloudflare 챌린지 흉내). 기록: `calls`.
@@ -25,6 +27,7 @@
 
 from __future__ import annotations
 
+import io
 import json
 import random
 import threading
@@ -35,6 +38,7 @@ from typing import Any, Final, Literal
 from urllib.parse import parse_qs
 
 import httpx
+from openpyxl import Workbook
 
 SEED: Final = 20261007
 STOCKS: Final[tuple[str, ...]] = tuple(f"99{i:03d}0" for i in range(1, 41))
@@ -59,7 +63,7 @@ HOSTS: Final[dict[str, str]] = {
     "www.hanaroetf.com": "hanaro",
     "www.samsungactive.co.kr": "koact",
     "www.plusetf.co.kr": "plus",
-    "www.riseetf.co.kr": "rise",
+    "kbam.co.kr": "rise",  # 2026-10 riseetf.co.kr → kbam.co.kr 이전
 }
 # 거를 행 모양: short = 6자리 코드 운용사(해외 티커·원화예금), ace = + 선물·채권 분류코드(ACE 가
 # `_STOCK` 으로 거른다), isin = ISIN 으로 주는 운용사(+ 선물·채권 ISIN, 우선주 ISIN)
@@ -141,6 +145,9 @@ class FakeIssuers:
     empty_funds: set[str] = field(default_factory=set[str])  # fund_id — 국내 종목 없는 PDF
     flaky: dict[str, int] = field(default_factory=dict[str, int])
     challenge: dict[str, int] = field(default_factory=dict[str, int])
+    rise_page: int = 2  # RISE 목록 한 쪽 줄 수(쪽 넘김을 시험하려고 작게 — 실사이트 20)
+    rise_top: int = 8  # RISE JSON 이 주는 상위 줄 수(실사이트 30 — 합성 펀드가 작아 줄였다)
+    rise_xlsx_status: int | None = None  # RISE 엑셀만 이 상태로 실패
     calls: list[tuple[str, str, str, dict[str, str]]] = field(
         default_factory=list[tuple[str, str, str, dict[str, str]]]
     )
@@ -438,25 +445,64 @@ class FakeIssuers:
         return httpx.Response(404, text="not found")
 
     def _rise(self, path: str, p: dict[str, str]) -> httpx.Response:
-        if path == "/prod/finder/listJquery":
-            items = "".join(
-                f'<li><p class="tit"><a href="/prod/finderDetail/{f.key}">{f.name}</a></p>\n'
-                f'<span class="code">({f.ticker})</span></li>'
-                for f in funds_of("rise")
-            )
-            return httpx.Response(200, text=f'<div>전체 <span class="n">3</span> 건</div>{items}')
-        if path == "/prod/finder/productViewSearchTabJquery3":
-            fund = self.fund("rise", p.get("fundCd", ""))
-            real = self.on_or_before(date.fromisoformat(p["searchDate"]))
-            if fund is None or real is None:
-                return httpx.Response(200, text="<table></table>")
-            rows = "".join(
-                f"<tr><td>{n}</td><td>{ln.name}</td><td>{ln.isin}</td><td>{ln.qty:,.0f}</td>"
-                f"<td>{ln.wt}</td><td>{ln.val:,.0f}</td></tr>"
-                for n, ln in enumerate(self.lines(fund, real), 1)
-            )
-            return httpx.Response(200, text=f"<table><tbody>{rows}</tbody></table>")
+        api = "/api/products/etfs"
+        if path == api:
+            funds = funds_of("rise")
+            page = int(p.get("page", "1"))
+            n = self.rise_page
+            chunk = funds[(page - 1) * n : page * n]
+            pages = -(-len(funds) // n)
+            items = [{"fund_cd": f.key, "krx_cd": f.ticker, "name": f.name, "category1": "합성"}
+                     for f in chunk]  # fmt: skip
+            info = {"total_count": len(funds), "total_page": pages, "current_page": page,
+                    "next_page": page + 1 if page < pages else None}  # fmt: skip
+            return httpx.Response(200, json={"page_items": items, "page_info": info})
+        if path.startswith(api + "/") and path.endswith("/holdings"):
+            fund = self.fund("rise", path[len(api) + 1 : -len("/holdings")])
+            if fund is None:
+                return httpx.Response(404, json={"detail": "not found"})
+            days = [d for d in (self.latest - timedelta(days=k) for k in range(90))
+                    if self.published(d)][:60]  # fmt: skip
+            asked = p.get("base_dt")
+            want = date(int(asked[:4]), int(asked[4:6]), int(asked[6:])) if asked else None
+            real = want if want is not None and self.published(want) else days[0]
+            lines = self.lines(fund, real)
+            if p.get("download") == "xlsx":
+                if self.rise_xlsx_status is not None:
+                    return httpx.Response(self.rise_xlsx_status, text="합성 엑셀 오류")
+                return httpx.Response(200, content=_rise_xlsx(lines))
+            top = sorted(lines, key=lambda ln: -ln.wt)[: self.rise_top]
+            items = [{"rank": k, "item_cd": ln.isin, "item_nm": ln.name, "ratio": ln.wt,
+                      "shares": ln.qty, "unit_price": 0.0, "vamt": ln.val}
+                     for k, ln in enumerate(top, 1)]  # fmt: skip
+            return httpx.Response(200, json={
+                "fund_cd": fund.key, "base_dt": real.strftime("%Y%m%d"),
+                "available_dates": [d.strftime("%Y%m%d") for d in days],
+                "holding_count": len(items), "total_count": len(lines), "items": items,
+            })  # fmt: skip
         return httpx.Response(404, text="not found")
+
+
+def _rise_short(ln: Line) -> str:
+    """RISE 엑셀의 종목코드 — 주식은 단축코드, 그 밖의 국내 ISIN 은 3~8번째 자리(실측 모양)."""
+    if ln.isin == PREF_ISIN:
+        return PREF_CODE
+    if len(ln.isin) == 12 and ln.isin.startswith("KR"):
+        return ln.isin[3:9]
+    return ln.code
+
+
+def _rise_xlsx(lines: list[Line]) -> bytes:
+    wb = Workbook()
+    ws = wb.active
+    assert ws is not None
+    ws.append(["종목코드", "종목명", "수량(주)", "보유비중(%)", "평가금액(원)"])
+    ws.append(["CASH00000001", "설정현금액", 1000, 100, 1000])
+    for ln in lines:
+        ws.append([_rise_short(ln), ln.name, ln.qty, ln.wt, ln.val])
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
 
 
 # ── 견본(tests/fixtures/synthetic/etf_issuers) ───────────────────────────────────────────
@@ -466,7 +512,7 @@ SAMPLE_DAY: Final = date(2026, 10, 6)  # 화요일
 
 def samples() -> dict[str, str]:
     """운용사마다 목록·PDF 응답 견본 하나씩(파일 이름 → 본문). 고정 시드라 늘 같다."""
-    w = FakeIssuers(latest=SAMPLE_DAY)
+    w = FakeIssuers(latest=SAMPLE_DAY, rise_top=100, rise_page=20)  # 견본은 JSON 한 장에 전부
     kd = "https://www.samsungfund.com/api/v1/kodex"
     tg = "https://investments.miraeasset.com/tigeretf/ko/product/search"
     tf = "https://timeetf.co.kr"
@@ -475,7 +521,7 @@ def samples() -> dict[str, str]:
     hn = "https://www.hanaroetf.com/api/v1/fund"
     ka = "https://www.samsungactive.co.kr/api/v1/product"
     pl = "https://www.plusetf.co.kr/api/v1/product"
-    rs = "https://www.riseetf.co.kr/prod/finder"
+    rs = "https://kbam.co.kr/api/products/etfs"
     tiger_isin = funds_of("tiger")[0].isin
     hanaro_uid = funds_of("hanaro")[0].key
     rise_key = funds_of("rise")[0].key
@@ -498,10 +544,8 @@ def samples() -> dict[str, str]:
         "koact_pdf.json": ("GET", f"{ka}/etf-pdf/KO000.do?gijunYMD=2026.10.06", None),
         "plus_universe.json": ("POST", f"{pl}/find/list", {"page": 0}),
         "plus_pdf.json": ("GET", f"{pl}/pdf/list?n=PL000&d=20261006&page=0&pageSize=1000", None),
-        "rise_universe.html": ("POST", f"{rs}/listJquery", None),
-        "rise_pdf.html": (
-            "POST", f"{rs}/productViewSearchTabJquery3",
-            {"searchDate": "2026-10-06", "fundCd": rise_key}),
+        "rise_universe.json": ("GET", f"{rs}?page=1&page_size=20", None),
+        "rise_pdf.json": ("GET", f"{rs}/{rise_key}/holdings?base_dt=20261006", None),
     }  # fmt: skip
     out: dict[str, str] = {}
     for name, (method, url, body) in req.items():

@@ -1,0 +1,28 @@
+{
+ "page_info": {
+  "current_page": 1,
+  "next_page": null,
+  "total_count": 3,
+  "total_page": 1
+ },
+ "page_items": [
+  {
+   "category1": "합성",
+   "fund_cd": "R800",
+   "krx_cd": "978000",
+   "name": "RISE 합성반도체"
+  },
+  {
+   "category1": "합성",
+   "fund_cd": "R810",
+   "krx_cd": "978100",
+   "name": "RISE 합성200"
+  },
+  {
+   "category1": "합성",
+   "fund_cd": "R820",
+   "krx_cd": "978200",
+   "name": "RISE 합성미국테크"
+  }
+ ]
+}

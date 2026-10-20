@@ -2,7 +2,7 @@
 
 원본 시험 없음(ET etf_tracker_v9 — docs/p3_design.md §1.11). ET 어댑터 머리말의 실측 주의를 시험으로
 고정한다: 우선주 ISIN 보정, 해외·현금·선물·채권 코드 거르기, 휴장일 폴백, HANARO 미래일 클램프,
-RISE 기준일 역추적, ACE 중복 코드 합산, KoAct 챌린지 재시도.
+RISE 공시일 목록·엑셀 전체(kbam.co.kr), ACE 중복 코드 합산, KoAct 챌린지 재시도.
 """
 
 from __future__ import annotations
@@ -136,20 +136,51 @@ def test_hanaro_future_clamp_uses_detail_page_date() -> None:
     assert all(p != f"/fund/{f.key}" for _, p, _ in new)
 
 
-def test_rise_traces_real_date_and_caches_per_request_day() -> None:
+def test_rise_picks_latest_published_day_on_or_before_request() -> None:
+    """kbam.co.kr 는 공시 없는 날을 달라면 최신 날을 조용히 준다 — 공시일 목록에서 고른다."""
     w, ads, _ = setup(latest=FRI, today=MON)
-    a, b = funds_of("rise")[0], funds_of("rise")[1]
-    rows, real = ads["rise"].holdings(a.key, MON)
-    assert rows and real == FRI  # 월요일 요청 → 금요일 자료(응답에 기준일 없음)
-    n = len(w.calls_of("rise"))
-    _, real_b = ads["rise"].holdings(b.key, MON)
-    assert real_b == FRI and len(w.calls_of("rise")) == n + 1  # 캐시 — 역추적 다시 안 함
+    f = funds_of("rise")[0]
+    rows, real = ads["rise"].holdings(f.key, MON)
+    assert real == FRI and {c: h.qty for c, h in rows.items()} == w.expected(f, FRI)
+    w2, ads2, _ = setup(latest=MON, today=MON)
+    _, real2 = ads2["rise"].holdings(f.key, SAT)  # 토요일 → 금요일(최신 월요일이 아니라)
+    assert real2 == FRI
+    asked = [q.get("base_dt") for _, p, q in w2.calls_of("rise") if p.endswith("/holdings")]
+    assert "20261009" in asked
 
 
 def test_rise_future_request_starts_from_today() -> None:
     _, ads, _ = setup(latest=TUE, today=date(2026, 10, 7))
     _, real = ads["rise"].holdings(funds_of("rise")[0].key, date(2026, 12, 1))
     assert real == TUE
+
+
+def test_rise_full_list_comes_from_xlsx_and_drops_cash_bond_futures() -> None:
+    """JSON 은 상위 줄만 — 나머지는 엑셀. 엑셀 코드는 6자리로 줄여 비주식도 코드처럼 보인다
+    (원화예금 010010·국고채권 03501G — 실측 2026-10-20)."""
+    w, ads, _ = setup()
+    f = funds_of("rise")[0]
+    rows, _ = ads["rise"].holdings(f.key, TUE)
+    assert {c: h.qty for c, h in rows.items()} == w.expected(f, TUE)
+    assert not {"A01690", "03502G", "010010"} & set(rows)
+    assert any(q.get("download") == "xlsx" for _, _, q in w.calls_of("rise"))
+    assert all(h.quality is Quality.OK for h in rows.values())
+
+
+def test_rise_xlsx_failure_falls_back_to_top_rows_as_estimated() -> None:
+    w, ads, _ = setup(rise_xlsx_status=500)
+    f = funds_of("rise")[0]
+    rows, real = ads["rise"].holdings(f.key, TUE)
+    assert real == TUE and 0 < len(rows) < len(w.expected(f, TUE))
+    assert {h.quality for h in rows.values()} == {Quality.ESTIMATED}  # 일부만 — 전체인 척 안 한다
+
+
+def test_rise_universe_follows_pages() -> None:
+    w, ads, _ = setup()
+    refs = ads["rise"].universe()
+    assert len(refs) == 3
+    pages = [q.get("page") for _, p, q in w.calls_of("rise") if p == "/api/products/etfs"]
+    assert pages == ["1", "2"]
 
 
 # ── 오류·재시도 ──
@@ -246,7 +277,7 @@ def test_parse_fixture_file(key: str) -> None:
         p = req.url.path
         listy = any(s in p for s in ("product.do", "list.ajax", "m11_list", "/api/etf/pds",
                                      "/api/funds", "search-list", "etf.do", "find/list",
-                                     "listJquery"))  # fmt: skip
+                                     "/api/products/etfs"))  # fmt: skip
         if listy and not any(s in p for s in ("pdf", "holdings")) and p != "/api/etf/pds/pdf":
             body = uni
             if ("product.do" in p or "etf.do" in p) and req.url.params.get("pageNo") != "1":
@@ -256,8 +287,6 @@ def test_parse_fixture_file(key: str) -> None:
             return httpx.Response(200, text=body)
         if key == "hanaro" and p.startswith("/fund/"):
             return httpx.Response(200, text="")
-        if key == "rise" and "productView" in p:
-            return httpx.Response(200, text=pdf if b"2026-10-06" in req.content else "<table/>")
         return httpx.Response(200, text=pdf)
 
     http = IssuerHttp(httpx.Client(transport=httpx.MockTransport(handler)), sleep=lambda s: None)
@@ -266,3 +295,13 @@ def test_parse_fixture_file(key: str) -> None:
     assert refs
     rows, _ = a.holdings(refs[0].fund_key, TUE)
     assert rows and all(c[:2] == "99" for c in rows)
+
+
+def test_rise_non_equity_fund_skips_xlsx() -> None:
+    """상위 줄에 국내 주식이 없으면(채권·해외형) 엑셀을 부르지 않는다 — 줄임 코드가 채권도 주식처럼
+    보인다(실측 136340)."""
+    w, ads, _ = setup(rise_top=1)
+    f = next(x for x in funds_of("rise") if x.kind == "us")
+    rows, _ = ads["rise"].holdings(f.key, TUE)
+    assert rows == {}
+    assert not any(q.get("download") for _, _, q in w.calls_of("rise"))

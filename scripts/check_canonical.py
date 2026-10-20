@@ -210,6 +210,7 @@ GROUPS: dict[str, Group] = {
                         _dots("samsungactive", "co", "kr"),
                         _dots("plusetf", "co", "kr"),
                         _dots("riseetf", "co", "kr"),
+                        _dots("kbam", "co", "kr"),  # RISE — 2026-10 riseetf 에서 이전
                     )
                 )
                 + ")"
