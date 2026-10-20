@@ -232,6 +232,14 @@
   letter-spacing: 0.02em;
   font-family: var(--mono);
   font-size: 10px;
+  min-width: 0;
+  overflow-wrap: anywhere; /* 'ECOS:…+ECOS:…+FRED+YAHOO' 처럼 긴 출처가 패널 밖으로 잘리지 않게 */
+}
+.panel .body > p.src {
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 10px;
+  overflow-wrap: anywhere;
 }
 .panel.stale h3 {
   color: var(--warn);
