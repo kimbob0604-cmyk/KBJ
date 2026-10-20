@@ -21,7 +21,7 @@ import json
 import threading
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from functools import cache
 from pathlib import Path
 from typing import Any, Final
@@ -84,8 +84,15 @@ def _envelope(items: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def _day(params: dict[str, str]) -> str | None:
-    """요청이 가리키는 날(`basDt` 또는 `beginBasDt`)."""
-    return params.get("basDt") or params.get("beginBasDt")
+    """요청이 가리키는 날 — `basDt`, 구간이면 그 끝 날(`endBasDt` 는 '미만' — 하루 앞). 구간의 첫
+    날로 적으면 최근 창을 받는 금투협 수집(2026-10-20)이 요청한 날을 늘 못 받았다."""
+    if params.get("basDt"):
+        return params["basDt"]
+    end = params.get("endBasDt")
+    if end and len(end) == 8 and end.isdigit():
+        last = date(int(end[:4]), int(end[4:6]), int(end[6:])) - timedelta(days=1)
+        return f"{last:%Y%m%d}"
+    return params.get("beginBasDt")
 
 
 def _with_day(items: list[dict[str, Any]], day: str | None) -> list[dict[str, Any]]:

@@ -33,15 +33,19 @@ from kbj.engines.board.config import BoardConfig
 HERE = Path(__file__).resolve().parent
 FILES = ("universe", "newhigh", "sectors", "events", "rankings")
 RECAPTURED = dict(
-    date="2026-10-08",
+    date="2026-10-21",
     reason=(
-        "사용자 요청 — 신고가 3축(역사적·52주·120일) 정의 변경(ADR 0017). 입력은 그대로, "
-        "config.newhigh 와 전일 순위(prev_ranks)만 새 정의로, 기대 산출은 kbj 엔진으로 다시 계산"
+        "사용자 요청 — 신고가 3축(역사적·52주·120일) 정의 변경(ADR 0017, 2026-10-08). 입력은 "
+        "그대로, config.newhigh 와 전일 순위(prev_ranks)만 새 정의로, 기대 산출은 kbj 엔진으로 "
+        "다시 계산. "
+        "2026-10-21 다시: 탐지 이벤트를 보드 모집단(시총 하한)에서만·재료 반납은 고가 등락률 "
+        "giveback.min_high_chg_pct 이상만·이벤트에 종목 이름(names) — 하루 1,073건 잡음(2026-10-20)"
     ),
     engine=f"kbj.engines.board.build.compute_day ({ENGINE_VERSION})",
     adr="docs/adr/0017-newhigh-three-axes.md",
     script="tests/golden/board/recapture.py",
 )
+RECAPTURE_SECTIONS = ("newhigh", "giveback")  # config/board.yaml 에서 골든 설정으로 옮기는 절
 
 
 def _read(path: Path) -> Any:
@@ -60,8 +64,10 @@ def main() -> int:
     from tests.golden import board_golden as bg
 
     common = _read(HERE / "inputs" / "common.json.gz")
-    new_nh = BoardConfig.load().to_dict()["newhigh"]
-    common["config"]["newhigh"] = new_nh
+    now_cfg = BoardConfig.load().to_dict()
+    for sec in RECAPTURE_SECTIONS:
+        common["config"][sec] = now_cfg[sec]
+    new_nh = now_cfg["newhigh"]
     BoardConfig.from_mapping(common["config"])  # 새 설정이 검증을 통과하는지
     _write(HERE / "inputs" / "common.json.gz", common)
 

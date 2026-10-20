@@ -26,7 +26,8 @@ def test_legacy_커밋이_shim_이전으로_고정돼_있다() -> None:
     assert meta["legacy_commit"] == LEGACY_COMMIT
     assert "shim 전" in meta["legacy_engine"]  # 입력의 출처
     rc = meta["recaptured"]
-    assert rc["date"] == "2026-10-08" and rc["adr"] == "docs/adr/0017-newhigh-three-axes.md"
+    # 2026-10-08 신고가 3축(ADR 0017), 2026-10-21 탐지 이벤트 잡음 줄이기(모집단·반납 문턱)
+    assert rc["date"] == "2026-10-21" and rc["adr"] == "docs/adr/0017-newhigh-three-axes.md"
     assert "사용자 요청" in rc["reason"] and "kbj" in meta["legacy_engine"]
     assert meta["seed"] == 20260826
     assert (meta["n_days"], meta["n_stocks"]) == (30, 300)

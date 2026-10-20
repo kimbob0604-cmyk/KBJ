@@ -11,10 +11,9 @@
 P5 에서 뺐다 — 꺼진 채.
 
 단언
-- 작업: 모든 실행이 ok·skipped(실측 전 키는 skipped). 예외 하나 — `macro.morning`·
-  `macro.morning_prv` 는 06:20 KST(= 16:20 ET 전날)에 FRED 일별 값이 아직 없어(가짜 FRED 도
-  다음 뉴욕 날에 공표 — 실제 FRED 일별 공표 시각 [확인 필요 #45]) 재시도 뒤 `not_ready` 로
-  끝난다(받은 척하지 않는다).
+- 작업: 모든 실행이 ok·skipped(실측 전 키는 skipped). `macro.morning`·`macro.morning_prv` 는
+  06:20 KST(= 16:20 ET 전날)에 그날 FRED 일별이 아직 없어 전 미국 영업일 값을 받는다(2026-10-20 —
+  전에는 날마다 재시도 뒤 `not_ready` 로 끝났다; 가짜 FRED 도 다음 뉴욕 날에 공표).
 - 데이터 키 각 done 1회, KIS 어떤 1초에도 ≤ 4, 토큰 발급은 auth 만.
 - F2 §5: 정규장 391분 × 켠 조합(K2I 3) 빈 분 0, 검산 ①~④ 합성 원장 0 차이, 순위 표 범위
   꼬리표.
@@ -59,7 +58,7 @@ P5_REAL = (
     "us.eod", "etf.report", "brief.morning", "brief.closing", "flows.report", "flows.market_minute",
     *ENABLE,
 )  # fmt: skip
-FRED_LAG = ("macro.morning", "macro.morning_prv")  # 06:20 KST 에 FRED 일별 미공표(머리말)
+FRED_LAG = ("macro.morning", "macro.morning_prv")  # 06:20 KST — 전 미국 영업일 FRED 일별(머리말)
 PAIRS = (("K2I", "F001"), ("K2I", "OC01"), ("K2I", "OP01"))
 REGULAR_MINUTES = 391  # 09:00~15:30
 
@@ -97,7 +96,6 @@ def test_every_run_finished_and_p5_handlers_are_real(day: SimDay) -> None:
         (j, a, r.status, str(dict(r.detail))[:200])
         for (j, a), r in day.final_runs().items()
         if r.status not in ("ok", "skipped")
-        and not (j in FRED_LAG and r.detail.get("result") == "not_ready")
     ]
     assert bad == []
     assert day.unsupported == []
@@ -105,8 +103,10 @@ def test_every_run_finished_and_p5_handlers_are_real(day: SimDay) -> None:
         runs = _runs(day, job)
         assert runs, job
         assert not any(r.detail.get("sim") for r in runs), job  # 실제 처리기
-    for job in FRED_LAG:
-        assert [r.detail.get("result") for r in _runs(day, job)] == ["not_ready"], job
+    for job in FRED_LAG:  # 공표 전으로 끝나지 않는다(전 미국 영업일 값 — 이미 받았으면 skipped)
+        runs = _runs(day, job)
+        assert all(r.status in ("ok", "skipped") for r in runs), job
+        assert all(r.detail.get("result") != "not_ready" for r in runs), job
     # 운영 등록부: macro.*·kofia·fsc_daily 는 2026-10-18 에 켰고, program.* 도 2026-10-20
     # 사용자 요청 "꺼 둔 것도 전부 활성화"로 켰다(전에는 D-P5-23 으로 꺼진 채)
     prod = load_registry()

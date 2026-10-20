@@ -143,14 +143,15 @@ def test_p3_jobs_ran_ok_and_claimed_what_the_registry_says(day: SimDay) -> None:
             ]
             assert all(done[k] == 1 for k in keys), (job, as_of)
             assert int(r.detail.get("collected", 0)) == len(keys), (job, as_of)
-    # 장중 두 작업: 그날 정규장 슬롯 전부(09:00~15:30, 양 끝 포함 40)
-    for job in ("flows.intraday", "market.intraday"):
+    # 장중 두 작업: 그날 정규장 슬롯 전부(09:00~15:30, 양 끝 포함 40). market.intraday 는 15:40
+    # 슬롯까지(종가 — 15:30 슬롯은 마감 동시호가 결과 전, 2026-10-20)
+    for job, n, last in (("flows.intraday", 40, "T15:30"), ("market.intraday", 41, "T15:40")):
         ok = [
             a
             for (j, a), r in final.items()
             if j == job and r.status == "ok" and a.startswith("2026-10-07")
         ]
-        assert len(ok) == 40 and min(ok).endswith("T09:00") and max(ok).endswith("T15:30"), job
+        assert len(ok) == n and min(ok).endswith("T09:00") and max(ok).endswith(last), job
 
 
 # ── 원장 quality 전이 ─────────────────────────────────────────────────────────────────────

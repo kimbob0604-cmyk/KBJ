@@ -78,7 +78,9 @@ describe('페이지 2 신고가 — 로그인', () => {
 
     const ev = panelByTitle(root, '탐지 이벤트');
     expect(ev.querySelectorAll('tbody tr')).toHaveLength(20);
-    expect(text(ev.querySelector('tbody tr'))).toContain(EVENT_LABEL.material_giveback); // 종류 순, 그 안 강도 순
+    // 종류 순(EVENT_LABEL 순서), 그 안 강도 순 — 합성 날에 재료 반납·거래량 이상이 없어(재료 반납은 고가
+    // +5% 이상만 — 2026-10-21 골든 재캡처) 첫 행은 근접 클러스터
+    expect(text(ev.querySelector('tbody tr'))).toContain(EVENT_LABEL.proximity_cluster);
     expect(text(ev)).toContain('[방산수출]'); // 테마 키 → 이름(섹터 응답)
     // 종류별 뜻(내부 번호 대신 — 2026-10-20), 신고가 표와 겹치는 복수 기준 신고가는 뺀다
     expect(text(ev.querySelector(':scope > .def'))).toContain('재료 반납 =');

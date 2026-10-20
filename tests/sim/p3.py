@@ -62,7 +62,8 @@ def expected_rows(sim: SimDay, n_watch_candidates: int) -> SlotRows:
     n_venues = len(cfg.kis.venues)
     return SlotRows(
         index=len(cfg.market.intraday_indices),
-        sector=SECTORS_PER_MARKET * 2,  # 시장 2회 호출(코스피·코스닥)
+        # 코스피 목록 + 코스닥 목록 둘(같은 합성 줄은 한 번) + 목록에 없는 코스닥 업종 한 건씩 2
+        sector=SECTORS_PER_MARKET * 2 + 2,
         rank=RANK_ROWS * 2 * n_venues,  # 시장 2 × 거래소
         etf_quote=min(cfg.etf.watch_top_n, n_watch_candidates),
     )
