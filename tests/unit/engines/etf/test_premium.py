@@ -56,3 +56,14 @@ def test_intraday_is_estimated_and_bad_rows_skipped() -> None:
 def test_alerts_sorted_by_magnitude() -> None:
     rows = [eday("A", 1006.0, 1000.0), eday("B", 980.0, 1000.0), eday("C", 1001.0, 1000.0)]
     assert [r.code for r in alerts(rows, THR)] == ["B", "A"]
+
+
+def test_no_trade_and_anomaly_are_not_premium_warnings() -> None:
+    """거래 없는 ETF(종가 = 묵은 체결가)·|괴리율| ≥ 50%(거래정지·청산)는 괴리 경고가 아니다 —
+    2026-10-20 1위가 거래정지 러시아 ETF(NAV 48원, 종가 8,535원 → +17,494%)였다."""
+    from dataclasses import replace
+
+    stale = replace(eday("R", 8535.0, 48.51), volume=0)
+    broken = eday("X", 3000.0, 1000.0)  # +200%
+    ok = eday("A", 1006.0, 1000.0)
+    assert [r.code for r in alerts([stale, broken, ok], THR)] == ["A"]

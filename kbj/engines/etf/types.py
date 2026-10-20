@@ -210,6 +210,9 @@ _OVERSEAS: Final = _words(
     "독일", "아시아", "라틴", "브라질", "다우존스", "NASDAQ", "NYSE", "NIKKEI", "HANG SENG",
     "CSI", "STOXX", "PHLX", "MSCI WORLD", "MSCI EM", "DOW JONES", "GLOBAL", "US", "CHINA",
     "JAPAN", "INDIA", "EUROPE",
+    # 2026-10-20 점검: 국내 대표지수로 잘못 들어가던 것(러시아·멕시코·필리핀·인도네시아·미국 개별주)
+    "러시아", "멕시코", "필리핀", "인도네시아", "태국", "사우디", "캐나다", "호주", "영국",
+    "테슬라", "엔비디아", "팔란티어", "애플", "마이크로소프트", "아마존", "알파벳", "메타",
 )  # fmt: skip
 _DOMESTIC_INDEX: Final = _words(
     "코스피", "KOSPI", "코스닥", "KOSDAQ", "KRX", "FnGuide", "에프앤가이드", "WISE", "KOREA",

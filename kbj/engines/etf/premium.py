@@ -7,6 +7,7 @@
   정확히)은 경고**다 — 나눗셈의 부동소수 끝자리 때문에 0.49999… 로 떨어지지 않게 괴리율을 소수
   9자리로 반올림한 뒤 비교한다.
 - NAV 가 없거나 0 이하면 괴리율을 내지 않는다(None — 지어내지 않는다).
+- 경고에서 빼는 것: 마감 거래량 0(종가가 묵은 체결가)·|괴리율| ≥ 50%(가격·NAV 이상 — 거래정지·청산).
 """
 
 from __future__ import annotations
@@ -20,9 +21,11 @@ from kbj.core.quality import Quality
 from kbj.core.rows import EtfDay, EtfMeta, EtfQuote, EtfType
 
 __all__ = [
+    "ANOMALY_PCT",
     "PremiumRow",
     "Thresholds",
     "alerts",
+    "no_trade_or_anomaly",
     "premium_pct",
     "premium_rows",
     "threshold_for",
@@ -113,11 +116,33 @@ def premium_rows(
     return out
 
 
+ANOMALY_PCT: Final = 50.0  # |괴리율| 이 이 이상이면 괴리가 아니라 가격·NAV 이상(거래정지·청산 등)
+
+
 def alerts(
     rows: Iterable[EtfDay | EtfQuote],
     thresholds: Thresholds,
     meta: Mapping[str, EtfMeta] | None = None,
 ) -> list[PremiumRow]:
-    """경고 행만 — |괴리율| 큰 순(같으면 코드 순)."""
-    hits = [r for r in premium_rows(rows, thresholds, meta) if r.warn]
+    """경고 행만 — |괴리율| 큰 순(같으면 코드 순).
+
+    그날 거래가 없는 ETF(마감 거래량 0 — 종가가 묵은 체결가)와 |괴리율| ≥ `ANOMALY_PCT` 는 괴리
+    경고가 아니다 — 뺀다(2026-10-20: 1위가 거래정지 러시아 ETF +17,494%)."""
+    rows = list(rows)
+    skip = no_trade_or_anomaly(rows, thresholds, meta)
+    hits = [r for r in premium_rows(rows, thresholds, meta) if r.warn and r.code not in skip]
     return sorted(hits, key=lambda r: (-abs(r.premium_pct), r.code))
+
+
+def no_trade_or_anomaly(
+    rows: Iterable[EtfDay | EtfQuote],
+    thresholds: Thresholds,
+    meta: Mapping[str, EtfMeta] | None = None,
+) -> set[str]:
+    """괴리 경고에서 뺄 코드 — 마감 거래량 0 이거나 |괴리율| ≥ ANOMALY_PCT."""
+    rows = list(rows)
+    out = {r.code for r in rows if isinstance(r, EtfDay) and r.volume == 0}
+    out |= {
+        r.code for r in premium_rows(rows, thresholds, meta) if abs(r.premium_pct) >= ANOMALY_PCT
+    }
+    return out

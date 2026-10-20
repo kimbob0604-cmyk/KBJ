@@ -17,7 +17,9 @@ screen:
 
 # ETF 수급(metrics §4)
 etf:
-  premium_warn_pct: {default: 0.5, overseas: 0.5, bond: 0.5}   # |괴리율| 경고 [확인 필요 — 해외·채권 기준]
+  # |괴리율| 경고 — KRX 괴리율 관리 기준(국내 1%·해외 2%)에 맞춤 [확인 필요]. 전엔 모두 0.5% 라 해외 ETF(NAV 가
+  # 전일 해외 종가라 구조적으로 괴리)의 70% 가 경고였다(2026-10-20: 1,176개 중 426개)
+  premium_warn_pct: {default: 1.0, overseas: 2.0, bond: 1.0}
   watch_top_n: 50                                # 장중 iNAV 를 볼 순자산 상위 ETF 수(§3.7) [확인 필요]
   investor_min_net_asset_krw: 100_000_000_000    # 투자자별 ETF 순매수를 받을 순자산 하한 1,000억 [확인 필요]
   split_tol: 0.02                                # 분할·병합 감지 상대오차(§4.3)
