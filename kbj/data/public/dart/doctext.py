@@ -29,6 +29,7 @@ __all__ = [
     "INT_MAX",
     "ParseError",
     "cell_after",
+    "html_grid",
     "html_tables",
     "largest",
     "norm_label",
@@ -41,6 +42,7 @@ __all__ = [
 BLANKS: Final = frozenset({"", "-", "—", "–", "N/A", "n/a", "해당사항없음", "해당없음", "없음"})
 # 금액·주식 수는 DB bigint(0010) — 그 밖의 정수는 해석 실패로 본다(저장에서 터지지 않게)
 INT_MAX: Final = 2**63 - 1
+MAX_SPAN: Final = 100  # rowspan·colspan 상한(망가진 원문이 격자를 부풀리지 않게)
 _TAG = re.compile(r"<[^>]+>")
 _WS = re.compile(r"\s+")
 _NEG_MARKS: Final = ("△", "▽", "−")  # 회계 표기의 음수(△) — '−'(U+2212)도 음수 부호로
@@ -181,6 +183,64 @@ def html_tables(text: str | None) -> list[list[list[str]]]:
                 rows.append(cells)
         if rows:
             out.append(rows)
+    return out
+
+
+def _span(td: Tag, attr: str) -> int:
+    try:
+        n = int(str(td.get(attr) or "1").strip())
+    except ValueError:
+        return 1
+    return min(max(n, 1), MAX_SPAN)
+
+
+def html_grid(text: str | None) -> list[list[list[str]]]:
+    """`html_tables` 와 같되 합친 칸(rowspan·colspan)을 펼친 격자 — 합친 칸 글자를 자리마다 되풀이.
+
+    DART 조정·청구 원문은 왼쪽 머리 칸('1. 조정에 관한 사항')을 여러 줄로 합치고(rowspan), '사채의
+    명칭'을 '회차·종류' 두 칸으로 나눈다(colspan — 실측 2026-10-20). 펼치지 않으면 값 줄이 머리보다
+    짧아 열이 어긋난다. `cell_after` 처럼 '다음 칸'을 읽는 곳은 되풀이된 머리 글자를 값으로 읽으니
+    `html_tables` 를 쓴다."""
+    if not text:
+        return []
+    soup = BeautifulSoup(text, "html.parser")
+    out: list[list[list[str]]] = []
+    for table in soup.find_all("table"):
+        if not isinstance(table, Tag):
+            continue
+        grid: list[list[str]] = []
+        carry: dict[int, tuple[str, int]] = {}  # 열 → (글자, 남은 줄 수)
+        for tr in table.find_all("tr"):
+            if not isinstance(tr, Tag):
+                continue
+            row: list[str] = []
+            tds = [td for td in tr.find_all(["td", "th"]) if isinstance(td, Tag)]
+            col = 0
+            for td in tds:
+                while col in carry:
+                    row.append(carry[col][0])
+                    col += 1
+                text_ = _clean(td.get_text(" "))
+                rs, cs = _span(td, "rowspan"), _span(td, "colspan")
+                for _ in range(cs):
+                    if rs > 1:
+                        carry[col] = (text_, rs)
+                    row.append(text_)
+                    col += 1
+            while col in carry:
+                row.append(carry[col][0])
+                col += 1
+            # 이 줄을 쓴 rowspan 은 한 줄 줄인다(이 줄에서 새로 시작한 칸 포함)
+            for c in list(carry):
+                t, left = carry[c]
+                if left <= 1:
+                    del carry[c]
+                else:
+                    carry[c] = (t, left - 1)
+            if row:
+                grid.append(row)
+        if grid:
+            out.append(grid)
     return out
 
 

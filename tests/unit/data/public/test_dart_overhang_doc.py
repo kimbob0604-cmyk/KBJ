@@ -18,7 +18,7 @@ import pytest
 from kbj.core.fin_rows import Instrument, OverhangEvent
 from kbj.core.quality import Quality
 from kbj.data.public.dart import overhang_doc as O
-from kbj.data.public.dart.doctext import ParseError
+from kbj.data.public.dart.doctext import ParseError, html_grid
 from tests.fixtures.synthetic.p4_world import build_world
 
 DOCS = Path(__file__).resolve().parents[3] / "fixtures" / "synthetic" / "dart" / "p4_docs.json"
@@ -235,3 +235,49 @@ def test_price_adjust_other_series_is_estimated_and_series_forms_link() -> None:
                                                                "4")]  # fmt: skip
     got = O.link_target(events, Instrument.CB, "3")
     assert got is not None and got.rcept_no == "20250120000001"
+
+
+# DART 실제 원문 모양(실측 2026-10-20 — 값은 합성): 왼쪽 머리 칸이 줄을 합치고(rowspan), '사채의
+# 명칭'이 '회차·종류' 두 칸으로 나뉜다(colspan). 펼치지 않으면 값 줄이 머리보다 짧아 열이 어긋나
+# 조정·청구 공시가 모두 '표를 찾지 못했다'로 실패했다.
+_ADJ_MERGED = (
+    "<table>"
+    '<tr><td rowspan="2">1. 조정에 관한 사항</td><td>회차</td><td>상장여부</td>'
+    "<td>조정전 전환가액 (원)</td><td>조정후 전환가액 (원)</td></tr>"
+    "<tr><td>7</td><td>비상장</td><td>12,000</td><td>11,500</td></tr>"
+    '<tr><td rowspan="2">2. 전환가능주식수 변동</td><td>회차</td><td>미전환사채의 권면총액</td>'
+    "<td>조정전 전환가능 주식수 (주)</td><td>조정후 전환가능 주식수 (주)</td></tr>"
+    "<tr><td>7</td><td>1,000,000,000</td><td>83,333</td><td>86,956</td></tr>"
+    "<tr><td>5. 조정가액 적용일</td><td>2026-09-21</td></tr>"
+    "</table>"
+)
+_EX_MERGED = (
+    "<table>"
+    '<tr><td rowspan="2">청구일자</td><td colspan="2">사채의 명칭</td><td rowspan="2">청구금액</td>'
+    '<td rowspan="2">전환가액</td><td rowspan="2">발행한 주식수</td>'
+    '<td rowspan="2">상장일 또는 예정일</td></tr>'
+    "<tr><td>회차</td><td>종류</td></tr>"
+    "<tr><td>2026-09-22</td><td>4</td><td>무기명식 무보증 사모 전환사채</td>"
+    "<td>1,000,000,000원</td><td>2,000</td><td>500,000</td><td>2026-10-10</td></tr>"
+    "</table>"
+)
+
+
+def test_price_adjust_reads_rows_under_a_merged_left_label() -> None:
+    p = O.parse_price_adjust(_ADJ_MERGED)
+    assert (p.seq, p.old_price, p.new_price, p.rows) == ("7", 12_000.0, 11_500.0, 1)
+    assert p.effective_date == date(2026, 9, 21)
+
+
+def test_exercise_reads_a_two_row_header_with_split_bond_name() -> None:
+    p = O.parse_exercise(_EX_MERGED)
+    assert (p.seq, p.amount, p.shares, p.old_price, p.rows) == (
+        "4", 1_000_000_000, 500_000, 2_000.0, 1,
+    )  # fmt: skip
+    assert p.effective_date == date(2026, 9, 22) and p.listing_date == date(2026, 10, 10)
+
+
+def test_html_grid_repeats_merged_cells() -> None:
+    (grid,) = html_grid(_EX_MERGED)
+    assert [len(r) for r in grid] == [7, 7, 7]
+    assert grid[1][:3] == ["청구일자", "회차", "종류"] and grid[1][3] == "청구금액"

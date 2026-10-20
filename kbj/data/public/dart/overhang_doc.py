@@ -31,6 +31,7 @@ from kbj.core.quality import Quality
 from kbj.data.public.dart.doctext import (
     ParseError,
     cell_after,
+    html_grid,
     html_tables,
     norm_label,
     parse_date,
@@ -232,7 +233,7 @@ def parse_exercise(html: str) -> AdjustParse:
     `other_seqs`·notes 로 남긴다(행은 estimated — `to_adjust`). 청구일은 첫 회차 행 중 가장 늦은
     날(그날까지 다 반영된다).
     """
-    for table in html_tables(html):
+    for table in html_grid(html):  # 합친 칸을 펼친다('사채의 명칭' → 회차·종류 — 실측 2026-10-20)
         for hi, head in enumerate(table):
             seq_i = _col(head, ("회차",))
             amt_i = _col(head, _EX_AMOUNT_HEADS)
@@ -300,9 +301,9 @@ def parse_exercise(html: str) -> AdjustParse:
 def parse_price_adjust(html: str) -> AdjustParse:
     """전환가액·행사가액·교환가액 조정 원문 → 조정 후 가격·적용일(머리 '회차 | 조정전 … | 조정후
     …')."""
-    tables = html_tables(html)
-    effective = parse_date(cell_after(tables, _ADJ_EFFECTIVE))
-    for table in tables:
+    effective = parse_date(cell_after(html_tables(html), _ADJ_EFFECTIVE))
+    # 왼쪽 머리 칸이 줄을 합친다(rowspan) — 펼쳐야 값 줄 열이 머리와 맞는다(실측 2026-10-20)
+    for table in html_grid(html):
         for hi, head in enumerate(table):
             after_i = _col(head, ("조정후",))
             seq_i = _col(head, ("회차",))
