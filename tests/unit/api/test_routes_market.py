@@ -154,6 +154,8 @@ def test_summary_adds_fx_and_vkospi_tiles_when_data_exists(
     assert fx["name"] == "원/달러" and fx["value"] == 1424.1 and fx["spark"] == [1400, 1410, 1424.1]
     assert round(fx["chg_pct"], 4) == round((1424.1 / 1410 - 1) * 100, 4)
     assert idx["VKOSPI"]["value"] == 22 and not idx["VKOSPI"]["live"]
+    # 기준 시각 = 그 거래일 마감(받은 시각이 아니다 — 묵은 값이 오늘 값처럼 보였다, 2026-10-20)
+    assert idx["VKOSPI"]["as_of"].startswith(last.isoformat())
 
 
 def test_summary_adds_k200_night_futures_tile(world: World, authed: TestClient) -> None:

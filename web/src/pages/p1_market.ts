@@ -120,7 +120,8 @@ export function indexTile(t: Tile): HTMLElement {
   return h(
     'div',
     { class: 'tile', data: { code: t.code } },
-    h('div', { class: 'n' }, name, t.live ? ' · 장중' : ''),
+    // 장중이 아니면 기준일을 보인다 — 묵은 값(전 거래일 이전)이 오늘 값처럼 보이지 않게(2026-10-20 VKOSPI)
+    h('div', { class: 'n' }, name, t.live ? ' · 장중' : ` · ${shortDate(t.as_of)}`),
     h('div', { class: 'p' }, v ?? DASH),
     h('div', { class: signClass(t.chg_pct) }, pct(t.chg_pct)),
     sparkline(t.spark, { label: `${name} 추이` }),

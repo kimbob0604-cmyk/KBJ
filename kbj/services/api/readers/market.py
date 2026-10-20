@@ -196,8 +196,16 @@ def _vkospi_tile(ctx: ReadContext, today: date) -> IndexTile | None:
     rows = ctx.repos.diag.vol_index_history(
         "vkospi", today - timedelta(days=AUX_LOOKBACK_DAYS), today
     )
+    # 기준 시각 = 그 거래일 마감(받은 시각이 아니라) — 받은 시각이면 묵은 값이 오늘 값처럼 보였다.
+    # 전 거래일보다 오래된 값은 stale(2026-10-20: 10/19 값이 10/15 대비 등락으로 '오늘'처럼 보였다)
+    prev = ctx.cal.prev_trading_day(today)
     pts = [
-        (float(r.close), r.source, r.as_of, r.quality)
+        (
+            float(r.close),
+            r.source,
+            close_as_of(r.trade_date),
+            Quality.STALE if r.trade_date < prev and r.quality is Quality.OK else r.quality,
+        )
         for r in sorted(rows, key=lambda r: r.trade_date)
         if r.close is not None
     ]
