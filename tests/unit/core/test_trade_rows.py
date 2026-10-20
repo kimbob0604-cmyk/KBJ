@@ -93,6 +93,8 @@ def test_monthly_rows() -> None:
     assert c.country == "US"
     with pytest.raises(ValueError):
         tr.CountryMonthRow(**{**c.__dict__, "country": "usa"})
+    # 관세청 특수 코드에 숫자가 섞인다(실측 2026-10-20 'Z1' — 9월 월간 국가 저장이 통째로 실패했다)
+    assert tr.CountryMonthRow(**{**c.__dict__, "country": "Z1"}).country == "Z1"
     s = tr.SigunguMonthRow(
         ym="2026-09", sido_cd="41", sgg_nm="가상시", hs6="854232", region_id="KR-41-a01",
         exp_usd=Decimal(1), exp_cnt=1, imp_usd=None, imp_cnt=None, bal_usd=None,

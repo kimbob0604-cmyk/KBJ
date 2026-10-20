@@ -85,7 +85,7 @@ TRADE_TABLES: Final[tuple[str, ...]] = (
 
 _YM = re.compile(r"[0-9]{4}-(0[1-9]|1[0-2])")
 _HS = re.compile(r"[0-9]{2}([0-9]{2}){0,4}")  # 2·4·6·8·10 자리(짝수)
-_COUNTRY = re.compile(r"[A-Z]{2}")
+_COUNTRY = re.compile(r"[A-Z0-9]{2}")  # 관세청 특수 코드에 숫자가 섞인다('Z1' — 실측 2026-10-20)
 _SIDO = re.compile(r"[0-9]{2}")
 _REGION = re.compile(r"KR-[0-9]{2}-[0-9a-z_]+")
 _CODE = re.compile(r"[0-9A-Z]{6}")
