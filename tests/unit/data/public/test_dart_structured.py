@@ -178,6 +178,23 @@ def test_fetch_decision_picks_the_same_receipt_and_none_when_absent() -> None:
     )
 
 
+def test_fetch_decision_for_a_correction_reads_back_from_since() -> None:
+    """정정 공시는 구조화 응답이 최초 제출일로 걸린다(실측 2026-10-20) — 정정일 하루만 물으면 없고,
+    `since` 부터 물으면 접수번호로 찾는다."""
+    w = build_world()
+    fake = FakeDart(lambda: CLOCK, world=w)
+    c = client_for(fake)
+    cb2 = next(e for e in w.overhang_events if e.seq == "2")
+    later = date(cb2.rcept_dt.year, cb2.rcept_dt.month, 28)
+    assert T.fetch_decision(c, cb2.corp_code, later, cb2.rcept_no, Instrument.CB) is None
+    got = T.fetch_decision(
+        c, cb2.corp_code, later, cb2.rcept_no, Instrument.CB, since=date(cb2.rcept_dt.year, 1, 1)
+    )
+    assert isinstance(got, OverhangEvent) and got.face_value == cb2.face_value
+    p = fake.calls("cvbdIsDecsn.json")[-1].params
+    assert (p["bgn_de"], p["end_de"]) == (f"{cb2.rcept_dt.year}0101", f"{later:%Y%m%d}")
+
+
 def test_fetch_decisions_history_for_link_fallback() -> None:
     w = build_world()
     c = client_for(FakeDart(lambda: CLOCK, world=w))

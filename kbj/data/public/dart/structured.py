@@ -348,14 +348,22 @@ def _rows(
 
 
 def fetch_decision(
-    client: DartJson, corp_code: str, day: date, rcept_no: str, target: Target
+    client: DartJson,
+    corp_code: str,
+    day: date,
+    rcept_no: str,
+    target: Target,
+    *,
+    since: date | None = None,
 ) -> Decision | None:
     """그날 접수된 결정 공시 하나(같은 접수번호 행). 응답에 없으면(013·늦게 반영) None.
 
+    정정 공시는 구조화 응답이 **최초 제출일**로 걸린다(실측 2026-10-20: 10-16 정정분이 bgn=end=10-16
+    으로는 없고 09-21 로는 나왔다) — `since` 부터 `day` 까지 읽어 접수번호로 고른다.
     DART 오류(키·한도·전송)는 그대로 올린다 — 처리기가 그 건(또는 그 실행)을 실패로 기록한다.
     """
     dataset = ENDPOINT_OF[target]
-    for row in _rows(client, dataset, corp_code, day, day):
+    for row in _rows(client, dataset, corp_code, since or day, day):
         if str(row.get("rcept_no") or "").strip() == rcept_no:
             return parse_decision(target, row, rcept_dt=day)
     return None

@@ -453,7 +453,10 @@ def _decision(env: _Env, d: DisclosureRow) -> tuple[int, str | None]:
     buybacks: list[BuybackEvent] = []
     html: str | None = None
     for target in targets:
-        got = structured.fetch_decision(env.client, d.corp_code, d.rcept_dt, d.rcept_no, target)
+        got = structured.fetch_decision(
+            env.client, d.corp_code, d.rcept_dt, d.rcept_no, target,
+            since=_years_back(d.rcept_dt, 1) if d.is_correction else None,
+        )  # fmt: skip
         if isinstance(got, BuybackEvent):
             buybacks.append(got)
             continue
