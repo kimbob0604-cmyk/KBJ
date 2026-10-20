@@ -314,7 +314,7 @@ describe('P6 페이지 7 수출입 — 공개 전부(탭 6, 자물쇠 없음), �
       await app.settled();
       const sec = root.querySelector('#page-7');
       const tabsEl = [...(sec?.querySelectorAll('[role="tab"]') ?? [])].map((b) => b.textContent);
-      expect(tabsEl).toEqual(['속보', '품목', '국가', '지역', '급등', '104품목']);
+      expect(tabsEl).toEqual(['월별 추이', '속보', '품목', '국가', '지역', '급등', '104품목']);
       expect(sec?.querySelectorAll('.panel.locked')).toHaveLength(0);
       // 속보 탭은 FLASH 본문(웨이브 2) — 준비 중 상자가 아니라 데이터 요청, 없으면(404) 탭 안 안내 한 줄(오류 아님)
       expect(sec?.querySelector('.panel h3 .src')?.textContent).not.toContain('준비 중');

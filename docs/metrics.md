@@ -715,6 +715,15 @@ test_index_review_repo.py·tests/unit/engines/index_review/test_service.py·test
 규칙), `top_n` = 직전 `items104.top_n_months`(12)개월 수출 상위 HS4 `n` 개(동률 코드 순 — 화면 '자동 선택' 꼬리표).
 묶음 사이 접두 겹침 = 설정 오류(`kbj.config.trade` 가 거부). bok 원본 목록은 레포에 없다(U3).
 
+## 29a. 월별 수출입 추이 (공개, 2026-10-20 사용자 요청 — "쌓아서 보고 QoQ·YoY")
+
+| 지표 | 공식 | 입력 | 단위 | 예외·품질 | 시험 |
+|---|---|---|---|---|---|
+| 월 합계 | 그 달 `item_monthly` HS10 행의 수출(또는 수입) 달러 합 — HS10 만 더한다(§26 가장 깊은 행 규칙) | 월간 | 달러 | 그 달 행이 없으면 그 달 없음(0 이 아니다) | `tests/unit/engines/trade/test_monthly.py` |
+| 쌓기 | HS 2자리(류) 합. 최근 12개월 합 상위 `top`(6)개 류 + 기타(= 월 합계 − 상위 류 합) | 월간 | 달러 | 류 이름은 `config/knowledge/hs_chapters.yaml`, 없으면 'HS nn' | 같은 |
+| 전월비·전년동월비 | 월 합계 ÷ 직전 달(·12개월 전 같은 달) − 1 | 월 합계 | % | 비교 달이 없으면 None | 같은 |
+| 분기 합·QoQ·YoY | 달력 분기 합(세 달이 다 있을 때만 — 모자라면 그 분기 없음). QoQ = ÷ 직전 분기 − 1, YoY = ÷ 전년 같은 분기 − 1 | 월 합계 | % | 비교 분기가 없으면 None | 같은 |
+
 ## G. GEX 지표 (로그인 — P7, GX 에서 옮김)
 
 > 정본(P7 FND-B): `GX:docs/metrics.md` §0~§8 을 그대로 옮겼다. 바뀐 것은 장 번호(§N → §GN)와 '구현·시험'

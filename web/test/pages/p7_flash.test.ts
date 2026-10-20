@@ -23,7 +23,12 @@ async function mount(tier: 'login' | 'public', over: Record<string, (() => Respo
   const { ctx, root } = pageCtx(7, tier, hz.source, { now: () => FLASH_NOW });
   await page.mount(ctx);
   await flush();
-  return { hz, root };
+  // 첫 탭은 '월별 추이'(2026-10-20) — 속보 탭을 열고, 경로는 속보 것만 센다
+  const tab = [...root.querySelectorAll<HTMLElement>('[role="tab"]')].find((b) => b.textContent === '속보');
+  tab?.click();
+  await flush();
+  const paths = (): string[] => hz.paths().filter((x) => x.includes('flash'));
+  return { hz: { ...hz, paths }, root };
 }
 
 const bodyRows = (root: ParentNode): HTMLTableRowElement[] => [...root.querySelectorAll<HTMLTableRowElement>('tbody tr')];
@@ -64,7 +69,7 @@ describe('페이지 7 속보 — 로그인', () => {
     });
     const p = panelByTitle(root, TITLE);
     expect(text(p.querySelector('.msg:not(.err)'))).toContain('아직 없음');
-    expect(root.querySelectorAll('[role="tab"]')).toHaveLength(6);
+    expect(root.querySelectorAll('[role="tab"]')).toHaveLength(7);
   });
 
   it('404 말고 실패(500)는 오류 줄로 남는다 — 삼키지 않는다', async () => {

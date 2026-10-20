@@ -73,6 +73,7 @@ export const FILE_CAPS = {
   "trade/countries.json": 1024 * KB,
   "trade/surge.json": 1024 * KB,
   "trade/items104.json": 1024 * KB,
+  "trade/monthly.json": 256 * KB,
   "trade/stocks.json": 1024 * KB,
   "diag/summary.json": 100 * KB,
   "diag/history.json": 512 * KB,

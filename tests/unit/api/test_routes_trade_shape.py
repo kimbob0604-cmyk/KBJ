@@ -31,6 +31,7 @@ P6_ROUTES: dict[str, tuple[str, str]] = {
     "/api/trade/regions?hs6=854232&sido=41": ("TradeRegions", "trade.customs_monthly"),
     "/api/trade/surges?ym=2026-09&level=hs4": ("TradeSurges", "trade.derive"),
     "/api/trade/items104?ym=2026-09": ("TradeItems104", "trade.derive"),
+    "/api/trade/monthly": ("TradeMonthly", "trade.customs_monthly"),
     "/api/trade/stocks": ("TradeStocks", "trade.stock_index"),
     "/api/trade/stock/000660": ("TradeStock", "trade.map_load"),
 }  # fmt: skip

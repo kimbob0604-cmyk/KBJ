@@ -113,7 +113,7 @@ describe('페이지 7 — 탭 6 × 등급 2', () => {
   for (const tier of ['login', 'public'] as const) {
     it(`${tier}: 탭마다 오류 0·NaN·undefined 0`, async () => {
       const { hz, root } = await mountP7(tier);
-      expect(TRADE_TABS.map((t) => t.label)).toEqual(['속보', '품목', '국가', '지역', '급등', '104품목']);
+      expect(TRADE_TABS.map((t) => t.label)).toEqual(['월별 추이', '속보', '품목', '국가', '지역', '급등', '104품목']);
       for (const t of TRADE_TABS) {
         await openTab(root, t.label);
         const panel = root.querySelector('[role="tabpanel"]:not([hidden])') ?? root;

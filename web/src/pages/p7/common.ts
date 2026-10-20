@@ -25,6 +25,7 @@ export type TradeRegions = S['TradeRegions'];
 export type TradeSurges = S['TradeSurges'];
 export type TradeItems104 = S['TradeItems104'];
 export type TradeStocks = S['TradeStocks'];
+export type TradeMonthly = S['TradeMonthly'];
 
 /** 탭 모듈 문맥(페이지 문맥에서 필요한 것만) */
 export interface TabCtx {

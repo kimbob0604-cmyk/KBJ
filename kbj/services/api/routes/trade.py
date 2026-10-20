@@ -22,6 +22,7 @@ from kbj.services.api.models.trade import (
     TradeItems,
     TradeItems104,
     TradeItemSeries,
+    TradeMonthly,
     TradeRegions,
     TradeStock,
     TradeStocks,
@@ -34,6 +35,7 @@ from kbj.services.api.readers.trade_explore import (
     trade_item_series,
     trade_items,
     trade_items104,
+    trade_monthly,
     trade_regions,
     trade_surges,
 )
@@ -162,6 +164,15 @@ def surges(request: Request, ym: YmQ = None, level: SurgeLevelQ = None) -> Respo
     return cached_json(
         request, domain=DOMAIN, ttl_s=TTL_DEFAULT_S,
         build=lambda: trade_surges(st.read, ym=ym, level=level),
+    )  # fmt: skip
+
+
+@router.get("/monthly", response_model=Envelope[TradeMonthly])
+def monthly(request: Request, months: Annotated[int, Query(ge=12, le=120)] = 36) -> Response:
+    st = get_state(request)
+    return cached_json(
+        request, domain=DOMAIN, ttl_s=TTL_DEFAULT_S,
+        build=lambda: trade_monthly(st.read, months=months),
     )  # fmt: skip
 
 

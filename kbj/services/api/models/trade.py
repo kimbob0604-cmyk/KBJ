@@ -287,3 +287,38 @@ class TradeStock(ApiModel):
     monthly: list[TradeStockPoint]
     quarterly: list[TradeStockPoint]
     lag_corr: dict[str, float | None]  # '0'·'1'·'2' 분기(수출이 앞섬)
+
+
+# ── 월별 추이(metrics §29a — 2026-10-20 사용자 요청: 쌓아서 보고 QoQ·YoY) ─────────────────────────
+
+
+class TradeChapterName(ApiModel):
+    hs: str  # HS 2자리, 또는 'other'(기타)
+    name: str
+
+
+class TradeMonthlyPoint(ApiModel):
+    ym: str
+    total: int  # 그 달 수출(수입) 달러 합 — HS10 합
+    parts: dict[str, int]  # 류(또는 'other') → 달러
+    mom: float | None  # 전월비(비율)
+    yoy: float | None  # 전년동월비(비율)
+
+
+class TradeQuarterPoint(ApiModel):
+    q: str  # YYYYQn — 세 달이 다 있는 분기만
+    total: int
+    qoq: float | None
+    yoy: float | None
+
+
+class TradeMonthlyStack(ApiModel):
+    flow: FlowT
+    chapters: list[TradeChapterName]  # 쌓는 순서(큰 것부터), 마지막이 기타
+    months: list[TradeMonthlyPoint]
+    quarters: list[TradeQuarterPoint]
+
+
+class TradeMonthly(ApiModel):
+    exp: TradeMonthlyStack
+    imp: TradeMonthlyStack

@@ -147,6 +147,7 @@ FILE_CAPS: Final[dict[str, int]] = {
     "trade/countries.json": 1024 * _KB,
     "trade/surge.json": 1024 * _KB,
     "trade/items104.json": 1024 * _KB,
+    "trade/monthly.json": 256 * _KB,  # 월별 추이(36달 × 수출·수입 × 류 7 — metrics §29a)
     "trade/stocks.json": 1024 * _KB,
     "diag/summary.json": 100 * _KB,
     "diag/history.json": 512 * _KB,

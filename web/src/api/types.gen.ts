@@ -1096,6 +1096,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/trade/monthly": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Monthly */
+        get: operations["monthly_api_trade_monthly_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/trade/items104": {
         parameters: {
             query?: never;
@@ -4718,6 +4735,25 @@ export interface components {
             generated_at: string;
             data: components["schemas"]["TradeList"];
         };
+        /** Envelope[TradeMonthly] */
+        Envelope_TradeMonthly_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["TradeMonthly"];
+        };
         /** Envelope[TradeOut] */
         Envelope_TradeOut_: {
             /** Source */
@@ -7875,6 +7911,13 @@ export interface components {
             /** Active */
             active: boolean;
         };
+        /** TradeChapterName */
+        TradeChapterName: {
+            /** Hs */
+            hs: string;
+            /** Name */
+            name: string;
+        };
         /** TradeCountries */
         TradeCountries: {
             /** Ym */
@@ -8187,6 +8230,40 @@ export interface components {
             /** Name */
             name: string | null;
         };
+        /** TradeMonthly */
+        TradeMonthly: {
+            exp: components["schemas"]["TradeMonthlyStack"];
+            imp: components["schemas"]["TradeMonthlyStack"];
+        };
+        /** TradeMonthlyPoint */
+        TradeMonthlyPoint: {
+            /** Ym */
+            ym: string;
+            /** Total */
+            total: number;
+            /** Parts */
+            parts: {
+                [key: string]: number;
+            };
+            /** Mom */
+            mom: number | null;
+            /** Yoy */
+            yoy: number | null;
+        };
+        /** TradeMonthlyStack */
+        TradeMonthlyStack: {
+            /**
+             * Flow
+             * @enum {string}
+             */
+            flow: "exp" | "imp";
+            /** Chapters */
+            chapters: components["schemas"]["TradeChapterName"][];
+            /** Months */
+            months: components["schemas"]["TradeMonthlyPoint"][];
+            /** Quarters */
+            quarters: components["schemas"]["TradeQuarterPoint"][];
+        };
         /** TradeOut */
         TradeOut: {
             /** Id */
@@ -8229,6 +8306,17 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** TradeQuarterPoint */
+        TradeQuarterPoint: {
+            /** Q */
+            q: string;
+            /** Total */
+            total: number;
+            /** Qoq */
+            qoq: number | null;
+            /** Yoy */
+            yoy: number | null;
         };
         /** TradeRegionRow */
         TradeRegionRow: {
@@ -12466,6 +12554,64 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_TradeSurges_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    monthly_api_trade_monthly_get: {
+        parameters: {
+            query?: {
+                months?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_TradeMonthly_"];
                 };
             };
             /** @description 세션 없음·만료 */

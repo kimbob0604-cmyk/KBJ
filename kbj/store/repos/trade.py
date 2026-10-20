@@ -26,6 +26,7 @@ from psycopg import sql
 
 from kbj.core.trade_rows import (
     MAP_ORIGINS,
+    ChapterMonth,
     CountryMonthRow,
     HsDim,
     ItemCountryMonthRow,
@@ -279,6 +280,10 @@ class TradeRepo(Protocol):
 
     def hs_dim(self, prefix: str | None = None, hs_len: int | None = None) -> list[HsDim]: ...
 
+    def chapter_monthly(self, ym_from: str, ym_to: str) -> list[ChapterMonth]:
+        """HS10 행만 류(HS 2자리)·월로 더한 수출·수입 달러(metrics §29a)."""
+        ...
+
     def surge(
         self, ym: str | None = None, level: str | None = None, flow: str | None = None
     ) -> list[SurgeRow]: ...
@@ -495,6 +500,14 @@ class _Base:
         )  # fmt: skip
         return self._read(T_SIGUNGU, conds)
 
+    def chapter_monthly(self, ym_from: str, ym_to: str) -> list[ChapterMonth]:
+        acc: dict[tuple[str, str], tuple[int, int]] = {}
+        for r in self.item_monthly(hs_len=10, ym_from=ym_from, ym_to=ym_to):
+            k = (r.ym, r.hs[:2])
+            e, i = acc.get(k, (0, 0))
+            acc[k] = (e + int(r.exp_usd or 0), i + int(r.imp_usd or 0))
+        return [ChapterMonth(ym, ch, e, i) for (ym, ch), (e, i) in sorted(acc.items())]
+
     def hs_dim(self, prefix: str | None = None, hs_len: int | None = None) -> list[HsDim]:
         conds = _conds(prefix=("hs", "prefix", prefix), hs_len=("hs_len", "eq", hs_len))
         return self._read(T_HS_DIM, conds)
@@ -590,6 +603,15 @@ class PgTradeRepo(_Base):
         with self._connect() as conn:
             r = conn.execute(sql.SQL("SELECT max(ym) FROM {}").format(t.ident())).fetchone()
         return None if r is None else r[0]
+
+    def chapter_monthly(self, ym_from: str, ym_to: str) -> list[ChapterMonth]:
+        q = sql.SQL(
+            "SELECT ym, left(hs, 2), coalesce(sum(exp_usd), 0), coalesce(sum(imp_usd), 0) "
+            "FROM {} WHERE hs_len = 10 AND ym BETWEEN %s AND %s GROUP BY 1, 2 ORDER BY 1, 2"
+        ).format(T_ITEM.ident())
+        with self._connect() as conn:
+            recs = conn.execute(q, (ym_from, ym_to)).fetchall()
+        return [ChapterMonth(r[0], r[1], int(r[2]), int(r[3])) for r in recs]
 
 
 class MemoryTradeRepo(_Base):

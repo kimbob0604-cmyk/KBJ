@@ -5764,6 +5764,81 @@
         }
       }
     },
+    "/api/trade/monthly": {
+      "get": {
+        "tags": [
+          "trade"
+        ],
+        "summary": "Monthly",
+        "operationId": "monthly_api_trade_monthly_get",
+        "parameters": [
+          {
+            "name": "months",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 120,
+              "minimum": 12,
+              "default": 36,
+              "title": "Months"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_TradeMonthly_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/trade/items104": {
       "get": {
         "tags": [
@@ -17520,6 +17595,49 @@
         ],
         "title": "Envelope[TradeList]"
       },
+      "Envelope_TradeMonthly_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/TradeMonthly"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[TradeMonthly]"
+      },
       "Envelope_TradeOut_": {
         "properties": {
           "source": {
@@ -27851,6 +27969,25 @@
         ],
         "title": "TimelineItem"
       },
+      "TradeChapterName": {
+        "properties": {
+          "hs": {
+            "type": "string",
+            "title": "Hs"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "hs",
+          "name"
+        ],
+        "title": "TradeChapterName"
+      },
       "TradeCountries": {
         "properties": {
           "ym": {
@@ -28933,6 +29070,116 @@
         "title": "TradeMapLine",
         "description": "매핑 한 줄 — 품목 행(region_id None) 또는 지역 행(region_id·hs = HS6)."
       },
+      "TradeMonthly": {
+        "properties": {
+          "exp": {
+            "$ref": "#/components/schemas/TradeMonthlyStack"
+          },
+          "imp": {
+            "$ref": "#/components/schemas/TradeMonthlyStack"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "exp",
+          "imp"
+        ],
+        "title": "TradeMonthly"
+      },
+      "TradeMonthlyPoint": {
+        "properties": {
+          "ym": {
+            "type": "string",
+            "title": "Ym"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "parts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Parts"
+          },
+          "mom": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mom"
+          },
+          "yoy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yoy"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "ym",
+          "total",
+          "parts",
+          "mom",
+          "yoy"
+        ],
+        "title": "TradeMonthlyPoint"
+      },
+      "TradeMonthlyStack": {
+        "properties": {
+          "flow": {
+            "type": "string",
+            "enum": [
+              "exp",
+              "imp"
+            ],
+            "title": "Flow"
+          },
+          "chapters": {
+            "items": {
+              "$ref": "#/components/schemas/TradeChapterName"
+            },
+            "type": "array",
+            "title": "Chapters"
+          },
+          "months": {
+            "items": {
+              "$ref": "#/components/schemas/TradeMonthlyPoint"
+            },
+            "type": "array",
+            "title": "Months"
+          },
+          "quarters": {
+            "items": {
+              "$ref": "#/components/schemas/TradeQuarterPoint"
+            },
+            "type": "array",
+            "title": "Quarters"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "flow",
+          "chapters",
+          "months",
+          "quarters"
+        ],
+        "title": "TradeMonthlyStack"
+      },
       "TradeOut": {
         "properties": {
           "id": {
@@ -29053,6 +29300,49 @@
           "created_at"
         ],
         "title": "TradeOut"
+      },
+      "TradeQuarterPoint": {
+        "properties": {
+          "q": {
+            "type": "string",
+            "title": "Q"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "qoq": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Qoq"
+          },
+          "yoy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yoy"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "q",
+          "total",
+          "qoq",
+          "yoy"
+        ],
+        "title": "TradeQuarterPoint"
       },
       "TradeRegionRow": {
         "properties": {

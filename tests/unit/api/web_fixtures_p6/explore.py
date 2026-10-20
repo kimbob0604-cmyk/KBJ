@@ -55,6 +55,7 @@ FILES: Final[tuple[tuple[str, str], ...]] = (
     ("regions.json", "/api/trade/regions"),
     ("surges.json", "/api/trade/surges"),
     ("items104.json", "/api/trade/items104"),
+    ("monthly.json", "/api/trade/monthly"),
 )
 # 공개 파일 중 픽스처로 싣는 것(전부 싣으면 국가·지역 파일이 수십 개 — 화면 시험에 필요한 것만)
 PUBLIC_FILES: Final[tuple[str, ...]] = (
@@ -65,6 +66,7 @@ PUBLIC_FILES: Final[tuple[str, ...]] = (
     "trade/country/US.json",
     "trade/surge.json",
     "trade/items104.json",
+    "trade/monthly.json",
 )
 
 
@@ -143,6 +145,21 @@ def memory_explore_reader(trade: MemoryTradeRepo) -> Reader:
         if n == "trade_x_groups":
             ym = str(p["ym"])
             return _rows(trade.item_group_monthly(ym_from=ym, ym_to=ym), _GROUP)
+        if n == "trade_x_chapter_monthly":
+            acc: dict[tuple[str, str], dict[str, Any]] = {}
+            order = {"ok": 1, "stale": 2, "estimated": 3, "invalid": 4}
+            for r in trade.item_monthly(hs_len=10, ym_from=str(p["ym_from"])):
+                a = acc.setdefault(
+                    (r.ym, r.hs[:2]),
+                    {"ym": r.ym, "ch": r.hs[:2], "exp_usd": 0, "imp_usd": 0, "as_of": r.as_of,
+                     "quality": r.quality.value},
+                )  # fmt: skip
+                a["exp_usd"] += int(r.exp_usd or 0)
+                a["imp_usd"] += int(r.imp_usd or 0)
+                a["as_of"] = max(a["as_of"], r.as_of)
+                if order[r.quality.value] > order[a["quality"]]:
+                    a["quality"] = r.quality.value
+            return [acc[k] for k in sorted(acc)]
         raise KeyError(f"모르는 Query: {n}")
 
     return read

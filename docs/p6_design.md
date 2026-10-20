@@ -393,6 +393,7 @@ stocks:
 | `trade/countries.json`·`trade/country/<ISO2>.json` | 국가 총괄 60개월 / 국가별 상위 품목 | 파일 1 MB |
 | `trade/region/<hs6>.json` | 매핑 HS6 의 시군구 | 파일 200 KB |
 | `trade/surge.json`·`trade/items104.json`·`trade/stocks.json` | — | 파일 1 MB |
+| `trade/monthly.json`(월별 추이 — metrics §29a) | — | 파일 256 KB |
 | `trade/stock/<code>.json` | `origin: public` 매핑 종목의 겹쳐 보기(시세 칸 없음) | 파일 100 KB |
 | `credit.json` | 칩 목록에 `export_flash` | 기존 100 KB |
 

@@ -29,6 +29,7 @@ from kbj.config.trade import (
 )
 from kbj.config.trade import TradeItems as TradeItemsCfg
 from kbj.core.quality import Quality
+from kbj.core.trade_monthly import OTHER, Stack, monthly_stack
 from kbj.core.trade_rows import SurgeLevel, prev_ym
 from kbj.engines.trade.explore import (
     Node,
@@ -43,6 +44,7 @@ from kbj.engines.trade.explore import (
 from kbj.engines.trade.price_volume import decompose, unit_price, weight_unfit
 from kbj.services.api.models.common import Envelope
 from kbj.services.api.models.trade import (
+    TradeChapterName,
     TradeCountries,
     TradeCountryItems,
     TradeCountryRow,
@@ -54,6 +56,10 @@ from kbj.services.api.models.trade import (
     TradeItems,
     TradeItems104,
     TradeItemSeries,
+    TradeMonthly,
+    TradeMonthlyPoint,
+    TradeMonthlyStack,
+    TradeQuarterPoint,
     TradeRegionRow,
     TradeRegions,
     TradeSurgeRow,
@@ -432,3 +438,42 @@ def trade_items104(ctx: ReadContext, *, ym: str | None) -> Envelope[TradeItems10
         else "자체 고정 HS4 목록(config/knowledge/trade_items.yaml)"
     )
     return _env(ctx, data, rows, note, "비중 = 104품목 합 대비")
+
+
+# ── 월별 추이(metrics §29a) ──────────────────────────────────────────────────────────────────
+
+MONTHLY_TOP: Final = 6
+
+
+def trade_monthly(ctx: ReadContext, *, months: int = 36) -> Envelope[TradeMonthly]:
+    """월별 수출·수입 — 상위 류 쌓기·전월비·전년동월비·분기 QoQ·YoY(비교용 12개월을 더 읽는다)."""
+    last = _last(ctx, "pub_trade.item_monthly", None, NO_MONTHLY)
+    rows = ctx.repos.trade.chapter_monthly(prev_ym(last, months + 11), last)
+    if not rows:
+        raise NoData(NO_MONTHLY)
+    stacks = {
+        f: monthly_stack(rows, flow=f, top=MONTHLY_TOP, months=months) for f in ("exp", "imp")
+    }
+    names = _names(ctx, {c for st in stacks.values() for c in st.chapters if c != OTHER})
+
+    def view(st: Stack) -> TradeMonthlyStack:
+        return TradeMonthlyStack(
+            flow=st.flow,
+            chapters=[
+                TradeChapterName(hs=c, name="기타" if c == OTHER else names.get(c, f"HS {c}"))
+                for c in st.chapters
+            ],
+            months=[
+                TradeMonthlyPoint(ym=p.ym, total=p.total, parts=dict(p.parts), mom=p.mom, yoy=p.yoy)
+                for p in st.months
+            ],
+            quarters=[
+                TradeQuarterPoint(q=q.q, total=q.total, qoq=q.qoq, yoy=q.yoy) for q in st.quarters
+            ],
+        )
+
+    data = TradeMonthly(exp=view(stacks["exp"]), imp=view(stacks["imp"]))
+    probe = ctx.repos.trade.item_monthly(prefix="85", hs_len=10, ym_from=last, ym_to=last)
+    n_months = len({r.ym for r in rows})
+    note = f"HS10 합 · 상위 {MONTHLY_TOP}개 류(최근 12개월 합) + 기타 · 받은 달 {n_months}개"
+    return _env(ctx, data, probe or ctx.repos.trade.item_monthly(ym_from=last, ym_to=last), note)

@@ -9,6 +9,7 @@ import { h } from '../ui/dom';
 import { type TabDef, tabs } from '../ui/tabs';
 import type { TabCtx, TabMount } from './p7/common';
 import { mount as mountCountries } from './p7/countries';
+import { mount as mountMonthly } from './p7/monthly';
 import { mount as mountFlash } from './p7/flash';
 import { mount as mountItems } from './p7/items';
 import { mount as mountItems104 } from './p7/items104';
@@ -16,9 +17,10 @@ import { mount as mountRegions } from './p7/regions';
 import { mount as mountStocks } from './p7/stocks';
 import { mount as mountSurge } from './p7/surge';
 
-export type TradeTabId = 'flash' | 'items' | 'countries' | 'regions' | 'surge' | 'items104';
+export type TradeTabId = 'monthly' | 'flash' | 'items' | 'countries' | 'regions' | 'surge' | 'items104';
 
 export const TRADE_TABS: readonly TabDef<TradeTabId>[] = [
+  { id: 'monthly', label: '월별 추이' },
   { id: 'flash', label: '속보' },
   { id: 'items', label: '품목' },
   { id: 'countries', label: '국가' },
@@ -29,6 +31,7 @@ export const TRADE_TABS: readonly TabDef<TradeTabId>[] = [
 
 /** 탭 → 모듈(순서대로 붙인다). 정적 import — 공개 번들 예산은 청크 합이라 나누지 않는다(p8_stock.ts 와 같다) */
 export const TAB_MODULES: Readonly<Record<TradeTabId, readonly TabMount[]>> = {
+  monthly: [mountMonthly],
   flash: [mountFlash],
   items: [mountItems, mountStocks],
   countries: [mountCountries],

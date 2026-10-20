@@ -36,6 +36,7 @@ __all__ = [
     "SURGE_RULES",
     "TEN_DAY_KINDS",
     "TRADE_TABLES",
+    "ChapterMonth",
     "CountryMonthRow",
     "Flow",
     "HsDim",
@@ -620,3 +621,13 @@ class StockExportRow:
     @property
     def is_quarter(self) -> bool:
         return "Q" in self.period
+
+
+@dataclass(frozen=True)
+class ChapterMonth:
+    """류(HS 2자리)·월 합 — `pub_trade.item_monthly` HS10 행만 더한 것(metrics §29a)."""
+
+    ym: str  # YYYY-MM
+    chapter: str  # HS 2자리
+    exp_usd: int
+    imp_usd: int

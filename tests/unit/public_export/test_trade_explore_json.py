@@ -65,7 +65,8 @@ def test_SQL_은_pub_trade_만() -> None:
 
 def test_파일_이름·상한·공개_검사(files: dict[str, Any], world: P6World) -> None:
     chapters = {r.hs for r in world.items if r.hs_len == 2}
-    want = {"trade/hs2.json", "trade/countries.json", "trade/surge.json", "trade/items104.json"}
+    want = {"trade/hs2.json", "trade/countries.json", "trade/surge.json", "trade/items104.json",
+            "trade/monthly.json"}  # fmt: skip
     want |= {f"trade/hs/{ch}.json" for ch in chapters}
     assert want <= set(files)
     assert {n for n in files if n.startswith("trade/country/")}
@@ -116,6 +117,12 @@ def test_누락_달은_상위_행(files: dict[str, Any], world: P6World) -> None
     assert code["exp"]["usd"][i] == int(whole.exp_usd or 0)
     miss = next(c for c in d["codes"] if c["hs"] == "390120")
     assert miss["exp"]["usd"][i] is None
+
+
+def test_월별_추이_공개_파일은_로그인_API_와_같다(files: dict[str, Any], c: TestClient) -> None:
+    api = c.get("/api/trade/monthly").json()["data"]
+    pub = _data(files["trade/monthly.json"])
+    assert pub == api
 
 
 @pytest.mark.parametrize(

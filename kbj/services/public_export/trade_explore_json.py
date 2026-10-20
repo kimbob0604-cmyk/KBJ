@@ -25,9 +25,11 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Final
+from typing import Any, Final, Literal
 
 from kbj.config.trade import load_hs_chapters, load_trade, load_trade_items
+from kbj.core.trade_monthly import OTHER, monthly_stack
+from kbj.core.trade_rows import ChapterMonth
 from kbj.services.public_export.manifest import BuildOut, PublicFile, Quality, worst_quality
 from kbj.services.public_export.pub_read import Query, Reader, Row
 
@@ -98,9 +100,22 @@ Q_GROUPS: Final = Query(
     "SELECT ym, group_id, exp_usd, yoy, unit_price, mode, as_of, quality "
     "FROM pub_trade.item_group_monthly WHERE ym = %(ym)s ORDER BY group_id",
 )
+# 월별 추이(metrics §29a) — HS10 만 류·월로 더한다
+Q_CHAPTER_MONTHLY: Final = Query(
+    "trade_x_chapter_monthly",
+    "SELECT ym, left(hs, 2) AS ch, coalesce(sum(exp_usd), 0) AS exp_usd, "
+    "coalesce(sum(imp_usd), 0) AS imp_usd, max(as_of) AS as_of, "
+    "(ARRAY['ok', 'stale', 'estimated', 'invalid'])[max(CASE quality WHEN 'stale' THEN 2 "
+    "WHEN 'estimated' THEN 3 WHEN 'invalid' THEN 4 ELSE 1 END)] AS quality "
+    "FROM pub_trade.item_monthly WHERE hs_len = 10 AND ym >= %(ym_from)s "
+    "GROUP BY 1, 2 ORDER BY 1, 2",
+)
+MONTHLY_MONTHS: Final = 36
+MONTHLY_TOP: Final = 6
 QUERIES: Final[tuple[Query, ...]] = (
     Q_ITEM_LAST, Q_CHAPTERS, Q_ITEMS, Q_HS_DIM, Q_COUNTRY_LAST, Q_COUNTRIES, Q_IC_LAST,
     Q_ITEM_COUNTRIES, Q_SIGUNGU_LAST, Q_SIGUNGU, Q_SURGE_LAST, Q_SURGE, Q_GROUP_LAST, Q_GROUPS,
+    Q_CHAPTER_MONTHLY,
 )  # fmt: skip
 SURGE_ORDER: Final = ("hs2", "hs4", "hs6", "hs10", "country")
 
@@ -609,6 +624,50 @@ def _items104(read: Reader, names: Mapping[str, str]) -> list[PublicFile]:
     ]
 
 
+def _monthly(read: Reader, names: Mapping[str, str]) -> list[PublicFile]:
+    """월별 추이(로그인 `GET /api/trade/monthly` 와 같은 모양 — 엔진 하나, metrics §29a)."""
+    last = _last(read, Q_ITEM_LAST)
+    if last is None:
+        return []
+    rows = read(Q_CHAPTER_MONTHLY, {"ym_from": prev_ym(last, MONTHLY_MONTHS + 11)})
+    if not rows:
+        return []
+    cm = [ChapterMonth(r["ym"], r["ch"], int(r["exp_usd"]), int(r["imp_usd"])) for r in rows]
+
+    def view(flow: Literal["exp", "imp"]) -> dict[str, Any]:
+        st = monthly_stack(cm, flow=flow, top=MONTHLY_TOP, months=MONTHLY_MONTHS)
+        return {
+            "flow": flow,
+            "chapters": [
+                {"hs": c, "name": "기타" if c == OTHER else (names.get(c) or f"HS {c}")}
+                for c in st.chapters
+            ],
+            "months": [
+                {"ym": p.ym, "total": p.total, "parts": dict(p.parts), "mom": p.mom, "yoy": p.yoy}
+                for p in st.months
+            ],
+            "quarters": [
+                {"q": q.q, "total": q.total, "qoq": q.qoq, "yoy": q.yoy} for q in st.quarters
+            ],
+        }
+
+    at, q = _envelope_stamp(rows)
+    n = len({r["ym"] for r in rows})
+    return [
+        PublicFile(
+            name="trade/monthly.json",
+            source=SOURCE,
+            as_of=at,
+            quality=q,
+            data={"exp": view("exp"), "imp": view("imp")},
+            notes=(
+                NOTE_USD,
+                f"HS10 합 · 상위 {MONTHLY_TOP}개 류(최근 12개월 합) + 기타 · 받은 달 {n}개",
+            ),
+        )
+    ]
+
+
 def build_trade_explore(read: Reader, *, now: datetime) -> BuildOut:
     """공개 탐색 파일(표가 비면 그 묶음 파일 0·이유 0). 기간은 저장된 마지막 기준 월에서 센다
     (시계와 무관 — 결정적)."""
@@ -632,6 +691,7 @@ def build_trade_explore(read: Reader, *, now: datetime) -> BuildOut:
     builders: Sequence[Callable[[], list[PublicFile]]] = (
         lambda: _surge(read, names, cnames),
         lambda: _items104(read, names),
+        lambda: _monthly(read, names),
     )
     files = [*item_files, *country_files, *ic_files, *region_files]
     for b in builders:
