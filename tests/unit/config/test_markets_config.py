@@ -43,7 +43,8 @@ def test_repo_markets_has_the_design_defaults() -> None:
     assert m.kis.venues == ("KRX",)  # D-P3-9
     assert m.screen.min_avg_turnover_krw == 30_000_000_000  # 300억(metrics §3)
     assert (m.screen.spike_min, m.screen.spike_min_prior_days, m.screen.streak_min) == (1.5, 10, 3)
-    assert m.etf.premium_warn_pct.default == 0.5 and m.etf.watch_top_n == 50
+    p = m.etf.premium_warn_pct  # KRX 괴리율 관리 기준(국내 1%·해외 2% — 2026-10-20)
+    assert (p.default, p.overseas, p.bond) == (1.0, 2.0, 1.0) and m.etf.watch_top_n == 50
     assert m.etf.investor_min_net_asset_krw == 100_000_000_000
     h = m.etf.holdings
     assert (h.qty_floor, h.action_pp, h.max_gap_days) == (100, 2.0, 14)  # ET tracker.py 그대로
