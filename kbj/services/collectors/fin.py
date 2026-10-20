@@ -43,7 +43,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime, time
 from typing import Any, Final, Literal, Protocol, cast
 
@@ -540,6 +540,9 @@ def _backfill_shares(run: FinRun, profiles: Mapping[str, CorpProfile]) -> None:
                 run.failures.append(f"stockTotqySttus@{corp}: {e}"[:200])
                 break
             if sc is not None:
+                if sc.rcept_dt is None:  # 접수일 = 접수번호 앞 8자리(없으면 PIT 읽기에서 빠진다)
+                    sc = replace(sc, rcept_dt=date(int(sc.rcept_no[:4]), int(sc.rcept_no[4:6]),
+                                                   int(sc.rcept_no[6:8])))  # fmt: skip
                 run.repos.filings.put_share_counts([sc], loaded_by=run.job, now=run.now)
                 run.bump("shares")
                 break

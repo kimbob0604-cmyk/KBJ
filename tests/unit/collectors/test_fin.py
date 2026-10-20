@@ -243,6 +243,10 @@ def test_백필은_주식총수가_없는_상세_대상_회사에_최근_보고�
     fin.backfill(st.ctx("fin.backfill"))
     got = {c for c in DETAIL_CORPS if st.repos.filings.latest_share_count(c) is not None}
     assert got  # 합성 세계에 주식총수가 있는 상세 회사
+    for c in got:  # 접수일(접수번호 앞 8자리)이 있어야 PIT 읽기(upto)에 걸린다
+        sc = st.repos.filings.latest_share_count(c)
+        assert sc is not None and sc.rcept_dt is not None
+        assert st.repos.filings.latest_share_count(c, upto=CLOCK.date()) is not None
     n = len([c for c in st.dart.calls if c[0] == "stockTotqySttus.json"])
     fin.backfill(st.ctx("fin.backfill", run_id="run-2"))
     after = [c for c in st.dart.calls if c[0] == "stockTotqySttus.json"]
