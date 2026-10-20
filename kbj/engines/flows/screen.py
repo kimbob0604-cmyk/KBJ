@@ -1,4 +1,4 @@
-"""스크리닝 6기준(docs/metrics.md §3, docs/p3_design.md §4.2 스크리닝 표).
+"""스크리닝 8기준(docs/metrics.md §3, docs/p3_design.md §4.2 스크리닝 표).
 
 | mode | 정렬 키(내림차순) | 거르는 조건 |
 |---|---|---|
@@ -8,6 +8,8 @@
 | both | 기간 외국인 + 기관 | 둘 다 > 0 |
 | streak | max(외국인 연속, 기관 연속), 같으면 기간 외국인 + 기관 | streak_min(3) 일 이상 |
 | spike | 급증 배수(오늘 ÷ 직전 19영업일 평균 — 기간 무관) | spike_min(1.5) 배 이상 |
+| foreign_cap | 기간 외국인 순매수 ÷ 끝 날 시총(%) | 시총·순매수 절댓값 하한(cap_min_won 등) |
+| inst_cap | 기간 기관 순매수 ÷ 끝 날 시총(%) | 같은 하한 |
 
 공통 필터(이 순서로 세어 `n_excluded` 에 남긴다)
 - 시장(all = 코스피 + 코스닥 — 코넥스 제외), 종류(보통주 `common` 와 우선주 `pref` 는 따로 — 스팩·
@@ -56,10 +58,12 @@ __all__ = [
     "spike_multiple",
 ]
 
-Mode = Literal["value", "foreign", "inst", "both", "streak", "spike"]
+Mode = Literal["value", "foreign", "inst", "both", "streak", "spike", "foreign_cap", "inst_cap"]
 Market = Literal["all", "KOSPI", "KOSDAQ"]
 ShareClass = Literal["common", "pref"]
-MODES: Final[tuple[Mode, ...]] = ("value", "foreign", "inst", "both", "streak", "spike")
+MODES: Final[tuple[Mode, ...]] = (
+    "value", "foreign", "inst", "both", "streak", "spike", "foreign_cap", "inst_cap",
+)  # fmt: skip
 PERIODS: Final[tuple[int, ...]] = (1, 5, 20)
 SPIKE_PRIOR_DAYS: Final = 19  # 급증 배수 분모 = 직전 19영업일(metrics §1)
 STREAK_LOOKBACK: Final = 60  # 연속일을 셀 때 거슬러 보는 최대 영업일(화면 표시 한도)
@@ -72,6 +76,8 @@ class ScreenTuning:
     spike_min: float = 1.5
     spike_min_prior_days: int = 10
     streak_min: int = 3
+    cap_min_won: int = 100_000_000_000  # 시총 대비 — 시총 1,000억 이상만
+    cap_net_min_won: int = 1_000_000_000  # 시총 대비 — |순매수| 10억 이상만
 
     @classmethod
     def from_config(cls, cfg: ScreenCfg) -> ScreenTuning:
@@ -107,6 +113,7 @@ class ScreenRow:
     flags: tuple[str, ...] | None
     quality: Quality
     source: str
+    mktcap: int | None = None  # 기간 끝 날 시가총액(원) — 시총 대비
 
 
 @dataclass(frozen=True)
@@ -242,6 +249,14 @@ def screen(
             key = (best, pair if pair is not None else float("-inf"))
             if best < tune.streak_min:
                 key = None
+        elif mode in ("foreign_cap", "inst_cap"):
+            v = sums["foreign" if mode == "foreign_cap" else "inst"]
+            cap = agg.last_mktcap
+            ok = (
+                v is not None and cap is not None and cap >= tune.cap_min_won
+                and abs(v) >= tune.cap_net_min_won
+            )  # fmt: skip
+            key = (v / cap * 100,) if ok and v is not None and cap else None
         else:  # spike
             key = (spike,) if spike is not None and spike >= tune.spike_min else None
         if key is None:
@@ -269,6 +284,7 @@ def screen(
             streak_foreign=s_f,
             streak_inst=s_i,
             spike_mult=spike,
+            mktcap=agg.last_mktcap,
             newhigh_label=(newhigh or {}).get(code),
             flags=today.flags,
             quality=agg.quality or Quality.INVALID,

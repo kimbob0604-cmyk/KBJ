@@ -940,7 +940,9 @@
                 "inst",
                 "both",
                 "streak",
-                "spike"
+                "spike",
+                "foreign_cap",
+                "inst_cap"
               ],
               "type": "string",
               "title": "Mode"
@@ -25576,7 +25578,9 @@
               "inst",
               "both",
               "streak",
-              "spike"
+              "spike",
+              "foreign_cap",
+              "inst_cap"
             ],
             "title": "Mode"
           },
@@ -25839,6 +25843,17 @@
           "source": {
             "type": "string",
             "title": "Source"
+          },
+          "mktcap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mktcap"
           }
         },
         "additionalProperties": false,

@@ -45,7 +45,8 @@
         "newhigh_label": null,
         "flags": [],
         "quality": "ok",
-        "source": "KRX+KIS"
+        "source": "KRX+KIS",
+        "mktcap": 1549716000000
       },
       {
         "rank": 2,
@@ -68,7 +69,8 @@
         "newhigh_label": null,
         "flags": [],
         "quality": "ok",
-        "source": "KRX+KIS"
+        "source": "KRX+KIS",
+        "mktcap": 2065791000000
       },
       {
         "rank": 3,
@@ -91,7 +93,8 @@
         "newhigh_label": null,
         "flags": [],
         "quality": "ok",
-        "source": "KRX+KIS"
+        "source": "KRX+KIS",
+        "mktcap": 808315000000
       },
       {
         "rank": 4,
@@ -114,7 +117,8 @@
         "newhigh_label": null,
         "flags": [],
         "quality": "ok",
-        "source": "KRX+KIS"
+        "source": "KRX+KIS",
+        "mktcap": 8395280000000
       },
       {
         "rank": 5,
@@ -137,7 +141,8 @@
         "newhigh_label": null,
         "flags": [],
         "quality": "ok",
-        "source": "KRX+KIS"
+        "source": "KRX+KIS",
+        "mktcap": 24122826000000
       }
     ]
   }

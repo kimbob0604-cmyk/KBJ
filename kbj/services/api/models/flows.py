@@ -51,6 +51,7 @@ class ScreenRow(ApiModel):
     flags: list[str] | None  # None = 상태를 모른다(n_status_unknown 에 세었다)
     quality: Quality
     source: str
+    mktcap: int | None = None  # 기간 끝 날 시가총액(원) — 시총 대비 기준
 
 
 class Excluded(ApiModel):
@@ -61,7 +62,7 @@ class Excluded(ApiModel):
 
 
 class ScreenResponse(ApiModel):
-    mode: Literal["value", "foreign", "inst", "both", "streak", "spike"]
+    mode: Literal["value", "foreign", "inst", "both", "streak", "spike", "foreign_cap", "inst_cap"]
     market: Literal["all", "KOSPI", "KOSDAQ"]
     period: int
     share_class: Literal["common", "pref"]

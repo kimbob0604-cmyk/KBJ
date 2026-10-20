@@ -54,7 +54,7 @@ __all__ = [
     "market_totals",
 ]
 
-Mode = Literal["value", "foreign", "inst", "both", "streak", "spike"]
+Mode = Literal["value", "foreign", "inst", "both", "streak", "spike", "foreign_cap", "inst_cap"]
 MarketQ = Literal["all", "KOSPI", "KOSDAQ"]
 ShareClass = Literal["common", "pref"]
 RECENT_DAYS: Final = 5
@@ -133,6 +133,7 @@ def flows_screen(
             flags=None if r.flags is None else list(r.flags),
             quality=r.quality,
             source=r.source or "KBJ",
+            mktcap=r.mktcap,
         )
         for r in res.rows
     ]

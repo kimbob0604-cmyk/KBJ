@@ -40,7 +40,7 @@ describe('페이지 4 수급 — 로그인', () => {
     expect(hz.paths().sort()).toEqual(['flows/intraday', 'flows/investors', SCREEN_DEFAULT]);
 
     const scr = panelByTitle(root, '종목 스크리너');
-    expect(scr.querySelectorAll('[role="group"] button')).toHaveLength(6);
+    expect(scr.querySelectorAll('[role="group"] button')).toHaveLength(MODES.length); // 8기준(시총 대비 둘)
     expect(scr.querySelectorAll('tbody tr')).toHaveLength(5);
     expect(text(scr.querySelector('.count'))).toBe('30종목 · 관리·정지 제외 2 · 상태 모름(제외 못함) 1');
     expect(text(scr.querySelector(':scope > .def'))).toContain(MODE_DEF.value);
@@ -52,7 +52,7 @@ describe('페이지 4 수급 — 로그인', () => {
     expect(text(panelByTitle(root, '종목 상세').querySelector('.msg'))).toBe('표에서 종목을 고르세요');
   });
 
-  it('6기준·시장·기간·하한·종류·관리종목 토글이 쿼리로 간다', async () => {
+  it('8기준·시장·기간·하한·종류·관리종목 토글이 쿼리로 간다', async () => {
     const { hz, root } = await mountLogin();
     const scr = panelByTitle(root, '종목 스크리너');
     for (const m of MODES.slice(1)) {
@@ -60,7 +60,9 @@ describe('페이지 4 수급 — 로그인', () => {
       await flush();
       expect(hz.paths().some((p) => p.includes(`mode=${m.value}&`))).toBe(true);
     }
-    expect(text(scr.querySelector(':scope > .def'))).toContain(MODE_DEF.spike);
+    expect(text(scr.querySelector(':scope > .def'))).toContain(MODE_DEF.inst_cap);
+    // 시총 대비 모드는 '시총 대비' 칸을 더한다
+    expect(text(scr.querySelector('thead'))).toContain('시총 대비');
     choose(selectByLabel(scr, '시장'), 'KOSDAQ');
     choose(selectByLabel(scr, '기간'), '20');
     choose(selectByLabel(scr, '일평균 거래대금 ≥'), '0');
@@ -71,7 +73,7 @@ describe('페이지 4 수급 — 로그인', () => {
     box.dispatchEvent(new Event('change'));
     await flush();
     expect(hz.paths().at(-1)).toBe(
-      'flows/screen?include_flagged=true&market=KOSDAQ&min_avg_turnover=0&mode=spike&period=20&share_class=pref',
+      'flows/screen?include_flagged=true&market=KOSDAQ&min_avg_turnover=0&mode=inst_cap&period=20&share_class=pref',
     );
   });
 

@@ -1,4 +1,4 @@
-"""스크리닝 6기준 — 정렬·필터·관리종목 제외·우선주 별도·급증 10일 미만(docs/metrics.md §3·§5)."""
+"""스크리닝 8기준 — 정렬·필터·관리종목 제외·우선주 별도·급증 10일 미만(docs/metrics.md §3·§5)."""
 
 from __future__ import annotations
 
@@ -47,6 +47,24 @@ def test_외국인_기관_정렬() -> None:
     i = _run(rows, mode="inst", period=1)
     assert [r.code for r in f.rows] == ["A00002", "A00001"]
     assert [r.code for r in i.rows] == ["A00002", "A00001"]
+
+
+def test_시총_대비는_순매수_나누기_시총_하한_미만은_뺀다() -> None:
+    """금액순은 대형주만 위에 온다 — 시총 대비(순매수 ÷ 끝 날 시총)로 줄 세운다. 시총 1,000억 미만·
+    |순매수| 10억 미만은 뺀다(잔돈으로 비율이 튀지 않게 — 2026-10-20 사용자 요청)."""
+    big = 10_000_000_000_000  # 시총 10조
+    mid = 200_000_000_000  # 2,000억
+    rows = (
+        _flat("A00001", foreign=500 * EOK, mktcap=big)  # 0.5%
+        + _flat("A00002", foreign=20 * EOK, mktcap=mid)  # 1.0%
+        + _flat("A00003", foreign=5 * EOK, mktcap=mid)  # 5억 — 하한 미만
+        + _flat("A00004", foreign=30 * EOK, mktcap=50_000_000_000)  # 시총 500억 — 하한 미만
+    )
+    res = _run(rows, mode="foreign_cap", period=1)
+    assert [r.code for r in res.rows] == ["A00002", "A00001"]
+    assert res.rows[0].mktcap == mid
+    by_value = _run(rows, mode="foreign", period=1)
+    assert by_value.rows[0].code == "A00001"
 
 
 def test_동반은_둘_다_양수만() -> None:

@@ -7236,7 +7236,7 @@ export interface components {
              * Mode
              * @enum {string}
              */
-            mode: "value" | "foreign" | "inst" | "both" | "streak" | "spike";
+            mode: "value" | "foreign" | "inst" | "both" | "streak" | "spike" | "foreign_cap" | "inst_cap";
             /**
              * Market
              * @enum {string}
@@ -7302,6 +7302,8 @@ export interface components {
             quality: components["schemas"]["Quality"];
             /** Source */
             source: string;
+            /** Mktcap */
+            mktcap?: number | null;
         };
         /** SectorCell */
         SectorCell: {
@@ -9344,7 +9346,7 @@ export interface operations {
     screen_api_flows_screen_get: {
         parameters: {
             query: {
-                mode: "value" | "foreign" | "inst" | "both" | "streak" | "spike";
+                mode: "value" | "foreign" | "inst" | "both" | "streak" | "spike" | "foreign_cap" | "inst_cap";
                 market?: "all" | "KOSPI" | "KOSDAQ";
                 period?: 1 | 5 | 20;
                 min_avg_turnover?: number | null;

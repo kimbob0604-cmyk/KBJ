@@ -32,7 +32,10 @@ CODE_PATTERN = r"^[0-9A-Z]{6}$"
 @router.get("/screen", response_model=Envelope[ScreenResponse])
 def screen(
     request: Request,
-    mode: Annotated[Literal["value", "foreign", "inst", "both", "streak", "spike"], Query()],
+    mode: Annotated[
+        Literal["value", "foreign", "inst", "both", "streak", "spike", "foreign_cap", "inst_cap"],
+        Query(),
+    ],
     market: Annotated[Literal["all", "KOSPI", "KOSDAQ"], Query()] = "all",
     period: PeriodQ = 5,
     min_avg_turnover: Annotated[int | None, Query(ge=0, le=10**15)] = None,
