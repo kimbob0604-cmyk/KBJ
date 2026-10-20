@@ -279,6 +279,22 @@ class MemoryRunLog:
             got = [r for r in self.records.values() if r.job == job and r.as_of == as_of]
         return max(got, key=lambda r: r.attempt) if got else None
 
+    def abandon_running(self, before: datetime, now: datetime, reason: str) -> list[RunRecord]:
+        """`before` 전에 시작한 running·queued 기록을 timeout 으로(앞 프로세스가 도중에 죽었다)."""
+        out: list[RunRecord] = []
+        with self._lock:
+            for rid, r in list(self.records.items()):
+                if r.status not in ("running", "queued"):
+                    continue
+                if r.started_at is not None and r.started_at >= before:
+                    continue
+                new = replace(r, status="timeout", finished_at=now,
+                              detail={**r.detail, "reason": reason, "abandoned": True})  # fmt: skip
+                self.records[rid] = new
+                self.history.append(new)
+                out.append(new)
+        return out
+
     def of(self, job: str) -> list[RunRecord]:
         with self._lock:
             return sorted(
@@ -328,6 +344,24 @@ class PgRunLog:
                 cur.execute(_UPSERT_RUN, row)
         except psycopg.Error as e:
             raise _db_error("실행 기록", e) from None
+
+    def abandon_running(self, before: datetime, now: datetime, reason: str) -> list[RunRecord]:
+        q = (
+            "UPDATE ops.job_run SET status = 'timeout', finished_at = %s, "
+            "detail = detail || %s WHERE status IN ('running', 'queued') "
+            "AND (started_at IS NULL OR started_at < %s) "
+            "RETURNING run_id, job, as_of, attempt, started_at, detail, source"
+        )
+        extra = Jsonb(_clean_detail({"reason": reason, "abandoned": True}))
+        try:
+            with self._connect() as conn, conn.cursor() as cur:
+                cur.execute(q, (_utc(now), extra, _utc(before)))
+                rows = cur.fetchall()
+        except psycopg.Error as e:
+            raise _db_error("끊긴 실행 정리", e) from None
+        return [
+            RunRecord(r[0], r[1], r[2], r[3], "timeout", r[4], now, r[5] or {}, r[6]) for r in rows
+        ]
 
     def latest(self, job: str, as_of: str) -> RunRecord | None:
         q = (

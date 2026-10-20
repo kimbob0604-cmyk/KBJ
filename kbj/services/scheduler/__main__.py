@@ -143,6 +143,20 @@ def _build(settings: Settings, *, inline: bool = False) -> tuple[Any, Any, Any, 
     return svc, runner, redis, redis.close
 
 
+ABANDON_REASON = "scheduler 재시작으로 끊김 — 다음 회차·수동 실행(kbj.sh job)으로 다시"
+
+
+def abandon_orphans(runs: Any, boot: datetime) -> list[str]:
+    """서비스 시작 때 — 앞 프로세스가 돌리다 죽은 running·queued 기록을 timeout 으로 닫는다.
+
+    작업은 모두 scheduler 컨테이너 안에서 돈다(수동 `kbj.sh job`·백필도 exec) — 컨테이너가 다시
+    뜨면 그 전에 시작한 실행은 모두 죽었다. 닫지 않으면 분 단위 회차·지난 날짜는 다시 불리지 않아
+    running 으로 영영 남고, 워치독이 30분마다 '마감 넘김' 알림을 보낸다(2026-10-20 점검: 배포 재시작
+    뒤 us.eod·program.stock_sweep·earnings.alerts 등 7건). 반환 = 닫은 실행의 'job@as_of'."""
+    closed = runs.abandon_running(boot, boot, ABANDON_REASON)
+    return [f"{r.job}@{r.as_of}" for r in closed]
+
+
 BACKFILL_MAX_DAYS = 1000  # 한 번에 펼칠 최대 거래일 수 [제안 — §3.8 '하루 최대 1,000일치']
 BACKFILL_STOP = frozenset({"failed", "timeout", "retry", "planned"})
 
@@ -400,10 +414,14 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     from kbj.services.scheduler.service import run  # pragma: no cover — compose 진입점
 
-    svc, _runner, redis, close = _build(settings)  # pragma: no cover
+    svc, runner, redis, close = _build(settings)  # pragma: no cover
     stop = threading.Event()  # pragma: no cover
     install_stop(stop)  # pragma: no cover
     try:  # pragma: no cover
+        closed = abandon_orphans(runner.runs, utcnow())
+        if closed:
+            log_event(log, logging.WARNING, SERVICE, "abandoned_runs", n=len(closed),
+                      runs=", ".join(closed)[:500])  # fmt: skip
         log_event(log, logging.INFO, SERVICE, "started")
         run(svc, stop, heartbeat=Heartbeater(redis, SERVICE))
     finally:  # pragma: no cover
