@@ -170,6 +170,10 @@ class DartJson(Protocol):
 # 종류 판정 전에 지울 말 — 다른 종류의 낱말을 품었지만 그 뜻이 아니다(2026-10-20 점검: 증권발행실적
 # 보고서가 '실적'으로, 증권신고서(지분증권)가 '지분'으로 분류됐다)
 _NOT_KIND: Final = ("증권발행실적", "지분증권", "특허가치")
+# 피드 종류(파싱 대상)에서 빼는 말 — 종속회사의 결정, 결정 철회(실측 2026-10-20: '유상증자결정
+# (종속회사의주요경영사항)'·'유상증자 결정 철회'가 오버행 결정으로 잡혀 빈 행이 됐다)
+_NOT_OWN_DECISION: Final = ("종속회사", "철회")
+_DECISION_KINDS: Final = frozenset({"overhang", "overhang_exercise", "price_adjust", "buyback"})
 
 
 def _clean(title: str | None) -> str:
@@ -189,14 +193,22 @@ def kind_of(title: str | None) -> str:
 
 
 def feed_kind(title: str | None) -> str:
-    """피드 종류(P4) — `FEED_KINDS`(공백을 지운 제목) 먼저, 안 걸리면 `kind_of`."""
+    """피드 종류(P4) — `FEED_KINDS`(공백을 지운 제목) 먼저, 안 걸리면 `kind_of`. 종속회사의 결정·
+    결정 철회는 이 회사의 새 물량·조정·자사주가 아니라 `kind_of` 로(파싱하지 않는다)."""
     t = (title or "").replace(" ", "").replace("ㆍ", "·")
+    kind = _feed_kind(t)
+    if kind in _DECISION_KINDS and any(w in t for w in _NOT_OWN_DECISION):
+        return kind_of(title)
+    return kind or kind_of(title)
+
+
+def _feed_kind(t: str) -> str | None:
     if "가액" in t and "조정" in t:
         return "price_adjust"  # '전환가액·행사가액 조정' 처럼 표기가 섞여도(2026-10-20 점검)
     for kind, words in FEED_KINDS:
         if any(w in t for w in words):
             return kind
-    return kind_of(title)
+    return None
 
 
 def _ymd(d: object) -> str:
