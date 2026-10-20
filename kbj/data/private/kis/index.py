@@ -30,7 +30,10 @@ from kbj.data.private.kis.parse import (
 
 __all__ = [
     "INDEX_TURNOVER_UNIT_KRW",
+    "SECTOR_BLNG",
+    "SECTOR_CODE_PREFIX",
     "SECTOR_MARKETS",
+    "SECTOR_SINGLES",
     "SOURCE",
     "params_index_quote",
     "params_sector_quotes",
@@ -45,20 +48,32 @@ SECTOR_MARKETS: Final[Mapping[str, tuple[str, str]]] = {
     "KOSPI": ("0001", "K"),
     "KOSDAQ": ("1001", "Q"),
 }
+# 시장마다 부를 소속 구분(FID_BLNG_CLS_CODE) — 실측 2026-10-20: 코스닥에 '0'(전업종)을 주면 선물·
+# 환율·코스피 업종이 섞인 100줄이 와(코스닥 IT서비스 칸에 코스피 0029 가 들어갔다) 코스닥 업종이
+# 거의 없다. '3' = 코스닥 산업 업종 17개, '1' = 기타 구분(오락·문화 1015 등). 코스피 '0' = 38개.
+SECTOR_BLNG: Final[Mapping[str, tuple[str, ...]]] = {"KOSPI": ("0",), "KOSDAQ": ("3", "1")}
+# 업종 코드 첫 자리(시장 밖 줄 — 선물·KSQ150·환율 등 — 은 버린다)
+SECTOR_CODE_PREFIX: Final[Mapping[str, str]] = {"KOSPI": "0", "KOSDAQ": "1"}
+# 목록에 없는 코스닥 업종 — 지수 한 건씩(FHPUP02100000, 응답에 이름이 없어 여기 이름). 코드는
+# 2026-10-20 값 대조 [추정]: KRX 10-19 종가 → KIS 장중 값(건설 70.70→67.63, 통신 1108.8→1085.4,
+# IT서비스 637.88→630.13, 제조 2785.86→2685.07). 다음 거래일 KRX 종가로 확인(probe_results).
+SECTOR_SINGLES: Final[Mapping[str, Mapping[str, str]]] = {
+    "KOSDAQ": {"1009": "제조", "1010": "건설", "1032": "통신", "1033": "IT 서비스"},
+}
 
 
 def params_index_quote(code: str) -> dict[str, str]:
     return {"FID_COND_MRKT_DIV_CODE": "U", "FID_INPUT_ISCD": code}
 
 
-def params_sector_quotes(market: str) -> dict[str, str]:
+def params_sector_quotes(market: str, blng: str | None = None) -> dict[str, str]:
     code, cls = SECTOR_MARKETS[market]
     return {
         "FID_COND_MRKT_DIV_CODE": "U",
         "FID_INPUT_ISCD": code,
         "FID_COND_SCR_DIV_CODE": "20214",
         "FID_MRKT_CLS_CODE": cls,
-        "FID_BLNG_CLS_CODE": "0",
+        "FID_BLNG_CLS_CODE": blng if blng is not None else SECTOR_BLNG[market][0],
     }
 
 
@@ -91,11 +106,12 @@ def parse_sector_quotes(body: Mapping[str, Any], market: str, ts: datetime) -> l
     what = f"FHPUP02140000 {market}"
     rows = rows_of(body, "output2", "output", what=what)
     out: list[SectorQuote] = []
+    prefix = SECTOR_CODE_PREFIX.get(market, "")
     for r in rows:
         code = str(pick(r, "bstp_cls_code") or "").strip()
         value = kis_float(pick(r, "bstp_nmix_prpr"))
-        if not code or value is None:
-            continue
+        if not code or value is None or not code.startswith(prefix):
+            continue  # 시장 밖 줄(선물·환율·다른 시장 업종)은 버린다
         out.append(
             SectorQuote(
                 market=market,

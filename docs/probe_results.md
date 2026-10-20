@@ -457,3 +457,13 @@ P6 관세청 수집(`trade.customs_tenday`·`trade.customs_monthly`)을 막는 �
 | ECOS | 개발 가이드(서비스 목록·OA-1010/1020/1030/1040 요청·출력 명세·메시지 코드), 이용약관 원문, 예시 키로 `StatisticTableList`·`StatisticItemList`·`StatisticSearch` 조회 | 화면이 스크립트로만 열려 화면이 부르는 공개 문서 백엔드로 읽었다 |
 | KOSIS | 개발 가이드 0101·0201·030101·0401·060101·0701, 공지 2건(분당 한도·HTTPS), 통계정보활용약관, 통계표 공개 페이지 | — |
 | 기존 소스(읽기 전용) | `p0src/etf-traker/board/ingest/datago.py:28-30,39-82` · `p0src/etf-traker/board/ingest/creds.py:26` · `p0src/etf-traker/board/CLAUDE.md:251` · `p0src/etf-traker/board/docs/APIS.md:35,47` · `p0src/etf-traker/monitor/kr/ingest.py:28` · `p0src/etf-traker/monitor/bok/fetch-ecos.js:10,21,23-32,55,62-63` · `p0src/etf-traker/monitor/bok/audit.js:19` · `p0src/etf-traker/monitor/bok/README.md:58` · `p0src/etf-traker/.github/workflows/bok.yml:11-22` · `p0src/etf-traker/flowlab/probe_market_official.py:152-162` · `p0src/etf-traker/flowlab/probe_market_unit2.py:150-152` | stock-dashboard·gexlab 스냅샷에는 관세청·ECOS·KOSIS 호출 코드가 없다(grep 결과) |
+
+## KIS 업종 전체시세(FHPUP02140000) 코스닥 — 소속 구분 (2026-10-20, 로컬)
+
+- `FID_BLNG_CLS_CODE=0`(전업종)으로 코스닥(1001/Q)을 부르면 선물·환율·코스피 업종(0028~0030)이 섞인 100줄이 오고
+  코스닥 산업 업종은 거의 없다. 코스닥 IT서비스·오락·문화 칸에 코스피 0029·0030 값이 그대로 들어갔다.
+- `3` = 코스닥 산업 업종 17개(1006 일반서비스·1011 유통·1013 운송·창고·1014 금융·1019~1031). `1` = 기타 구분
+  23줄(1015 오락·문화, 규모·소속부, KSQ150 계열). `2` = 0줄.
+- 목록에 없는 코스닥 업종 넷은 지수 한 건씩(FHPUP02100000 — 응답에 이름 없음). 코드는 KRX 10-19 종가와 10-20 장중
+  값 대조로 정했다 **[추정]**: 1009 제조(2785.86→2685.07), 1010 건설(70.70→67.63), 1032 통신(1108.8→1085.4 — KIS
+  목록 이름도 '통신'), 1033 IT서비스(637.88→630.13). 다음 거래일 KRX 종가로 다시 맞춰 본다.

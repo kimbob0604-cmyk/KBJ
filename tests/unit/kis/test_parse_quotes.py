@@ -219,3 +219,10 @@ def test_sector_quotes_skip_rows_without_value_and_fail_when_none() -> None:
     with pytest.raises(KisParseError):
         parse_sector_quotes({**OK, "output2": []}, "KOSPI", TS)
     assert params_sector_quotes("KOSDAQ")["FID_INPUT_ISCD"] == "1001"
+    assert params_sector_quotes("KOSDAQ")["FID_BLNG_CLS_CODE"] == "3"  # '0' 은 선물·환율이 섞인다
+    mixed = {**OK, "output2": [
+        {"bstp_cls_code": "1023", "hts_kor_isnm": "화학", "bstp_nmix_prpr": "2000.00"},
+        {"bstp_cls_code": "0029", "hts_kor_isnm": "IT 서비스", "bstp_nmix_prpr": "600.00"},
+        {"bstp_cls_code": "3006", "hts_kor_isnm": "F-KSQ150", "bstp_nmix_prpr": "900.00"},
+    ]}  # fmt: skip
+    assert [q.code for q in parse_sector_quotes(mixed, "KOSDAQ", TS)] == ["1023"]  # 시장 밖 줄 버림

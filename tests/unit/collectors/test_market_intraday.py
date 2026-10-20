@@ -108,8 +108,13 @@ def test_market_slot_indices_and_sectors() -> None:
     idx = repos.market.index_quotes(ts, end)
     assert [q.code for q in idx] == sorted(load_cfg().market.intraday_indices)
     assert {q.name for q in idx} == set(load_cfg().market.intraday_indices.values())
-    assert len(repos.market.sector_quotes(ts, end)) == 2 * SECTORS_PER_MARKET
-    assert kis.count() == 3 + 2  # §3.7 슬롯당 5건
+    secs = repos.market.sector_quotes(ts, end)
+    # 코스닥은 목록 둘(소속 3·1 — 같은 합성 줄은 한 번) + 목록에 없는 업종 한 건씩(1032·1033 —
+    # 1009·1010 은 합성 목록에 이미 있어 부르지 않는다)
+    assert len(secs) == 2 * SECTORS_PER_MARKET + 2
+    assert {q.code for q in secs if q.market == "KOSDAQ"} >= {"1032", "1033"}
+    assert all(q.code.startswith("1") for q in secs if q.market == "KOSDAQ")
+    assert kis.count() == 3 + 1 + 2 + 2  # 지수 3 + 코스피 목록 1 + 코스닥 목록 2 + 한 건씩 2
 
 
 def test_failed_key_only_is_retried_within_the_slot_without_duplicates() -> None:

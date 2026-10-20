@@ -81,6 +81,21 @@ def test_장중은_KIS_업종코드를_시장_이름으로_맞춘다() -> None:
     assert cells["IT서비스"].chg_pct == -1.0  # 띄어쓰기 차이
 
 
+def test_코스닥_목록에_섞여_온_코스피_업종은_버린다() -> None:
+    """KIS 코스닥 목록(소속 0)에 코스피 0029 'IT 서비스'가 KOSDAQ 으로 섞여 와 코스닥 IT서비스 칸이
+    코스피 값과 똑같았다(2026-10-20) — 시장과 업종 코드 첫 자리가 다르면 버린다."""
+    bars = {c: _bars(c, [100.0] * 10) for c in ("IT서비스", "코스닥IT서비스")}
+    ts = datetime.combine(D[10], datetime.min.time(), tzinfo=KST).replace(hour=15, minute=40)
+    quotes = [
+        SectorQuote("KOSPI", "0029", ts, "IT 서비스", 99.0, -1.0, 5, "kis", Quality.ESTIMATED),
+        SectorQuote("KOSDAQ", "0029", ts, "IT 서비스", 99.0, -1.0, 5, "kis", Quality.ESTIMATED),
+        SectorQuote("KOSDAQ", "1033", ts, "IT 서비스", 98.0, -2.0, 5, "kis", Quality.ESTIMATED),
+    ]
+    cells = {c.code: c for c in sector_heat(bars, quotes, ["IT서비스", "코스닥IT서비스"], 1)}
+    assert cells["IT서비스"].chg_pct == -1.0
+    assert cells["코스닥IT서비스"].chg_pct == -2.0
+
+
 def test_합성_업종지수() -> None:
     m = generate(4)
     series = m.index_series()

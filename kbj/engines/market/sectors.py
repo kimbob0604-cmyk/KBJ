@@ -54,6 +54,7 @@ def index_return_pct(bars: Sequence[IndexBar], day: date, period: int) -> float 
 
 
 KOSDAQ_PREFIX: Final = "코스닥"
+_CODE_PREFIX: Final = {"KOSPI": "0", "KOSDAQ": "1"}  # KIS 업종 코드 첫 자리
 
 
 def _norm(name: str) -> str:
@@ -90,6 +91,8 @@ def sector_heat(
     for q in intraday:
         if not q.quality.usable or q.value is None:
             continue
+        if q.code[:1].isdigit() and q.code[:1] != _CODE_PREFIX.get(q.market, q.code[:1]):
+            continue  # 시장 밖 업종 코드(코스닥 목록에 섞여 온 코스피 00xx — 2026-10-20 점검)
         # 설정·KRX 일봉은 이름 코드('화학'·'코스닥화학'), KIS 장중은 업종 코드('0008')라 코드로는
         # 한 번도 맞물리지 않아 급락일에도 어제 값만 보였다(2026-10-20) — 시장·이름으로 맞춘다
         code = q.code if q.code in codes else want.get((q.market, _norm(q.name or "")))

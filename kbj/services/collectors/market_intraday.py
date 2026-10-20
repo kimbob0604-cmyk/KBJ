@@ -41,7 +41,9 @@ from kbj.config.markets import MarketsConfig
 from kbj.core.rows import EtfQuote, IntradayInvestor, RankRow, SectorQuote, Snap
 from kbj.data.private.kis.etf import params_etf_quote, parse_etf_quote
 from kbj.data.private.kis.index import (
+    SECTOR_BLNG,
     SECTOR_MARKETS,
+    SECTOR_SINGLES,
     params_index_quote,
     params_sector_quotes,
     parse_index_quote,
@@ -170,10 +172,23 @@ def _indices(c: _Ctx, _venue: str) -> int:
 
 
 def _sectors(c: _Ctx, _venue: str) -> int:
-    rows: list[SectorQuote] = []
+    got: dict[tuple[str, str], SectorQuote] = {}
     for market in SECTOR_MARKETS:
-        body = _get(c, "sector_quotes", params_sector_quotes(market), f"FHPUP02140000 {market}")
-        rows += parse_sector_quotes(body, market, c.ts)
+        for blng in SECTOR_BLNG[market]:
+            body = _get(c, "sector_quotes", params_sector_quotes(market, blng),
+                        f"FHPUP02140000 {market}/{blng}")  # fmt: skip
+            for q in parse_sector_quotes(body, market, c.ts):
+                got.setdefault((q.market, q.code), q)
+        for code, name in SECTOR_SINGLES.get(market, {}).items():
+            if (market, code) in got:
+                continue
+            body = _get(c, "index_quote", params_index_quote(code), f"FHPUP02100000 {code}")
+            iq = parse_index_quote(body, code, c.ts, name=name)
+            got[(market, code)] = SectorQuote(
+                market=market, code=code, ts=c.ts, name=name, value=iq.value,
+                chg_pct=iq.chg_pct, turnover=iq.turnover, source=iq.source, quality=iq.quality,
+            )  # fmt: skip
+    rows = list(got.values())
     c.repos.market.put_sector_quotes(rows, loaded_by=c.job, received_at=c.now)
     return len(rows)
 
