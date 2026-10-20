@@ -14,7 +14,7 @@ import io
 import zipfile
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any
 
 import pytest
@@ -262,7 +262,9 @@ def test_unlinked_adjust_is_stored_invalid_with_a_reason() -> None:
     assert d.row("e14.adj2").parse_state == "done"  # 행은 남는다(연결 실패는 품질로)
 
 
-def test_one_bad_document_fails_alone_and_goes_na_after_three_tries() -> None:
+def test_one_bad_document_fails_alone_and_retries_with_waits_then_na() -> None:
+    """DART 원문·구조화 응답은 늦게 붙는다 — 실패한 건은 처음 본 뒤 10분·1시간·6시간·1일·2일에 다시
+    시도하고(config/fin.yaml retry_wait_min), 6번째 실패에 na. 매분 다시 부르지 않는다."""
     w = build_world()
     bad = w.rcept("e18.prelim")
     d = Day(Patched(w, bad_docs={bad}))
@@ -273,15 +275,23 @@ def test_one_bad_document_fails_alone_and_goes_na_after_three_tries() -> None:
     assert "ParseError" in (row.parse_note or "")
     live = d.claims.live(DataKey("DART", "document", bad))
     assert live is None  # 실패한 키는 다시 잡을 수 있다
-    d.today("14:47")
-    r3 = d.today("14:48")
-    assert r3.detail["na"] == 1
-    row = d.row("e18.prelim")
-    assert (row.parse_state, row.parse_tries) == ("na", 3)
-    assert str(row.parse_note).startswith("3회 실패")
+    assert d.today("14:47").detail["failed"] == 0  # 10분 전 — 아직 다시 부르지 않는다
+    assert d.row("e18.prelim").parse_tries == 1
+    first = row.first_seen_at
+    tries = [(10, 2), (60, 3), (360, 4), (1440, 5)]
+    for wait, want in tries:
+        t = first + timedelta(minutes=wait)
+        d.at(t.date(), f"{t:%H:%M}")
+        assert d.row("e18.prelim").parse_tries == want
     d.today("15:21")  # 다른 공시는 계속 처리된다
     assert d.row("e11.sub_prelim").parse_state == "done"
-    assert d.today("15:22").detail["failed"] == 0  # na 는 더 시도하지 않는다
+    t = first + timedelta(minutes=2880)
+    assert d.at(t.date(), f"{t:%H:%M}").detail["na"] == 1
+    row = d.row("e18.prelim")
+    assert (row.parse_state, row.parse_tries) == ("na", 6)
+    assert str(row.parse_note).startswith("6회 실패")
+    t += timedelta(minutes=1)
+    assert d.at(t.date(), f"{t:%H:%M}").detail["failed"] == 0  # na 는 더 시도하지 않는다
 
 
 def test_quota_020_closes_the_day_with_a_reason_and_keeps_pending() -> None:

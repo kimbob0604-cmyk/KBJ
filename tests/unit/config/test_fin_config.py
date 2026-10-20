@@ -30,11 +30,14 @@ def test_real_files_parse_with_design_defaults() -> None:
     fin = load_fin(settings=S)
     f = fin.filings
     assert f.keywords["상장폐지"] == 10 and f.keywords["공급계약"] == 8 and f.keywords["배당"] == 6
-    assert f.keywords["사업보고서"] == 2 and len(f.keywords) == 39  # SD :9920 표 그대로
+    assert (
+        f.keywords["사업보고서"] == 2 and len(f.keywords) == 44
+    )  # SD :9920 표 39 + 상장 유지 위험·주식소각 5
     assert (f.importance_levels.critical, f.importance_levels.high, f.importance_levels.medium) == (
         10, 6, 4,
     )  # fmt: skip
-    assert f.feed.max_pages == 30 and f.feed.retry_parse_max == 3
+    assert f.feed.max_pages == 30 and f.feed.retry_parse_max == 6
+    assert f.feed.retry_wait_min == (10, 60, 360, 1440, 2880)
     e = fin.earnings
     assert (e.thresholds.big_pct, e.thresholds.standard_pct, e.thresholds.inline_pct) == (
         20.0, 10.0, 5.0,

@@ -97,7 +97,20 @@ class LoginBonus(_Model):
 class FeedCfg(_Model):
     max_pages: int = Field(ge=1, le=100)
     retry_parse_max: int = Field(ge=1, le=10)
+    # n 번 실패한 건의 다음 시도 = 처음 본 시각 + retry_wait_min[n-1] 분(길이 = 상한 - 1)
+    retry_wait_min: tuple[int, ...] = ()
     rescan_at: str
+
+    @model_validator(mode="after")
+    def _waits(self) -> FeedCfg:
+        w = self.retry_wait_min
+        if len(w) != self.retry_parse_max - 1:
+            raise ValueError(
+                f"retry_wait_min 은 retry_parse_max - 1 개: {len(w)} != {self.retry_parse_max - 1}"
+            )
+        if any(x < 0 for x in w) or list(w) != sorted(w):
+            raise ValueError(f"retry_wait_min 은 0 이상·커지는 순서: {w!r}")
+        return self
 
     @field_validator("rescan_at")
     @classmethod

@@ -29,7 +29,7 @@ from __future__ import annotations
 
 from collections.abc import Collection, Iterable, Mapping, Sequence
 from dataclasses import replace
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any, Final, Protocol
 
 from kbj.core.fin_rows import (
@@ -160,9 +160,16 @@ class FilingsRepo(Protocol):
         ...
 
     def pending(
-        self, *, kinds: Collection[str] | None = None, max_tries: int = 3, limit: int = 500
+        self,
+        *,
+        kinds: Collection[str] | None = None,
+        max_tries: int = 3,
+        limit: int = 500,
+        now: datetime | None = None,
+        wait_min: Sequence[int] = (),
     ) -> list[DisclosureRow]:
-        """파싱 대기(pending·failed 이고 parse_tries < max_tries) — 접수번호 오름차순."""
+        """파싱 대기(pending·failed 이고 parse_tries < max_tries) — 접수번호 오름차순. `now` 를 주면
+        n 번 실패한 행은 first_seen_at + wait_min[n-1] 분 ≤ now 일 때만(값이 모자라면 마지막 값)."""
         ...
 
     def mark_parsed(
@@ -418,14 +425,26 @@ class PgFilingsRepo:
         )
 
     def pending(
-        self, *, kinds: Collection[str] | None = None, max_tries: int = 3, limit: int = 500
+        self,
+        *,
+        kinds: Collection[str] | None = None,
+        max_tries: int = 3,
+        limit: int = 500,
+        now: datetime | None = None,
+        wait_min: Sequence[int] = (),
     ) -> list[DisclosureRow]:
         kind_list = None if kinds is None else sorted(set(kinds))
+        if now is not None:
+            require_aware("now", now)
+        waits = [int(x) for x in wait_min]
         return self._get(
             DISCLOSURE,
             "parse_state IN ('pending', 'failed') AND parse_tries < %s "
-            "AND (%s::text[] IS NULL OR kind = ANY(%s::text[]))",
-            (max_tries, kind_list, kind_list),
+            "AND (%s::text[] IS NULL OR kind = ANY(%s::text[])) "
+            "AND (%s::timestamptz IS NULL OR parse_tries = 0 OR cardinality(%s::int[]) = 0 "
+            "     OR first_seen_at + make_interval(mins => (%s::int[])"
+            "[LEAST(parse_tries, cardinality(%s::int[]))]) <= %s::timestamptz)",
+            (max_tries, kind_list, kind_list, now, waits, waits, waits, now),
             "rcept_no",
             limit,
         )
@@ -784,13 +803,26 @@ class MemoryFilingsRepo:
         return rows if limit is None else rows[:limit]
 
     def pending(
-        self, *, kinds: Collection[str] | None = None, max_tries: int = 3, limit: int = 500
+        self,
+        *,
+        kinds: Collection[str] | None = None,
+        max_tries: int = 3,
+        limit: int = 500,
+        now: datetime | None = None,
+        wait_min: Sequence[int] = (),
     ) -> list[DisclosureRow]:
+        def due(r: DisclosureRow) -> bool:
+            if now is None or r.parse_tries == 0 or not wait_min:
+                return True
+            wait = wait_min[min(r.parse_tries, len(wait_min)) - 1]
+            return r.first_seen_at + timedelta(minutes=wait) <= now
+
         return self.disclosure_t.where(
             lambda r: (
                 r.parse_state in ("pending", "failed")
                 and r.parse_tries < max_tries
                 and (kinds is None or r.kind in kinds)
+                and due(r)
             )
         )[:limit]
 

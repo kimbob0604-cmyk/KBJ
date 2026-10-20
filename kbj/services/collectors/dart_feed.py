@@ -13,7 +13,8 @@ docs/p4_design.md §1.3·§3.2·§4.1~§4.4·D-P4-3·D-P4-25, ADR 0013.
    키워드 점수는 `filings.derive`(묶음 E)가 채운다. 이 모듈은 E 를 import 하지 않는다).
 3. **파싱**: 상장사 공시 중 `prelim`·`pre_announce`·`overhang`·`overhang_exercise`·`price_adjust`·
    `buyback`(취득·처분 결정)·`insider`·`major_holder` 는 `parse_state=pending` 으로 넣고, 대기 행(앞
-   실행의 실패 포함 — 시도 < `retry_parse_max`)마다 접수번호 데이터 키 `DART:<데이터셋> @
+   실행의 실패 포함 — 시도 < `retry_parse_max`, n 번 실패한 건은 처음 본 뒤 `retry_wait_min[n-1]`
+   분이 지나야 — DART 원문·구조화 응답이 늦게 붙는다)마다 접수번호 데이터 키 `DART:<데이터셋> @
    <접수번호>` 를 자원 `claims`(실행기와 같은 선점 장부)로 직접 잡고 → 구조화 API 또는 원문 → 각 표
    → 키 complete/fail(D-P4-25 ② — 이 키는 `JobResult.collected` 에 넣지 않는다).
 
@@ -696,9 +697,11 @@ def _failed(env: _Env, d: DisclosureRow, why: str, max_tries: int, report: FeedR
 
 
 def _parse_pending(env: _Env, report: FeedReport) -> None:
+    feed = env.cfg.filings.feed
     pending = env.repos.filings.pending(
-        kinds=PARSE_KINDS, max_tries=env.cfg.filings.feed.retry_parse_max, limit=PARSE_LIMIT
-    )
+        kinds=PARSE_KINDS, max_tries=feed.retry_parse_max, limit=PARSE_LIMIT,
+        now=env.now, wait_min=feed.retry_wait_min,
+    )  # fmt: skip
     for d in pending:
         _parse_one(env, d, report)
 
