@@ -63,6 +63,8 @@ if (
 ):  # 연속일이 원장 창에서 잘리지 않게(엔진 한도가 바뀌면 바로 실패)
     raise RuntimeError("원장 창이 연속일 한도보다 짧다")
 INTRADAY_TOP_N: Final = 30
+CAP_MIN_WON: Final = 100_000_000_000  # 시총 대비 순위 하한 — 보드 시총 하한과 같은 1,000억
+CAP_NET_MIN_WON: Final = 1_000_000_000  # 순매수 10억 이상만(잔돈 순매수로 비율이 튀지 않게)
 
 
 def _newhigh_labels(ctx: ReadContext, day: date) -> dict[str, str]:
@@ -285,7 +287,15 @@ def flows_intraday(ctx: ReadContext) -> Envelope[IntradayFlows]:
         rows.sort(key=lambda r: (-(r.net_value or 0), r.code))
         if by_cap:  # 시총 대비 — 시총을 모르는 종목은 뺀다(0 으로 줄 세우지 않는다)
             pcts = {r.code: cap_pct(r.code, r.net_value)[1] for r in rows}
-            rows = [r for r in rows if pcts[r.code] is not None]
+            # 하한(보드와 같은 시총 1,000억·순매수 10억) — 없으면 시총 200억대 소형주가 1~4억으로
+            # 상위를 채웠다(2026-10-20 점검)
+            rows = [
+                r
+                for r in rows
+                if pcts[r.code] is not None
+                and (cap_pct(r.code, r.net_value)[0] or 0) >= CAP_MIN_WON
+                and abs(r.net_value or 0) >= CAP_NET_MIN_WON
+            ]
             rows.sort(key=lambda r: (-(pcts[r.code] or 0.0), r.code))
         out: list[IntradayRow] = []
         for i, r in enumerate(rows[:INTRADAY_TOP_N], start=1):
