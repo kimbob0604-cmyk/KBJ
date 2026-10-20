@@ -65,6 +65,22 @@ def test_장중은_마지막_시세_estimated() -> None:
     assert five.chg_pct == pytest.approx(10.0)
 
 
+def test_장중은_KIS_업종코드를_시장_이름으로_맞춘다() -> None:
+    """설정·KRX 일봉은 이름 코드('화학'·'코스닥화학'), KIS 장중은 업종 코드('0008')라 맞물리지 않아
+    급락일에도 어제 값만 보였다(2026-10-20)."""
+    bars = {c: _bars(c, [100.0] * 10) for c in ("화학", "코스닥화학", "IT서비스")}
+    ts = datetime.combine(D[10], datetime.min.time(), tzinfo=KST).replace(hour=15, minute=40)
+    quotes = [
+        SectorQuote("KOSPI", "0008", ts, "화학", 94.0, -6.0, 5, "kis", Quality.ESTIMATED),
+        SectorQuote("KOSDAQ", "1023", ts, "화학", 97.0, -3.0, 5, "kis", Quality.ESTIMATED),
+        SectorQuote("KOSPI", "0029", ts, "IT 서비스", 99.0, -1.0, 5, "kis", Quality.ESTIMATED),
+    ]
+    cells = {c.code: c for c in sector_heat(bars, quotes, ["화학", "코스닥화학", "IT서비스"], 1)}
+    assert cells["화학"].chg_pct == -6.0 and cells["화학"].quality is Quality.ESTIMATED
+    assert cells["코스닥화학"].chg_pct == -3.0  # 코스피 화학과 섞이지 않는다
+    assert cells["IT서비스"].chg_pct == -1.0  # 띄어쓰기 차이
+
+
 def test_합성_업종지수() -> None:
     m = generate(4)
     series = m.index_series()

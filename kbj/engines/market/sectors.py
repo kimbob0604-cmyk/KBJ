@@ -53,6 +53,22 @@ def index_return_pct(bars: Sequence[IndexBar], day: date, period: int) -> float 
     return (cur / base - 1) * 100
 
 
+KOSDAQ_PREFIX: Final = "코스닥"
+
+
+def _norm(name: str) -> str:
+    return "".join(ch for ch in name if ch not in " ·").upper()
+
+
+def sector_key(code: str) -> tuple[str, str]:
+    """설정의 업종 이름 코드 → (시장, 정규화 이름).
+
+    '코스닥화학' → (KOSDAQ, 화학), '화학' → (KOSPI, 화학)."""
+    if code.startswith(KOSDAQ_PREFIX):
+        return "KOSDAQ", _norm(code[len(KOSDAQ_PREFIX) :])
+    return "KOSPI", _norm(code)
+
+
 def _missing(code: str, name: str | None, market: str | None, why: str) -> SectorCell:
     return SectorCell(code, name, market, None, None, Quality.INVALID, "", None, why)
 
@@ -70,11 +86,18 @@ def sector_heat(
     if period not in PERIODS:
         raise ValueError(f"period 는 {PERIODS} 중 하나: {period!r}")
     latest: dict[str, SectorQuote] = {}
+    want = {sector_key(c): c for c in codes}
     for q in intraday:
-        if q.code in codes and q.quality.usable and q.value is not None:
-            cur = latest.get(q.code)
-            if cur is None or q.ts > cur.ts:
-                latest[q.code] = q
+        if not q.quality.usable or q.value is None:
+            continue
+        # 설정·KRX 일봉은 이름 코드('화학'·'코스닥화학'), KIS 장중은 업종 코드('0008')라 코드로는
+        # 한 번도 맞물리지 않아 급락일에도 어제 값만 보였다(2026-10-20) — 시장·이름으로 맞춘다
+        code = q.code if q.code in codes else want.get((q.market, _norm(q.name or "")))
+        if code is None:
+            continue
+        cur = latest.get(code)
+        if cur is None or q.ts > cur.ts:
+            latest[code] = q
     out: list[SectorCell] = []
     for code in codes:
         bars = [
