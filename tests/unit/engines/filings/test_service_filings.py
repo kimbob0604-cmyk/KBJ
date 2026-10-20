@@ -81,6 +81,21 @@ def test_night_sweep_writes_overhang_insider_schedule_and_scores() -> None:
     assert bwex is not None and bwex.kw_score == 8 and bwex.kw_matched == ("신주인수권",)
 
 
+def test_stale_score_is_rescored_when_keyword_table_changes() -> None:
+    """키워드 표를 바꾸면(config/fin.yaml) 최근 기간의 옛 점수도 다음 실행에 새 점수로 바뀐다."""
+    w = world()
+    lw = load()
+    pub = lw.repos.public()
+    svc.run_derive(pub, w.today, now=w.clock, cfg=CFG, calendar=KR)
+    rc = w.rcept("e14.bwex")
+    stored = lw.repos.filings.disclosure_t.rows[(rc,)]
+    stored.row = replace(stored.row, kw_score=0, kw_matched=())  # 옛 표로 매긴 점수
+    again = svc.run_derive(pub, w.today, now=w.clock, cfg=CFG, calendar=KR)
+    assert again.n_scored == 1  # 그 한 줄만 — 같은 점수인 줄은 다시 쓰지 않는다
+    bwex = lw.repos.filings.disclosure(rc)
+    assert bwex is not None and bwex.kw_score == 8 and bwex.kw_matched == ("신주인수권",)
+
+
 def test_same_as_of_rerun_is_idempotent() -> None:
     w = world()
     lw = load()

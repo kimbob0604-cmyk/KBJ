@@ -6,8 +6,9 @@
 미리 쓴다(D-P4-17).
 
 한 실행(`10,40 7-21 * * *`, as_of = 분 — 날짜 부분이 파생 행의 as_of)
-1. **키워드 점수**: 최근 `SCORE_LOOKBACK_DAYS` 일 공시 중 점수가 없는 행(`kw_score` None)에
-   `importance.keyword_score` 를 채운다(07:00 다시 훑기가 넣은 전 영업일 행 포함).
+1. **키워드 점수**: 최근 `SCORE_LOOKBACK_DAYS` 일 공시 중 점수가 없거나 지금 키워드 표로 매긴 점수와
+   다른 행에 `importance.keyword_score` 를 채운다(07:00 다시 훑기가 넣은 전 영업일 행 포함 —
+   `config/fin.yaml` 키워드를 바꾸면 그 기간 행은 다음 실행에 새 점수로 바뀐다).
 2. **대상 회사**
    - 증분: 최근 `CHANGE_WINDOW` 안에 처음 본 공시(또는 재무 적재 — 주식총수가 바뀐다)가 있는 회사 중
      종류가 맞는 회사(오버행 ← 결정·청구·조정·정기보고서, 내부자 ← 소유보고·정기보고서, 일정 ←
@@ -75,7 +76,7 @@ __all__ = [
 ]
 
 JOB: Final = "filings.derive"
-SCORE_LOOKBACK_DAYS: Final = 7  # 점수 없는 공시를 찾는 기간(연휴 뒤 07:00 다시 훑기 포함) [제안]
+SCORE_LOOKBACK_DAYS: Final = 7  # 점수를 (다시) 매기는 기간(연휴 뒤 07:00 다시 훑기 포함) [제안]
 # 증분 대상 = 이 시간 안에 처음 본 공시(30분 주기 + 실패·재시도 여유 — 놓친 것은 훑기가 채운다)
 CHANGE_WINDOW: Final = timedelta(minutes=90)
 NIGHT_SWEEP_HOUR: Final = 21  # 21:10·21:40 — 밤 마무리 훑기(KST)
@@ -146,11 +147,12 @@ def _years_back(d: date, years: int) -> date:
 
 
 def score_disclosures(f: FilingsRepo, rows: Iterable[DisclosureRow], cfg: FinConfig) -> int:
-    """점수가 없는 공시 행에 키워드 점수·맞은 키워드를 채운다(공개 — 관심·시총 가산은 읽을 때)."""
+    """점수가 없거나 지금 키워드 표와 다른 공시 행에 키워드 점수·맞은 키워드를 쓴다(공개 — 관심·시총
+    가산은 읽을 때). 같은 점수·같은 키워드면 쓰지 않는다(멱등)."""
     scores: dict[str, tuple[int, Sequence[str]]] = {}
     for d in rows:
-        if d.kw_score is None:
-            ks = importance.keyword_score(d.title, cfg.filings.keywords)
+        ks = importance.keyword_score(d.title, cfg.filings.keywords)
+        if d.kw_score != ks.score or tuple(d.kw_matched) != tuple(ks.matched):
             scores[d.rcept_no] = (ks.score, ks.matched)
     return f.set_scores(scores) if scores else 0
 
