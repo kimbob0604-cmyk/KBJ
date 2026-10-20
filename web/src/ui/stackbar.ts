@@ -153,7 +153,10 @@ export function stackBar(o: StackBarOptions): HTMLDivElement {
       const amount = mode === 'pct' ? `${pct(sg.y1 - sg.y0, 1, false)} (${fmt(sg.value)})` : fmt(sg.value);
       s('title', {}, rect, `${o.categories[sg.category] ?? DASH} · ${name} ${amount}`);
     }
+    // 범주가 많으면(월별 3년 등) 이름이 붙어 읽히지 않는다 — 12개 안팎만 적는다(마지막은 늘)
+    const every = Math.max(1, Math.ceil(n / 12));
     o.categories.forEach((c, j) => {
+      if (j % every !== (n - 1) % every) return;
       s(
         'text',
         { x: left + j * step + step / 2, y: H - 6, 'text-anchor': 'middle' },
