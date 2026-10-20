@@ -31,14 +31,15 @@ FIELDS: Final[Mapping[str, str]] = {
     "treasury": "tesstk_co",
     "period_end": "stlm_dt",
 }
+# 회사에 따라 '의결권 있는 주식'·'의결권 없는 주식'으로 적는다(실측 2026-10-20 — 줄바꿈 포함)
 CLASS_LABELS: Final[Mapping[str, tuple[str, ...]]] = {
-    "common": ("보통주", "보통주식"),
-    "pref": ("우선주", "우선주식", "종류주식"),
+    "common": ("보통주", "보통주식", "의결권있는주식"),
+    "pref": ("우선주", "우선주식", "종류주식", "의결권없는주식"),
 }
 
 
 def _norm(s: object) -> str:
-    return str(s or "").replace(" ", "")
+    return "".join(str(s or "").split())  # 공백·줄바꿈 모두
 
 
 def _counts(row: Mapping[str, Any] | None) -> tuple[int | None, int | None]:

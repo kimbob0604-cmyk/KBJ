@@ -60,6 +60,7 @@ from kbj.core.time import KST
 from kbj.data.budget import BudgetExhausted
 from kbj.data.public.dart.client import DartClient, DartQuotaExceeded
 from kbj.data.public.dart.disclosures import DartJson
+from kbj.data.public.dart.doctext import ParseError
 from kbj.data.public.dart.shares import fetch_share_count
 from kbj.data.ratelimit import Priority
 from kbj.data.spec import DataKey
@@ -533,7 +534,11 @@ def _backfill_shares(run: FinRun, profiles: Mapping[str, CorpProfile]) -> None:
             reverse=True,
         )
         for year, reprt in periods[:SHARE_TRIES]:
-            sc = fetch_share_count(cast(DartJson, run.client), corp, year, reprt)
+            try:
+                sc = fetch_share_count(cast(DartJson, run.client), corp, year, reprt)
+            except ParseError as e:  # 그 회사만 — 다음 회사는 계속(격리)
+                run.failures.append(f"stockTotqySttus@{corp}: {e}"[:200])
+                break
             if sc is not None:
                 run.repos.filings.put_share_counts([sc], loaded_by=run.job, now=run.now)
                 run.bump("shares")

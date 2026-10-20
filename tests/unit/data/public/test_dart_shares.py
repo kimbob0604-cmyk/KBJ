@@ -72,3 +72,17 @@ def test_missing_common_row_is_an_error_and_bad_reprt_is_refused() -> None:
                    limiter=RecordingLimiter(), retries=1)  # fmt: skip
     with pytest.raises(ValueError, match="보고서 코드"):
         S.fetch_share_count(c, "99400130", 2026, "11015")
+
+
+def test_voting_share_labels_with_line_breaks_read_as_common_and_pref() -> None:
+    """'의결권 있는·없는 주식'(줄바꿈 포함)으로 적는 회사(실측 2026-10-20) — 보통주·우선주로."""
+    js = {"status": "000", "list": [
+        {"rcept_no": "20260814000001", "se": "의결권 있는\n주식", "istc_totqy": "8,592,896",
+         "tesstk_co": "1,238,725", "stlm_dt": "2026-06-30"},
+        {"rcept_no": "20260814000001", "se": "의결권 없는\n주식", "istc_totqy": "-",
+         "tesstk_co": "-", "stlm_dt": "2026-06-30"},
+        {"rcept_no": "20260814000001", "se": "합계", "istc_totqy": "8,592,896",
+         "tesstk_co": "1,238,725", "stlm_dt": "2026-06-30"},
+    ]}  # fmt: skip
+    got = S.parse_share_count(js, "99400130")
+    assert got is not None and (got.common_issued, got.treasury_common) == (8_592_896, 1_238_725)
