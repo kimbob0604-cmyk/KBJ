@@ -213,6 +213,7 @@ def detect(rows, cfg, prev_near=None):
                     type="material_giveback",
                     theme=x.get("theme"),
                     tickers=[x["code"]],
+                    names=[x.get("name")],
                     severity=round(x.get("giveback_pp") or 0, 2),
                     evidence=dict(
                         giveback=x["giveback"],
@@ -230,11 +231,15 @@ def detect(rows, cfg, prev_near=None):
                     type="volume_anomaly",
                     theme=x.get("theme"),
                     tickers=[x["code"]],
+                    names=[x.get("name")],
                     severity=round(x["vol_mult"], 2),
+                    # 방향(등락)·거래대금이 없으면 급락일 투매와 재료성 급등을 가를 수 없다(2026-10-20)
                     evidence=dict(
                         vol_mult=x["vol_mult"],
                         volume=x.get("volume"),
                         avg_vol_20=x.get("avg_vol_20"),
+                        chg_pct=x.get("chg_pct"),
+                        turnover=x.get("turnover"),
                     ),
                 )
             )
@@ -249,12 +254,14 @@ def detect(rows, cfg, prev_near=None):
                     type="multi_label_high",
                     theme=x.get("theme"),
                     tickers=[x["code"]],
+                    names=[x.get("name")],
                     severity=len(hits),
                     evidence=dict(labels=hits),
                 )
             )
     # 9 근접 클러스터 — 한 테마에서 근접 종목 3개 이상
     near = {}
+    name_of = {x["code"]: x.get("name") for x in rows}
     for x in rows:
         if x.get("near_kind") and x.get("theme"):
             near.setdefault(x["theme"], []).append(x["code"])
@@ -265,6 +272,7 @@ def detect(rows, cfg, prev_near=None):
                     type="proximity_cluster",
                     theme=t,
                     tickers=sorted(cs),
+                    names=[name_of.get(c) for c in sorted(cs)],
                     severity=len(cs),
                     evidence=dict(n=len(cs)),
                 )
@@ -289,6 +297,7 @@ def detect(rows, cfg, prev_near=None):
                         type="breakout_fail",
                         theme=x.get("theme"),
                         tickers=[code],
+                        names=[x.get("name")],
                         severity=round(g - pg, 2),
                         evidence=dict(kind=kind, gap_prev=pg, gap_now=g),
                     )

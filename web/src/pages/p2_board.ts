@@ -65,8 +65,37 @@ export const EVENT_LABEL: Record<string, string> = {
   volume_anomaly: '거래량 이상',
   multi_label_high: '복수 기준 신고가',
   proximity_cluster: '근접 클러스터',
-  breakout_fail: '돌파 실패',
+  breakout_fail: '근접 후 후퇴',
 };
+
+/** 종류별 뜻(패널 설명) — 내부 번호만 있던 것(2026-10-20 사용자 '탐지 이벤트가 무슨 뜻인지 모르겠다') */
+export const EVENT_HELP =
+  '재료 반납 = 장중 +5% 이상 올랐다가 상승분의 70% 이상을 내주고 끝남(매물 출회 신호). ' +
+  '거래량 이상 = 20일 평균의 5배 이상 거래(재료 발생 — 등락으로 방향을 본다). ' +
+  '근접 클러스터 = 한 테마에서 신고가 5% 이내 종목이 3개 이상(테마 확산 전조). ' +
+  '근접 후 후퇴 = 어제 신고가 5% 이내였는데 오늘 신고가와의 거리가 벌어짐(돌파 시도 실패 — 지수 급락일엔 많이 잡힌다). ' +
+  '시총 1,000억 이상 보드 종목만 본다. 복수 기준 신고가는 신고가 표와 같아 뺐다.';
+
+/** 화면에서 뺀 종류 — 라벨이 겹쳐(52주면 120일도 자동) 신고가 표와 같은 것을 센다 */
+export const HIDDEN_EVENTS = new Set(['multi_label_high']);
+
+/** 강도 — 종류마다 단위가 다르다(배수·%p·종목 수) */
+export function severityText(e: { type: string; severity: number | null }): string {
+  const v = e.severity;
+  if (v === null) return DASH;
+  switch (e.type) {
+    case 'volume_anomaly':
+      return `${num(v, 1)}배`;
+    case 'material_giveback':
+      return `${num(v, 1)}%p`;
+    case 'breakout_fail':
+      return `+${num(v, 2)}%p`;
+    case 'proximity_cluster':
+      return `${num(v)}종목`;
+    default:
+      return num(v, 2);
+  }
+}
 
 function isObj(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -334,6 +363,7 @@ interface Ev {
   type: string;
   theme: string | null;
   tickers: string[];
+  names?: (string | null)[];
   severity: number | null;
   evidence: Record<string, unknown>;
 }
@@ -345,6 +375,8 @@ export function evidenceText(e: Ev, labels: Record<string, string>): string {
       return `고가 대비 반납 ${num(n(x.giveback_pp), 2)}%p (고가 ${pct(n(x.high_chg_pct))} → 종가 ${pct(n(x.chg_pct))})`;
     case 'proximity_cluster':
       return `근접 ${num(n(x.n))}종목`;
+    case 'volume_anomaly':
+      return `거래량 ${num(n(x.volume))} (20일 평균 ${num(n(x.avg_vol_20), 0)}) · 등락 ${pct(n(x.chg_pct))}`;
     case 'breakout_fail': {
       const k = str(x.kind);
       return `${k ? (labels[k] ?? k) : ''} 갭 ${pct(n(x.gap_prev), 2, false)} → ${pct(n(x.gap_now), 2, false)}`.trim();
@@ -366,6 +398,7 @@ export function eventsOf(env: Envelope<S['BoardEvents']>): Ev[] {
     type: str(e.type) ?? '?',
     theme: str(e.theme),
     tickers: Array.isArray(e.tickers) ? e.tickers.filter((t): t is string => typeof t === 'string') : [],
+    names: Array.isArray(e.names) ? e.names.map((t) => (typeof t === 'string' ? t : null)) : [],
     severity: n(e.severity),
     evidence: isObj(e.evidence) ? e.evidence : {},
   }));
@@ -672,7 +705,17 @@ async function mountLogin(ctx: PageContext, { pNh, pNear, pSec, pHeat, pEv, pRan
       pEv,
       () => ctx.source.get<S['BoardEvents']>('board/events'),
       (env) => {
-        const evs = eventsOf(env).sort((a, b) => (b.severity ?? 0) - (a.severity ?? 0));
+        // 종류별로 묶고(강도 단위가 다르다) 그 안에서 강도 순
+        const order = Object.keys(EVENT_LABEL);
+        const evs = eventsOf(env)
+          .filter((e) => !HIDDEN_EVENTS.has(e.type))
+          .sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type) || (b.severity ?? 0) - (a.severity ?? 0));
+        for (const e of evs) {
+          e.tickers.forEach((c, i) => {
+            const nm = e.names?.[i];
+            if (nm) names.set(c, nm);
+          });
+        }
         pEv.body.append(
           table<Ev>({
             columns: [
@@ -693,7 +736,7 @@ async function mountLogin(ctx: PageContext, { pNh, pNear, pSec, pHeat, pEv, pRan
                   return `${theme}${who.join(', ')}${more}`;
                 },
               },
-              { key: 'sev', label: '강도', cell: (e) => num(e.severity, 2) },
+              { key: 'sev', label: '강도', cell: (e) => severityText(e) },
               {
                 key: 'ev',
                 label: '근거',
@@ -706,7 +749,7 @@ async function mountLogin(ctx: PageContext, { pNh, pNear, pSec, pHeat, pEv, pRan
             empty: '탐지 없음',
           }).el,
         );
-        pEv.setDef(env.data.note ?? null);
+        pEv.setDef(EVENT_HELP);
         return 0;
       },
       hint,
