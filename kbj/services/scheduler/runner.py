@@ -453,7 +453,8 @@ class JobRunner:
         if (job.name, as_of) in self._caught or (job.name, as_of) in self._pending:
             return
         self._caught.add((job.name, as_of))
-        if self.runs.latest(job.name, as_of) is None:
+        prev = self.runs.latest(job.name, as_of)
+        if prev is None or _was_planned(prev):
             self._fire(job, fire_at, now, events, catch_up=True)
 
     def _fire(
@@ -493,7 +494,7 @@ class JobRunner:
         prev = self.runs.latest(job.name, as_of)
         # ok·skipped 는 끝난 실행 — 다시 돌지 않는다. running·queued 인데 진행 목록에 없으면 앞
         # 프로세스가 도중에 죽은 것이다 — 시도 번호를 이어 다시 돈다(선점은 같은 작업이 이어 쥔다).
-        if prev is not None and prev.status in ("ok", "skipped"):
+        if prev is not None and prev.status in ("ok", "skipped") and not _was_planned(prev):
             events.append(RunEvent("already", job.name, as_of, now, prev.attempt))
             return
         attempt0 = prev.attempt if prev is not None else 0
@@ -949,3 +950,9 @@ class JobRunner:
             self._health.emit(HealthEvent(kind, detail, now, "warning", service=SERVICE))
         except Exception as e:
             log_event(log, logging.ERROR, SERVICE, "health_failed", error=type(e).__name__)
+
+
+def _was_planned(rec: RunRecord) -> bool:
+    """처리기가 없어(꺼진 작업) `planned` 로 건너뛴 기록 — 끝난 실행이 아니다. 작업을 켠 뒤 같은
+    회차가 이 기록 때문에 다시 돌지 않았다(2026-10-20: trade.customs_monthly@2026-09)."""
+    return rec.status == "skipped" and rec.detail.get("reason") == PLANNED

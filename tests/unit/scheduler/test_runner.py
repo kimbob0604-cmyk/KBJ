@@ -537,6 +537,21 @@ def test_disabled_job_without_handler_is_recorded_as_planned() -> None:
     assert rig.claims.rows == [] and rig.notes.sent == []
 
 
+def test_planned_record_does_not_block_the_job_once_enabled() -> None:
+    """꺼져 있을 때 남은 '계획됨' 기록은 끝난 실행이 아니다 — 켠 뒤 같은 회차가 돈다(2026-10-20:
+    trade.customs_monthly@2026-09 가 켠 날 이 기록 때문에 돌지 않았다)."""
+    off = Rig([krx_like(owner="kbj.services.collectors.not_yet:run")], {}, kst(2026, 10, 6, 8, 0))
+    off.run_until(kst(2026, 10, 6, 8, 10))
+    rec = off.runs.latest("krx.daily", "2026-10-02")
+    assert rec is not None and rec.detail["reason"] == "planned"
+    pub = Publisher(kst(2026, 10, 6, 8, 0))
+    on = Rig([krx_like()], {"tests.fake:krx": pub}, kst(2026, 10, 6, 12, 0))
+    on.runs.records.update(off.runs.records)
+    events = on.runner.run_once("krx.daily", on.now, as_of="2026-10-02")
+    assert "already" not in [e.kind for e in events]
+    assert pub.calls and on.runs.latest("krx.daily", "2026-10-02").status == "ok"  # type: ignore[union-attr]
+
+
 def test_planned_minute_job_is_recorded_once_per_day() -> None:
     """매분 도는 계획됨 작업(예: filings.dart_feed)도 하루 기록은 1건.
 
