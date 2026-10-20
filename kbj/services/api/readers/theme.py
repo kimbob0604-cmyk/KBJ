@@ -69,7 +69,8 @@ NOT_A_THEME: Final = "대테마 없음 — 분류에 없는 id"
 NOTE_CLASSES: Final = "대테마 분류는 사용자 작성(stock-dashboard 테마 마스터 — 주 1회)"
 NOTE_MEMBERS: Final = "편입 = 대테마에 걸린 네이버 테마(stock-dashboard 수집)의 종목 합집합"
 NOTE_METHOD: Final = (
-    "등락은 시총 가중 평균(시총 모르면 단순 평균) · 20일 = 21거래일 전 종가 대비(보드)"
+    "등락은 편입 종목 동일가중 평균(대형주 하나가 테마를 덮지 않게) · "
+    "20일 = 21거래일 전 종가 대비(보드)"
 )
 NOTE_MISMATCH: Final = "공개 분류 판과 편입 판의 기준 시각이 다르다 — 다음 theme.*_sync 뒤 맞춰진다"
 _STALE_FALLBACK_DAYS: Final = 15

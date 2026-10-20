@@ -86,11 +86,11 @@ def test_strength_matches_board_rollup_and_hand_math() -> None:
     assert "000004" not in items  # invalid 은 뺀다
     st = theme_strengths(THEMES, codes, items)
     a = st["a"]
-    ref = rollup("", [items[c] for c in codes["a"]], "theme")
+    ref = rollup("", [{**items[c], "mktcap": None} for c in codes["a"]], "theme")
     assert (a.chg_pct, a.ret_5d, a.ret_20d) == (ref["chg_pct"], ref["ret_5d"], ref["ret_21d"])
-    # 시총 가중: 000003 은 시총 없음(가중치 0) → (2×300 − 1×100) / 400 = 1.25
-    assert math.isclose(a.chg_pct or 0, 1.25)
-    assert a.weighted and (a.up, a.flat, a.down, a.unknown) == (1, 1, 1, 0)
+    # 동일가중(metrics §31): (2 − 1 + 0) / 3 = 0.33 — 시총 가중(1.25)이면 대형주가 테마를 덮었다
+    assert math.isclose(a.chg_pct or 0, 0.33)
+    assert not a.weighted and (a.up, a.flat, a.down, a.unknown) == (1, 1, 1, 0)
     assert a.up_ratio == pytest.approx(1 / 3, abs=1e-4)
     assert a.n_newhigh == 1 and a.mktcap == 400 * EOK
     assert a.leader_code in {"000001", "000002", "000003"}

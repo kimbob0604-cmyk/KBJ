@@ -16,7 +16,7 @@ export const P9_SECTIONS = ['sections', 'chains', 'rank', 'heat', 'chain_strengt
 export type P9Section = (typeof P9_SECTIONS)[number];
 
 export const P9_LOGIN_PANELS: Readonly<Record<'rank' | 'heat' | 'chain_strength' | 'members', { title: string; span: Span; lock: string; def: string }>> = {
-  rank: { title: '테마 강도', span: 12, lock: 'quote_based', def: '편입 종목 등락의 시총 가중 평균(당일·5일·20일)·상승 비율·신고가 수' },
+  rank: { title: '테마 강도', span: 12, lock: 'quote_based', def: '편입 종목 등락의 동일가중 평균(당일·5일·20일 — 종목 하나에 한 표)·상승 비율·신고가 수. 거래대금 1위 = 그 테마에서 거래대금이 가장 큰 종목' },
   heat: { title: '강도 히트맵', span: 6, lock: 'quote_based', def: '크기 = 편입 종목 시총 합, 색 = 고른 기간 등락' },
   chain_strength: { title: '밸류체인 강도', span: 6, lock: 'quote_based', def: '같은 밸류체인 대테마들의 편입 종목 합집합' },
   members: { title: '편입 종목', span: 12, lock: '네이버 유래 편입 종목·사유 — 로그인', def: '대테마에 걸린 원본 테마의 종목 합집합 · 종목을 누르면 종목 상세' },

@@ -2,7 +2,7 @@
 // **공개 빌드에서는 번들에서 뺀다**(p9_themes.ts 의 LOGIN_FILLS — p8_stock LOGIN_VALUE 방식, 공개 JS 예산 ADR 0025).
 //
 // - 키: 'themes/strength'(+ period 1·5·20), 'themes/<id>'(편입 종목). 404 는 '.msg'(작업·시각), 그 밖만 '.msg.err'.
-// - 강도 = 편입 종목의 당일·5일·20일 등락 시총 가중 평균(보드 롤업), 상승 비율, 신고가 수(보드 라벨). 시세는 보드 종목
+// - 강도 = 편입 종목의 당일·5일·20일 등락 동일가중 평균(metrics §31 — 시총 가중이면 대형주 하나가 테마를 덮었다), 상승 비율, 신고가 수(보드 라벨). 시세는 보드 종목
 //   하루(KRX/KIS 정본) — 서버가 계산한다(화면은 반올림·색만).
 // - 편입 종목 표의 종목은 #/p/8/<코드>(종목 상세)로 연다(app/route.ts openStock).
 import { openStock } from '../../app/route';
@@ -51,7 +51,7 @@ function strengthColumns(): Column<Row>[] {
     { key: 'up', label: '상승 비율', cell: (r) => ratio(r.stats.up_ratio) },
     { key: 'nh', label: '신고가', cell: (r) => num(r.stats.n_newhigh) },
     { key: 'n', label: '종목', cell: (r) => `${num(r.stats.n_priced)}/${num(r.stats.n_members)}` },
-    { key: 'lead', label: '주도주', align: 'l', cell: (r) => r.stats.leader?.name ?? DASH },
+    { key: 'lead', label: '거래대금 1위', align: 'l', cell: (r) => r.stats.leader?.name ?? DASH },
   ];
 }
 
@@ -145,12 +145,13 @@ export function asOfDay(day: string | null | undefined): string {
 function drawHeat(p: Panel, rows: readonly Row[], period: Period, day: string): void {
   p.clearBody();
   p.body.append(h('p', { class: 'dim', data: { section: 'asof' } }, asOfDay(day)));
-  const items = rows.map((r) => ({ id: r.id, label: r.name, size: r.stats.mktcap, color: periodValue(r.stats, period) }));
+  // 크기 = 시세 있는 편입 종목 수 — 시총 합이면 여러 테마에 든 대형주 시총이 테마마다 겹쳐 더해졌다(2026-10-20)
+  const items = rows.map((r) => ({ id: r.id, label: r.name, size: r.stats.n_priced, color: periodValue(r.stats, period) }));
   p.body.append(
     treemap({
-      label: `대테마 강도 히트맵 — 크기 시총 합, 색 ${PERIODS.find((x) => x.value === String(period))?.label ?? ''} 등락`,
+      label: `대테마 강도 히트맵 — 크기 종목 수, 색 ${PERIODS.find((x) => x.value === String(period))?.label ?? ''} 등락`,
       items,
-      formatSize: (v) => joEok(v),
+      formatSize: (v) => `${num(v)}종목`,
       formatColor: (v) => pct(v, 2),
       w: 480,
       h: 300,

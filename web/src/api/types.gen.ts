@@ -7766,7 +7766,7 @@ export interface components {
         };
         /**
          * ThemeStats
-         * @description 강도 — 등락은 %(시총 가중 평균, 시총 모르면 단순 평균 — weighted False), 20일 = 21거래일 전
+         * @description 강도 — 등락은 %(편입 종목 동일가중 평균 — weighted False, metrics §31), 20일 = 21거래일 전
          *     종가 대비(보드 ret_21d). up_ratio = 상승 / 등락을 아는 종목(없으면 None). 시총 합은 원(아는
          *     종목만).
          */

@@ -6,8 +6,9 @@
 
 - 대테마의 종목 = 그 대테마에 걸린 네이버 테마들의 편입 종목 합집합(종목 마스터 안 — 중복 한 번).
 - 집계는 보드 테마 집계와 같은 롤업(`kbj.engines.board.aggregate.rollup`): 등락·5일·20일(=보드
-  `ret_21d`, 21거래일 전 종가 대비) **시총 가중 평균**(시총을 모르면 단순 평균으로 떨어지고
-  `weighted=False`), 상승·보합·하락·모름 종목 수, 신고가 종목 수(보드 라벨 — 종가 기준 우선순위),
+  `ret_21d`, 21거래일 전 종가 대비)은 **동일가중 평균**(metrics §31 — 시총 가중이면 여러 테마에 든
+  대형주 하나가 테마를 덮었다, 2026-10-20), 상승·보합·하락·모름 종목 수, 신고가 종목 수(보드
+  라벨 — 종가 기준 우선순위),
   근접 수, 거래대금 배수(20일 평균 대비 — 아는 종목만).
 - 상승 비율 = 상승 / (등락을 아는 종목). 아는 종목이 없으면 None(0 으로 채우지 않는다 — 규칙 2).
 - 밸류체인 = 대테마의 `valuechain` 값이 같은 대테마들. 체인 집계는 그 대테마들 종목의 합집합.
@@ -132,16 +133,18 @@ def stock_items(days: Mapping[str, StockDay]) -> dict[str, dict[str, Any]]:
 def _strength(codes: Sequence[str], items: Mapping[str, dict[str, Any]]) -> Strength:
     got = [items[c] for c in codes if c in items]
     r = rollup("", got, "theme")
+    # 등락은 동일가중(metrics §31) — 시총 가중이면 여러 테마에 든 대형주 하나가 테마를 덮는다
+    eq = rollup("", [{**x, "mktcap": None} for x in got], "theme")
     b = r["breadth"]
     lead = r["leader"]
     known_cap = [x["mktcap"] for x in got if x.get("mktcap") is not None]
     return Strength(
         n_members=len(codes),
         n_priced=len(got),
-        chg_pct=r["chg_pct"],
-        ret_5d=r["ret_5d"],
-        ret_20d=r["ret_21d"],
-        weighted=bool(r["weighted"]),
+        chg_pct=eq["chg_pct"],
+        ret_5d=eq["ret_5d"],
+        ret_20d=eq["ret_21d"],
+        weighted=False,
         up=b["up"],
         flat=b["flat"],
         down=b["down"],
