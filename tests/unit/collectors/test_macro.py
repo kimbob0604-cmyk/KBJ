@@ -14,6 +14,7 @@ import yaml
 from pydantic import SecretStr
 
 from kbj.config.macro import MacroConfig, parse_macro
+from kbj.core.p5_rows import MacroSeriesRow
 from kbj.core.quality import Quality
 from kbj.data.public.ecos.client import EcosRow
 from kbj.data.public.fred.client import FredClient
@@ -142,7 +143,9 @@ def test_all_sources_when_probed_and_rerun_keeps_first_seen_time() -> None:
 def test_not_ready_when_the_session_value_is_missing_but_rows_are_written() -> None:
     cfg = cfg_with()
     repos = memory_public_repos()
-    early = datetime(2026, 11, 16, 21, 20, tzinfo=UTC)  # 가짜 서버 끝 = 11-15(일) → 11-16 값 없음
+    # FRED 일별은 하루 늦게 올라와 06:20 KST 에는 미국 거래일의 **전** 거래일(11-13 금)을 요구한다 —
+    # 가짜 서버 끝 = 11-12(목)이면 그 값이 없다
+    early = datetime(2026, 11, 13, 21, 20, tzinfo=UTC)
     res = M.morning(
         ctx(
             MORNING[:1],
@@ -288,3 +291,16 @@ def test_unknown_dataset_key_fails_without_touching_repos() -> None:
         ctx([key("FRED:other", US_DAY)], {"macro_config": cfg_with(), "public_repos": repos})
     )
     assert res.status == "failed" and repos.macro.meta() == []
+
+
+def test_fred_daily_wants_the_previous_us_trading_day_and_blank_counts() -> None:
+    """FRED 일별은 다음 미국 영업일에 올라온다 — 06:20 KST 의 미국 거래일 D 에는 D 의 전 거래일을
+    요구한다. 채권시장 휴장일 값 '.'(빈 값)도 공표로 센다(2026-10-20: 날마다 '공표 전' 4회 실패)."""
+    c = ctx(MORNING[:1], {}, now=NOW)
+    assert M.fred_daily_want(c, date(2026, 11, 16)) == "2026-11-13"  # 월 → 금
+    s = cfg_with().series
+    daily = [x for x in s if x.dataset == "FRED:gov_series" and x.freq == "D"][:1]
+    blank = [MacroSeriesRow(daily[0].id, "2026-11-13", None, "%", "FRED", NOW, Quality.INVALID)]
+    M.require_periods(daily, blank, "2026-11-13", count_blank=True)
+    with pytest.raises(M.NotReady):
+        M.require_periods(daily, blank, "2026-11-13")

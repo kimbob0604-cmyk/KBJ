@@ -45,6 +45,7 @@ from kbj.services.collectors.macro import (
     client,
     config,
     ecos_rows,
+    fred_daily_want,
     period_of,
     ready_series,
     require_periods,
@@ -118,7 +119,8 @@ def _fred_restricted(ctx: JobContext, cfg: MacroConfig, repos: Repos, key: DataK
                 MacroSeriesRow(s.id, period_of(s.freq, o.date), o.value, s.unit, "FRED", ctx.now, q)
             )
     n = write_series(repos.macro_prv, series, rows, job=ctx.job, now=ctx.now)
-    require_periods([s for s in series if s.freq == "D"], rows, day.isoformat())
+    daily = [s for s in series if s.freq == "D"]
+    require_periods(daily, rows, fred_daily_want(ctx, day), count_blank=True)  # FRED 하루 늦게
     return n
 
 

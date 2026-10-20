@@ -42,6 +42,7 @@ from typing import Any, Final, Protocol
 
 from kbj.config.macro import MacroConfig, SeriesCfg, load_macro
 from kbj.config.markets import load_calendar_events
+from kbj.core.calendar import TradingCalendar, us_calendar
 from kbj.core.p5_rows import CalendarEvent, MacroSeriesMeta, MacroSeriesRow
 from kbj.core.quality import Quality
 from kbj.core.time import KST
@@ -66,6 +67,7 @@ __all__ = [
     "NotConfigured",
     "NotReady",
     "evening",
+    "fred_daily_want",
     "meta_of",
     "monthly",
     "morning",
@@ -193,11 +195,18 @@ def write_series(
     return repo.upsert_series(stamped, loaded_by=job, received_at=now)
 
 
-def require_periods(series: Sequence[SeriesCfg], rows: Sequence[MacroSeriesRow], want: str) -> None:
-    """시리즈마다 `want` 기간(이후) 값이 있어야 — 없으면 NotReady(공표 전)."""
+def require_periods(
+    series: Sequence[SeriesCfg],
+    rows: Sequence[MacroSeriesRow],
+    want: str,
+    *,
+    count_blank: bool = False,
+) -> None:
+    """시리즈마다 `want` 기간(이후) 값이 있어야 — 없으면 NotReady(공표 전). `count_blank` 면 값이
+    빈 줄(FRED '.' — 채권시장 휴장일)도 공표된 것으로 센다."""
     have: dict[str, set[str]] = {}
     for r in rows:
-        if r.value is not None:
+        if r.value is not None or count_blank:
             have.setdefault(r.series_id, set()).add(r.period)
     late = [s.id for s in series if not any(p >= want for p in have.get(s.id, set()))]
     if late:
@@ -328,8 +337,18 @@ def _fred_gov(ctx: JobContext, cfg: MacroConfig, repos: PublicRepos, key: DataKe
         for o in fred.observations(s.item or "", start, day):
             rows.append(_row(s, period_of(s.freq, o.date), o.value, o.quality, ctx.now))
     n = write_series(repos.macro, series, rows, job=ctx.job, now=ctx.now)
-    require_periods([s for s in series if s.freq == "D"], rows, day.isoformat())
+    daily = [s for s in series if s.freq == "D"]
+    require_periods(daily, rows, fred_daily_want(ctx, day), count_blank=True)
     return n
+
+
+def fred_daily_want(ctx: JobContext, day: date) -> str:
+    """FRED 일별(국채·연방기금)이 06:20 KST 에 있어야 할 기간 — 미국 거래일 `day` 의 **전** 거래일.
+
+    FRED 는 일별 금리를 다음 미국 영업일 오후에 올린다(H.15) — 그날 값을 요구하면 macro.morning 이
+    날마다 '공표 전'으로 끝났다(2026-10-20 점검: 10-19·10-20 모두 4회 실패)."""
+    us: TradingCalendar = ctx.resources.get("us") or us_calendar()
+    return us.prev_trading_day(day).isoformat()
 
 
 def calendar_window(cfg: MacroConfig, day: date) -> tuple[date, date]:
