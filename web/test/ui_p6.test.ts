@@ -75,7 +75,7 @@ describe('ui/csv — BOM·이스케이프·빈 값', () => {
 
 describe('페이지 7 탭 틀 — 웨이브 2 는 이 파일을 고치지 않는다', () => {
   it('탭과 모듈 표가 맞고, 맨 앞 종목 탭에 매핑 종목 랭킹·흐름(P10)', () => {
-    expect(TRADE_TABS.map((t) => t.id)).toEqual(['stocks', 'monthly', 'flash', 'items', 'countries', 'regions', 'surge', 'items104']);
+    expect(TRADE_TABS.map((t) => t.id)).toEqual(['stocks', 'industry', 'monthly', 'flash', 'items', 'countries', 'regions', 'surge', 'items104']);
     for (const t of TRADE_TABS) expect(TAB_MODULES[t.id].length, t.id).toBeGreaterThan(0);
     expect(TAB_MODULES.items).toHaveLength(1);
     expect(TAB_MODULES.stocks).toHaveLength(1);

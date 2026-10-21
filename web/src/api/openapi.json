@@ -6201,6 +6201,142 @@
         }
       }
     },
+    "/api/trade/countries/{cc}/trend": {
+      "get": {
+        "tags": [
+          "trade"
+        ],
+        "summary": "Country Trend",
+        "description": "국가 수출 품목 추이(P10 단계 4 — 전월·전년 대비·24개월·관련 종목).",
+        "operationId": "country_trend_api_trade_countries__cc__trend_get",
+        "parameters": [
+          {
+            "name": "cc",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z0-9]{2}$",
+              "title": "Cc"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_TradeCountryTrend_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/trade/sectors": {
+      "get": {
+        "tags": [
+          "trade"
+        ],
+        "summary": "Sectors",
+        "description": "산업별 수출(P10 단계 4 — 매핑 종목 지수 합·YoY·종목·추적 품목).",
+        "operationId": "sectors_api_trade_sectors_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_TradeSectors_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/gex/levels": {
       "get": {
         "tags": [
@@ -17606,6 +17742,49 @@
         ],
         "title": "Envelope[TradeCountryItems]"
       },
+      "Envelope_TradeCountryTrend_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/TradeCountryTrend"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[TradeCountryTrend]"
+      },
       "Envelope_TradeFlash_": {
         "properties": {
           "source": {
@@ -18035,6 +18214,49 @@
           "data"
         ],
         "title": "Envelope[TradeRegions]"
+      },
+      "Envelope_TradeSectors_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/TradeSectors"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[TradeSectors]"
       },
       "Envelope_TradeStockFlows_": {
         "properties": {
@@ -28933,6 +29155,116 @@
         ],
         "title": "TradeCountryRow"
       },
+      "TradeCountryTrend": {
+        "properties": {
+          "country": {
+            "type": "string",
+            "pattern": "^[A-Z0-9]{2}$",
+            "title": "Country"
+          },
+          "ym": {
+            "type": "string",
+            "title": "Ym"
+          },
+          "months": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Months"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/TradeCountryTrendRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "country",
+          "ym",
+          "months",
+          "rows"
+        ],
+        "title": "TradeCountryTrend"
+      },
+      "TradeCountryTrendRow": {
+        "properties": {
+          "hs": {
+            "type": "string",
+            "pattern": "^[0-9]{2}([0-9]{2}){0,4}$",
+            "title": "Hs"
+          },
+          "usd": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usd"
+          },
+          "mom": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mom"
+          },
+          "yoy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yoy"
+          },
+          "spark": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Spark"
+          },
+          "stocks": {
+            "items": {
+              "$ref": "#/components/schemas/TradeRelatedStock"
+            },
+            "type": "array",
+            "title": "Stocks"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "hs",
+          "usd",
+          "mom",
+          "yoy",
+          "spark",
+          "stocks"
+        ],
+        "title": "TradeCountryTrendRow"
+      },
       "TradeFlash": {
         "properties": {
           "kind": {
@@ -30758,6 +31090,213 @@
           "rows"
         ],
         "title": "TradeRegions"
+      },
+      "TradeRelatedStock": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[0-9A-Z]{6}$",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name"
+        ],
+        "title": "TradeRelatedStock"
+      },
+      "TradeSector": {
+        "properties": {
+          "sector": {
+            "type": "string",
+            "title": "Sector"
+          },
+          "n_stocks": {
+            "type": "integer",
+            "title": "N Stocks"
+          },
+          "usd": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usd"
+          },
+          "yoy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yoy"
+          },
+          "yoy_3m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yoy 3M"
+          },
+          "spark": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Spark"
+          },
+          "stocks": {
+            "items": {
+              "$ref": "#/components/schemas/TradeSectorStock"
+            },
+            "type": "array",
+            "title": "Stocks"
+          },
+          "products": {
+            "items": {
+              "$ref": "#/components/schemas/TradeSectorProduct"
+            },
+            "type": "array",
+            "title": "Products"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "sector",
+          "n_stocks",
+          "usd",
+          "yoy",
+          "yoy_3m",
+          "spark",
+          "stocks",
+          "products"
+        ],
+        "title": "TradeSector"
+      },
+      "TradeSectorProduct": {
+        "properties": {
+          "hs": {
+            "type": "string",
+            "pattern": "^[0-9]{2}([0-9]{2}){0,4}$",
+            "title": "Hs"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "hs",
+          "name"
+        ],
+        "title": "TradeSectorProduct"
+      },
+      "TradeSectorStock": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[0-9A-Z]{6}$",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "usd": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usd"
+          },
+          "yoy_3m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yoy 3M"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "usd",
+          "yoy_3m"
+        ],
+        "title": "TradeSectorStock"
+      },
+      "TradeSectors": {
+        "properties": {
+          "last_ym": {
+            "type": "string",
+            "title": "Last Ym"
+          },
+          "months": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Months"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/TradeSector"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "last_ym",
+          "months",
+          "rows"
+        ],
+        "title": "TradeSectors"
       },
       "TradeStatsOut": {
         "properties": {

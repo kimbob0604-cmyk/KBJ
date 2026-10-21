@@ -69,7 +69,7 @@ describe('페이지 7 속보 — 로그인', () => {
     });
     const p = panelByTitle(root, TITLE);
     expect(text(p.querySelector('.msg:not(.err)'))).toContain('아직 없음');
-    expect(root.querySelectorAll('[role="tab"]')).toHaveLength(8);
+    expect(root.querySelectorAll('[role="tab"]')).toHaveLength(9);
   });
 
   it('404 말고 실패(500)는 오류 줄로 남는다 — 삼키지 않는다', async () => {

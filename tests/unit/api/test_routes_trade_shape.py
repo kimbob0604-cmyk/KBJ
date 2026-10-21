@@ -36,6 +36,8 @@ P6_ROUTES: dict[str, tuple[str, str]] = {
     "/api/trade/stock/000660": ("TradeStock", "trade.map_load"),
     "/api/trade/stock/000660/flows": ("TradeStockFlows", "trade.map_load"),
     "/api/trade/stock/000660/preview": ("TradePreview", "trade.map_load"),
+    "/api/trade/countries/US/trend": ("TradeCountryTrend", "trade.customs_monthly"),
+    "/api/trade/sectors": ("TradeSectors", "trade.map_load"),
 }  # fmt: skip
 TEMPLATES = {
     "/api/trade/items/8542/series": "/api/trade/items/{hs}/series",
@@ -44,6 +46,7 @@ TEMPLATES = {
     "/api/trade/stock/000660": "/api/trade/stock/{code}",
     "/api/trade/stock/000660/flows": "/api/trade/stock/{code}/flows",
     "/api/trade/stock/000660/preview": "/api/trade/stock/{code}/preview",
+    "/api/trade/countries/US/trend": "/api/trade/countries/{cc}/trend",
 }
 # 리더 본문을 채운 묶음의 경로(웨이브 2 — 그 묶음 시험이 빈 저장소 404 를 본다)
 FILLED: frozenset[str] = frozenset(

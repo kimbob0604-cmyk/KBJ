@@ -168,3 +168,32 @@ def test_실적_프리뷰_매핑_없음은_404(c: TestClient) -> None:
     assert r.status_code == 404 and r.json() == {"code": "no_data", "message": NOT_MAPPED}
     r = map_api_world(empty=True).authed().get("/api/trade/stock/992004/preview")
     assert r.status_code == 404 and r.json()["message"] == NO_MAP
+
+
+def test_국가_품목_추이(c: TestClient) -> None:
+    """P10 단계 4 — 24개월 스파크라인·전월/전년 대비·관련 종목(상대국이 이 나라이거나 전세계)."""
+    r = c.get("/api/trade/countries/US/trend")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    json.dumps(body, allow_nan=False)
+    d = body["data"]
+    assert len(d["months"]) == 24 and d["months"][-1] == d["ym"] and d["rows"]
+    usds = [x["usd"] for x in d["rows"] if x["usd"] is not None]
+    assert usds == sorted(usds, reverse=True)
+    for x in d["rows"]:
+        assert len(x["spark"]) == 24 and x["spark"][-1] == x["usd"]
+    assert any(x["stocks"] for x in d["rows"])
+
+
+def test_산업_묶음(c: TestClient, aw: FlashApiWorld) -> None:
+    r = c.get("/api/trade/sectors")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    json.dumps(body, allow_nan=False)
+    d = body["data"]
+    codes = {s["code"] for x in d["rows"] for s in x["stocks"]}
+    assert sum(x["n_stocks"] for x in d["rows"]) == len(codes) > 0
+    for x in d["rows"]:
+        assert len(x["spark"]) == 24 and x["spark"][-1] == x["usd"] and x["products"]
+    r = map_api_world(empty=True).authed().get("/api/trade/sectors")
+    assert r.status_code == 404 and r.json()["message"] == NO_MAP

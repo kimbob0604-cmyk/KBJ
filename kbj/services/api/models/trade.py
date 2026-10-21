@@ -380,6 +380,59 @@ class TradePreview(ApiModel):
     history: list[TradePreviewQuarter]
 
 
+# ── 국가 품목 추이·산업(P10 단계 4 — 로그인) ─────────────────────────────────────────────
+
+
+class TradeRelatedStock(ApiModel):
+    code: str = Field(pattern=r"^[0-9A-Z]{6}$")
+    name: str
+
+
+class TradeCountryTrendRow(ApiModel):
+    hs: str = Field(pattern=r"^[0-9]{2}([0-9]{2}){0,4}$")
+    usd: int | None  # 마지막 달
+    mom: float | None  # 전월 대비
+    yoy: float | None  # 전년 같은 달 대비
+    spark: list[int | None]  # months 순(달러)
+    stocks: list[TradeRelatedStock]  # 그 품목을 매핑한 종목(상대국이 이 나라거나 전세계)
+
+
+class TradeCountryTrend(ApiModel):
+    country: str = Field(pattern=r"^[A-Z0-9]{2}$")
+    ym: str
+    months: list[str]
+    rows: list[TradeCountryTrendRow]
+
+
+class TradeSectorStock(ApiModel):
+    code: str = Field(pattern=r"^[0-9A-Z]{6}$")
+    name: str
+    usd: int | None  # 마지막 달 종목 수출 지수(가중, 달러)
+    yoy_3m: float | None
+
+
+class TradeSectorProduct(ApiModel):
+    hs: str = Field(pattern=r"^[0-9]{2}([0-9]{2}){0,4}$")
+    name: str | None
+
+
+class TradeSector(ApiModel):
+    sector: str
+    n_stocks: int
+    usd: int | None  # 마지막 달 산업 합(종목 지수 합)
+    yoy: float | None  # 두 달 모두 값이 있는 종목만으로
+    yoy_3m: float | None
+    spark: list[int | None]
+    stocks: list[TradeSectorStock]
+    products: list[TradeSectorProduct]
+
+
+class TradeSectors(ApiModel):
+    last_ym: str
+    months: list[str]
+    rows: list[TradeSector]
+
+
 # ── 월별 추이(metrics §29a — 2026-10-20 사용자 요청: 쌓아서 보고 QoQ·YoY) ─────────────────────────
 
 

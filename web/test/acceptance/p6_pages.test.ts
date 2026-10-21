@@ -34,6 +34,7 @@ function loginResponse(url: string, stockAs: (code: string) => string | null): R
   const fl = /^trade\/flash\?(?:.*&)?kind=([a-z_]+)/.exec(path);
   if (fl?.[1]) return json(fx(`trade_flash/flash_${fl[1]}`));
   if (p === 'trade/stocks') return json(fx('trade_map/stocks'));
+  if (p === 'trade/sectors') return json(fx('trade_map/sectors')); // P10 단계 4 '산업' 탭
   const st = /^trade\/stock\/([0-9A-Z]{6})$/.exec(p);
   if (st?.[1]) {
     const name = stockAs(st[1]);
@@ -109,11 +110,11 @@ async function openTab(root: HTMLElement, label: string): Promise<void> {
   await flush(10);
 }
 
-describe('페이지 7 — 탭 6 × 등급 2', () => {
+describe('페이지 7 — 탭 9 × 등급 2', () => {
   for (const tier of ['login', 'public'] as const) {
     it(`${tier}: 탭마다 오류 0·NaN·undefined 0`, async () => {
       const { hz, root } = await mountP7(tier);
-      expect(TRADE_TABS.map((t) => t.label)).toEqual(['종목', '월별 추이', '속보', '품목', '국가', '지역', '급등', '104품목']);
+      expect(TRADE_TABS.map((t) => t.label)).toEqual(['종목', '산업', '월별 추이', '속보', '품목', '국가', '지역', '급등', '104품목']);
       for (const t of TRADE_TABS) {
         await openTab(root, t.label);
         const panel = root.querySelector('[role="tabpanel"]:not([hidden])') ?? root;

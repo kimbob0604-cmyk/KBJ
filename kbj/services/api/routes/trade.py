@@ -17,6 +17,7 @@ from kbj.services.api.models.trade import (
     TenDayKindT,
     TradeCountries,
     TradeCountryItems,
+    TradeCountryTrend,
     TradeFlash,
     TradeItemCountries,
     TradeItems,
@@ -25,6 +26,7 @@ from kbj.services.api.models.trade import (
     TradeMonthly,
     TradePreview,
     TradeRegions,
+    TradeSectors,
     TradeStock,
     TradeStockFlows,
     TradeStocks,
@@ -42,6 +44,7 @@ from kbj.services.api.readers.trade_explore import (
     trade_surges,
 )
 from kbj.services.api.readers.trade_flash import trade_flash
+from kbj.services.api.readers.trade_industry import trade_country_trend, trade_sectors
 from kbj.services.api.readers.trade_map import trade_stock, trade_stock_flows, trade_stocks
 from kbj.services.api.readers.trade_preview import trade_stock_preview
 from kbj.services.api.routes._common import data_router
@@ -222,3 +225,22 @@ def stock_preview(request: Request, code: Annotated[str, Path(pattern=CODE_PATTE
         request, domain=DOMAIN, ttl_s=TTL_DEFAULT_S,
         build=lambda: trade_stock_preview(st.read, code=code),
     )  # fmt: skip
+
+
+@router.get("/countries/{cc}/trend", response_model=Envelope[TradeCountryTrend])
+def country_trend(request: Request, cc: Annotated[str, Path(pattern=CC_PATTERN)]) -> Response:
+    """국가 수출 품목 추이(P10 단계 4 — 전월·전년 대비·24개월·관련 종목)."""
+    st = get_state(request)
+    return cached_json(
+        request, domain=DOMAIN, ttl_s=TTL_DEFAULT_S,
+        build=lambda: trade_country_trend(st.read, country=cc),
+    )  # fmt: skip
+
+
+@router.get("/sectors", response_model=Envelope[TradeSectors])
+def sectors(request: Request) -> Response:
+    """산업별 수출(P10 단계 4 — 매핑 종목 지수 합·YoY·종목·추적 품목)."""
+    st = get_state(request)
+    return cached_json(
+        request, domain=DOMAIN, ttl_s=TTL_DEFAULT_S, build=lambda: trade_sectors(st.read)
+    )

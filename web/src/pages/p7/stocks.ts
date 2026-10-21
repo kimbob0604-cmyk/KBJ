@@ -7,6 +7,7 @@
 import type { Envelope } from "../../data/source";
 import { h } from "../../ui/dom";
 import { toCsv } from "../../ui/csv";
+import { panel } from "../../ui/panel";
 import { seg } from "../../ui/seg";
 import { sparkline } from "../../ui/svg";
 import { type Column, table } from "../../ui/table";
@@ -20,7 +21,7 @@ import {
   tradePanel,
   type TradeStocks,
 } from "./common";
-import { flowsPanel } from "./flows";
+import { flowsPanel, TITLE as FLOWS_TITLE } from "./flows";
 
 export const TITLE = "맵핑 트렌드 — 매핑 종목 랭킹";
 /** 급등락: 최근 1개월 또는 3개월 수출 지수 YoY 의 절댓값이 이 이상 */
@@ -171,10 +172,19 @@ export async function mount(t: TabCtx, el: HTMLElement): Promise<void> {
   const rows: Ranked[] = env.data.rows.map((r, i) => ({ ...r, __rank: i + 1 }));
   const basis =
     env.notes.find((n) => n.startsWith("랭킹")) ?? env.as_of.slice(0, 10);
-  const flows = flowsPanel(t, env.data.rows);
-  el.querySelector(":scope > .grid")?.append(flows.el);
+  // 흐름 패널(로그인 전용) — 공개 빌드는 자물쇠만(흐름·프리뷰 모듈을 번들에서 뺀다 — p7_trade.ts 산업 탭과 같은 규칙)
+  const flows =
+    import.meta.env.MODE === "public"
+      ? null
+      : flowsPanel(t, env.data.rows);
+  el.querySelector(":scope > .grid")?.append(
+    flows?.el ??
+      panel(t.tier, { title: FLOWS_TITLE, tier: "login", span: 12 }).el,
+  );
   const pick =
-    t.tier === "login" ? (code: string) => void flows.show(code) : undefined;
+    t.tier === "login" && flows
+      ? (code: string) => void flows.show(code)
+      : undefined;
   const state = { sector: "", swing: false, sort: "yoy_3m" as SortKey };
   const holder = h("div", { class: "trend-table" });
   const draw = (): void => {

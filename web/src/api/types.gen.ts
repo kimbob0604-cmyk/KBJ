@@ -1204,6 +1204,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/trade/countries/{cc}/trend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Country Trend
+         * @description 국가 수출 품목 추이(P10 단계 4 — 전월·전년 대비·24개월·관련 종목).
+         */
+        get: operations["country_trend_api_trade_countries__cc__trend_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/trade/sectors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sectors
+         * @description 산업별 수출(P10 단계 4 — 매핑 종목 지수 합·YoY·종목·추적 품목).
+         */
+        get: operations["sectors_api_trade_sectors_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/gex/levels": {
         parameters: {
             query?: never;
@@ -4697,6 +4737,25 @@ export interface components {
             generated_at: string;
             data: components["schemas"]["TradeCountryItems"];
         };
+        /** Envelope[TradeCountryTrend] */
+        Envelope_TradeCountryTrend_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["TradeCountryTrend"];
+        };
         /** Envelope[TradeFlash] */
         Envelope_TradeFlash_: {
             /** Source */
@@ -4886,6 +4945,25 @@ export interface components {
              */
             generated_at: string;
             data: components["schemas"]["TradeRegions"];
+        };
+        /** Envelope[TradeSectors] */
+        Envelope_TradeSectors_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["TradeSectors"];
         };
         /** Envelope[TradeStockFlows] */
         Envelope_TradeStockFlows_: {
@@ -8209,6 +8287,32 @@ export interface components {
             exp_share: number | null;
             quality: components["schemas"]["Quality"];
         };
+        /** TradeCountryTrend */
+        TradeCountryTrend: {
+            /** Country */
+            country: string;
+            /** Ym */
+            ym: string;
+            /** Months */
+            months: string[];
+            /** Rows */
+            rows: components["schemas"]["TradeCountryTrendRow"][];
+        };
+        /** TradeCountryTrendRow */
+        TradeCountryTrendRow: {
+            /** Hs */
+            hs: string;
+            /** Usd */
+            usd: number | null;
+            /** Mom */
+            mom: number | null;
+            /** Yoy */
+            yoy: number | null;
+            /** Spark */
+            spark: (number | null)[];
+            /** Stocks */
+            stocks: components["schemas"]["TradeRelatedStock"][];
+        };
         /** TradeFlash */
         TradeFlash: {
             /**
@@ -8724,6 +8828,59 @@ export interface components {
             ym: string;
             /** Rows */
             rows: components["schemas"]["TradeRegionRow"][];
+        };
+        /** TradeRelatedStock */
+        TradeRelatedStock: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+        };
+        /** TradeSector */
+        TradeSector: {
+            /** Sector */
+            sector: string;
+            /** N Stocks */
+            n_stocks: number;
+            /** Usd */
+            usd: number | null;
+            /** Yoy */
+            yoy: number | null;
+            /** Yoy 3M */
+            yoy_3m: number | null;
+            /** Spark */
+            spark: (number | null)[];
+            /** Stocks */
+            stocks: components["schemas"]["TradeSectorStock"][];
+            /** Products */
+            products: components["schemas"]["TradeSectorProduct"][];
+        };
+        /** TradeSectorProduct */
+        TradeSectorProduct: {
+            /** Hs */
+            hs: string;
+            /** Name */
+            name: string | null;
+        };
+        /** TradeSectorStock */
+        TradeSectorStock: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Usd */
+            usd: number | null;
+            /** Yoy 3M */
+            yoy_3m: number | null;
+        };
+        /** TradeSectors */
+        TradeSectors: {
+            /** Last Ym */
+            last_ym: string;
+            /** Months */
+            months: string[];
+            /** Rows */
+            rows: components["schemas"]["TradeSector"][];
         };
         /** TradeStatsOut */
         TradeStatsOut: {
@@ -13306,6 +13463,120 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_TradePreview_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    country_trend_api_trade_countries__cc__trend_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cc: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_TradeCountryTrend_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    sectors_api_trade_sectors_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_TradeSectors_"];
                 };
             };
             /** @description 세션 없음·만료 */

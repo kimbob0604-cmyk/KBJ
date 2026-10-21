@@ -198,6 +198,14 @@ def render() -> dict[str, str]:
             raise RuntimeError(f"/api/trade/stock/{code}/preview: HTTP {r.status_code}")
         if r.status_code == 200:
             out[f"preview_{code}.json"] = _dump(r.json())
+    for name, path in (  # P10 단계 4 — 국가 품목 추이·산업(로그인)
+        ("trend_US.json", "/api/trade/countries/US/trend"),
+        ("sectors.json", "/api/trade/sectors"),
+    ):
+        r = c.get(path)
+        if r.status_code != 200:
+            raise RuntimeError(f"{path}: HTTP {r.status_code}")
+        out[name] = _dump(r.json())
     nomap = c.get("/api/trade/stock/994010")
     if nomap.status_code != 404:
         raise RuntimeError(f"매핑 없는 종목: HTTP {nomap.status_code}")

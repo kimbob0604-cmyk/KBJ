@@ -1,10 +1,13 @@
 // 페이지 7 '국가' 탭(EXP — docs/p6_design.md §1.4·§6, metrics §26). 국가 총괄(마지막 달 수출·수입·수지·전년 대비·비중) +
 // 고른 국가의 수출 품목(HS4). 로그인: 'trade/countries'·'trade/countries/<ISO2>/items'(API), 공개: 'trade/countries'·
 // 'trade/country/<ISO2>'(같은 모양의 공개 파일). 금액은 달러(원화 환산 없음). 실패는 탭 안 한 줄.
+// 로그인은 품목 추이(P10 단계 4 — 'trade/countries/<ISO2>/trend': 전월·전년 대비·24개월·관련 종목)를 아래에 더 그린다.
+import type { components } from '../../api/types.gen';
 import type { Envelope } from '../../data/source';
 import { toCsv } from '../../ui/csv';
 import { h, replace } from '../../ui/dom';
 import { signClass } from '../../ui/fmt';
+import { sparkline } from '../../ui/svg';
 import { type Column, table } from '../../ui/table';
 import {
   failNote,
@@ -22,6 +25,32 @@ import {
 
 export const TITLE = '국가';
 export const ITEMS_TITLE = '국가별 수출 품목';
+export const TREND_MAX_STOCKS = 3;
+
+export type TradeCountryTrend = components['schemas']['TradeCountryTrend'];
+type TrendRow = TradeCountryTrend['rows'][number];
+
+/** 관련 종목 글자 — 앞 TREND_MAX_STOCKS 개 + '외 N' */
+export function relatedText(r: TrendRow): string {
+  const head = r.stocks.slice(0, TREND_MAX_STOCKS).map((s) => s.name);
+  const more = r.stocks.length - head.length;
+  return head.length ? `${head.join(', ')}${more > 0 ? ` 외 ${String(more)}` : ''}` : '—';
+}
+
+function trendColumns(names: ReadonlyMap<string, string | null>): Column<TrendRow>[] {
+  return [
+    { key: 'hs', label: '품목', align: 'l', cell: (r) => `${names.get(r.hs) ?? ''} (${r.hs})` },
+    { key: 'usd', label: '금액', cell: (r) => usd(r.usd) },
+    { key: 'mom', label: '전월 대비', cell: (r) => ratio(r.mom), cls: (r) => signClass(r.mom) },
+    { key: 'yoy', label: '전년 대비', cell: (r) => ratio(r.yoy), cls: (r) => signClass(r.yoy) },
+    {
+      key: 'spark',
+      label: '24개월',
+      cell: (r) => sparkline(r.spark, { label: `${r.hs} 24개월 수출`, w: 96, h: 20 }),
+    },
+    { key: 'stocks', label: '관련 종목', align: 'l', cell: (r) => relatedText(r) },
+  ];
+}
 
 type Row = TradeCountries['rows'][number];
 
@@ -98,6 +127,10 @@ export async function mount(t: TabCtx, el: HTMLElement): Promise<void> {
   ip.showMessage('위 표에서 국가를 고르면 그린다');
   el.append(h('div', { class: 'grid' }, p.el, ip.el));
   const pick = async (r: Row): Promise<void> => {
+    const trend =
+      t.tier === 'login'
+        ? t.source.get<TradeCountryTrend>(`trade/countries/${r.country}/trend`).catch(() => null)
+        : Promise.resolve(null);
     try {
       const env = await countryItems(t, r.country);
       ip.setSource(env);
@@ -124,6 +157,20 @@ export async function mount(t: TabCtx, el: HTMLElement): Promise<void> {
           rowKey: (x) => x.hs,
         }).el,
       );
+      const tr = await trend;
+      if (tr) {
+        const names = new Map(d.rows.map((x) => [x.hs, x.name] as const));
+        ip.body.append(
+          h('h5', null, `품목 추이 · 24개월 (${tr.data.months[0] ?? ''}~${tr.data.ym})`),
+          table<TrendRow>({
+            caption: `${d.country} 수출 품목 추이`,
+            columns: trendColumns(names),
+            rows: tr.data.rows,
+            rowKey: (x) => x.hs,
+            pageSize: 20,
+          }).el,
+        );
+      }
     } catch (err) {
       ip.showError(err);
     }

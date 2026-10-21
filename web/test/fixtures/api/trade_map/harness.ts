@@ -30,6 +30,9 @@ export type Over = Record<string, (() => Response) | undefined>;
 export function loginFixtureName(path: string): string | null {
   const p = path.split('?')[0] ?? '';
   if (p === 'trade/stocks') return 'stocks';
+  if (p === 'trade/sectors') return 'sectors';
+  const t = /^trade\/countries\/([A-Z0-9]{2})\/trend$/.exec(p);
+  if (t) return `trend_${t[1] ?? ''}`;
   const f = /^trade\/stock\/([0-9A-Z]{6})\/(flows|preview)$/.exec(p);
   if (f) return `${f[2] ?? ''}_${f[1] ?? ''}`;
   const m = /^trade\/stock\/([0-9A-Z]{6})$/.exec(p);
