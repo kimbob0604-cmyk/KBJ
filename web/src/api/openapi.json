@@ -6316,6 +6316,84 @@
         }
       }
     },
+    "/api/gex/briefing": {
+      "get": {
+        "tags": [
+          "gex"
+        ],
+        "summary": "Briefing",
+        "operationId": "briefing_api_gex_briefing_get",
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "all",
+                "nearest",
+                "0dte"
+              ],
+              "type": "string",
+              "default": "all",
+              "title": "Scope"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_GexBriefing_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/gex/flow": {
       "get": {
         "tags": [
@@ -15402,6 +15480,49 @@
         ],
         "title": "Envelope[Financials]"
       },
+      "Envelope_GexBriefing_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/GexBriefing"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[GexBriefing]"
+      },
       "Envelope_GexFlow_": {
         "properties": {
           "source": {
@@ -19381,6 +19502,191 @@
         ],
         "title": "FyEstimateView"
       },
+      "GexBriefing": {
+        "properties": {
+          "scope": {
+            "type": "string",
+            "enum": [
+              "all",
+              "nearest",
+              "0dte"
+            ],
+            "title": "Scope"
+          },
+          "cycle_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Cycle At"
+          },
+          "session_open": {
+            "type": "boolean",
+            "title": "Session Open"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "regime": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "long",
+                  "short"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regime"
+          },
+          "regime_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regime Label"
+          },
+          "net_gex": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Gex"
+          },
+          "net_vs_avg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Vs Avg"
+          },
+          "headline": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Headline"
+          },
+          "expected_move": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Move"
+          },
+          "levels": {
+            "items": {
+              "$ref": "#/components/schemas/GexKeyLevel"
+            },
+            "type": "array",
+            "title": "Levels"
+          },
+          "strikes": {
+            "items": {
+              "$ref": "#/components/schemas/GexStrikeNet"
+            },
+            "type": "array",
+            "title": "Strikes"
+          },
+          "expiry": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry"
+          },
+          "expiry_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry Date"
+          },
+          "days_to_expiry": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days To Expiry"
+          },
+          "multiplier": {
+            "type": "integer",
+            "title": "Multiplier"
+          },
+          "strategies": {
+            "items": {
+              "$ref": "#/components/schemas/GexStrategy"
+            },
+            "type": "array",
+            "title": "Strategies"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scope",
+          "cycle_at",
+          "session_open",
+          "price",
+          "regime",
+          "regime_label",
+          "net_gex",
+          "net_vs_avg",
+          "headline",
+          "expected_move",
+          "levels",
+          "strikes",
+          "expiry",
+          "expiry_date",
+          "days_to_expiry",
+          "multiplier",
+          "strategies"
+        ],
+        "title": "GexBriefing",
+        "description": "`/api/gex/briefing` — 감마 국면·머리 문장·레벨표·행사가 표·옵션 포지셔닝."
+      },
       "GexFlow": {
         "properties": {
           "hiro_flag": {
@@ -19512,6 +19818,121 @@
         ],
         "title": "GexInvestorRow",
         "description": "투자자별 선물·옵션 순매수(`prv_gex.investor_flow` 마지막 행 — 대금은 **원**)."
+      },
+      "GexKeyLevel": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "em_up",
+              "call_wall2",
+              "call_wall",
+              "flip",
+              "spot",
+              "put_wall",
+              "put_wall2",
+              "em_down"
+            ],
+            "title": "Kind"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          },
+          "dist_pt": {
+            "type": "number",
+            "title": "Dist Pt"
+          },
+          "dist_pct": {
+            "type": "number",
+            "title": "Dist Pct"
+          },
+          "lines": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Lines"
+          },
+          "strength": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "강",
+                  "약"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strength"
+          },
+          "gex": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gex"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind",
+          "label",
+          "value",
+          "dist_pt",
+          "dist_pct"
+        ],
+        "title": "GexKeyLevel",
+        "description": "레벨표 한 줄 — 값·현재가와의 거리·해설(규칙 문장)."
+      },
+      "GexLeg": {
+        "properties": {
+          "side": {
+            "type": "string",
+            "enum": [
+              "buy",
+              "sell"
+            ],
+            "title": "Side"
+          },
+          "cp": {
+            "type": "string",
+            "enum": [
+              "C",
+              "P"
+            ],
+            "title": "Cp"
+          },
+          "strike": {
+            "type": "number",
+            "title": "Strike"
+          },
+          "price": {
+            "type": "number",
+            "title": "Price"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "side",
+          "cp",
+          "strike",
+          "price"
+        ],
+        "title": "GexLeg"
       },
       "GexLevel": {
         "properties": {
@@ -19829,6 +20250,99 @@
         "title": "GexProfile",
         "description": "`/api/gex/profile?scope=` — 행사가별 GEX 막대 + 현재가·Flip·월(화면 `profile`·`ladder`)."
       },
+      "GexStrategy": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "idea": {
+            "type": "string",
+            "title": "Idea"
+          },
+          "legs": {
+            "items": {
+              "$ref": "#/components/schemas/GexLeg"
+            },
+            "type": "array",
+            "title": "Legs"
+          },
+          "net_premium": {
+            "type": "number",
+            "title": "Net Premium"
+          },
+          "breakevens": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Breakevens"
+          },
+          "max_profit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Profit"
+          },
+          "max_loss": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Loss"
+          },
+          "scenario": {
+            "items": {
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array",
+              "maxItems": 2,
+              "minItems": 2
+            },
+            "type": "array",
+            "title": "Scenario"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "name",
+          "idea",
+          "legs",
+          "net_premium",
+          "breakevens",
+          "max_profit",
+          "max_loss",
+          "scenario"
+        ],
+        "title": "GexStrategy",
+        "description": "옵션 포지셔닝 한 구조 — 만기 손익(pt, 수수료·증거금 제외)."
+      },
       "GexStrikeBar": {
         "properties": {
           "mrkt_cls": {
@@ -19873,6 +20387,36 @@
         ],
         "title": "GexStrikeBar",
         "description": "행사가 하나의 GEX(원/1%, GX §2.1 — 콜 롱·풋 숏 naive 딜러)."
+      },
+      "GexStrikeNet": {
+        "properties": {
+          "strike": {
+            "type": "number",
+            "title": "Strike"
+          },
+          "call": {
+            "type": "number",
+            "title": "Call"
+          },
+          "put": {
+            "type": "number",
+            "title": "Put"
+          },
+          "net": {
+            "type": "number",
+            "title": "Net"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "strike",
+          "call",
+          "put",
+          "net"
+        ],
+        "title": "GexStrikeNet",
+        "description": "행사가 하나(범위의 만기 합산) — 콜·풋·순 GEX(원/1%)."
       },
       "Health": {
         "properties": {

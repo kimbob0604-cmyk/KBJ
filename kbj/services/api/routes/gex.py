@@ -14,6 +14,7 @@ from fastapi import Query, Request, Response
 from kbj.services.api.deps import cached_json, get_state, live_ttl
 from kbj.services.api.models.common import Envelope
 from kbj.services.api.models.gex import (
+    GexBriefing,
     GexFlow,
     GexLevels,
     GexMetricSeries,
@@ -21,6 +22,7 @@ from kbj.services.api.models.gex import (
     GexScopeT,
 )
 from kbj.services.api.readers.gex import gex_flow, gex_levels, gex_metrics, gex_profile
+from kbj.services.api.readers.gex_briefing import gex_briefing
 from kbj.services.api.routes._common import data_router
 
 router = data_router("gex")
@@ -58,6 +60,15 @@ def metrics(
     return cached_json(
         request, domain=DOMAIN, ttl_s=live_ttl(st),
         build=lambda: gex_metrics(st.read, name=name, start=start, end=end),
+    )  # fmt: skip
+
+
+@router.get("/briefing", response_model=Envelope[GexBriefing])
+def briefing(request: Request, scope: ScopeQ = "all") -> Response:
+    st = get_state(request)
+    return cached_json(
+        request, domain=DOMAIN, ttl_s=live_ttl(st),
+        build=lambda: gex_briefing(st.read, scope=scope),
     )  # fmt: skip
 
 

@@ -45,6 +45,7 @@ export function gexHarness(over: Over = {}): GexHarness {
       return `./${name}.json` in FX ? json(gexFixture(name)) : json(NO_DATA, 404);
     }
     if (base === 'gex/flow') return json(gexFixture('flow'));
+    if (base === 'gex/briefing') return json(gexFixture('briefing_all'));
     return json(NO_DATA, 404);
   });
   return { source: createApiSource({ fetch }), calls, paths: () => calls.map((c) => c.url.replace(/^\/api\//, '')) };

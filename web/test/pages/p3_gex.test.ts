@@ -15,6 +15,7 @@ import {
   type GexMetricSeries,
   type GexProfile,
 } from '../../src/pages/p3/gex';
+import { BRIEF_TITLE } from '../../src/pages/p3/gex_brief';
 import { P3_SECTIONS } from '../../src/pages/p3_diag';
 import { json } from '../helpers';
 import { GEX_NOW, gexFixture, gexHarness } from '../fixtures/api/gex/harness';
@@ -37,13 +38,14 @@ async function mount(tier: 'login' | 'public', over: Record<string, (() => Respo
 }
 
 describe('페이지 3 GEX — 로그인', () => {
-  it('프로필·레벨은 반폭 둘 나란히, 확장 지표는 전체 폭 — 순서는 진입 모듈이 고정', async () => {
+  it('브리핑(전체 폭) 아래 프로필·레벨 반폭 둘 나란히, 확장 지표는 전체 폭 — 순서는 진입 모듈이 고정', async () => {
     const { root } = await mount('login');
     const spans = [...root.querySelectorAll('section.panel')].map((p) => [text(p.querySelector('h3 > span')), p.className]);
-    expect(spans.map((s) => s[0])).toEqual([TITLES.profile, TITLES.levels, TITLES.ext]);
-    expect(spans[0]?.[1]).toContain('span-6');
+    expect(spans.map((s) => s[0])).toEqual([BRIEF_TITLE, TITLES.profile, TITLES.levels, TITLES.ext]);
+    expect(spans[0]?.[1]).toContain('span-12');
     expect(spans[1]?.[1]).toContain('span-6');
-    expect(spans[2]?.[1]).toContain('span-12');
+    expect(spans[2]?.[1]).toContain('span-6');
+    expect(spans[3]?.[1]).toContain('span-12');
     expect(P3_SECTIONS).toContain('gex');
   });
 

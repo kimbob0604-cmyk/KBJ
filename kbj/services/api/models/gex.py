@@ -21,17 +21,22 @@ from kbj.core.quality import Quality
 from kbj.services.api.models.common import ApiModel
 
 __all__ = [
+    "GexBriefing",
     "GexFlagT",
     "GexFlow",
     "GexFlowPoint",
     "GexInvestorRow",
+    "GexKeyLevel",
+    "GexLeg",
     "GexLevel",
     "GexLevels",
     "GexMetricPoint",
     "GexMetricSeries",
     "GexProfile",
     "GexScopeT",
+    "GexStrategy",
     "GexStrikeBar",
+    "GexStrikeNet",
 ]
 
 GexScopeT = Literal["all", "nearest", "0dte"]
@@ -134,3 +139,74 @@ class GexFlow(ApiModel):
     hiro: list[GexFlowPoint]
     investors: list[GexInvestorRow]
     night_investor_collected: bool = False  # '수집 안 함(야간)'(§6.2)
+
+
+# ── 브리핑(2026-10-21 사용자 요청 — 행사가별 콜·풋·순감마 + 레벨 해설 + 옵션 포지셔닝) ──────────
+
+
+class GexKeyLevel(ApiModel):
+    """레벨표 한 줄 — 값·현재가와의 거리·해설(규칙 문장)."""
+
+    kind: Literal[
+        "em_up", "call_wall2", "call_wall", "flip", "spot", "put_wall", "put_wall2", "em_down"
+    ]
+    label: str
+    value: float
+    dist_pt: float
+    dist_pct: float
+    lines: list[str] = Field(default_factory=list[str])
+    strength: Literal["강", "약"] | None = None
+    gex: float | None = None  # 그 행사가 순 GEX(원/1%)
+
+
+class GexStrikeNet(ApiModel):
+    """행사가 하나(범위의 만기 합산) — 콜·풋·순 GEX(원/1%)."""
+
+    strike: float
+    call: float
+    put: float
+    net: float
+
+
+class GexLeg(ApiModel):
+    side: Literal["buy", "sell"]
+    cp: Literal["C", "P"]
+    strike: float
+    price: float  # pt
+
+
+class GexStrategy(ApiModel):
+    """옵션 포지셔닝 한 구조 — 만기 손익(pt, 수수료·증거금 제외)."""
+
+    key: str
+    name: str
+    idea: str
+    legs: list[GexLeg]
+    net_premium: float  # 양수 = 받음
+    breakevens: list[float]
+    max_profit: float | None  # None = 제한 없음
+    max_loss: float | None
+    scenario: list[tuple[float, float]]  # (등락 %, 만기 손익 pt)
+    note: str = ""
+
+
+class GexBriefing(ApiModel):
+    """`/api/gex/briefing` — 감마 국면·머리 문장·레벨표·행사가 표·옵션 포지셔닝."""
+
+    scope: GexScopeT
+    cycle_at: AwareDatetime
+    session_open: bool
+    price: float | None
+    regime: Literal["long", "short"] | None
+    regime_label: str | None
+    net_gex: float | None  # 원/1%
+    net_vs_avg: float | None  # 최근 세션 순GEX 절댓값 평균 대비 배수
+    headline: str | None
+    expected_move: float | None  # 1세션 ±1σ(pt)
+    levels: list[GexKeyLevel]
+    strikes: list[GexStrikeNet]  # 현재가 가까운 행사가(내림차순)
+    expiry: str | None  # 전략에 쓴 만기('WKM:261022' 처럼 분류:만기)
+    expiry_date: date | None
+    days_to_expiry: int | None
+    multiplier: int  # 원/pt — 손익 pt × 승수 = 원
+    strategies: list[GexStrategy]

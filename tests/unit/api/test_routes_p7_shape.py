@@ -24,6 +24,7 @@ P7_ROUTES: dict[str, tuple[str, str]] = {
         "GexMetricSeries", "gex.engine",
     ),
     "/api/gex/flow": ("GexFlow", "flows.market_minute"),
+    "/api/gex/briefing?scope=all": ("GexBriefing", "gex.engine"),
     "/api/diag/summary?date=2026-10-13": ("DiagSummary", "diag.daily"),
     "/api/diag/history?key=credit_spread&days=250": ("DiagHistory", "diag.public"),
     "/api/diag/events?from=2026-10-01&to=2026-10-31": ("DiagEvents", "diag.public"),

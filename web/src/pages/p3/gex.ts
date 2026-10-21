@@ -18,6 +18,7 @@ import { ladder, type Rung } from '../../ui/ladder';
 import { errorText, type Panel, panel } from '../../ui/panel';
 import { profile, type ProfileBar } from '../../ui/profile';
 import { seg } from '../../ui/seg';
+import { BRIEF_DEF, BRIEF_TITLE, briefView, type GexBriefing } from './gex_brief';
 
 type S = components['schemas'];
 export type GexLevels = S['GexLevels'];
@@ -234,24 +235,37 @@ export const EXT_DEF =
 
 /** ④ GEX 레벨(로그인) */
 /** ④ GEX 패널 셋(틀만 — 공개 빌드는 이 틀만 쓰고 본문 mountGex 는 번들에서 빠진다, P8 WRAP) */
-export function gexPanels(ctx: PageContext): { prof: Panel; lvls: Panel; ext: Panel } {
+export function gexPanels(ctx: PageContext): { brief: Panel; prof: Panel; lvls: Panel; ext: Panel } {
   const common = { tier: 'login' as const, lock: 'options', src: GEX_SOURCE };
+  const brief = panel(ctx.tier, { ...common, title: BRIEF_TITLE, span: 12, def: BRIEF_DEF });
   const prof = panel(ctx.tier, { ...common, title: TITLES.profile, span: 6, def: PROFILE_DEF });
   const lvls = panel(ctx.tier, { ...common, title: TITLES.levels, span: 6, def: LEVELS_DEF });
   const ext = panel(ctx.tier, { ...common, title: TITLES.ext, span: 12, def: EXT_DEF });
-  ctx.root.append(prof.el, lvls.el, ext.el);
-  return { prof, lvls, ext };
+  ctx.root.append(brief.el, prof.el, lvls.el, ext.el);
+  return { brief, prof, lvls, ext };
 }
 
 export async function mountGex(ctx: PageContext): Promise<void> {
-  const { prof, lvls, ext } = gexPanels(ctx);
+  const { brief, prof, lvls, ext } = gexPanels(ctx);
   if (lvls.locked) return; // 공개판 — 자물쇠만, 요청하지 않는다
 
   const levelCache = new Map<GexScope, Envelope<GexLevels>>();
   const profileCache = new Map<GexScope, Envelope<GexProfile>>();
+  const briefCache = new Map<GexScope, Envelope<GexBriefing>>();
   const scopes = seg<GexScope>({ label: 'GEX 범위', options: SCOPES, value: 'all', onChange: (v) => void show(v) });
 
   async function show(scope: GexScope): Promise<void> {
+    try {
+      let env = briefCache.get(scope);
+      if (!env) {
+        env = await ctx.source.get<GexBriefing>('gex/briefing', { scope });
+        briefCache.set(scope, env);
+      }
+      brief.setSource(env);
+      replace(brief.body, briefView(env.data));
+    } catch (err) {
+      fail(brief, err, GEX_HINT);
+    }
     try {
       let env = levelCache.get(scope);
       if (!env) {

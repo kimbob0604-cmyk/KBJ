@@ -974,3 +974,56 @@ svg text.warn {
   color: var(--fg);
   overflow-wrap: anywhere;
 }
+
+/* ── 페이지 3 GEX 브리핑(2026-10-21) ── */
+.gb { display: grid; gap: 14px; min-width: 0; max-width: 100%; }
+.gb-txt, .gb-headline, .gb-sub, .gb-line { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+.gb-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.gb-chip { border: 1px solid currentColor; border-radius: 999px; padding: 2px 12px; font-weight: 700; }
+.gb-short { color: var(--up); }
+.gb-long { color: var(--accent); }
+.gb-net { color: var(--fg); font-weight: 700; }
+.gb-headline { margin: 0; font-size: 1.25rem; line-height: 1.45; color: var(--fg); }
+.gb-sub { margin: 0; font-family: var(--mono); }
+.gb h5 { margin: 6px 0; color: var(--accent); font-size: 0.85rem; letter-spacing: 0.06em; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+.gb-lv { display: grid; grid-template-columns: 18px 120px minmax(0, 1fr); gap: 10px; padding: 8px 0; border-bottom: 1px dashed var(--line); }
+.gb-arrow { color: var(--dim); }
+.gb-val b { display: block; font-family: var(--mono); font-size: 1.15rem; }
+.gb-val small { color: var(--dim); font-family: var(--mono); }
+.gb-cw .gb-val b { color: var(--warn); }
+.gb-pw .gb-val b { color: #9b6bff; }
+.gb-warn .gb-val b { color: var(--fg); }
+.gb-accent .gb-val b { color: var(--accent); }
+.gb-dim .gb-val b { color: var(--dim); }
+.gb-label { margin: 0 0 2px; font-weight: 700; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.gb-line { margin: 2px 0; color: var(--fg); opacity: 0.9; }
+.gb-badge { border: 1px solid currentColor; border-radius: 999px; padding: 0 8px; font-size: 0.75rem; }
+.gb-strong { color: var(--accent); }
+.gb-weak { color: var(--dim); }
+.gb-gex { font-family: var(--mono); color: var(--dim); font-weight: 400; }
+.gb-bars { width: 100%; height: auto; max-width: 760px; }
+.gb-bars text { font-family: var(--mono); font-size: 11px; }
+.gb-call { fill: #f2c94c; }
+.gb-put { fill: #9b6bff; }
+.gb-pos { fill: #2fd27a; }
+.gb-neg { fill: #ff4f7b; }
+.gb-tcw { fill: #f2c94c; }
+.gb-tpw { fill: #9b6bff; }
+.gb-legend { margin: 0; }
+.gb-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.gb-card { border: 1px solid var(--line); padding: 10px; display: grid; gap: 6px; min-width: 0; overflow: hidden; }
+.gb-card * { white-space: normal; overflow-wrap: anywhere; }
+.gb-card h5 { border: 0; margin: 0; padding: 0; }
+.gb-idea, .gb-note { margin: 0; color: var(--dim); font-size: 0.85rem; }
+.gb-note { color: var(--up); }
+.gb-legs { margin: 0; padding-left: 16px; font-family: var(--mono); font-size: 0.85rem; }
+.gb-nums { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 0; font-size: 0.85rem; }
+.gb-nums dt { color: var(--dim); }
+.gb-nums dd { margin: 0; font-family: var(--mono); }
+.gb-payoff { width: 100%; height: 90px; }
+.gb-scen { width: 100%; table-layout: fixed; border-collapse: collapse; font-family: var(--mono); font-size: 0.72rem; text-align: center; }
+.gb-scen th { color: var(--dim); font-weight: 400; }
+@media (max-width: 640px) {
+  .gb-lv { grid-template-columns: 14px 84px minmax(0, 1fr); }
+  .gb-headline { font-size: 1.05rem; }
+}

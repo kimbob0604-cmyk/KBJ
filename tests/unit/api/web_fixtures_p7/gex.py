@@ -37,6 +37,7 @@ FILES: Final[tuple[tuple[str, str], ...]] = (
     ("metrics_vex.json", "/api/gex/metrics?name=vex"),
     ("metrics_skew_25d.json", "/api/gex/metrics?name=skew_25d"),
     ("flow.json", "/api/gex/flow"),
+    ("briefing_all.json", "/api/gex/briefing?scope=all"),
 )
 
 

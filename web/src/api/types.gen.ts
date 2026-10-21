@@ -1215,6 +1215,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/gex/briefing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Briefing */
+        get: operations["briefing_api_gex_briefing_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/gex/flow": {
         parameters: {
             query?: never;
@@ -3766,6 +3783,25 @@ export interface components {
             generated_at: string;
             data: components["schemas"]["Financials"];
         };
+        /** Envelope[GexBriefing] */
+        Envelope_GexBriefing_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["GexBriefing"];
+        };
         /** Envelope[GexFlow] */
         Envelope_GexFlow_: {
             /** Source */
@@ -5304,6 +5340,52 @@ export interface components {
             quality: components["schemas"]["Quality"];
         };
         /**
+         * GexBriefing
+         * @description `/api/gex/briefing` — 감마 국면·머리 문장·레벨표·행사가 표·옵션 포지셔닝.
+         */
+        GexBriefing: {
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "all" | "nearest" | "0dte";
+            /**
+             * Cycle At
+             * Format: date-time
+             */
+            cycle_at: string;
+            /** Session Open */
+            session_open: boolean;
+            /** Price */
+            price: number | null;
+            /** Regime */
+            regime: ("long" | "short") | null;
+            /** Regime Label */
+            regime_label: string | null;
+            /** Net Gex */
+            net_gex: number | null;
+            /** Net Vs Avg */
+            net_vs_avg: number | null;
+            /** Headline */
+            headline: string | null;
+            /** Expected Move */
+            expected_move: number | null;
+            /** Levels */
+            levels: components["schemas"]["GexKeyLevel"][];
+            /** Strikes */
+            strikes: components["schemas"]["GexStrikeNet"][];
+            /** Expiry */
+            expiry: string | null;
+            /** Expiry Date */
+            expiry_date: string | null;
+            /** Days To Expiry */
+            days_to_expiry: number | null;
+            /** Multiplier */
+            multiplier: number;
+            /** Strategies */
+            strategies: components["schemas"]["GexStrategy"][];
+        };
+        /**
          * GexFlow
          * @description `/api/gex/flow` — HIRO-lite·투자자별. 야간 투자자별은 수집하지 않는다(D-P7-6).
          */
@@ -5358,6 +5440,48 @@ export interface components {
              */
             ts: string;
             quality: components["schemas"]["Quality"];
+        };
+        /**
+         * GexKeyLevel
+         * @description 레벨표 한 줄 — 값·현재가와의 거리·해설(규칙 문장).
+         */
+        GexKeyLevel: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "em_up" | "call_wall2" | "call_wall" | "flip" | "spot" | "put_wall" | "put_wall2" | "em_down";
+            /** Label */
+            label: string;
+            /** Value */
+            value: number;
+            /** Dist Pt */
+            dist_pt: number;
+            /** Dist Pct */
+            dist_pct: number;
+            /** Lines */
+            lines?: string[];
+            /** Strength */
+            strength?: ("강" | "약") | null;
+            /** Gex */
+            gex?: number | null;
+        };
+        /** GexLeg */
+        GexLeg: {
+            /**
+             * Side
+             * @enum {string}
+             */
+            side: "buy" | "sell";
+            /**
+             * Cp
+             * @enum {string}
+             */
+            cp: "C" | "P";
+            /** Strike */
+            strike: number;
+            /** Price */
+            price: number;
         };
         /**
          * GexLevel
@@ -5484,6 +5608,38 @@ export interface components {
             bars: components["schemas"]["GexStrikeBar"][];
         };
         /**
+         * GexStrategy
+         * @description 옵션 포지셔닝 한 구조 — 만기 손익(pt, 수수료·증거금 제외).
+         */
+        GexStrategy: {
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /** Idea */
+            idea: string;
+            /** Legs */
+            legs: components["schemas"]["GexLeg"][];
+            /** Net Premium */
+            net_premium: number;
+            /** Breakevens */
+            breakevens: number[];
+            /** Max Profit */
+            max_profit: number | null;
+            /** Max Loss */
+            max_loss: number | null;
+            /** Scenario */
+            scenario: [
+                number,
+                number
+            ][];
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
+        /**
          * GexStrikeBar
          * @description 행사가 하나의 GEX(원/1%, GX §2.1 — 콜 롱·풋 숏 naive 딜러).
          */
@@ -5501,6 +5657,20 @@ export interface components {
             /** Gex */
             gex: number;
             quality: components["schemas"]["Quality"];
+        };
+        /**
+         * GexStrikeNet
+         * @description 행사가 하나(범위의 만기 합산) — 콜·풋·순 GEX(원/1%).
+         */
+        GexStrikeNet: {
+            /** Strike */
+            strike: number;
+            /** Call */
+            call: number;
+            /** Put */
+            put: number;
+            /** Net */
+            net: number;
         };
         /** Health */
         Health: {
@@ -12960,6 +13130,64 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_GexMetricSeries_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    briefing_api_gex_briefing_get: {
+        parameters: {
+            query?: {
+                scope?: "all" | "nearest" | "0dte";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_GexBriefing_"];
                 };
             };
             /** @description 세션 없음·만료 */

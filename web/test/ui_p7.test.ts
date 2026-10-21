@@ -142,12 +142,13 @@ describe('페이지 3 자리표시(p3_diag.ts) — 패널 순서·등급 갈림'
       '공공지표 추이',
       '시장 진단',
       '시장 진단 추이',
+      'GEX 브리핑',
       'GEX 프로필',
       'GEX 레벨',
       '확장 지표',
       '이벤트 달력',
     ]);
-    for (const t of ['종합 판정', '국장 공포탐욕', '시장 진단', '시장 진단 추이', 'GEX 프로필', 'GEX 레벨', '확장 지표']) {
+    for (const t of ['종합 판정', '국장 공포탐욕', '시장 진단', '시장 진단 추이', 'GEX 브리핑', 'GEX 프로필', 'GEX 레벨', '확장 지표']) {
       expect(panelByTitle(root, t).classList.contains('locked'), t).toBe(true);
     }
     for (const t of ['공공지표 진단', '공공지표 추이', '이벤트 달력']) {
