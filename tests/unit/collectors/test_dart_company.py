@@ -48,7 +48,7 @@ def test_every_listed_company_profile_is_stored() -> None:
     fake, client, repos = setup()
     r = C.run(ctx(client, repos))
     assert r.status == "ok" and r.collected == (RUN_KEY,) and r.rows == 19
-    assert r.detail == {"targets": 19, "stored": 19, "failed": 0}
+    assert r.detail == {"targets": 19, "fresh": 0, "stored": 19, "failed": 0}
     w = build_world()
     assert repos.filings.profiles() == {p.corp_code: p for p in w.profiles}
     assert len(fake.calls("company.json")) == 19  # 비상장 잡음 회사는 부르지 않는다
@@ -94,3 +94,23 @@ def test_no_keys_or_no_listed_companies_is_skipped() -> None:
     empty = memory_public_repos()
     r = C.run(ctx(client, empty))
     assert r.status == "skipped" and "고유번호" in str(r.detail["reason"])
+
+
+def test_recent_profiles_are_not_fetched_again() -> None:
+    """같은 주 안의 재시도·수동 fill-dart 는 이미 받은 회사를 다시 부르지 않는다(2026-10-21 —
+    전체 2,700건을 처음부터 다시 불러 DART 일 예산을 다 썼다). 멈춘 자리부터 이어 받는다."""
+    fake, client, repos = setup()
+    fake.inject("020", 1, endpoint="company.json")
+    first = C.run(ctx(client, repos))
+    assert first.status == "failed"
+    fake2 = FakeDart(lambda: T0, world=build_world())
+    client2 = DartClient(KEY, transport=fake2.transport("company"), limiter=RecordingLimiter(),
+                         retries=1, backoff_s=0)  # fmt: skip
+    ok = C.run(ctx(client2, repos))
+    assert ok.status == "ok" and ok.detail["fresh"] == 0 and len(fake2.calls("company.json")) == 19
+    fake3 = FakeDart(lambda: T0, world=build_world())
+    client3 = DartClient(KEY, transport=fake3.transport("company"), limiter=RecordingLimiter(),
+                         retries=1, backoff_s=0)  # fmt: skip
+    again = C.run(ctx(client3, repos))
+    assert again.status == "ok" and again.detail["fresh"] == 19
+    assert fake3.calls("company.json") == []

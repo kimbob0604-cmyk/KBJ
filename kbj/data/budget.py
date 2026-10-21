@@ -25,8 +25,9 @@ from redis import Redis
 from redis.exceptions import RedisError
 
 from kbj.core.masking import safe_snippet
+from kbj.core.runctx import current_job
 from kbj.core.time import KST
-from kbj.store.redis_keys import budget_closed_key, budget_key, krx_calls_key
+from kbj.store.redis_keys import budget_closed_key, budget_key, job_counts_key, krx_calls_key
 
 TTL_S: Final = 3 * 86400
 REASON_MAX: Final = 200
@@ -154,7 +155,30 @@ class DailyBudget:
             if code == 1:
                 raise BudgetExhausted(self.name, day, n, self.cap)
             self._local[day] = n
+            self._count_job(key)
             return n
+
+    def by_job(self, at: datetime) -> dict[str, int]:
+        """그날 작업별로 가져간 수(실행기 밖 호출은 '-'). Redis 가 없으면 빈 표."""
+        if self._r is None:
+            return {}
+        try:
+            raw: Any = self._r.hgetall(job_counts_key(self.key(self.day_of(at))))
+        except RedisError as e:
+            self._redis_failed(e)
+            return {}
+        return {_text(k): int(v) for k, v in raw.items()}
+
+    def _count_job(self, key: str) -> None:
+        """작업별 셈(진단용 — 상한 판정에는 쓰지 않는다). 실패해도 호출은 막지 않는다."""
+        if self._r is None:
+            return
+        jk = job_counts_key(key)
+        try:
+            self._r.hincrby(jk, current_job() or "-", 1)
+            self._r.expire(jk, self._ttl)
+        except RedisError as e:
+            self._redis_failed(e)
 
     def exhaust(self, at: datetime, reason: str) -> None:
         """그날 예산을 닫는다(출처가 일 한도 초과를 알려 왔을 때). 사유는 가리고 줄여서 남긴다."""

@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Final
 
 from kbj.core.fin_rows import CorpProfile
@@ -39,6 +39,9 @@ __all__ = ["BATCH", "FAIL_RATIO", "JOB", "collect", "run"]
 JOB: Final = "filings.company_profile"
 BATCH: Final = 100
 FAIL_RATIO: Final = 0.10
+# 이만큼 안에 받은 회사는 건너뛴다(주 1회 작업 — 재시도·수동 fill-dart 가 처음부터 다시
+# 2,700건을 부르지 않게. 2026-10-21 DART 일 예산 18,000 소진)
+FRESH: Final = timedelta(days=6)
 
 log = logging.getLogger(__name__)
 
@@ -101,10 +104,16 @@ def run(ctx: JobContext) -> JobResult:
     repos: PublicRepos | None = ctx.resources.get("public_repos")
     if repos is None:
         repos = pg_public_repos(ctx.resource("connect"))
-    corps = sorted({corp for corp, _name in repos.filings.corp_index().values()})
-    if not corps:
+    listed = sorted({corp for corp, _name in repos.filings.corp_index().values()})
+    if not listed:
         return JobResult(
             "skipped", detail={"reason": "상장사 고유번호가 없다(filings.corp_code 전)"}
+        )
+    fresh = repos.filings.profiles_received_since(ctx.now - FRESH)
+    corps = [c for c in listed if c not in fresh]
+    if not corps:
+        return JobResult(
+            "ok", collected=ctx.keys, detail={"targets": 0, "fresh": len(fresh), "stored": 0}
         )
     client: DartJson | None = ctx.resources.get("dart")
     owned: DartClient | None = None
@@ -118,7 +127,10 @@ def run(ctx: JobContext) -> JobResult:
     finally:
         if owned is not None:
             owned.close()
-    detail: dict[str, object] = {"targets": len(corps), "stored": stored, "failed": len(failed)}
+    detail: dict[str, object] = {
+        "targets": len(corps), "fresh": len(listed) - len(corps), "stored": stored,
+        "failed": len(failed),
+    }  # fmt: skip
     if failed:
         detail["failed_corps"] = failed[:5]
     if stop is not None:

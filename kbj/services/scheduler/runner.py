@@ -38,6 +38,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from collections.abc import Callable, Iterable, Mapping
 from concurrent.futures import Future
 from dataclasses import dataclass, field
@@ -48,6 +49,7 @@ from typing import Any, Final, Literal
 from kbj.config.settings import Settings
 from kbj.core.calendar import State, TradingCalendar
 from kbj.core.masking import mask_text
+from kbj.core.runctx import run_as_job
 from kbj.core.time import KST
 from kbj.data.catalog import claimable, keys_for
 from kbj.data.spec import DataKey, DatasetSpec
@@ -200,6 +202,9 @@ class JobRunner:
         self._caught: set[tuple[str, str]] = set()
         self._resolved: dict[str, Handler | None] = {}
         self._error_at: dict[tuple[str, str], datetime] = {}
+        # 같은 작업·같은 사유(숫자 뺀 문장)의 실패 알림은 KST 하루 한 번(매분 작업이 예산 소진으로
+        # 하루 수백 통을 보내지 않게 — 2026-10-21 filings.dart_feed). 나머지는 health 에만 남긴다.
+        self._alerted: dict[tuple[str, str], date] = {}
         # 처리기 없는 작업(계획됨)은 작업·현지 날짜마다 기록 1건만 남긴다(매분 작업이 하루
         # 780행을 쌓지 않게 — 메인 결정 2026-10-07). 재기동하면 그날 1건이 더 생길 수 있다.
         self._planned_days: set[tuple[str, date]] = set()
@@ -731,7 +736,7 @@ class JobRunner:
             RunRecord(run_id, job.name, p.as_of, attempt, "running", now, None, detail, p.source)
         )
         events.append(RunEvent("started", job.name, p.as_of, now, attempt, detail))
-        p.future = self._submit(lambda: handler(ctx))
+        p.future = self._submit(lambda: run_as_job(job.name, lambda: handler(ctx)))
 
     def _collect(self, now: datetime, events: list[RunEvent]) -> None:
         for key in list(self._pending):
@@ -922,6 +927,12 @@ class JobRunner:
         self._emit(now, "job_failed", f"{job.name}@{as_of}: {_reason(reason)}")
         if self._notify is None:
             return
+        day = now.astimezone(KST).date()
+        same = (job.name, _DIGITS.sub("#", _reason(reason)))
+        if self._alerted.get(same) == day:
+            return  # 오늘 같은 사유로 이미 보냈다
+        self._alerted[same] = day
+        text += "\n(같은 사유가 반복되면 오늘은 다시 보내지 않는다)"
         try:
             ticket = self._notify(
                 text,
@@ -952,6 +963,9 @@ class JobRunner:
             self._health.emit(HealthEvent(kind, detail, now, "warning", service=SERVICE))
         except Exception as e:
             log_event(log, logging.ERROR, SERVICE, "health_failed", error=type(e).__name__)
+
+
+_DIGITS: Final = re.compile(r"\d+")
 
 
 def _was_planned(rec: RunRecord) -> bool:

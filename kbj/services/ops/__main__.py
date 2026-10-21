@@ -222,6 +222,8 @@ def _parser() -> argparse.ArgumentParser:
     w = sub.add_parser("week", help="7일 일자별 판정 + 통과/실패(종료 코드 0/1)")
     w.add_argument("--end", type=date.fromisoformat, default=None, help="마지막 날(기본 어제 KST)")
     w.add_argument("--json", action="store_true", help="JSON 으로")
+    b = sub.add_parser("budget", help="오늘(또는 --day) 출처별 호출 예산·작업별 셈")
+    b.add_argument("--day", type=date.fromisoformat, default=None, help="날짜(기본 오늘 KST)")
     return p
 
 
@@ -236,6 +238,8 @@ def main(
     o: IO[str] = out or sys.stdout
     e_: IO[str] = err or sys.stderr
     args = _parser().parse_args(argv)
+    if args.cmd == "budget":
+        return _budget(args.day or now().astimezone(KST).date(), o, e_)
     try:
         d = deps()
         at = now()
@@ -255,6 +259,24 @@ def main(
     except Exception as e:  # Redis 등 — 종류만(접속 정보가 문장에 섞일 수 있다)
         print(f"점검 실패: {type(e).__name__}: {_safe(str(e))}", file=e_)
         return 2
+
+
+def _budget(day: date, out: IO[str], err: IO[str]) -> int:  # pragma: no cover — Redis 필요
+    from kbj.config.settings import Settings
+    from kbj.services.ops.budget_report import budget_lines
+    from kbj.services.runtime.heartbeat import connect_redis
+
+    settings = Settings()
+    if settings.redis_url is None:
+        print("KBJ_REDIS_URL 이 필요하다", file=err)
+        return 2
+    try:
+        lines = budget_lines(connect_redis(settings.redis_url), day)
+    except Exception as e:
+        print(f"점검 실패: {type(e).__name__}: {_safe(str(e))}", file=err)
+        return 2
+    print("\n".join(lines), file=out)
+    return 0
 
 
 if __name__ == "__main__":  # pragma: no cover

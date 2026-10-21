@@ -206,3 +206,33 @@ def server_value(server: fakeredis.FakeServer, key: str) -> str | None:
     if raw is None:
         return None
     return raw.decode() if isinstance(raw, bytes) else str(raw)
+
+
+def test_takes_are_counted_per_running_job() -> None:
+    from kbj.core.runctx import run_as_job
+
+    r = fakeredis.FakeRedis()
+    b = DailyBudget(r, "dart", 10)
+    run_as_job("filings.dart_feed", lambda: [b.take(AT) for _ in range(3)])
+    run_as_job("fin.backfill", lambda: b.take(AT))
+    b.take(AT)  # 실행기 밖(수동 CLI 등)
+    assert b.used(AT) == 5
+    assert b.by_job(AT) == {"filings.dart_feed": 3, "fin.backfill": 1, "-": 1}
+    with pytest.raises(KrxCapReached):
+        for _ in range(10):
+            b.take(AT)
+    assert sum(b.by_job(AT).values()) == 10  # 상한에 걸린 시도는 세지 않는다
+
+
+def test_budget_report_lists_counters_and_jobs() -> None:
+    from kbj.core.runctx import run_as_job
+    from kbj.services.ops.budget_report import budget_lines
+
+    r = fakeredis.FakeRedis()
+    b = DailyBudget(r, "dart", 10)
+    run_as_job("filings.company_profile", lambda: [b.take(AT) for _ in range(2)])
+    b.exhaust(AT, "020 요청 제한 초과")
+    lines = budget_lines(r, D28)
+    assert lines[1].startswith("■ dart: 2 — 닫힘: 020")
+    assert lines[2].split() == ["2", "filings.company_profile"]
+    assert budget_lines(r, date(2026, 9, 29)) == ["2026-09-29 — 기록된 호출 예산 없음"]

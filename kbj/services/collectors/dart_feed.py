@@ -102,6 +102,7 @@ PARSE_KINDS: Final[tuple[str, ...]] = (
     "major_holder",
 )
 PARSE_LIMIT: Final = 200  # 한 실행이 파싱할 대기 행 상한(8/s → 약 25초 + 원문) [제안]
+BUDGET_CLOSED: Final = "DART 일 예산·한도 소진 — 다음 날 0시(KST) 뒤 첫 실행이 이어 받는다"
 RESCAN_MAX_PAGES: Final = 100  # 다시 훑기 쪽 상한(10,000건 — 3월 말 사업보고서 마감일 대비) [제안]
 LINK_LOOKBACK_YEARS: Final = 7  # 조정·청구 공시의 옛 결정 공시를 찾는 기간(CB 만기 보통 3~5년)
 DOC_DATASET: Final = "document"
@@ -763,9 +764,15 @@ def run(ctx: JobContext) -> JobResult:
     env = _Env(repos, claims, client, cfg, kr, ctx.now, ctx.run_id, job=ctx.job or JOB)
     try:
         report = collect(env, _run_day(ctx))
+    except (DartQuotaExceeded, BudgetExhausted) as e:
+        # 그날 예산·한도가 닫혔다 — 오류가 아니라 기다림. 매분 실패·알림을 쌓지 않는다(2026-10-21:
+        # 08:47 소진 뒤 19:59 까지 매분 '작업 실패' 텔레그램). 다음 날 첫 실행이 다시 훑는다.
+        return JobResult("skipped", detail={"reason": f"{BUDGET_CLOSED} ({type(e).__name__})"})
     finally:
         if owned is not None:
             owned.close()
+    if report.stop is not None and report.day_closed:
+        return JobResult("skipped", rows=report.new, detail=report.detail())
     # run-once(수동)는 event 데이터셋 키도 '<dataset>@<as_of>' 로 미리 잡는다 — 받은 키를 그대로
     # 돌려줘야 실패로 남지 않는다(묶음 M 요청). 접수번호 키는 위에서 직접 complete/fail 했다.
     if report.stop is not None:

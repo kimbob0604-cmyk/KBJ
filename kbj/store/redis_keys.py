@@ -138,6 +138,11 @@ def budget_key(source: str, scope: str | None, day: date) -> str:
     return f"{BUDGET_PREFIX}{source}:{mid}{_ymd(day)}"
 
 
+def job_counts_key(counter_key: str) -> str:
+    """일 예산 카운터의 작업별 셈(해시 — 필드 = 작업 이름) — `budget:dart:20261006:by_job`."""
+    return f"{counter_key}:by_job"
+
+
 def budget_closed_key(counter_key: str) -> str:
     """그날 닫힌 예산의 사유 키 — 카운터 키 + `:closed`(공공데이터포털 GW `22`·DART `020`)."""
     return _part("counter_key", counter_key) + BUDGET_CLOSED_SUFFIX

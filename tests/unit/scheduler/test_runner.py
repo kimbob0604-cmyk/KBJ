@@ -871,3 +871,29 @@ def test_failure_reason_falls_back_to_detail_error() -> None:
     rec = rig.runs.latest("krx.daily", "2026-10-02")
     assert rec is not None and rec.status == "failed"
     assert "분봉 적재 실패" in str(rec.detail.get("reason"))
+
+
+def test_same_failure_is_alerted_once_per_day() -> None:
+    """매분 작업이 같은 사유(숫자만 다름)로 계속 실패해도 텔레그램은 하루 한 통(2026-10-21
+    filings.dart_feed 예산 소진). health 에는 매번 남는다. 다른 사유·다음 날은 다시 보낸다."""
+    n = itertools.count(17990)
+
+    def failing(ctx: JobContext) -> JobResult:
+        return JobResult("failed", detail={"reason": f"dart 호출 {next(n)}/18000 — 그날 상한"})
+
+    job = {
+        "name": "filings.minutely",
+        "phase": "P4",
+        "owner": "tests.fake:fail",
+        "schedule": {"cron": "* 9-10 * * *", "when": "always"},
+        "retry": {"max": 0},
+        "as_of": "minute",
+        "enabled": True,
+    }
+    rig = Rig([job], {"tests.fake:fail": failing}, kst(2026, 10, 6, 8, 59))
+    rig.run_until(kst(2026, 10, 6, 9, 30))
+    assert rig.kinds("filings.minutely").count("failed") > 20
+    assert [s["kind"] for s in rig.notes.sent] == ["ops.job_failed"]
+    assert rig.health.kinds().count("job_failed") > 20
+    rig.run_until(kst(2026, 10, 7, 9, 5))
+    assert len(rig.notes.sent) == 2

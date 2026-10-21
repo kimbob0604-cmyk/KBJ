@@ -2,7 +2,7 @@
 F).
 
 docs/p4_design.md §1.3·§4.1~§4.4·§8.2: 증분 멈춤, 07:00 다시 훑기(하루 한 번), 정정 공시는 새 행,
-같은 분 두 실행에 선점 중복 0, 한 건 실패 격리(3회면 na), 020 이면 그날 중단·`failed` 사유, 전송
+같은 분 두 실행에 선점 중복 0, 한 건 실패 격리(3회면 na), 020·예산 소진이면 그날 중단(skipped), 전송
 오류는 시도 수를 쓰지 않는다, 결정 공시 구조화 + 원문 보충, 조정·청구의 대상 잇기(옛 결정은 구조화로
 찾아 넣는다), 소유보고 회사 전체에서 새 접수번호만 + 원문 변동 사유. 선점 키는
 `MemoryClaimStore`(설계 §1.3 끝 — 자원 `claims`).
@@ -327,7 +327,8 @@ def test_quota_020_closes_the_day_with_a_reason_and_keeps_pending() -> None:
     d = Day()
     d.fake.inject("020", 1, endpoint="document.xml")
     r = d.today("14:46")
-    assert r.status == "failed" and r.collected == ()
+    # 그날 한도는 오류가 아니라 기다림 — skipped(실행기가 '작업 실패' 알림을 보내지 않는다)
+    assert r.status == "skipped" and r.collected == ()
     assert "한도" in r.detail["reason"] and r.detail["new"] > 0  # 목록은 넣었다
     waiting = d.repos.filings.pending(kinds=F.PARSE_KINDS)
     assert len(waiting) == 5 and all(x.parse_tries == 0 for x in waiting)  # 시도 수를 쓰지 않는다
@@ -540,3 +541,21 @@ def test_incremental_cut_at_max_pages_reads_the_rest_of_the_day_in_the_same_run(
     assert r.detail["complete"] and any("이어 읽었다" in w for w in r.detail["warnings"])
     again = d.today("20:00")
     assert again.detail["new"] == 0 and again.detail["pages"] == 1
+
+
+def test_closed_daily_budget_is_a_quiet_skip_not_a_failure() -> None:
+    """예산이 그날 닫히면(18,000/18,000) 매분 실행은 부르지 않고 skipped — 2026-10-21 매분 '작업
+    실패' 텔레그램. 다음 날은 다시 돈다."""
+    import fakeredis
+
+    from kbj.data.budget import DailyBudget
+
+    d = Day()
+    budget = DailyBudget(fakeredis.FakeRedis(), "dart", 1)
+    d.client = DartClient(
+        KEY, transport=d.fake.transport("feed"), limiter=RecordingLimiter(), retries=1,
+        backoff_s=0, now=lambda: d.now, budget=budget,
+    )  # fmt: skip
+    r = d.today("14:46")
+    assert r.status == "skipped" and r.collected == ()
+    assert F.BUDGET_CLOSED in str(r.detail["reason"])

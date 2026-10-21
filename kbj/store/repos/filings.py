@@ -213,6 +213,9 @@ class FilingsRepo(Protocol):
     ) -> int: ...
 
     def profiles(self, corp_codes: Collection[str] | None = None) -> dict[str, CorpProfile]: ...
+    def profiles_received_since(self, since: datetime) -> set[str]:
+        """`since` 뒤에 기업개황을 받은 corp_code(같은 주에 다시 받지 않게 — company_profile)."""
+        ...
 
     # ── 잠정실적·실적 일정 ──
     def put_prelims(self, rows: Sequence[PrelimRow], *, loaded_by: str, now: datetime) -> int: ...
@@ -552,6 +555,14 @@ class PgFilingsRepo:
             "corp_code",
         )  # fmt: skip
         return {p.corp_code: p for p in rows}
+
+    def profiles_received_since(self, since: datetime) -> set[str]:
+        require_aware("since", since)
+        with self._connect() as conn:
+            rows = conn.execute(
+                b"SELECT corp_code FROM pub_filings.corp_profile WHERE received_at >= %s", (since,)
+            ).fetchall()
+        return {r[0] for r in rows}
 
     # 잠정실적·일정
     def put_prelims(self, rows: Sequence[PrelimRow], *, loaded_by: str, now: datetime) -> int:
@@ -919,6 +930,15 @@ class MemoryFilingsRepo:
             for p in self.profile_t.all()
             if corp_codes is None or p.corp_code in corp_codes
         }
+
+    def profiles_received_since(self, since: datetime) -> set[str]:
+        require_aware("since", since)
+        out: set[str] = set()
+        for st in self.profile_t.rows.values():
+            at = st.extra.get("received_at")
+            if isinstance(at, datetime) and at >= since:
+                out.add(st.row.corp_code)
+        return out
 
     # 잠정실적·일정
     def put_prelims(self, rows: Sequence[PrelimRow], *, loaded_by: str, now: datetime) -> int:
