@@ -342,14 +342,14 @@ fill_try() {
 
 # 매크로·미국·신용·테마·진단 같은 나머지 빈 칸을 순서대로 한 번씩 돌린다(한 작업이 실패해도 다음으로). 키가 없는 작업은 실패로 나온다
 cmd_fill_all() {
-  local k missing="" job
+  local k absent_keys="" job
   require_scheduler
   FILL_DAY="$(last_weekday)"
   kbj_step "필요한 선택 키 확인(이름만)"
   for k in KBJ_ECOS_KEY KBJ_FRED_KEY KBJ_DATAGO_KEY KBJ_KOSIS_KEY KBJ_KRX_API_KEY KBJ_DART_API_KEY; do
-    kbj_env_has "$k" || missing="$missing $k"
+    kbj_env_has "$k" || absent_keys="$absent_keys $k"
   done
-  if [[ -n "$missing" ]]; then kbj_warn "비어 있는 키:$missing — 해당 칸은 채워지지 않는다($(kbj_cmd keys) 이름 으로 넣는다)"; else kbj_ok "선택 키가 모두 있다"; fi
+  if [[ -n "$absent_keys" ]]; then kbj_warn "비어 있는 키:$absent_keys — 해당 칸은 채워지지 않는다($(kbj_cmd keys) 이름 으로 넣는다)"; else kbj_ok "선택 키가 모두 있다"; fi
   kbj_step "매크로·신용·테마·지도 수집(기준 날짜 $FILL_DAY)"
   for job in macro.morning macro.morning_prv macro.monthly macro.monthly_prv \
     macro.evening macro.evening_prv market_stats.kofia market.fsc_daily theme.master_sync theme.classes_sync trade.map_load; do
