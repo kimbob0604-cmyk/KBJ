@@ -8,7 +8,7 @@
 //   문자열 0 — 하나라도 있으면 실패.
 //   선택: 환경변수 KBJ_LOGIN_ORIGIN(로그인 VM 주소)을 주면 그 문자열도 0 이어야 한다(값은 출력하지 않는다).
 // 로그인(dist-login): TradingView 주소('tradingview.com'·'tradingview-widget.com'·'embed-widget-') 0(대소문자 무시).
-// 크기 예산(§6.9 [제안]): JS gzip 공개 ≤ 88 KB·로그인 ≤ 131 KB(ADR 0025 — P8 WRAP 갱신), CSS gzip ≤ 20 KB.
+// 크기 예산(§6.9 [제안]): JS gzip 공개 ≤ 88 KB·로그인 ≤ 147 KB(ADR 0025 — 2026-10-21 갱신 147 KB), CSS gzip ≤ 20 KB.
 // 서비스 워커(sw.js)는 JS 합계에 넣지 않는다.
 // 종료 코드: 0 통과, 1 발견, 2 사용법·빌드 없음.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
@@ -36,9 +36,10 @@ export const LOGIN_FORBIDDEN = [
 
 export const BUDGET_GZIP = {
   // ADR 0025(P6 — 60 → 72 KB, P7 WRAP — 실측 + 10%: 공개 81,266 B → 88 KB, 로그인 99,353 B → 107 KB,
-  // P8 WRAP — 공개 페이지 3 로그인 본문을 빼 79,276 B(88 KB 그대로), 로그인 121,256 B → 131 KB)
+  // P8 WRAP — 공개 페이지 3 로그인 본문을 빼 79,276 B(88 KB 그대로), 로그인 121,256 B → 131 KB,
+  // 2026-10-21 — 장중 수급 차트·신용 패널·테마 강도·문구 정리 추가로 로그인 136,608 B → 147 KB)
   public: { js: 88 * 1024, css: 20 * 1024 },
-  login: { js: 131 * 1024, css: 20 * 1024 },
+  login: { js: 147 * 1024, css: 20 * 1024 },
 };
 
 const TEXT_EXT = /\.(?:js|mjs|css|html|json|webmanifest|svg|txt|map|xml)$/i;

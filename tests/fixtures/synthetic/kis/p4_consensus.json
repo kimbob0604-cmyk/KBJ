@@ -680,70 +680,70 @@
    "msg_cd": "MCA00000",
    "output": [
     {
-     "hts_goal_prc": "91400",
+     "hts_goal_prc": "91300",
      "invt_opnn": "매수",
      "mbcr_name": "샘플증권",
      "rgbf_invt_opnn": "매수",
      "stck_bsop_date": "20261106"
     },
     {
-     "hts_goal_prc": "89500",
+     "hts_goal_prc": "87400",
      "invt_opnn": "매수",
      "mbcr_name": "시뮬투자증권",
      "rgbf_invt_opnn": "매수",
      "stck_bsop_date": "20261105"
     },
     {
-     "hts_goal_prc": "83400",
+     "hts_goal_prc": "85300",
      "invt_opnn": "매수",
      "mbcr_name": "모의증권",
      "rgbf_invt_opnn": "매수",
      "stck_bsop_date": "20261104"
     },
     {
-     "hts_goal_prc": "80500",
+     "hts_goal_prc": "81000",
      "invt_opnn": "매수",
      "mbcr_name": "가상증권",
      "rgbf_invt_opnn": "매수",
      "stck_bsop_date": "20261102"
     },
     {
-     "hts_goal_prc": "91200",
+     "hts_goal_prc": "90700",
      "invt_opnn": "매수",
      "mbcr_name": "테스트금융투자",
      "rgbf_invt_opnn": "매수",
      "stck_bsop_date": "20261028"
     },
     {
-     "hts_goal_prc": "97600",
+     "hts_goal_prc": "96600",
      "invt_opnn": "매수",
      "mbcr_name": "시뮬투자증권",
      "rgbf_invt_opnn": "매수",
      "stck_bsop_date": "20260923"
     },
     {
-     "hts_goal_prc": "88600",
+     "hts_goal_prc": "87700",
      "invt_opnn": "매수",
      "mbcr_name": "가상증권",
      "rgbf_invt_opnn": "매수",
      "stck_bsop_date": "20260923"
     },
     {
-     "hts_goal_prc": "100000",
+     "hts_goal_prc": "99000",
      "invt_opnn": "매수",
      "mbcr_name": "테스트금융투자",
      "rgbf_invt_opnn": "매수",
      "stck_bsop_date": "20260918"
     },
     {
-     "hts_goal_prc": "96200",
+     "hts_goal_prc": "95400",
      "invt_opnn": "매수",
      "mbcr_name": "샘플증권",
      "rgbf_invt_opnn": "매수",
      "stck_bsop_date": "20260916"
     },
     {
-     "hts_goal_prc": "89800",
+     "hts_goal_prc": "89100",
      "invt_opnn": "매수",
      "mbcr_name": "모의증권",
      "rgbf_invt_opnn": "매수",
@@ -768,21 +768,21 @@
    "msg_cd": "MCA00000",
    "output": [
     {
-     "hts_goal_prc": "14140",
+     "hts_goal_prc": "14220",
      "invt_opnn": "매수",
      "mbcr_name": "가상증권",
      "rgbf_invt_opnn": "매수",
      "stck_bsop_date": "20261104"
     },
     {
-     "hts_goal_prc": "15340",
+     "hts_goal_prc": "15350",
      "invt_opnn": "매수",
      "mbcr_name": "모의증권",
      "rgbf_invt_opnn": "매수",
      "stck_bsop_date": "20261028"
     },
     {
-     "hts_goal_prc": "15820",
+     "hts_goal_prc": "16190",
      "invt_opnn": "중립",
      "mbcr_name": "시뮬투자증권",
      "rgbf_invt_opnn": "중립",
@@ -803,14 +803,14 @@
      "stck_bsop_date": "20260923"
     },
     {
-     "hts_goal_prc": "13530",
+     "hts_goal_prc": "13240",
      "invt_opnn": "매수",
      "mbcr_name": "가상증권",
      "rgbf_invt_opnn": "매수",
      "stck_bsop_date": "20260916"
     },
     {
-     "hts_goal_prc": "15380",
+     "hts_goal_prc": "16000",
      "invt_opnn": "중립",
      "mbcr_name": "시뮬투자증권",
      "rgbf_invt_opnn": "중립",
@@ -835,14 +835,14 @@
    "msg_cd": "MCA00000",
    "output": [
     {
-     "hts_goal_prc": "15580",
+     "hts_goal_prc": "15650",
      "invt_opnn": "매수",
      "mbcr_name": "모의증권",
      "rgbf_invt_opnn": "매수",
      "stck_bsop_date": "20261103"
     },
     {
-     "hts_goal_prc": "17110",
+     "hts_goal_prc": "16960",
      "invt_opnn": "매수",
      "mbcr_name": "시뮬투자증권",
      "rgbf_invt_opnn": "매수",
@@ -856,42 +856,42 @@
      "stck_bsop_date": "20261030"
     },
     {
-     "hts_goal_prc": "17190",
+     "hts_goal_prc": "17120",
      "invt_opnn": "매수",
      "mbcr_name": "가상증권",
      "rgbf_invt_opnn": "매수",
      "stck_bsop_date": "20261026"
     },
     {
-     "hts_goal_prc": "16920",
+     "hts_goal_prc": "16370",
      "invt_opnn": "매수",
      "mbcr_name": "시뮬투자증권",
      "rgbf_invt_opnn": "매수",
      "stck_bsop_date": "20260923"
     },
     {
-     "hts_goal_prc": "16160",
+     "hts_goal_prc": "15630",
      "invt_opnn": "매수",
      "mbcr_name": "가상증권",
      "rgbf_invt_opnn": "매수",
      "stck_bsop_date": "20260923"
     },
     {
-     "hts_goal_prc": "18040",
+     "hts_goal_prc": "18350",
      "invt_opnn": "매수",
      "mbcr_name": "샘플증권",
      "rgbf_invt_opnn": "매수",
      "stck_bsop_date": "20260918"
     },
     {
-     "hts_goal_prc": "16620",
+     "hts_goal_prc": "16910",
      "invt_opnn": "매수",
      "mbcr_name": "모의증권",
      "rgbf_invt_opnn": "매수",
      "stck_bsop_date": "20260918"
     },
     {
-     "hts_goal_prc": "18180",
+     "hts_goal_prc": "17960",
      "invt_opnn": "매수",
      "mbcr_name": "시뮬투자증권",
      "rgbf_invt_opnn": "매수",

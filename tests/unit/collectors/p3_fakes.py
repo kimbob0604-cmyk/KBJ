@@ -76,7 +76,10 @@ class DirectKis:
         self.consumer = consumer
         self.hook = hook
         self.calls: list[tuple[str, dict[str, str], Priority, float | None]] = []
-        r = server.handle(
+        self.token = self._issue()
+
+    def _issue(self) -> str:
+        r = self.server.handle(
             httpx.Request(
                 "POST",
                 "https://fake-kis" + TOKEN_PATH,
@@ -88,7 +91,7 @@ class DirectKis:
             ),
             "auth",
         )
-        self.token = r.json()["access_token"]
+        return str(r.json()["access_token"])
 
     def get(
         self,
@@ -101,6 +104,20 @@ class DirectKis:
         timeout: float | None = None,
     ) -> KisResponse:
         self.calls.append((tr_id, dict(params), priority, timeout))
+        r = self._send(path, tr_id, params)
+        if r.status_code != 200 and "EGW00123" in r.text:
+            # 운영처럼 토큰을 다시 받아 한 번 더 — 여러 날에 걸친 시험(토큰 24시간)
+            self.token = self._issue()
+            r = self._send(path, tr_id, params)
+        try:
+            body: dict[str, Any] = r.json()
+        except ValueError:
+            body = {"_text": r.text[:200]}
+        if self.hook is not None and r.status_code == 200:
+            body = self.hook(tr_id, dict(params), body)
+        return KisResponse(r.status_code, body, 0.0)
+
+    def _send(self, path: str, tr_id: str, params: dict[str, str]) -> httpx.Response:
         req = httpx.Request(
             "GET",
             "https://fake-kis" + path,
@@ -112,14 +129,7 @@ class DirectKis:
                 "tr_id": tr_id,
             },
         )
-        r = self.server.handle(req, self.consumer)
-        try:
-            body: dict[str, Any] = r.json()
-        except ValueError:
-            body = {"_text": r.text[:200]}
-        if self.hook is not None and r.status_code == 200:
-            body = self.hook(tr_id, dict(params), body)
-        return KisResponse(r.status_code, body, 0.0)
+        return self.server.handle(req, self.consumer)
 
     def count(self, tr_id: str | None = None) -> int:
         return sum(1 for c in self.calls if tr_id in (None, c[0]))

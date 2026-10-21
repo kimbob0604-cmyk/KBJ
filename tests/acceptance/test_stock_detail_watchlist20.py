@@ -96,12 +96,10 @@ _PREF_COMPANY = (
     "financials", "report", "report_xlsx", "segments", "consensus", "valuation", "scenario",
     "overhang", "insiders", "disclosures", "earnings",
 )  # fmt: skip
+# 컨센서스 칸(① 대상 0)은 06e675c(컨센서스 대상 — 종류 없는 KRX 기본정보를 보드 정본
+# 분류로)가 고쳐 표에서 지웠다(2026-10-21 — strict XPASS).
+# ② 우선주→회사·③ 스팩 판정은 아직 남아 있다.
 KNOWN_BUG: dict[tuple[str, str], str] = {
-    **{
-        (code, "consensus"): _KIND_BUG
-        for code, row in expect()["stocks"].items()
-        if row["consensus"] in ("ok", "no_data")
-    },
     **{("994015", route): _KIND_BUG for route in _PREF_COMPANY},
     ("994040", "valuation"): _KIND_BUG,
 }
@@ -140,7 +138,6 @@ def test_no_500_anywhere_including_known_bug_cells(client: TestClient) -> None:
     assert {c[2] for c in codes} <= {200, 404}
 
 
-@pytest.mark.xfail(strict=True, reason=_KIND_BUG)
 def test_universe_kind_is_resolved_for_p4_consumers(pipeline: P4Pipeline) -> None:
     """결함 S-R1 의 뿌리 — 실제 krx.daily 를 거친 유니버스에서도 P4 컨센서스 대상 규칙이 보통주를
     안다."""
@@ -201,7 +198,6 @@ def test_alert_earnings_once_for_the_watchlist_prelim(pipeline: P4Pipeline) -> N
     assert all("NaN" not in c["text"] and "None" not in c["text"] for c in calls)
 
 
-@pytest.mark.xfail(strict=True, reason=_KIND_BUG + " — 컨센서스 대상 0 이라 리비전 묶음이 없다")
 def test_alert_revision_once_a_day_for_the_watchlist(pipeline: P4Pipeline) -> None:
     """리비전 묶음 하루 1통(16:00 — ADR 0018). 관심 밖·그날 스냅이 없는 종목은 싣지 않는다."""
     want = expect()["alerts"]["alert.revision"]

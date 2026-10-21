@@ -114,8 +114,9 @@ describe("check-bundle: 크기 예산(gzip)", () => {
     expect(r.js).toBe(95_000);
     expect(r.findings.map((f) => f.rule)).toEqual(["budget_js"]);
     // ADR 0025: 공개 JS 예산 72 KB(P6 페이지 7) → 88 KB·로그인 107 KB(P7 WRAP — 실측 + 10%) → 로그인 131 KB(P8 WRAP)
+    // → 147 KB(2026-10-21 — 실측 136,608 B + 10%)
     expect(BUDGET_GZIP.public.js).toBe(88 * 1024);
-    expect(BUDGET_GZIP.login.js).toBe(131 * 1024);
+    expect(BUDGET_GZIP.login.js).toBe(147 * 1024);
     expect(
       checkBudget([{ name: "assets/a.js", bytes: 70_000 }], BUDGET_GZIP.public)
         .findings,
