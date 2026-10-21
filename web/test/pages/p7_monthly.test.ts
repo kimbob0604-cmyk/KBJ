@@ -18,11 +18,14 @@ async function mount(tier: 'login' | 'public') {
   const { ctx, root } = pageCtx(7, tier, hz.source, { now: () => EXPLORE_NOW });
   await page.mount(ctx);
   await flush(10);
+  // 첫 탭은 '종목'(P10 — 2026-10-21) — 월별 추이 탭을 연다
+  [...root.querySelectorAll<HTMLElement>('[role="tab"]')].find((b) => b.textContent === '월별 추이')?.click();
+  await flush(10);
   return { hz, root };
 }
 
 describe('페이지 7 월별 추이', () => {
-  it('첫 탭 — 쌓은 막대(상위 류 + 기타)·전년동월비 선·분기 표·최신 달/분기 요약', async () => {
+  it('월별 추이 탭 — 쌓은 막대(상위 류 + 기타)·전년동월비 선·분기 표·최신 달/분기 요약', async () => {
     const { hz, root } = await mount('login');
     expect(
       hz.paths().filter((p) => p.startsWith('trade/monthly')),

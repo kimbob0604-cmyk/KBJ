@@ -1,0 +1,1830 @@
+{
+  "source": "관세청(공공데이터포털)+DART",
+  "as_of": "2026-12-11T11:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "금액은 미화 달러(원화 환산 없음 — 환율 미조정)",
+    "흐름 금액은 통관 합(가중치 미적용) — 회사 매출이 아니라 그 품목·지역의 통관 금액",
+    "일평균 = 금액 ÷ 그 달 영업일(거래일 달력 — 관세청 조업일수와 다를 수 있다)",
+    "매핑 가중치는 자체 큐레이션 초안 — '검토 전' 종목은 사람이 아직 확인하지 않았다"
+  ],
+  "generated_at": "2026-12-11T11:30:00+09:00",
+  "data": {
+    "code": "992004",
+    "name": "가상상장04",
+    "reviewed": false,
+    "origin": "public",
+    "map_version": "p6world-1",
+    "evidence": [
+      {
+        "kind": "synthetic",
+        "note": "합성 근거(실측 아님)",
+        "rcept_no": null
+      }
+    ],
+    "flows": [
+      {
+        "id": "v1_exp_all",
+        "name": "전국 품목 수출",
+        "kind": "national",
+        "direction": "exp",
+        "nature": "mixed",
+        "nature_label": "업황 혼합",
+        "partners": [],
+        "regions": [],
+        "products": [
+          {
+            "hs": "8902200000",
+            "name": "가상품목 8902200000",
+            "weight": 0.2
+          }
+        ],
+        "basis": "",
+        "last_ym": "2026-10",
+        "has_kg": true,
+        "points": [
+          {
+            "ym": "2023-11",
+            "usd": 299471491,
+            "kg": 5403897,
+            "unit_price": 55.41769041859976,
+            "usd_yoy": -0.07750664227643378,
+            "kg_yoy": -0.07750662563962496,
+            "price_yoy": -1.8034610693717923e-08,
+            "days": 22,
+            "daily_usd": 13612340,
+            "daily_yoy": -0.07750664227643378,
+            "products": {
+              "8902200000": 299471491
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2023-12",
+            "usd": 314535741,
+            "kg": 5675728,
+            "unit_price": 55.417691087381215,
+            "usd_yoy": -0.0021690411789766495,
+            "kg_yoy": -0.0021691028198336237,
+            "price_yoy": 6.177485301073204e-08,
+            "days": 19,
+            "daily_usd": 16554512,
+            "daily_yoy": 0.10286579659165729,
+            "products": {
+              "8902200000": 314535741
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-01",
+            "usd": 304291477,
+            "kg": 5490873,
+            "unit_price": 55.417686222209106,
+            "usd_yoy": -0.06421789155472479,
+            "kg_yoy": -0.06421785225957166,
+            "price_yoy": -4.1991774724081665e-08,
+            "days": 22,
+            "daily_usd": 13831430,
+            "daily_yoy": -0.14928899232247705,
+            "products": {
+              "8902200000": 304291477
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-02",
+            "usd": 312239226,
+            "kg": 5634288,
+            "unit_price": 55.41769004353345,
+            "usd_yoy": -0.038972512809822724,
+            "kg_yoy": -0.03897250022387011,
+            "price_yoy": -1.309635011548238e-08,
+            "days": 19,
+            "daily_usd": 16433643,
+            "daily_yoy": 0.011607881252818197,
+            "products": {
+              "8902200000": 312239226
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-03",
+            "usd": 358860146,
+            "kg": 6475553,
+            "unit_price": 55.417683400938884,
+            "usd_yoy": 0.3357173082279623,
+            "kg_yoy": 0.3357174799649174,
+            "price_yoy": -1.2857281395106668e-07,
+            "days": 20,
+            "daily_usd": 17943007,
+            "daily_yoy": 0.4692890390507587,
+            "products": {
+              "8902200000": 358860146
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-04",
+            "usd": 335141529,
+            "kg": 6047555,
+            "unit_price": 55.41769012435604,
+            "usd_yoy": -0.06598457766255428,
+            "kg_yoy": -0.06598466792446767,
+            "price_yoy": 9.663857780672913e-08,
+            "days": 21,
+            "daily_usd": 15959120,
+            "daily_yoy": -0.11046150253576592,
+            "products": {
+              "8902200000": 335141529
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-05",
+            "usd": 355637050,
+            "kg": 6417393,
+            "unit_price": 55.41768285034125,
+            "usd_yoy": 0.06206676292938518,
+            "kg_yoy": 0.06206677751733891,
+            "price_yoy": -1.3735439341466815e-08,
+            "days": 20,
+            "daily_usd": 17781852,
+            "daily_yoy": 0.06206676292938518,
+            "products": {
+              "8902200000": 355637050
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-06",
+            "usd": 347605247,
+            "kg": 6272460,
+            "unit_price": 55.417690507392635,
+            "usd_yoy": 0.19752261735026022,
+            "kg_yoy": 0.19752250153879514,
+            "price_yoy": 9.670921818916156e-08,
+            "days": 19,
+            "daily_usd": 18295013,
+            "daily_yoy": 0.32357762970291915,
+            "products": {
+              "8902200000": 347605247
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-07",
+            "usd": 323485536,
+            "kg": 5837225,
+            "unit_price": 55.41769179704397,
+            "usd_yoy": 0.08083149415032853,
+            "kg_yoy": 0.08083148788671046,
+            "price_yoy": 5.795184554457933e-09,
+            "days": 23,
+            "daily_usd": 14064588,
+            "daily_yoy": -0.01315385316709139,
+            "products": {
+              "8902200000": 323485536
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-08",
+            "usd": 318510400,
+            "kg": 5747450,
+            "unit_price": 55.41768958407641,
+            "usd_yoy": -0.06748983419248777,
+            "kg_yoy": -0.06748982463951014,
+            "price_yoy": -1.0244368353617972e-08,
+            "days": 21,
+            "daily_usd": 15167161,
+            "daily_yoy": -0.023084588201653822,
+            "products": {
+              "8902200000": 318510400
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-09",
+            "usd": 347633896,
+            "kg": 6272977,
+            "unit_price": 55.41769019717432,
+            "usd_yoy": 0.09862903611796892,
+            "kg_yoy": 0.09862897676512916,
+            "price_yoy": 5.4024462237123316e-08,
+            "days": 18,
+            "daily_usd": 19312994,
+            "daily_yoy": 0.1596639825689672,
+            "products": {
+              "8902200000": 347633896
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-10",
+            "usd": 300541087,
+            "kg": 5423198,
+            "unit_price": 55.41768657533802,
+            "usd_yoy": -0.08725697602575566,
+            "kg_yoy": -0.08725693612277263,
+            "price_yoy": -4.371765138788675e-08,
+            "days": 20,
+            "daily_usd": 15027054,
+            "daily_yoy": -0.13289412722446792,
+            "products": {
+              "8902200000": 300541087
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-11",
+            "usd": 271213496,
+            "kg": 4893988,
+            "unit_price": 55.417687170463026,
+            "usd_yoy": -0.09435954957061343,
+            "kg_yoy": -0.09435949648929287,
+            "price_yoy": -5.861191099132412e-08,
+            "days": 21,
+            "daily_usd": 12914928,
+            "daily_yoy": -0.05123381383588066,
+            "products": {
+              "8902200000": 271213496
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-12",
+            "usd": 311196985,
+            "kg": 5615481,
+            "unit_price": 55.417689953897096,
+            "usd_yoy": -0.010614869996602438,
+            "kg_yoy": -0.010614849760242184,
+            "price_yoy": -2.045347069490333e-08,
+            "days": 20,
+            "daily_usd": 15559849,
+            "daily_yoy": -0.060084126496772305,
+            "products": {
+              "8902200000": 311196985
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-01",
+            "usd": 307404035,
+            "kg": 5547038,
+            "unit_price": 55.417690486346046,
+            "usd_yoy": 0.010228870130332357,
+            "kg_yoy": 0.010228792397857234,
+            "price_yoy": 7.694541626079854e-08,
+            "days": 18,
+            "daily_usd": 17078001,
+            "daily_yoy": 0.2347241746037394,
+            "products": {
+              "8902200000": 307404035
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-02",
+            "usd": 281722987,
+            "kg": 5083629,
+            "unit_price": 55.41769216439673,
+            "usd_yoy": -0.09773352115598699,
+            "kg_yoy": -0.09773355568618436,
+            "price_yoy": 3.827051053839625e-08,
+            "days": 20,
+            "daily_usd": 14086149,
+            "daily_yoy": -0.14284684509818768,
+            "products": {
+              "8902200000": 281722987
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-03",
+            "usd": 376268154,
+            "kg": 6789676,
+            "unit_price": 55.41768915041012,
+            "usd_yoy": 0.048509170477793795,
+            "kg_yoy": 0.048509061697124656,
+            "price_yoy": 1.037479533394503e-07,
+            "days": 20,
+            "daily_usd": 18813407,
+            "daily_yoy": 0.048509170477793795,
+            "products": {
+              "8902200000": 376268154
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-04",
+            "usd": 309863887,
+            "kg": 5591426,
+            "unit_price": 55.417685399037744,
+            "usd_yoy": -0.07542378312656084,
+            "kg_yoy": -0.07542370429041156,
+            "price_yoy": -8.526732686586769e-08,
+            "days": 22,
+            "daily_usd": 14084722,
+            "daily_yoy": -0.1174499748026262,
+            "products": {
+              "8902200000": 309863887
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-05",
+            "usd": 380535589,
+            "kg": 6866681,
+            "unit_price": 55.41768854560158,
+            "usd_yoy": 0.07001109417593021,
+            "kg_yoy": 0.07001098421118979,
+            "price_yoy": 1.0276973050338256e-07,
+            "days": 19,
+            "daily_usd": 20028188,
+            "daily_yoy": 0.1263274675536108,
+            "products": {
+              "8902200000": 380535589
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-06",
+            "usd": 393533435,
+            "kg": 7101225,
+            "unit_price": 55.41768286457618,
+            "usd_yoy": 0.13212743017081108,
+            "kg_yoy": 0.1321275863058513,
+            "price_yoy": -1.3791293695941675e-07,
+            "days": 19,
+            "daily_usd": 20712286,
+            "daily_yoy": 0.13212743017081108,
+            "products": {
+              "8902200000": 393533435
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-07",
+            "usd": 345957243,
+            "kg": 6242723,
+            "unit_price": 55.417682796433546,
+            "usd_yoy": 0.06946742434876585,
+            "kg_yoy": 0.06946759804530411,
+            "price_yoy": -1.6241402578387465e-07,
+            "days": 23,
+            "daily_usd": 15041619,
+            "daily_yoy": 0.06946742434876585,
+            "products": {
+              "8902200000": 345957243
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-08",
+            "usd": 319129087,
+            "kg": 5758614,
+            "unit_price": 55.41769026366414,
+            "usd_yoy": 0.0019424389282107768,
+            "kg_yoy": 0.0019424266413801128,
+            "price_yoy": 1.2263010829016707e-08,
+            "days": 20,
+            "daily_usd": 15956454,
+            "daily_yoy": 0.05203956087462136,
+            "products": {
+              "8902200000": 319129087
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-09",
+            "usd": 386160254,
+            "kg": 6968177,
+            "unit_price": 55.41768729468267,
+            "usd_yoy": 0.11082451522506309,
+            "kg_yoy": 0.1108245734043023,
+            "price_yoy": -5.237482181286168e-08,
+            "days": 22,
+            "daily_usd": 17552738,
+            "daily_yoy": -0.0911435784522211,
+            "products": {
+              "8902200000": 386160254
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-10",
+            "usd": 385897437,
+            "kg": 6963435,
+            "unit_price": 55.417683513955396,
+            "usd_yoy": 0.28400892154888635,
+            "kg_yoy": 0.2840089924800828,
+            "price_yoy": -5.5241977992004365e-08,
+            "days": 18,
+            "daily_usd": 21438746,
+            "daily_yoy": 0.4266765794987626,
+            "products": {
+              "8902200000": 385897437
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-11",
+            "usd": 332079034,
+            "kg": 5992293,
+            "unit_price": 55.41768968907228,
+            "usd_yoy": 0.2244192818487174,
+            "kg_yoy": 0.22441922620161714,
+            "price_yoy": 4.54477511180329e-08,
+            "days": 20,
+            "daily_usd": 16603951,
+            "daily_yoy": 0.28564024594115334,
+            "products": {
+              "8902200000": 332079034
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-12",
+            "usd": 345858936,
+            "kg": 6240949,
+            "unit_price": 55.417683432439524,
+            "usd_yoy": 0.11138266972605781,
+            "kg_yoy": 0.11138280051165705,
+            "price_yoy": -1.1767826435526985e-07,
+            "days": 21,
+            "daily_usd": 16469473,
+            "daily_yoy": 0.05845968545338853,
+            "products": {
+              "8902200000": 345858936
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-01",
+            "usd": 283008041,
+            "kg": 5106818,
+            "unit_price": 55.417686904056495,
+            "usd_yoy": -0.07936133304170845,
+            "kg_yoy": -0.07936127353012545,
+            "price_yoy": -6.46416247196413e-08,
+            "days": 21,
+            "daily_usd": 13476573,
+            "daily_yoy": -0.21088114260717872,
+            "products": {
+              "8902200000": 283008041
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-02",
+            "usd": 288208700,
+            "kg": 5200663,
+            "unit_price": 55.41768424525873,
+            "usd_yoy": 0.0230215967431866,
+            "kg_yoy": 0.023021742932066935,
+            "price_yoy": -1.4289909411324686e-07,
+            "days": 17,
+            "daily_usd": 16953452,
+            "daily_yoy": 0.20355481969786648,
+            "products": {
+              "8902200000": 288208700
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-03",
+            "usd": 348595396,
+            "kg": 6290327,
+            "unit_price": 55.4176906860327,
+            "usd_yoy": -0.07354530992277386,
+            "kg_yoy": -0.07354533559480603,
+            "price_yoy": 2.7709971428535596e-08,
+            "days": 21,
+            "daily_usd": 16599780,
+            "daily_yoy": -0.11766219992645133,
+            "products": {
+              "8902200000": 348595396
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-04",
+            "usd": 306473336,
+            "kg": 5530244,
+            "unit_price": 55.41768789948509,
+            "usd_yoy": -0.010942065668981926,
+            "kg_yoy": -0.010942110295298568,
+            "price_yoy": 4.512002482748301e-08,
+            "days": 22,
+            "daily_usd": 13930606,
+            "daily_yoy": -0.010942065668981926,
+            "products": {
+              "8902200000": 306473336
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-05",
+            "usd": 329198708,
+            "kg": 5940318,
+            "unit_price": 55.417691106772395,
+            "usd_yoy": -0.1349069114268836,
+            "kg_yoy": -0.13490695140781983,
+            "price_yoy": 4.621576410457351e-08,
+            "days": 18,
+            "daily_usd": 18288817,
+            "daily_yoy": -0.08684618428393276,
+            "products": {
+              "8902200000": 329198708
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-06",
+            "usd": 316867396,
+            "kg": 5717803,
+            "unit_price": 55.417683330468016,
+            "usd_yoy": -0.19481454987426927,
+            "kg_yoy": -0.1948145566433961,
+            "price_yoy": 8.406916496284111e-09,
+            "days": 21,
+            "daily_usd": 15088923,
+            "daily_yoy": -0.2714988784576722,
+            "products": {
+              "8902200000": 316867396
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-07",
+            "usd": 384530667,
+            "kg": 6938772,
+            "unit_price": 55.41768298482786,
+            "usd_yoy": 0.11149766273284811,
+            "kg_yoy": 0.11149765895427355,
+            "price_yoy": 3.3995344317361287e-09,
+            "days": 22,
+            "daily_usd": 17478666,
+            "daily_yoy": 0.1620202837661595,
+            "products": {
+              "8902200000": 384530667
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-08",
+            "usd": 332571944,
+            "kg": 6001188,
+            "unit_price": 55.41768463177624,
+            "usd_yoy": 0.04212357176956427,
+            "kg_yoy": 0.04212367767660763,
+            "price_yoy": -1.0162617525288908e-07,
+            "days": 20,
+            "daily_usd": 16628597,
+            "daily_yoy": 0.04212357176956427,
+            "products": {
+              "8902200000": 332571944
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-09",
+            "usd": 319289707,
+            "kg": 5761513,
+            "unit_price": 55.41768403542611,
+            "usd_yoy": -0.17316786569132514,
+            "kg_yoy": -0.17316781706320028,
+            "price_yoy": -5.881256903705889e-08,
+            "days": 20,
+            "daily_usd": 15964485,
+            "daily_yoy": -0.09048465226045765,
+            "products": {
+              "8902200000": 319289707
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-10",
+            "usd": 323316189,
+            "kg": 5834170,
+            "unit_price": 55.417683920763366,
+            "usd_yoy": -0.16217067541705388,
+            "kg_yoy": -0.1621706815673586,
+            "price_yoy": 7.340761110086191e-09,
+            "days": 20,
+            "daily_usd": 16165809,
+            "daily_yoy": -0.24595360787534848,
+            "products": {
+              "8902200000": 323316189
+            },
+            "quality": "ok"
+          }
+        ],
+        "notes": []
+      },
+      {
+        "id": "v1_exp_sg_tw",
+        "name": "전국 품목 수출 — SG, TW",
+        "kind": "national",
+        "direction": "exp",
+        "nature": "mixed",
+        "nature_label": "업황 혼합",
+        "partners": [
+          "SG",
+          "TW"
+        ],
+        "regions": [],
+        "products": [
+          {
+            "hs": "7201",
+            "name": "가상품목 7201",
+            "weight": 0.1
+          }
+        ],
+        "basis": "",
+        "last_ym": "2026-10",
+        "has_kg": true,
+        "points": [
+          {
+            "ym": "2023-11",
+            "usd": 104813822,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": -0.11855252377609671,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 22,
+            "daily_usd": 4764264,
+            "daily_yoy": -0.11855252377609671,
+            "products": {
+              "7201": 104813822
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2023-12",
+            "usd": 118231366,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.05526138204691344,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 19,
+            "daily_usd": 6222703,
+            "daily_yoy": 0.16634152752553577,
+            "products": {
+              "7201": 118231366
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-01",
+            "usd": 134281765,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.3617103875790768,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 22,
+            "daily_usd": 6103716,
+            "daily_yoy": 0.23791853416279696,
+            "products": {
+              "7201": 134281765
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-02",
+            "usd": 121546805,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": -0.028450149334054764,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 19,
+            "daily_usd": 6397200,
+            "daily_yoy": 0.02268405333257384,
+            "products": {
+              "7201": 121546805
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-03",
+            "usd": 128518788,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.10034307363034123,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 20,
+            "daily_usd": 6425939,
+            "daily_yoy": 0.21037738099337533,
+            "products": {
+              "7201": 128518788
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-04",
+            "usd": 129847645,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.08209779441385745,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 21,
+            "daily_usd": 6183221,
+            "daily_yoy": 0.03056932801319756,
+            "products": {
+              "7201": 129847645
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-05",
+            "usd": 127489688,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.15171051110461153,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 20,
+            "daily_usd": 6374484,
+            "daily_yoy": 0.15171051110461153,
+            "products": {
+              "7201": 127489688
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-06",
+            "usd": 129634084,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.1095867966634938,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 19,
+            "daily_usd": 6822846,
+            "daily_yoy": 0.22638540683859842,
+            "products": {
+              "7201": 129634084
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-07",
+            "usd": 133472892,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.09860673641473428,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 23,
+            "daily_usd": 5803169,
+            "daily_yoy": 0.003075715856931227,
+            "products": {
+              "7201": 133472892
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-08",
+            "usd": 127237312,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": -0.0012182506054437825,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 21,
+            "daily_usd": 6058919,
+            "daily_yoy": 0.04634278508001133,
+            "products": {
+              "7201": 127237312
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-09",
+            "usd": 143153984,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.09259712435371514,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 18,
+            "daily_usd": 7952999,
+            "daily_yoy": 0.15329696459558817,
+            "products": {
+              "7201": 143153984
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-10",
+            "usd": 145699175,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.17456286001371746,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 20,
+            "daily_usd": 7284958,
+            "daily_yoy": 0.11583471701303161,
+            "products": {
+              "7201": 145699175
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-11",
+            "usd": 114019683,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.08783060119685371,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 21,
+            "daily_usd": 5429508,
+            "daily_yoy": 0.13963205839670367,
+            "products": {
+              "7201": 114019683
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-12",
+            "usd": 115951298,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": -0.01928479791056459,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 20,
+            "daily_usd": 5797564,
+            "daily_yoy": -0.06832055801503634,
+            "products": {
+              "7201": 115951298
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-01",
+            "usd": 124589737,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": -0.07217679928469811,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 18,
+            "daily_usd": 6921652,
+            "daily_yoy": 0.1340061342075911,
+            "products": {
+              "7201": 124589737
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-02",
+            "usd": 141721112,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.1659797392453055,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 20,
+            "daily_usd": 7086055,
+            "daily_yoy": 0.1076807522830403,
+            "products": {
+              "7201": 141721112
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-03",
+            "usd": 153559617,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.19484177675251657,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 20,
+            "daily_usd": 7677980,
+            "daily_yoy": 0.19484177675251657,
+            "products": {
+              "7201": 153559617
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-04",
+            "usd": 126100787,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": -0.028855802506083217,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 22,
+            "daily_usd": 5731853,
+            "daily_yoy": -0.07299872057398848,
+            "products": {
+              "7201": 126100787
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-05",
+            "usd": 128494363,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.007880441279297878,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 19,
+            "daily_usd": 6762861,
+            "daily_yoy": 0.06092678029399767,
+            "products": {
+              "7201": 128494363
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-06",
+            "usd": 147569784,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.13835636004494,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 19,
+            "daily_usd": 7766830,
+            "daily_yoy": 0.13835636004494,
+            "products": {
+              "7201": 147569784
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-07",
+            "usd": 128172793,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": -0.039709179299119435,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 23,
+            "daily_usd": 5572730,
+            "daily_yoy": -0.039709179299119435,
+            "products": {
+              "7201": 128172793
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-08",
+            "usd": 131614805,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.03440416125735202,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 20,
+            "daily_usd": 6580740,
+            "daily_yoy": 0.08612436932021961,
+            "products": {
+              "7201": 131614805
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-09",
+            "usd": 152652987,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.06635514244577356,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 22,
+            "daily_usd": 6938772,
+            "daily_yoy": -0.12752761072618524,
+            "products": {
+              "7201": 152652987
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-10",
+            "usd": 157451423,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.0806610469825928,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 18,
+            "daily_usd": 8747301,
+            "daily_yoy": 0.20073449664732523,
+            "products": {
+              "7201": 157451423
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-11",
+            "usd": 118617079,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.04032107333608348,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 20,
+            "daily_usd": 5930853,
+            "daily_yoy": 0.09233712700288765,
+            "products": {
+              "7201": 118617079
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-12",
+            "usd": 134271781,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.15800153440283182,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 21,
+            "daily_usd": 6393894,
+            "daily_yoy": 0.10285860419317316,
+            "products": {
+              "7201": 134271781
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-01",
+            "usd": 151673723,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.21738536939041775,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 21,
+            "daily_usd": 7222558,
+            "daily_yoy": 0.043473173763215245,
+            "products": {
+              "7201": 151673723
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-02",
+            "usd": 144301371,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.01820659578228545,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 17,
+            "daily_usd": 8488315,
+            "daily_yoy": 0.19789011268504164,
+            "products": {
+              "7201": 144301371
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-03",
+            "usd": 159938546,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.041540407071997354,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 21,
+            "daily_usd": 7616121,
+            "daily_yoy": -0.008056755169526308,
+            "products": {
+              "7201": 159938546
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-04",
+            "usd": 151371525,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.20040111248473025,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 22,
+            "daily_usd": 6880523,
+            "daily_yoy": 0.20040111248473025,
+            "products": {
+              "7201": 151371525
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-05",
+            "usd": 147520019,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.14806607508533265,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 18,
+            "daily_usd": 8195556,
+            "daily_yoy": 0.21184752370118454,
+            "products": {
+              "7201": 147520019
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-06",
+            "usd": 151966826,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.02979635722716778,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 21,
+            "daily_usd": 7236515,
+            "daily_yoy": -0.06827948631827674,
+            "products": {
+              "7201": 151966826
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-07",
+            "usd": 152498257,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.18978648612268278,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 22,
+            "daily_usd": 6931738,
+            "daily_yoy": 0.2438676900373502,
+            "products": {
+              "7201": 152498257
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-08",
+            "usd": 180305183,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.36994605584075435,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 20,
+            "daily_usd": 9015259,
+            "daily_yoy": 0.36994605584075435,
+            "products": {
+              "7201": 180305183
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-09",
+            "usd": 174193348,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.1411067115247473,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 20,
+            "daily_usd": 8709667,
+            "daily_yoy": 0.25521738267722194,
+            "products": {
+              "7201": 174193348
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-10",
+            "usd": 179203284,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.13814966283283447,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 20,
+            "daily_usd": 8960164,
+            "daily_yoy": 0.024334696549551005,
+            "products": {
+              "7201": 179203284
+            },
+            "quality": "ok"
+          }
+        ],
+        "notes": []
+      },
+      {
+        "id": "v1_kr_31_a01",
+        "name": "시군구 수출 — KR-31-a01",
+        "kind": "sigungu",
+        "direction": "exp",
+        "nature": "mixed",
+        "nature_label": "업황 혼합",
+        "partners": [],
+        "regions": [
+          "KR-31-a01"
+        ],
+        "products": [
+          {
+            "hs": "900210",
+            "name": "가상품목 900210",
+            "weight": 0.1
+          }
+        ],
+        "basis": "",
+        "last_ym": "2026-10",
+        "has_kg": false,
+        "points": [
+          {
+            "ym": "2023-11",
+            "usd": 48343442,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.07251093072389936,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 22,
+            "daily_usd": 2197429,
+            "daily_yoy": 0.07251093072389936,
+            "products": {
+              "900210": 48343442
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2023-12",
+            "usd": 39449336,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.028917931785374718,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 19,
+            "daily_usd": 2076280,
+            "daily_yoy": 0.13722508249962484,
+            "products": {
+              "900210": 39449336
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-01",
+            "usd": 44654363,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.37024103330075353,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 22,
+            "daily_usd": 2029743,
+            "daily_yoy": 0.2456736666370487,
+            "products": {
+              "900210": 44654363
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-02",
+            "usd": 43706040,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.24246105195470102,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 19,
+            "daily_usd": 2300317,
+            "daily_yoy": 0.30785373889968537,
+            "products": {
+              "900210": 43706040
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-03",
+            "usd": 35500388,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": -0.2317830430143344,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 20,
+            "daily_usd": 1775019,
+            "daily_yoy": -0.15496134731576783,
+            "products": {
+              "900210": 35500388
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-04",
+            "usd": 36934069,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.0427395070827612,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 21,
+            "daily_usd": 1758765,
+            "daily_yoy": -0.006914755159275088,
+            "products": {
+              "900210": 36934069
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-05",
+            "usd": 42807074,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.18173581278324713,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 20,
+            "daily_usd": 2140353,
+            "daily_yoy": 0.18173581278324713,
+            "products": {
+              "900210": 42807074
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-06",
+            "usd": 41426615,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": -0.08840179596219444,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 19,
+            "daily_usd": 2180348,
+            "daily_yoy": 0.007555909725995624,
+            "products": {
+              "900210": 41426615
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-07",
+            "usd": 38778990,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.08508906370464153,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 23,
+            "daily_usd": 1686043,
+            "daily_yoy": -0.009266507052283823,
+            "products": {
+              "900210": 38778990
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-08",
+            "usd": 48355317,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.18251300327819653,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 21,
+            "daily_usd": 2302634,
+            "daily_yoy": 0.23882314629144408,
+            "products": {
+              "900210": 48355317
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-09",
+            "usd": 42786662,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": -0.08129871681407763,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 18,
+            "daily_usd": 2377036,
+            "daily_yoy": -0.030259756637081914,
+            "products": {
+              "900210": 42786662
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-10",
+            "usd": 46549635,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.13400607339924653,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 20,
+            "daily_usd": 2327481,
+            "daily_yoy": 0.07730576972928427,
+            "products": {
+              "900210": 46549635
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-11",
+            "usd": 38067940,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": -0.21255213892300018,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 21,
+            "daily_usd": 1812759,
+            "daily_yoy": -0.17505462172885733,
+            "products": {
+              "900210": 38067940
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2024-12",
+            "usd": 45289374,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.14803894291148523,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 20,
+            "daily_usd": 2264468,
+            "daily_yoy": 0.090636995765911,
+            "products": {
+              "900210": 45289374
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-01",
+            "usd": 43064718,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": -0.03559887305972764,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 18,
+            "daily_usd": 2392484,
+            "daily_yoy": 0.17871248848255505,
+            "products": {
+              "900210": 43064718
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-02",
+            "usd": 45474309,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.040458229571931126,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 20,
+            "daily_usd": 2273715,
+            "daily_yoy": -0.011564681906665486,
+            "products": {
+              "900210": 45474309
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-03",
+            "usd": 34544221,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": -0.026933987313040086,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 20,
+            "daily_usd": 1727211,
+            "daily_yoy": -0.026933987313040086,
+            "products": {
+              "900210": 34544221
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-04",
+            "usd": 41036788,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.1110822368366724,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 22,
+            "daily_usd": 1865308,
+            "daily_yoy": 0.060578498798641744,
+            "products": {
+              "900210": 41036788
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-05",
+            "usd": 47930068,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.11967634134489069,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 19,
+            "daily_usd": 2522635,
+            "daily_yoy": 0.17860667509988515,
+            "products": {
+              "900210": 47930068
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-06",
+            "usd": 46386665,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.11973099902079865,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 19,
+            "daily_usd": 2441403,
+            "daily_yoy": 0.11973099902079865,
+            "products": {
+              "900210": 46386665
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-07",
+            "usd": 43316535,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.11701039660909163,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 23,
+            "daily_usd": 1883327,
+            "daily_yoy": 0.11701039660909163,
+            "products": {
+              "900210": 43316535
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-08",
+            "usd": 37172159,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": -0.23127049296357627,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 20,
+            "daily_usd": 1858607,
+            "daily_yoy": -0.19283401761175512,
+            "products": {
+              "900210": 37172159
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-09",
+            "usd": 43768051,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.022936797453374513,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 22,
+            "daily_usd": 1989456,
+            "daily_yoy": -0.16305171117451167,
+            "products": {
+              "900210": 43768051
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-10",
+            "usd": 44121202,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": -0.052168679732934486,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 18,
+            "daily_usd": 2451177,
+            "daily_yoy": 0.05314591140785052,
+            "products": {
+              "900210": 44121202
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-11",
+            "usd": 46052340,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.2097407950101844,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 20,
+            "daily_usd": 2302617,
+            "daily_yoy": 0.2702278347606937,
+            "products": {
+              "900210": 46052340
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2025-12",
+            "usd": 42724209,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": -0.05663944482871408,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 21,
+            "daily_usd": 2034486,
+            "daily_yoy": -0.10156137602734683,
+            "products": {
+              "900210": 42724209
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-01",
+            "usd": 47211767,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.09629806469416557,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 21,
+            "daily_usd": 2248179,
+            "daily_yoy": -0.06031594454785805,
+            "products": {
+              "900210": 47211767
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-02",
+            "usd": 42596479,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": -0.06328474391991312,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 17,
+            "daily_usd": 2505675,
+            "daily_yoy": 0.10201794832951405,
+            "products": {
+              "900210": 42596479
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-03",
+            "usd": 41804520,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.21017405487302776,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 21,
+            "daily_usd": 1990691,
+            "daily_yoy": 0.15254671892669314,
+            "products": {
+              "900210": 41804520
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-04",
+            "usd": 34297690,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": -0.1642208937015246,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 22,
+            "daily_usd": 1558985,
+            "daily_yoy": -0.1642208937015246,
+            "products": {
+              "900210": 34297690
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-05",
+            "usd": 33541347,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": -0.3002023906997169,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 18,
+            "daily_usd": 1863408,
+            "daily_yoy": -0.2613247457385901,
+            "products": {
+              "900210": 33541347
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-06",
+            "usd": 35656598,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": -0.2313179229418627,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 21,
+            "daily_usd": 1697933,
+            "daily_yoy": -0.30452573980454245,
+            "products": {
+              "900210": 35656598
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-07",
+            "usd": 44065488,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.017290233394707144,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 22,
+            "daily_usd": 2002976,
+            "daily_yoy": 0.06353069854901205,
+            "products": {
+              "900210": 44065488
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-08",
+            "usd": 41718221,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.12229749689814895,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 20,
+            "daily_usd": 2085911,
+            "daily_yoy": 0.12229749689814895,
+            "products": {
+              "900210": 41718221
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-09",
+            "usd": 44533865,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": 0.01749710079619482,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 20,
+            "daily_usd": 2226693,
+            "daily_yoy": 0.11924681087581446,
+            "products": {
+              "900210": 44533865
+            },
+            "quality": "ok"
+          },
+          {
+            "ym": "2026-10",
+            "usd": 39702871,
+            "kg": null,
+            "unit_price": null,
+            "usd_yoy": -0.10014076679053308,
+            "kg_yoy": null,
+            "price_yoy": null,
+            "days": 20,
+            "daily_usd": 1985143,
+            "daily_yoy": -0.19012669011147976,
+            "products": {
+              "900210": 39702871
+            },
+            "quality": "ok"
+          }
+        ],
+        "notes": []
+      }
+    ]
+  }
+}

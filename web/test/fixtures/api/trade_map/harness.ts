@@ -1,5 +1,5 @@
 // MAP 시험 도우미 — 합성 픽스처(tests/unit/api/web_fixtures_p6/map.py 가 만든 이 폴더의 JSON — p6_world, 실데이터 아님)를
-// 실제 데이터 소스에 가짜 fetch 로 물린다. 로그인: /api/trade/stocks·/api/trade/stock/<코드>, 공개: ./data/trade/… .
+// 실제 데이터 소스에 가짜 fetch 로 물린다. 로그인: /api/trade/stocks·/api/trade/stock/<코드>(/flows·/preview), 공개: ./data/trade/… .
 import { createApiSource } from '../../../../src/data/api';
 import type { DataSource } from '../../../../src/data/source';
 import { createStaticSource } from '../../../../src/data/static';
@@ -30,6 +30,8 @@ export type Over = Record<string, (() => Response) | undefined>;
 export function loginFixtureName(path: string): string | null {
   const p = path.split('?')[0] ?? '';
   if (p === 'trade/stocks') return 'stocks';
+  const f = /^trade\/stock\/([0-9A-Z]{6})\/(flows|preview)$/.exec(p);
+  if (f) return `${f[2] ?? ''}_${f[1] ?? ''}`;
   const m = /^trade\/stock\/([0-9A-Z]{6})$/.exec(p);
   return m ? `stock_${m[1] ?? ''}` : null;
 }
@@ -41,7 +43,7 @@ export function mapLoginHarness(over: Over = {}): MapHarness {
     if (o) return o();
     const name = loginFixtureName(path);
     if (name !== null && `./${name}.json` in FX) return json(mapFixture(name));
-    if (name?.startsWith('stock_')) return json(mapFixture('no_map_994010'), 404);
+    if (name !== null && /^(stock|flows|preview)_/.test(name)) return json(mapFixture('no_map_994010'), 404);
     return json({ code: 'no_data', message: '아직 없음 — trade.stock_index 21:00' }, 404);
   });
   return { source: createApiSource({ fetch }), calls, paths: () => calls.map((c) => c.url.replace(/^\/api\//, '')) };

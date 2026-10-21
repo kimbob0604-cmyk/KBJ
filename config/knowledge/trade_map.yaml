@@ -1,497 +1,2177 @@
-# 종목↔HS 매핑표(공개 — 자체 큐레이션, docs/p6_design.md §4.5·D-P6-14, metrics §28). 해석기 kbj/config/trade.py.
-# 첫 판(웨이브 2 MAP — 사용자 결정 2026-10-13 Q7: reviewed: false 로 출시). 수출 비중이 사업보고서에 적히는
-# 업종(반도체·자동차·조선·전력기기·화장품·라면·방산·이차전지·석유화학·철강 등)에서 자체로 고른 60종목
-# (2026-10-14 공개 출처 점검: HD현대미포 010620 상장폐지로 삭제, KAI 8803→8807, 267270 사명 HD건설기계,
-# 오리온·한화엔진 가중치 하향, 329180 8906·298040 8535 추가 — 모두 reviewed: false).
-# **가중치는 초안이다** — 사람이 사업보고서 매출 구성으로 검토한 뒤 reviewed: true 로 바꾼다. 근거의 접수번호(rcept_no)는
-# 검토 때 채운다 [확인 필요]. HS 는 업종 대표 HS4(일부 HS6)이고 실데이터 대조는 verify_trade [실측 필요 #56].
+# 종목↔HS 매핑표(공개 — 자체 큐레이션, docs/p10_trade_stocks_plan.md 단계 2·docs/p6_design.md §4.5, metrics §28).
+# 판 2(2026-10-21 — 사용자 결정: 300종목, 나쁜양파 '종목별 흐름' 단위). 해석기 kbj/config/trade.py.
 #
-# 형식(한 종목):
-#   - code: "000000"          # 6자리 영숫자
-#     name: 종목 이름
-#     reviewed: false          # 사람이 가중치·근거를 검토했는가
-#     items:                   # 품목 행 — hs 는 2~10 짝수 자리 접두, flow exp·imp, weight 0~1
-#       - {hs: "854232", flow: exp, weight: 0.55, countries: [CN, US]}   # countries 비면 전 국가
-#     regions:                 # 지역 행 — trade_regions.yaml 의 통합 ID × HS6
-#       - {region_id: "KR-41-xxx", hs6: "330499", weight: 0.3}
-#     evidence:                # 근거 1개 이상 — DART 접수번호 + 자체 문장 요약(원문 복사 아님)
-#       - {kind: dart_business_report, rcept_no: "<14자리>", note: "매출 구성 요약"}
-# 규칙: 종목별 가중치 합 ≤ 1, 같은 품목·지역 행 중복 금지. 관심종목은 여기 넣지 않는다(공개판이 관심종목을
-# 드러내지 않게 — R9). 관심종목 전용은 VM local 파일(trade.yaml map.local_file).
-# 관세청 조회코드표 원본은 레포에 넣지 않는다.
-version: 1
+# **전부 초안(reviewed: false)** — 회사별 주요 제품·사업장 소재지를 공개 정보로 추려 적었다. 가중치(매출 중 그 흐름의
+# 몫)와 HS 소호(6자리)는 추정이다. 사업보고서(DART)로 확인한 종목은 근거에 접수번호를 채우고 reviewed: true 로 바꾼다.
+# 상관 검증(종목 수출 지수 vs 분기 매출 — 페이지 8 겹쳐 보기)이 낮은 흐름은 '업황 혼합'으로 읽는다.
+#
+# 형식(한 종목): code·name·reviewed·flows·evidence. 흐름(flow) 하나:
+#   id(종목 안 유일, 소문자) · name(화면 제목) · kind(national 전국 품목 | sigungu 사업장 시군구 × HS6)
+#   · nature(company 회사 출하 | mixed 업황 혼합 | affiliate 관계사·자회사 물량) · direction(exp 기본 | imp)
+#   · regions(sigungu — trade_regions.yaml 통합 ID) · partners(national — 상대국 ISO2, 비면 전세계)
+#   · products[{hs, name, weight}] · basis(선정 근거 — 자체 요약 문장, 원문 복사 아님)
+# 규칙: 종목별 가중치 합 ≤ 1, 같은 (HS·방향·시군구) 줄 중복 금지, 시군구 흐름은 수출·HS6 만. 관심종목 전용 매핑은
+# 여기 넣지 않는다(VM local 파일 — trade.yaml map.local_file). 관세청 조회코드표 원본은 레포에 넣지 않는다.
+version: 2
 stocks:
+  # ── 반도체·전자부품·디스플레이 ──
   - code: '005930'
     name: 삼성전자
     reviewed: false
-    items:
-    - {hs: '854232', flow: exp, weight: 0.3}
-    - {hs: '8517', flow: exp, weight: 0.1}
-    - {hs: '8471', flow: exp, weight: 0.05}
-    regions:
-    - {region_id: KR-41-pyeongtaek, hs6: '854232', weight: 0.1}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+    sector: 반도체
+    flows:
+      - {id: mem, name: "메모리 반도체 — 평택·화성·용인(기흥)", kind: sigungu, nature: mixed, regions: [KR-41-pyeongtaek, KR-41-hwaseong, KR-41-yongin], products: [{hs: '854232', name: "메모리 반도체", weight: 0.25}], basis: "평택·화성·기흥(용인) 반도체 사업장의 메모리 수출. 같은 시군구에 장비·소재 회사 물량이 섞일 수 있다(업황 혼합)"}
+      - {id: phone, name: "휴대폰·통신기기 전국", kind: national, nature: mixed, products: [{hs: '8517', name: "통신기기", weight: 0.05}], basis: "휴대폰 생산은 대부분 해외(베트남·인도) — 국내 통관은 일부·부품 위주"}
+      - {id: ssd, name: "컴퓨터 기억장치(SSD) 전국", kind: national, nature: mixed, products: [{hs: '847170', name: "기억장치", weight: 0.05}], basis: "SSD 등 저장장치 수출(전국 품목 — 타사 물량 혼합)"}
+    evidence: [{kind: kbj_draft, note: "반도체 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
   - code: '000660'
     name: SK하이닉스
     reviewed: false
-    items:
-    - {hs: '854232', flow: exp, weight: 0.6}
-    regions:
-    - {region_id: KR-41-icheon, hs6: '854232', weight: 0.2}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+    sector: 반도체
+    flows:
+      - {id: dram, name: "D램·HBM — 이천", kind: sigungu, nature: company, regions: [KR-41-icheon], products: [{hs: '854232', name: "메모리 반도체", weight: 0.45}], basis: "이천 본사 팹(D램·HBM). 이천 시군구의 메모리 수출은 거의 이 회사 물량"}
+      - {id: nand, name: "낸드 — 청주", kind: sigungu, nature: mixed, regions: [KR-43-cheongju], products: [{hs: '854232', name: "메모리 반도체", weight: 0.15}], basis: "청주 팹(낸드). 청주에는 다른 반도체 업체도 있어 업황 혼합"}
+    evidence: [{kind: kbj_draft, note: "반도체 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
   - code: '042700'
     name: 한미반도체
     reviewed: false
-    items:
-    - {hs: '8486', flow: exp, weight: 0.7}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+    sector: 반도체 장비
+    flows:
+      - {id: eq, name: "반도체 제조장비 전국", kind: national, nature: mixed, products: [{hs: '8486', name: "반도체 제조장비", weight: 0.6}], basis: "TC본더·비전 플레이스먼트 등 후공정 장비. 8486 전국은 업계 전체(업황)"}
+      - {id: eq_inc, name: "반도체 장비 — 인천 서구", kind: sigungu, nature: mixed, regions: [KR-28-seo], products: [{hs: '848620', name: "반도체 소자 제조장비", weight: 0.2}], basis: "인천 서구 본사·공장. 같은 시군구 타 장비사 물량 혼입 가능"}
+    evidence: [{kind: kbj_draft, note: "반도체 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
   - code: '058470'
     name: 리노공업
     reviewed: false
-    items:
-    - {hs: '9030', flow: exp, weight: 0.5}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+    sector: 반도체 부품
+    flows:
+      - {id: socket, name: "검사용 소켓·프로브", kind: national, nature: mixed, products: [{hs: '8536', name: "접속기기", weight: 0.3}, {hs: '9030', name: "측정·검사기기", weight: 0.3}], basis: "부산 강서 공장의 테스트 소켓·핀(전국 품목 — 업황)"}
+    evidence: [{kind: kbj_draft, note: "반도체 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
   - code: '240810'
     name: 원익IPS
     reviewed: false
-    items:
-    - {hs: '8486', flow: exp, weight: 0.4}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '005380'
-    name: 현대차
+    sector: 반도체 장비
+    flows:
+      - {id: eq, name: "반도체 제조장비 — 평택", kind: sigungu, nature: mixed, regions: [KR-41-pyeongtaek], products: [{hs: '848620', name: "반도체 소자 제조장비", weight: 0.3}], basis: "평택 진위 사업장. 평택은 삼성 팹이 있어 장비 수출 비중은 작다(업황 혼합)"}
+      - {id: eq_all, name: "반도체 제조장비 전국", kind: national, nature: mixed, products: [{hs: '8486', name: "반도체 제조장비", weight: 0.2}], basis: "전공정 증착 장비(업황)"}
+    evidence: [{kind: kbj_draft, note: "반도체 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '039030'
+    name: 이오테크닉스
     reviewed: false
-    items:
-    - hs: '8703'
-      flow: exp
-      weight: 0.4
-      countries: [US]
-    regions:
-    - {region_id: KR-31-buk, hs6: '870380', weight: 0.05}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '000270'
-    name: 기아
+    sector: 반도체 장비
+    flows:
+      - {id: laser, name: "레이저 가공기 전국", kind: national, nature: mixed, products: [{hs: '8456', name: "레이저 가공기계", weight: 0.5}], basis: "레이저 마커·커팅(전국 품목)"}
+    evidence: [{kind: kbj_draft, note: "반도체 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '036930'
+    name: 주성엔지니어링
     reviewed: false
-    items:
-    - {hs: '8703', flow: exp, weight: 0.5}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '012330'
-    name: 현대모비스
+    sector: 반도체 장비
+    flows:
+      - {id: eq, name: "반도체·디스플레이 장비 전국", kind: national, nature: mixed, products: [{hs: '8486', name: "반도체 제조장비", weight: 0.5}], basis: "경기 광주 공장 — ALD·CVD"}
+    evidence: [{kind: kbj_draft, note: "반도체 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '319660'
+    name: 피에스케이
     reviewed: false
-    items:
-    - {hs: '8708', flow: exp, weight: 0.3}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '204320'
-    name: HL만도
+    sector: 반도체 장비
+    flows:
+      - {id: eq, name: "반도체 제조장비 — 화성", kind: sigungu, nature: mixed, regions: [KR-41-hwaseong], products: [{hs: '848620', name: "반도체 소자 제조장비", weight: 0.4}], basis: "화성 사업장 — 드라이 스트립. 화성에는 삼성 팹·타 장비사가 있어 업황 혼합"}
+    evidence: [{kind: kbj_draft, note: "반도체 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '084370'
+    name: 유진테크
     reviewed: false
-    items:
-    - {hs: '8708', flow: exp, weight: 0.3}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '161390'
-    name: 한국타이어앤테크놀로지
+    sector: 반도체 장비
+    flows:
+      - {id: eq, name: "반도체 제조장비 — 용인", kind: sigungu, nature: mixed, regions: [KR-41-yongin], products: [{hs: '848620', name: "반도체 소자 제조장비", weight: 0.4}], basis: "용인 사업장 — LPCVD"}
+    evidence: [{kind: kbj_draft, note: "반도체 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '095610'
+    name: 테스
     reviewed: false
-    items:
-    - {hs: '4011', flow: exp, weight: 0.5}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '073240'
-    name: 금호타이어
+    sector: 반도체 장비
+    flows:
+      - {id: eq, name: "반도체 제조장비 — 용인", kind: sigungu, nature: mixed, regions: [KR-41-yongin], products: [{hs: '848620', name: "반도체 소자 제조장비", weight: 0.3}], basis: "용인 사업장 — PECVD"}
+    evidence: [{kind: kbj_draft, note: "반도체 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '095340'
+    name: ISC
     reviewed: false
-    items:
-    - {hs: '4011', flow: exp, weight: 0.5}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '002350'
-    name: 넥센타이어
+    sector: 반도체 부품
+    flows:
+      - {id: socket, name: "테스트 소켓 — 성남", kind: sigungu, nature: mixed, regions: [KR-41-seongnam], products: [{hs: '853690', name: "기타 접속기기", weight: 0.5}], basis: "성남 본사 — 러버 소켓"}
+    evidence: [{kind: kbj_draft, note: "반도체 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '067310'
+    name: 하나마이크론
     reviewed: false
-    items:
-    - {hs: '4011', flow: exp, weight: 0.5}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '009540'
-    name: HD한국조선해양
+    sector: 반도체 후공정
+    flows:
+      - {id: pkg, name: "집적회로 전국", kind: national, nature: mixed, products: [{hs: '8542', name: "집적회로", weight: 0.1}], basis: "아산 패키징(임가공) — 집적회로 전국은 업황"}
+    evidence: [{kind: kbj_draft, note: "반도체 후공정 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '357780'
+    name: 솔브레인
     reviewed: false
-    items:
-    - {hs: '8901', flow: exp, weight: 0.6}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '329180'
-    name: HD현대중공업
+    sector: 반도체 소재
+    flows:
+      - {id: chem, name: "불화수소·식각액 전국", kind: national, nature: mixed, products: [{hs: '2811', name: "무기산", weight: 0.2}, {hs: '3824', name: "화학조제품", weight: 0.1}], basis: "공주·논산 공장 — 고순도 식각액"}
+    evidence: [{kind: kbj_draft, note: "반도체 소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '005290'
+    name: 동진쎄미켐
     reviewed: false
-    items:
-    - {hs: '8901', flow: exp, weight: 0.6}   # 옛 HD현대미포(010620 — 2025-12-01 흡수합병·상장폐지)의 중형선 포함
-    - {hs: '8906', flow: exp, weight: 0.05}  # 특수선(군함) — 소량, 가중치 미검토
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '010140'
-    name: 삼성중공업
+    sector: 반도체 소재
+    flows:
+      - {id: pr, name: "감광액 전국", kind: national, nature: mixed, products: [{hs: '3707', name: "감광성 조제품", weight: 0.3}], basis: "화성 발안 — 포토레지스트"}
+    evidence: [{kind: kbj_draft, note: "반도체 소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '064760'
+    name: 티씨케이
     reviewed: false
-    items:
-    - {hs: '8901', flow: exp, weight: 0.6}
-    regions:
-    - {region_id: KR-48-geoje, hs6: '890120', weight: 0.1}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '042660'
-    name: 한화오션
+    sector: 반도체 소재
+    flows:
+      - {id: parts, name: "반도체 장비 부품(SiC 링)", kind: national, nature: mixed, products: [{hs: '848690', name: "반도체 장비 부품", weight: 0.6}], basis: "안성 공장 — SiC 포커스링"}
+    evidence: [{kind: kbj_draft, note: "반도체 소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '074600'
+    name: 원익QnC
     reviewed: false
-    items:
-    - {hs: '8901', flow: exp, weight: 0.5}
-    - {hs: '8906', flow: exp, weight: 0.1}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '082740'
-    name: 한화엔진
+    sector: 반도체 소재
+    flows:
+      - {id: quartz, name: "석영 부품", kind: national, nature: mixed, products: [{hs: '7020', name: "기타 유리제품", weight: 0.2}, {hs: '848690', name: "반도체 장비 부품", weight: 0.2}], basis: "구미 — 쿼츠웨어"}
+    evidence: [{kind: kbj_draft, note: "반도체 소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '098460'
+    name: 고영
     reviewed: false
-    items:
-    # 선박 엔진은 대부분 국내 조선소 납품 — 수출은 선박(8901)에 묶여 잡힌다(조선 수출에 간접 연동). 8408 직수출은 작다
-    - {hs: '8408', flow: exp, weight: 0.1}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '267260'
-    name: HD현대일렉트릭
+    sector: 검사장비
+    flows:
+      - {id: insp, name: "3D 검사장비 전국", kind: national, nature: mixed, products: [{hs: '9031', name: "측정·검사기기", weight: 0.6}], basis: "용인·서울 — 3D SPI·AOI"}
+    evidence: [{kind: kbj_draft, note: "검사장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '140860'
+    name: 파크시스템스
     reviewed: false
-    items:
-    - hs: '8504'
-      flow: exp
-      weight: 0.5
-      countries: [US]
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '010120'
-    name: LS ELECTRIC
+    sector: 검사장비
+    flows:
+      - {id: afm, name: "원자현미경 전국", kind: national, nature: mixed, products: [{hs: '9031', name: "측정·검사기기", weight: 0.6}], basis: "수원 — AFM"}
+    evidence: [{kind: kbj_draft, note: "검사장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '403870'
+    name: HPSP
     reviewed: false
-    items:
-    - {hs: '8504', flow: exp, weight: 0.2}
-    - {hs: '8537', flow: exp, weight: 0.2}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '298040'
-    name: 효성중공업
+    sector: 반도체 장비
+    flows:
+      - {id: eq, name: "고압 어닐링 장비 전국", kind: national, nature: mixed, products: [{hs: '8486', name: "반도체 제조장비", weight: 0.7}], basis: "화성 — 고압 수소 어닐링"}
+    evidence: [{kind: kbj_draft, note: "반도체 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '281820'
+    name: 케이씨텍
     reviewed: false
-    items:
-    - {hs: '8504', flow: exp, weight: 0.4}
-    - {hs: '8535', flow: exp, weight: 0.1}   # 초고압 차단기·GIS — 가중치 미검토
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '103590'
-    name: 일진전기
+    sector: 반도체 장비
+    flows:
+      - {id: cmp, name: "CMP 장비 전국", kind: national, nature: mixed, products: [{hs: '8486', name: "반도체 제조장비", weight: 0.4}], basis: "안성 — CMP·세정"}
+    evidence: [{kind: kbj_draft, note: "반도체 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '079370'
+    name: 제우스
     reviewed: false
-    items:
-    - {hs: '8544', flow: exp, weight: 0.3}
-    - {hs: '8504', flow: exp, weight: 0.2}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '001440'
-    name: 대한전선
+    sector: 반도체 장비
+    flows:
+      - {id: eq, name: "세정장비 전국", kind: national, nature: mixed, products: [{hs: '8486', name: "반도체 제조장비", weight: 0.4}], basis: "화성 — 웨이퍼 세정"}
+    evidence: [{kind: kbj_draft, note: "반도체 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '007660'
+    name: 이수페타시스
     reviewed: false
-    items:
-    - {hs: '8544', flow: exp, weight: 0.5}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '006260'
-    name: LS
+    sector: PCB
+    flows:
+      - {id: pcb, name: "인쇄회로기판 — 대구 달성", kind: sigungu, nature: mixed, regions: [KR-27-dalseong], products: [{hs: '853400', name: "인쇄회로", weight: 0.6}], basis: "대구 달성 공장 — 고다층 MLB(AI 서버). 같은 시군구 타 업체 혼입 가능"}
+    evidence: [{kind: kbj_draft, note: "PCB — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '222800'
+    name: 심텍
     reviewed: false
-    items:
-    - {hs: '8544', flow: exp, weight: 0.3}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '090430'
-    name: 아모레퍼시픽
+    sector: PCB
+    flows:
+      - {id: pcb, name: "반도체 기판 — 청주", kind: sigungu, nature: mixed, regions: [KR-43-cheongju], products: [{hs: '853400', name: "인쇄회로", weight: 0.5}], basis: "청주 공장 — 메모리 모듈·패키지 기판"}
+    evidence: [{kind: kbj_draft, note: "PCB — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '353200'
+    name: 대덕전자
     reviewed: false
-    items:
-    - {hs: '3304', flow: exp, weight: 0.4}
-    regions:
-    - {region_id: KR-41-osan, hs6: '330499', weight: 0.05}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '051900'
-    name: LG생활건강
+    sector: PCB
+    flows:
+      - {id: pcb, name: "반도체 기판 — 안산", kind: sigungu, nature: mixed, regions: [KR-41-ansan], products: [{hs: '853400', name: "인쇄회로", weight: 0.5}], basis: "안산 공장 — FC-BGA·패키지 기판"}
+    evidence: [{kind: kbj_draft, note: "PCB — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '195870'
+    name: 해성디에스
     reviewed: false
-    items:
-    - {hs: '3304', flow: exp, weight: 0.3}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '192820'
-    name: 코스맥스
+    sector: 반도체 부품
+    flows:
+      - {id: lf, name: "리드프레임·기판 전국", kind: national, nature: mixed, products: [{hs: '8542', name: "집적회로(부품 포함)", weight: 0.1}, {hs: '853400', name: "인쇄회로", weight: 0.2}], basis: "창원 — 리드프레임"}
+    evidence: [{kind: kbj_draft, note: "반도체 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '000990'
+    name: DB하이텍
     reviewed: false
-    items:
-    - {hs: '3304', flow: exp, weight: 0.4}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '161890'
-    name: 한국콜마
+    sector: 반도체
+    flows:
+      - {id: fab, name: "파운드리 — 음성", kind: sigungu, nature: mixed, regions: [KR-43-eumseong], products: [{hs: '854239', name: "기타 집적회로", weight: 0.5}], basis: "음성 상우 팹(부천 팹 별도)"}
+    evidence: [{kind: kbj_draft, note: "반도체 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '089030'
+    name: 테크윙
     reviewed: false
-    items:
-    - {hs: '3304', flow: exp, weight: 0.3}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '257720'
-    name: 실리콘투
+    sector: 반도체 장비
+    flows:
+      - {id: handler, name: "테스트 핸들러 전국", kind: national, nature: mixed, products: [{hs: '8486', name: "반도체 제조장비", weight: 0.3}, {hs: '9031', name: "측정·검사기기", weight: 0.2}], basis: "안성 — 메모리 테스트 핸들러"}
+    evidence: [{kind: kbj_draft, note: "반도체 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '232140'
+    name: 와이씨
     reviewed: false
-    items:
-    - {hs: '3304', flow: exp, weight: 0.7}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '003230'
-    name: 삼양식품
+    sector: 반도체 장비
+    flows:
+      - {id: tester, name: "메모리 테스터 전국", kind: national, nature: mixed, products: [{hs: '9030', name: "측정·검사기기", weight: 0.6}], basis: "메모리 웨이퍼 테스터"}
+    evidence: [{kind: kbj_draft, note: "반도체 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '003160'
+    name: 디아이
     reviewed: false
-    items:
-    - hs: '1902'
-      flow: exp
-      weight: 0.7
-      countries: [CN, US]
-    regions:
-    - {region_id: KR-51-wonju, hs6: '190230', weight: 0.1}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '004370'
-    name: 농심
+    sector: 반도체 장비
+    flows:
+      - {id: tester, name: "번인 테스터 전국", kind: national, nature: mixed, products: [{hs: '9030', name: "측정·검사기기", weight: 0.4}], basis: "번인·메모리 테스터"}
+    evidence: [{kind: kbj_draft, note: "반도체 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '092870'
+    name: 엑시콘
     reviewed: false
-    items:
-    - {hs: '1902', flow: exp, weight: 0.3}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '271560'
-    name: 오리온
+    sector: 반도체 장비
+    flows:
+      - {id: tester, name: "SSD·메모리 테스터 전국", kind: national, nature: mixed, products: [{hs: '9030', name: "측정·검사기기", weight: 0.5}], basis: "테스터"}
+    evidence: [{kind: kbj_draft, note: "반도체 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '014680'
+    name: 한솔케미칼
     reviewed: false
-    items:
-    # 해외 매출 대부분이 중국·베트남·러시아 현지 생산 — 한국 수출 통계와의 연결이 약하다
-    - {hs: '1905', flow: exp, weight: 0.05}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '012450'
-    name: 한화에어로스페이스
+    sector: 반도체 소재
+    flows:
+      - {id: h2o2, name: "과산화수소 — 전주", kind: sigungu, nature: company, regions: [KR-52-jeonju], products: [{hs: '284700', name: "과산화수소", weight: 0.2}], basis: "전주 공장 — 반도체용 과산화수소. 전주의 과산화수소 수출은 대부분 이 회사"}
+      - {id: prec, name: "프리커서·양자점 전국", kind: national, nature: mixed, products: [{hs: '2931', name: "유기·무기 화합물", weight: 0.1}], basis: "반도체 프리커서(업황)"}
+    evidence: [{kind: kbj_draft, note: "반도체 소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '093370'
+    name: 후성
     reviewed: false
-    items:
-    - {hs: '8710', flow: exp, weight: 0.2}
-    - {hs: '9306', flow: exp, weight: 0.1}
-    - {hs: '8411', flow: exp, weight: 0.1}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '064350'
-    name: 현대로템
+    sector: 화학 소재
+    flows:
+      - {id: ref, name: "냉매·전해질 전국", kind: national, nature: mixed, products: [{hs: '2903', name: "할로겐화 탄화수소", weight: 0.2}, {hs: '2826', name: "불화물", weight: 0.2}], basis: "울산 — 냉매·LiPF6"}
+    evidence: [{kind: kbj_draft, note: "화학 소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '101490'
+    name: 에스앤에스텍
     reviewed: false
-    items:
-    - {hs: '8710', flow: exp, weight: 0.4}
-    - {hs: '8603', flow: exp, weight: 0.1}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '079550'
-    name: LIG넥스원
+    sector: 반도체 소재
+    flows:
+      - {id: blank, name: "블랭크 마스크 전국", kind: national, nature: mixed, products: [{hs: '3705', name: "사진 플레이트", weight: 0.3}], basis: "대구 — 블랭크마스크(분류 확인 필요)"}
+    evidence: [{kind: kbj_draft, note: "반도체 소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '036540'
+    name: SFA반도체
     reviewed: false
-    items:
-    - {hs: '9306', flow: exp, weight: 0.3}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '047810'
-    name: 한국항공우주
+    sector: 반도체 후공정
+    flows:
+      - {id: pkg, name: "집적회로 전국", kind: national, nature: mixed, products: [{hs: '8542', name: "집적회로", weight: 0.1}], basis: "천안 — 패키징·테스트(임가공)"}
+    evidence: [{kind: kbj_draft, note: "반도체 후공정 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '033640'
+    name: 네패스
     reviewed: false
-    items:
-    - {hs: '8802', flow: exp, weight: 0.3}
-    - {hs: '8807', flow: exp, weight: 0.1}   # 항공기 부품 — HS 2022 개정으로 8803 → 8807
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '373220'
-    name: LG에너지솔루션
+    sector: 반도체 후공정
+    flows:
+      - {id: pkg, name: "집적회로 전국", kind: national, nature: mixed, products: [{hs: '8542', name: "집적회로", weight: 0.1}], basis: "청주 — 범핑·WLP"}
+    evidence: [{kind: kbj_draft, note: "반도체 후공정 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '322310'
+    name: 오로스테크놀로지
     reviewed: false
-    items:
-    - {hs: '8507', flow: exp, weight: 0.5}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '006400'
-    name: 삼성SDI
+    sector: 검사장비
+    flows:
+      - {id: ovl, name: "오버레이 계측 전국", kind: national, nature: mixed, products: [{hs: '9031', name: "측정·검사기기", weight: 0.5}], basis: "동탄(화성) — 오버레이 계측"}
+    evidence: [{kind: kbj_draft, note: "검사장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '348210'
+    name: 넥스틴
     reviewed: false
-    items:
-    - {hs: '8507', flow: exp, weight: 0.5}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '247540'
-    name: 에코프로비엠
+    sector: 검사장비
+    flows:
+      - {id: insp, name: "웨이퍼 검사장비 전국", kind: national, nature: mixed, products: [{hs: '9031', name: "측정·검사기기", weight: 0.6}], basis: "화성 — 다크필드 검사"}
+    evidence: [{kind: kbj_draft, note: "검사장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '039440'
+    name: 에스티아이
     reviewed: false
-    items:
-    - {hs: '2841', flow: exp, weight: 0.5}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '003670'
-    name: 포스코퓨처엠
+    sector: 반도체 장비
+    flows:
+      - {id: ccss, name: "약액 공급장치 전국", kind: national, nature: mixed, products: [{hs: '8486', name: "반도체 제조장비", weight: 0.4}], basis: "화성 — CCSS"}
+    evidence: [{kind: kbj_draft, note: "반도체 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '053610'
+    name: 프로텍
     reviewed: false
-    items:
-    - {hs: '2841', flow: exp, weight: 0.3}
-    - {hs: '6902', flow: exp, weight: 0.1}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '066970'
-    name: 엘앤에프
+    sector: 반도체 장비
+    flows:
+      - {id: disp, name: "디스펜서 전국", kind: national, nature: mixed, products: [{hs: '8486', name: "반도체 제조장비", weight: 0.4}], basis: "안양 — 디스펜서·레이저 리플로우"}
+    evidence: [{kind: kbj_draft, note: "반도체 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '183300'
+    name: 코미코
     reviewed: false
-    items:
-    - {hs: '2841', flow: exp, weight: 0.6}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '051910'
-    name: LG화학
+    sector: 반도체 부품
+    flows:
+      - {id: coat, name: "장비 부품 세정·코팅 전국", kind: national, nature: mixed, products: [{hs: '848690', name: "반도체 장비 부품", weight: 0.2}], basis: "안성 — 세정·코팅(서비스 비중 큼)"}
+    evidence: [{kind: kbj_draft, note: "반도체 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '102710'
+    name: 이엔에프테크놀로지
     reviewed: false
-    items:
-    - {hs: '3901', flow: exp, weight: 0.1}
-    - {hs: '3903', flow: exp, weight: 0.1}
-    - {hs: '2841', flow: exp, weight: 0.1}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '011170'
-    name: 롯데케미칼
+    sector: 반도체 소재
+    flows:
+      - {id: chem, name: "식각액·신너 전국", kind: national, nature: mixed, products: [{hs: '3824', name: "화학조제품", weight: 0.2}, {hs: '3814', name: "유기용제", weight: 0.1}], basis: "공주 — 식각액"}
+    evidence: [{kind: kbj_draft, note: "반도체 소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '131290'
+    name: 티에스이
     reviewed: false
-    items:
-    - {hs: '3901', flow: exp, weight: 0.2}
-    - {hs: '2902', flow: exp, weight: 0.1}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '011780'
-    name: 금호석유화학
+    sector: 반도체 부품
+    flows:
+      - {id: probe, name: "프로브카드·소켓 전국", kind: national, nature: mixed, products: [{hs: '9030', name: "측정·검사기기", weight: 0.3}, {hs: '8536', name: "접속기기", weight: 0.2}], basis: "천안 — 프로브카드"}
+    evidence: [{kind: kbj_draft, note: "반도체 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '077360'
+    name: 덕산하이메탈
     reviewed: false
-    items:
-    - {hs: '4002', flow: exp, weight: 0.3}
-    - {hs: '3903', flow: exp, weight: 0.1}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '010950'
-    name: S-Oil
-    reviewed: false
-    items:
-    - {hs: '2710', flow: exp, weight: 0.5}
-    regions:
-    - {region_id: KR-31-ulju, hs6: '271019', weight: 0.1}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '096770'
-    name: SK이노베이션
-    reviewed: false
-    items:
-    - {hs: '2710', flow: exp, weight: 0.3}
-    - {hs: '8507', flow: exp, weight: 0.1}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '298020'
-    name: 효성티앤씨
-    reviewed: false
-    items:
-    - {hs: '5402', flow: exp, weight: 0.4}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '005490'
-    name: POSCO홀딩스
-    reviewed: false
-    items:
-    - {hs: '7208', flow: exp, weight: 0.15}
-    - {hs: '7209', flow: exp, weight: 0.1}
-    - {hs: '7219', flow: exp, weight: 0.05}
-    regions:
-    - {region_id: KR-47-pohang, hs6: '720851', weight: 0.05}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '004020'
-    name: 현대제철
-    reviewed: false
-    items:
-    - {hs: '7208', flow: exp, weight: 0.2}
-    - {hs: '7216', flow: exp, weight: 0.1}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '103140'
-    name: 풍산
-    reviewed: false
-    items:
-    - {hs: '7409', flow: exp, weight: 0.3}
-    - {hs: '9306', flow: exp, weight: 0.2}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '010130'
-    name: 고려아연
-    reviewed: false
-    items:
-    - {hs: '7901', flow: exp, weight: 0.3}
-    - {hs: '7106', flow: exp, weight: 0.2}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '066570'
-    name: LG전자
-    reviewed: false
-    items:
-    - {hs: '8418', flow: exp, weight: 0.1}
-    - {hs: '8450', flow: exp, weight: 0.1}
-    - {hs: '8415', flow: exp, weight: 0.1}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+    sector: 반도체 소재
+    flows:
+      - {id: solder, name: "솔더볼 전국", kind: national, nature: mixed, products: [{hs: '8311', name: "용접·솔더 재료", weight: 0.4}], basis: "울산 북구 — 솔더볼"}
+    evidence: [{kind: kbj_draft, note: "반도체 소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
   - code: '009150'
     name: 삼성전기
     reviewed: false
-    items:
-    - {hs: '8532', flow: exp, weight: 0.5}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+    sector: 전자부품
+    flows:
+      - {id: mlcc, name: "MLCC — 수원·부산 강서", kind: sigungu, nature: mixed, regions: [KR-41-suwon, KR-26-gangseo], products: [{hs: '853224', name: "적층 세라믹 콘덴서", weight: 0.35}], basis: "수원·부산(녹산) 사업장의 MLCC. 같은 시군구 타사 콘덴서 혼입 가능"}
+      - {id: sub, name: "패키지 기판 전국", kind: national, nature: mixed, products: [{hs: '853400', name: "인쇄회로", weight: 0.1}], basis: "부산·세종 — FC-BGA(업황)"}
+    evidence: [{kind: kbj_draft, note: "전자부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
   - code: '011070'
     name: LG이노텍
     reviewed: false
-    items:
-    - {hs: '8525', flow: exp, weight: 0.6}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+    sector: 전자부품
+    flows:
+      - {id: cam, name: "카메라 모듈 전국", kind: national, nature: mixed, products: [{hs: '8525', name: "카메라·송신기", weight: 0.2}], basis: "구미 등 — 카메라 모듈(생산 상당 부분 해외)"}
+      - {id: sub, name: "기판 소재 전국", kind: national, nature: mixed, products: [{hs: '853400', name: "인쇄회로", weight: 0.05}], basis: "구미 — 패키지 기판"}
+    evidence: [{kind: kbj_draft, note: "전자부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
   - code: '034220'
     name: LG디스플레이
     reviewed: false
-    items:
-    - {hs: '8524', flow: exp, weight: 0.6}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '207940'
-    name: 삼성바이오로직스
+    sector: 디스플레이
+    flows:
+      - {id: panel, name: "평판 디스플레이 모듈 전국", kind: national, nature: mixed, products: [{hs: '8524', name: "평판 디스플레이 모듈", weight: 0.5}], basis: "파주·구미 — OLED·LCD(전국 품목 업황)"}
+    evidence: [{kind: kbj_draft, note: "디스플레이 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '066570'
+    name: LG전자
     reviewed: false
-    items:
-    - {hs: '3002', flow: exp, weight: 0.6}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '068270'
-    name: 셀트리온
+    sector: 가전
+    flows:
+      - {id: app, name: "냉장고·세탁기·에어컨 전국", kind: national, nature: mixed, products: [{hs: '8418', name: "냉장고", weight: 0.04}, {hs: '8450', name: "세탁기", weight: 0.03}, {hs: '8415', name: "에어컨", weight: 0.03}], basis: "창원 등 — 가전(생산 대부분 해외, 국내 통관은 일부)"}
+      - {id: evcomp, name: "자동차 부품 전국", kind: national, nature: mixed, products: [{hs: '8708', name: "자동차 부품", weight: 0.02}], basis: "VS(전장) 일부"}
+    evidence: [{kind: kbj_draft, note: "가전 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '090460'
+    name: 비에이치
     reviewed: false
-    items:
-    - {hs: '3002', flow: exp, weight: 0.6}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '033780'
-    name: KT&G
+    sector: 전자부품
+    flows:
+      - {id: fpcb, name: "연성회로기판 전국", kind: national, nature: mixed, products: [{hs: '853400', name: "인쇄회로", weight: 0.4}], basis: "인천 — FPCB(베트남 생산 비중)"}
+    evidence: [{kind: kbj_draft, note: "전자부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '049070'
+    name: 인탑스
     reviewed: false
-    items:
-    - {hs: '2402', flow: exp, weight: 0.2}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '241560'
-    name: 두산밥캣
+    sector: 전자부품
+    flows:
+      - {id: case, name: "통신기기 부품 전국", kind: national, nature: mixed, products: [{hs: '8517', name: "통신기기(부품)", weight: 0.1}], basis: "안양 — 휴대폰 케이스"}
+    evidence: [{kind: kbj_draft, note: "전자부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '091700'
+    name: 파트론
     reviewed: false
-    items:
-    - {hs: '8427', flow: exp, weight: 0.2}
-    - {hs: '8429', flow: exp, weight: 0.2}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
-  - code: '267270'
-    name: HD건설기계        # 2026-01-01 HD현대인프라코어 흡수합병·사명 변경(코드 그대로)
+    sector: 전자부품
+    flows:
+      - {id: cam, name: "카메라 모듈 전국", kind: national, nature: mixed, products: [{hs: '8525', name: "카메라 모듈", weight: 0.2}], basis: "화성 — 카메라·센서 모듈(베트남 비중)"}
+    evidence: [{kind: kbj_draft, note: "전자부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '097520'
+    name: 엠씨넥스
     reviewed: false
-    items:
-    - {hs: '8429', flow: exp, weight: 0.4}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+    sector: 전자부품
+    flows:
+      - {id: cam, name: "카메라 모듈 전국", kind: national, nature: mixed, products: [{hs: '8525', name: "카메라 모듈", weight: 0.2}], basis: "카메라 모듈(베트남 비중)"}
+    evidence: [{kind: kbj_draft, note: "전자부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '213420'
+    name: 덕산네오룩스
+    reviewed: false
+    sector: 디스플레이 소재
+    flows:
+      - {id: oled, name: "OLED 유기물 전국", kind: national, nature: mixed, products: [{hs: '2921', name: "아민 화합물", weight: 0.2}, {hs: '2933', name: "복소환 화합물", weight: 0.2}], basis: "천안 — OLED 소재(분류 확인 필요)"}
+    evidence: [{kind: kbj_draft, note: "디스플레이 소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '025540'
+    name: 한국단자
+    reviewed: false
+    sector: 전자부품
+    flows:
+      - {id: conn, name: "커넥터 전국", kind: national, nature: mixed, products: [{hs: '8536', name: "접속기기", weight: 0.3}], basis: "인천 — 자동차·전자 커넥터"}
+    evidence: [{kind: kbj_draft, note: "전자부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '033240'
+    name: 자화전자
+    reviewed: false
+    sector: 전자부품
+    flows:
+      - {id: act, name: "액추에이터 전국", kind: national, nature: mixed, products: [{hs: '8501', name: "소형 모터", weight: 0.2}], basis: "청주 — 카메라 액추에이터"}
+    evidence: [{kind: kbj_draft, note: "전자부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  # ── 이차전지·화학·정유·철강·비철 ──
+  - code: '373220'
+    name: LG에너지솔루션
+    reviewed: false
+    sector: 이차전지
+    flows:
+      - {id: cell, name: "리튬이온 전지 — 청주(오창)", kind: sigungu, nature: mixed, regions: [KR-43-cheongju], products: [{hs: '850760', name: "리튬이온 축전지", weight: 0.15}], basis: "오창 공장. 생산 대부분은 해외(미국·폴란드·중국) — 국내 통관은 일부"}
+    evidence: [{kind: kbj_draft, note: "이차전지 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '006400'
+    name: 삼성SDI
+    reviewed: false
+    sector: 이차전지
+    flows:
+      - {id: cell, name: "리튬이온 전지 — 울주·천안", kind: sigungu, nature: mixed, regions: [KR-31-ulju, KR-44-cheonan], products: [{hs: '850760', name: "리튬이온 축전지", weight: 0.2}], basis: "울산(울주)·천안 사업장 — 원통형·ESS. 해외 생산 비중 큼"}
+    evidence: [{kind: kbj_draft, note: "이차전지 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '096770'
+    name: SK이노베이션
+    reviewed: false
+    sector: 정유·이차전지
+    flows:
+      - {id: oil, name: "석유제품 — 울산 남구", kind: sigungu, nature: company, regions: [KR-31-nam], products: [{hs: '271019', name: "경유 등 석유제품", weight: 0.25}], basis: "울산 남구 콤플렉스(SK에너지). 울산 남구의 석유제품 수출은 주로 이 회사"}
+      - {id: cell, name: "리튬이온 전지 — 서산", kind: sigungu, nature: mixed, regions: [KR-44-seosan], products: [{hs: '850760', name: "리튬이온 축전지", weight: 0.05}], basis: "서산(SK온) — 해외 생산 비중 큼"}
+    evidence: [{kind: kbj_draft, note: "정유·이차전지 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '010950'
+    name: S-Oil
+    reviewed: false
+    sector: 정유
+    flows:
+      - {id: oil, name: "석유제품 — 울주(온산)", kind: sigungu, nature: company, regions: [KR-31-ulju], products: [{hs: '271019', name: "경유 등 석유제품", weight: 0.4}, {hs: '271012', name: "휘발유 등 경질유", weight: 0.1}], basis: "온산(울주) 공장. 울주의 석유제품 수출은 대부분 이 회사"}
+    evidence: [{kind: kbj_draft, note: "정유 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '078930'
+    name: GS
+    reviewed: false
+    sector: 정유
+    flows:
+      - {id: oil, name: "석유제품 — 여수", kind: sigungu, nature: affiliate, regions: [KR-46-yeosu], products: [{hs: '271019', name: "경유 등 석유제품", weight: 0.3}], basis: "여수(GS칼텍스 — 지분법 회사). 지주 매출과는 직접 연결 약함"}
+    evidence: [{kind: kbj_draft, note: "정유 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '247540'
+    name: 에코프로비엠
+    reviewed: false
+    sector: 이차전지 소재
+    flows:
+      - {id: cathode, name: "양극재 — 포항·청주", kind: sigungu, nature: mixed, regions: [KR-47-pohang, KR-43-cheongju], products: [{hs: '284190', name: "리튬 복합산화물 등", weight: 0.5}], basis: "포항·오창 공장. 포항에는 다른 양극재 공장도 있어 업황 혼합"}
+    evidence: [{kind: kbj_draft, note: "이차전지 소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '086520'
+    name: 에코프로
+    reviewed: false
+    sector: 이차전지 소재
+    flows:
+      - {id: cathode, name: "양극재 — 포항·청주", kind: sigungu, nature: affiliate, regions: [KR-47-pohang, KR-43-cheongju], products: [{hs: '284190', name: "리튬 복합산화물 등", weight: 0.4}], basis: "자회사 에코프로비엠 물량(지주)"}
+    evidence: [{kind: kbj_draft, note: "이차전지 소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '003670'
+    name: 포스코퓨처엠
+    reviewed: false
+    sector: 이차전지 소재
+    flows:
+      - {id: cathode, name: "양극재 — 광양·구미", kind: sigungu, nature: mixed, regions: [KR-46-gwangyang, KR-47-gumi], products: [{hs: '284190', name: "리튬 복합산화물 등", weight: 0.3}], basis: "광양·구미 양극재"}
+      - {id: anode, name: "음극재 전국", kind: national, nature: mixed, products: [{hs: '3801', name: "인조 흑연", weight: 0.05}], basis: "세종 — 음극재"}
+      - {id: refr, name: "내화물 전국", kind: national, nature: mixed, products: [{hs: '6902', name: "내화 벽돌", weight: 0.02}], basis: "포항 — 내화물(국내 위주)"}
+    evidence: [{kind: kbj_draft, note: "이차전지 소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '066970'
+    name: 엘앤에프
+    reviewed: false
+    sector: 이차전지 소재
+    flows:
+      - {id: cathode, name: "양극재 — 대구 달서·달성", kind: sigungu, nature: company, regions: [KR-27-dalseo, KR-27-dalseong], products: [{hs: '284190', name: "리튬 복합산화물 등", weight: 0.6}], basis: "성서(달서)·구지(달성) 공장. 대구 양극재 수출은 대부분 이 회사"}
+    evidence: [{kind: kbj_draft, note: "이차전지 소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '005070'
+    name: 코스모신소재
+    reviewed: false
+    sector: 이차전지 소재
+    flows:
+      - {id: cathode, name: "양극재 — 충주", kind: sigungu, nature: company, regions: [KR-43-chungju], products: [{hs: '284190', name: "리튬 복합산화물 등", weight: 0.4}], basis: "충주 공장 — 양극재"}
+    evidence: [{kind: kbj_draft, note: "이차전지 소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '020150'
+    name: 롯데에너지머티리얼즈
+    reviewed: false
+    sector: 이차전지 소재
+    flows:
+      - {id: foil, name: "동박 — 익산", kind: sigungu, nature: company, regions: [KR-52-iksan], products: [{hs: '741011', name: "정제동 박", weight: 0.4}], basis: "익산 공장(말레이시아 생산 비중 큼)"}
+    evidence: [{kind: kbj_draft, note: "이차전지 소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '011790'
+    name: SKC
+    reviewed: false
+    sector: 소재
+    flows:
+      - {id: film, name: "필름·화학 전국", kind: national, nature: mixed, products: [{hs: '3920', name: "플라스틱 필름", weight: 0.1}], basis: "PET 필름 등"}
+      - {id: foil, name: "동박 — 정읍", kind: sigungu, nature: affiliate, regions: [KR-52-jeongeup], products: [{hs: '741011', name: "정제동 박", weight: 0.1}], basis: "정읍(SK넥실리스 — 종속 회사)"}
+    evidence: [{kind: kbj_draft, note: "소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '348370'
+    name: 엔켐
+    reviewed: false
+    sector: 이차전지 소재
+    flows:
+      - {id: elec, name: "전해액 전국", kind: national, nature: mixed, products: [{hs: '3824', name: "화학조제품", weight: 0.3}], basis: "당진 — 전해액(해외 생산 비중)"}
+    evidence: [{kind: kbj_draft, note: "이차전지 소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '278280'
+    name: 천보
+    reviewed: false
+    sector: 이차전지 소재
+    flows:
+      - {id: salt, name: "전해질 첨가제 전국", kind: national, nature: mixed, products: [{hs: '2826', name: "불화물", weight: 0.2}, {hs: '2933', name: "복소환 화합물", weight: 0.1}], basis: "충주 — 전해질"}
+    evidence: [{kind: kbj_draft, note: "이차전지 소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '361610'
+    name: SK아이이테크놀로지
+    reviewed: false
+    sector: 이차전지 소재
+    flows:
+      - {id: sep, name: "분리막 전국", kind: national, nature: mixed, products: [{hs: '3920', name: "플라스틱 필름", weight: 0.2}], basis: "청주·증평 — 분리막(해외 생산 비중)"}
+    evidence: [{kind: kbj_draft, note: "이차전지 소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '450080'
+    name: 에코프로머티리얼즈
+    reviewed: false
+    sector: 이차전지 소재
+    flows:
+      - {id: prec, name: "전구체 전국", kind: national, nature: mixed, products: [{hs: '2825', name: "금속 산화물·수산화물", weight: 0.3}], basis: "포항 — 전구체(분류 확인 필요)"}
+    evidence: [{kind: kbj_draft, note: "이차전지 소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '051910'
+    name: LG화학
+    reviewed: false
+    sector: 화학
+    flows:
+      - {id: pe, name: "합성수지 전국", kind: national, nature: mixed, products: [{hs: '3901', name: "에틸렌 중합체", weight: 0.08}, {hs: '3903', name: "스티렌 중합체(ABS)", weight: 0.08}], basis: "여수·대산 — 범용 수지(업황)"}
+      - {id: abs_ys, name: "ABS — 여수", kind: sigungu, nature: mixed, regions: [KR-46-yeosu], products: [{hs: '390330', name: "ABS 수지", weight: 0.05}], basis: "여수 공장 ABS. 같은 시군구 타사 혼입 가능"}
+      - {id: cathode, name: "양극재 전국", kind: national, nature: mixed, products: [{hs: '284190', name: "리튬 복합산화물 등", weight: 0.05}], basis: "청주 — 양극재"}
+    evidence: [{kind: kbj_draft, note: "화학 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '011170'
+    name: 롯데케미칼
+    reviewed: false
+    sector: 화학
+    flows:
+      - {id: poly, name: "합성수지 전국", kind: national, nature: mixed, products: [{hs: '3901', name: "에틸렌 중합체", weight: 0.1}, {hs: '3902', name: "프로필렌 중합체", weight: 0.08}], basis: "여수·대산·울산"}
+      - {id: arom, name: "방향족 탄화수소 전국", kind: national, nature: mixed, products: [{hs: '2902', name: "고리모양 탄화수소", weight: 0.05}], basis: "울산 — PX 등"}
+    evidence: [{kind: kbj_draft, note: "화학 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '011780'
+    name: 금호석유화학
+    reviewed: false
+    sector: 화학
+    flows:
+      - {id: rubber, name: "합성고무 — 여수", kind: sigungu, nature: mixed, regions: [KR-46-yeosu], products: [{hs: '400219', name: "SBR 등 합성고무", weight: 0.2}], basis: "여수 공장 — SBR·NB라텍스"}
+      - {id: abs, name: "ABS·합성수지 전국", kind: national, nature: mixed, products: [{hs: '3903', name: "스티렌 중합체", weight: 0.1}], basis: "여수"}
+    evidence: [{kind: kbj_draft, note: "화학 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '009830'
+    name: 한화솔루션
+    reviewed: false
+    sector: 화학·태양광
+    flows:
+      - {id: solar, name: "태양광 모듈 — 진천·음성", kind: sigungu, nature: mixed, regions: [KR-43-jincheon, KR-43-eumseong], products: [{hs: '854143', name: "태양광 모듈", weight: 0.15}], basis: "진천·음성 큐셀 공장. 음성에는 타 모듈 업체도 있어 업황 혼합"}
+      - {id: pvc, name: "PVC·PE 전국", kind: national, nature: mixed, products: [{hs: '3904', name: "염화비닐 중합체", weight: 0.05}, {hs: '3901', name: "에틸렌 중합체", weight: 0.05}], basis: "여수·울산"}
+    evidence: [{kind: kbj_draft, note: "화학·태양광 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '322000'
+    name: HD현대에너지솔루션
+    reviewed: false
+    sector: 태양광
+    flows:
+      - {id: solar, name: "태양광 모듈 — 음성", kind: sigungu, nature: mixed, regions: [KR-43-eumseong], products: [{hs: '854143', name: "태양광 모듈", weight: 0.5}], basis: "음성 공장(큐셀 물량 혼입)"}
+    evidence: [{kind: kbj_draft, note: "태양광 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '006650'
+    name: 대한유화
+    reviewed: false
+    sector: 화학
+    flows:
+      - {id: poly, name: "합성수지 전국", kind: national, nature: mixed, products: [{hs: '3901', name: "에틸렌 중합체", weight: 0.2}, {hs: '3902', name: "프로필렌 중합체", weight: 0.2}], basis: "울산·온산"}
+    evidence: [{kind: kbj_draft, note: "화학 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '298020'
+    name: 효성티앤씨
+    reviewed: false
+    sector: 섬유·화학
+    flows:
+      - {id: spandex, name: "스판덱스 전국", kind: national, nature: mixed, products: [{hs: '5402', name: "합성 필라멘트사", weight: 0.15}], basis: "울산 — 스판덱스(해외 생산 비중 큼)"}
+    evidence: [{kind: kbj_draft, note: "섬유·화학 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '298050'
+    name: 효성첨단소재
+    reviewed: false
+    sector: 소재
+    flows:
+      - {id: cord, name: "타이어코드 전국", kind: national, nature: mixed, products: [{hs: '5902', name: "타이어코드 직물", weight: 0.15}], basis: "울산 — 타이어코드"}
+      - {id: cf, name: "탄소섬유 전국", kind: national, nature: mixed, products: [{hs: '6815', name: "탄소섬유 제품", weight: 0.05}], basis: "전주 — 탄소섬유"}
+    evidence: [{kind: kbj_draft, note: "소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '298000'
+    name: 효성화학
+    reviewed: false
+    sector: 화학
+    flows:
+      - {id: pp, name: "PP 전국", kind: national, nature: mixed, products: [{hs: '3902', name: "프로필렌 중합체", weight: 0.3}], basis: "울산·대산"}
+    evidence: [{kind: kbj_draft, note: "화학 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '120110'
+    name: 코오롱인더
+    reviewed: false
+    sector: 소재
+    flows:
+      - {id: aramid, name: "아라미드·타이어코드 전국", kind: national, nature: mixed, products: [{hs: '5402', name: "합성 필라멘트사", weight: 0.1}, {hs: '5902', name: "타이어코드 직물", weight: 0.05}], basis: "구미 — 아라미드"}
+      - {id: film, name: "필름 전국", kind: national, nature: mixed, products: [{hs: '3920', name: "플라스틱 필름", weight: 0.05}], basis: "구미 — 필름"}
+    evidence: [{kind: kbj_draft, note: "소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '003240'
+    name: 태광산업
+    reviewed: false
+    sector: 섬유·화학
+    flows:
+      - {id: fiber, name: "아크릴·스판덱스 전국", kind: national, nature: mixed, products: [{hs: '5503', name: "합성 스테이플", weight: 0.1}, {hs: '5402', name: "합성 필라멘트사", weight: 0.1}], basis: "울산"}
+    evidence: [{kind: kbj_draft, note: "섬유·화학 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '004430'
+    name: 송원산업
+    reviewed: false
+    sector: 화학
+    flows:
+      - {id: aox, name: "산화방지제 전국", kind: national, nature: mixed, products: [{hs: '3812', name: "고무·플라스틱 첨가제", weight: 0.4}], basis: "울산 — 산화방지제"}
+    evidence: [{kind: kbj_draft, note: "화학 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '007690'
+    name: 국도화학
+    reviewed: false
+    sector: 화학
+    flows:
+      - {id: epoxy, name: "에폭시 수지 전국", kind: national, nature: mixed, products: [{hs: '3907', name: "에폭시 수지", weight: 0.3}], basis: "익산·울산"}
+    evidence: [{kind: kbj_draft, note: "화학 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '161000'
+    name: 애경케미칼
+    reviewed: false
+    sector: 화학
+    flows:
+      - {id: chem, name: "가소제·수지 전국", kind: national, nature: mixed, products: [{hs: '2917', name: "카복실산", weight: 0.1}, {hs: '3907', name: "폴리에스터 수지", weight: 0.1}], basis: "울산"}
+    evidence: [{kind: kbj_draft, note: "화학 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '014830'
+    name: 유니드
+    reviewed: false
+    sector: 화학
+    flows:
+      - {id: koh, name: "가성칼륨 전국", kind: national, nature: mixed, products: [{hs: '2815', name: "수산화칼륨", weight: 0.2}], basis: "울산 — 가성칼륨"}
+    evidence: [{kind: kbj_draft, note: "화학 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '025860'
+    name: 남해화학
+    reviewed: false
+    sector: 화학
+    flows:
+      - {id: fert, name: "비료 전국", kind: national, nature: mixed, products: [{hs: '3105', name: "복합비료", weight: 0.2}], basis: "여수 — 복합비료"}
+    evidence: [{kind: kbj_draft, note: "화학 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '005490'
+    name: POSCO홀딩스
+    reviewed: false
+    sector: 철강
+    flows:
+      - {id: hr_gy, name: "열연 — 광양", kind: sigungu, nature: company, regions: [KR-46-gwangyang], products: [{hs: '720851', name: "열연 강판(두께 10mm 초과)", weight: 0.05}, {hs: '720827', name: "열연 코일", weight: 0.05}], basis: "광양제철소. 광양의 열연 수출은 거의 이 회사"}
+      - {id: ph, name: "철강재 — 포항", kind: sigungu, nature: mixed, regions: [KR-47-pohang], products: [{hs: '720851', name: "열연 강판(두께 10mm 초과)", weight: 0.03}], basis: "포항제철소(현대제철 포항 등 혼입)"}
+      - {id: ss, name: "스테인리스 전국", kind: national, nature: mixed, products: [{hs: '7219', name: "스테인리스 판재", weight: 0.05}], basis: "포항 — STS"}
+    evidence: [{kind: kbj_draft, note: "철강 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '004020'
+    name: 현대제철
+    reviewed: false
+    sector: 철강
+    flows:
+      - {id: hr, name: "열연·후판 전국", kind: national, nature: mixed, products: [{hs: '7208', name: "열연 강판", weight: 0.08}, {hs: '7216', name: "형강", weight: 0.03}], basis: "당진·인천·포항"}
+      - {id: cr, name: "냉연·도금 — 당진", kind: sigungu, nature: mixed, regions: [KR-44-dangjin], products: [{hs: '721049', name: "아연 도금 강판", weight: 0.05}], basis: "당진 제철소(동부·KG 등 혼입 가능)"}
+    evidence: [{kind: kbj_draft, note: "철강 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '001430'
+    name: 세아베스틸지주
+    reviewed: false
+    sector: 철강
+    flows:
+      - {id: bar, name: "특수강 봉강 — 군산", kind: sigungu, nature: company, regions: [KR-52-gunsan], products: [{hs: '722830', name: "합금강 봉", weight: 0.15}], basis: "군산 공장 — 특수강 봉강"}
+    evidence: [{kind: kbj_draft, note: "철강 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '306200'
+    name: 세아제강
+    reviewed: false
+    sector: 철강
+    flows:
+      - {id: pipe, name: "강관 전국", kind: national, nature: mixed, products: [{hs: '7306', name: "기타 강관", weight: 0.2}, {hs: '7305', name: "대구경 강관", weight: 0.1}], basis: "포항·순천"}
+    evidence: [{kind: kbj_draft, note: "철강 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '092790'
+    name: 넥스틸
+    reviewed: false
+    sector: 철강
+    flows:
+      - {id: octg, name: "유정용 강관 전국", kind: national, nature: mixed, products: [{hs: '7304', name: "이음매 없는 강관", weight: 0.2}, {hs: '7306', name: "기타 강관", weight: 0.3}], basis: "포항 — OCTG(미국향)"}
+    evidence: [{kind: kbj_draft, note: "철강 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '005010'
+    name: 휴스틸
+    reviewed: false
+    sector: 철강
+    flows:
+      - {id: pipe, name: "강관 전국", kind: national, nature: mixed, products: [{hs: '7306', name: "기타 강관", weight: 0.3}], basis: "당진"}
+    evidence: [{kind: kbj_draft, note: "철강 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '460850'
+    name: 동국씨엠
+    reviewed: false
+    sector: 철강
+    flows:
+      - {id: coat, name: "컬러강판 — 부산 사하", kind: sigungu, nature: company, regions: [KR-26-saha], products: [{hs: '721070', name: "도장 강판", weight: 0.4}], basis: "부산 공장 — 컬러강판"}
+    evidence: [{kind: kbj_draft, note: "철강 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '460860'
+    name: 동국제강
+    reviewed: false
+    sector: 철강
+    flows:
+      - {id: plate, name: "후판·형강 전국", kind: national, nature: mixed, products: [{hs: '7208', name: "열연 강판", weight: 0.03}, {hs: '7216', name: "형강", weight: 0.03}], basis: "당진·포항 — 내수 비중 큼"}
+    evidence: [{kind: kbj_draft, note: "철강 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '016380'
+    name: KG스틸
+    reviewed: false
+    sector: 철강
+    flows:
+      - {id: coat, name: "도금·냉연 — 당진", kind: sigungu, nature: mixed, regions: [KR-44-dangjin], products: [{hs: '721049', name: "아연 도금 강판", weight: 0.3}], basis: "당진 공장(현대제철 혼입)"}
+    evidence: [{kind: kbj_draft, note: "철강 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '002710'
+    name: TCC스틸
+    reviewed: false
+    sector: 철강
+    flows:
+      - {id: tin, name: "도금 강판 — 아산", kind: sigungu, nature: mixed, regions: [KR-44-asan], products: [{hs: '721012', name: "주석 도금 강판", weight: 0.3}], basis: "아산 — 석도·니켈 도금(이차전지 캔)"}
+    evidence: [{kind: kbj_draft, note: "철강 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '010130'
+    name: 고려아연
+    reviewed: false
+    sector: 비철
+    flows:
+      - {id: zinc, name: "아연 괴 — 울주(온산)", kind: sigungu, nature: company, regions: [KR-31-ulju], products: [{hs: '790111', name: "아연(99.99% 이상)", weight: 0.1}], basis: "온산 제련소"}
+      - {id: pm, name: "귀금속 전국", kind: national, nature: mixed, products: [{hs: '7106', name: "은", weight: 0.1}, {hs: '7108', name: "금", weight: 0.1}], basis: "온산 — 금·은(업황)"}
+    evidence: [{kind: kbj_draft, note: "비철 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '000670'
+    name: 영풍
+    reviewed: false
+    sector: 비철
+    flows:
+      - {id: zinc, name: "아연 괴 — 봉화", kind: sigungu, nature: company, regions: [KR-47-bonghwa], products: [{hs: '790111', name: "아연(99.99% 이상)", weight: 0.2}], basis: "석포 제련소(봉화)"}
+    evidence: [{kind: kbj_draft, note: "비철 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '103140'
+    name: 풍산
+    reviewed: false
+    sector: 비철·방산
+    flows:
+      - {id: copper, name: "동 판·띠 전국", kind: national, nature: mixed, products: [{hs: '7409', name: "동 판·띠", weight: 0.15}], basis: "울산 — 신동"}
+      - {id: ammo, name: "탄약 전국", kind: national, nature: mixed, products: [{hs: '9306', name: "탄약", weight: 0.15}], basis: "부산 기장·경주 — 방산"}
+    evidence: [{kind: kbj_draft, note: "비철·방산 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '012800'
+    name: 대창
+    reviewed: false
+    sector: 비철
+    flows:
+      - {id: brass, name: "황동봉 전국", kind: national, nature: mixed, products: [{hs: '7407', name: "동 봉·형재", weight: 0.2}], basis: "시흥 — 황동봉"}
+    evidence: [{kind: kbj_draft, note: "비철 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '006110'
+    name: 삼아알미늄
+    reviewed: false
+    sector: 비철
+    flows:
+      - {id: foil, name: "알루미늄 박 — 평택", kind: sigungu, nature: mixed, regions: [KR-41-pyeongtaek], products: [{hs: '760711', name: "알루미늄 박(압연)", weight: 0.4}], basis: "평택 — 이차전지용 박"}
+    evidence: [{kind: kbj_draft, note: "비철 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '018470'
+    name: 조일알미늄
+    reviewed: false
+    sector: 비철
+    flows:
+      - {id: plate, name: "알루미늄 판 전국", kind: national, nature: mixed, products: [{hs: '7606', name: "알루미늄 판", weight: 0.2}], basis: "경산"}
+    evidence: [{kind: kbj_draft, note: "비철 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '002240'
+    name: 고려제강
+    reviewed: false
+    sector: 철강
+    flows:
+      - {id: wire, name: "와이어로프·선재 전국", kind: national, nature: mixed, products: [{hs: '7312', name: "강철 로프", weight: 0.15}, {hs: '7217', name: "강철선", weight: 0.05}], basis: "부산·양산"}
+    evidence: [{kind: kbj_draft, note: "철강 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '008970'
+    name: 동양철관
+    reviewed: false
+    sector: 철강
+    flows:
+      - {id: pipe, name: "대구경 강관 전국", kind: national, nature: mixed, products: [{hs: '7305', name: "대구경 강관", weight: 0.2}], basis: "당진"}
+    evidence: [{kind: kbj_draft, note: "철강 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '071090'
+    name: 하이스틸
+    reviewed: false
+    sector: 철강
+    flows:
+      - {id: pipe, name: "강관 전국", kind: national, nature: mixed, products: [{hs: '7306', name: "기타 강관", weight: 0.2}], basis: "당진"}
+    evidence: [{kind: kbj_draft, note: "철강 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  # ── 자동차·조선·전력기기·방산·기계 ──
+  - code: '005380'
+    name: 현대차
+    reviewed: false
+    sector: 자동차
+    flows:
+      - {id: ulsan, name: "완성차 — 울산 북구", kind: sigungu, nature: company, regions: [KR-31-buk], products: [{hs: '870323', name: "승용차(1.5~3L)", weight: 0.1}, {hs: '870380', name: "전기 승용차", weight: 0.05}], basis: "울산공장(북구). 울산 북구의 승용차 수출은 이 회사"}
+      - {id: asan, name: "완성차 — 아산", kind: sigungu, nature: company, regions: [KR-44-asan], products: [{hs: '870323', name: "승용차(1.5~3L)", weight: 0.05}], basis: "아산공장"}
+      - {id: all, name: "승용차 전국", kind: national, nature: mixed, products: [{hs: '8703', name: "승용차", weight: 0.1}], basis: "기아 물량 포함(업황)"}
+    evidence: [{kind: kbj_draft, note: "자동차 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '000270'
+    name: 기아
+    reviewed: false
+    sector: 자동차
+    flows:
+      - {id: hs, name: "완성차 — 화성", kind: sigungu, nature: company, regions: [KR-41-hwaseong], products: [{hs: '870323', name: "승용차(1.5~3L)", weight: 0.1}, {hs: '870380', name: "전기 승용차", weight: 0.05}], basis: "화성 오토랜드"}
+      - {id: gm, name: "완성차 — 광명·광주", kind: sigungu, nature: company, regions: [KR-41-gwangmyeong, KR-29-seo], products: [{hs: '870322', name: "승용차(1~1.5L)", weight: 0.05}, {hs: '870323', name: "승용차(1.5~3L)", weight: 0.03}], basis: "광명(소하리)·광주 오토랜드"}
+      - {id: all, name: "승용차 전국", kind: national, nature: mixed, products: [{hs: '8703', name: "승용차", weight: 0.1}], basis: "현대차 물량 포함(업황)"}
+    evidence: [{kind: kbj_draft, note: "자동차 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '012330'
+    name: 현대모비스
+    reviewed: false
+    sector: 자동차 부품
+    flows:
+      - {id: parts, name: "자동차 부품 전국", kind: national, nature: mixed, products: [{hs: '8708', name: "자동차 부품", weight: 0.15}], basis: "모듈·A/S 부품(업황)"}
+      - {id: bat, name: "배터리 시스템 전국", kind: national, nature: mixed, products: [{hs: '8507', name: "축전지", weight: 0.03}], basis: "전동화 부품"}
+    evidence: [{kind: kbj_draft, note: "자동차 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '204320'
+    name: HL만도
+    reviewed: false
+    sector: 자동차 부품
+    flows:
+      - {id: parts, name: "제동·조향 부품 전국", kind: national, nature: mixed, products: [{hs: '870830', name: "제동장치", weight: 0.1}, {hs: '870894', name: "조향장치", weight: 0.1}], basis: "평택·익산·원주"}
+    evidence: [{kind: kbj_draft, note: "자동차 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '011210'
+    name: 현대위아
+    reviewed: false
+    sector: 자동차 부품·기계
+    flows:
+      - {id: eng, name: "엔진 전국", kind: national, nature: mixed, products: [{hs: '8407', name: "불꽃점화 엔진", weight: 0.1}], basis: "창원·평택·서산"}
+      - {id: mt, name: "공작기계 전국", kind: national, nature: mixed, products: [{hs: '8458', name: "선반", weight: 0.03}, {hs: '8457', name: "머시닝센터", weight: 0.03}], basis: "창원"}
+    evidence: [{kind: kbj_draft, note: "자동차 부품·기계 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '018880'
+    name: 한온시스템
+    reviewed: false
+    sector: 자동차 부품
+    flows:
+      - {id: hvac, name: "자동차 공조 — 대전 대덕", kind: sigungu, nature: company, regions: [KR-30-daedeok], products: [{hs: '841520', name: "자동차용 공조기", weight: 0.15}], basis: "대전 본사·공장"}
+    evidence: [{kind: kbj_draft, note: "자동차 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '005850'
+    name: 에스엘
+    reviewed: false
+    sector: 자동차 부품
+    flows:
+      - {id: lamp, name: "자동차 램프 — 경산", kind: sigungu, nature: mixed, regions: [KR-47-gyeongsan], products: [{hs: '851220', name: "차량용 조명", weight: 0.2}], basis: "진량(경산) 공장"}
+    evidence: [{kind: kbj_draft, note: "자동차 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '015750'
+    name: 성우하이텍
+    reviewed: false
+    sector: 자동차 부품
+    flows:
+      - {id: body, name: "차체 부품 전국", kind: national, nature: mixed, products: [{hs: '870829', name: "차체 부품", weight: 0.05}], basis: "부산 기장 — 해외 생산 비중 큼"}
+    evidence: [{kind: kbj_draft, note: "자동차 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '161390'
+    name: 한국타이어앤테크놀로지
+    reviewed: false
+    sector: 타이어
+    flows:
+      - {id: tire, name: "승용차 타이어 — 대전 대덕·금산", kind: sigungu, nature: company, regions: [KR-30-daedeok, KR-44-geumsan], products: [{hs: '401110', name: "승용차용 타이어", weight: 0.25}], basis: "대전·금산 공장. 해외 생산(헝가리·미국·인니·중국) 비중 큼"}
+    evidence: [{kind: kbj_draft, note: "타이어 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '073240'
+    name: 금호타이어
+    reviewed: false
+    sector: 타이어
+    flows:
+      - {id: tire, name: "승용차 타이어 — 광주 광산·곡성·평택", kind: sigungu, nature: company, regions: [KR-29-gwangsan, KR-46-gokseong, KR-41-pyeongtaek], products: [{hs: '401110', name: "승용차용 타이어", weight: 0.3}], basis: "광주·곡성·평택 공장"}
+    evidence: [{kind: kbj_draft, note: "타이어 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '002350'
+    name: 넥센타이어
+    reviewed: false
+    sector: 타이어
+    flows:
+      - {id: tire, name: "승용차 타이어 — 양산·창녕", kind: sigungu, nature: company, regions: [KR-48-yangsan, KR-48-changnyeong], products: [{hs: '401110', name: "승용차용 타이어", weight: 0.3}], basis: "양산·창녕 공장"}
+    evidence: [{kind: kbj_draft, note: "타이어 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '004490'
+    name: 세방전지
+    reviewed: false
+    sector: 자동차 부품
+    flows:
+      - {id: lead, name: "납축전지 — 광주 광산", kind: sigungu, nature: mixed, regions: [KR-29-gwangsan], products: [{hs: '850710', name: "납축전지(시동용)", weight: 0.3}], basis: "광주 공장"}
+    evidence: [{kind: kbj_draft, note: "자동차 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '009900'
+    name: 명신산업
+    reviewed: false
+    sector: 자동차 부품
+    flows:
+      - {id: body, name: "차체 부품 전국", kind: national, nature: mixed, products: [{hs: '870829', name: "차체 부품", weight: 0.05}], basis: "경주 — 핫스탬핑(해외 비중 큼)"}
+    evidence: [{kind: kbj_draft, note: "자동차 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '092200'
+    name: 디아이씨
+    reviewed: false
+    sector: 자동차 부품
+    flows:
+      - {id: gear, name: "기어·변속기 전국", kind: national, nature: mixed, products: [{hs: '8483', name: "전동축·기어", weight: 0.2}], basis: "울산 — 기어"}
+    evidence: [{kind: kbj_draft, note: "자동차 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '064960'
+    name: SNT모티브
+    reviewed: false
+    sector: 자동차 부품
+    flows:
+      - {id: motor, name: "모터·부품 전국", kind: national, nature: mixed, products: [{hs: '8501', name: "전동기", weight: 0.1}, {hs: '870899', name: "기타 자동차 부품", weight: 0.05}], basis: "부산 기장"}
+    evidence: [{kind: kbj_draft, note: "자동차 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '215360'
+    name: 우리산업
+    reviewed: false
+    sector: 자동차 부품
+    flows:
+      - {id: heater, name: "공조 부품 전국", kind: national, nature: mixed, products: [{hs: '8708', name: "자동차 부품", weight: 0.1}], basis: "용인 — PTC 히터"}
+    evidence: [{kind: kbj_draft, note: "자동차 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '009540'
+    name: HD한국조선해양
+    reviewed: false
+    sector: 조선
+    flows:
+      - {id: hhi, name: "선박 — 울산 동구", kind: sigungu, nature: affiliate, regions: [KR-31-dong], products: [{hs: '890190', name: "기타 화물선(LNG선 등)", weight: 0.2}, {hs: '890120', name: "유조선", weight: 0.1}], basis: "HD현대중공업(울산 동구 — 미포 포함, 자회사)"}
+      - {id: samho, name: "선박 — 영암", kind: sigungu, nature: affiliate, regions: [KR-46-yeongam], products: [{hs: '890190', name: "기타 화물선(LNG선 등)", weight: 0.1}, {hs: '890120', name: "유조선", weight: 0.05}], basis: "HD현대삼호(영암, 자회사)"}
+    evidence: [{kind: kbj_draft, note: "조선 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '329180'
+    name: HD현대중공업
+    reviewed: false
+    sector: 조선
+    flows:
+      - {id: ship, name: "선박 — 울산 동구", kind: sigungu, nature: company, regions: [KR-31-dong], products: [{hs: '890190', name: "기타 화물선(LNG선 등)", weight: 0.35}, {hs: '890120', name: "유조선", weight: 0.15}], basis: "울산 조선소(미포 합병 포함). 선박 통관은 인도 시점에 잡힌다(매출 인식과 시차)"}
+      - {id: navy, name: "함정 전국", kind: national, nature: mixed, products: [{hs: '8906', name: "군함 등", weight: 0.05}], basis: "방산 함정"}
+      - {id: eng, name: "선박 엔진 전국", kind: national, nature: mixed, products: [{hs: '8408', name: "압축점화 엔진", weight: 0.05}], basis: "엔진기계(울산)"}
+    evidence: [{kind: kbj_draft, note: "조선 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '010140'
+    name: 삼성중공업
+    reviewed: false
+    sector: 조선
+    flows:
+      - {id: ship, name: "선박·해양 — 거제", kind: sigungu, nature: mixed, regions: [KR-48-geoje], products: [{hs: '890190', name: "기타 화물선(LNG선 등)", weight: 0.4}, {hs: '890120', name: "유조선", weight: 0.1}], basis: "거제조선소. 거제에는 한화오션(옥포)도 있어 업황 혼합"}
+    evidence: [{kind: kbj_draft, note: "조선 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '042660'
+    name: 한화오션
+    reviewed: false
+    sector: 조선
+    flows:
+      - {id: ship, name: "선박 — 거제", kind: sigungu, nature: mixed, regions: [KR-48-geoje], products: [{hs: '890190', name: "기타 화물선(LNG선 등)", weight: 0.4}, {hs: '890120', name: "유조선", weight: 0.1}], basis: "옥포(거제). 삼성중공업 물량과 섞인다"}
+      - {id: navy, name: "함정·잠수함 전국", kind: national, nature: mixed, products: [{hs: '8906', name: "군함 등", weight: 0.05}], basis: "방산 함정"}
+    evidence: [{kind: kbj_draft, note: "조선 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '097230'
+    name: HJ중공업
+    reviewed: false
+    sector: 조선
+    flows:
+      - {id: ship, name: "선박 — 부산 영도", kind: sigungu, nature: company, regions: [KR-26-yeongdo], products: [{hs: '890190', name: "기타 화물선", weight: 0.2}], basis: "영도 조선소"}
+    evidence: [{kind: kbj_draft, note: "조선 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '082740'
+    name: 한화엔진
+    reviewed: false
+    sector: 조선 기자재
+    flows:
+      - {id: eng, name: "선박 엔진 — 창원", kind: sigungu, nature: mixed, regions: [KR-48-changwon], products: [{hs: '840810', name: "선박용 압축점화 엔진", weight: 0.6}], basis: "창원 공장(STX엔진 등 혼입)"}
+    evidence: [{kind: kbj_draft, note: "조선 기자재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '077970'
+    name: STX엔진
+    reviewed: false
+    sector: 조선 기자재·방산
+    flows:
+      - {id: eng, name: "엔진 전국", kind: national, nature: mixed, products: [{hs: '8408', name: "압축점화 엔진", weight: 0.3}], basis: "창원 — 선박·방산 엔진"}
+    evidence: [{kind: kbj_draft, note: "조선 기자재·방산 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '033500'
+    name: 동성화인텍
+    reviewed: false
+    sector: 조선 기자재
+    flows:
+      - {id: ins, name: "LNG 보냉재 전국", kind: national, nature: mixed, products: [{hs: '3921', name: "플라스틱 판(발포)", weight: 0.2}], basis: "부산 — 보냉재(국내 조선소 납품 비중 큼)"}
+    evidence: [{kind: kbj_draft, note: "조선 기자재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '017960'
+    name: 한국카본
+    reviewed: false
+    sector: 조선 기자재
+    flows:
+      - {id: ins, name: "LNG 보냉재 전국", kind: national, nature: mixed, products: [{hs: '3921', name: "플라스틱 판(발포)", weight: 0.1}, {hs: '7019', name: "유리섬유", weight: 0.05}], basis: "밀양"}
+    evidence: [{kind: kbj_draft, note: "조선 기자재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '014620'
+    name: 성광벤드
+    reviewed: false
+    sector: 조선 기자재
+    flows:
+      - {id: fit, name: "관 이음쇠 — 부산 강서", kind: sigungu, nature: mixed, regions: [KR-26-gangseo], products: [{hs: '730793', name: "맞대기 용접 이음쇠", weight: 0.4}], basis: "부산 녹산(태광 등 혼입)"}
+    evidence: [{kind: kbj_draft, note: "조선 기자재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '023160'
+    name: 태광
+    reviewed: false
+    sector: 조선 기자재
+    flows:
+      - {id: fit, name: "관 이음쇠 — 부산 강서", kind: sigungu, nature: mixed, regions: [KR-26-gangseo], products: [{hs: '730793', name: "맞대기 용접 이음쇠", weight: 0.4}], basis: "부산 녹산(성광벤드 등 혼입)"}
+    evidence: [{kind: kbj_draft, note: "조선 기자재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '013030'
+    name: 하이록코리아
+    reviewed: false
+    sector: 조선 기자재
+    flows:
+      - {id: valve, name: "피팅·밸브 전국", kind: national, nature: mixed, products: [{hs: '7307', name: "관 이음쇠", weight: 0.2}, {hs: '8481', name: "밸브", weight: 0.2}], basis: "부산 강서"}
+    evidence: [{kind: kbj_draft, note: "조선 기자재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '443060'
+    name: HD현대마린솔루션
+    reviewed: false
+    sector: 조선 서비스
+    flows:
+      - {id: parts, name: "선박 부품 전국", kind: national, nature: mixed, products: [{hs: '8409', name: "엔진 부품", weight: 0.1}], basis: "A/S 부품(서비스 매출 비중 큼)"}
+    evidence: [{kind: kbj_draft, note: "조선 서비스 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '267260'
+    name: HD현대일렉트릭
+    reviewed: false
+    sector: 전력기기
+    flows:
+      - {id: tr, name: "대형 변압기 — 울산 동구", kind: sigungu, nature: company, regions: [KR-31-dong], products: [{hs: '850423', name: "변압기(10MVA 초과)", weight: 0.4}], basis: "울산 공장"}
+      - {id: gis, name: "개폐장치 전국", kind: national, nature: mixed, products: [{hs: '8535', name: "개폐기(1kV 초과)", weight: 0.1}, {hs: '8537', name: "배전반", weight: 0.05}], basis: "GIS·배전반"}
+    evidence: [{kind: kbj_draft, note: "전력기기 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '298040'
+    name: 효성중공업
+    reviewed: false
+    sector: 전력기기
+    flows:
+      - {id: tr, name: "대형 변압기 — 창원", kind: sigungu, nature: company, regions: [KR-48-changwon], products: [{hs: '850423', name: "변압기(10MVA 초과)", weight: 0.25}], basis: "창원 공장"}
+      - {id: gis, name: "개폐장치 전국", kind: national, nature: mixed, products: [{hs: '8535', name: "개폐기(1kV 초과)", weight: 0.05}], basis: "GIS"}
+    evidence: [{kind: kbj_draft, note: "전력기기 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '010120'
+    name: LS ELECTRIC
+    reviewed: false
+    sector: 전력기기
+    flows:
+      - {id: dist, name: "배전반·개폐기 전국", kind: national, nature: mixed, products: [{hs: '8537', name: "배전반", weight: 0.15}, {hs: '8536', name: "개폐기(1kV 이하)", weight: 0.05}], basis: "청주·천안"}
+      - {id: tr, name: "변압기 전국", kind: national, nature: mixed, products: [{hs: '8504', name: "변압기", weight: 0.05}], basis: "부산 — 변압기"}
+    evidence: [{kind: kbj_draft, note: "전력기기 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '103590'
+    name: 일진전기
+    reviewed: false
+    sector: 전력기기
+    flows:
+      - {id: cable, name: "전선 전국", kind: national, nature: mixed, products: [{hs: '8544', name: "절연 전선", weight: 0.15}], basis: "화성 — 전력선"}
+      - {id: tr, name: "변압기 전국", kind: national, nature: mixed, products: [{hs: '8504', name: "변압기", weight: 0.1}], basis: "홍성 — 변압기"}
+    evidence: [{kind: kbj_draft, note: "전력기기 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '001440'
+    name: 대한전선
+    reviewed: false
+    sector: 전선
+    flows:
+      - {id: hv, name: "고압 케이블 — 당진", kind: sigungu, nature: company, regions: [KR-44-dangjin], products: [{hs: '854460', name: "전선(1kV 초과)", weight: 0.3}], basis: "당진 공장"}
+    evidence: [{kind: kbj_draft, note: "전선 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '006260'
+    name: LS
+    reviewed: false
+    sector: 전선·지주
+    flows:
+      - {id: sub, name: "해저·고압 케이블 — 동해", kind: sigungu, nature: affiliate, regions: [KR-51-donghae], products: [{hs: '854460', name: "전선(1kV 초과)", weight: 0.1}], basis: "LS전선 동해 공장(자회사)"}
+      - {id: cable, name: "전선 전국", kind: national, nature: mixed, products: [{hs: '8544', name: "절연 전선", weight: 0.05}], basis: "구미·인동"}
+    evidence: [{kind: kbj_draft, note: "전선·지주 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '000500'
+    name: 가온전선
+    reviewed: false
+    sector: 전선
+    flows:
+      - {id: cable, name: "전선 전국", kind: national, nature: mixed, products: [{hs: '8544', name: "절연 전선", weight: 0.1}], basis: "군포 — 내수 비중 큼"}
+    evidence: [{kind: kbj_draft, note: "전선 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '033100'
+    name: 제룡전기
+    reviewed: false
+    sector: 전력기기
+    flows:
+      - {id: tr, name: "배전 변압기 전국", kind: national, nature: mixed, products: [{hs: '8504', name: "변압기", weight: 0.6}], basis: "서울 — 북미 배전 변압기"}
+    evidence: [{kind: kbj_draft, note: "전력기기 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '062040'
+    name: 산일전기
+    reviewed: false
+    sector: 전력기기
+    flows:
+      - {id: tr, name: "특수 변압기 전국", kind: national, nature: mixed, products: [{hs: '8504', name: "변압기", weight: 0.7}], basis: "수원 — 신재생용 변압기"}
+    evidence: [{kind: kbj_draft, note: "전력기기 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '006340'
+    name: 대원전선
+    reviewed: false
+    sector: 전선
+    flows:
+      - {id: cable, name: "전선 전국", kind: national, nature: mixed, products: [{hs: '8544', name: "절연 전선", weight: 0.1}], basis: "내수 비중 큼"}
+    evidence: [{kind: kbj_draft, note: "전선 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
   - code: '034020'
     name: 두산에너빌리티
     reviewed: false
-    items:
-    - {hs: '8406', flow: exp, weight: 0.1}
-    - {hs: '8401', flow: exp, weight: 0.1}
-    - {hs: '8402', flow: exp, weight: 0.1}
-    evidence:
-    - {kind: dart_business_report, note: 사업보고서 '사업의 내용' 주요 제품·수출 비중 문단으로 확인할 대상(초안 — 가중치 미검토)}
+    sector: 발전기기
+    flows:
+      - {id: turb, name: "터빈·원자로 전국", kind: national, nature: mixed, products: [{hs: '8406', name: "증기터빈", weight: 0.05}, {hs: '8401', name: "원자로", weight: 0.05}, {hs: '8411', name: "가스터빈", weight: 0.03}], basis: "창원"}
+      - {id: cw, name: "발전기기 — 창원", kind: sigungu, nature: mixed, regions: [KR-48-changwon], products: [{hs: '840290', name: "보일러 부품", weight: 0.03}], basis: "창원 공장(분류 확인 필요)"}
+    evidence: [{kind: kbj_draft, note: "발전기기 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '336260'
+    name: 두산퓨얼셀
+    reviewed: false
+    sector: 발전기기
+    flows:
+      - {id: fc, name: "연료전지 전국", kind: national, nature: mixed, products: [{hs: '8501', name: "발전기", weight: 0.05}], basis: "익산 — 내수 비중 큼(분류 확인 필요)"}
+    evidence: [{kind: kbj_draft, note: "발전기기 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '012450'
+    name: 한화에어로스페이스
+    reviewed: false
+    sector: 방산·항공
+    flows:
+      - {id: arm, name: "자주포·장갑차 — 창원", kind: sigungu, nature: mixed, regions: [KR-48-changwon], products: [{hs: '871000', name: "전차·장갑차", weight: 0.15}], basis: "창원 사업장(현대로템 전차 혼입)"}
+      - {id: aero, name: "항공 엔진·부품 전국", kind: national, nature: mixed, products: [{hs: '8411', name: "터보제트·가스터빈", weight: 0.05}, {hs: '8807', name: "항공기 부품", weight: 0.03}], basis: "창원 — 항공엔진"}
+      - {id: ammo, name: "탄약·유도무기 전국", kind: national, nature: mixed, products: [{hs: '9306', name: "탄약", weight: 0.03}], basis: "방산"}
+    evidence: [{kind: kbj_draft, note: "방산·항공 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '064350'
+    name: 현대로템
+    reviewed: false
+    sector: 방산·철도
+    flows:
+      - {id: tank, name: "전차 — 창원", kind: sigungu, nature: mixed, regions: [KR-48-changwon], products: [{hs: '871000', name: "전차·장갑차", weight: 0.3}], basis: "창원 공장(한화 자주포 혼입)"}
+      - {id: rail, name: "철도차량 전국", kind: national, nature: mixed, products: [{hs: '8603', name: "전동차", weight: 0.05}], basis: "창원·의왕"}
+    evidence: [{kind: kbj_draft, note: "방산·철도 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '079550'
+    name: LIG넥스원
+    reviewed: false
+    sector: 방산
+    flows:
+      - {id: msl, name: "유도무기 전국", kind: national, nature: mixed, products: [{hs: '9306', name: "탄약·미사일", weight: 0.2}, {hs: '9301', name: "군용 무기", weight: 0.05}], basis: "구미·대전 — 수출 인도 시점 통관"}
+    evidence: [{kind: kbj_draft, note: "방산 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '047810'
+    name: 한국항공우주
+    reviewed: false
+    sector: 항공·방산
+    flows:
+      - {id: ac, name: "항공기 — 사천", kind: sigungu, nature: company, regions: [KR-48-sacheon], products: [{hs: '880230', name: "항공기(2~15t)", weight: 0.15}, {hs: '880730', name: "항공기 부품", weight: 0.15}], basis: "사천 본사 — 완제기 수출·기체 부품(보잉·에어버스)"}
+    evidence: [{kind: kbj_draft, note: "항공·방산 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '272210'
+    name: 한화시스템
+    reviewed: false
+    sector: 방산·IT
+    flows:
+      - {id: radar, name: "레이더·전자장비 전국", kind: national, nature: mixed, products: [{hs: '8526', name: "레이더", weight: 0.05}], basis: "구미·용인"}
+    evidence: [{kind: kbj_draft, note: "방산·IT — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '003570'
+    name: SNT다이내믹스
+    reviewed: false
+    sector: 방산·기계
+    flows:
+      - {id: trans, name: "변속기 전국", kind: national, nature: mixed, products: [{hs: '8483', name: "전동축·기어", weight: 0.2}], basis: "창원 — 전차 변속기"}
+    evidence: [{kind: kbj_draft, note: "방산·기계 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '241560'
+    name: 두산밥캣
+    reviewed: false
+    sector: 기계
+    flows:
+      - {id: ce, name: "소형 건설장비 전국", kind: national, nature: mixed, products: [{hs: '8427', name: "지게차", weight: 0.05}, {hs: '8429', name: "굴착기 등", weight: 0.05}], basis: "국내 생산 일부(대부분 미국)"}
+    evidence: [{kind: kbj_draft, note: "기계 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '267270'
+    name: HD건설기계
+    reviewed: false
+    sector: 기계
+    flows:
+      - {id: exc, name: "굴착기·건설장비 전국", kind: national, nature: mixed, products: [{hs: '8429', name: "굴착기 등", weight: 0.3}, {hs: '8431', name: "건설기계 부품", weight: 0.05}], basis: "울산·인천 — 굴착기"}
+      - {id: eng, name: "엔진 전국", kind: national, nature: mixed, products: [{hs: '8408', name: "압축점화 엔진", weight: 0.05}], basis: "인천 — 엔진"}
+    evidence: [{kind: kbj_draft, note: "기계 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '019210'
+    name: 와이지-원
+    reviewed: false
+    sector: 기계
+    flows:
+      - {id: tool, name: "절삭공구 전국", kind: national, nature: mixed, products: [{hs: '8207', name: "절삭 공구", weight: 0.5}], basis: "인천 — 엔드밀"}
+    evidence: [{kind: kbj_draft, note: "기계 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '017800'
+    name: 현대엘리베이터
+    reviewed: false
+    sector: 기계
+    flows:
+      - {id: elev, name: "승강기 전국", kind: national, nature: mixed, products: [{hs: '8428', name: "승강기 등", weight: 0.05}], basis: "충주 — 내수 비중 큼"}
+    evidence: [{kind: kbj_draft, note: "기계 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '277810'
+    name: 레인보우로보틱스
+    reviewed: false
+    sector: 기계
+    flows:
+      - {id: robot, name: "산업용 로봇 전국", kind: national, nature: mixed, products: [{hs: '8479', name: "기타 기계", weight: 0.1}], basis: "대전 — 협동로봇(분류 확인 필요)"}
+    evidence: [{kind: kbj_draft, note: "기계 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  # ── 화장품·식품·제약바이오·의료기기 ──
+  - code: '090430'
+    name: 아모레퍼시픽
+    reviewed: false
+    sector: 화장품
+    flows:
+      - {id: osan, name: "기초화장품 — 오산", kind: sigungu, nature: mixed, regions: [KR-41-osan], products: [{hs: '330499', name: "기초화장품", weight: 0.15}], basis: "오산 뷰티캠퍼스(타사 혼입 가능)"}
+      - {id: all, name: "화장품 전국", kind: national, nature: mixed, products: [{hs: '3304', name: "화장품", weight: 0.05}], basis: "업계 전체(업황)"}
+    evidence: [{kind: kbj_draft, note: "화장품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '051900'
+    name: LG생활건강
+    reviewed: false
+    sector: 화장품·생활용품
+    flows:
+      - {id: cj, name: "기초화장품 — 청주", kind: sigungu, nature: mixed, regions: [KR-43-cheongju], products: [{hs: '330499', name: "기초화장품", weight: 0.08}], basis: "청주 화장품 공장"}
+      - {id: hh, name: "생활용품 전국", kind: national, nature: mixed, products: [{hs: '3305', name: "두발용 제품", weight: 0.02}, {hs: '3306', name: "구강용 제품", weight: 0.02}], basis: "생활용품"}
+    evidence: [{kind: kbj_draft, note: "화장품·생활용품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '192820'
+    name: 코스맥스
+    reviewed: false
+    sector: 화장품 ODM
+    flows:
+      - {id: hs, name: "화장품 — 화성", kind: sigungu, nature: mixed, regions: [KR-41-hwaseong], products: [{hs: '330499', name: "기초화장품", weight: 0.2}, {hs: '330410', name: "입술 화장품", weight: 0.05}], basis: "화성 공장(ODM — 브랜드사 수출과 겹칠 수 있다)"}
+    evidence: [{kind: kbj_draft, note: "화장품 ODM — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '161890'
+    name: 한국콜마
+    reviewed: false
+    sector: 화장품 ODM
+    flows:
+      - {id: sj, name: "화장품 — 세종", kind: sigungu, nature: company, regions: [KR-36-sejong], products: [{hs: '330499', name: "기초화장품", weight: 0.15}], basis: "세종 공장(ODM)"}
+      - {id: pharm, name: "의약품 전국", kind: national, nature: mixed, products: [{hs: '3004', name: "의약품", weight: 0.02}], basis: "제약(HK이노엔 지분)"}
+    evidence: [{kind: kbj_draft, note: "화장품 ODM — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '241710'
+    name: 코스메카코리아
+    reviewed: false
+    sector: 화장품 ODM
+    flows:
+      - {id: es, name: "화장품 — 음성", kind: sigungu, nature: company, regions: [KR-43-eumseong], products: [{hs: '330499', name: "기초화장품", weight: 0.3}], basis: "음성 공장(ODM)"}
+    evidence: [{kind: kbj_draft, note: "화장품 ODM — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '352480'
+    name: 씨앤씨인터내셔널
+    reviewed: false
+    sector: 화장품 ODM
+    flows:
+      - {id: lip, name: "색조 화장품 전국", kind: national, nature: mixed, products: [{hs: '330410', name: "입술 화장품", weight: 0.3}, {hs: '330420', name: "눈 화장품", weight: 0.1}], basis: "포천 — 색조 ODM"}
+    evidence: [{kind: kbj_draft, note: "화장품 ODM — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '257720'
+    name: 실리콘투
+    reviewed: false
+    sector: 화장품 유통
+    flows:
+      - {id: all, name: "화장품 전국", kind: national, nature: mixed, products: [{hs: '3304', name: "화장품", weight: 0.8}], basis: "K-뷰티 수출 플랫폼 — 업계 전체 수출과 동행"}
+    evidence: [{kind: kbj_draft, note: "화장품 유통 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '018290'
+    name: 브이티
+    reviewed: false
+    sector: 화장품
+    flows:
+      - {id: all, name: "화장품 전국", kind: national, nature: mixed, products: [{hs: '3304', name: "화장품", weight: 0.6}], basis: "리들샷 — OEM 생산(업황)"}
+    evidence: [{kind: kbj_draft, note: "화장품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '237880'
+    name: 클리오
+    reviewed: false
+    sector: 화장품
+    flows:
+      - {id: all, name: "색조 화장품 전국", kind: national, nature: mixed, products: [{hs: '330410', name: "입술 화장품", weight: 0.2}, {hs: '330420', name: "눈 화장품", weight: 0.1}], basis: "OEM 생산(업황)"}
+    evidence: [{kind: kbj_draft, note: "화장품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '114840'
+    name: 아이패밀리에스씨
+    reviewed: false
+    sector: 화장품
+    flows:
+      - {id: all, name: "화장품 전국", kind: national, nature: mixed, products: [{hs: '3304', name: "화장품", weight: 0.5}], basis: "롬앤 — 일본향(업황)"}
+    evidence: [{kind: kbj_draft, note: "화장품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '439090'
+    name: 마녀공장
+    reviewed: false
+    sector: 화장품
+    flows:
+      - {id: all, name: "화장품 전국", kind: national, nature: mixed, products: [{hs: '3304', name: "화장품", weight: 0.4}], basis: "클렌징 오일(업황)"}
+    evidence: [{kind: kbj_draft, note: "화장품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '214420'
+    name: 토니모리
+    reviewed: false
+    sector: 화장품
+    flows:
+      - {id: all, name: "화장품 전국", kind: national, nature: mixed, products: [{hs: '3304', name: "화장품", weight: 0.3}], basis: "업황"}
+    evidence: [{kind: kbj_draft, note: "화장품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '278470'
+    name: 에이피알
+    reviewed: false
+    sector: 화장품·뷰티기기
+    flows:
+      - {id: cos, name: "화장품 전국", kind: national, nature: mixed, products: [{hs: '3304', name: "화장품", weight: 0.4}], basis: "메디큐브(OEM — 업황)"}
+      - {id: dev, name: "뷰티 디바이스 전국", kind: national, nature: mixed, products: [{hs: '8543', name: "전기기기", weight: 0.2}], basis: "에이지알 — 분류 확인 필요"}
+    evidence: [{kind: kbj_draft, note: "화장품·뷰티기기 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '483650'
+    name: 달바글로벌
+    reviewed: false
+    sector: 화장품
+    flows:
+      - {id: all, name: "화장품 전국", kind: national, nature: mixed, products: [{hs: '3304', name: "화장품", weight: 0.5}], basis: "미스트 세럼(업황)"}
+    evidence: [{kind: kbj_draft, note: "화장품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '003350'
+    name: 한국화장품제조
+    reviewed: false
+    sector: 화장품 ODM
+    flows:
+      - {id: all, name: "화장품 전국", kind: national, nature: mixed, products: [{hs: '3304', name: "화장품", weight: 0.4}], basis: "ODM(업황)"}
+    evidence: [{kind: kbj_draft, note: "화장품 ODM — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '251970'
+    name: 펌텍코리아
+    reviewed: false
+    sector: 화장품 용기
+    flows:
+      - {id: pack, name: "플라스틱 용기 전국", kind: national, nature: mixed, products: [{hs: '3923', name: "플라스틱 용기", weight: 0.2}], basis: "김포 — 펌프 용기(국내 납품 비중 큼)"}
+    evidence: [{kind: kbj_draft, note: "화장품 용기 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '115960'
+    name: 연우
+    reviewed: false
+    sector: 화장품 용기
+    flows:
+      - {id: pack, name: "플라스틱 용기 전국", kind: national, nature: mixed, products: [{hs: '3923', name: "플라스틱 용기", weight: 0.3}], basis: "인천 — 화장품 용기"}
+    evidence: [{kind: kbj_draft, note: "화장품 용기 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '003230'
+    name: 삼양식품
+    reviewed: false
+    sector: 식품
+    flows:
+      - {id: ramen, name: "라면 — 원주·밀양", kind: sigungu, nature: company, regions: [KR-51-wonju, KR-48-miryang], products: [{hs: '190230', name: "라면 등 면류", weight: 0.8}], basis: "원주·밀양 공장. 두 시군구의 라면 수출은 거의 이 회사(불닭 시리즈)"}
+    evidence: [{kind: kbj_draft, note: "식품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '004370'
+    name: 농심
+    reviewed: false
+    sector: 식품
+    flows:
+      - {id: ramen, name: "라면 — 구미·부산 강서", kind: sigungu, nature: mixed, regions: [KR-47-gumi, KR-26-gangseo], products: [{hs: '190230', name: "라면 등 면류", weight: 0.15}], basis: "구미·부산(녹산) 공장. 해외(미국·중국) 생산 비중 큼"}
+      - {id: snack, name: "스낵 전국", kind: national, nature: mixed, products: [{hs: '1905', name: "과자·빵", weight: 0.02}], basis: "스낵"}
+    evidence: [{kind: kbj_draft, note: "식품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '007310'
+    name: 오뚜기
+    reviewed: false
+    sector: 식품
+    flows:
+      - {id: ramen, name: "라면 — 평택", kind: sigungu, nature: mixed, regions: [KR-41-pyeongtaek], products: [{hs: '190230', name: "라면 등 면류", weight: 0.05}], basis: "평택 공장"}
+      - {id: sauce, name: "소스 전국", kind: national, nature: mixed, products: [{hs: '2103', name: "소스", weight: 0.02}], basis: "소스·조미"}
+    evidence: [{kind: kbj_draft, note: "식품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '271560'
+    name: 오리온
+    reviewed: false
+    sector: 식품
+    flows:
+      - {id: snack, name: "과자 전국", kind: national, nature: mixed, products: [{hs: '1905', name: "과자·빵", weight: 0.03}, {hs: '1704', name: "설탕 과자", weight: 0.01}], basis: "해외 법인 생산이 대부분 — 국내 통관은 작다"}
+    evidence: [{kind: kbj_draft, note: "식품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '280360'
+    name: 롯데웰푸드
+    reviewed: false
+    sector: 식품
+    flows:
+      - {id: conf, name: "과자·빙과 전국", kind: national, nature: mixed, products: [{hs: '1806', name: "초콜릿", weight: 0.02}, {hs: '2105', name: "아이스크림", weight: 0.02}], basis: "업황"}
+    evidence: [{kind: kbj_draft, note: "식품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '005180'
+    name: 빙그레
+    reviewed: false
+    sector: 식품
+    flows:
+      - {id: ice, name: "아이스크림 전국", kind: national, nature: mixed, products: [{hs: '2105', name: "아이스크림", weight: 0.05}], basis: "메로나 등"}
+      - {id: milk, name: "가공유 전국", kind: national, nature: mixed, products: [{hs: '0402', name: "농축 유", weight: 0.02}], basis: "바나나맛우유 등(분류 확인 필요)"}
+    evidence: [{kind: kbj_draft, note: "식품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '001680'
+    name: 대상
+    reviewed: false
+    sector: 식품·소재
+    flows:
+      - {id: seas, name: "소스·김치·조미료 전국", kind: national, nature: mixed, products: [{hs: '2103', name: "소스", weight: 0.03}, {hs: '2106', name: "조제 식료품", weight: 0.02}], basis: "업황"}
+      - {id: amino, name: "아미노산 전국", kind: national, nature: mixed, products: [{hs: '2922', name: "아미노 화합물", weight: 0.03}], basis: "군산 — 라이신(해외 생산 비중)"}
+    evidence: [{kind: kbj_draft, note: "식품·소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '097950'
+    name: CJ제일제당
+    reviewed: false
+    sector: 식품·바이오
+    flows:
+      - {id: food, name: "가공식품 전국", kind: national, nature: mixed, products: [{hs: '1902', name: "면·만두 등", weight: 0.01}, {hs: '2106', name: "조제 식료품", weight: 0.01}], basis: "해외 생산 비중 큼"}
+      - {id: bio, name: "아미노산 전국", kind: national, nature: mixed, products: [{hs: '2922', name: "아미노 화합물", weight: 0.01}], basis: "바이오(해외 생산 비중 큼)"}
+    evidence: [{kind: kbj_draft, note: "식품·바이오 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '033780'
+    name: KT&G
+    reviewed: false
+    sector: 담배
+    flows:
+      - {id: cig, name: "궐련 — 대전 대덕", kind: sigungu, nature: company, regions: [KR-30-daedeok], products: [{hs: '240220', name: "궐련(담배)", weight: 0.15}], basis: "신탄진(대전 대덕) 공장"}
+      - {id: ngp, name: "궐련형 전자담배 전국", kind: national, nature: mixed, products: [{hs: '2404', name: "비연소 흡입 제품", weight: 0.05}], basis: "릴·전자담배 스틱(분류 확인 필요)"}
+    evidence: [{kind: kbj_draft, note: "담배 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '000080'
+    name: 하이트진로
+    reviewed: false
+    sector: 주류
+    flows:
+      - {id: soju, name: "소주 전국", kind: national, nature: mixed, products: [{hs: '2208', name: "증류주", weight: 0.05}, {hs: '2203', name: "맥주", weight: 0.01}], basis: "이천·청주 등"}
+    evidence: [{kind: kbj_draft, note: "주류 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '005300'
+    name: 롯데칠성
+    reviewed: false
+    sector: 음료·주류
+    flows:
+      - {id: bev, name: "음료·주류 전국", kind: national, nature: mixed, products: [{hs: '2202', name: "음료", weight: 0.02}, {hs: '2208', name: "증류주", weight: 0.02}], basis: "업황"}
+    evidence: [{kind: kbj_draft, note: "음료·주류 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '006040'
+    name: 동원산업
+    reviewed: false
+    sector: 수산
+    flows:
+      - {id: tuna, name: "참치 전국", kind: national, nature: mixed, products: [{hs: '0303', name: "냉동 어류", weight: 0.05}, {hs: '1604', name: "어류 조제품", weight: 0.03}], basis: "원양 어획(통관 분류 확인 필요)"}
+    evidence: [{kind: kbj_draft, note: "수산 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '017810'
+    name: 풀무원
+    reviewed: false
+    sector: 식품
+    flows:
+      - {id: food, name: "조제 식료품 전국", kind: national, nature: mixed, products: [{hs: '2106', name: "조제 식료품", weight: 0.01}], basis: "해외 생산 비중 큼"}
+    evidence: [{kind: kbj_draft, note: "식품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '207940'
+    name: 삼성바이오로직스
+    reviewed: false
+    sector: 바이오
+    flows:
+      - {id: cdmo, name: "바이오의약품 — 인천 연수(송도)", kind: sigungu, nature: mixed, regions: [KR-28-yeonsu], products: [{hs: '300215', name: "면역 제품(투여량)", weight: 0.3}], basis: "송도 공장. 같은 연수구에 셀트리온이 있어 업황 혼합"}
+    evidence: [{kind: kbj_draft, note: "바이오 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '068270'
+    name: 셀트리온
+    reviewed: false
+    sector: 바이오
+    flows:
+      - {id: bio, name: "바이오의약품 — 인천 연수(송도)", kind: sigungu, nature: mixed, regions: [KR-28-yeonsu], products: [{hs: '300215', name: "면역 제품(투여량)", weight: 0.4}], basis: "송도 공장. 삼성바이오로직스 물량과 섞인다"}
+    evidence: [{kind: kbj_draft, note: "바이오 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '302440'
+    name: SK바이오사이언스
+    reviewed: false
+    sector: 바이오
+    flows:
+      - {id: vac, name: "백신 — 안동", kind: sigungu, nature: company, regions: [KR-47-andong], products: [{hs: '300241', name: "백신(사람용)", weight: 0.3}], basis: "안동 L하우스"}
+    evidence: [{kind: kbj_draft, note: "바이오 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '145020'
+    name: 휴젤
+    reviewed: false
+    sector: 바이오
+    flows:
+      - {id: btx, name: "보툴리눔 톡신 전국", kind: national, nature: mixed, products: [{hs: '3002', name: "면역 제품 등", weight: 0.4}], basis: "춘천 — 분류 확인 필요"}
+    evidence: [{kind: kbj_draft, note: "바이오 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '086900'
+    name: 메디톡스
+    reviewed: false
+    sector: 바이오
+    flows:
+      - {id: btx, name: "보툴리눔 톡신 전국", kind: national, nature: mixed, products: [{hs: '3002', name: "면역 제품 등", weight: 0.3}], basis: "오창 — 분류 확인 필요"}
+    evidence: [{kind: kbj_draft, note: "바이오 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '069620'
+    name: 대웅제약
+    reviewed: false
+    sector: 제약
+    flows:
+      - {id: btx, name: "보툴리눔 톡신 전국", kind: national, nature: mixed, products: [{hs: '3002', name: "면역 제품 등", weight: 0.1}], basis: "나보타(화성 향남)"}
+      - {id: drug, name: "의약품 전국", kind: national, nature: mixed, products: [{hs: '3004', name: "의약품", weight: 0.03}], basis: "업황"}
+    evidence: [{kind: kbj_draft, note: "제약 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '128940'
+    name: 한미약품
+    reviewed: false
+    sector: 제약
+    flows:
+      - {id: drug, name: "의약품 전국", kind: national, nature: mixed, products: [{hs: '3004', name: "의약품", weight: 0.05}], basis: "평택·팔탄"}
+    evidence: [{kind: kbj_draft, note: "제약 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '000100'
+    name: 유한양행
+    reviewed: false
+    sector: 제약
+    flows:
+      - {id: api, name: "원료의약품 전국", kind: national, nature: mixed, products: [{hs: '2933', name: "복소환 화합물", weight: 0.05}, {hs: '3004', name: "의약품", weight: 0.03}], basis: "유한화학(API) — 업황"}
+    evidence: [{kind: kbj_draft, note: "제약 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '006280'
+    name: 녹십자
+    reviewed: false
+    sector: 제약
+    flows:
+      - {id: plasma, name: "혈액제제·백신 전국", kind: national, nature: mixed, products: [{hs: '3002', name: "면역 제품 등", weight: 0.1}], basis: "오창·화순"}
+    evidence: [{kind: kbj_draft, note: "제약 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '214450'
+    name: 파마리서치
+    reviewed: false
+    sector: 제약·의료
+    flows:
+      - {id: pdrn, name: "PDRN 제품 전국", kind: national, nature: mixed, products: [{hs: '3004', name: "의약품", weight: 0.1}, {hs: '3304', name: "화장품", weight: 0.1}], basis: "강릉 — 리쥬란(분류 확인 필요)"}
+    evidence: [{kind: kbj_draft, note: "제약·의료 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '137310'
+    name: 에스디바이오센서
+    reviewed: false
+    sector: 진단
+    flows:
+      - {id: dx, name: "진단 시약 전국", kind: national, nature: mixed, products: [{hs: '3822', name: "진단 시약", weight: 0.3}], basis: "청주 — 분류 확인 필요"}
+    evidence: [{kind: kbj_draft, note: "진단 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '096530'
+    name: 씨젠
+    reviewed: false
+    sector: 진단
+    flows:
+      - {id: dx, name: "분자진단 시약 전국", kind: national, nature: mixed, products: [{hs: '3822', name: "진단 시약", weight: 0.5}], basis: "업황"}
+    evidence: [{kind: kbj_draft, note: "진단 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '099190'
+    name: 아이센스
+    reviewed: false
+    sector: 진단
+    flows:
+      - {id: cgm, name: "혈당 측정 전국", kind: national, nature: mixed, products: [{hs: '3822', name: "진단 시약(스트립)", weight: 0.3}, {hs: '9027', name: "분석 기기", weight: 0.1}], basis: "송도·원주"}
+    evidence: [{kind: kbj_draft, note: "진단 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '214150'
+    name: 클래시스
+    reviewed: false
+    sector: 의료기기
+    flows:
+      - {id: hifu, name: "미용 의료기기 전국", kind: national, nature: mixed, products: [{hs: '9018', name: "의료기기", weight: 0.4}], basis: "슈링크(분류 확인 필요)"}
+    evidence: [{kind: kbj_draft, note: "의료기기 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '336570'
+    name: 원텍
+    reviewed: false
+    sector: 의료기기
+    flows:
+      - {id: laser, name: "미용 레이저 전국", kind: national, nature: mixed, products: [{hs: '9018', name: "의료기기", weight: 0.4}], basis: "대전 — 올리지오"}
+    evidence: [{kind: kbj_draft, note: "의료기기 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '287410'
+    name: 제이시스메디칼
+    reviewed: false
+    sector: 의료기기
+    flows:
+      - {id: dev, name: "미용 의료기기 전국", kind: national, nature: mixed, products: [{hs: '9018', name: "의료기기", weight: 0.4}], basis: "서울"}
+    evidence: [{kind: kbj_draft, note: "의료기기 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '043150'
+    name: 바텍
+    reviewed: false
+    sector: 의료기기
+    flows:
+      - {id: xray, name: "치과용 X선 전국", kind: national, nature: mixed, products: [{hs: '9022', name: "X선 기기", weight: 0.6}], basis: "화성 — 치과 영상"}
+    evidence: [{kind: kbj_draft, note: "의료기기 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '228670'
+    name: 레이
+    reviewed: false
+    sector: 의료기기
+    flows:
+      - {id: xray, name: "치과용 영상장비 전국", kind: national, nature: mixed, products: [{hs: '9022', name: "X선 기기", weight: 0.4}], basis: "성남"}
+    evidence: [{kind: kbj_draft, note: "의료기기 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '145720'
+    name: 덴티움
+    reviewed: false
+    sector: 의료기기
+    flows:
+      - {id: impl, name: "임플란트 전국", kind: national, nature: mixed, products: [{hs: '9021', name: "치과용 보철", weight: 0.5}], basis: "수원 광교"}
+    evidence: [{kind: kbj_draft, note: "의료기기 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '039840'
+    name: 디오
+    reviewed: false
+    sector: 의료기기
+    flows:
+      - {id: impl, name: "임플란트 전국", kind: national, nature: mixed, products: [{hs: '9021', name: "치과용 보철", weight: 0.4}], basis: "부산"}
+    evidence: [{kind: kbj_draft, note: "의료기기 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '041830'
+    name: 인바디
+    reviewed: false
+    sector: 의료기기
+    flows:
+      - {id: bia, name: "체성분 분석기 전국", kind: national, nature: mixed, products: [{hs: '9018', name: "의료기기", weight: 0.3}, {hs: '9031', name: "측정기기", weight: 0.2}], basis: "천안"}
+    evidence: [{kind: kbj_draft, note: "의료기기 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '065510'
+    name: 휴비츠
+    reviewed: false
+    sector: 의료기기
+    flows:
+      - {id: oph, name: "안과 기기 전국", kind: national, nature: mixed, products: [{hs: '9018', name: "의료기기", weight: 0.5}], basis: "안양"}
+    evidence: [{kind: kbj_draft, note: "의료기기 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '335890'
+    name: 비올
+    reviewed: false
+    sector: 의료기기
+    flows:
+      - {id: rf, name: "미용 RF 기기 전국", kind: national, nature: mixed, products: [{hs: '9018', name: "의료기기", weight: 0.4}], basis: "분류 확인 필요"}
+    evidence: [{kind: kbj_draft, note: "의료기기 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '214370'
+    name: 케어젠
+    reviewed: false
+    sector: 바이오
+    flows:
+      - {id: pep, name: "펩타이드 제품 전국", kind: national, nature: mixed, products: [{hs: '3304', name: "화장품", weight: 0.2}, {hs: '2106', name: "조제 식료품", weight: 0.1}], basis: "분류 확인 필요"}
+    evidence: [{kind: kbj_draft, note: "바이오 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  # ── 2선(장비·부품·가전·자동차 부품·항공·풍력·에너지 수입·제지·화학·제약·식품·기계) ──
+  - code: '137400'
+    name: 피엔티
+    reviewed: false
+    sector: 이차전지 장비
+    flows:
+      - {id: eq, name: "롤투롤 장비 전국", kind: national, nature: mixed, products: [{hs: '8479', name: "기타 기계", weight: 0.3}, {hs: '8420', name: "캘린더", weight: 0.1}], basis: "구미 — 코터·캘린더"}
+    evidence: [{kind: kbj_draft, note: "이차전지 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '222080'
+    name: 씨아이에스
+    reviewed: false
+    sector: 이차전지 장비
+    flows:
+      - {id: eq, name: "전극 공정 장비 전국", kind: national, nature: mixed, products: [{hs: '8420', name: "캘린더", weight: 0.3}, {hs: '8479', name: "기타 기계", weight: 0.1}], basis: "대구 — 캘린더·슬리터"}
+    evidence: [{kind: kbj_draft, note: "이차전지 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '299030'
+    name: 하나기술
+    reviewed: false
+    sector: 이차전지 장비
+    flows:
+      - {id: eq, name: "조립·화성 장비 전국", kind: national, nature: mixed, products: [{hs: '8479', name: "기타 기계", weight: 0.3}], basis: "화성"}
+    evidence: [{kind: kbj_draft, note: "이차전지 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '259630'
+    name: 엠플러스
+    reviewed: false
+    sector: 이차전지 장비
+    flows:
+      - {id: eq, name: "조립 장비 전국", kind: national, nature: mixed, products: [{hs: '8479', name: "기타 기계", weight: 0.4}], basis: "청주 오창"}
+    evidence: [{kind: kbj_draft, note: "이차전지 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '372170'
+    name: 윤성에프앤씨
+    reviewed: false
+    sector: 이차전지 장비
+    flows:
+      - {id: eq, name: "믹싱 장비 전국", kind: national, nature: mixed, products: [{hs: '8479', name: "기타 기계", weight: 0.3}], basis: "부산"}
+    evidence: [{kind: kbj_draft, note: "이차전지 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '056190'
+    name: 에스에프에이
+    reviewed: false
+    sector: 장비
+    flows:
+      - {id: eq, name: "물류 자동화·장비 전국", kind: national, nature: mixed, products: [{hs: '8428', name: "운반 기계", weight: 0.1}, {hs: '8486', name: "반도체 장비", weight: 0.05}], basis: "화성·아산"}
+    evidence: [{kind: kbj_draft, note: "장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '031980'
+    name: 피에스케이홀딩스
+    reviewed: false
+    sector: 반도체 장비
+    flows:
+      - {id: eq, name: "후공정 장비 전국", kind: national, nature: mixed, products: [{hs: '8486', name: "반도체 제조장비", weight: 0.5}], basis: "화성 — 디스컴·리플로우"}
+    evidence: [{kind: kbj_draft, note: "반도체 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '059090'
+    name: 미코
+    reviewed: false
+    sector: 반도체 부품
+    flows:
+      - {id: parts, name: "세라믹 히터·부품 전국", kind: national, nature: mixed, products: [{hs: '848690', name: "반도체 장비 부품", weight: 0.3}], basis: "안성"}
+    evidence: [{kind: kbj_draft, note: "반도체 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '036810'
+    name: 에프에스티
+    reviewed: false
+    sector: 반도체 장비
+    flows:
+      - {id: eq, name: "칠러·펠리클 전국", kind: national, nature: mixed, products: [{hs: '8419', name: "열교환·냉각 기기", weight: 0.2}, {hs: '9002', name: "광학 부품", weight: 0.1}], basis: "화성 — 분류 확인 필요"}
+    evidence: [{kind: kbj_draft, note: "반도체 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '086390'
+    name: 유니테스트
+    reviewed: false
+    sector: 반도체 장비
+    flows:
+      - {id: tester, name: "메모리 테스터 전국", kind: national, nature: mixed, products: [{hs: '9030', name: "측정·검사기기", weight: 0.4}], basis: "용인"}
+    evidence: [{kind: kbj_draft, note: "반도체 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '098120'
+    name: 마이크로컨텍솔
+    reviewed: false
+    sector: 반도체 부품
+    flows:
+      - {id: socket, name: "번인 소켓 전국", kind: national, nature: mixed, products: [{hs: '8536', name: "접속기기", weight: 0.4}], basis: "아산"}
+    evidence: [{kind: kbj_draft, note: "반도체 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '356860'
+    name: 티엘비
+    reviewed: false
+    sector: PCB
+    flows:
+      - {id: pcb, name: "메모리 모듈 기판 — 안산", kind: sigungu, nature: mixed, regions: [KR-41-ansan], products: [{hs: '853400', name: "인쇄회로", weight: 0.5}], basis: "안산 반월 공장(대덕전자·코리아써키트 혼입)"}
+    evidence: [{kind: kbj_draft, note: "PCB — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '007810'
+    name: 코리아써키트
+    reviewed: false
+    sector: PCB
+    flows:
+      - {id: pcb, name: "인쇄회로기판 — 안산", kind: sigungu, nature: mixed, regions: [KR-41-ansan], products: [{hs: '853400', name: "인쇄회로", weight: 0.4}], basis: "안산 공장(타 PCB 업체 혼입)"}
+    evidence: [{kind: kbj_draft, note: "PCB — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '265520'
+    name: AP시스템
+    reviewed: false
+    sector: 디스플레이 장비
+    flows:
+      - {id: eq, name: "레이저 장비 전국", kind: national, nature: mixed, products: [{hs: '8486', name: "반도체·디스플레이 장비", weight: 0.5}], basis: "화성 — ELA·LLO"}
+    evidence: [{kind: kbj_draft, note: "디스플레이 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '272290'
+    name: 이녹스첨단소재
+    reviewed: false
+    sector: 소재
+    flows:
+      - {id: film, name: "기능성 필름 전국", kind: national, nature: mixed, products: [{hs: '3919', name: "접착 필름", weight: 0.2}, {hs: '3920', name: "플라스틱 필름", weight: 0.1}], basis: "아산"}
+    evidence: [{kind: kbj_draft, note: "소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '102120'
+    name: 어보브반도체
+    reviewed: false
+    sector: 반도체
+    flows:
+      - {id: mcu, name: "MCU 전국", kind: national, nature: mixed, products: [{hs: '8542', name: "집적회로", weight: 0.1}], basis: "팹리스 — 업황"}
+    evidence: [{kind: kbj_draft, note: "반도체 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '217190'
+    name: 제너셈
+    reviewed: false
+    sector: 반도체 장비
+    flows:
+      - {id: eq, name: "후공정 장비 전국", kind: national, nature: mixed, products: [{hs: '8486', name: "반도체 제조장비", weight: 0.4}], basis: "인천"}
+    evidence: [{kind: kbj_draft, note: "반도체 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '166090'
+    name: 하나머티리얼즈
+    reviewed: false
+    sector: 반도체 부품
+    flows:
+      - {id: parts, name: "실리콘 부품 전국", kind: national, nature: mixed, products: [{hs: '848690', name: "반도체 장비 부품", weight: 0.5}], basis: "천안"}
+    evidence: [{kind: kbj_draft, note: "반도체 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '101160'
+    name: 월덱스
+    reviewed: false
+    sector: 반도체 부품
+    flows:
+      - {id: parts, name: "실리콘·쿼츠 부품 전국", kind: national, nature: mixed, products: [{hs: '848690', name: "반도체 장비 부품", weight: 0.3}], basis: "구미"}
+    evidence: [{kind: kbj_draft, note: "반도체 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '272110'
+    name: 케이엔제이
+    reviewed: false
+    sector: 반도체 부품
+    flows:
+      - {id: parts, name: "SiC 링 전국", kind: national, nature: mixed, products: [{hs: '848690', name: "반도체 장비 부품", weight: 0.4}], basis: "천안"}
+    evidence: [{kind: kbj_draft, note: "반도체 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '083310'
+    name: 엘오티베큠
+    reviewed: false
+    sector: 반도체 장비
+    flows:
+      - {id: pump, name: "진공 펌프 전국", kind: national, nature: mixed, products: [{hs: '8414', name: "펌프·압축기", weight: 0.4}], basis: "평택"}
+    evidence: [{kind: kbj_draft, note: "반도체 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '029460'
+    name: 케이씨
+    reviewed: false
+    sector: 반도체 장비
+    flows:
+      - {id: gas, name: "가스 공급장치 전국", kind: national, nature: mixed, products: [{hs: '8486', name: "반도체 제조장비", weight: 0.2}], basis: "안성"}
+    evidence: [{kind: kbj_draft, note: "반도체 장비 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '104830'
+    name: 원익머트리얼즈
+    reviewed: false
+    sector: 반도체 소재
+    flows:
+      - {id: gas, name: "특수가스 전국", kind: national, nature: mixed, products: [{hs: '2811', name: "무기 화합물", weight: 0.1}, {hs: '2804', name: "수소·희가스", weight: 0.1}], basis: "청주"}
+    evidence: [{kind: kbj_draft, note: "반도체 소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '001820'
+    name: 삼화콘덴서
+    reviewed: false
+    sector: 전자부품
+    flows:
+      - {id: cap, name: "콘덴서 전국", kind: national, nature: mixed, products: [{hs: '8532', name: "콘덴서", weight: 0.4}], basis: "용인"}
+    evidence: [{kind: kbj_draft, note: "전자부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '005680'
+    name: 삼영전자
+    reviewed: false
+    sector: 전자부품
+    flows:
+      - {id: cap, name: "알루미늄 콘덴서 전국", kind: national, nature: mixed, products: [{hs: '8532', name: "콘덴서", weight: 0.3}], basis: "성남"}
+    evidence: [{kind: kbj_draft, note: "전자부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '052710'
+    name: 아모텍
+    reviewed: false
+    sector: 전자부품
+    flows:
+      - {id: comp, name: "세라믹 칩·모터 전국", kind: national, nature: mixed, products: [{hs: '8532', name: "콘덴서", weight: 0.1}, {hs: '8501', name: "소형 모터", weight: 0.1}], basis: "김포"}
+    evidence: [{kind: kbj_draft, note: "전자부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '417200'
+    name: LS머트리얼즈
+    reviewed: false
+    sector: 전자부품
+    flows:
+      - {id: uc, name: "울트라커패시터 전국", kind: national, nature: mixed, products: [{hs: '8532', name: "콘덴서", weight: 0.3}], basis: "안양"}
+    evidence: [{kind: kbj_draft, note: "전자부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '010170'
+    name: 대한광통신
+    reviewed: false
+    sector: 전자부품
+    flows:
+      - {id: fiber, name: "광섬유·광케이블 전국", kind: national, nature: mixed, products: [{hs: '9001', name: "광섬유", weight: 0.2}, {hs: '8544', name: "광케이블", weight: 0.2}], basis: "안산"}
+    evidence: [{kind: kbj_draft, note: "전자부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '060720'
+    name: KH바텍
+    reviewed: false
+    sector: 전자부품
+    flows:
+      - {id: hinge, name: "힌지·기구 부품 전국", kind: national, nature: mixed, products: [{hs: '8302', name: "금속 장착구", weight: 0.2}, {hs: '8517', name: "통신기기 부품", weight: 0.1}], basis: "구미 — 폴더블 힌지"}
+    evidence: [{kind: kbj_draft, note: "전자부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '053450'
+    name: 세코닉스
+    reviewed: false
+    sector: 전자부품
+    flows:
+      - {id: lens, name: "광학 렌즈 전국", kind: national, nature: mixed, products: [{hs: '9002', name: "광학 부품", weight: 0.3}], basis: "양주"}
+    evidence: [{kind: kbj_draft, note: "전자부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '082920'
+    name: 비츠로셀
+    reviewed: false
+    sector: 전자부품
+    flows:
+      - {id: bat, name: "1차 리튬전지 전국", kind: national, nature: mixed, products: [{hs: '8506', name: "1차 전지", weight: 0.6}], basis: "예산"}
+    evidence: [{kind: kbj_draft, note: "전자부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '021240'
+    name: 코웨이
+    reviewed: false
+    sector: 가전
+    flows:
+      - {id: wp, name: "정수기·공기청정기 전국", kind: national, nature: mixed, products: [{hs: '8421', name: "여과기", weight: 0.05}], basis: "공주·인천 — 해외 판매는 현지 법인"}
+    evidence: [{kind: kbj_draft, note: "가전 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '284740'
+    name: 쿠쿠홈시스
+    reviewed: false
+    sector: 가전
+    flows:
+      - {id: cook, name: "전기밥솥 전국", kind: national, nature: mixed, products: [{hs: '8516', name: "전열 기기", weight: 0.1}], basis: "양산"}
+    evidence: [{kind: kbj_draft, note: "가전 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '009450'
+    name: 경동나비엔
+    reviewed: false
+    sector: 가전
+    flows:
+      - {id: heater, name: "보일러·온수기 전국", kind: national, nature: mixed, products: [{hs: '8419', name: "온수기", weight: 0.3}, {hs: '8403', name: "보일러", weight: 0.1}], basis: "평택 — 북미향 온수기"}
+    evidence: [{kind: kbj_draft, note: "가전 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '044340'
+    name: 위닉스
+    reviewed: false
+    sector: 가전
+    flows:
+      - {id: air, name: "제습기·공기청정기 전국", kind: national, nature: mixed, products: [{hs: '8415', name: "공기조절기", weight: 0.1}, {hs: '8421', name: "여과기", weight: 0.1}], basis: "시흥"}
+    evidence: [{kind: kbj_draft, note: "가전 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '200880'
+    name: 서연이화
+    reviewed: false
+    sector: 자동차 부품
+    flows:
+      - {id: parts, name: "내장 부품 전국", kind: national, nature: mixed, products: [{hs: '8708', name: "자동차 부품", weight: 0.05}], basis: "해외 생산 비중 큼"}
+    evidence: [{kind: kbj_draft, note: "자동차 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '010690'
+    name: 화신
+    reviewed: false
+    sector: 자동차 부품
+    flows:
+      - {id: parts, name: "섀시 부품 전국", kind: national, nature: mixed, products: [{hs: '8708', name: "자동차 부품", weight: 0.05}], basis: "영천"}
+    evidence: [{kind: kbj_draft, note: "자동차 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '043370'
+    name: 평화정공
+    reviewed: false
+    sector: 자동차 부품
+    flows:
+      - {id: parts, name: "도어 모듈 전국", kind: national, nature: mixed, products: [{hs: '8708', name: "자동차 부품", weight: 0.05}], basis: "대구"}
+    evidence: [{kind: kbj_draft, note: "자동차 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '005710'
+    name: 대원산업
+    reviewed: false
+    sector: 자동차 부품
+    flows:
+      - {id: seat, name: "시트 전국", kind: national, nature: mixed, products: [{hs: '9401', name: "의자(차량용)", weight: 0.05}], basis: "안산"}
+    evidence: [{kind: kbj_draft, note: "자동차 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '013310'
+    name: 아진산업
+    reviewed: false
+    sector: 자동차 부품
+    flows:
+      - {id: parts, name: "차체 부품 전국", kind: national, nature: mixed, products: [{hs: '8708', name: "자동차 부품", weight: 0.05}], basis: "경산"}
+    evidence: [{kind: kbj_draft, note: "자동차 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '122350'
+    name: 삼기
+    reviewed: false
+    sector: 자동차 부품
+    flows:
+      - {id: cast, name: "알루미늄 부품 전국", kind: national, nature: mixed, products: [{hs: '8708', name: "자동차 부품", weight: 0.1}], basis: "평택·서산"}
+    evidence: [{kind: kbj_draft, note: "자동차 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '010100'
+    name: 한국프랜지
+    reviewed: false
+    sector: 자동차 부품
+    flows:
+      - {id: parts, name: "구동 부품 전국", kind: national, nature: mixed, products: [{hs: '8708', name: "자동차 부품", weight: 0.05}], basis: "울산"}
+    evidence: [{kind: kbj_draft, note: "자동차 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '033530'
+    name: 세종공업
+    reviewed: false
+    sector: 자동차 부품
+    flows:
+      - {id: exh, name: "배기 부품 전국", kind: national, nature: mixed, products: [{hs: '8708', name: "자동차 부품", weight: 0.05}], basis: "울산"}
+    evidence: [{kind: kbj_draft, note: "자동차 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '023800'
+    name: 인지컨트롤스
+    reviewed: false
+    sector: 자동차 부품
+    flows:
+      - {id: parts, name: "열관리 부품 전국", kind: national, nature: mixed, products: [{hs: '8708', name: "자동차 부품", weight: 0.05}], basis: "시흥"}
+    evidence: [{kind: kbj_draft, note: "자동차 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '210540'
+    name: 디와이파워
+    reviewed: false
+    sector: 기계 부품
+    flows:
+      - {id: cyl, name: "유압 실린더 전국", kind: national, nature: mixed, products: [{hs: '8412', name: "유압 실린더", weight: 0.3}], basis: "창원"}
+    evidence: [{kind: kbj_draft, note: "기계 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '000490'
+    name: 대동
+    reviewed: false
+    sector: 농기계
+    flows:
+      - {id: tractor, name: "트랙터 전국", kind: national, nature: mixed, products: [{hs: '8701', name: "트랙터", weight: 0.3}, {hs: '8433', name: "수확기", weight: 0.02}], basis: "대구 달성 — 북미향 트랙터"}
+    evidence: [{kind: kbj_draft, note: "농기계 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '002900'
+    name: TYM
+    reviewed: false
+    sector: 농기계
+    flows:
+      - {id: tractor, name: "트랙터 전국", kind: national, nature: mixed, products: [{hs: '8701', name: "트랙터", weight: 0.4}], basis: "옥천·익산 — 북미향"}
+    evidence: [{kind: kbj_draft, note: "농기계 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '036890'
+    name: 진성티이씨
+    reviewed: false
+    sector: 기계 부품
+    flows:
+      - {id: uc, name: "굴착기 하부 부품 전국", kind: national, nature: mixed, products: [{hs: '8431', name: "건설기계 부품", weight: 0.4}], basis: "안산"}
+    evidence: [{kind: kbj_draft, note: "기계 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '010240'
+    name: 흥국
+    reviewed: false
+    sector: 기계 부품
+    flows:
+      - {id: parts, name: "건설기계 부품 전국", kind: national, nature: mixed, products: [{hs: '8431', name: "건설기계 부품", weight: 0.3}], basis: "부산"}
+    evidence: [{kind: kbj_draft, note: "기계 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '067390'
+    name: 아스트
+    reviewed: false
+    sector: 항공 부품
+    flows:
+      - {id: aero, name: "항공기 동체 부품 전국", kind: national, nature: mixed, products: [{hs: '8807', name: "항공기 부품", weight: 0.5}], basis: "사천 — 보잉 부품"}
+    evidence: [{kind: kbj_draft, note: "항공 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '274090'
+    name: 켄코아에어로스페이스
+    reviewed: false
+    sector: 항공 부품
+    flows:
+      - {id: aero, name: "항공기 부품 전국", kind: national, nature: mixed, products: [{hs: '8807', name: "항공기 부품", weight: 0.4}], basis: "사천"}
+    evidence: [{kind: kbj_draft, note: "항공 부품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '065450'
+    name: 빅텍
+    reviewed: false
+    sector: 방산
+    flows:
+      - {id: elec, name: "전자전 장비 전국", kind: national, nature: mixed, products: [{hs: '8526', name: "레이더 등", weight: 0.1}], basis: "이천"}
+    evidence: [{kind: kbj_draft, note: "방산 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '010820'
+    name: 퍼스텍
+    reviewed: false
+    sector: 방산
+    flows:
+      - {id: ammo, name: "유도무기 부품 전국", kind: national, nature: mixed, products: [{hs: '9306', name: "탄약 부품", weight: 0.1}], basis: "창원"}
+    evidence: [{kind: kbj_draft, note: "방산 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '005870'
+    name: 휴니드
+    reviewed: false
+    sector: 방산
+    flows:
+      - {id: comm, name: "전술 통신 전국", kind: national, nature: mixed, products: [{hs: '8517', name: "통신기기", weight: 0.1}], basis: "인천"}
+    evidence: [{kind: kbj_draft, note: "방산 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '271940'
+    name: 일진하이솔루스
+    reviewed: false
+    sector: 수소
+    flows:
+      - {id: tank, name: "수소 저장용기 전국", kind: national, nature: mixed, products: [{hs: '7311', name: "압축가스 용기", weight: 0.3}], basis: "완주"}
+    evidence: [{kind: kbj_draft, note: "수소 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '112610'
+    name: 씨에스윈드
+    reviewed: false
+    sector: 풍력
+    flows:
+      - {id: tower, name: "풍력 타워 전국", kind: national, nature: mixed, products: [{hs: '7308', name: "철구조물", weight: 0.02}], basis: "생산 대부분 해외"}
+    evidence: [{kind: kbj_draft, note: "풍력 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '297090'
+    name: 씨에스베어링
+    reviewed: false
+    sector: 풍력
+    flows:
+      - {id: bearing, name: "베어링 전국", kind: national, nature: mixed, products: [{hs: '8482', name: "베어링", weight: 0.4}], basis: "함안"}
+    evidence: [{kind: kbj_draft, note: "풍력 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '100130'
+    name: 동국S&C
+    reviewed: false
+    sector: 풍력
+    flows:
+      - {id: tower, name: "풍력 타워 전국", kind: national, nature: mixed, products: [{hs: '7308', name: "철구조물", weight: 0.2}], basis: "포항"}
+    evidence: [{kind: kbj_draft, note: "풍력 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '018000'
+    name: 유니슨
+    reviewed: false
+    sector: 풍력
+    flows:
+      - {id: wtg, name: "풍력 발전기 전국", kind: national, nature: mixed, products: [{hs: '8502', name: "발전 세트", weight: 0.1}], basis: "사천"}
+    evidence: [{kind: kbj_draft, note: "풍력 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '036460'
+    name: 한국가스공사
+    reviewed: false
+    sector: 에너지
+    flows:
+      - {id: lng, name: "LNG 수입 전국", kind: national, nature: mixed, direction: imp, products: [{hs: '271111', name: "액화천연가스", weight: 0.5}], basis: "전국 LNG 수입(직수입 민간 물량 혼입). 수입 흐름 — 매출이 아니라 도입 물량 신호"}
+    evidence: [{kind: kbj_draft, note: "에너지 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '018670'
+    name: SK가스
+    reviewed: false
+    sector: 에너지
+    flows:
+      - {id: lpg, name: "LPG 수입 전국", kind: national, nature: mixed, direction: imp, products: [{hs: '271112', name: "프로판", weight: 0.4}, {hs: '271113', name: "부탄", weight: 0.2}], basis: "전국 LPG 수입(E1 물량 혼입)"}
+    evidence: [{kind: kbj_draft, note: "에너지 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '017940'
+    name: E1
+    reviewed: false
+    sector: 에너지
+    flows:
+      - {id: lpg, name: "LPG 수입 전국", kind: national, nature: mixed, direction: imp, products: [{hs: '271112', name: "프로판", weight: 0.4}, {hs: '271113', name: "부탄", weight: 0.2}], basis: "전국 LPG 수입(SK가스 물량 혼입)"}
+    evidence: [{kind: kbj_draft, note: "에너지 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '213500'
+    name: 한솔제지
+    reviewed: false
+    sector: 제지
+    flows:
+      - {id: paper, name: "인쇄용지·특수지 전국", kind: national, nature: mixed, products: [{hs: '4810', name: "도공지", weight: 0.2}], basis: "장항·대전"}
+    evidence: [{kind: kbj_draft, note: "제지 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '009580'
+    name: 무림P&P
+    reviewed: false
+    sector: 제지
+    flows:
+      - {id: pulp, name: "펄프·인쇄용지 전국", kind: national, nature: mixed, products: [{hs: '4703', name: "화학 펄프", weight: 0.05}, {hs: '4810', name: "도공지", weight: 0.1}], basis: "울산"}
+    evidence: [{kind: kbj_draft, note: "제지 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '002380'
+    name: KCC
+    reviewed: false
+    sector: 소재
+    flows:
+      - {id: paint, name: "도료·실리콘 전국", kind: national, nature: mixed, products: [{hs: '3208', name: "도료", weight: 0.03}, {hs: '3910', name: "실리콘", weight: 0.05}], basis: "해외 생산 비중 큼"}
+    evidence: [{kind: kbj_draft, note: "소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '000390'
+    name: 삼화페인트
+    reviewed: false
+    sector: 소재
+    flows:
+      - {id: paint, name: "도료 전국", kind: national, nature: mixed, products: [{hs: '3208', name: "도료", weight: 0.05}], basis: "안산"}
+    evidence: [{kind: kbj_draft, note: "소재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '004000'
+    name: 롯데정밀화학
+    reviewed: false
+    sector: 화학
+    flows:
+      - {id: chem, name: "ECH·셀룰로스 전국", kind: national, nature: mixed, products: [{hs: '2910', name: "에폭사이드", weight: 0.1}, {hs: '3912', name: "셀룰로스", weight: 0.1}], basis: "울산"}
+    evidence: [{kind: kbj_draft, note: "화학 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '102260'
+    name: 동성케미컬
+    reviewed: false
+    sector: 화학
+    flows:
+      - {id: pu, name: "폴리우레탄 전국", kind: national, nature: mixed, products: [{hs: '3909', name: "폴리우레탄", weight: 0.1}], basis: "부산"}
+    evidence: [{kind: kbj_draft, note: "화학 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '138490'
+    name: 코오롱플라스틱
+    reviewed: false
+    sector: 화학
+    flows:
+      - {id: pom, name: "POM 전국", kind: national, nature: mixed, products: [{hs: '3907', name: "폴리아세탈", weight: 0.3}], basis: "김천"}
+    evidence: [{kind: kbj_draft, note: "화학 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '017890'
+    name: 한국알콜
+    reviewed: false
+    sector: 화학
+    flows:
+      - {id: eth, name: "에탄올·초산에틸 전국", kind: national, nature: mixed, products: [{hs: '2207', name: "에틸알코올", weight: 0.1}, {hs: '2915', name: "초산 에스터", weight: 0.1}], basis: "울산"}
+    evidence: [{kind: kbj_draft, note: "화학 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '457190'
+    name: 이수스페셜티케미컬
+    reviewed: false
+    sector: 화학
+    flows:
+      - {id: sulf, name: "황화합물 전국", kind: national, nature: mixed, products: [{hs: '2930', name: "유기 황 화합물", weight: 0.2}], basis: "온산 — 분류 확인 필요"}
+    evidence: [{kind: kbj_draft, note: "화학 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '019440'
+    name: 세아특수강
+    reviewed: false
+    sector: 철강
+    flows:
+      - {id: wire, name: "특수강 선재 전국", kind: national, nature: mixed, products: [{hs: '7223', name: "스테인리스 선", weight: 0.05}, {hs: '7228', name: "합금강 봉", weight: 0.05}], basis: "포항"}
+    evidence: [{kind: kbj_draft, note: "철강 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '058430'
+    name: 포스코스틸리온
+    reviewed: false
+    sector: 철강
+    flows:
+      - {id: coat, name: "도금·컬러 강판 전국", kind: national, nature: mixed, products: [{hs: '7210', name: "도금 강판", weight: 0.3}], basis: "포항"}
+    evidence: [{kind: kbj_draft, note: "철강 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '185750'
+    name: 종근당
+    reviewed: false
+    sector: 제약
+    flows:
+      - {id: drug, name: "의약품 전국", kind: national, nature: mixed, products: [{hs: '3004', name: "의약품", weight: 0.02}], basis: "천안"}
+    evidence: [{kind: kbj_draft, note: "제약 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '243070'
+    name: 휴온스
+    reviewed: false
+    sector: 제약
+    flows:
+      - {id: drug, name: "의약품 전국", kind: national, nature: mixed, products: [{hs: '3004', name: "의약품", weight: 0.05}], basis: "제천"}
+    evidence: [{kind: kbj_draft, note: "제약 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '003850'
+    name: 보령
+    reviewed: false
+    sector: 제약
+    flows:
+      - {id: drug, name: "의약품 전국", kind: national, nature: mixed, products: [{hs: '3004', name: "의약품", weight: 0.03}], basis: "예산"}
+    evidence: [{kind: kbj_draft, note: "제약 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '170900'
+    name: 동아에스티
+    reviewed: false
+    sector: 제약
+    flows:
+      - {id: drug, name: "의약품 전국", kind: national, nature: mixed, products: [{hs: '3004', name: "의약품", weight: 0.05}], basis: "천안·송도"}
+    evidence: [{kind: kbj_draft, note: "제약 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '237690'
+    name: 에스티팜
+    reviewed: false
+    sector: 제약
+    flows:
+      - {id: api, name: "올리고 원료의약품 전국", kind: national, nature: mixed, products: [{hs: '2934', name: "핵산 등", weight: 0.5}], basis: "안산 반월 — 분류 확인 필요"}
+    evidence: [{kind: kbj_draft, note: "제약 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '064550'
+    name: 바이오니아
+    reviewed: false
+    sector: 진단
+    flows:
+      - {id: dx, name: "분자진단 전국", kind: national, nature: mixed, products: [{hs: '3822', name: "진단 시약", weight: 0.2}, {hs: '9027', name: "분석 기기", weight: 0.1}], basis: "대전"}
+    evidence: [{kind: kbj_draft, note: "진단 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '267980'
+    name: 매일유업
+    reviewed: false
+    sector: 식품
+    flows:
+      - {id: formula, name: "조제분유 전국", kind: national, nature: mixed, products: [{hs: '1901', name: "조제 식료품(분유)", weight: 0.03}], basis: "평택·광주"}
+    evidence: [{kind: kbj_draft, note: "식품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '049770'
+    name: 동원F&B
+    reviewed: false
+    sector: 식품
+    flows:
+      - {id: can, name: "수산물 조제품 전국", kind: national, nature: mixed, products: [{hs: '1604', name: "어류 조제품", weight: 0.02}], basis: "창원"}
+    evidence: [{kind: kbj_draft, note: "식품 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '010660'
+    name: 화천기계
+    reviewed: false
+    sector: 기계
+    flows:
+      - {id: mt, name: "공작기계 전국", kind: national, nature: mixed, products: [{hs: '8458', name: "선반", weight: 0.2}, {hs: '8457', name: "머시닝센터", weight: 0.1}], basis: "창원"}
+    evidence: [{kind: kbj_draft, note: "기계 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '099440'
+    name: 스맥
+    reviewed: false
+    sector: 기계
+    flows:
+      - {id: mt, name: "공작기계 전국", kind: national, nature: mixed, products: [{hs: '8458', name: "선반", weight: 0.2}, {hs: '8457', name: "머시닝센터", weight: 0.1}], basis: "김해"}
+    evidence: [{kind: kbj_draft, note: "기계 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '454910'
+    name: 두산로보틱스
+    reviewed: false
+    sector: 기계
+    flows:
+      - {id: cobot, name: "협동로봇 전국", kind: national, nature: mixed, products: [{hs: '8479', name: "기타 기계", weight: 0.2}], basis: "수원 — 분류 확인 필요"}
+    evidence: [{kind: kbj_draft, note: "기계 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '108380'
+    name: 대양전기공업
+    reviewed: false
+    sector: 조선 기자재
+    flows:
+      - {id: light, name: "선박 조명·배전 전국", kind: national, nature: mixed, products: [{hs: '9405', name: "조명기구", weight: 0.1}, {hs: '8537', name: "배전반", weight: 0.1}], basis: "부산"}
+    evidence: [{kind: kbj_draft, note: "조선 기자재 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '267250'
+    name: HD현대
+    reviewed: false
+    sector: 지주·정유
+    flows:
+      - {id: oil, name: "석유제품 — 서산(대산)", kind: sigungu, nature: affiliate, regions: [KR-44-seosan], products: [{hs: '271019', name: "경유 등 석유제품", weight: 0.2}], basis: "HD현대오일뱅크 대산 공장(서산 — 자회사)"}
+    evidence: [{kind: kbj_draft, note: "지주·정유 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '000880'
+    name: 한화
+    reviewed: false
+    sector: 지주·방산
+    flows:
+      - {id: expl, name: "화약·탄약 전국", kind: national, nature: mixed, products: [{hs: '3602', name: "조제 폭약", weight: 0.03}, {hs: '9306', name: "탄약", weight: 0.02}], basis: "보은·여수 — 화약(자체 사업)"}
+    evidence: [{kind: kbj_draft, note: "지주·방산 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '047050'
+    name: 포스코인터내셔널
+    reviewed: false
+    sector: 상사
+    flows:
+      - {id: steel, name: "철강재 전국(트레이딩)", kind: national, nature: mixed, products: [{hs: '7208', name: "열연 강판", weight: 0.02}, {hs: '7209', name: "냉연 강판", weight: 0.02}], basis: "트레이딩 — 포스코 철강재 수출 대행(업황)"}
+    evidence: [{kind: kbj_draft, note: "상사 — 공개 정보 기반 초안(사업보고서 확인 전)"}]
+  - code: '001570'
+    name: 금양
+    reviewed: false
+    sector: 화학
+    flows:
+      - {id: blow, name: "발포제 전국", kind: national, nature: mixed, products: [{hs: '2929', name: "질소 화합물", weight: 0.2}], basis: "부산 — 발포제(분류 확인 필요)"}
+    evidence: [{kind: kbj_draft, note: "화학 — 공개 정보 기반 초안(사업보고서 확인 전)"}]

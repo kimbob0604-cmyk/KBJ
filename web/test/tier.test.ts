@@ -291,11 +291,11 @@ describe('P5 섞인 페이지 6·9 — 공개 몫은 공개 파일, 로그인 �
   });
 });
 
-describe('P6 페이지 7 수출입 — 공개 전부(탭 6, 자물쇠 없음), 웨이브 1 껍데기는 요청 없이 준비 중(P6)', () => {
+describe('P6 페이지 7 수출입 — 공개 전부(첫 탭 종목, 공개 자물쇠는 흐름 패널 하나), 404 는 안내 한 줄', () => {
   const loaders = () => new Map([[7, () => Promise.resolve(p7)]]);
 
   for (const tier of ['public', 'login'] as const) {
-    it(`${tier}: 탭 6 개·첫 탭(속보)만 그린다·자물쇠 0·요청 0`, async () => {
+    it(`${tier}: 탭 8 개·첫 탭(종목)만 그린다·로그인 API 요청 0`, async () => {
       const root = appRoot();
       const { fetch, calls } = fakeFetch(() => json({}, 404));
       const opts = { fetch, now: fixedClock(), loaders: loaders(), ribbon: null };
@@ -314,9 +314,8 @@ describe('P6 페이지 7 수출입 — 공개 전부(탭 6, 자물쇠 없음), �
       await app.settled();
       const sec = root.querySelector('#page-7');
       const tabsEl = [...(sec?.querySelectorAll('[role="tab"]') ?? [])].map((b) => b.textContent);
-      expect(tabsEl).toEqual(['월별 추이', '속보', '품목', '국가', '지역', '급등', '104품목']);
-      expect(sec?.querySelectorAll('.panel.locked')).toHaveLength(0);
-      // 속보 탭은 FLASH 본문(웨이브 2) — 준비 중 상자가 아니라 데이터 요청, 없으면(404) 탭 안 안내 한 줄(오류 아님)
+      expect(tabsEl).toEqual(['종목', '월별 추이', '속보', '품목', '국가', '지역', '급등', '104품목']);
+      // 종목 탭 — 랭킹은 데이터 요청, 없으면(404) 탭 안 안내 한 줄(오류 아님). 흐름 패널은 랭킹이 온 뒤에만 붙는다
       expect(sec?.querySelector('.panel h3 .src')?.textContent).not.toContain('준비 중');
       expect(sec?.querySelector('.panel .msg:not(.err)')).not.toBeNull();
       expect(sec?.querySelector('.panel .msg.err')).toBeNull();

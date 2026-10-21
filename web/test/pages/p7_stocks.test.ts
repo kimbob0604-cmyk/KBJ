@@ -1,8 +1,8 @@
-// 페이지 7 '품목' 탭 아래 매핑 종목 랭킹 표(MAP — docs/p6_design.md §4.6·§6, metrics §28). 로그인은 API(공개·local 매핑),
+// 페이지 7 '종목' 탭 매핑 종목 랭킹 표(MAP — docs/p6_design.md §4.6·§6, metrics §28). 로그인은 API(공개·local 매핑),
 // 공개는 공개 파일(공개 매핑만 — 로그인 API 0회). 합성 픽스처(p6_world)만.
 import { describe, expect, it } from 'vitest';
 import type { TradeStocks } from '../../src/pages/p7/common';
-import { mount, STATUS_LABEL, stocksCsv, TITLE } from '../../src/pages/p7/stocks';
+import { filterRows, mount, sectors, STATUS_LABEL, stocksCsv, TITLE } from '../../src/pages/p7/stocks';
 import { BOM } from '../../src/ui/csv';
 import { json } from '../helpers';
 import { MAP_NOW, mapFixture, mapLoginHarness, mapPublicHarness, type Over } from '../fixtures/api/trade_map/harness';
@@ -59,5 +59,25 @@ describe('매핑 종목 랭킹', () => {
     expect(lines[0]).toBe(BOM + '순위,종목코드,종목,3개월 수출 지수 YoY,상태,검토');
     expect(lines[1]?.startsWith('1,')).toBe(true);
     expect(csv).toContain('출처,관세청(공공데이터포털)');
+  });
+});
+
+describe('맵핑 트렌드 — 필터·정렬(P10 단계 2)', () => {
+  const rows = [
+    { code: '000002', name: 'B', yoy_3m: 0.1, yoy_1m: 0.5, status: 'ok', reviewed: false, origin: 'public', quality: 'ok', sector: '반도체', spark: [] },
+    { code: '000001', name: 'A', yoy_3m: 0.05, yoy_1m: -0.4, status: 'ok', reviewed: false, origin: 'public', quality: 'ok', sector: '조선', spark: [] },
+    { code: '000003', name: 'C', yoy_3m: 0.01, yoy_1m: 0.02, status: 'ok', reviewed: false, origin: 'public', quality: 'ok', sector: '반도체', spark: [] },
+  ] as TradeStocks['rows'];
+
+  it('산업·급등락·정렬', () => {
+    expect(filterRows(rows, { sector: '', swing: false, sort: 'yoy_3m' }).map((r) => r.code)).toEqual(['000002', '000001', '000003']);
+    expect(filterRows(rows, { sector: '반도체', swing: false, sort: 'yoy_3m' }).map((r) => r.code)).toEqual(['000002', '000003']);
+    expect(filterRows(rows, { sector: '', swing: true, sort: 'yoy_3m' }).map((r) => r.code)).toEqual(['000002', '000001']);
+    expect(filterRows(rows, { sector: '', swing: false, sort: 'yoy_1m' }).map((r) => r.code)).toEqual(['000002', '000003', '000001']);
+    expect(filterRows(rows, { sector: '', swing: false, sort: 'code' }).map((r) => r.code)).toEqual(['000001', '000002', '000003']);
+  });
+
+  it('산업 칩 — 많은 순, 첫 칩은 전체', () => {
+    expect(sectors(rows).map((s) => s.label)).toEqual(['전체(3)', '반도체(2)', '조선(1)']);
   });
 });

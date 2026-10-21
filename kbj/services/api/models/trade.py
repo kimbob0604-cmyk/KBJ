@@ -25,6 +25,9 @@ __all__ = [
     "TradeFlash",
     "TradeFlashCell",
     "TradeFlashSegment",
+    "TradeFlow",
+    "TradeFlowPoint",
+    "TradeFlowProduct",
     "TradeGroupRow",
     "TradeItemCountries",
     "TradeItemCountryRow",
@@ -38,6 +41,7 @@ __all__ = [
     "TradeRegionRow",
     "TradeRegions",
     "TradeStock",
+    "TradeStockFlows",
     "TradeStockPoint",
     "TradeStockRank",
     "TradeStocks",
@@ -242,6 +246,11 @@ class TradeStockRank(ApiModel):
     reviewed: bool
     origin: Literal["public", "local"]
     quality: Quality
+    # P10 단계 2 — 맵핑 트렌드(공개 파일에는 없을 수 있다 — 기본값)
+    sector: str | None = None  # 매핑표 업종(자체 분류)
+    last_ym: str | None = None  # 지수가 있는 마지막 달
+    yoy_1m: float | None = None  # 마지막 달 지수 / 전년 같은 달 − 1
+    spark: list[int | None] = Field(default_factory=list[int | None])  # 최근 12개월 지수(달러)
 
 
 class TradeStocks(ApiModel):
@@ -287,6 +296,88 @@ class TradeStock(ApiModel):
     monthly: list[TradeStockPoint]
     quarterly: list[TradeStockPoint]
     lag_corr: dict[str, float | None]  # '0'·'1'·'2' 분기(수출이 앞섬)
+
+
+# ── 종목별 흐름(P10 단계 1 — docs/p10_trade_stocks_plan.md) ───────────────────────────────────────
+
+
+class TradeFlowProduct(ApiModel):
+    hs: str
+    name: str | None  # 매핑표 이름, 없으면 관세청 품목명(hs_dim)
+    weight: float = Field(ge=0, le=1)  # 종목 수출 지수 가중치(그 품목 줄)
+
+
+class TradeFlowPoint(ApiModel):
+    ym: str = Field(pattern=r"^[0-9]{4}-(0[1-9]|1[0-2])$")
+    usd: int | None  # 흐름 합(가중치 미적용 — 통관 금액)
+    kg: int | None  # 시군구 흐름은 None(시군구 표에 중량 없음)
+    unit_price: float | None  # 달러/kg
+    usd_yoy: float | None
+    kg_yoy: float | None
+    price_yoy: float | None
+    days: int | None  # 그 달 영업일(거래일 달력)
+    daily_usd: int | None
+    daily_yoy: float | None
+    products: dict[str, int | None]  # hs → 금액
+    quality: Quality
+
+
+class TradeFlow(ApiModel):
+    id: str
+    name: str
+    kind: Literal["national", "sigungu"]
+    direction: FlowT
+    nature: Literal["company", "mixed", "affiliate"]
+    nature_label: str  # 회사 출하 · 업황 혼합 · 관계사·타사 물량 혼입
+    partners: list[str]  # ISO2(비면 전 세계)
+    regions: list[str]  # 시군구 이름(trade_regions.yaml — 못 찾으면 통합 ID)
+    products: list[TradeFlowProduct]
+    basis: str  # 선정 근거(자체 요약 문장 — 비면 '')
+    last_ym: str | None
+    has_kg: bool
+    points: list[TradeFlowPoint]  # 달 오름차순(최근 FLOW_MONTHS 개월)
+    notes: list[str]
+
+
+class TradeStockFlows(ApiModel):
+    code: str = Field(pattern=r"^[0-9A-Z]{6}$")
+    name: str
+    reviewed: bool
+    origin: Literal["public", "local"]
+    map_version: str
+    evidence: list[TradeMapEvidence]
+    flows: list[TradeFlow]
+
+
+# ── 실적 프리뷰(P10 단계 3 — 로그인: 컨센서스 KIS) ─────────────────────────────────────────
+
+
+class TradePreviewQuarter(ApiModel):
+    quarter: str = Field(pattern=r"^[0-9]{4}Q[1-4]$")
+    export_krw: float | None  # 분기 수출 원 환산(진행 중 분기는 있는 달 평균 × 3)
+    revenue: int | None  # 공시 매출(원)
+    fitted: float | None  # 회귀 값
+    months: int
+
+
+class TradePreview(ApiModel):
+    code: str = Field(pattern=r"^[0-9A-Z]{6}$")
+    name: str
+    quarter: str = Field(pattern=r"^[0-9]{4}Q[1-4]$")
+    months_seen: int
+    reported: bool  # 그 분기 매출이 이미 공시됨(사후 대조)
+    export_krw: float | None
+    revenue_est: float | None
+    consensus: float | None
+    consensus_note: str | None
+    diff: float | None  # 추정 ÷ 컨센서스 − 1
+    verdict: Literal["BEAT", "IN LINE", "MISS"] | None
+    prev_verdict: Literal["BEAT", "IN LINE", "MISS"] | None  # 마지막 달을 뺀 판정
+    r2: float | None
+    points: int
+    confidence: Literal["높음", "보통", "낮음"]
+    band: float
+    history: list[TradePreviewQuarter]
 
 
 # ── 월별 추이(metrics §29a — 2026-10-20 사용자 요청: 쌓아서 보고 QoQ·YoY) ─────────────────────────

@@ -1164,6 +1164,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/trade/stock/{code}/flows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stock Flows
+         * @description 종목별 무역 흐름(P10 — 흐름마다 최근 36개월 금액·중량·단가·일평균·YoY).
+         */
+        get: operations["stock_flows_api_trade_stock__code__flows_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/trade/stock/{code}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stock Preview
+         * @description 실적 프리뷰(P10 — 통관 기반 분기 매출 추정 vs 컨센서스, 매매 권유 아님).
+         */
+        get: operations["stock_preview_api_trade_stock__code__preview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/gex/levels": {
         parameters: {
             query?: never;
@@ -4809,6 +4849,25 @@ export interface components {
             generated_at: string;
             data: components["schemas"]["TradeOut"];
         };
+        /** Envelope[TradePreview] */
+        Envelope_TradePreview_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["TradePreview"];
+        };
         /** Envelope[TradeRegions] */
         Envelope_TradeRegions_: {
             /** Source */
@@ -4827,6 +4886,25 @@ export interface components {
              */
             generated_at: string;
             data: components["schemas"]["TradeRegions"];
+        };
+        /** Envelope[TradeStockFlows] */
+        Envelope_TradeStockFlows_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["TradeStockFlows"];
         };
         /** Envelope[TradeStock] */
         Envelope_TradeStock_: {
@@ -8187,6 +8265,83 @@ export interface components {
             /** Cells */
             cells: components["schemas"]["TradeFlashCell"][];
         };
+        /** TradeFlow */
+        TradeFlow: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "national" | "sigungu";
+            /**
+             * Direction
+             * @enum {string}
+             */
+            direction: "exp" | "imp";
+            /**
+             * Nature
+             * @enum {string}
+             */
+            nature: "company" | "mixed" | "affiliate";
+            /** Nature Label */
+            nature_label: string;
+            /** Partners */
+            partners: string[];
+            /** Regions */
+            regions: string[];
+            /** Products */
+            products: components["schemas"]["TradeFlowProduct"][];
+            /** Basis */
+            basis: string;
+            /** Last Ym */
+            last_ym: string | null;
+            /** Has Kg */
+            has_kg: boolean;
+            /** Points */
+            points: components["schemas"]["TradeFlowPoint"][];
+            /** Notes */
+            notes: string[];
+        };
+        /** TradeFlowPoint */
+        TradeFlowPoint: {
+            /** Ym */
+            ym: string;
+            /** Usd */
+            usd: number | null;
+            /** Kg */
+            kg: number | null;
+            /** Unit Price */
+            unit_price: number | null;
+            /** Usd Yoy */
+            usd_yoy: number | null;
+            /** Kg Yoy */
+            kg_yoy: number | null;
+            /** Price Yoy */
+            price_yoy: number | null;
+            /** Days */
+            days: number | null;
+            /** Daily Usd */
+            daily_usd: number | null;
+            /** Daily Yoy */
+            daily_yoy: number | null;
+            /** Products */
+            products: {
+                [key: string]: number | null;
+            };
+            quality: components["schemas"]["Quality"];
+        };
+        /** TradeFlowProduct */
+        TradeFlowProduct: {
+            /** Hs */
+            hs: string;
+            /** Name */
+            name: string | null;
+            /** Weight */
+            weight: number;
+        };
         /** TradeGroupRow */
         TradeGroupRow: {
             /** Group Id */
@@ -8477,6 +8632,59 @@ export interface components {
              */
             created_at: string;
         };
+        /** TradePreview */
+        TradePreview: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Quarter */
+            quarter: string;
+            /** Months Seen */
+            months_seen: number;
+            /** Reported */
+            reported: boolean;
+            /** Export Krw */
+            export_krw: number | null;
+            /** Revenue Est */
+            revenue_est: number | null;
+            /** Consensus */
+            consensus: number | null;
+            /** Consensus Note */
+            consensus_note: string | null;
+            /** Diff */
+            diff: number | null;
+            /** Verdict */
+            verdict: ("BEAT" | "IN LINE" | "MISS") | null;
+            /** Prev Verdict */
+            prev_verdict: ("BEAT" | "IN LINE" | "MISS") | null;
+            /** R2 */
+            r2: number | null;
+            /** Points */
+            points: number;
+            /**
+             * Confidence
+             * @enum {string}
+             */
+            confidence: "높음" | "보통" | "낮음";
+            /** Band */
+            band: number;
+            /** History */
+            history: components["schemas"]["TradePreviewQuarter"][];
+        };
+        /** TradePreviewQuarter */
+        TradePreviewQuarter: {
+            /** Quarter */
+            quarter: string;
+            /** Export Krw */
+            export_krw: number | null;
+            /** Revenue */
+            revenue: number | null;
+            /** Fitted */
+            fitted: number | null;
+            /** Months */
+            months: number;
+        };
         /** TradeQuarterPoint */
         TradeQuarterPoint: {
             /** Q */
@@ -8584,6 +8792,26 @@ export interface components {
                 [key: string]: number | null;
             };
         };
+        /** TradeStockFlows */
+        TradeStockFlows: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Reviewed */
+            reviewed: boolean;
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "public" | "local";
+            /** Map Version */
+            map_version: string;
+            /** Evidence */
+            evidence: components["schemas"]["TradeMapEvidence"][];
+            /** Flows */
+            flows: components["schemas"]["TradeFlow"][];
+        };
         /** TradeStockPoint */
         TradeStockPoint: {
             /** Period */
@@ -8620,6 +8848,14 @@ export interface components {
              */
             origin: "public" | "local";
             quality: components["schemas"]["Quality"];
+            /** Sector */
+            sector?: string | null;
+            /** Last Ym */
+            last_ym?: string | null;
+            /** Yoy 1M */
+            yoy_1m?: number | null;
+            /** Spark */
+            spark?: (number | null)[];
         };
         /** TradeStocks */
         TradeStocks: {
@@ -12954,6 +13190,122 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_TradeStock_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    stock_flows_api_trade_stock__code__flows_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_TradeStockFlows_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    stock_preview_api_trade_stock__code__preview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_TradePreview_"];
                 };
             };
             /** @description 세션 없음·만료 */

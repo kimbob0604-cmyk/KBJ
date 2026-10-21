@@ -2,7 +2,20 @@
 
 사용자 요청(2026-10-21): 수출입을 품목 트리맵이 아니라 **산업·회사별로 하나하나** 따서 보고 싶다 —
 나쁜양파(badonion.co.kr)처럼. 그 화면 구조는 [research/badonion_structure.md](research/badonion_structure.md).
-이 문서는 계획이다(아직 구현 없음). 결정이 필요한 곳은 **[결정]**.
+결정이 필요한 곳은 **[결정]**. 사용자 결정(2026-10-21): **300종목**, 대만 등 외국 매출(단계 5·6)은 보류, **1~4단계 순차**.
+
+## 진행 상태(2026-10-21)
+
+| 단계 | 상태 | 구현 |
+|---|---|---|
+| 1 종목별 흐름 | 완료 | 판 2 `flows:`(해석기 `kbj/config/trade.py` — 판 1 자동 변환), `pub_trade.stock_map.flow_id·flow_meta`(0027), 엔진 `kbj/engines/trade/flows.py`, `/api/trade/stock/{code}/flows`, 페이지 7 맨 앞 '종목' 탭(`web/src/pages/p7/flows.ts`) |
+| 2 300종목 + 맵핑 트렌드 | 완료(초안) | `trade_map.yaml` 판 2 — 300종목·산업(sector)·흐름, 전부 `reviewed: false`(공개 정보 기반 초안). 시군구 14곳 추가. '맵핑 트렌드' 표(산업 칩·급등락·정렬·12개월 스파크라인). 로컬 채우기 `kbj.sh fill-trade` |
+| 3 실적 프리뷰 | 완료 | 엔진 `kbj/engines/trade/preview.py`, 계산 `kbj/services/engine/trade_preview.py`(로그인 — 계약 ⑰ 밖), `/api/trade/stock/{code}/preview`, '종목' 탭 흐름 위 카드, 작업 `trade.preview`(거래일 16:00 — ADR 0018, 알림 `trade.preview` 달마다 한 번) |
+| 4 국가·산업 탭 | 진행 | |
+
+단계 3 은 계획과 다르게: 카드는 페이지 8 이 아니라 페이지 7 '종목' 탭(흐름과 같이 본다). 진행 중 분기는 10일 속보가 아니라
+있는 달 평균 × 3(종목 지수가 월 확정만 쓰므로). 컨센서스는 KIS 연간 추정(12월 결산)에서 공시 분기를 뺀 남은 분기 평균(분기
+컨센서스가 따로 없다). 알림은 '마지막 달을 뺀 판정'과 견줘 바뀐 종목만, subject = 마지막 달(달마다 한 통).
 
 ## 0. 이미 있는 것(P6·P8) vs 없는 것
 

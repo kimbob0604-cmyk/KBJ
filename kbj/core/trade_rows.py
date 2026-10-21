@@ -538,7 +538,8 @@ class StockMapRow:
     """매핑표 한 줄(`pub_trade.stock_map`). 품목 행은 region_id = ''(빈 문자열 — 기본 키에 NULL 을
     두지 않는다), 지역 행은 region_id 와 hs = HS6·flow = exp. weight 0~1. countries = 품목 행의 국가
     목록(비면 전 국가). origin public = 공개 매핑표(레포), local = VM 전용(관심종목 —
-    공개 내보내기는 읽지 않는다, D-P6-14). evidence = 근거 목록(DART 접수번호 등)."""
+    공개 내보내기는 읽지 않는다, D-P6-14). evidence = 근거 목록(DART 접수번호 등).
+    flow_id·flow_meta = 그 줄이 속한 흐름(P10 — 같은 흐름의 줄은 같은 meta)."""
 
     code: str
     hs: str
@@ -554,6 +555,9 @@ class StockMapRow:
     quality: Quality
     countries: tuple[str, ...] = ()
     evidence: tuple[Mapping[str, object], ...] = field(default=())
+    flow_id: str = ""  # P10 — 흐름 id(종목 안에서 유일). '' = 판 1 적재분(흐름 정보 없음)
+    # 흐름 이름·종류·근거 등(같은 흐름의 줄은 같은 값)
+    flow_meta: Mapping[str, object] = field(default_factory=dict[str, object])
 
     def __post_init__(self) -> None:
         _match("code", self.code, _CODE)
@@ -578,6 +582,11 @@ class StockMapRow:
             raise ValueError(f"countries 가 겹친다: {cs}")
         _set(self, "countries", cs)
         _evidence(self)
+        if self.flow_id and not _GROUP.fullmatch(self.flow_id):
+            raise ValueError(f"flow_id 는 소문자·숫자·밑줄: {self.flow_id!r}")
+        if not isinstance(self.flow_meta, Mapping):  # pyright: ignore[reportUnnecessaryIsInstance]
+            raise TypeError(f"flow_meta 는 매핑: {self.flow_meta!r}")
+        _set(self, "flow_meta", {str(k): v for k, v in self.flow_meta.items()})
         _common(self, collected=False)
 
 

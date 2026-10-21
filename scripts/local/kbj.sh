@@ -16,6 +16,7 @@
 #   bash scripts/local/kbj.sh fill-all          # 나머지 빈 칸(매크로·미국·신용·테마·진단 등)을 한 번에 채움 — 키가 없는 것은 건너뛰고 끝에 알려 준다
 #   bash scripts/local/kbj.sh probe-kosis       # 통계청(KOSIS) 표의 항목 코드표를 찍는다(키는 안 보임) — 매크로 KOSIS 칸을 켜는 데 쓴다
 #   bash scripts/local/kbj.sh fill-dart         # 종목 상세(8)의 재무·공시용: DART 회사코드·프로필·재무 5년 백필·밸류에이션 재계산(DART 키 필요)
+#   bash scripts/local/kbj.sh fill-trade        # 수출입 '종목' 탭: 매핑표(300종목) 다시 싣기·시군구 5년 백필·종목 수출 지수 다시 계산(공공데이터 키 필요)
 #   bash scripts/local/kbj.sh job <작업> [--as-of 값]   # 작업 하나를 지금 한 번(예: job market.close_collect)
 #   bash scripts/local/kbj.sh budget [--day YYYY-MM-DD]   # 오늘 DART·KRX 등 호출 예산을 어느 작업이 얼마나 썼는지
 #   bash scripts/local/kbj.sh audit [--show 경로]   # 화면 API 전체 점검(상태·기준 시각·빈 칸) — 로그인 없이, 값은 --show 로 하나씩
@@ -31,7 +32,7 @@ source "$here/../vm/lib.sh"
 URL="http://127.0.0.1:8000"
 AWAKE_PID_FILE="${KBJ_AWAKE_PID_FILE:-$HOME/.kbj-awake.pid}"
 
-usage() { sed -n '2,24p' "$0"; }
+usage() { sed -n '2,25p' "$0"; }
 
 # 도커 설정 점검(메모리 5GB 미만이면 서비스가 죽을 수 있다 — 알려만 준다)
 check_docker_resources() {
@@ -340,6 +341,25 @@ fill_try() {
   fi
 }
 
+month_ago() { date -v-"$1"m +%Y-%m 2>/dev/null || date -d "$1 months ago" +%Y-%m; }
+
+# 수출입 '종목' 탭(P10) — 매핑표를 다시 싣고, 매핑 HS6 의 시군구 5년치를 받고(새로 매핑한 품목은 과거가 비어 있다),
+# 종목 수출 지수를 다시 계산한다. 시군구 백필은 공공데이터 하루 한도의 90% 에서 멈춘다 — 끝나지 않으면 다음 날 다시
+cmd_fill_trade() {
+  local from to rc=0
+  kbj_env_has KBJ_DATAGO_KEY || kbj_die "KBJ_DATAGO_KEY 가 비었다 — $(kbj_cmd keys) KBJ_DATAGO_KEY 로 넣고 $(kbj_cmd start) 를 다시"
+  require_scheduler
+  from="$(month_ago 60)"; to="$(month_ago 1)"
+  kbj_step "매핑표 다시 싣기(trade.map_load)"
+  cmd_job trade.map_load || rc=1
+  kbj_step "시군구 × HS6 백필 $from ~ $to (매핑표 품목만)"
+  kbj_compose exec -T scheduler python -m kbj.services.collectors.customs backfill --from "$from" --to "$to" --datasets 15134343 || rc=1
+  kbj_step "종목 수출 지수 다시 계산(trade.stock_index)"
+  cmd_job trade.stock_index --no-deps || rc=1
+  if (( rc == 0 )); then kbj_ok "끝 — 브라우저 7번 '수출입' → '종목' 탭"; else kbj_warn "일부 단계가 실패했다 — 위 줄을 본다. 백필이 '한도 앞에서 멈춤' 이면 내일 같은 명령을 다시"; fi
+  return "$rc"
+}
+
 # 매크로·미국·신용·테마·진단 같은 나머지 빈 칸을 순서대로 한 번씩 돌린다(한 작업이 실패해도 다음으로). 키가 없는 작업은 실패로 나온다
 cmd_fill_all() {
   local k absent_keys="" job
@@ -404,6 +424,7 @@ main() {
       kbj_compose exec -T -e MPLCONFIGDIR=/tmp/mpl scheduler python -m kbj.services.macro_probe
       ;;
     fill-dart) cmd_fill_dart ;;
+    fill-trade) cmd_fill_trade ;;
     budget)
       require_scheduler
       kbj_compose exec -T scheduler python -m kbj.services.ops budget "$@"

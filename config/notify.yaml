@@ -94,6 +94,10 @@ kinds:
     topic: alert
     dedup: daily
     note: "관심종목 리비전(|pct| ≥ 5 — config/fin.yaml consensus.alert_min_abs_pct) 하루 1통 묶음, 0건이면 보내지 않는다. 작업 consensus.snapshot 16:00(P4, ADR 0018 — 마감 수집 뒤 약 3분 수집하고 보낸다, 평소 16:00~16:05. 실데이터 확인 #29 전까지 작업이 꺼져 있다 — D-P4-10). 흡수 #10"
+  trade.preview:
+    topic: alert
+    dedup: subject
+    note: "실적 프리뷰(P10 단계 3 — docs/p10_trade_stocks_plan.md) — 마지막 달 통관이 들어와 판정(BEAT·IN LINE·MISS)이 바뀐 매핑 종목 한 통 묶음, 0건이면 보내지 않는다. subject = 마지막 달(YYYY-MM — 달마다 한 번). 30종목 넘으면 '외 N'. 규칙 문장(LLM 아님)·매매 권유 아님. 작업 trade.preview 16:00(ADR 0018)"
   alert.gex_level:
     topic: alert
     dedup: cooldown

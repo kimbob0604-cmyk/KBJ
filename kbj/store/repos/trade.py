@@ -76,7 +76,7 @@ T_ITEM_GROUP: Final = Table(
 )
 T_STOCK_MAP: Final = Table(
     "pub_trade.stock_map", StockMapRow, key=("code", "hs", "flow", "region_id"), extra=_RECV,
-    json_cols=frozenset({"evidence"}),
+    json_cols=frozenset({"evidence", "flow_meta"}),
 )  # fmt: skip
 T_STOCK_EXPORT: Final = Table(
     "pub_trade.stock_export", StockExportRow, key=("code", "period"), extra=_COMP,

@@ -479,6 +479,16 @@ jobs:
     writes: [pub_trade.stock_export]
     note: "종목 수출 지수·분기 YoY·매출 YoY 시차 상관(metrics §28) — stock_map·월간·시군구·pub_fin.quarterly 만 읽는다. 시세 칸 없음(로그인 종가 줄은 /api/stock/{code}/chart)"
 
+  - name: trade.preview
+    phase: P6
+    enabled: true               # P10 단계 3(사용자 결정 2026-10-21 — 1~4단계 순차)
+    owner: "kbj.services.engine.trade_preview:run_job"
+    schedule: {cron: "0 16 * * 1-5", when: trading_day}
+    retry: {max: 1, backoff_s: [1800]}
+    as_of: run_date
+    notify: {kind: trade.preview}
+    note: "실적 프리뷰(로그인 — 컨센서스 KIS): 전날 21:00 trade.stock_index 의 종목 수출 지수 → 분기 매출 회귀 추정 vs 연간 컨센서스 잔여 분기 평균. 판정이 바뀐 종목만 한 통(달마다 한 번). 장 마감 뒤 발송이라 16:00(ADR 0018). 표에 쓰지 않는다 — 화면은 /api/trade/stock/{code}/preview 가 그때 계산"
+
   - name: market.fsc_daily
     phase: P5                 # D-P3-17 — KRX 대조 보조는 P5
     enabled: true               # 2026-10-18 로컬 운영에서 켬 — 키(ECOS·FRED·DATAGO)를 넣었고 빈 칸을 채우려는 사용자 요청

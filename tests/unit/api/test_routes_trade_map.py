@@ -14,7 +14,16 @@ import pytest
 from fastapi.testclient import TestClient
 
 from kbj.engines.trade.overlay import rank, rank_yoy
-from kbj.services.api.readers.trade_map import NO_MAP, NO_STOCK_INDEX, NOT_MAPPED
+from kbj.services.api.readers.trade_map import (
+    FLOW_MONTHS,
+    NO_MAP,
+    NO_STOCK_INDEX,
+    NOT_MAPPED,
+    NOTE_RAW,
+)
+from kbj.services.api.readers.trade_preview import NO_CONSENSUS
+from kbj.services.api.readers.trade_preview import SOURCE as PREVIEW_SOURCE
+from kbj.services.engine.trade_preview import DISCLAIMER
 from tests.fixtures.synthetic.p6_world import build_world
 from tests.unit.api.web_fixtures_p6.flash import FlashApiWorld
 from tests.unit.api.web_fixtures_p6.map import EXTRA, map_api_world
@@ -112,3 +121,50 @@ def test_매핑_없음·빈_저장소() -> None:
 
 def test_코드_형식은_422(c: TestClient) -> None:
     assert c.get("/api/trade/stock/12345").status_code == 422
+
+
+def test_흐름_모양(c: TestClient) -> None:
+    body = _get(c, "/api/trade/stock/992004/flows")
+    d = body["data"]
+    assert NOTE_RAW in body["notes"] and d["code"] == "992004" and d["flows"]
+    kinds = {f["kind"] for f in d["flows"]}
+    assert kinds <= {"national", "sigungu"}
+    for f in d["flows"]:
+        assert 0 < len(f["points"]) <= FLOW_MONTHS and f["products"]
+        yms = [p["ym"] for p in f["points"]]
+        assert yms == sorted(yms)
+        if f["kind"] == "sigungu":  # 시군구 표는 중량 없음
+            assert not f["has_kg"] and all(p["kg"] is None for p in f["points"])
+            assert f["regions"]  # 이름(trade_regions.yaml), 못 찾으면 통합 ID
+        assert f["nature_label"] and f["last_ym"] is not None
+        last = next(p for p in f["points"] if p["ym"] == f["last_ym"])
+        assert last["usd"] is not None and set(last["products"]) == {x["hs"] for x in f["products"]}
+    assert any(x["name"] for f in d["flows"] for x in f["products"])  # hs_dim 품목명
+
+
+def test_흐름_매핑_없음은_404(c: TestClient) -> None:
+    r = c.get("/api/trade/stock/994010/flows")
+    assert r.status_code == 404 and r.json() == {"code": "no_data", "message": NOT_MAPPED}
+    r = map_api_world(empty=True).authed().get("/api/trade/stock/992004/flows")
+    assert r.status_code == 404 and r.json()["message"] == NO_MAP
+
+
+def test_실적_프리뷰_모양(c: TestClient) -> None:
+    """합성 세계엔 컨센서스가 없다 — 추정·이력만, 판정 없음(P10 단계 3)."""
+    r = c.get("/api/trade/stock/992004/preview")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    json.dumps(body, allow_nan=False)
+    d = body["data"]
+    assert body["source"] == PREVIEW_SOURCE and DISCLAIMER in body["notes"]
+    assert d["code"] == "992004" and d["history"] and d["history"][-1]["quarter"] == d["quarter"]
+    assert d["consensus"] is None and d["verdict"] is None and d["band"] == 0.05
+    assert d["reported"] or NO_CONSENSUS in body["notes"]
+    assert d["confidence"] in ("높음", "보통", "낮음") and 0 < d["months_seen"] <= 3
+
+
+def test_실적_프리뷰_매핑_없음은_404(c: TestClient) -> None:
+    r = c.get("/api/trade/stock/994010/preview")
+    assert r.status_code == 404 and r.json() == {"code": "no_data", "message": NOT_MAPPED}
+    r = map_api_world(empty=True).authed().get("/api/trade/stock/992004/preview")
+    assert r.status_code == 404 and r.json()["message"] == NO_MAP

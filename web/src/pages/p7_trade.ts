@@ -17,9 +17,10 @@ import { mount as mountRegions } from './p7/regions';
 import { mount as mountStocks } from './p7/stocks';
 import { mount as mountSurge } from './p7/surge';
 
-export type TradeTabId = 'monthly' | 'flash' | 'items' | 'countries' | 'regions' | 'surge' | 'items104';
+export type TradeTabId = 'stocks' | 'monthly' | 'flash' | 'items' | 'countries' | 'regions' | 'surge' | 'items104';
 
 export const TRADE_TABS: readonly TabDef<TradeTabId>[] = [
+  { id: 'stocks', label: '종목' }, // P10 — 종목별 무역 흐름(맨 앞)
   { id: 'monthly', label: '월별 추이' },
   { id: 'flash', label: '속보' },
   { id: 'items', label: '품목' },
@@ -31,9 +32,10 @@ export const TRADE_TABS: readonly TabDef<TradeTabId>[] = [
 
 /** 탭 → 모듈(순서대로 붙인다). 정적 import — 공개 번들 예산은 청크 합이라 나누지 않는다(p8_stock.ts 와 같다) */
 export const TAB_MODULES: Readonly<Record<TradeTabId, readonly TabMount[]>> = {
+  stocks: [mountStocks],
   monthly: [mountMonthly],
   flash: [mountFlash],
-  items: [mountItems, mountStocks],
+  items: [mountItems],
   countries: [mountCountries],
   regions: [mountRegions],
   surge: [mountSurge],

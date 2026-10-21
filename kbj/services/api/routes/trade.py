@@ -23,8 +23,10 @@ from kbj.services.api.models.trade import (
     TradeItems104,
     TradeItemSeries,
     TradeMonthly,
+    TradePreview,
     TradeRegions,
     TradeStock,
+    TradeStockFlows,
     TradeStocks,
     TradeSurges,
 )
@@ -40,7 +42,8 @@ from kbj.services.api.readers.trade_explore import (
     trade_surges,
 )
 from kbj.services.api.readers.trade_flash import trade_flash
-from kbj.services.api.readers.trade_map import trade_stock, trade_stocks
+from kbj.services.api.readers.trade_map import trade_stock, trade_stock_flows, trade_stocks
+from kbj.services.api.readers.trade_preview import trade_stock_preview
 from kbj.services.api.routes._common import data_router
 
 router = data_router("trade")
@@ -199,3 +202,23 @@ def stock(request: Request, code: Annotated[str, Path(pattern=CODE_PATTERN)]) ->
     return cached_json(
         request, domain=DOMAIN, ttl_s=TTL_DEFAULT_S, build=lambda: trade_stock(st.read, code=code)
     )
+
+
+@router.get("/stock/{code}/flows", response_model=Envelope[TradeStockFlows])
+def stock_flows(request: Request, code: Annotated[str, Path(pattern=CODE_PATTERN)]) -> Response:
+    """종목별 무역 흐름(P10 — 흐름마다 최근 36개월 금액·중량·단가·일평균·YoY)."""
+    st = get_state(request)
+    return cached_json(
+        request, domain=DOMAIN, ttl_s=TTL_DEFAULT_S,
+        build=lambda: trade_stock_flows(st.read, code=code),
+    )  # fmt: skip
+
+
+@router.get("/stock/{code}/preview", response_model=Envelope[TradePreview])
+def stock_preview(request: Request, code: Annotated[str, Path(pattern=CODE_PATTERN)]) -> Response:
+    """실적 프리뷰(P10 — 통관 기반 분기 매출 추정 vs 컨센서스, 매매 권유 아님)."""
+    st = get_state(request)
+    return cached_json(
+        request, domain=DOMAIN, ttl_s=TTL_DEFAULT_S,
+        build=lambda: trade_stock_preview(st.read, code=code),
+    )  # fmt: skip

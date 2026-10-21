@@ -71,6 +71,7 @@ bash scripts/local/kbj.sh start
 | 화면 데이터 전체 점검 | `bash scripts/local/kbj.sh audit` — 화면 API 전부의 상태·기준 시각·빈 칸(로그인 없이). 한 화면 값은 `audit --show /api/market/summary` |
 | Claude 에게 맡기기 | 맥 터미널에서 `cd ~/kbj && claude remote-control` — 세션이 Claude 앱에 뜬다. 점검 절차는 `.claude/skills/local-verify/SKILL.md`, `.env` 읽기는 `.claude/settings.json` 에서 막는다 |
 | 종목 상세(8번) 재무·공시 채우기(DART 키 필요, 처음 한 번 + 며칠) | `bash scripts/local/kbj.sh fill-dart` |
+| 수출입 7번 '종목' 탭 채우기(공공데이터 키 필요 — 매핑표 다시 싣기·시군구 5년 백필·지수 재계산) | `bash scripts/local/kbj.sh fill-trade` |
 | 작업 하나 지금 돌리기 | `bash scripts/local/kbj.sh job market.close_collect` (`--as-of 2026-10-16` 로 날짜 지정) |
 | 문제가 있는 서비스 로그 | `bash scripts/local/kbj.sh status --logs api` |
 

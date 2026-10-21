@@ -29,11 +29,12 @@ ROOT = Path(__file__).resolve().parents[3]
 FILE = ROOT / "config" / "knowledge" / "trade_map.yaml"
 
 
-def test_첫_판은_60종목_이상_검토_전() -> None:
+def test_판_2는_300종목_산업·흐름이_있다() -> None:
     tm = load_trade_map()
-    assert len(tm.stocks) >= 60
-    # 첫 판은 검토 전 출시(사용자 결정 2026-10-13 Q7) — 검토하면 true 로 바꾼다
+    # 판 2(사용자 결정 2026-10-21 — 300종목). 검토 전 출시 — 검토하면 reviewed: true
+    assert tm.version == 2 and len(tm.stocks) >= 300
     assert all(isinstance(s.reviewed, bool) for s in tm.stocks)
+    assert all(s.sector and s.flows for s in tm.stocks)
 
 
 def test_파일_사이_대조_통과() -> None:
@@ -63,10 +64,13 @@ def test_근거는_자체_문장_접수번호는_14자리만() -> None:
 def test_HS_짝수_자리·가중치_합() -> None:
     tm = load_trade_map()
     for s in tm.stocks:
-        total = sum(i.weight for i in s.items) + sum(r.weight for r in s.regions)
+        flows = s.flow_list()
+        total = sum(p.weight for f in flows for p in f.products)
         assert 0 < total <= 1 + 1e-9, s.code
-        for i in s.items:
-            assert len(i.hs) in (2, 4, 6, 8, 10) and i.hs.isdigit()
+        for f in flows:
+            for p in f.products:
+                assert len(p.hs) in (2, 4, 6, 8, 10) and p.hs.isdigit()
+                assert f.kind == "national" or len(p.hs) == 6
 
 
 def test_행으로_펴면_종목마다_줄이_있다() -> None:

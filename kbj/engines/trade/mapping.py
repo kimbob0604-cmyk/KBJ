@@ -25,7 +25,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Final
 
-from kbj.config.trade import HsChapters, TradeMap, TradeRegions
+from kbj.config.trade import HsChapters, MapFlow, TradeMap, TradeRegions
 from kbj.core.quality import Quality
 from kbj.core.trade_rows import MapOrigin, StockMapRow
 
@@ -35,6 +35,7 @@ __all__ = [
     "Resolved",
     "cross_check",
     "db_check",
+    "flow_meta",
     "map_rows",
     "map_version",
     "resolve",
@@ -61,38 +62,40 @@ def map_version(tm: TradeMap) -> str:
     return f"v{tm.version}-{hashlib.sha256(body.encode()).hexdigest()[:10]}"
 
 
+def flow_meta(f: MapFlow, sector: str = "") -> dict[str, object]:
+    """흐름 → `stock_map.flow_meta`(화면용 — 이름·종류·방향·구분·상대국·시군구·품목·근거·업종)."""
+    return {
+        "sector": sector,
+        "name": f.name,
+        "kind": f.kind,
+        "direction": f.direction,
+        "nature": f.nature,
+        "partners": list(f.partners),
+        "regions": list(f.regions),
+        "products": [{"hs": p.hs, "name": p.name} for p in f.products],
+        "basis": f.basis,
+    }
+
+
 def map_rows(
     tm: TradeMap, *, origin: MapOrigin, version: str, as_of: datetime
 ) -> list[StockMapRow]:
-    """매핑표 → `StockMapRow`(기본 키 오름차순). 근거는 {kind, note, rcept_no?} 그대로."""
+    """매핑표 → `StockMapRow`(기본 키 오름차순). 흐름마다 줄(`MapFlow.lines`) — 판 1
+    items·regions 도 흐름으로 바꿔 읽는다(`MapStock.flow_list`). 근거는 {kind, note, rcept_no?}."""
     out: list[StockMapRow] = []
     for s in tm.stocks:
         ev = tuple({k: v for k, v in e.model_dump().items() if v is not None} for e in s.evidence)
-        common = {
-            "code": s.code,
-            "name": s.name,
-            "origin": origin,
-            "reviewed": s.reviewed,
-            "map_version": version,
-            "source": MAP_SOURCE,
-            "as_of": as_of,
-            "quality": Quality.OK,
-            "evidence": ev,
-        }
-        for i in s.items:
-            out.append(
-                StockMapRow(
-                    hs=i.hs, flow=i.flow, region_id="", weight=i.weight,
-                    countries=tuple(i.countries), **common,  # pyright: ignore[reportArgumentType]
-                )
-            )  # fmt: skip
-        for r in s.regions:
-            out.append(
-                StockMapRow(
-                    hs=r.hs6, flow="exp", region_id=r.region_id, weight=r.weight,
-                    countries=(), **common,  # pyright: ignore[reportArgumentType]
-                )
-            )  # fmt: skip
+        for f in s.flow_list():
+            meta = flow_meta(f, s.sector)
+            for hs, direction, rid, weight, countries in f.lines():
+                out.append(
+                    StockMapRow(
+                        code=s.code, hs=hs, flow=direction, region_id=rid, name=s.name,
+                        weight=weight, origin=origin, reviewed=s.reviewed, map_version=version,
+                        source=MAP_SOURCE, as_of=as_of, quality=Quality.OK, countries=countries,
+                        evidence=ev, flow_id=f.id, flow_meta=meta,
+                    )
+                )  # fmt: skip
     return sorted(out, key=lambda r: (r.code, r.hs, r.flow, r.region_id))
 
 
@@ -102,14 +105,11 @@ def cross_check(tm: TradeMap, *, chapters: HsChapters, regions: TradeRegions) ->
     known_rg = regions.ids()
     out: list[Problem] = []
     for s in tm.stocks:
-        for i in s.items:
-            if i.hs[:2] not in known_ch:
-                out.append(Problem(s.code, "chapter_missing", f"HS {i.hs} 의 장 {i.hs[:2]}"))
-        for r in s.regions:
-            if r.hs6[:2] not in known_ch:
-                out.append(Problem(s.code, "chapter_missing", f"HS {r.hs6} 의 장 {r.hs6[:2]}"))
-            if r.region_id not in known_rg:
-                out.append(Problem(s.code, "region_missing", r.region_id))
+        for f in s.flow_list():
+            for p in f.products:
+                if p.hs[:2] not in known_ch:
+                    out.append(Problem(s.code, "chapter_missing", f"HS {p.hs} 의 장 {p.hs[:2]}"))
+            out += [Problem(s.code, "region_missing", r) for r in f.regions if r not in known_rg]
     return out
 
 

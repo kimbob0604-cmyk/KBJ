@@ -31,10 +31,14 @@ __all__ = [
     "TRADE_ITEMS_FILE",
     "TRADE_MAP_FILE",
     "TRADE_REGIONS_FILE",
+    "FlowKind",
+    "FlowNature",
     "HsChapters",
     "ItemGroup",
     "MapEvidence",
+    "MapFlow",
     "MapItem",
+    "MapProduct",
     "MapRegion",
     "MapStock",
     "RegionCfg",
@@ -71,6 +75,9 @@ _HHMM = re.compile(r"([01][0-9]|2[0-3]):[0-5][0-9]")
 _CHAPTER = re.compile(r"[0-9]{2}")
 
 Flow = Literal["exp", "imp"]
+FlowKind = Literal["national", "sigungu"]
+# 회사 출하 · 업황 혼합 · 관계사·타사 물량 혼입
+FlowNature = Literal["company", "mixed", "affiliate"]
 
 
 class _Model(BaseModel):
@@ -266,12 +273,82 @@ class MapEvidence(_Model):
     rcept_no: str | None = Field(default=None, pattern=r"^[0-9]{14}$")
 
 
+class MapProduct(_Model):
+    """흐름 안의 추적 품목 하나 — 이름은 화면용(비면 `pub_trade.hs_dim` 이름)."""
+
+    hs: str
+    name: str | None = None
+    weight: float = Field(default=0.0, ge=0, le=1)
+
+    @field_validator("hs")
+    @classmethod
+    def _h(cls, v: str) -> str:
+        return _hs(v)
+
+
+class MapFlow(_Model):
+    """종목의 무역 흐름 하나(P10 — 나쁜양파 '종목별 흐름'과 같은 단위).
+
+    - national: 전국 품목(상대국 `partners` 를 주면 그 나라 합, 비면 전 세계).
+    - sigungu: 사업장 시군구(`regions` — trade_regions.yaml 통합 ID) × HS6. 시군구 표는 수출만
+      저장한다.
+    - weight 는 품목마다(종목 수출 지수 가중치) — 시군구 흐름은 나열한 시군구 합에 곱한다.
+    """
+
+    id: str
+    name: str = Field(min_length=1)
+    kind: FlowKind
+    direction: Flow = "exp"
+    nature: FlowNature = "mixed"
+    partners: tuple[str, ...] = ()
+    regions: tuple[str, ...] = ()
+    products: tuple[MapProduct, ...] = Field(min_length=1)
+    basis: str = ""
+
+    @field_validator("id")
+    @classmethod
+    def _id(cls, v: str) -> str:
+        if not _GROUP.fullmatch(v):
+            raise ValueError(f"흐름 id 는 소문자·숫자·밑줄: {v!r}")
+        return v
+
+    @model_validator(mode="after")
+    def _shape(self) -> MapFlow:
+        if any(not _COUNTRY.fullmatch(c) for c in self.partners):
+            raise ValueError(f"{self.id}: partners 는 ISO2 대문자: {self.partners}")
+        if any(not _REGION.fullmatch(r) for r in self.regions):
+            raise ValueError(f"{self.id}: regions 는 'KR-<시도 2자리>-<id>': {self.regions}")
+        hs = [p.hs for p in self.products]
+        if len(set(hs)) != len(hs) or len(set(self.regions)) != len(self.regions):
+            raise ValueError(f"{self.id}: 같은 품목·시군구가 두 번 있다")
+        if self.kind == "sigungu":
+            if not self.regions or self.partners:
+                raise ValueError(f"{self.id}: 시군구 흐름은 regions 필수·partners 없음")
+            if self.direction != "exp" or any(len(h) != 6 for h in hs):
+                raise ValueError(f"{self.id}: 시군구 흐름은 수출·HS6 만(시군구 표는 수출만 저장)")
+        elif self.regions:
+            raise ValueError(f"{self.id}: 전국 흐름에 regions 를 둘 수 없다")
+        return self
+
+    def lines(self) -> list[tuple[str, Flow, str, float, tuple[str, ...]]]:
+        """(hs, 방향, region_id, weight, 상대국) — `pub_trade.stock_map` 한 줄씩."""
+        if self.kind == "sigungu":
+            return [(p.hs, "exp", r, p.weight, ()) for r in self.regions for p in self.products]
+        return [(p.hs, self.direction, "", p.weight, self.partners) for p in self.products]
+
+
+def _slug(v: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", v.lower()).strip("_")
+
+
 class MapStock(_Model):
     code: str
     name: str = Field(min_length=1)
     reviewed: bool
-    items: tuple[MapItem, ...] = ()
-    regions: tuple[MapRegion, ...] = ()
+    sector: str = ""  # 업종(자체 분류 — 맵핑 트렌드 칩)
+    items: tuple[MapItem, ...] = ()  # 판 1 — flow_list() 가 흐름으로 바꿔 읽는다
+    regions: tuple[MapRegion, ...] = ()  # 판 1
+    flows: tuple[MapFlow, ...] = ()  # 판 2(P10)
     evidence: tuple[MapEvidence, ...] = Field(min_length=1)
 
     @field_validator("code")
@@ -281,21 +358,54 @@ class MapStock(_Model):
             raise ValueError(f"종목코드는 6자리 영숫자: {v!r}")
         return v
 
+    def flow_list(self) -> tuple[MapFlow, ...]:
+        """흐름 목록 — 판 2 `flows` + 판 1 items(방향·상대국별 전국 흐름)·regions(시군구별 흐름)."""
+        out = list(self.flows)
+        groups: dict[tuple[Flow, tuple[str, ...]], list[MapItem]] = {}
+        for i in self.items:
+            groups.setdefault((i.flow, i.countries), []).append(i)
+        for (flow, cc), its in groups.items():
+            word = "수출" if flow == "exp" else "수입"
+            out.append(
+                MapFlow(
+                    id=f"v1_{flow}_{_slug('_'.join(cc)) or 'all'}",
+                    name=f"전국 품목 {word}" + (f" — {', '.join(cc)}" if cc else ""),
+                    kind="national", direction=flow, partners=cc,
+                    products=tuple(MapProduct(hs=i.hs, weight=i.weight) for i in its),
+                )
+            )  # fmt: skip
+        regs: dict[str, list[MapRegion]] = {}
+        for r in self.regions:
+            regs.setdefault(r.region_id, []).append(r)
+        for rid, rs in regs.items():
+            out.append(
+                MapFlow(
+                    id=f"v1_{_slug(rid)}", name=f"시군구 수출 — {rid}", kind="sigungu",
+                    regions=(rid,),
+                    products=tuple(MapProduct(hs=r.hs6, weight=r.weight) for r in rs),
+                )
+            )  # fmt: skip
+        return tuple(out)
+
     @model_validator(mode="after")
     def _shape(self) -> MapStock:
-        if not self.items and not self.regions:
-            raise ValueError(f"{self.code}: items·regions 가 모두 비었다")
-        keys = [(i.hs, i.flow) for i in self.items] + [(r.hs6, r.region_id) for r in self.regions]
+        flows = self.flow_list()
+        if not flows:
+            raise ValueError(f"{self.code}: items·regions·flows 가 모두 비었다")
+        ids = [f.id for f in flows]
+        if len(set(ids)) != len(ids):
+            raise ValueError(f"{self.code}: 같은 흐름 id 가 두 번 있다")
+        keys = [(hs, d, rid) for f in flows for hs, d, rid, _w, _c in f.lines()]
         if len(set(keys)) != len(keys):
             raise ValueError(f"{self.code}: 같은 품목·지역 행이 두 번 있다")
-        total = sum(i.weight for i in self.items) + sum(r.weight for r in self.regions)
+        total = sum(p.weight for f in flows for p in f.products)
         if total > 1 + 1e-9:
             raise ValueError(f"{self.code}: 가중치 합 {total:.4f} > 1")
         return self
 
 
 class TradeMap(_Model):
-    version: Literal[1]
+    version: Literal[1, 2]
     stocks: tuple[MapStock, ...] = ()
 
     @model_validator(mode="after")

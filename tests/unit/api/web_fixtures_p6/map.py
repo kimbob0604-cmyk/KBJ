@@ -187,6 +187,17 @@ def render() -> dict[str, str]:
         if r.status_code != 200:
             raise RuntimeError(f"/api/trade/stock/{code}: HTTP {r.status_code}")
         out[f"stock_{code}.json"] = _dump(r.json())
+    for code in STOCK_FILES[:2]:
+        r = c.get(f"/api/trade/stock/{code}/flows")
+        if r.status_code != 200:
+            raise RuntimeError(f"/api/trade/stock/{code}/flows: HTTP {r.status_code}")
+        out[f"flows_{code}.json"] = _dump(r.json())
+        # P10 단계 3 — 지수 없는 종목은 404(파일 없음)
+        r = c.get(f"/api/trade/stock/{code}/preview")
+        if r.status_code not in (200, 404):
+            raise RuntimeError(f"/api/trade/stock/{code}/preview: HTTP {r.status_code}")
+        if r.status_code == 200:
+            out[f"preview_{code}.json"] = _dump(r.json())
     nomap = c.get("/api/trade/stock/994010")
     if nomap.status_code != 404:
         raise RuntimeError(f"매핑 없는 종목: HTTP {nomap.status_code}")

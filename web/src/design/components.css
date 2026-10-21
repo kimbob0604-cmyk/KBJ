@@ -1027,3 +1027,15 @@ svg text.warn {
   .gb-lv { grid-template-columns: 14px 84px minmax(0, 1fr); }
   .gb-headline { font-size: 1.05rem; }
 }
+
+/* 페이지 7 '종목' 탭 — 종목별 무역 흐름(P10) */
+.flows > select { margin: 0 0 8px; }
+.flows-head { margin: 4px 0 8px; font-weight: 600; }
+.flow-block { border-top: 1px solid var(--line); padding: 10px 0 14px; }
+.flow-card h5 { margin: 0 0 6px; }
+.flow-card h5 .tag { margin-left: 8px; }
+.flow-basis summary { cursor: pointer; color: var(--dim); }
+.flow-basis p { margin: 4px 0 0; white-space: pre-wrap; }
+.flow-block .seg { margin: 6px 0; }
+.trend-filters { display: flex; flex-wrap: wrap; gap: 6px 12px; margin: 0 0 8px; }
+.trend-table svg { vertical-align: middle; }

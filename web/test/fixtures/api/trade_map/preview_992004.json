@@ -1,0 +1,124 @@
+{
+  "source": "관세청(공공데이터포털)+DART+KIS 추정실적",
+  "as_of": "2026-12-11T02:30:00Z",
+  "quality": "estimated",
+  "notes": [
+    "컨센서스 없음(수집 대상 아님·12월 결산 아님) — 판정 없이 추정만",
+    "환율이 없는 달은 달러 그대로 셈 — 원화 매출과 단위가 섞인다",
+    "2026Q4 는 1개월만 — 남은 달은 있는 달 평균으로 채웠다(EST)",
+    "추정 = 최근 분기들의 (분기 수출 × 달 평균 원/달러) 대비 매출 회귀(OLS) — 수출 비중이 낮은 회사는 신뢰가 낮다",
+    "통관 기반 추정 — 매매 권유가 아니다"
+  ],
+  "generated_at": "2026-12-11T11:30:00+09:00",
+  "data": {
+    "code": "992004",
+    "name": "가상상장04",
+    "quarter": "2026Q4",
+    "months_seen": 1,
+    "reported": false,
+    "export_krw": 259661559.0,
+    "revenue_est": 134072247922.1546,
+    "consensus": null,
+    "consensus_note": null,
+    "diff": null,
+    "verdict": null,
+    "prev_verdict": null,
+    "r2": 0.2676651686553718,
+    "points": 12,
+    "confidence": "낮음",
+    "band": 0.05,
+    "history": [
+      {
+        "quarter": "2023Q4",
+        "export_krw": 236249152.0,
+        "revenue": 113285606960,
+        "fitted": 91422303031.22449,
+        "months": 3
+      },
+      {
+        "quarter": "2024Q1",
+        "export_krw": 245898985.0,
+        "revenue": 103853149975,
+        "fitted": 109001223714.46216,
+        "months": 3
+      },
+      {
+        "quarter": "2024Q2",
+        "export_krw": 258490682.0,
+        "revenue": 99721129360,
+        "fitted": 131939283143.0929,
+        "months": 3
+      },
+      {
+        "quarter": "2024Q3",
+        "export_krw": 251304482.0,
+        "revenue": 132867693343,
+        "fitted": 118848316717.67572,
+        "months": 3
+      },
+      {
+        "quarter": "2024Q4",
+        "export_krw": 227148024.0,
+        "revenue": 51761843032,
+        "fitted": 74842948006.11743,
+        "months": 3
+      },
+      {
+        "quarter": "2025Q1",
+        "export_krw": 247374407.0,
+        "revenue": 94678150735,
+        "fitted": 111688972436.36273,
+        "months": 3
+      },
+      {
+        "quarter": "2025Q2",
+        "export_krw": 270538428.0,
+        "revenue": 173829504319,
+        "fitted": 153886437186.67004,
+        "months": 3
+      },
+      {
+        "quarter": "2025Q3",
+        "export_krw": 263919050.0,
+        "revenue": 40653824870,
+        "fitted": 141828039820.16962,
+        "months": 3
+      },
+      {
+        "quarter": "2025Q4",
+        "export_krw": 267090885.0,
+        "revenue": 152581771716,
+        "fitted": 147606112444.3609,
+        "months": 3
+      },
+      {
+        "quarter": "2026Q1",
+        "export_krw": 242715068.0,
+        "revenue": 155261803383,
+        "fitted": 103201141536.3548,
+        "months": 3
+      },
+      {
+        "quarter": "2026Q2",
+        "export_krw": 245943289.0,
+        "revenue": 114119604900,
+        "fitted": 109081931484.42566,
+        "months": 3
+      },
+      {
+        "quarter": "2026Q3",
+        "export_krw": 271009900.0,
+        "revenue": 215477935858,
+        "fitted": 154745308930.0844,
+        "months": 3
+      },
+      {
+        "quarter": "2026Q4",
+        "export_krw": 259661559.0,
+        "revenue": null,
+        "fitted": 134072247922.1546,
+        "months": 1
+      }
+    ]
+  }
+}

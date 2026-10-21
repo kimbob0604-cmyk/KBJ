@@ -34,16 +34,24 @@ P6_ROUTES: dict[str, tuple[str, str]] = {
     "/api/trade/monthly": ("TradeMonthly", "trade.customs_monthly"),
     "/api/trade/stocks": ("TradeStocks", "trade.stock_index"),
     "/api/trade/stock/000660": ("TradeStock", "trade.map_load"),
+    "/api/trade/stock/000660/flows": ("TradeStockFlows", "trade.map_load"),
+    "/api/trade/stock/000660/preview": ("TradePreview", "trade.map_load"),
 }  # fmt: skip
 TEMPLATES = {
     "/api/trade/items/8542/series": "/api/trade/items/{hs}/series",
     "/api/trade/items/854232/countries": "/api/trade/items/{hs}/countries",
     "/api/trade/countries/US/items": "/api/trade/countries/{cc}/items",
     "/api/trade/stock/000660": "/api/trade/stock/{code}",
+    "/api/trade/stock/000660/flows": "/api/trade/stock/{code}/flows",
+    "/api/trade/stock/000660/preview": "/api/trade/stock/{code}/preview",
 }
 # 리더 본문을 채운 묶음의 경로(웨이브 2 — 그 묶음 시험이 빈 저장소 404 를 본다)
 FILLED: frozenset[str] = frozenset(
-    {"/api/trade/flash?kind=exp_item&months=24"}  # FLASH — test_routes_trade_flash.py
+    {
+        "/api/trade/flash?kind=exp_item&months=24",  # FLASH — test_routes_trade_flash.py
+        "/api/trade/stock/000660/flows",  # P10 — test_routes_trade_map.py(매핑 없음 404 no_map)
+        "/api/trade/stock/000660/preview",  # P10 단계 3 — 같은 파일
+    }
 )
 
 

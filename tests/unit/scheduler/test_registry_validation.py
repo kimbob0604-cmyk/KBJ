@@ -111,6 +111,7 @@ P6_ENABLED = {
     "trade.stock_index",
     "trade.customs_tenday",  # 2026-10-20 사용자 요청으로 켬
     "trade.customs_monthly",
+    "trade.preview",  # P10 단계 3(사용자 결정 2026-10-21)
 }
 # P7(docs/p7_design.md §1.7-1 — 웨이브 3 WRAP). 외부 호출이 없는 세 작업. krx.vkospi 는 VKOSPI 행·칸
 # 실측(#P7-1) 전까지 꺼진 채(D-P7-14). 서비스 gex.engine·ws_gateway·recorder 는 P7_SERVICES(아래)
@@ -245,6 +246,7 @@ POST_CLOSE_SENDERS = {
     "flows.report": "flows.report",
     "consensus.snapshot": "alert.revision",
     "rules.close": "alert.rule_close",
+    "trade.preview": "trade.preview",  # P10 단계 3 — 판정 변화 묶음(달마다 한 번)
 }
 
 
@@ -1012,6 +1014,7 @@ P6_JOBS = {
     "trade.map_load": "kbj.services.engine.trade_map:load",
     "trade.derive": "kbj.services.engine.trade:derive",
     "trade.stock_index": "kbj.services.engine.trade_map:stock_index",
+    "trade.preview": "kbj.services.engine.trade_preview:run_job",  # P10 단계 3(로그인)
 }
 P6_WRITES = {
     "trade.customs_tenday": {"pub_trade.ten_day", "pub_trade.ten_day_columns"},
@@ -1022,6 +1025,7 @@ P6_WRITES = {
     "trade.map_load": {"pub_trade.stock_map"},
     "trade.derive": {"pub_trade.surge", "pub_trade.item_group_monthly"},
     "trade.stock_index": {"pub_trade.stock_export"},
+    "trade.preview": set(),
 }  # fmt: skip
 P6_AS_OF = {
     "trade.customs_tenday": "ten_day",
@@ -1029,6 +1033,7 @@ P6_AS_OF = {
     "trade.map_load": "run_date",
     "trade.derive": "month",
     "trade.stock_index": "run_date",
+    "trade.preview": "run_date",
 }
 
 
@@ -1107,6 +1112,8 @@ TEN_DAY_DATASETS = {"15157908", "15157941", "15157901", "15157909"}
 
 def test_p6_sends_nothing_new_and_keeps_the_1600_rule() -> None:  # D-P6-8, ADR 0018
     for name in P6_JOBS:
+        if name == "trade.preview":  # P10 단계 3 — 16:00 판정 변화 묶음(ADR 0018 을 지킨다)
+            continue
         assert REG.by_name(name).notify is None, name
     closing = [
         j.name for j in REG.jobs if j.notify is not None and j.notify.kind == "brief.closing"
