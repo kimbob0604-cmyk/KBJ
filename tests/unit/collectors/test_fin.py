@@ -285,3 +285,92 @@ def test_백필의_응답_모양_실패는_작업_실패가_아니다(monkeypatc
     assert res.detail["n_unparsed"] == 2 and "failed_keys" not in res.detail
     assert st.repos.filings.latest_share_count(bad) is None
     assert any(st.repos.filings.latest_share_count(c) for c in DETAIL_CORPS - {bad})
+
+
+# ── 차분 불가가 굳던 것(2026-10-21 — 화면 '분기 12' 중 1Q 하나만 값, 나머지 '차분 불가') ─────────
+
+_GAP_FROM = date(2025, 8, 1)  # 이 날 전 정기보고서는 수집 시작 전(처리 표시만 된 것으로)
+_SWITCH = date(2026, 7, 1)  # 이 날부터 상세 대상(관심종목에 넣었다)
+
+
+def _gap_state(corp: str, *, hold_from: date | None = None) -> tuple[WorldState, list[str]]:
+    """수집 시작 전 정기보고서는 처리된 것으로 두고(그 분기 행 없음), `hold_from` 뒤 것은 미뤄 둔
+    주요계정 층 상태 → (상태, 미뤄 둔 접수번호)."""
+    st = make_state(corps={corp}, detail=set())
+    pend = st.repos.filings.fin_unloaded(limit=999)
+    st.repos.filings.mark_fin_loaded(
+        [d.rcept_no for d in pend if d.rcept_dt < _GAP_FROM], now=st.now
+    )
+    held = [d.rcept_no for d in pend if hold_from is not None and d.rcept_dt >= hold_from]
+    st.repos.filings.mark_fin_loaded(held, now=st.now)
+    return st, held
+
+
+def _unhold(st: WorldState, held: list[str]) -> None:
+    for stored in list(st.repos.filings.disclosure_t.rows.values()):
+        if stored.row.rcept_no in held:
+            stored.row = replace(stored.row, fin_loaded_at=None)
+
+
+def _assert_truth(st: WorldState, corp: str, fs: str, since: tuple[int, int]) -> None:
+    truth = _truth(st, corp, fs)
+    qs = [x for x in st.repos.fin.quarters(corp, fs_div=fs) if (x.fiscal_year, x.fiscal_q) >= since]
+    assert qs and all(not x.derived for x in qs), [(x.period, x.tier) for x in qs if x.derived]
+    for x in qs:
+        t = truth[(x.fiscal_year, x.fiscal_q)]
+        assert (x.period, x.revenue, x.op, x.ni) == (x.period, t.revenue, t.op, t.ni)
+
+
+def test_주요계정_층은_직전_분기가_비면_직전_보고서를_받아_차분한다() -> None:
+    """수집 시작(2025-08) 전 1Q 행이 없다 — 2Q·3Q·4Q 가 전부 '차분 불가'로 굳던 것."""
+    corp = "99400150"
+    st, _ = _gap_state(corp)
+    res = fin.quarterly(st.ctx("fin.quarterly"))
+    assert res.status == "ok", res.detail
+    assert res.detail["main.prev_fetch"] >= 1
+    _assert_truth(st, corp, "CFS", (2025, 2))
+
+
+def test_상세_대상이_된_뒤_첫_보고서는_앞_보고서_원시_행을_받아_차분한다() -> None:
+    """1Q 는 주요계정 층으로, 2Q 는 관심종목에 넣은 뒤 전체 재무제표로 — 1Q 원시 행이 없어 2Q 가
+    '차분 불가'로 굳던 것(화면: 2026 1Q 만 값)."""
+    corp = "99400010"
+    st, held = _gap_state(corp, hold_from=_SWITCH)
+    assert fin.quarterly(st.ctx("fin.quarterly")).status == "ok"
+    st.detail = {"994010"}
+    _unhold(st, held)
+    res = fin.quarterly(st.ctx("fin.quarterly", run_id="run-2"))
+    assert res.status == "ok", res.detail
+    assert res.detail["full.prior"] >= 1
+    assert (2026, "11013", "CFS") in st.repos.fin.raw_keys(corp)
+    q2 = next(x for x in st.repos.fin.quarters(corp, fs_div="CFS") if x.period == "2026Q2")
+    assert q2.tier == "full" and not q2.derived
+    _assert_truth(st, corp, "CFS", (2025, 2))
+    # 한 번 받은 앞 보고서는 다시 부르지 않는다
+    n = len(st.dart.calls)
+    fin.quarterly(st.ctx("fin.quarterly", run_id="run-3"))
+    assert [c for c in st.dart.calls[n:] if c[0] == "fnlttSinglAcntAll.json"] == []
+
+
+def test_백필은_이미_굳은_차분_불가_행을_고친다(monkeypatch: pytest.MonkeyPatch) -> None:
+    """고치기 전 코드로 쌓인 상태(주요계정 2025 2Q~4Q·전체 재무제표 2026 2Q 차분 불가)를
+    `fin.backfill` 한 번이 고친다 — 지난 분기(2025 1Q)도 채워 YoY 가 된다."""
+    corp = "99400010"
+    with monkeypatch.context() as m:  # 고치기 전 동작: 직전 누적을 받지 않는다
+        m.setattr(fin, "_main_prev", lambda *a, **k: {})
+        m.setattr(fin, "_ensure_prior_raws", lambda *a, **k: 0)
+        st, held = _gap_state(corp, hold_from=_SWITCH)
+        fin.quarterly(st.ctx("fin.quarterly"))
+        st.detail = {"994010"}
+        _unhold(st, held)
+        fin.quarterly(st.ctx("fin.quarterly", run_id="run-2"))
+    broken = {x.period for x in st.repos.fin.quarters(corp, fs_div="CFS") if x.derived}
+    assert broken == {"2025Q2", "2025Q3", "2025Q4", "2026Q2"}
+    st.fin_cfg = st.fin_cfg.model_copy(
+        update={"backfill": BackfillCfg(from_year=2025, tier="main")}
+    )
+    res = fin.backfill(st.ctx("fin.backfill", run_id="run-3"))
+    assert res.status == "ok", res.detail
+    assert res.detail["repaired.quarters"] > 0
+    _assert_truth(st, corp, "CFS", (2025, 1))
+    assert {x.period for x in st.repos.fin.quarters(corp, fs_div="CFS")} >= {"2025Q1", "2026Q2"}

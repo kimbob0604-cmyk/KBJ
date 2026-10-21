@@ -15,6 +15,10 @@ docs/p4_design.md §1.5·§3.2·§3.5·§4.5, D-P4-4·5·25, ADR 0014. 승격·�
    `stockTotqySttus`). 나머지는 KST 07:30 뒤 그날 첫 실행이 다중회사 주요계정(`fnlttMultiAcnt`,
    100개 묶음)으로 받는다 — 원시 행은 저장하지 않고, 직전 분기 누적은 저장한 분기 단독 행에서
    되살린다.
+   차분할 직전 누적이 없으면 그 자리에서 받는다(2026-10-21 — 한 분기가 비면 그 해 남은 분기가
+   전부 '차분 불가'로 굳었다): 상세 층은 그 회계연도 앞 보고서 원시 행(`_ensure_prior_raws`),
+   주요계정 층은 직전 보고서 묶음 한 번(`_main_prev`). 이미 굳은 행은 `fin.backfill` 이 고친다
+   (상세 층 `_repair_full`, 주요계정 층은 차분 불가 행을 다시 받는다).
 3. 분기 단독(`normalize` — dart-report `to_quarterly` 하나)·비율(`ratios`)을
    `pub_fin.quarterly`·`ratio` 에 쓰고, 처리한 공시에 `fin_loaded_at` 을 찍는다.
 
@@ -55,6 +59,7 @@ from kbj.core.fin_rows import (
     QuarterRow,
     StatementRaw,
     quarter_of_reprt,
+    reprt_of_quarter,
 )
 from kbj.core.time import KST
 from kbj.data.budget import BudgetExhausted
@@ -244,12 +249,108 @@ def renormalize(run: FinRun, corp_code: str, profile: CorpProfile | None) -> tup
     return nq, _ratios(run, corp_code)
 
 
+def _fetch_raw(run: FinRun, corp_code: str, year: int, reprt: str) -> bool:
+    """전체 재무제표 한 보고서(CFS → 비면 OFS)를 받아 원시 행으로 둔다. 받았으면 True."""
+    for fs in FS_DIVS:
+        rows = run.client.financials(corp_code, year, reprt, fs)
+        if rows:
+            rcept = next((str(r["rcept_no"]) for r in rows if r.get("rcept_no")), None)
+            currency = next((str(r["currency"]) for r in rows if r.get("currency")), None)
+            run.repos.fin.put_raw(
+                StatementRaw(corp_code, year, reprt, fs, rcept, tuple(rows), currency),
+                loaded_by=run.job,
+                now=run.now,
+            )
+            return True
+    return False
+
+
+def _ensure_prior_raws(
+    run: FinRun, corp_code: str, year: int, q: int, profile: CorpProfile | None
+) -> int:
+    """그 회계연도의 앞 보고서(1 … q-1) 원시 행이 없으면 받는다 → 받은 보고서 수.
+
+    분기 단독은 직전 누적과의 차분이라(2Q = 반기 − 1Q, 4Q = 연간 − 3분기 누적) 앞 보고서 원시
+    행이 없으면 그 분기가 '차분 불가'로 굳는다. 상세 대상이 된 뒤 처음 온 보고서(그 전 분기는
+    주요계정 층이었거나 수집 전)가 그랬다(2026-10-21). 이미 있는 보고서는 다시 부르지 않는다.
+    """
+    have = run.repos.fin.raw_keys(corp_code)
+    added = 0
+    for pq in range(1, q):
+        reprt = reprt_of_quarter(pq)
+        if any((year, reprt, fs) in have for fs in FS_DIVS):
+            continue
+        if not _ended(run, year, reprt, profile):
+            continue
+        if _fetch_raw(run, corp_code, year, reprt):
+            added += 1
+    if added:
+        run.bump("full.prior", added)
+    return added
+
+
+def _repair_full(run: FinRun, profiles: Mapping[str, CorpProfile]) -> None:
+    """상세 대상 회사의 전체 재무제표 층 '차분 불가' 분기 — 앞 보고서 원시 행을 받아 다시 정규화.
+
+    주요계정 백필은 full 행을 덮지 못하므로(저장소 층 규칙) 층이 main 이어도 이 길이 따로 돈다.
+    """
+    for corp in sorted(detail_corps(run)):
+        broken = sorted(
+            {
+                (r.fiscal_year, r.fiscal_q)
+                for r in run.repos.fin.quarters(corp)
+                if r.tier == "full" and r.derived
+            }
+        )
+        added = sum(_ensure_prior_raws(run, corp, y, q, profiles.get(corp)) for y, q in broken)
+        if added:
+            nq, nr = renormalize(run, corp, profiles.get(corp))
+            run.bump("repaired.quarters", nq)
+            run.bump("ratios", nr)
+
+
 def _ratios(run: FinRun, corp_code: str) -> int:
     quarters = run.repos.fin.quarters(corp_code)
     if not quarters:
         return 0
     rr = ratios(quarters, run.repos.filings.share_counts(corp_code))
     return run.repos.fin.upsert_ratios(rr, loaded_by=run.job, now=run.now) if rr else 0
+
+
+def _raw_of(
+    corp_code: str, year: int, reprt: str, fs: str, rows: Sequence[Mapping[str, Any]]
+) -> StatementRaw:
+    rcept = next((str(r["rcept_no"]) for r in rows if r.get("rcept_no")), None)
+    return StatementRaw(corp_code, year, reprt, _fs(fs), rcept, tuple(rows))
+
+
+def _main_needs_prev(run: FinRun, corp_code: str, year: int, q: int, fss: Iterable[str]) -> bool:
+    """그 분기를 차분할 직전 누적을 저장한 분기 단독 행으로 되살릴 수 없는가(어느 기준이든)."""
+    if q <= 1:
+        return False
+    existing = run.repos.fin.quarters(corp_code)
+    return any(cumulative_from_quarters(existing, year, q - 1, fs) is None for fs in fss)
+
+
+def _main_prev(
+    run: FinRun,
+    got: Mapping[str, Mapping[str, Sequence[Mapping[str, Any]]]],
+    year: int,
+    reprt: str,
+) -> dict[str, dict[str, list[dict[str, Any]]]]:
+    """직전 누적을 되살릴 수 없는 회사만 직전 보고서 주요계정을 한 번 더 받는다(같은 묶음 하나).
+
+    저장한 분기가 비었거나(수집 시작 전·백필 전) 차분 불가였으면 이 분기도 차분 불가로 굳고, 그 해
+    남은 분기가 줄줄이 같이 굳었다(2026-10-21 — 2Q·3Q·4Q 전부 '차분 불가'). 직전 보고서의 누적
+    (`thstrm_add_amount`)을 바로 쓰면 앞 분기 단독 행이 없어도 차분이 된다.
+    """
+    q = quarter_of_reprt(reprt)
+    need = sorted(c for c, by_fs in got.items() if _main_needs_prev(run, c, year, q, by_fs))
+    if not need:
+        return {}
+    prev_reprt = reprt_of_quarter(q - 1)
+    run.bump("main.prev_fetch", len(need))
+    return _multi(run, need, year, prev_reprt)
 
 
 def _main_rows(
@@ -259,17 +360,24 @@ def _main_rows(
     reprt: str,
     rows_by_fs: Mapping[str, Sequence[Mapping[str, Any]]],
     profile: CorpProfile | None,
+    prev_by_fs: Mapping[str, Sequence[Mapping[str, Any]]] | None = None,
 ) -> list[QuarterRow]:
-    """주요계정 응답(회사 하나) → 그 분기의 분기 단독 행(직전 누적은 저장한 분기에서 되살림)."""
+    """주요계정 응답(회사 하나) → 그 분기의 분기 단독 행.
+
+    직전 누적은 저장한 분기에서 되살리고, 되살릴 수 없으면 `prev_by_fs`(직전 보고서 주요계정 응답 —
+    `_main_prev`)의 누적을 쓴다. 둘 다 없으면 차분 불가(derived).
+    """
     q = quarter_of_reprt(reprt)
     out: list[QuarterRow] = []
     existing = run.repos.fin.quarters(corp_code)
     for fs, rows in sorted(rows_by_fs.items()):
-        rcept = next((str(r["rcept_no"]) for r in rows if r.get("rcept_no")), None)
-        raw = StatementRaw(corp_code, year, reprt, _fs(fs), rcept, tuple(rows))
-        reports = [report_of_raw(raw)]
+        reports = [report_of_raw(_raw_of(corp_code, year, reprt, fs, rows))]
         if q > 1:
             prev = cumulative_from_quarters(existing, year, q - 1, fs)
+            prev_rows = (prev_by_fs or {}).get(fs)
+            if prev is None and prev_rows:
+                prev_raw = _raw_of(corp_code, year, reprt_of_quarter(q - 1), fs, prev_rows)
+                prev = report_of_raw(prev_raw)
             if prev is not None:
                 reports.insert(0, prev)
         out += quarter_rows(
@@ -361,6 +469,14 @@ def _load_full(run: FinRun, job: _Job, profile: CorpProfile | None) -> bool:
         if got_rows:
             break
     run.bump("full.reports" if got_rows else "full.empty")
+    if got_rows:
+        try:
+            _ensure_prior_raws(run, corp, job.year, quarter_of_reprt(job.reprt), profile)
+        except _STOP:
+            raise
+        except Exception as exc:  # 다음 실행이 다시(받은 원시 행은 남는다 — 다시 정규화만)
+            run.failures.append(f"fnlttSinglAcntAll@{corp}:{job.year}:prior: {type(exc).__name__}")
+            return False
     skey = run.claim("stockTotqySttus", f"{corp}:{d.rcept_no}")
     if skey is not None:
         try:
@@ -443,10 +559,13 @@ def _load_main(
                 continue
             try:
                 got = _multi(run, chunk, year, reprt)
+                prev = _main_prev(run, got, year, reprt)
                 rows: list[QuarterRow] = []
                 for corp in chunk:
                     if corp in got:
-                        rows += _main_rows(run, corp, year, reprt, got[corp], profiles.get(corp))
+                        rows += _main_rows(
+                            run, corp, year, reprt, got[corp], profiles.get(corp), prev.get(corp)
+                        )
                 if rows:
                     run.repos.fin.upsert_quarters(rows, loaded_by=run.job, now=run.now)
                 for corp in chunk:
@@ -602,48 +721,52 @@ def _backfill_full(run: FinRun, profiles: Mapping[str, CorpProfile]) -> None:
                     continue
                 if not _ended(run, year, reprt, profiles.get(corp)):
                     continue
-                for fs in FS_DIVS:
-                    rows = run.client.financials(corp, year, reprt, fs)
-                    if rows:
-                        rcept = next((str(r["rcept_no"]) for r in rows if r.get("rcept_no")), None)
-                        currency = next(
-                            (str(r["currency"]) for r in rows if r.get("currency")), None
-                        )
-                        run.repos.fin.put_raw(
-                            StatementRaw(corp, year, reprt, fs, rcept, tuple(rows), currency),
-                            loaded_by=run.job,
-                            now=run.now,
-                        )
-                        added += 1
-                        break
+                if _fetch_raw(run, corp, year, reprt):
+                    added += 1
         run.bump("full.reports", added)
         nq, nr = renormalize(run, corp, profiles.get(corp))
         run.bump("quarters", nq)
         run.bump("ratios", nr)
 
 
+def _main_missing(run: FinRun, corp_code: str, year: int, q: int) -> bool:
+    """주요계정 백필이 그 분기를 (다시) 받아야 하는가 — 행이 없거나, 주요계정 행뿐인데 차분 불가.
+
+    전체 재무제표 행(full)은 주요계정 행이 덮지 못한다(저장소 층 규칙) — 그 차분 불가는
+    `_repair_full` 이 직전 원시 행을 받아 고친다.
+    """
+    rows = [
+        r for r in run.repos.fin.quarters(corp_code) if (r.fiscal_year, r.fiscal_q) == (year, q)
+    ]
+    if not rows:
+        return True
+    return all(r.tier == "main" for r in rows) and any(r.derived for r in rows)
+
+
 def _backfill_main(run: FinRun, profiles: Mapping[str, CorpProfile]) -> None:
+    """주요계정 층 백필 — 상장사 전부(상세 대상 포함: 층이 main 이면 상세 대상의 지난 분기를 채우는
+    길이 이것뿐이다 — 2026-10-21 관심종목의 지난 분기가 비어 차분 불가). 주요계정 행은 전체 재무제표
+    행을 덮지 않는다."""
     idx = run.repos.filings.corp_index()
-    detail = detail_corps(run, idx)
-    corps = sorted({c for c, _n in idx.values()} - detail)
+    corps = sorted({c for c, _n in idx.values()})
     for year in _years(run):
         for reprt in REPRT:  # 1Q → 4Q 순서(직전 누적을 되살릴 수 있게)
             q = quarter_of_reprt(reprt)
             need = [
                 c
                 for c in corps
-                if _ended(run, year, reprt, profiles.get(c))
-                and not any(
-                    r.fiscal_year == year and r.fiscal_q == q for r in run.repos.fin.quarters(c)
-                )
+                if _ended(run, year, reprt, profiles.get(c)) and _main_missing(run, c, year, q)
             ]
             for i in range(0, len(need), BATCH):
                 chunk = need[i : i + BATCH]
                 got = _multi(run, chunk, year, reprt)
+                prev = _main_prev(run, got, year, reprt)
                 rows: list[QuarterRow] = []
                 for corp in chunk:
                     if corp in got:
-                        rows += _main_rows(run, corp, year, reprt, got[corp], profiles.get(corp))
+                        rows += _main_rows(
+                            run, corp, year, reprt, got[corp], profiles.get(corp), prev.get(corp)
+                        )
                 if rows:
                     run.repos.fin.upsert_quarters(rows, loaded_by=run.job, now=run.now)
                 run.bump("main.quarters", len(rows))
@@ -663,6 +786,7 @@ def backfill(ctx: JobContext) -> JobResult:
         stopped: str | None = None
         try:
             _backfill_shares(run, profiles)
+            _repair_full(run, profiles)
             if run.fin_cfg.backfill.tier == "full":
                 _backfill_full(run, profiles)
             else:

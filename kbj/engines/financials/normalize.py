@@ -13,7 +13,9 @@ docs/p4_design.md §1.5·§4.5, docs/metrics.md §9, D-P4-5(재무 2층·분기 
 - PIT(D-P4-11): 행의 `rcept_dt` = 그 분기 값을 만든 보고서들의 접수일 중 늦은 것(차분이면 직전
   보고서도) — 접수번호 앞 8자리(YYYYMMDD). 모르면 None(PIT 계산에서 빠진다).
 - 주요계정 층(`fnlttMultiAcnt` — 원시 행을 저장하지 않는다)은 직전 분기 누적을 이미 저장한 분기
-  단독 행의 합으로 되살려(`cumulative_from_quarters`) 같은 `to_quarterly` 에 넣는다.
+  단독 행의 합으로 되살려(`cumulative_from_quarters`) 같은 `to_quarterly` 에 넣는다. 되살릴 수
+  없으면(분기가 비었거나 차분 불가) 수집 쪽이 직전 보고서를 받아 그 누적을 쓴다(2026-10-21 —
+  한 분기가 비면 그 해 남은 분기가 전부 '차분 불가'로 굳었다).
 
 [확인 필요 #35] 이 모듈이 더 뽑는 계정의 태그·이름(`EXTRA`), 현금흐름표 감가상각 칸이 누적인지,
 전체 재무제표에 줄이 없으면 0 으로 보는 규칙(차입금·단기금융상품 — **전체 재무제표 층만**.
@@ -249,10 +251,12 @@ def cumulative_from_quarters(
 ) -> Report | None:
     """저장한 분기 단독 행(1 … upto_q)의 합 → 그 분기까지의 누적 `Report`(주요계정 층 차분용).
 
-    분기가 하나라도 없으면 None. 칸이 None 인 분기가 있으면 그 칸은 누적에서 빠진다(→ 차분 None).
+    분기가 하나라도 없거나 차분을 못 한(derived — 손익 칸이 전부 None) 분기가 있으면 None — 호출자가
+    직전 보고서 누적을 따로 받는다(그 분기를 '직전 누적 있음'으로 보고 손익 칸만 None 으로 비우지
+    않게). 칸이 None 인 분기가 있으면 그 칸은 누적에서 빠진다(→ 차분 None).
     """
     rows = {r.fiscal_q: r for r in quarters if r.fiscal_year == year and r.fs_div == fs_div}
-    if any(q not in rows for q in range(1, upto_q + 1)):
+    if any(q not in rows or rows[q].derived for q in range(1, upto_q + 1)):
         return None
     span = [rows[q] for q in range(1, upto_q + 1)]
     p = Period(year=year, quarter=f"{upto_q}Q", fs_div=fs_div)

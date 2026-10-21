@@ -156,6 +156,25 @@ def test_주요계정_층은_직전_누적을_되살린다() -> None:
     assert cumulative_from_quarters(stored, 2026, 3, "CFS") is None  # 3Q 저장 전
 
 
+def test_차분_불가_분기로는_누적을_되살리지_않는다() -> None:
+    """1Q 가 빈 채 2Q 를 받아 차분 불가(손익 None)였으면 반기 누적을 되살리지 않는다 — 되살리면
+    '직전 누적 있음'으로 보여 3Q 가 derived=False 인데 손익만 None 인 행이 됐다(2026-10-21)."""
+    corp = "99400150"
+    mraws = {(r.bsns_year, r.reprt_code): r for r in raws(corp, "CFS", multi=True)}
+    stored = quarter_rows([report_of_raw(mraws[(2026, "11012")])], profile(corp), tier="main",
+                          corp_code=corp)  # fmt: skip
+    (q2,) = stored
+    assert q2.derived and q2.revenue is None
+    one = quarter_rows([report_of_raw(mraws[(2026, "11013")])], profile(corp), tier="main",
+                       corp_code=corp)  # fmt: skip
+    assert cumulative_from_quarters(one + stored, 2026, 2, "CFS") is None
+    # 직전 보고서 누적을 바로 쓰면 앞 분기 단독 행 없이도 차분된다(수집 `_main_prev`)
+    reps = [report_of_raw(mraws[(2026, "11012")]), report_of_raw(mraws[(2026, "11014")])]
+    got = quarter_rows(reps, profile(corp), tier="main", corp_code=corp, keep=[(2026, 3)])
+    t = next(x for x in world().quarter_truth(corp, "CFS") if x.key == (2026, 3))
+    assert not got[0].derived and (got[0].revenue, got[0].op) == (t.revenue, t.op)
+
+
 def test_접수일은_접수번호_앞_8자리() -> None:
     assert str(rcept_date("20261113800001")) == "2026-11-13"
     assert (

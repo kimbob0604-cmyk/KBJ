@@ -85,7 +85,9 @@ export function drawFin(p: Panel, d: Fin): void {
     return;
   }
   const cur = d.currency;
-  const rows = d.rows.filter((r) => !r.derived);
+  // 차트 칸은 표의 행 전부 — 차분 불가 행도 자리를 둔다(값만 비움). 걸러 내면 값이 하나뿐일 때 범위
+  // 글자가 '2026 1Q ~ 2026 1Q' 가 되고 막대 하나가 그림을 덮었다(2026-10-21)
+  const rows = d.rows;
   append(p.body, [
     comboChart({
       label: `${d.basis === 'q' ? '분기' : '연간'} 매출과 영업이익률`,

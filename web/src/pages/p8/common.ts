@@ -457,16 +457,24 @@ export interface ComboOptions {
   barName: string;
 }
 
-/** 막대 + 보조축 선(OPM %). 값이 없으면 그 자리를 비운다(0 으로 그리지 않는다). */
+/** 막대 최대 폭(viewBox 단위) */
+const BAR_MAX = 40;
+
+/** 막대 + 보조축 선(OPM %). 값이 없으면 그 자리를 비운다(0 으로 그리지 않는다). 칸은 categories 전부 —
+ *  값이 없는 분기(차분 불가)도 자리를 두고, 아래 범위 글자는 첫 칸 ~ 끝 칸이다. */
 export function comboChart(o: ComboOptions): SVGSVGElement {
   const W = 640;
   const plotH = 144;
   const box = svgBox(`0 0 ${W} 180`, o.label);
+  // 칸 폭은 분기 수로 나누되 막대는 BAR_MAX 를 넘지 않는다 — 값이 하나뿐이면 막대 하나가 그림 전체를
+  // 덮어 빈 상자처럼 보였다(2026-10-21). 맨 위 1/10 은 비운다(꼭대기 % 글자와 겹치지 않게)
   const step = (W - 48) / Math.max(o.categories.length, 1);
   const cx = (i: number): number => 8 + i * step + step / 2;
-  const bMax = Math.max(1, ...o.bars.filter(finite));
+  const bw = Math.min(step * 0.64, BAR_MAX);
+  const bMax = Math.max(1, ...o.bars.filter(finite)) * 1.1;
+  s('line', { x1: 8, x2: W - 40, y1: 14 + plotH, y2: 14 + plotH, stroke: 'var(--line)', 'stroke-width': 1 }, box);
   o.bars.forEach((v, i) => {
-    if (finite(v) && v > 0) s('rect', { x: cx(i) - step * 0.32, y: 14 + plotH * (1 - v / bMax), width: step * 0.64, height: (v / bMax) * plotH, fill: 'var(--line)' }, box);
+    if (finite(v) && v > 0) s('rect', { x: cx(i) - bw / 2, y: 14 + plotH * (1 - v / bMax), width: bw, height: (v / bMax) * plotH, fill: 'var(--line)' }, box);
   });
   const lv = o.line.filter(finite);
   const lo = Math.min(0, ...lv);
@@ -479,6 +487,10 @@ export function comboChart(o: ComboOptions): SVGSVGElement {
   };
   o.line.forEach((v, i) => (finite(v) ? pts.push(`${cx(i).toFixed(1)},${y(v).toFixed(1)}`) : out()));
   out();
+  // 점도 찍는다 — 앞뒤가 비어 혼자인 값은 선이 그려지지 않는다
+  o.line.forEach((v, i) => {
+    if (finite(v)) s('circle', { cx: cx(i).toFixed(1), cy: y(v).toFixed(1), r: 2.4, fill: 'var(--accent)' }, box);
+  });
   if (lv.length) s('text', { x: W - 36, y: y(hi) + 4 }, box, `${num(hi, 1)}%`);
   if (lo < 0) s('text', { x: W - 36, y: y(lo) + 4 }, box, `${num(lo, 1)}%`);
   s('text', { x: 8, y: 10 }, box, `막대 = ${o.barName}, 선 = OPM(%)`);
