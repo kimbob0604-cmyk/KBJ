@@ -5,12 +5,14 @@
 
 from __future__ import annotations
 
+import re
+from datetime import date
 from typing import Any
 
 import pytest
 
 from kbj.core.gex.gex import OPTION_MULTIPLIER
-from kbj.services.api.readers.gex_briefing import NEAR_STRIKES, STRATEGY_NOTE
+from kbj.services.api.readers.gex_briefing import NEAR_STRIKES, STRATEGY_NOTE, expiry_label
 from tests.unit.api.web_fixtures_p7.gex import GexApiWorld, gex_api_world
 
 
@@ -59,6 +61,25 @@ def test_strategies_use_the_nearest_expiry_and_carry_the_disclaimer(body: dict[s
     cost = -ls["net_premium"]
     assert ls["breakevens"] == pytest.approx([k - cost, k + cost], abs=0.02)
     assert STRATEGY_NOTE in body["notes"]
+    assert re.fullmatch(r"(월물|위클리\((월|목)\)) \d{1,2}/\d{1,2}", d["expiry"])
+
+
+def test_walls_sit_on_their_side_and_move_is_one_session(body: dict[str, Any]) -> None:
+    d = body["data"]
+    by = {x["kind"]: x for x in d["levels"]}
+    if "call_wall" in by and by["call_wall"]["dist_pt"] < 0:
+        assert all(r["call"] <= 0 for r in d["strikes"] if r["strike"] >= d["price"])
+    if "put_wall" in by:
+        assert by["put_wall"]["value"] <= d["price"] or all(
+            r["put"] >= 0 for r in d["strikes"] if r["strike"] <= d["price"]
+        )
+    assert d["expected_move"] is None or d["expected_move"] > d["price"] * 0.001
+
+
+def test_expiry_label_reads_like_a_person_would() -> None:
+    assert expiry_label("WKI", date(2026, 10, 22)) == "위클리(목) 10/22"
+    assert expiry_label("WKM", date(2026, 10, 26)) == "위클리(월) 10/26"
+    assert expiry_label("", date(2026, 11, 12)) == "월물 11/12"
 
 
 def test_empty_store_is_404() -> None:

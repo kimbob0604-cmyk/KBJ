@@ -27,9 +27,11 @@ __all__ = [
     "StrikeNet",
     "briefing",
     "money",
+    "one_day_move",
     "sigma_to_expiry",
     "strategies",
     "strike_table",
+    "table_walls",
 ]
 
 EOK: Final = 1e8
@@ -37,6 +39,11 @@ JO: Final = 1e12
 SCENARIO_PCT: Final = (-10.0, -7.5, -5.0, -2.5, 0.0, 2.5, 5.0, 7.5, 10.0)
 STRANGLE_SIGMA: Final = 1.5  # 숏 스트랭글 행사가 — 만기까지 ±1.5σ(원문 '저는 1.5시그마')
 WALL_STRONG: Final = 2.0  # 벽의 콜(풋) GEX 가 표 중앙값의 이 배 이상이면 '강'
+SESSIONS_PER_YEAR: Final = 252
+# 패리티(C − P ≈ F − K)로 본 내재 선도가 행사가들 중앙값에서 이만큼(pt, 또는 C+P 의 비율 중 큰 값)
+# 넘게 벗어나면 그 행사가 시세는 쓰지 않는다 — 장 마감 뒤 한쪽만 남은 호가 등
+PARITY_TOL_PT: Final = 1.0
+PARITY_TOL_RATIO: Final = 0.15
 
 Kind = Literal[
     "em_up", "call_wall2", "call_wall", "flip", "spot", "put_wall", "put_wall2", "em_down"
@@ -129,6 +136,20 @@ def strike_table(bars: Iterable[StrikeBar]) -> list[StrikeNet]:
     return [StrikeNet(k, c, p, c + p) for k, (c, p) in sorted(acc.items(), reverse=True)]
 
 
+def table_walls(rows: Sequence[StrikeNet], price: float) -> tuple[float | None, float | None]:
+    """행사가 표(만기 합산)에서 콜월(현재가 이상 콜 GEX 최대)·풋월(현재가 이하 풋 GEX 절댓값 최대).
+
+    그쪽에 후보가 없으면 전체에서 고른다.
+    """
+    calls = [r for r in rows if r.call > 0]
+    puts = [r for r in rows if r.put < 0]
+    cu = [r for r in calls if r.strike >= price] or calls
+    pd = [r for r in puts if r.strike <= price] or puts
+    cw = max(cu, key=lambda r: (r.call, -r.strike)).strike if cu else None
+    pw = min(pd, key=lambda r: (r.put, -r.strike)).strike if pd else None
+    return cw, pw
+
+
 def money(v: float) -> str:
     """원 → '+5.6조'·'-5,857억'(화면 문장용)."""
     sign = "+" if v > 0 else "-" if v < 0 else ""
@@ -202,8 +223,11 @@ def briefing(
         out.append(lvl("em_up", f"오늘 예상 상단 — 1일 예상폭 +{_pt(expected_move)}pt", up))
         out.append(lvl("em_down", f"오늘 예상 하단 — 1일 예상폭 -{_pt(expected_move)}pt", dn))
     if call_wall is not None:
-        back = flip if flip is not None and flip < call_wall else price
-        lines = [f"막히면 → {_pt(back)}까지 되돌림."]
+        # 되돌림 목표 — 현재가(콜월) 아래 가장 가까운 지지(플립·풋월·2차 풋월)
+        floor = min(price, call_wall)
+        under = [v for v in (flip, put_wall, pw2) if v is not None and v < floor]
+        lines = [f"막히면 → {_pt(max(under))}까지 되돌림." if under
+                 else "막히면 → 아래 받쳐 줄 레벨이 멀어 되돌림 폭이 클 수 있습니다."]  # fmt: skip
         if cw2 is not None:
             lines.append(f"{_pt(call_wall)} 위에서 마감하면 → 다음 저항은 {_pt(cw2)}입니다.")
         out.append(lvl("call_wall", "콜월", call_wall, lines,
@@ -283,6 +307,21 @@ def _bounds(legs: Sequence[Leg], lo: float, hi: float) -> tuple[float | None, fl
     return mp, ml
 
 
+def _parity_clean(px: dict[tuple[float, str], float]) -> dict[tuple[float, str], float]:
+    """콜·풋이 다 있는 행사가의 내재 선도(K + C − P)가 중앙값에서 크게 벗어나면 그 행사가를 뺀다."""
+    fwd = {k: k + px[(k, "C")] - px[(k, "P")] for (k, cp) in px if cp == "C" and (k, "P") in px}
+    if len(fwd) < 3:
+        return px
+    vals = sorted(fwd.values())
+    med = vals[len(vals) // 2]
+    bad: set[float] = set()
+    for k, f in fwd.items():
+        tol = max(PARITY_TOL_PT, PARITY_TOL_RATIO * (px[(k, "C")] + px[(k, "P")]))
+        if abs(f - med) > tol:
+            bad.add(k)
+    return {key: v for key, v in px.items() if key[0] not in bad}
+
+
 def _nearest(strikes: Sequence[float], x: float) -> float:
     return min(strikes, key=lambda k: (abs(k - x), k))
 
@@ -294,7 +333,7 @@ def strategies(
 
     sigma_to_expiry: 만기까지 ±1σ(pt) — 외가 행사가를 고르는 데 쓴다(없으면 ATM ±5%).
     """
-    px = {(q.strike, q.cp): q.price for q in quotes if q.price > 0}
+    px = _parity_clean({(q.strike, q.cp): q.price for q in quotes if q.price > 0})
     both = sorted({k for (k, _cp) in px if (k, "C") in px and (k, "P") in px})
     if not both:
         return []
@@ -344,6 +383,9 @@ def strategies(
     for key, name, idea, legs, note in built:
         net = sum(g.price if g.side == "sell" else -g.price for g in legs)
         mp, ml = _bounds(legs, lo, hi)
+        if mp is not None and mp <= 0:
+            note = "이 시세로는 만기 이익 구간이 없다 — 호가가 비정상일 수 있다" + (
+                f" · {note}" if note else "")  # fmt: skip
         scen = tuple((p, round(_payoff(legs, price * (1 + p / 100)), 2)) for p in SCENARIO_PCT)
         out.append(Strategy(key, name, idea, tuple(legs), round(net, 2),
                             _breakevens(legs, lo, hi), mp if mp is None else round(mp, 2),
@@ -356,3 +398,10 @@ def sigma_to_expiry(price: float, atm_iv: float | None, t_years: float | None) -
     if not atm_iv or not t_years or atm_iv <= 0 or t_years <= 0:
         return None
     return price * atm_iv * math.sqrt(t_years)
+
+
+def one_day_move(price: float, atm_iv: float | None) -> float | None:
+    """1세션 ±1σ(pt) = F × IV × √(1/252)."""
+    if not atm_iv or atm_iv <= 0:
+        return None
+    return price * atm_iv / math.sqrt(SESSIONS_PER_YEAR)

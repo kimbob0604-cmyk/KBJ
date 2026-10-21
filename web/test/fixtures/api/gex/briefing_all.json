@@ -18,7 +18,7 @@
     "net_gex": -900000000.0,
     "net_vs_avg": null,
     "headline": "롱감마 구간에서 출발합니다. 오늘 첫 시험대는 위로 360, 아래로 350.5입니다.",
-    "expected_move": 4.2,
+    "expected_move": 4.023926633672471,
     "levels": [
       {
         "kind": "call_wall2",
@@ -47,10 +47,10 @@
       },
       {
         "kind": "em_up",
-        "label": "오늘 예상 상단 — 1일 예상폭 +4.2pt",
-        "value": 355.66,
-        "dist_pt": 4.2,
-        "dist_pct": 1.2,
+        "label": "오늘 예상 상단 — 1일 예상폭 +4.0pt",
+        "value": 355.48,
+        "dist_pt": 4.02,
+        "dist_pct": 1.14,
         "lines": [],
         "strength": null,
         "gex": null
@@ -81,10 +81,10 @@
       },
       {
         "kind": "em_down",
-        "label": "오늘 예상 하단 — 1일 예상폭 -4.2pt",
-        "value": 347.26,
-        "dist_pt": -4.2,
-        "dist_pct": -1.2,
+        "label": "오늘 예상 하단 — 1일 예상폭 -4.0pt",
+        "value": 347.44,
+        "dist_pt": -4.02,
+        "dist_pct": -1.14,
         "lines": [],
         "strength": null,
         "gex": null
@@ -216,7 +216,7 @@
         "net": -3600000000.0
       }
     ],
-    "expiry": "M:202612",
+    "expiry": "월물 12/10",
     "expiry_date": "2026-12-10",
     "days_to_expiry": 0,
     "multiplier": 250000,

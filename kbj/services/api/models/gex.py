@@ -205,7 +205,7 @@ class GexBriefing(ApiModel):
     expected_move: float | None  # 1세션 ±1σ(pt)
     levels: list[GexKeyLevel]
     strikes: list[GexStrikeNet]  # 현재가 가까운 행사가(내림차순)
-    expiry: str | None  # 전략에 쓴 만기('WKM:261022' 처럼 분류:만기)
+    expiry: str | None  # 전략에 쓴 만기('위클리(목) 10/22' 처럼 읽는 이름)
     expiry_date: date | None
     days_to_expiry: int | None
     multiplier: int  # 원/pt — 손익 pt × 승수 = 원

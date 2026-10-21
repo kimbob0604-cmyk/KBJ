@@ -10,9 +10,11 @@ from kbj.engines.gex.briefing import (
     StrikeBar,
     briefing,
     money,
+    one_day_move,
     sigma_to_expiry,
     strategies,
     strike_table,
+    table_walls,
 )
 
 E = 1e8  # 억
@@ -53,7 +55,7 @@ def test_briefing_levels_and_sentences() -> None:
     assert by["call_wall2"].value == 895.0  # 콜월 위 콜 GEX 최대(900 은 2.0조 < 895 4.1조)
     assert by["put_wall2"].value == 870.0
     assert by["flip"].lines[0].startswith("이미 이 선 아래에 있습니다")  # 884.8 < 890
-    assert by["call_wall"].lines == ("막히면 → 890까지 되돌림.",
+    assert by["call_wall"].lines == ("막히면 → 880까지 되돌림.",
                                      "892.5 위에서 마감하면 → 다음 저항은 895입니다.")  # fmt: skip
     assert by["put_wall"].lines == ("무너지면 → 870 2차 풋월까지 열립니다.",)
     assert by["call_wall"].strength == "약"  # 6.7조 < 콜 GEX 중앙값 4.1조 × 2
@@ -122,3 +124,53 @@ def test_payoff_respects_leg_sides() -> None:
 
     legs = [Leg("sell", "P", 210.0, 8.0)]
     assert _payoff(legs, 220.0) == 8.0 and _payoff(legs, 200.0) == -2.0
+
+
+def test_table_walls_pick_call_above_and_put_below_the_price() -> None:
+    rows = strike_table(BARS)
+    # 풋 절댓값 최대는 900(5.8조)이지만 현재가 위 — 풋월은 아래에서 가장 큰 880
+    assert table_walls(rows, 884.8) == (892.5, 880.0)
+    # 현재가 위에 콜이 없으면 전체에서
+    assert table_walls(rows, 950.0)[0] == 892.5
+    assert table_walls([], 884.8) == (None, None)
+
+
+def test_pullback_target_is_the_nearest_support_below() -> None:
+    rows = strike_table(BARS)
+    b = briefing(rows, price=884.8, flip=870.0, call_wall=892.5, put_wall=860.0,
+                 expected_move=None)  # fmt: skip
+    cw = next(x for x in b.levels if x.kind == "call_wall")
+    assert cw.lines[0] == "막히면 → 870까지 되돌림."  # 플립 870 > 풋월 860
+    b = briefing(rows, price=884.8, flip=None, call_wall=892.5, put_wall=None,
+                 expected_move=None)  # fmt: skip
+    cw = next(x for x in b.levels if x.kind == "call_wall")
+    assert cw.lines[0].startswith("막히면 → 아래 받쳐 줄 레벨이 멀어")
+
+
+def test_one_day_move_uses_252_sessions() -> None:
+    assert one_day_move(888.75, 0.2) == pytest.approx(888.75 * 0.2 / 252**0.5)
+    assert one_day_move(888.75, None) is None and one_day_move(888.75, 0.0) is None
+
+
+def test_parity_outlier_strike_is_dropped() -> None:
+    # 선도 ≈ 217 인 행사가들 + 220 콜만 튀는 호가(마감 뒤 한쪽만 남은 값처럼)
+    quotes = [
+        ChainQuote(210.0, "C", 12.0), ChainQuote(210.0, "P", 5.0),
+        ChainQuote(215.0, "C", 8.5), ChainQuote(215.0, "P", 6.5),
+        ChainQuote(220.0, "C", 25.0), ChainQuote(220.0, "P", 8.0),
+        ChainQuote(225.0, "C", 3.5), ChainQuote(225.0, "P", 11.5),
+    ]  # fmt: skip
+    ls = next(s for s in strategies(quotes, price=218.0, sigma_to_expiry=5.0)
+              if s.key == "long_straddle")  # fmt: skip
+    assert {g.strike for g in ls.legs} == {215.0}  # 220 이 더 가깝지만 패리티가 깨져 빠짐
+
+
+def test_structure_without_profit_zone_is_flagged() -> None:
+    quotes = [
+        ChainQuote(220.0, "C", 30.0), ChainQuote(220.0, "P", 30.0),
+        ChainQuote(230.0, "C", 1.0), ChainQuote(210.0, "P", 1.0),
+    ]  # fmt: skip
+    w = next(s for s in strategies(quotes, price=220.0, sigma_to_expiry=10.0)
+             if s.key == "straddle_wings")  # fmt: skip
+    assert w.breakevens == () and w.max_profit is not None and w.max_profit <= 0
+    assert w.note.startswith("이 시세로는 만기 이익 구간이 없다")

@@ -4,10 +4,15 @@
 숏 스트랭글·합성 매수)의 손익분기를 장중 사이클마다. 계산은 `kbj.engines.gex.briefing`(순수 함수 —
 문장은 규칙 템플릿, LLM 아님). 이 리더는 저장소에서 꺼내 엔진에 넘기고 봉투를 씌운다.
 
-- 레벨·행사가 막대는 `/api/gex/profile` 과 같은 사이클·같은 범위(그 응답을 그대로 쓴다).
+- 행사가 막대는 `/api/gex/profile` 과 같은 사이클·같은 범위(그 응답을 그대로 쓴다). 콜월·풋월은
+  엔진 값을 쓰되 현재가 반대편(풋월이 현재가 위 등)이면 행사가 표(만기 합산)에서 그쪽으로 다시
+  고르고 notes 에 적는다.
+- 1일 예상폭은 ATM IV × √(1/252)(엔진 값은 남은 장 시간 기준이라 마감 뒤 0 에 가깝다 — IV 가 없을
+  때만 쓴다).
 - '평소 대비': 최근 `AVG_DAYS` 세션의 세션 마지막 순GEX 절댓값 평균(오늘 제외).
 - 전략: 그 사이클 옵션 체인에서 오늘 이후 가장 가까운 만기 하나. 가격은 호가 중간, 없으면 현재가.
-  외가 행사가는 만기까지 ±1σ(ATM IV × √T, KIS IV — 없으면 ±5%).
+  외가 행사가는 만기까지 ±1σ(ATM IV × √T, KIS IV — 없으면 ±5%). 호가 폭이 넓으면 현재가를 쓰고,
+  패리티로 본 선도가 튀는 행사가는 뺀다(엔진).
 """
 
 from __future__ import annotations
@@ -24,9 +29,11 @@ from kbj.engines.gex.briefing import (
     ChainQuote,
     StrikeBar,
     briefing,
+    one_day_move,
     sigma_to_expiry,
     strategies,
     strike_table,
+    table_walls,
 )
 from kbj.services.api.models.common import Envelope
 from kbj.services.api.models.gex import (
@@ -40,20 +47,33 @@ from kbj.services.api.models.gex import (
 from kbj.services.api.readers._common import ReadContext, envelope
 from kbj.services.api.readers.gex import SOURCE, gex_profile
 
-__all__ = ["AVG_DAYS", "NEAR_STRIKES", "gex_briefing"]
+__all__ = ["AVG_DAYS", "NEAR_STRIKES", "expiry_label", "gex_briefing"]
 
 AVG_DAYS: Final = 20
 NEAR_STRIKES: Final = 21  # 행사가 표 — 현재가에 가까운 순
 MIN_PAIRS: Final = 3  # 콜·풋 가격이 다 있는 행사가가 이보다 적은 만기는 전략에 쓰지 않는다
+SPREAD_ABS: Final = 0.5  # pt — 호가 폭이 이것과 중간값×SPREAD_REL 중 큰 값을 넘으면 현재가를 쓴다
+SPREAD_REL: Final = 0.3
+CLS_LABEL: Final = {"": "월물", "M": "월물", "WKM": "위클리(월)", "WKI": "위클리(목)"}
+WALL_NOTE: Final = "엔진 벽이 현재가 반대편이라 행사가 표(만기 합산)에서 다시 골랐다: "
 STRATEGY_NOTE: Final = (
     "옵션 포지셔닝은 만기 손익(pt × 승수, 수수료·증거금·세금 제외) — 매매 권유 아님"
 )
 
 
 def _mid(r: ChainRecord) -> float | None:
-    if r.bid is not None and r.ask is not None and r.bid > 0 and r.ask > 0:
-        return float((r.bid + r.ask) / 2)
-    return float(r.last) if r.last is not None and r.last > 0 else None
+    """호가 중간(폭이 좁을 때만) — 아니면 현재가."""
+    last = float(r.last) if r.last is not None and r.last > 0 else None
+    if r.bid is not None and r.ask is not None and r.bid > 0 and r.ask >= r.bid:
+        mid = float((r.bid + r.ask) / 2)
+        if float(r.ask - r.bid) <= max(SPREAD_ABS, SPREAD_REL * mid) or last is None:
+            return mid
+    return last
+
+
+def expiry_label(cls: str, d: date) -> str:
+    """'WKI' + 2026-10-22 → '위클리(목) 10/22'."""
+    return f"{CLS_LABEL.get(cls, cls)} {d.month}/{d.day}"
 
 
 def _pick_expiry(
@@ -98,19 +118,43 @@ def _recent_net(ctx: ReadContext, scope: GexScopeT, today: date) -> list[float]:
     return [last[d] for d in sorted(last)[-AVG_DAYS:]]
 
 
+def _pt(v: float) -> str:
+    return f"{v:,.1f}" if v % 1 else f"{v:,.0f}"
+
+
 def gex_briefing(ctx: ReadContext, *, scope: GexScopeT) -> Envelope[GexBriefing]:
     prof = gex_profile(ctx, scope=scope)
     p = prof.data
     notes = list(prof.notes)
     today = ctx.now_kst().date()
     rows = strike_table(StrikeBar(b.strike, b.gex_call, b.gex_put) for b in p.bars)
+    head = ctx.repos.gex.levels_latest(scope, upto=ctx.now())[0]
+    chain = ctx.repos.gex.chain_latest(head.trade_date, head.session, head.ts)
+    dates = {(c, e): d for c, e, d, _src in ctx.repos.gex.expiry_dates(today - timedelta(days=7))}
+    pick = _pick_expiry(chain, dates, today) if p.price is not None else None
+    ch = [r for r in chain if pick is not None and (r.mrkt_cls, r.expiry) == pick[:2]]
+    iv = _atm_iv(ch or chain, p.price) if p.price is not None else None
+    em = one_day_move(p.price, iv) if p.price is not None else None
+    if em is None:
+        em = p.expected_move
+        if em is not None and p.price and em < p.price * 0.001:
+            em = None
+            notes.append("ATM IV 없음·장 마감 — 1일 예상폭을 만들지 않았다")
     regime = regime_label = headline = None
     net = vs = None
     levels: list[GexKeyLevel] = []
     if p.price is not None and rows:
-        b = briefing(rows, price=p.price, flip=p.flip, call_wall=p.call_wall,
-                     put_wall=p.put_wall, expected_move=p.expected_move,
-                     recent_net=_recent_net(ctx, scope, today))  # fmt: skip
+        # 엔진 벽이 제자리(콜월 ≥ 현재가 ≥ 풋월)면 그대로, 반대편이면 행사가 표에서 다시 고른다
+        tcw, tpw = table_walls(rows, p.price)
+        cw = p.call_wall if p.call_wall is not None and p.call_wall >= p.price else tcw
+        pw = p.put_wall if p.put_wall is not None and p.put_wall <= p.price else tpw
+        moved = [f"{name} {_pt(a)}→{_pt(b)}" for name, a, b in
+                 (("콜월", p.call_wall, cw), ("풋월", p.put_wall, pw))
+                 if a is not None and b is not None and a != b]  # fmt: skip
+        if moved:
+            notes.append(WALL_NOTE + ", ".join(moved))
+        b = briefing(rows, price=p.price, flip=p.flip, call_wall=cw, put_wall=pw,
+                     expected_move=em, recent_net=_recent_net(ctx, scope, today))  # fmt: skip
         regime, regime_label, headline = b.regime, b.regime_label, b.headline
         net, vs = b.net_gex, b.net_vs_avg
         levels = [GexKeyLevel(kind=x.kind, label=x.label, value=x.value, dist_pt=x.dist_pt,
@@ -123,19 +167,14 @@ def gex_briefing(ctx: ReadContext, *, scope: GexScopeT) -> Envelope[GexBriefing]
     strikes = [GexStrikeNet(strike=r.strike, call=r.call, put=r.put, net=r.net)
                for r in sorted(near, key=lambda r: -r.strike)]  # fmt: skip
 
-    head = ctx.repos.gex.levels_latest(scope, upto=ctx.now())[0]
-    chain = ctx.repos.gex.chain_latest(head.trade_date, head.session, head.ts)
-    dates = {(c, e): d for c, e, d, _src in ctx.repos.gex.expiry_dates(today - timedelta(days=7))}
-    pick = _pick_expiry(chain, dates, today) if p.price is not None else None
     strats: list[GexStrategy] = []
     expiry = expiry_date = days = None
     if pick is not None and p.price is not None:
-        cls, exp, expiry_date = pick
-        expiry = f"{cls or 'M'}:{exp}"
+        cls, _exp, expiry_date = pick
+        expiry = expiry_label(cls, expiry_date)
         days = (expiry_date - today).days
-        ch = [r for r in chain if (r.mrkt_cls, r.expiry) == (cls, exp)]
         quotes = [ChainQuote(float(r.strike), r.cp, m) for r in ch if (m := _mid(r)) is not None]
-        sig = sigma_to_expiry(p.price, _atm_iv(ch, p.price), max(days, 1) / 365)
+        sig = sigma_to_expiry(p.price, iv, max(days, 1) / 365)
         if sig is None:
             notes.append("ATM IV 없음 — 외가 행사가는 현재가 ±5% 로 골랐다")
         strats = [
@@ -155,7 +194,7 @@ def gex_briefing(ctx: ReadContext, *, scope: GexScopeT) -> Envelope[GexBriefing]
         scope=scope, cycle_at=p.cycle_at,
         session_open=state_at(ctx.now_kst(), ctx.cal).state in (State.DAY, State.NIGHT),
         price=p.price, regime=regime, regime_label=regime_label, net_gex=net, net_vs_avg=vs,
-        headline=headline, expected_move=p.expected_move, levels=levels, strikes=strikes,
+        headline=headline, expected_move=em, levels=levels, strikes=strikes,
         expiry=expiry, expiry_date=expiry_date, days_to_expiry=days,
         multiplier=OPTION_MULTIPLIER, strategies=strats,
     )  # fmt: skip

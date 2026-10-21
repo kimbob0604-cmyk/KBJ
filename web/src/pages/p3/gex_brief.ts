@@ -3,7 +3,7 @@
 // 서버 규칙(엔진 `kbj.engines.gex.briefing`), 화면은 그리기만. 로그인 전용(공개판은 자물쇠 틀만).
 import type { components } from '../../api/types.gen';
 import { h } from '../../ui/dom';
-import { DASH, num, type Num } from '../../ui/fmt';
+import { DASH, kstTime, num, type Num } from '../../ui/fmt';
 import { s, svgBox } from '../../ui/svg';
 
 type S = components['schemas'];
@@ -211,6 +211,7 @@ export function briefView(b: GexBriefing): HTMLElement {
   const em = b.levels.find((l) => l.kind === 'em_up');
   const ed = b.levels.find((l) => l.kind === 'em_down');
   const sub = [
+    b.session_open ? null : `장 마감 — 마지막 사이클 ${kstTime(b.cycle_at)}`,
     `현재 ${pt(b.price)}`,
     em && ed ? `1일 예상범위 ${pt(ed.value)}~${pt(em.value)}` : null,
     b.expiry ? `전략 만기 ${b.expiry}${b.days_to_expiry !== null ? ` D-${String(b.days_to_expiry)}` : ''}` : null,
