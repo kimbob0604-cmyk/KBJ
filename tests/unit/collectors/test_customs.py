@@ -12,7 +12,7 @@ from typing import Any
 
 from pydantic import SecretStr
 
-from kbj.config.trade import HsChapters, TradeConfig, TradeMap, load_trade
+from kbj.config.trade import HsChapters, TradeConfig, TradeMap, load_trade, parse_trade_map
 from kbj.core.quality import Quality
 from kbj.core.time import KST
 from kbj.data.budget import DailyBudget
@@ -296,6 +296,26 @@ def test_chapters_and_hs6_helpers() -> None:
         sorted({r.hs for r in W.stock_map if r.region_id})
     )
     assert C.ym_flat("2026-10") == "202610" and C.ym_dash("202610") == "2026-10"
+    # 판 2(flows) — 시군구 흐름 HS6 만(전국 흐름은 빼고). 2026-10-22 실측: 판 2 를 못 읽어 백필 0건
+    v2 = parse_trade_map(
+        {
+            "version": 2,
+            "stocks": [
+                {
+                    "code": "000001", "name": "가상", "reviewed": False,
+                    "evidence": [{"kind": "synthetic", "note": "x"}],
+                    "flows": [
+                        {"id": "a", "name": "사업장", "kind": "sigungu",
+                         "regions": ["KR-41-hwaseong"],
+                         "products": [{"hs": "854232", "weight": 0.3}]},
+                        {"id": "b", "name": "전국", "kind": "national",
+                         "products": [{"hs": "8542", "weight": 0.2}]},
+                    ],
+                }
+            ],
+        }
+    )  # fmt: skip
+    assert C.sigungu_hs6([v2]) == ("854232",)
 
 
 def test_ten_day_rows_skips_unchanged_and_none_keeps_values() -> None:

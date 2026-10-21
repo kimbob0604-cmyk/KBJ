@@ -351,11 +351,11 @@ cmd_fill_trade() {
   require_scheduler
   from="$(month_ago 60)"; to="$(month_ago 1)"
   kbj_step "매핑표 다시 싣기(trade.map_load)"
-  cmd_job trade.map_load || rc=1
+  cmd_job trade.map_load --force || rc=1  # 오늘 07:35 에 옛 매핑표로 이미 돌았어도 다시 싣는다
   kbj_step "시군구 × HS6 백필 $from ~ $to (매핑표 품목만)"
   kbj_compose exec -T scheduler python -m kbj.services.collectors.customs backfill --from "$from" --to "$to" --datasets 15134343 || rc=1
   kbj_step "종목 수출 지수 다시 계산(trade.stock_index)"
-  cmd_job trade.stock_index --no-deps || rc=1
+  cmd_job trade.stock_index --no-deps --force || rc=1
   if (( rc == 0 )); then kbj_ok "끝 — 브라우저 7번 '수출입' → '종목' 탭"; else kbj_warn "일부 단계가 실패했다 — 위 줄을 본다. 백필이 '한도 앞에서 멈춤' 이면 내일 같은 명령을 다시"; fi
   return "$rc"
 }

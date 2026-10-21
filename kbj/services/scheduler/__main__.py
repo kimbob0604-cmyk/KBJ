@@ -1,5 +1,5 @@
 """`python -m kbj.services.scheduler [run | validate [경로] |
-run-once <작업> [--as-of 값] [--no-deps] |
+run-once <작업> [--as-of 값] [--no-deps] [--force] |
 backfill <작업> (--from YYYY-MM-DD --to YYYY-MM-DD | --to-listing [--to YYYY-MM-DD])
 [--max-days N]]`.
 
@@ -342,6 +342,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         action="store_true",
         help="의존 작업의 실행 기록을 보지 않는다(수동 — 다른 작업이 이미 받은 날짜의 재계산 등)",
     )
+    o.add_argument(
+        "--force",
+        action="store_true",
+        help="같은 as_of 가 이미 끝났어도 다시 돈다(설정 파일을 바꾼 뒤 같은 날 다시 싣기 등)",
+    )
     b = sub.add_parser("backfill", help="백필 작업을 날짜 범위의 거래일마다(최근부터 과거로)")
     b.add_argument("job")
     b.add_argument("--from", dest="start", type=date.fromisoformat, default=None)
@@ -385,7 +390,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         try:
             try:
                 events = runner.run_once(
-                    args.job, utcnow(), as_of=args.as_of, ignore_deps=args.no_deps
+                    args.job,
+                    utcnow(),
+                    as_of=args.as_of,
+                    ignore_deps=args.no_deps,
+                    force=args.force,
                 )
             except (KeyError, ValueError) as e:  # 없는 작업·external·as_of 를 정할 수 없음
                 print(f"오류: {e}")

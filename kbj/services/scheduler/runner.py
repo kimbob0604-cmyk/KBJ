@@ -280,11 +280,14 @@ class JobRunner:
         as_of: str | None = None,
         source: RunSource = "manual",
         ignore_deps: bool = False,
+        force: bool = False,
     ) -> list[RunEvent]:
         """작업 하나를 지금 한 번(조건은 보지 않는다).
 
         `ignore_deps` 면 의존 작업의 실행 기록을 보지 않는다(수동 — 다른 작업이 같은 수집 키를 이미
         받아 둔 날짜의 보드 재계산 같은 때. 필요한 데이터가 있는지는 처리기가 스스로 다시 확인한다).
+        `force` 면 같은 as_of 가 이미 ok·skipped 로 끝났어도 다시 돈다(수동 — 설정 파일을 바꾼 뒤
+        같은 날 다시 싣기 등. 시도 번호는 이어 붙는다).
         `as_of` 를 주면 실행·수집 키에 그 값을 쓴다. 주지 않았는데 지금 시각으로 as_of 를 정할 수
         없으면(휴장일의 trade_date, event) `AsOfUnavailable` — 조용히 끝나지 않는다.
         """
@@ -309,6 +312,7 @@ class JobRunner:
             source=source,
             check_when=False,
             skip_deps=ignore_deps,
+            force=force,
         )
         self._advance(now, events)
         self._collect(now, events)  # 그 자리에서 끝난 시도(inline)를 거둔다
@@ -474,6 +478,7 @@ class JobRunner:
         check_when: bool = True,
         catch_up: bool = False,
         skip_deps: bool = False,
+        force: bool = False,
     ) -> None:
         local_day = fire_at.astimezone(job.schedule.zone).date()
         if check_when and not holds(
@@ -499,7 +504,8 @@ class JobRunner:
         prev = self.runs.latest(job.name, as_of)
         # ok·skipped 는 끝난 실행 — 다시 돌지 않는다. running·queued 인데 진행 목록에 없으면 앞
         # 프로세스가 도중에 죽은 것이다 — 시도 번호를 이어 다시 돈다(선점은 같은 작업이 이어 쥔다).
-        if prev is not None and prev.status in ("ok", "skipped") and not _was_planned(prev):
+        done = prev is not None and prev.status in ("ok", "skipped") and not _was_planned(prev)
+        if prev is not None and done and not force:
             events.append(RunEvent("already", job.name, as_of, now, prev.attempt))
             return
         attempt0 = prev.attempt if prev is not None else 0

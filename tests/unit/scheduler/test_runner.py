@@ -897,3 +897,26 @@ def test_same_failure_is_alerted_once_per_day() -> None:
     assert rig.health.kinds().count("job_failed") > 20
     rig.run_until(kst(2026, 10, 7, 9, 5))
     assert len(rig.notes.sent) == 2
+
+
+def test_run_once_force_reruns_a_finished_as_of() -> None:
+    """2026-10-22 실측: 07:35 에 옛 매핑표로 끝난 trade.map_load 를 같은 날 다시 싣지 못했다."""
+    briefs: list[JobContext] = []
+
+    def brief(ctx: JobContext) -> JobResult:
+        briefs.append(ctx)
+        return JobResult("ok")
+
+    rig = Rig(
+        close_and_brief(),
+        {"tests.fake:close": Publisher(None), "tests.fake:brief": brief},
+        kst(2026, 10, 6, 17, 0),
+    )
+    run = rig.runner.run_once
+    first = run("brief.closing", rig.now, as_of="2026-10-06", ignore_deps=True)
+    again = run("brief.closing", rig.now, as_of="2026-10-06", ignore_deps=True)
+    assert [e.kind for e in first] == ["started", "ok"]
+    assert [e.kind for e in again] == ["already"] and len(briefs) == 1
+    forced = run("brief.closing", rig.now, as_of="2026-10-06", ignore_deps=True, force=True)
+    assert [e.kind for e in forced] == ["started", "ok"] and len(briefs) == 2
+    assert forced[-1].attempt == first[-1].attempt + 1

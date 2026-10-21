@@ -252,8 +252,20 @@ def chapters_of(ch: HsChapters) -> tuple[str, ...]:
 
 
 def sigungu_hs6(maps: Iterable[TradeMap]) -> tuple[str, ...]:
-    """매핑표(공개 + local)의 지역 행 HS6(정렬·중복 없음)."""
-    return tuple(sorted({rg.hs6 for m in maps for s in m.stocks for rg in s.regions}))
+    """매핑표(공개 + local)의 시군구 흐름 HS6(정렬·중복 없음). 판 1 의 regions 는 `flow_list()` 가
+    시군구 흐름으로 바꿔 준다(판 2 는 regions 칸이 비어 있다 — 2026-10-22 실측: 백필이 0건)."""
+    return tuple(
+        sorted(
+            {
+                p.hs
+                for m in maps
+                for s in m.stocks
+                for f in s.flow_list()
+                if f.kind == "sigungu"
+                for p in f.products
+            }
+        )
+    )
 
 
 def _region_id(regions: TradeRegions, sido: str, name: str, ym: str) -> str | None:
@@ -673,6 +685,8 @@ class BackfillReport:
     def lines(self) -> list[str]:
         out: list[str] = []
         for ds in MONTHLY_ORDER:
+            if ds not in self.done and ds not in self.skipped and ds not in self.stopped:
+                continue  # 고르지 않은 데이터셋(--datasets)은 줄을 내지 않는다
             d = len(self.done.get(ds, []))
             s = len(self.skipped.get(ds, []))
             tail = f" · 멈춤: {self.stopped[ds]}" if ds in self.stopped else ""
