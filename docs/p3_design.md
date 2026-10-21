@@ -505,7 +505,7 @@ P2 설계 §8.2 의 0007 계획에 있던 `pub_themes.sector_map` 은 P5(분류 
 | 필드 | 형 | 규칙 |
 |---|---|---|
 | `source` | str (필수) | 원천 묶음 — 예 `"KRX"`, `"KIS"`, `"KRX+KIS"`, `"KIS(잠정)"` |
-| `as_of` | AwareDatetime (필수) | 데이터가 가리키는 시각(마감 = 그날 15:30 KST, 슬롯 = 슬롯 끝) |
+| `as_of` | AwareDatetime (필수) | 데이터가 가리키는 시각(마감 = 그날 15:30 KST, 슬롯 = 슬롯 끝). 응답 시각(`generated_at`)보다 뒤면 응답 시각으로 당기고 notes 에 적는다(2026-10-21 — 장중 잠정 값이 '기준 15:30'으로 보이던 것) |
 | `quality` | `Quality` (필수) | 구성 값 중 가장 나쁜 것(ok < stale < estimated; invalid 행은 빠지고 `notes` 에 수) |
 | `notes` | list[str] | "NXT 미포함", "검산 불가: 기타법인 미제공", "invalid 3행 제외" 등 |
 | `generated_at` | AwareDatetime | 응답을 만든 시각 |

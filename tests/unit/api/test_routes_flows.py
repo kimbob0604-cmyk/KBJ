@@ -126,4 +126,8 @@ def test_intraday_estimated(world: World, authed: TestClient) -> None:
     tv = [x["turnover"] for x in d["turnover_rank"]]
     assert tv == sorted(tv, reverse=True)
     assert [x["rank"] for x in d["turnover_rank"]] == [1, 2, 3, 4, 5]
-    assert body["as_of"].endswith("10:10:00+09:00")
+    # 슬롯 끝(10:10)이 응답 시각(10:05)보다 뒤라 응답 시각으로 당긴다(2026-10-21 — 아직 오지 않은
+    # 시각을 기준으로 보이지 않게)
+    from kbj.services.api.models.common import FUTURE_AS_OF_NOTE
+
+    assert body["as_of"].endswith("10:05:00+09:00") and FUTURE_AS_OF_NOTE in body["notes"]

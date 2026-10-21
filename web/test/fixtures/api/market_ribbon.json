@@ -1,8 +1,10 @@
 {
   "source": "KBJ:calendar+config:calendar_events(한국은행 공표 일정)+KIS",
-  "as_of": "2026-09-16T10:10:00+09:00",
+  "as_of": "2026-09-16T10:05:00+09:00",
   "quality": "estimated",
-  "notes": [],
+  "notes": [
+    "기준 시각이 응답 시각보다 뒤라 응답 시각으로 적었다(아직 오지 않은 시각)"
+  ],
   "generated_at": "2026-09-16T10:05:00+09:00",
   "data": {
     "chips": [
