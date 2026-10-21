@@ -389,7 +389,7 @@ stocks:
 | 파일 | 내용 | 상한 [제안] |
 |---|---|---|
 | `trade/flash.json` | 4종 × 10년 구간 | 200 KB |
-| `trade/hs2.json`·`trade/hs/<2자리>.json` | HS2 총괄 / 장별 HS4·HS6 24개월 | 파일 1 MB |
+| `trade/hs2.json`·`trade/hs/<2자리>.json` | HS2 총괄 / 장별 HS4·HS6 24개월 | hs2 1 MB · 장별 2 MB(2026-10-21 — 84장 기계 1.11 MB) |
 | `trade/countries.json`·`trade/country/<ISO2>.json` | 국가 총괄 60개월 / 국가별 상위 품목 | 파일 1 MB |
 | `trade/region/<hs6>.json` | 매핑 HS6 의 시군구 | 파일 200 KB |
 | `trade/surge.json`·`trade/items104.json`·`trade/stocks.json` | — | 파일 1 MB |

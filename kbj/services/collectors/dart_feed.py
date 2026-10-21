@@ -145,6 +145,7 @@ class FeedReport:
     failed: int = 0
     na: int = 0
     skipped: int = 0
+    backlog_held: int = 0
     rows: int = 0
     stop: str | None = None
     day_closed: bool = False
@@ -162,6 +163,8 @@ class FeedReport:
         }
         if self.invalid:
             out["invalid"] = self.invalid
+        if self.backlog_held:
+            out["backlog_held"] = self.backlog_held
         if self.skipped:
             out["claim_skipped"] = self.skipped
         if self.rescan is not None:
@@ -711,13 +714,28 @@ def _failed(env: _Env, d: DisclosureRow, why: str, max_tries: int, report: FeedR
         log.info("공시 파싱 실패(%d/%d) rcept_no=%s kind=%s", tries, max_tries, d.rcept_no, d.kind)
 
 
+def _backlog_closed(env: _Env) -> bool:
+    """공용 일 예산을 `backlog_budget_share` 이상 썼나(밀린 파싱을 멈출 때)."""
+    share = env.cfg.filings.feed.backlog_budget_share
+    used_fn = getattr(env.client, "budget_used_share", None)
+    if share >= 1 or used_fn is None:
+        return False
+    used = used_fn(env.now)
+    return used is not None and used >= share
+
+
 def _parse_pending(env: _Env, report: FeedReport) -> None:
+    """그날 공시부터(접수번호 내림차순). 예산을 정한 몫 이상 썼으면 전날까지 밀린 것은 다음 날로."""
     feed = env.cfg.filings.feed
     pending = env.repos.filings.pending(
         kinds=PARSE_KINDS, max_tries=feed.retry_parse_max, limit=PARSE_LIMIT,
-        now=env.now, wait_min=feed.retry_wait_min,
+        now=env.now, wait_min=feed.retry_wait_min, newest_first=True,
     )  # fmt: skip
-    for d in pending:
+    today = to_kst(env.now).date()
+    for i, d in enumerate(pending):
+        if d.rcept_dt < today and _backlog_closed(env):
+            report.backlog_held = len(pending) - i  # 내림차순 — 남은 것은 모두 전날까지
+            return
         _parse_one(env, d, report)
 
 

@@ -81,7 +81,7 @@ export const FILE_CAPS = {
 };
 /** 코드 이름 파일(trade/ 한 단계 더) — 경로 접두 → 파일 하나 상한 */
 export const PREFIX_CAPS = {
-  "trade/hs/": 1024 * KB,
+  "trade/hs/": 2048 * KB, // 84장 1.11 MB(2026-10-21) — manifest.py PREFIX_CAPS 와 같게
   "trade/country/": 1024 * KB,
   "trade/region/": 200 * KB,
   "trade/stock/": 100 * KB,

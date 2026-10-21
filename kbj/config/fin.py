@@ -100,6 +100,9 @@ class FeedCfg(_Model):
     # n 번 실패한 건의 다음 시도 = 처음 본 시각 + retry_wait_min[n-1] 분(길이 = 상한 - 1)
     retry_wait_min: tuple[int, ...] = ()
     rescan_at: str
+    # 공용 DART 일 예산을 이 몫 이상 쓰면 전날까지의 밀린 파싱은 다음 날로
+    # (그날 목록·그날 공시 몫을 남긴다)
+    backlog_budget_share: float = Field(default=1.0, gt=0, le=1)
 
     @model_validator(mode="after")
     def _waits(self) -> FeedCfg:

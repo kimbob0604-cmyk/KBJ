@@ -151,6 +151,7 @@ class PublicExportCfg(_Model):
     country_months: int = Field(ge=1, le=120)
     dir_cap_mb: int = Field(ge=1, le=200)
     file_cap_kb: int = Field(ge=1, le=10240)
+    hs_cap_kb: int = Field(ge=1, le=10240)  # trade/hs/<장>.json(장마다 HS4·HS6 — 84장이 크다)
     flash_cap_kb: int = Field(ge=1, le=10240)
     region_cap_kb: int = Field(ge=1, le=10240)
     stock_cap_kb: int = Field(ge=1, le=10240)

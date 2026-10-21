@@ -292,7 +292,8 @@ def test_dart_quota_stops_the_day(quota: SimDay) -> None:
     assert later == []
     feed = _runs(quota, "filings.dart_feed")
     after = [r for r in feed if r.as_of[:10] == TODAY.isoformat() and _started(r) > hit.at]
-    assert after and all(r.status == "failed" for r in after)
+    # 그날 한도는 기다림 — skipped(매분 '작업 실패' 알림을 쌓지 않는다, 2026-10-21 da746ed)
+    assert after and all(r.status == "skipped" for r in after)
 
 
 def test_dart_quota_next_day_rescan_misses_nothing(quota: SimDay) -> None:

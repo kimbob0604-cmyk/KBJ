@@ -37,6 +37,7 @@ public_export:                  # §7 [제안 — 실측 #57 뒤 확정]
   country_months: 60            # 국가 총괄
   dir_cap_mb: 20                # trade/ 폴더 합계
   file_cap_kb: 1024
+  hs_cap_kb: 2048               # trade/hs/<장>.json — 84장(기계) 1.11 MB(2026-10-21)
   flash_cap_kb: 200
   region_cap_kb: 200
   stock_cap_kb: 100

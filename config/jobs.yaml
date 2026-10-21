@@ -152,8 +152,11 @@ jobs:
     phase: P5                 # D-P3-17
     enabled: true             # P5 웨이브 3(WRAP — D-P5-23): 사용자 결정 Q6 — Nasdaq·Stooq·Yahoo(ET 운영 확인)
     owner: "kbj.services.collectors.us:eod"
-    # 16:10 뉴욕 = 서머타임 끝(11-01) 전 05:10 KST, 뒤 06:10 KST
-    schedule: {cron: "10 16 * * 1-5", tz: America/New_York, when: us_trading_day}
+    # 16:10 뉴욕 = 서머타임 끝(11-01) 전 05:10 KST, 뒤 06:10 KST. 09:10 뉴욕(화~토)에 한 번 더 —
+    # 그때 as_of 는 전 미국 세션: 종목 일봉(Nasdaq 일봉·스크리너·Yahoo 차트 모두)이 다음 날 아침 ET 에야
+    # 그날 값으로 바뀐다(실측 2026-10-21: 10-20 20:50 ET 에도 세 곳 다 10-19 종가, 지수만 10-20 —
+    # 10-19 봉은 10-20 08:40 ET 쯤). 이미 받은 날은 키가 done 이라 건너뛴다(그래서 when: always)
+    schedule: {cron: "10 9,16 * * 1-6", tz: America/New_York, when: always}
     # 공표 전이면 앞 종목 확인에서 1분 안에 끝난다 — 간격을 두고 여러 번, 전 종목 받기(약 70분)가
     # 들어갈 시한(2026-10-20 점검: 120분 시한을 첫 받기가 다 써 재시도가 40분 만에 끊겼다)
     retry: {max: 5, backoff_s: [900, 900, 1200, 1800]}

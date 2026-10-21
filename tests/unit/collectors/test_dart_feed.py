@@ -559,3 +559,31 @@ def test_closed_daily_budget_is_a_quiet_skip_not_a_failure() -> None:
     r = d.today("14:46")
     assert r.status == "skipped" and r.collected == ()
     assert F.BUDGET_CLOSED in str(r.detail["reason"])
+
+
+def test_backlog_waits_for_tomorrow_once_the_budget_share_is_used() -> None:
+    """공용 일 예산을 backlog_budget_share(0.6) 이상 썼으면 전날까지 밀린 파싱은 다음 날로 — 그날
+    목록·그날 공시 몫을 남긴다(2026-10-21: 밀린 건을 분당 200건씩 파싱해 07:52 에 예산이 닫혔다)."""
+    import fakeredis
+
+    from kbj.data.budget import DailyBudget
+
+    w = build_world()
+    bad = "e18.prelim"
+    d = Day(Patched(w, bad_docs={w.rcept(bad)}))
+    assert d.today("14:46").detail["failed"] == 1  # 그날 실패 — 밀린 건이 된다
+    assert d.cfg.filings.feed.backlog_budget_share == pytest.approx(0.6)
+    budget = DailyBudget(fakeredis.FakeRedis(), "dart", 100)
+    d.client = DartClient(
+        KEY, transport=d.fake.transport("feed"), limiter=RecordingLimiter(), retries=1,
+        backoff_s=0, now=lambda: d.now, budget=budget,
+    )  # fmt: skip
+    nxt = date(2026, 11, 17)
+    d.now = datetime(nxt.year, nxt.month, nxt.day, 9, 0, tzinfo=KST)
+    for _ in range(70):
+        budget.take(d.now)
+    r = d.at(nxt, "09:00")
+    assert r.status == "ok" and r.detail["backlog_held"] >= 1
+    assert d.row(bad).parse_tries == 1  # 다시 부르지 않았다
+    used = d.client.budget_used_share(d.now)
+    assert used is not None and 0.6 <= used < 1

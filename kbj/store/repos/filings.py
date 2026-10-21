@@ -175,9 +175,11 @@ class FilingsRepo(Protocol):
         limit: int = 500,
         now: datetime | None = None,
         wait_min: Sequence[int] = (),
+        newest_first: bool = False,
     ) -> list[DisclosureRow]:
-        """파싱 대기(pending·failed 이고 parse_tries < max_tries) — 접수번호 오름차순. `now` 를 주면
-        n 번 실패한 행은 first_seen_at + wait_min[n-1] 분 ≤ now 일 때만(값이 모자라면 마지막 값)."""
+        """파싱 대기(pending·failed 이고 parse_tries < max_tries) — 접수번호 오름차순(`newest_first`
+        면 내림차순 — 그날 공시를 밀린 것보다 먼저). `now` 를 주면 n 번 실패한 행은
+        first_seen_at + wait_min[n-1] 분 ≤ now 일 때만(값이 모자라면 마지막 값)."""
         ...
 
     def mark_parsed(
@@ -454,6 +456,7 @@ class PgFilingsRepo:
         limit: int = 500,
         now: datetime | None = None,
         wait_min: Sequence[int] = (),
+        newest_first: bool = False,
     ) -> list[DisclosureRow]:
         kind_list = None if kinds is None else sorted(set(kinds))
         if now is not None:
@@ -467,7 +470,7 @@ class PgFilingsRepo:
             "     OR first_seen_at + make_interval(mins => (%s::int[])"
             "[LEAST(parse_tries, cardinality(%s::int[]))]) <= %s::timestamptz)",
             (max_tries, kind_list, kind_list, now, waits, waits, waits, now),
-            "rcept_no",
+            "rcept_no DESC" if newest_first else "rcept_no",
             limit,
         )
 
@@ -858,6 +861,7 @@ class MemoryFilingsRepo:
         limit: int = 500,
         now: datetime | None = None,
         wait_min: Sequence[int] = (),
+        newest_first: bool = False,
     ) -> list[DisclosureRow]:
         def due(r: DisclosureRow) -> bool:
             if now is None or r.parse_tries == 0 or not wait_min:
@@ -865,14 +869,17 @@ class MemoryFilingsRepo:
             wait = wait_min[min(r.parse_tries, len(wait_min)) - 1]
             return r.first_seen_at + timedelta(minutes=wait) <= now
 
-        return self.disclosure_t.where(
+        rows = self.disclosure_t.where(
             lambda r: (
                 r.parse_state in ("pending", "failed")
                 and r.parse_tries < max_tries
                 and (kinds is None or r.kind in kinds)
                 and due(r)
             )
-        )[:limit]
+        )
+        if newest_first:
+            rows = sorted(rows, key=lambda r: r.rcept_no, reverse=True)
+        return rows[:limit]
 
     def mark_parsed(
         self, rcept_no: str, state: str, *, note: str | None = None, now: datetime

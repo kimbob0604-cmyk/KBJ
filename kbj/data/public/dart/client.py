@@ -320,6 +320,15 @@ class DartClient:
 
     # ------------------------------------------------------------------ 공개 API(dart-report)
 
+    def budget_used_share(self, at: datetime) -> float | None:
+        """공용 일 예산(`budget:dart`)을 그날 얼마나 썼나(0~1, 닫혔으면 1). 예산이 없으면 None."""
+        b = self._budget
+        if b is None:
+            return None
+        if b.closed_reason(at) is not None:
+            return 1.0
+        return min(b.used(at) / b.cap, 1.0)
+
     def get_json(
         self,
         endpoint: str,

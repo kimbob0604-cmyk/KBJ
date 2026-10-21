@@ -600,7 +600,7 @@ describe("merge-public-data: P6 하위 폴더 trade/ — p6_design §7", () => {
     expect(FILE_CAPS["trade/flash.json"]).toBe(200 * 1024);
     expect(FILE_CAPS["trade/ribbon.json"]).toBe(4 * 1024);
     expect(PREFIX_CAPS).toEqual({
-      "trade/hs/": 1024 * 1024,
+      "trade/hs/": 2048 * 1024, // 84장 1.11 MB(2026-10-21)
       "trade/country/": 1024 * 1024,
       "trade/region/": 200 * 1024,
       "trade/stock/": 100 * 1024,

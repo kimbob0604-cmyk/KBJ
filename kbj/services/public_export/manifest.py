@@ -155,7 +155,7 @@ FILE_CAPS: Final[dict[str, int]] = {
 }
 # 코드 이름 파일(하위 폴더 한 단계 더) — 경로 접두 → 파일 하나 상한
 PREFIX_CAPS: Final[dict[str, int]] = {
-    "trade/hs/": 1024 * _KB,
+    "trade/hs/": 2048 * _KB,  # 84장(기계 — HS6 가 많다) 1.11 MB(2026-10-21) — 1 MB 는 [제안]이었다
     "trade/country/": 1024 * _KB,
     "trade/region/": 200 * _KB,
     "trade/stock/": 100 * _KB,

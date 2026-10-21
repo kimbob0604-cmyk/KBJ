@@ -526,7 +526,8 @@ def test_p6_caps_match_trade_yaml() -> None:
         assert FILE_CAPS[f"trade/{n}.json"] == pe.file_cap_kb * kb, n
     assert PREFIX_CAPS["trade/region/"] == pe.region_cap_kb * kb
     assert PREFIX_CAPS["trade/stock/"] == pe.stock_cap_kb * kb
-    assert PREFIX_CAPS["trade/hs/"] == PREFIX_CAPS["trade/country/"] == pe.file_cap_kb * kb
+    assert PREFIX_CAPS["trade/country/"] == pe.file_cap_kb * kb
+    assert PREFIX_CAPS["trade/hs/"] == pe.hs_cap_kb * kb  # 84장 1.11 MB(2026-10-21)
     assert file_cap("trade/stock/000660.json") == pe.stock_cap_kb * kb
     assert file_cap("trade/unknown.json") is None and file_cap("credit.json") == 100 * kb
 
