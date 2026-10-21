@@ -36,7 +36,7 @@ import threading
 from collections.abc import Callable, Iterable, Sequence
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from kbj.config.files import config_path
 from kbj.config.settings import Settings
@@ -56,6 +56,9 @@ from kbj.services.scheduler.registry import (
     budgets_from_limits,
     migration_tables,
 )
+
+if TYPE_CHECKING:
+    from kbj.services.scheduler.runner import RunEvent
 
 SERVICE = "scheduler"
 log = logging.getLogger("kbj.services.scheduler")
@@ -327,6 +330,21 @@ def rebuild_alltime_fn(settings: Settings, job: str) -> Callable[[], int] | None
     return run
 
 
+def event_lines(ev: RunEvent) -> list[str]:
+    """run-once 가 찍는 줄 — 실패·재시도·시한 초과면 사유(기록 detail 의 reason — 이미 가린 문구)와
+    처리기가 남긴 첫 문제 몇 줄(`public_first` — 매핑표 검증)을 붙인다. 사유 없이 '실패'만 보여
+    로그를 따로 뒤져야 하던 것(2026-10-22 fill-trade)."""
+    head = f"{ev.kind} {ev.job} {ev.as_of} 시도 {ev.attempt}"
+    if ev.kind not in ("failed", "retry", "timeout"):
+        return [head]
+    reason = str(ev.detail.get("reason", "") or "")
+    out = [f"{head} — {reason}" if reason else head]
+    first = ev.detail.get("public_first")
+    if isinstance(first, list | tuple):
+        out += [f"  · {x}" for x in first]  # pyright: ignore[reportUnknownVariableType]
+    return out
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="python -m kbj.services.scheduler")
     sub = p.add_subparsers(dest="cmd")
@@ -400,7 +418,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 print(f"오류: {e}")
                 return 1
             for ev in events:
-                print(f"{ev.kind} {ev.job} {ev.as_of} 시도 {ev.attempt}")
+                for line in event_lines(ev):
+                    print(line)
             return 0 if all(ev.kind not in ("failed", "timeout") for ev in events) else 1
         finally:
             close()

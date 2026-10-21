@@ -34,7 +34,10 @@
   데이터셋마다 부르고, 창 안의 달이 그 표에 이미 다 있으면 건너뛴다(선점 키 = 창의 달들 — 다음 날
   다시 돌리면 이어서 받는다). 부르기 전에 그 창의 예상 호출 수를 더해 데이터셋 하루 한도
   (`limits.yaml datago.daily_cap_per_dataset`) × `backfill.stop_at_ratio` 를 넘으면 그 데이터셋은
-  멈춘다(다른 데이터셋은 계속).
+  멈춘다(다른 데이터셋은 계속). 포털 게이트웨이가 한도 초과로 끊어도(`DatagoQuotaExceeded`) 같은
+  멈춤(종료 0 — 내일 다시). 호출·형식 오류(`FetchError`·`CustomsFormatError`·리미터 대기 초과)는
+  그 데이터셋만 **실패**로 멈추고(받은 창은 남는다 — 다른 데이터셋은 계속) 사유를 한 줄로 내며
+  종료 코드 1(2026-10-22: 시군구 첫 실호출의 오류가 트레이스백으로만 나와 무엇이 실패했는지 몰랐다).
 
 공개 작업(계약 ⑭ 방식): 로그인 원천·저장소를 import 하지 않는다 — 저장소는 `kbj.store.repos.trade`.
 텔레그램은 보내지 않는다(16:00 `brief.closing` 한 줄 — D-P6-8, ADR 0018).
@@ -77,7 +80,7 @@ from kbj.core.trade_rows import (
     TenDayRow,
 )
 from kbj.data.budget import BudgetExhausted
-from kbj.data.datago import DatagoTransport
+from kbj.data.datago import DatagoQuotaExceeded, DatagoTransport
 from kbj.data.http import FetchError
 from kbj.data.public.customs.client import (
     COUNTRIES,
@@ -99,6 +102,7 @@ from kbj.data.public.customs.models import (
     TradeRow,
 )
 from kbj.data.public.customs.models import TenDayRow as RawTenDay
+from kbj.data.ratelimit import RateLimitTimeout
 from kbj.data.spec import DataKey
 from kbj.services.collectors.macro import REASON_MAX, KeyRun, NotConfigured, NotReady
 from kbj.services.scheduler.handlers import JobContext, JobResult
@@ -680,16 +684,19 @@ class BackfillReport:
     done: dict[str, list[str]] = field(default_factory=dict[str, list[str]])
     skipped: dict[str, list[str]] = field(default_factory=dict[str, list[str]])
     stopped: dict[str, str] = field(default_factory=dict[str, str])
+    failed: dict[str, str] = field(default_factory=dict[str, str])  # 호출·형식 오류 — 종료 1
     rows: int = 0
 
     def lines(self) -> list[str]:
         out: list[str] = []
         for ds in MONTHLY_ORDER:
-            if ds not in self.done and ds not in self.skipped and ds not in self.stopped:
+            if not any(ds in m for m in (self.done, self.skipped, self.stopped, self.failed)):
                 continue  # 고르지 않은 데이터셋(--datasets)은 줄을 내지 않는다
             d = len(self.done.get(ds, []))
             s = len(self.skipped.get(ds, []))
             tail = f" · 멈춤: {self.stopped[ds]}" if ds in self.stopped else ""
+            if ds in self.failed:
+                tail += f" · 실패: {self.failed[ds]}"
             out.append(f"{SOURCE}:{ds} 받은 창 {d} · 이미 있음 {s}{tail}")
         out.append(f"쓴 행 {self.rows}")
         return out
@@ -798,6 +805,15 @@ def backfill(
             except BudgetExhausted as e:
                 rep.stopped[ds] = f"{label} 일 예산 닫힘: {e}"[:REASON_MAX]
                 break
+            except DatagoQuotaExceeded as e:  # 포털이 그날 한도로 끊었다 — 예산 닫힘과 같다
+                rep.stopped[ds] = f"{label} 포털 한도 초과: {e.reason} — 내일 다시"[:REASON_MAX]
+                break
+            except (FetchError, CustomsFormatError, RateLimitTimeout) as e:
+                why = str(e)
+                if isinstance(e, FetchError):  # 키는 이미 가렸다 — 상태 코드는 원인을 가른다
+                    why = e.reason if e.status is None else f"HTTP {e.status} {e.reason}"
+                rep.failed[ds] = f"{label} {type(e).__name__}: {why}"[:REASON_MAX]
+                break
             rep.rows += n
             rep.done.setdefault(ds, []).append(label)
     return rep
@@ -869,7 +885,8 @@ def main(
     )
     for line in rep.lines():
         o.write(line + "\n")
-    return 0  # 한도에서 멈춘 것은 실패가 아니다 — 내일 다시 실행하면 이어 받는다
+    # 한도에서 멈춘 것은 실패가 아니다 — 내일 다시 실행하면 이어 받는다. 호출·형식 오류만 1
+    return 1 if rep.failed else 0
 
 
 if __name__ == "__main__":  # pragma: no cover

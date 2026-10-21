@@ -920,3 +920,23 @@ def test_run_once_force_reruns_a_finished_as_of() -> None:
     forced = run("brief.closing", rig.now, as_of="2026-10-06", ignore_deps=True, force=True)
     assert [e.kind for e in forced] == ["started", "ok"] and len(briefs) == 2
     assert forced[-1].attempt == first[-1].attempt + 1
+
+
+def test_run_once_lines_carry_the_failure_reason() -> None:
+    # 2026-10-22 fill-trade: run-once 가 'failed … 시도 2' 만 찍어 무엇이 실패했는지 몰랐다
+    from kbj.services.scheduler.__main__ import event_lines
+
+    at = datetime(2026, 10, 21, 22, 0, tzinfo=UTC)
+    ok = RunEvent("ok", "trade.map_load", "2026-10-22", at, 2, {"rows": 3})
+    assert event_lines(ok) == ["ok trade.map_load 2026-10-22 시도 2"]
+    detail = {
+        "reason": "매핑표 검증 실패 — 옛 판 유지",
+        "public_first": ["000000 region_missing KR-99-x"],
+    }
+    bad = RunEvent("failed", "trade.map_load", "2026-10-22", at, 2, detail)
+    assert event_lines(bad) == [
+        "failed trade.map_load 2026-10-22 시도 2 — 매핑표 검증 실패 — 옛 판 유지",
+        "  · 000000 region_missing KR-99-x",
+    ]
+    bare = RunEvent("timeout", "trade.map_load", "2026-10-22", at, 1)
+    assert event_lines(bare) == ["timeout trade.map_load 2026-10-22 시도 1"]

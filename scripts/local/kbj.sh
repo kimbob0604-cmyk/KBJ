@@ -346,17 +346,22 @@ month_ago() { date -v-"$1"m +%Y-%m 2>/dev/null || date -d "$1 months ago" +%Y-%m
 # 수출입 '종목' 탭(P10) — 매핑표를 다시 싣고, 매핑 HS6 의 시군구 5년치를 받고(새로 매핑한 품목은 과거가 비어 있다),
 # 종목 수출 지수를 다시 계산한다. 시군구 백필은 공공데이터 하루 한도의 90% 에서 멈춘다 — 끝나지 않으면 다음 날 다시
 cmd_fill_trade() {
-  local from to rc=0
+  local from to rc=0 failed=""
   kbj_env_has KBJ_DATAGO_KEY || kbj_die "KBJ_DATAGO_KEY 가 비었다 — $(kbj_cmd keys) KBJ_DATAGO_KEY 로 넣고 $(kbj_cmd start) 를 다시"
   require_scheduler
   from="$(month_ago 60)"; to="$(month_ago 1)"
-  kbj_step "매핑표 다시 싣기(trade.map_load)"
-  cmd_job trade.map_load --force || rc=1  # 오늘 07:35 에 옛 매핑표로 이미 돌았어도 다시 싣는다
-  kbj_step "시군구 × HS6 백필 $from ~ $to (매핑표 품목만)"
-  kbj_compose exec -T scheduler python -m kbj.services.collectors.customs backfill --from "$from" --to "$to" --datasets 15134343 || rc=1
-  kbj_step "종목 수출 지수 다시 계산(trade.stock_index)"
-  cmd_job trade.stock_index --no-deps --force || rc=1
-  if (( rc == 0 )); then kbj_ok "끝 — 브라우저 7번 '수출입' → '종목' 탭"; else kbj_warn "일부 단계가 실패했다 — 위 줄을 본다. 백필이 '한도 앞에서 멈춤' 이면 내일 같은 명령을 다시"; fi
+  kbj_step "1/3 매핑표 다시 싣기(trade.map_load)"
+  cmd_job trade.map_load --force || { rc=1; failed="$failed map_load"; }  # 오늘 07:35 에 옛 매핑표로 이미 돌았어도 다시 싣는다
+  kbj_step "2/3 시군구 × HS6 백필 $from ~ $to (매핑표 품목만)"
+  kbj_compose exec -T scheduler python -m kbj.services.collectors.customs backfill --from "$from" --to "$to" --datasets 15134343 \
+    || { rc=1; failed="$failed 시군구백필"; }
+  kbj_step "3/3 종목 수출 지수 다시 계산(trade.stock_index)"
+  cmd_job trade.stock_index --no-deps --force || { rc=1; failed="$failed stock_index"; }
+  if (( rc == 0 )); then
+    kbj_ok "끝 — 브라우저 7번 '수출입' → '종목' 탭"
+  else
+    kbj_warn "실패한 단계:$failed — 그 단계의 'failed …'·'실패:'·Traceback 줄을 본다. 백필이 '멈춤: … 한도' 면 실패가 아니다(내일 같은 명령을 다시)"
+  fi
   return "$rc"
 }
 

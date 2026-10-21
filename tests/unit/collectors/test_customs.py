@@ -400,3 +400,42 @@ def test_backfill_cli_with_injected_deps() -> None:
     assert code == 0 and "DATAGO:15101609 받은 창 1" in buf.getvalue()
     assert {r.ym for r in rig.repo.item_monthly()} == {"2026-09", "2026-10"}
     assert all(r.hs.startswith("85") for r in rig.repo.item_monthly())
+
+
+def _cli_deps(rig: Rig) -> dict[str, Any]:
+    return {
+        "repo": rig.repo,
+        "client": rig.client,
+        "cap": 9500,
+        "used": lambda ds: 0,
+        "now": rig.clock,
+        "cfg": CFG,
+        "maps": [rig.world.trade_map()],
+        "regions": rig.world.trade_regions(),
+        "chapters": HsChapters(version=1, chapters={"85": "가상"}),
+    }
+
+
+def test_backfill_cli_call_error_fails_that_dataset_with_a_reason() -> None:
+    # 2026-10-22 fill-trade: 시군구 첫 실호출의 오류가 트레이스백으로 끝나 무엇이 실패했는지 몰랐다
+    rig = Rig(kst(2026, 11, 20, 9, 0))
+    rig.fake.inject("30", 10_000, path_part="getSigunguPerPrlstPerAcrs")  # 활용신청 없는 키
+    buf = io.StringIO()
+    code = C.main(["backfill", "--from", "2026-09", "--to", "2026-10", "--datasets",
+                   "15101612", "15134343"], out=buf, build=lambda: _cli_deps(rig))  # fmt: skip
+    out = buf.getvalue()
+    assert code == 1
+    assert "DATAGO:15101612 받은 창 1" in out  # 다른 데이터셋은 계속
+    line = next(x for x in out.splitlines() if x.startswith("DATAGO:15134343"))
+    assert "받은 창 0" in line and "실패: 2026-09~2026-10 DatagoKeyError" in line
+    assert rig.repo.sigungu_monthly() == []
+
+
+def test_backfill_cli_portal_quota_stops_like_the_budget() -> None:
+    rig = Rig(kst(2026, 11, 20, 9, 0))
+    rig.fake.inject("22", path_part="getSigunguPerPrlstPerAcrs")  # 포털 일 한도 초과
+    buf = io.StringIO()
+    code = C.main(["backfill", "--from", "2026-09", "--to", "2026-10", "--datasets",
+                   "15134343"], out=buf, build=lambda: _cli_deps(rig))  # fmt: skip
+    out = buf.getvalue()
+    assert code == 0 and "멈춤: 2026-09~2026-10 포털 한도 초과" in out and "실패" not in out
