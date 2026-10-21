@@ -8,8 +8,8 @@
 
 1. **하트비트 끊김**: 등록부의 켜진 상시 서비스(`services`, heartbeat_s 가 있는 것)의 하트비트가
    없거나   heartbeat_s 보다 오래됐다.
-2. **놓친 실행**: 켜진 cron 작업의 오늘 마지막 예정 시각이 `GRACE_MIN` 분 넘게 지났는데 그 as_of 의
-   실행 기록이 없다(scheduler 가 멈췄던 경우).
+2. **놓친 실행**: 켜진 cron 작업(워치독 자신 제외)의 오늘 마지막 예정 시각이 `GRACE_MIN` 분
+   넘게 지났는데 그 as_of 의 실행 기록이 없다(scheduler 가 멈췄던 경우).
 3. **마감 지난 실행**: `running` 기록이 시작 + deadline_min 을 넘겼다(실행기가 timeout 으로 바꾸지
    못한 경우 — 예: scheduler 재기동으로 진행 목록을 잃음).
 
@@ -55,7 +55,9 @@ def _missed(
     out: list[Problem] = []
     for job in registry.enabled_jobs():
         spec = job.schedule.cron_spec()
-        if spec is None or job.external:
+        # 워치독 자신은 뺀다 — 지금 돌고 있으면 scheduler 는 살아 있고, 재기동 사이 빠진 5분 한 칸은
+        # 손쓸 일이 없다(같은 공백은 하루 한 번 도는 작업들의 놓친 실행으로 드러난다)
+        if spec is None or job.external or job.name == KIND:
             continue
         local = (now - timedelta(minutes=GRACE_MIN)).astimezone(job.schedule.zone)
         due = spec.prev_at_or_before(local)

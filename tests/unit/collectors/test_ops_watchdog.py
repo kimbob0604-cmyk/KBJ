@@ -170,6 +170,15 @@ def test_finds_dead_heartbeat_missed_run_and_overdue_running() -> None:
     assert result.status == "ok" and result.detail["problems"] == 4
 
 
+def test_watchdog_does_not_report_its_own_missed_slot() -> None:
+    runs = seeded_runs()
+    for key in [k for k, r in runs.records.items() if r.job == "ops.watchdog"]:
+        runs.records.pop(key)  # 재기동 사이 워치독 5분 회차가 빠졌다
+    notes = Notes()
+    wd.run(ctx(notes, runs))
+    assert not [n for n in notes.sent if n["subject"].startswith("missed:ops.watchdog")]
+
+
 def test_holiday_has_no_missed_trading_day_runs() -> None:
     hol = datetime(2026, 10, 5, 12, 0, tzinfo=KST)  # 대체공휴일
     runs = MemoryRunLog()

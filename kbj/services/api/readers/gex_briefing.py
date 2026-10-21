@@ -5,8 +5,8 @@
 문장은 규칙 템플릿, LLM 아님). 이 리더는 저장소에서 꺼내 엔진에 넘기고 봉투를 씌운다.
 
 - 행사가 막대는 `/api/gex/profile` 과 같은 사이클·같은 범위(그 응답을 그대로 쓴다). 콜월·풋월은
-  엔진 값을 쓰되 현재가 반대편(풋월이 현재가 위 등)이면 행사가 표(만기 합산)에서 그쪽으로 다시
-  고르고 notes 에 적는다.
+  그 막대(만기 합산)에서 현재가 위 콜 감마 최대·아래 풋 감마 최대 — 화면 막대와 어긋나지 않게
+  (실데이터 10/21: 엔진 풋월 950·850 이 막대의 880 과 달랐다). 엔진과 다르면 notes 에 적는다.
 - 1일 예상폭은 ATM IV × √(1/252)(엔진 값은 남은 장 시간 기준이라 마감 뒤 0 에 가깝다 — IV 가 없을
   때만 쓴다).
 - '평소 대비': 최근 `AVG_DAYS` 세션의 세션 마지막 순GEX 절댓값 평균(오늘 제외).
@@ -55,7 +55,7 @@ MIN_PAIRS: Final = 3  # 콜·풋 가격이 다 있는 행사가가 이보다 적
 SPREAD_ABS: Final = 0.5  # pt — 호가 폭이 이것과 중간값×SPREAD_REL 중 큰 값을 넘으면 현재가를 쓴다
 SPREAD_REL: Final = 0.3
 CLS_LABEL: Final = {"": "월물", "M": "월물", "WKM": "위클리(월)", "WKI": "위클리(목)"}
-WALL_NOTE: Final = "엔진 벽이 현재가 반대편이라 행사가 표(만기 합산)에서 다시 골랐다: "
+WALL_NOTE: Final = "벽은 행사가 막대(만기 합산) 기준 — 'GEX 레벨' 패널(엔진 범위 기준)과 다름: "
 STRATEGY_NOTE: Final = (
     "옵션 포지셔닝은 만기 손익(pt × 승수, 수수료·증거금·세금 제외) — 매매 권유 아님"
 )
@@ -144,10 +144,8 @@ def gex_briefing(ctx: ReadContext, *, scope: GexScopeT) -> Envelope[GexBriefing]
     net = vs = None
     levels: list[GexKeyLevel] = []
     if p.price is not None and rows:
-        # 엔진 벽이 제자리(콜월 ≥ 현재가 ≥ 풋월)면 그대로, 반대편이면 행사가 표에서 다시 고른다
-        tcw, tpw = table_walls(rows, p.price)
-        cw = p.call_wall if p.call_wall is not None and p.call_wall >= p.price else tcw
-        pw = p.put_wall if p.put_wall is not None and p.put_wall <= p.price else tpw
+        # 벽은 화면 막대(행사가 표)와 같은 기준 — 현재가 위 콜 감마 최대·아래 풋 감마 최대
+        cw, pw = table_walls(rows, p.price)
         moved = [f"{name} {_pt(a)}→{_pt(b)}" for name, a, b in
                  (("콜월", p.call_wall, cw), ("풋월", p.put_wall, pw))
                  if a is not None and b is not None and a != b]  # fmt: skip
