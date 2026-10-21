@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import importlib.util
+import re
 from decimal import Decimal
 from types import ModuleType
 
@@ -146,6 +147,15 @@ def test_sigungu_parses_comma_strings_and_keeps_requested_sido() -> None:
     )
     assert r.exp_usd is not None and r.imp_usd is not None and r.balance_usd is not None
     assert r.exp_usd == r.imp_usd + r.balance_usd
+
+
+def test_sigungu_without_item_name_column() -> None:
+    """2026-10-22 맥 실측: 실제 응답엔 korePrlstNm(품목 한글명) 열이 없다 — 이름 없이 받는다."""
+    body = re.sub(r"<korePrlstNm>[^<]*</korePrlstNm>", "", synth("customs_sigungu.xml"))
+    assert "korePrlstNm" not in body
+    c, _server = _client(body)
+    rows = c.sigungu("202607", "202608", "41", "330499")
+    assert len(rows) == 4 and all(r.item_name is None and r.exp_usd is not None for r in rows)
 
 
 def test_sigungu_refuses_sido_codes_outside_their_reform_window() -> None:

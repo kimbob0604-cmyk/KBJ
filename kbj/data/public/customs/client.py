@@ -202,11 +202,12 @@ class CustomsClient:
             "sidoCd": sido,
         }
         rows = self._rows(SIGUNGU, params)
+        # korePrlstNm(품목 한글명)은 실제 응답에 없다(2026-10-22 맥 실측 — 문서엔 있음). 이름은
+        # hs_dim(품목별 표)에서 붙으므로 선택 열로 둔다
         need = (
             "priodTitle",
             "sggNm",
             "hsSgn",
-            "korePrlstNm",
             "expCnt",
             "expUsdAmt",
             "impCnt",
@@ -224,7 +225,7 @@ class CustomsClient:
                         sido=sido,
                         sigungu_name=str(r["sggNm"]).strip(),
                         hs6=normalize_hs(r["hsSgn"]),
-                        item_name=_text(r["korePrlstNm"]),
+                        item_name=_text(r.get("korePrlstNm")),
                         exp_count=parse_amount(r["expCnt"]),
                         exp_usd=parse_amount(r["expUsdAmt"]),
                         imp_count=parse_amount(r["impCnt"]),
