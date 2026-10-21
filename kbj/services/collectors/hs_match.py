@@ -75,15 +75,16 @@ class Result:
     err: float | None = None
     alts: list[tuple[str, ...]] = field(default_factory=list)
     note: str = ""
+    live: tuple[str, ...] = ()  # 값 있는 계열 코드(줄여 찍기용)
 
     def line(self) -> str:
         e = "" if self.err is None else f" err={self.err * 100:.2f}%"
         if self.status == "match":
             alt = f" alt={len(self.alts)}" if self.alts else ""
-            more = "".join(f" | {'+'.join(a)}" for a in self.alts)
-            return f"{self.rid} match {'+'.join(self.codes)}{e}{alt}{more}"
+            more = "".join(f" | {_short(a, self.live)}" for a in self.alts)
+            return f"{self.rid} match {_short(self.codes, self.live)}{e}{alt}{more}"
         if self.status == "nomatch":
-            best = "+".join(self.codes) or "-"
+            best = _short(self.codes, self.live) or "-"
             return f"{self.rid} nomatch best={best}{e} {self.note}".rstrip()
         return f"{self.rid} {self.status} {self.note}".rstrip()
 
@@ -128,6 +129,39 @@ def find_subsets(series: Series, want: Mapping[str, float]) -> list[tuple[str, .
 
     walk(0, [0.0] * len(months), [])
     return out
+
+
+def _prefix_groups(series: Series, want: Mapping[str, float]) -> list[tuple[str, ...]]:
+    """접두(4·6·8자리)가 같은 계열 전부의 합이 맞는 경우 — 품목이 소호·호 전체일 때."""
+    months = sorted(want)
+    need = len(months) - 1 if len(months) > 2 else len(months)
+    live = [c for c, s in series.items() if any(s.get(m, 0.0) for m in months)]
+    out: list[tuple[str, ...]] = []
+    for n in (4, 6, 8):
+        groups: dict[str, list[str]] = {}
+        for c in live:
+            if len(c) > n:
+                groups.setdefault(c[:n], []).append(c)
+        for cs in groups.values():
+            tot = [sum(series[c].get(m, 0.0) for c in cs) for m in months]
+            if (
+                len(cs) > 1
+                and sum(_ok(a, want[m]) for a, m in zip(tot, months, strict=True)) >= need
+            ):
+                out.append(tuple(sorted(cs)))
+    return out
+
+
+def _short(codes: Sequence[str], live: Sequence[str]) -> str:
+    """어떤 접두의 값 있는 코드 전부(넷 이상)면 '접두*', 아니면 전부 적는다."""
+    if len(codes) > 3:
+        pre = codes[0]
+        for c in codes[1:]:
+            while not c.startswith(pre):
+                pre = pre[:-1]
+        if set(codes) == {c for c in live if c.startswith(pre)}:
+            return f"{pre}*"
+    return "+".join(codes)
 
 
 def _best(series: Series, want: Mapping[str, float]) -> tuple[tuple[str, ...], float] | None:
@@ -189,14 +223,17 @@ def match_target(t: Target, src: Source) -> Result:
     series = {c: {m: v for m, v in s.items() if m in t.months} for c, s in series.items()}
     if not any(any(s.values()) for s in series.values()):
         return Result(t.rid, "no_data", note=f"후보 {len(t.candidates)}개 — 값 없음")
-    sols = find_subsets(series, t.months)
+    sols = _prefix_groups(series, t.months) + find_subsets(series, t.months)
+    sols = list(dict.fromkeys(sols))
     if sols:
 
         def total(cs: Sequence[str]) -> dict[str, float]:
             return {m: sum(series[c].get(m, 0.0) for c in cs) for m in t.months}
 
         ranked = sorted(sols, key=lambda cs: (_err(total(cs), t.months), len(cs)))
-        return Result(t.rid, "match", ranked[0], _err(total(ranked[0]), t.months), ranked[1:])
+        live = tuple(sorted(c for c, v in series.items() if any(v.values())))
+        best = ranked[0]
+        return Result(t.rid, "match", best, _err(total(best), t.months), ranked[1:], live=live)
     b = _best(series, t.months)
     if b is None:
         return Result(t.rid, "no_data")

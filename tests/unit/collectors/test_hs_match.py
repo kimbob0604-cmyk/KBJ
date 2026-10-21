@@ -132,3 +132,11 @@ def test_main_lines_without_amounts():
 def test_main_bad_input():
     out = io.StringIO()
     assert main([], inp=io.StringIO("{}"), out=out, source=lambda: FakeSource({})) == 2
+
+
+def test_whole_prefix_group_is_short():
+    many: Series = {f"870899{i:04d}": s(100.0, 100.0, 100.0) for i in range(12)}
+    src = FakeSource(many)
+    r = match_target(Target("R6", "exp", "national", s(1200.0, 1200.0, 1200.0), ("8708",)), src)
+    assert r.status == "match" and len(r.codes) == 12
+    assert r.line() == "R6 match 87089900* err=0.00%"
