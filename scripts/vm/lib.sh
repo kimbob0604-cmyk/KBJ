@@ -301,23 +301,56 @@ kbj_bring_up() {
   kbj_db_roles
   kbj_step "작업 등록부 검증"
   kbj_compose run --rm --no-deps scheduler python -m kbj.services.scheduler validate || kbj_die "등록부 검증 실패"
-  kbj_step "모든 서비스 기동(gex-poller 는 등록부에서 꺼져 있어 runbook ④ 전까지 띄우지 않는다)"
+  if kbj_gex_poller_on; then
+    kbj_step "모든 서비스 기동(gex-poller 포함 — 등록부 gex.poller 켜짐)"
+  else
+    kbj_step "모든 서비스 기동(gex-poller 는 등록부에서 꺼져 있어 runbook ④ 전까지 띄우지 않는다)"
+  fi
   local svcs=() svc
   while IFS= read -r svc; do   # mapfile 은 bash 4+ — Mac 기본 bash 3.2 에서도 돌게 한다
     [[ -n "$svc" ]] && svcs+=("$svc")
   done < <(kbj_app_services)
   kbj_compose up -d --remove-orphans ${svcs[@]+"${svcs[@]}"} || kbj_die "기동 실패"
   kbj_wait_healthy 300 || true
+  kbj_gex_master
 }
 
-# gex-poller 는 GX → KBJ 전환(runbook ④) 전까지 띄우지 않는다 — 등록부 config/jobs.yaml services 의 gex.poller 를 따른다
+# 등록부 config/jobs.yaml services 의 gex.poller 가 enabled: true 인가(0 = 켜짐)
+kbj_gex_poller_on() {
+  awk '/^  - name: gex\.poller$/{f=1; next} f && /^  - /{f=0} f && /^ +enabled: true/{on=1} END{exit !on}' \
+    "$KBJ_ROOT/config/jobs.yaml" 2>/dev/null
+}
+
+# gex-poller 는 GX → KBJ 전환(runbook ④) 전까지 띄우지 않는다 — 등록부의 gex.poller 를 따른다(2026-10-20 부터 켜짐)
 kbj_app_services() {
   local svcs
   svcs="$(kbj_compose config --services 2>/dev/null)" || return 0
-  if awk '/^  - name: gex\.poller$/{f=1; next} f && /^  - /{f=0} f && /^ +enabled: true/{on=1} END{exit !on}' \
-    "$KBJ_ROOT/config/jobs.yaml" 2>/dev/null; then
+  if kbj_gex_poller_on; then
     printf '%s\n' "$svcs" | grep -vx migrate
   else
     printf '%s\n' "$svcs" | grep -vx -e migrate -e gex-poller
   fi
+}
+
+# GEX 옵션 마스터(Redis kis:master)가 없으면 한 번 받는다(runbook ④-5·⑧). kis.master 는 PRE_DAY 진입 때만 돌고
+# 상태 진입 작업은 기동 때 발화하지 않는다 — 장중·주말에 처음 띄운 스택은 다음 거래일 아침까지 마스터가 비어
+# gex-poller 가 체인을 하나도 부르지 못한다(하트비트는 살아 healthy 로 보이고, 페이지 3 GEX 가 멈춘다).
+# 있는지만 본다(redis-cli exists — 비밀번호는 컨테이너 환경에서 읽고 화면에 내지 않는다). 휴장일이면 받지 못해도 된다.
+kbj_gex_master() {
+  kbj_gex_poller_on || return 0
+  local have
+  # shellcheck disable=SC2016  # $KBJ_REDIS_PASSWORD 는 redis 컨테이너 안에서 푼다
+  have="$(kbj_compose exec -T redis sh -c 'REDISCLI_AUTH="$KBJ_REDIS_PASSWORD" redis-cli exists kis:master:sha' 2>/dev/null \
+    | tr -d '[:space:]')" || have=""
+  case "$have" in
+    1) kbj_ok "GEX 옵션 마스터 있음(kis:master)" ;;
+    0)
+      kbj_step "GEX 옵션 마스터 받기(kis.master 한 번 — 없으면 gex-poller 가 체인을 부르지 못한다)"
+      if kbj_compose exec -T scheduler python -m kbj.services.scheduler run-once kis.master; then
+        kbj_ok "kis.master 실행 — gex-poller 가 1분 안에 마스터를 읽는다(로그 master_loaded)"
+      else
+        kbj_warn "kis.master 를 받지 못했다(휴장일이면 정상 — 다음 거래일 아침 PRE_DAY 에 저절로 받는다). $(kbj_cmd status) --logs scheduler"
+      fi ;;
+    *) kbj_warn "GEX 옵션 마스터 확인 실패(redis) — $(kbj_cmd status) --logs redis" ;;
+  esac
 }

@@ -55,7 +55,9 @@ docker compose --profile app ps                        # 모두 healthy(하트�
 - VM 에서 runbook 의 `docker compose --profile app …` 명령을 칠 때는 `-f docker-compose.yml -f docker-compose.vm.yml` 을
   붙인다(caddy 포함). 한 번짜리 명령(`exec`·`run`)은 붙이지 않아도 같다.
 - `gex-poller` 와 GX 수집 작업 다섯(`gex.day_minutes`·`gex.night_minutes`·`gex.krx_derivatives`·`kis.master`·
-  `kis.master_night`·개장 확인 둘)은 등록부에서 **꺼져 있다**(§11 Q2 — 옛 GX 와 동시 실행 금지, §9 R2). ④ 에서 켠다.
+  `kis.master_night`·개장 확인 둘)은 처음엔 등록부에서 꺼져 있었다(§11 Q2 — 옛 GX 와 동시 실행 금지, §9 R2). 2026-10-20
+  사용자 요청으로 켰다(④ 의 4 가 끝난 상태) — 옛 GX 는 돌리지 않는다. start.sh·`kbj.sh start` 는 등록부를 따라
+  `gex-poller` 를 띄우고, Redis `kis:master` 가 없으면 ④-5 의 `run-once kis.master` 를 한 번 한다.
 - 첫 기동 뒤 바로 `python -m kbj.services.ops check`(⑤)로 하트비트·작업 기록을 본다.
 
 ## ④ GX → KBJ 전환 [사용자 — 주말, 장이 닫힌 시간]

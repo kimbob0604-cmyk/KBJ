@@ -867,9 +867,22 @@ svg text.warn {
   font-family: var(--mono);
   font-variant-numeric: tabular-nums;
 }
-.ladder svg text,
 .profile svg text {
   font-size: 10px;
+}
+/* 사다리는 viewBox(300) 이상으로 넓히지 않는다 — 반폭 패널에서 글자가 두세 배로 커지지 않게. 글자 9(줄 간격 12 —
+   ui/ladder.ts LABEL_GAP) */
+.ladder .ladder-svg {
+  max-width: 300px;
+}
+.ladder svg text {
+  font-size: 9px;
+}
+/* 페이지 3 GEX 패널 머리 원천 줄(긴 엔진 출처 · 시각 · 품질) — 반폭에서 제목과 붙지 않게 한 단계 작게 */
+.panel.gex h3 .src {
+  font-size: 9px;
+  letter-spacing: 0;
+  line-height: 1.5;
 }
 /* P8 공용 부품(ui/form·heatmap — docs/p8_design.md D-P8-23). 기존 토큰만(테마 5종), 좁은 폭은 줄바꿈 — 가로 넘침 없음 */
 .form-row {

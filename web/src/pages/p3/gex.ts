@@ -8,6 +8,9 @@
 //   '마지막 세션 — <시각>'. 야간 투자자별은 '수집 안 함(야간)'(D-P7-6).
 // - 데이터 키: API 'gex/levels'·'gex/profile'(scope)·'gex/metrics'(name)·'gex/flow'. 아직 없음(404)은 '.msg',
 //   그 밖 실패만 '.msg.err'(삼키지 않는다). 한 패널의 실패는 그 패널 안에서만(절대 규칙 4).
+// - 실시간: GEX_REFRESH_MS(30초 — API 캐시 장중 TTL 과 같다)마다 지금 범위의 브리핑·레벨·프로필과 확장 지표를 다시
+//   읽는다(범위 캐시는 그때 비운다). 탭이 안 보이면 주기 실행기가 멈추고, 다시 보이면 바로 한 번(app/refresh.ts).
+//   2026-10-22 사용자 '3번 진단 페이지가 실시간 업데이트가 안 된다' — 전에는 처음 한 번만 읽었다.
 import type { components } from '../../api/types.gen';
 import type { PageContext } from '../../app/types';
 import { DataError, type Envelope } from '../../data/source';
@@ -29,6 +32,8 @@ export type GexScope = GexLevels['scope'];
 type Level = GexLevels['levels'][number];
 
 export const GEX_SOURCE = 'KBJ GEX 엔진(KIS 옵션 체인·웹소켓)';
+/** 다시 읽는 주기 — 엔진 사이클(chain.ready·10초 따라잡기)보다 길고 API 캐시 장중 TTL(30초)과 같다 */
+export const GEX_REFRESH_MS = 30_000;
 export const GEX_HINT = 'gex.engine 장중 사이클';
 /** 섀도 지표 자리 문구(§10 Q3) */
 export const SHADOW_TEXT = '섀도 검증 중';
@@ -241,6 +246,8 @@ export function gexPanels(ctx: PageContext): { brief: Panel; prof: Panel; lvls: 
   const prof = panel(ctx.tier, { ...common, title: TITLES.profile, span: 6, def: PROFILE_DEF });
   const lvls = panel(ctx.tier, { ...common, title: TITLES.levels, span: 6, def: LEVELS_DEF });
   const ext = panel(ctx.tier, { ...common, title: TITLES.ext, span: 12, def: EXT_DEF });
+  // 머리 원천 줄이 반폭 패널에서 제목과 붙지 않게 작은 글씨(components.css .panel.gex)
+  for (const p of [brief, prof, lvls, ext]) p.el.classList.add('gex');
   ctx.root.append(brief.el, prof.el, lvls.el, ext.el);
   return { brief, prof, lvls, ext };
 }
@@ -252,7 +259,16 @@ export async function mountGex(ctx: PageContext): Promise<void> {
   const levelCache = new Map<GexScope, Envelope<GexLevels>>();
   const profileCache = new Map<GexScope, Envelope<GexProfile>>();
   const briefCache = new Map<GexScope, Envelope<GexBriefing>>();
-  const scopes = seg<GexScope>({ label: 'GEX 범위', options: SCOPES, value: 'all', onChange: (v) => void show(v) });
+  let current: GexScope = 'all';
+  const scopes = seg<GexScope>({
+    label: 'GEX 범위',
+    options: SCOPES,
+    value: current,
+    onChange: (v) => {
+      current = v;
+      void show(v);
+    },
+  });
 
   async function show(scope: GexScope): Promise<void> {
     try {
@@ -289,10 +305,29 @@ export async function mountGex(ctx: PageContext): Promise<void> {
     }
   }
 
-  await show('all');
-  try {
-    await drawExt(ctx, ext);
-  } catch (err) {
-    ext.showError(err);
+  async function loadExt(): Promise<void> {
+    try {
+      await drawExt(ctx, ext);
+    } catch (err) {
+      ext.showError(err);
+    }
   }
+
+  await show(current);
+  await loadExt();
+  // 첫 불러오기 중에 앱이 내려갔으면(격자가 문서에서 빠짐) 주기 작업을 걸지 않는다
+  if (!ctx.root.isConnected) return;
+  let busy = false;
+  ctx.every(GEX_REFRESH_MS, () => {
+    if (busy) return; // 앞 회차가 아직이면 건너뛴다(느린 응답이 겹쳐 쌓이지 않게)
+    busy = true;
+    levelCache.clear();
+    profileCache.clear();
+    briefCache.clear();
+    void show(current)
+      .then(loadExt)
+      .finally(() => {
+        busy = false;
+      });
+  });
 }

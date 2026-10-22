@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import {
   barsOf,
   extItem,
+  GEX_REFRESH_MS,
   headState,
   levelText,
   mountGex,
@@ -115,10 +116,64 @@ describe('페이지 3 GEX — 로그인', () => {
   });
 });
 
+describe('페이지 3 GEX — 실시간·머리', () => {
+  it('실시간 — 30초마다 지금 범위의 브리핑·레벨·프로필·확장 지표를 다시 읽고 새 값으로 다시 그린다', async () => {
+    const hz = gexHarness();
+    const { ctx, root, every } = pageCtx(3, 'login', hz.source, { now: () => GEX_NOW });
+    await mountGex(ctx);
+    await flush();
+    expect(every.map((e) => e.ms)).toEqual([GEX_REFRESH_MS]);
+    expect(GEX_REFRESH_MS).toBe(30_000);
+    const lv = panelByTitle(root, TITLES.levels);
+    buttonByText(lv, '0DTE').click();
+    await flush();
+    const before = hz.paths().length;
+    every[0]?.fn();
+    await flush(10);
+    const again = hz.paths().slice(before);
+    expect(again).toEqual(
+      expect.arrayContaining(['gex/briefing?scope=0dte', 'gex/levels?scope=0dte', 'gex/profile?scope=0dte', 'gex/flow']),
+    );
+    expect(again.some((p) => p.startsWith('gex/metrics'))).toBe(true);
+    expect(again.some((p) => p.includes('scope=all'))).toBe(false);
+    expect(text(root)).not.toMatch(/NaN|undefined/);
+  });
+
+  it('다시 읽은 값이 화면에 — 엔진이 새 사이클을 쓰면 콜월이 바뀐다', async () => {
+    const first = gexFixture<Env<GexLevels>>('levels_all');
+    const next = gexFixture<Env<GexLevels>>('levels_all');
+    const call = next.data.levels.find((l) => l.name === 'call_wall');
+    expect(call).toBeDefined();
+    if (call) call.value = 365;
+    let n = 0;
+    const hz = gexHarness({ 'gex/levels': () => json(n++ === 0 ? first : next) });
+    const { ctx, root, every } = pageCtx(3, 'login', hz.source, { now: () => GEX_NOW });
+    await mountGex(ctx);
+    await flush();
+    const callRow = (): string =>
+      [...panelByTitle(root, TITLES.levels).querySelectorAll('.lvl')].map((r) => text(r)).find((r) => r.startsWith('콜월')) ?? '';
+    expect(callRow().endsWith('360.00')).toBe(true);
+    every[0]?.fn();
+    await flush(10);
+    expect(callRow().endsWith('365.00')).toBe(true);
+    expect(text(root)).not.toMatch(/NaN|undefined/);
+  });
+
+  it('머리 원천 줄은 GEX 패널만 작은 글씨 칸(.panel.gex)', async () => {
+    const { root } = await mount('login');
+    for (const t of Object.values(TITLES)) expect(panelByTitle(root, t).classList.contains('gex')).toBe(true);
+  });
+
+});
+
 describe('페이지 3 GEX — 공개', () => {
-  it('공개판은 자물쇠만 — GEX API 0회', async () => {
+  it('공개판은 자물쇠만 — GEX API 0회, 주기 작업도 걸지 않는다', async () => {
     const { hz, root } = await mount('public');
     expect(hz.paths()).toHaveLength(0);
+    const pub = gexHarness();
+    const p = pageCtx(3, 'public', pub.source, { now: () => GEX_NOW });
+    await mountGex(p.ctx);
+    expect(p.every).toHaveLength(0);
     for (const t of Object.values(TITLES)) expect(panelByTitle(root, t).classList.contains('locked')).toBe(true);
   });
 });

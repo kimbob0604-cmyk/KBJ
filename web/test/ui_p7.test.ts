@@ -5,7 +5,7 @@ import type { DataSource } from '../src/data/source';
 import p3, { P3_SECTIONS } from '../src/pages/p3_diag';
 import { SHADOW_TEXT } from '../src/pages/p3/gex';
 import { type GaugeBand, gauge, gaugeLayout } from '../src/ui/gauge';
-import { ladder, ladderLayout } from '../src/ui/ladder';
+import { LABEL_GAP, ladder, ladderLayout, spreadLabels } from '../src/ui/ladder';
 import { profile, profileLayout } from '../src/ui/profile';
 import { pageCtx, panelByTitle } from './pages/support';
 
@@ -79,6 +79,45 @@ describe('ladder — 가격 사다리', () => {
     expect(empty.textContent).toContain('없음: Flip');
     expect(ladderLayout([{ name: '현재가', value: 1 }], 100).rows[0]?.y).toBe(50);
     expect(empty.querySelector('svg')?.hasAttribute('width')).toBe(false);
+  });
+
+  it('가까운 값의 글자는 글자 높이만큼 벌린다 — 눈금은 참 위치, 순서 그대로(2026-10-22 화면: 풋월·Flip·현재가 겹침)', () => {
+    const rungs = [
+      { name: '현재가', value: 868.66 },
+      { name: 'Flip', value: 870.4 },
+      { name: '콜월', value: 885 },
+      { name: '풋월', value: 870 },
+      { name: '+1σ', value: 883.1 },
+      { name: '−1σ', value: 854.22 },
+    ];
+    const lay = ladderLayout(rungs, 180);
+    expect(lay.rows.map((r) => r.names[0])).toEqual(['콜월', '+1σ', 'Flip', '풋월', '현재가', '−1σ']);
+    const ys = lay.rows.map((r) => r.labelY);
+    for (let i = 1; i < ys.length; i += 1) expect((ys[i] ?? 0) - (ys[i - 1] ?? 0)).toBeGreaterThanOrEqual(LABEL_GAP - 1e-9);
+    for (const y of ys) {
+      expect(y).toBeGreaterThanOrEqual(12 - 1e-9);
+      expect(y).toBeLessThanOrEqual(168 + 1e-9);
+    }
+    // 눈금(참 위치)은 값 비율 그대로 — 콜월 맨 위, −1σ 맨 아래
+    expect(lay.rows[0]?.y).toBeCloseTo(12, 6);
+    expect(lay.rows.at(-1)?.y).toBeCloseTo(168, 6);
+    // 떨어진 단(−1σ)은 옮기지 않는다
+    expect(lay.rows.at(-1)?.labelY).toBeCloseTo(168, 6);
+    // 그린 결과 — 옮긴 단만 이음선(양쪽 둘씩), 글자 수는 단마다 둘
+    const el = ladder('GEX 사다리', rungs);
+    const moved = lay.rows.filter((r) => Math.abs(r.labelY - r.y) > 0.5).length;
+    expect(moved).toBeGreaterThan(0);
+    expect(el.querySelectorAll('line.ladder-lead').length).toBe(moved * 2);
+    expect(el.querySelectorAll('svg text').length).toBe(rungs.length * 2);
+  });
+
+  it('겹친 무리는 참 위치 평균에 모은다(한쪽으로만 밀지 않는다), 칸이 모자라면 위부터 순서대로', () => {
+    expect(spreadLabels([50, 50, 50], 10, 0, 100)).toEqual([40, 50, 60]);
+    expect(spreadLabels([10, 40, 90], 10, 0, 100)).toEqual([10, 40, 90]);
+    expect(spreadLabels([0, 1], 10, 0, 100)).toEqual([0, 10]); // 위 끝 — 아래로
+    expect(spreadLabels([99, 100], 10, 0, 100)).toEqual([90, 100]); // 아래 끝 — 위로
+    expect(spreadLabels([5, 5, 5, 5], 10, 0, 20)).toEqual([0, 10, 20, 30]); // 칸 부족 — 순서·간격은 지킨다
+    expect(spreadLabels([], 10, 0, 100)).toEqual([]);
   });
 });
 

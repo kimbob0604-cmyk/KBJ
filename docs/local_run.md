@@ -95,8 +95,9 @@ bash scripts/local/kbj.sh start
   확정 데이터)은 맥이 깨어 있는 때 다시 돌려 메운다.
 - **실데이터로 아직 확인하지 못한 수집 작업은 꺼져 있다:** 관세청 수출입(`trade.customs_*`), 컨센서스 스냅샷, 지수 정기변경(`index.*`),
   VKOSPI. 키를 넣고 실제로 한 번 받아 보며 확인한 뒤 켜는 일이 남아 있다(`docs/probe_results.md` §7).
-- **옵션 감마(GEX) 수집:** 기존 GEXLAB 이 계속 수집 중이면 그대로 둔다. KBJ 쪽 수집기(`gex.poller` 등)는 전환 순서(런북 ④)를 따라
-  켤 때까지 꺼져 있다.
+- **옵션 감마(GEX) 수집:** KBJ 쪽 수집기(`gex.poller`·`kis.master` 등)는 2026-10-20 부터 등록부에서 켜져 있다 — 같은 KIS
+  앱키로 옛 GEXLAB 수집을 같이 돌리지 않는다(한도 초과). `start` 는 GEX 옵션 마스터(Redis `kis:master`)가 없으면 한 번
+  받는다(장중·주말에 처음 띄워도 `gex-poller` 가 체인을 부를 수 있게). 페이지 3 GEX 패널은 30초마다 다시 읽는다.
 - **외부 공개 사이트(Pages)·공유 링크:** 로컬 모드에서는 쓰지 않는다.
 - **실주문은 없다:** `KBJ_LIVE_TRADING` 은 항상 false 다.
 

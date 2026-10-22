@@ -15,7 +15,7 @@ flowchart LR
     AUTH[auth<br/>KIS 토큰 유일 발급]
     SCH[scheduler<br/>작업 등록부 jobs.yaml]
     WS[ws-gateway → recorder]
-    GXP[gex-poller<br/>P9 — 전환 전 꺼짐]
+    GXP[gex-poller<br/>P9 — 2026-10-20 켬]
     ENG[gex-engine]
     DB[(Postgres+Timescale<br/>pub_* · prv_* · ops)]
     RD[(Redis<br/>버스·하트비트·세션·리미터)]
@@ -40,7 +40,7 @@ flowchart LR
 | `notifier` | 발송 outbox 소비 → 텔레그램(발송 꺼짐이 기본). 장 마감 뒤 발송은 전부 16:00 | ADR 0005·0018 |
 | `ws-gateway` → `recorder` | KIS 웹소켓 체결 → Redis 버스 → 원문 녹화(`prv_gex.raw_messages`) | ADR 0029 |
 | `gex-engine` | 옵션 체인 → GEX 레벨·지표(`prv_gex.levels`…) | ADR 0029 |
-| `gex-poller` | 전광판·체인·선물·최종거래일 폴링(P9 GXI 이식). **꺼진 채** — 사용자가 런북 ④ 로 옛 GX 에서 전환 | ADR 0036 |
+| `gex-poller` | 전광판·체인·선물·최종거래일 폴링(P9 GXI 이식). 2026-10-20 등록부에서 켬(런북 ④ 전환 — 옛 GX 와 동시 실행 금지) | ADR 0036 |
 | `api` | 로그인 API + 로그인 SPA 정적 파일(같은 출처). 외부 호출 없음 | ADR 0008 |
 | `db`·`redis`·`migrate` | Postgres+Timescale 하나, Redis 하나, 마이그레이션 0001~0022 | ADR 0002 |
 
