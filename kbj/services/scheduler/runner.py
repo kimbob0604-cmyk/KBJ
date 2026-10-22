@@ -26,7 +26,8 @@
 6. **재시도·마감**: `failed`·`not_ready` 는 `retry` 대로 다시(마감 안에서). 다 쓰거나 마감을
    넘기면 실패 — health `job_failed` + 알림 `ops.job_failed`(subject `<작업>:<as_of>`, 작업·as_of
    마다 1회 — notify.yaml). 처리기가 마감을 넘겨 돌고 있으면 `timeout` 으로 기록한다(스레드는
-   멈출 수 없으니 결과가 나중에 와도 버리고 로그만).
+   멈출 수 없으니 결과가 나중에 와도 버리고 로그만). 잠드는 호스트(설정 `scheduler_catch_up_h` > 0
+   — 로컬)는 잠든 시간을 하루 단위 작업의 마감·의존 시한에 세지 않는다(`_after_sleep`).
 7. **격리**: 처리기는 `submit`(기본 데몬 스레드)으로 돌아 상태 루프를 막지 않는다. 처리기 예외·
    저장소 오류는 그 작업만 실패시킨다(절대 규칙 4). 실행기 안의 오류(기록 저장소·캘린더 등)도 그
    작업에서 멈춘다 — 발화 오류는 그 작업의 창을 남겨 다음 tick 에 다시 보고, 진행 오류는 그 실행만
@@ -72,6 +73,13 @@ __all__ = ["JobRunner", "RunEvent", "Submit", "inline_submit", "thread_submit"]
 
 SERVICE: Final = "scheduler"
 DEP_POLL_S: Final = 30  # 굳은 의존을 다시 보는 간격
+# 호스트 잠듦 보정(잠드는 호스트 = 설정 scheduler_catch_up_h > 0 — 로컬만): 1초 tick 이 이 초 넘게
+# 끊기면 잠들었던 것으로 본다. 마감이 이 분 이상인 하루 단위 작업만 시한을 미룬다(장중 슬롯 작업은
+# 마감이 짧다 — 늦게 돌면 지난 슬롯을 지금 값으로 채운다). 깬 뒤 이 초 동안은 그 작업을 띄우지
+# 않는다(맥은 잠든 중에도 몇 초씩 깨는데(DarkWake) 그때는 DNS 가 안 된다)
+SLEEP_GAP_S: Final = 120
+SLEEP_EXTEND_MIN_DEADLINE: Final = 60
+SLEEP_SETTLE_S: Final = 60
 REASON_MAX: Final = 300
 PLANNED: Final = "planned"
 
@@ -196,6 +204,9 @@ class JobRunner:
         self._settings = settings
         self._resources = dict(resources or {})
         self._last: datetime | None = None
+        self._settle_until: datetime | None = (
+            None  # 호스트가 깬 뒤 하루 단위 작업을 띄우지 않는 때까지
+        )
         self._behind: dict[str, datetime] = {}  # 발화 중 오류가 난 작업 → 다시 볼 창의 시작
         self._pending: dict[tuple[str, str], _Pending] = {}
         self._abandoned: list[_Pending] = []
@@ -237,6 +248,7 @@ class JobRunner:
     def tick(self, now: datetime) -> list[RunEvent]:
         now = _utc(now)
         events: list[RunEvent] = []
+        self._after_sleep(now)
         self._collect(now, events)
         last = self._last
         if last is None:
@@ -362,6 +374,35 @@ class JobRunner:
             out.append(t)
             t += timedelta(minutes=eq.every_min)
         return out
+
+    def _after_sleep(self, now: datetime) -> None:
+        """잠드는 호스트에서 tick 사이가 `SLEEP_GAP_S` 를 넘게 벌어졌으면(잠들었다 깸) 하루 단위
+        작업(마감 `SLEEP_EXTEND_MIN_DEADLINE` 분 이상)의 마감·의존 시한을 벌어진 만큼 미루고, 아직
+        시작하지 않은 시도는 깬 뒤 `SLEEP_SETTLE_S` 를 기다리게 한다 — 잠든 시간은 시한에 안 센다.
+
+        2026-10-22: 15:35 마감 수집이 16:19 덮개를 닫아 멈췄고, 잠든 중 몇 초씩 깬 때(네트워크 없음)
+        ETF 종목이 이름풀이 실패로 넘어갔으며, 재시도는 벽시계 마감(17:35)에 잘려 16:00 작업 여섯이
+        의존 실패로 끝났다 — 17:58 에 깼을 때 이어 돌 수 있었다."""
+        sleeps = self._settings is not None and self._settings.scheduler_catch_up_h > 0
+        last = self._last
+        if not sleeps or last is None:
+            return
+        gap = now - last
+        if gap.total_seconds() <= SLEEP_GAP_S:
+            return
+        self._settle_until = now + timedelta(seconds=SLEEP_SETTLE_S)
+        moved = 0
+        for p in self._pending.values():
+            if p.job.deadline_min < SLEEP_EXTEND_MIN_DEADLINE:
+                continue
+            p.deadline += gap
+            p.wait_until += gap
+            if p.soft_since is not None:
+                p.soft_since += gap
+            moved += 1
+        log_event(
+            log, logging.INFO, SERVICE, "host_slept", gap_s=round(gap.total_seconds()), moved=moved
+        )
 
     def _startup_catch_up(self, now: datetime, events: list[RunEvent]) -> None:
         """켜진 직후 한 번 — 꺼져 있던 동안 놓친 켜진 작업을 작업마다 가장 최근 회차만(설정
@@ -578,6 +619,10 @@ class JobRunner:
                 self._timeout(p, now, events)
             return
         if p.next_at is not None and p.next_at > now:
+            return
+        settle = self._settle_until
+        if settle is not None and now < settle and p.job.deadline_min >= SLEEP_EXTEND_MIN_DEADLINE:
+            p.next_at = settle  # 깬 직후 — 네트워크가 돌아올 때까지 하루 단위 작업은 띄우지 않는다
             return
         if now > p.deadline:
             self._give_up(p, now, events, "마감을 넘겼다(시작하지 못함)")

@@ -28,6 +28,9 @@
   행이 없어도 기다리지 않는다(`no_trade_codes` — 행은 만들지 않는다). 오늘 스냅이 없는 종목(ETF)은
   당일 행이 비어 남은 것이 허용 수 이하일 때만 현재가를 한 번 보고 같은 규칙을 쓴다
   (`_settle_unknown` — 거래 없는 채권 ETF 셋이 마감 수집 전체와 보드를 막았다, 2026-10-19·20).
+- 네트워크 오류(이름풀이·접속 — `httpx.TransportError`)는 일시 실패다. `NET_DOWN_AFTER` 번
+  이어지면 남은 종목은 부르지 않고 일시 실패로 둔다(받은 것은 쓴다 — 재시도가 이어 받는다). 맥이
+  잠든 중 몇 초씩 깬 때 네트워크 없이 ETF 437종목을 다 넘겨 '종목 고유 실패'로 끝났다(2026-10-22).
 - 투자자 금액은 쓰기 전에 **자릿수 대조**(`investors.unit_check` — 수량 × 종가)를 한다. 배수가 0.2~5
   밖이면 단위를 잘못 안 것으로 보고 **하나도 쓰지 않는다**(ET monitor/flow '자릿수가 틀리면 리포트를
   쓰지 않는다'). 대조할 규모가 모자라면 쓰되 `unit_check: unverified` 로 적는다(통과라고 하지
@@ -43,6 +46,8 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from typing import Any, Final
+
+import httpx
 
 from kbj.config.markets import MarketsConfig
 from kbj.core.rows import Bar, IntradayInvestor, InvestorDay, Snap, UniverseRow
@@ -106,6 +111,8 @@ ORDER: Final[tuple[str, ...]] = (
 )
 PERMANENT_MAX_RATIO: Final = 0.05  # 종목 고유 실패 허용 비율 [확인 필요]
 PERMANENT_MIN: Final = 3  # 작은 목록에서도 이만큼은 넘어간다
+NET_DOWN_AFTER: Final = 5  # 네트워크 오류가 이만큼 이어지면 남은 종목은 부르지 않는다
+OFFLINE_REASON: Final = "네트워크 끊김 — 부르지 않았다(다음 시도에 받는다)"
 SAMPLE_MAX: Final = 5
 STALE_AFTER_DAYS: Final = 2  # 이만큼 지난 날의 '행 없음'은 공표 지연이 아니라 사실이다
 MARKET_HISTORY_DAYS: Final = 450  # 시장 TR 은 최근 300영업일을 준다 — 받은 만큼 저장
@@ -120,7 +127,7 @@ class UnitMismatch(RuntimeError):
 def _transient(e: BaseException) -> bool:
     if isinstance(e, KisRejected):
         return e.retryable
-    return isinstance(e, TokenError | RateLimitTimeout | OSError | NotReady)
+    return isinstance(e, TokenError | RateLimitTimeout | OSError | httpx.TransportError | NotReady)
 
 
 @dataclass
@@ -132,8 +139,23 @@ class _Tally:
     permanent: dict[str, str] = field(default_factory=dict[str, str])
     no_trade: dict[str, str] = field(default_factory=dict[str, str])
     not_ready: int = 0
+    net_streak: int = 0  # 이어진 네트워크 오류 수(응답을 받으면 0)
+    offline_skipped: int = 0
+
+    def answered(self) -> None:
+        self.net_streak = 0
+
+    def offline(self) -> bool:
+        return self.net_streak >= NET_DOWN_AFTER
+
+    def skip_rest(self, codes: Sequence[str]) -> None:
+        """네트워크가 끊겼다 — 남은 종목은 부르지 않고 일시 실패로 둔다."""
+        for code in codes:
+            self.transient[code] = OFFLINE_REASON
+        self.offline_skipped += len(codes)
 
     def fail(self, code: str, e: BaseException) -> None:
+        self.net_streak = self.net_streak + 1 if isinstance(e, httpx.TransportError) else 0
         if isinstance(e, NotReady):
             self.not_ready += 1
             self.transient[code] = reason(e)
@@ -149,6 +171,8 @@ class _Tally:
             d["skipped_sample"] = dict(sorted(self.permanent.items())[:SAMPLE_MAX])
         if self.transient:
             d["retry_codes"] = len(self.transient)
+        if self.offline_skipped:
+            d["offline_skipped"] = self.offline_skipped
         if self.no_trade:
             d["no_trade_codes"] = len(self.no_trade)
             d["no_trade_sample"] = dict(sorted(self.no_trade.items())[:SAMPLE_MAX])
@@ -309,9 +333,13 @@ def _stock_quotes(c: _Ctx, venue: str) -> int:
     tally = _Tally(len(targets))
     snaps: list[Snap] = []
     bars: list[Bar] = []
-    for code, name, market in todo:
+    for i, (code, name, market) in enumerate(todo):
+        if tally.offline():
+            tally.skip_rest([t[0] for t in todo[i:]])
+            break
         try:
             body = _get(c, "stock_quote", params_quote(code, venue), f"FHKST01010100 {code}")
+            tally.answered()
             s = parse_quote(body, code, day=c.day, venue=venue, market=market, name=name)
             bars.append(bar_from_quote(body, s))
             snaps.append(s)
@@ -362,6 +390,9 @@ def _settle_unknown(c: _Ctx, venue: str, codes: Sequence[str], tally: _Tally) ->
     부르지 않는다 — 재시도가 다시 본다."""
     if not codes:
         return
+    if tally.offline():
+        tally.skip_rest(codes)
+        return
     if len(codes) > tally.cap():
         for code in codes:
             tally.fail(code, NotReady(f"FHKST01010900 {code}: {c.day} 행이 아직 없다"))
@@ -396,10 +427,14 @@ def _investors(c: _Ctx, venue: str, targets: Sequence[tuple[str, str | None]], l
     snapped = _snapped_today(c, venue)
     unknown: list[str] = []
     stale = (c.now.astimezone(KST).date() - c.day).days >= STALE_AFTER_DAYS
-    for code, _name in todo:
+    for i, (code, _name) in enumerate(todo):
+        if tally.offline():
+            tally.skip_rest([t[0] for t in todo[i:]])
+            break
         try:
             body = _get(c, "stock_investor", params_stock_investor(code, venue),
                         f"FHKST01010900 {code}")  # fmt: skip
+            tally.answered()
             parsed = parse_stock_investor(body, code, venue=venue)
             today = on_day(parsed, c.day)
             if not today and code in no_trade:

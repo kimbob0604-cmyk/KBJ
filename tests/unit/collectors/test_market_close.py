@@ -11,6 +11,7 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 from typing import Any, cast
 
+import httpx
 import pytest
 
 from kbj.core.quality import Quality
@@ -127,6 +128,47 @@ def test_transient_failures_leave_only_that_key_and_retry_fetches_the_rest() -> 
     assert res2.status == "ok"
     assert kis.count("FHKST01010100") - before == 3  # 남은 종목만
     assert len(repos.market.snapshots(DAY, source="kis")) == 20
+
+
+def test_network_down_stops_calling_and_the_retry_takes_the_rest() -> None:
+    """맥이 잠든 중 몇 초씩 깬 때(이름풀이 실패 — 2026-10-22) — 이어진 네트워크 오류 뒤 남은 종목은
+    부르지 않고 일시 실패로 둔다. 받은 종목은 쓰고, 네트워크가 돌아온 재시도가 남은 것만 받는다."""
+    state = {"ok_left": 8}
+
+    def hook(tr: str, params: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
+        if tr == "FHKST01010100":
+            if state["ok_left"] <= 0:
+                raise httpx.ConnectError("[Errno -2] Name or service not known")
+            state["ok_left"] -= 1
+        return body
+
+    repos, _server, kis = setup(hook)
+    res = run(repos, kis, keys("stock_quote_eod"))
+    assert res.status == "failed"
+    assert "12/20 종목 미완" in res.detail["reason"]  # 종목 고유 실패가 아니다
+    down = market_close.NET_DOWN_AFTER
+    assert kis.count("FHKST01010100") == 8 + down
+    assert res.detail["stock_quote_eod"]["offline_skipped"] == 20 - 8 - down
+    assert len(repos.market.snapshots(DAY, source="kis")) == 8
+    state["ok_left"] = 100
+    before = kis.count("FHKST01010100")
+    res2 = run(repos, kis, keys("stock_quote_eod"), attempt=2)
+    assert res2.status == "ok"
+    assert kis.count("FHKST01010100") - before == 12
+
+
+def test_network_errors_on_investors_are_transient_not_stock_specific() -> None:
+    def hook(tr: str, params: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
+        if tr == "FHKST01010900":
+            raise httpx.ConnectError("[Errno -2] Name or service not known")
+        return body
+
+    repos, _server, kis = setup(hook)
+    res = run(repos, kis, keys("stock_investor_daily"))
+    assert res.status == "failed"
+    assert "20/20 종목 미완" in res.detail["reason"]
+    assert "고유" not in res.detail["reason"]
+    assert kis.count("FHKST01010900") == market_close.NET_DOWN_AFTER
 
 
 def test_stock_specific_failures_are_named_and_tolerated_up_to_a_cap() -> None:

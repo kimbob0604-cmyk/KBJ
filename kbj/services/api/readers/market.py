@@ -335,6 +335,14 @@ def _end_day(ctx: ReadContext, day: date | None) -> tuple[date, bool]:
     return day, False
 
 
+def _live_since(ctx: ReadContext, today: date) -> datetime:
+    """장중 값을 읽을 창의 시작 — 직전 거래일 0시. 그날 0시부터 읽으면 자정 뒤 KRX 확정(다음 거래일
+    08:05) 전까지 직전 거래일의 장중·마감 값이 창 밖으로 밀려 전전 거래일 확정값이 보였다(2026-10-23
+    00:11 지수·업종이 10/21 로 — 주말 내내도). 확정보다 새 값만 쓰는 비교는 `_index_tile`·
+    `sector_heat`·`_turnover` 에 있다."""
+    return day_start(ctx.cal.prev_trading_day(today))
+
+
 def _equity_open(ctx: ReadContext, now: datetime) -> bool:
     """지금이 그날 정규장(개장~마감) 안인가."""
     d = now.date()
@@ -356,7 +364,7 @@ def market_summary(ctx: ReadContext, *, day: date | None = None) -> Envelope[Mar
         [*codes, *(v for v in krx_code.values() if v)], today, SPARK_N + 1
     )
     bars = {c: both.get(c) or both.get(krx_code[c], []) for c in codes}
-    quotes = ctx.repos.market.index_quotes(day_start(today), now) if with_live else []
+    quotes = ctx.repos.market.index_quotes(_live_since(ctx, today), now) if with_live else []
     notes: list[str] = []
     tiles: list[IndexTile] = []
     open_now = with_live and _equity_open(ctx, now)
@@ -437,7 +445,7 @@ def market_sectors(
     now = ctx.now_kst()
     end, with_live = _end_day(ctx, day)
     bars = ctx.repos.market.index_series(codes, end, period + 1)
-    live = ctx.repos.market.sector_quotes(day_start(end), now) if with_live else []
+    live = ctx.repos.market.sector_quotes(_live_since(ctx, end), now) if with_live else []
     # 코드가 KRX 지수 이름이면 화면 이름은 시장을 붙인다(접두어 없는 이름 = 코스피 목록)
     names = {c: _sector_name(c) for c in codes if not c.isascii()}
     cells = sector_heat(bars, live, codes, period, names=names)

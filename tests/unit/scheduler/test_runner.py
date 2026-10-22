@@ -209,6 +209,94 @@ def test_running_past_deadline_is_timeout_and_late_result_dropped() -> None:
     assert all(r.status == "failed" for r in rig.claims.rows)
 
 
+def _held_first() -> tuple[Any, list[tuple[Callable[[], JobResult], Future[JobResult]]]]:
+    """첫 제출(마감 수집)만 붙잡아 두고 나머지는 그 자리에서 — 잠든 동안 돌고 있던 시도."""
+    held: list[tuple[Callable[[], JobResult], Future[JobResult]]] = []
+
+    def submit(fn: Callable[[], JobResult]) -> Future[JobResult]:
+        if held:
+            return inline_submit(fn)
+        fut: Future[JobResult] = Future()
+        held.append((fn, fut))
+        return fut
+
+    return submit, held
+
+
+def _slept_close_day(settings: Settings | None) -> Rig:
+    # 2026-10-22 재현: 15:35 마감 수집이 도는 중 16:19 덮개를 닫아 잠들고 17:58 에 깼다
+    ok = lambda ctx: JobResult("ok", collected=ctx.keys, rows=1)  # noqa: E731
+    submit, held = _held_first()
+    rig = Rig(
+        close_and_brief(),
+        {"tests.fake:close": ok, "tests.fake:brief": ok},
+        kst(2026, 10, 6, 15, 30),
+        submit=submit,
+        settings=settings,
+    )
+    rig.run_until(kst(2026, 10, 6, 16, 19))
+    assert rig.kinds("brief.closing") == ["waiting"]
+    rig.now = kst(2026, 10, 6, 17, 58).astimezone(UTC)
+    rig.tick()
+    fn, fut = held[0]
+    fut.set_result(fn())  # 깬 뒤 마저 끝난다
+    rig.run_until(kst(2026, 10, 6, 18, 5))
+    return rig
+
+
+def test_host_sleep_does_not_count_toward_the_deadline() -> None:
+    rig = _slept_close_day(Settings.model_construct(scheduler_catch_up_h=20))
+    assert rig.kinds("market.close_collect") == ["started", "ok"]
+    # 깬 뒤 SLEEP_SETTLE_S(60초)를 기다려 의존 작업이 돈다
+    assert rig.times("brief.closing", "started") == [kst(2026, 10, 6, 17, 59)]
+    assert rig.kinds("brief.closing")[-1] == "ok"
+
+    off = _slept_close_day(None)  # 꺼 둔 기본값(VM) — 벽시계 마감(17:35)이 지나 잘린다
+    assert off.kinds("market.close_collect") == ["started", "timeout"]
+    assert off.kinds("brief.closing")[-1] == "failed"
+
+
+def test_host_sleep_keeps_short_deadline_jobs_on_the_wall_clock() -> None:
+    # 장중 슬롯처럼 마감이 짧은 작업(60분 미만)은 미루지 않는다 — 늦게 돌면 지난 회차를 지금 값으로
+    # 채운다
+    pending: list[Future[JobResult]] = []
+
+    def never(fn: Callable[[], JobResult]) -> Future[JobResult]:
+        fut: Future[JobResult] = Future()
+        pending.append(fut)
+        return fut
+
+    job = krx_like(deadline_min=30, retry={"max": 0})
+    on = Settings.model_construct(scheduler_catch_up_h=20)
+    rig = Rig([job], {"tests.fake:krx": Publisher(None)}, kst(2026, 10, 6, 8, 0), submit=never,
+              settings=on)  # fmt: skip
+    rig.run_until(kst(2026, 10, 6, 8, 10))
+    rig.now = kst(2026, 10, 6, 9, 0).astimezone(UTC)
+    rig.tick()
+    assert rig.kinds("krx.daily") == ["started", "timeout"]
+
+
+def test_retry_does_not_start_in_the_first_seconds_after_waking() -> None:
+    # 맥은 잠든 중에도 몇 초씩 깨는데(DarkWake) 그때는 네트워크가 없다 — 깬 뒤 60초는 새 시도를
+    # 띄우지 않는다
+    rig = Rig(
+        close_and_brief(),
+        {"tests.fake:close": Publisher(None), "tests.fake:brief": Publisher(None)},
+        kst(2026, 10, 6, 15, 34),
+        settings=Settings.model_construct(scheduler_catch_up_h=20),
+    )
+    rig.run_until(kst(2026, 10, 6, 15, 36))
+    assert rig.kinds("market.close_collect") == ["started", "retry"]
+    rig.now = kst(2026, 10, 6, 16, 30).astimezone(UTC)  # 잠들었다 몇 초 깸
+    rig.tick()
+    rig.now += timedelta(seconds=20)
+    rig.tick()
+    assert rig.kinds("market.close_collect") == ["started", "retry"]
+    rig.now += timedelta(seconds=45)
+    rig.tick()
+    assert rig.kinds("market.close_collect")[2] == "started"
+
+
 # ── 의존·캐치업 ───────────────────────────────────────────────────────────────────────────
 
 

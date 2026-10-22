@@ -119,7 +119,9 @@ class Settings(BaseSettings):
     # Docker Desktop 은 host 네트워크가 호스트에 닿지 않는다. 이때만 http 쿠키(secure=false) 허용
     api_container_bind: bool = False
     # 스케줄러가 켜질 때 지난 N시간 안에 놓친 작업(기록 없음)을 작업마다 최근 회차 한 번씩.
-    # VM(상시 가동)은 0. 로컬(맥이 잠들어 15:35 마감 수집을 놓침)은 오버레이가 켠다
+    # VM(상시 가동)은 0. 로컬(맥이 잠들어 15:35 마감 수집을 놓침)은 오버레이가 켠다.
+    # 0 보다 크면 잠드는 호스트로 보고 잠든 시간을 하루 단위 작업의 시한에 세지 않는다
+    # (runner.JobRunner._after_sleep)
     scheduler_catch_up_h: int = Field(default=0, ge=0, le=72)
     web_dist_dir: Path = Path("web/dist-login")  # 로그인 SPA 빌드(api 가 같은 출처로 내보낸다)
 

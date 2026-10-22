@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
+
 from fastapi.testclient import TestClient
 
 from kbj.engines.flows.checks import apply_checks
@@ -51,6 +53,20 @@ def test_summary_after_close_same_day_is_not_called_live(world: World, authed: T
     kospi = next(x for x in body["data"]["indices"] if x["code"] == "0001")
     assert kospi["value"] == 2650.5 and kospi["quality"] == "estimated"
     assert not kospi["live"]
+
+
+def test_summary_and_sectors_after_midnight_keep_the_last_session(
+    world: World, authed: TestClient
+) -> None:
+    """자정 뒤 KRX 확정(다음 거래일 08:05) 전 — 직전 거래일의 장중·마감 값을 그대로 보인다. 그날
+    0시부터만 읽어 전전 거래일 확정값으로 돌아갔다(2026-10-23 00:11 지수·업종이 10/21 로)."""
+    world.clock.set((world.slot + timedelta(days=1)).replace(hour=0, minute=30))
+    body = authed.get("/api/market/summary").json()
+    kospi = next(x for x in body["data"]["indices"] if x["code"] == "0001")
+    assert kospi["value"] == 2650.5 and kospi["quality"] == "estimated"
+    assert not kospi["live"]
+    cells = authed.get("/api/market/sectors?period=1").json()["data"]["cells"]
+    assert cells[0]["chg_pct"] == 0.5
 
 
 def test_sectors(world: World, authed: TestClient) -> None:
