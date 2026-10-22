@@ -269,3 +269,35 @@ def test_heartbeat_is_read_under_the_process_name() -> None:
     assert result.status == "ok" and result.detail["problems"] == 0, notes.sent
     assert {"engine", "ws-gateway", "recorder"} <= set(asked)
     assert not [a for a in asked if a.startswith("gex.")]
+
+
+def test_jobs_waiting_on_close_collect_become_one_alert() -> None:
+    """16:10 — 마감 수집이 아직 도는 중이면 16:00 작업 여럿을 따로 알리지 않고 한 통으로 묶는다."""
+    now = datetime(2026, 10, 6, 16, 11, tzinfo=KST)
+    runs = MemoryRunLog()
+    runs.record(
+        RunRecord(
+            "market.close_collect:2026-10-06:1",
+            "market.close_collect",
+            "2026-10-06",
+            1,
+            "running",
+            started_at=now - timedelta(minutes=36),
+        )
+    )
+    problems = wd._missed(REG, runs, KR, US, now)  # pyright: ignore[reportPrivateUsage]
+    # 이 시험은 다른 작업 기록을 넣지 않았다 — 마감 수집에 걸린 묶음만 본다
+    waiting = [p for p in problems if p.subject.startswith("waiting:market.close_collect")]
+    assert [p.subject for p in waiting] == ["waiting:market.close_collect:2026-10-06"]
+    assert "running" in waiting[0].text and "board.daily(16:00)" in waiting[0].text
+    missed = {p.subject for p in problems if p.subject.startswith("missed:")}
+    for job in ("board.daily", "rules.close", "brief.closing", "diag.daily"):
+        assert f"missed:{job}:2026-10-06" not in missed
+    # 마감 수집이 끝났는데도 16:00 작업 기록이 없으면 다시 작업마다 알린다
+    runs.record(
+        RunRecord(
+            "market.close_collect:2026-10-06:1", "market.close_collect", "2026-10-06", 1, "ok"
+        )
+    )
+    missed = {p.subject for p in wd._missed(REG, runs, KR, US, now)}  # pyright: ignore[reportPrivateUsage]
+    assert "missed:board.daily:2026-10-06" in missed

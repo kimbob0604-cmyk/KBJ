@@ -9,7 +9,9 @@
 1. **하트비트 끊김**: 등록부의 켜진 상시 서비스(`services`, heartbeat_s 가 있는 것)의 하트비트가
    없거나   heartbeat_s 보다 오래됐다.
 2. **놓친 실행**: 켜진 cron 작업(워치독 자신 제외)의 오늘 마지막 예정 시각이 `GRACE_MIN` 분
-   넘게 지났는데 그 as_of 의 실행 기록이 없다(scheduler 가 멈췄던 경우).
+   넘게 지났는데 그 as_of 의 실행 기록이 없다(scheduler 가 멈췄던 경우). 단 같은 as_of 굳은 의존이
+   아직 끝나지 않았으면(기록 없음·queued·running — 예: 16:00 작업들이 마감 수집을 기다림) 작업마다
+   알리지 않고 그 의존 하나로 묶은 `waiting:` 한 통.
 3. **마감 지난 실행**: `running` 기록이 시작 + deadline_min 을 넘겼다(실행기가 timeout 으로 바꾸지
    못한 경우 — 예: scheduler 재기동으로 진행 목록을 잃음).
 
@@ -31,7 +33,7 @@ from kbj.services.ops.source import GapWriter, ServiceExpect, record_heartbeat_g
 from kbj.services.scheduler.claims import RunLog, RunRecord
 from kbj.services.scheduler.conditions import AsOfUnavailable, holds, resolve_as_of
 from kbj.services.scheduler.handlers import JobContext, JobResult
-from kbj.services.scheduler.registry import Registry
+from kbj.services.scheduler.registry import JobSpec, Registry
 from kbj.store.db import StoreError
 
 __all__ = ["GRACE_MIN", "Problem", "find_problems", "pg_running_runs", "run"]
@@ -49,10 +51,24 @@ class Problem:
     text: str
 
 
+def _waiting_on(job: JobSpec, runs: RunLog, as_of: str) -> tuple[str, str] | None:
+    """같은 as_of 굳은 의존 중 아직 안 끝난(기록 없음·queued·running) 첫 의존 → (작업, 상태)."""
+    for d in job.depends_on:
+        if not d.hard or d.as_of != "same":
+            continue
+        rec = runs.latest(d.job, as_of)
+        if rec is None or rec.status in ("queued", "running"):
+            return d.job, "기록 없음" if rec is None else rec.status
+    return None
+
+
 def _missed(
     registry: Registry, runs: RunLog, kr: TradingCalendar, us: TradingCalendar, now: datetime
 ) -> list[Problem]:
     out: list[Problem] = []
+    # 굳은 의존이 아직 끝나지 않아 발화 뒤 기다리는 작업(실행기는 의존이 끝나야 기록을 남긴다)은
+    # 작업마다 알리지 않고 의존 하나로 묶어 한 통 — 진짜 원인(의존과 그 상태)을 짚는다
+    waiting: dict[tuple[str, str, str], list[str]] = {}
     for job in registry.enabled_jobs():
         spec = job.schedule.cron_spec()
         # 워치독 자신은 뺀다 — 지금 돌고 있으면 scheduler 는 살아 있고, 재기동 사이 빠진 5분 한 칸은
@@ -70,6 +86,10 @@ def _missed(
         except AsOfUnavailable:
             continue
         if runs.latest(job.name, as_of) is None:
+            dep = _waiting_on(job, runs, as_of)
+            if dep is not None:
+                waiting.setdefault((dep[0], as_of, dep[1]), []).append(f"{job.name}({due:%H:%M})")
+                continue
             out.append(
                 Problem(
                     f"missed:{job.name}:{as_of}",
@@ -77,6 +97,14 @@ def _missed(
                     "— scheduler 확인",
                 )
             )
+    for (dep_job, as_of, state), names in sorted(waiting.items()):
+        out.append(
+            Problem(
+                f"waiting:{dep_job}:{as_of}",
+                f"[워치독] {dep_job}(as_of {as_of}, {state}) 가 아직 끝나지 않아 "
+                f"{len(names)}개 작업이 기다린다: {', '.join(names)}",
+            )
+        )
     return out
 
 
