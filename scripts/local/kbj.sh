@@ -17,6 +17,7 @@
 #   bash scripts/local/kbj.sh probe-kosis       # 통계청(KOSIS) 표의 항목 코드표를 찍는다(키는 안 보임) — 매크로 KOSIS 칸을 켜는 데 쓴다
 #   bash scripts/local/kbj.sh fill-dart         # 종목 상세(8)의 재무·공시용: DART 회사코드·프로필·재무 5년 백필·밸류에이션 재계산(DART 키 필요)
 #   bash scripts/local/kbj.sh fill-trade        # 수출입 '종목' 탭: 매핑표(300종목) 다시 싣기·시군구 5년 백필·종목 수출 지수 다시 계산(공공데이터 키 필요)
+#   bash scripts/local/kbj.sh verify-trade      # 공개 매핑표 전체를 맥 DB 와 대조(종목코드·이름·HS·최근 12개월 실적·시군구 이름) — 문제 줄만 찍는다
 #   bash scripts/local/kbj.sh hs-match <파일>   # 월별 금액 파일(JSON)과 관세청 통계가 맞는 HS 코드를 찾아 한 줄씩 찍는다(공공데이터 키 필요 — 금액은 안 찍음)
 #   bash scripts/local/kbj.sh job <작업> [--as-of 값]   # 작업 하나를 지금 한 번(예: job market.close_collect)
 #   bash scripts/local/kbj.sh budget [--day YYYY-MM-DD]   # 오늘 DART·KRX 등 호출 예산을 어느 작업이 얼마나 썼는지
@@ -33,7 +34,7 @@ source "$here/../vm/lib.sh"
 URL="http://127.0.0.1:8000"
 AWAKE_PID_FILE="${KBJ_AWAKE_PID_FILE:-$HOME/.kbj-awake.pid}"
 
-usage() { sed -n '2,26p' "$0"; }
+usage() { sed -n '2,27p' "$0"; }
 
 # 도커 설정 점검(메모리 5GB 미만이면 서비스가 죽을 수 있다 — 알려만 준다)
 check_docker_resources() {
@@ -431,6 +432,10 @@ main() {
       ;;
     fill-dart) cmd_fill_dart ;;
     fill-trade) cmd_fill_trade ;;
+    verify-trade)
+      require_scheduler
+      kbj_compose exec -T scheduler python -m kbj.services.engine.verify_trade --public "$@"
+      ;;
     hs-match)
       [[ -f "${1:-}" ]] || kbj_die "파일을 준다 — $(kbj_cmd hs-match) ~/Downloads/hs_match_in.json"
       kbj_env_has KBJ_DATAGO_KEY || kbj_die "KBJ_DATAGO_KEY 가 비었다 — $(kbj_cmd keys) KBJ_DATAGO_KEY"

@@ -81,3 +81,61 @@ def test_watchlist_CLI_종료_코드() -> None:
 
     code, _, err = _run("--watchlist", "main", db=boom)
     assert code == 2 and "secret" not in err
+
+
+def _public_rows():
+    from datetime import UTC, datetime
+
+    from kbj.config.trade import parse_trade_map
+    from kbj.engines.trade.mapping import map_rows
+
+    tm = parse_trade_map(
+        {
+            "version": 2,
+            "stocks": [
+                {
+                    "code": "990001",
+                    "name": "가나전자",
+                    "reviewed": False,
+                    "flows": [
+                        {"id": "s1", "name": "x", "kind": "sigungu", "nature": "company",
+                         "regions": ["KR-41-hwaseong"],
+                         "products": [{"hs": "854232", "weight": 0.5}]},
+                        {"id": "n1", "name": "y", "kind": "national", "nature": "mixed",
+                         "products": [{"hs": "8542321010", "weight": 0.5}]},
+                    ],
+                    "evidence": [{"kind": "synthetic", "note": "합성"}],
+                }
+            ],
+        }
+    )  # fmt: skip
+    return map_rows(tm, origin="public", version="v", as_of=datetime(2026, 10, 1, tzinfo=UTC))
+
+
+def test_public_전부_통과와_문제_줄() -> None:
+    from kbj.services.engine.verify_trade import PublicView, verify_public
+
+    rows = _public_rows()
+    ok = PublicView(
+        smap=rows,
+        corp={"990001": "가나전자"},
+        hs_codes={"8542321010"},
+        live_hs={("8542321010", "exp")},
+        live_sgg={("KR-41-hwaseong", "854232")},
+        unmatched_sgg=(),
+    )
+    s = verify_public(ok)
+    assert s["lines"] == 2 and s["problem_lines"] == []
+    bad = PublicView(
+        smap=rows,
+        corp={"990001": "가나전자홀딩스"},
+        hs_codes={"8542321010"},
+        live_hs=(),
+        live_sgg=(),
+        unmatched_sgg={("41", "수원시 영통구")},
+    )
+    s = verify_public(bad)
+    assert s["name_mismatch"] == 1 and s["no_recent"] == 2 and s["region_unmatched"] == 1
+    out = io.StringIO()
+    assert main(["--public", "--json"], out=out, err=io.StringIO(), public=lambda: bad) == 1
+    assert json.loads(out.getvalue())["no_recent"] == 2
