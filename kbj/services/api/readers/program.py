@@ -121,6 +121,10 @@ def program_top(ctx: ReadContext, *, market: str, side: str, scope: str) -> Enve
     if scope == "intraday":
         day = today if ctx.cal.is_trading_day(today) else ctx.cal.prev_trading_day(today)
         rows = ctx.repos.program.stock_scan(day, mkt, venue)
+        if not rows and day == today:
+            # 개장 전(자정 뒤) — 직전 거래일 장중 훑기를 보인다(빈 칸이 되던 것, 2026-10-23 00:50)
+            day = ctx.cal.prev_trading_day(today)
+            rows = ctx.repos.program.stock_scan(day, mkt, venue)
         if not rows:
             raise NoData(NO_TOP)
         slot = max((r.ts for r in rows if r.ts is not None), default=None)

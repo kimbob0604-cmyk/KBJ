@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from typing import Any
 
 import pytest
@@ -158,6 +158,14 @@ def test_program_top_intraday_says_its_scope(side: str) -> None:
     assert all((n > 0) if side == "buy" else (n < 0) for n in nets)
     assert [r["rank"] for r in d["rows"]] == list(range(1, len(nets) + 1))
     assert all(r["name"] for r in d["rows"])
+
+
+def test_program_top_intraday_after_midnight_shows_the_last_session() -> None:
+    # 다음 날 개장 전 — 그날 훑기가 아직 없으면 직전 거래일 장중 훑기(빈 칸이 아니다)
+    after = datetime.combine(TODAY + timedelta(days=1), time(0, 30), tzinfo=KST)
+    body = get(program_api_world(at=after), "/api/program/top?market=K&side=buy&scope=intraday")
+    assert body["data"]["slot"].startswith(TODAY.isoformat())  # 그날 마지막 장중 훑기
+    assert body["data"]["rows"]
 
 
 def test_program_top_close_full_and_partial_sweep() -> None:
