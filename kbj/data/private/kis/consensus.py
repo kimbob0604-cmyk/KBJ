@@ -198,7 +198,7 @@ def parse_estimate(
     head_rows = rows_of(body, OUT_HEAD, what=what) if OUT_HEAD in body else []
     head = head_rows[0] if head_rows else {}
     got = str(pick(head, *_HEAD_CODE) or code).strip()
-    if got != code:
+    if got not in (code, f"A{code}"):  # 표준코드 앞 'A' 를 붙여 오기도 한다(2026-10-21~ 146/304)
         raise KisParseError(f"{what}: 응답 종목코드가 다르다({got})")
     periods = rows_of(body, OUT_PERIODS, what=what)
     pl = _table(body, OUT_PL, PL_ROWS, what)

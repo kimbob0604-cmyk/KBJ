@@ -207,9 +207,20 @@ def test_estimate_all_zero_or_blank_columns_are_empty() -> None:
     assert [r.fiscal_ym for r in rows] == ["202612"]
 
 
+def test_estimate_head_code_with_a_prefix_is_the_same_stock() -> None:
+    """머리 종목코드가 'A' 를 붙여 와도 같은 종목이다(2026-10-21~ 304종목 중 146 이 '고유 실패')."""
+    body = _body(["202612E"], revenue=["100"])
+    body[OUT_HEAD]["sht_cd"] = "A994010"
+    rows = parse_estimate(body, "994010", snap_date=DAY)
+    assert [r.code for r in rows] == ["994010"]
+
+
 def test_estimate_shape_errors() -> None:
     body = _body(["202612E"], revenue=["100"])
     body[OUT_HEAD]["sht_cd"] = "994020"
+    with pytest.raises(KisParseError, match="종목코드"):
+        parse_estimate(body, "994010", snap_date=DAY)
+    body[OUT_HEAD]["sht_cd"] = "A994020"
     with pytest.raises(KisParseError, match="종목코드"):
         parse_estimate(body, "994010", snap_date=DAY)
     short = _body(["202612E"], revenue=["100"])
