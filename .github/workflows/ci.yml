@@ -27,6 +27,7 @@ name: CI
 #   지웠다(GX 수집 통합 시험 일부는 kbj tests/integration/test_gex_ingest_pg.py 로 — kbj-integration 이 모은다).
 #   test (kbj) 의 `and not legacy` 삭제, canonical 은 모든 그룹이 목표 0 이라 한 단계, public-safety 잡을
 #   public-outputs(scripts/check_public_outputs.py — 레포·공개 사이트·데모 미디어·데모 이미지 입력)로 바꿨다.
+# - ADR 0042: calls 잡(공개 투자 콜 기록 — 형식 + 직전 버전 대비 고침·삭제·소급 검사, fetch-depth 0)
 #   새 잡 demo (compose): docker-compose.demo.yml 을 띄워 데모 계정으로 대표 API(scripts/demo_smoke.py)
 
 on:
@@ -213,6 +214,37 @@ jobs:
         run: uv sync --frozen
       - name: 공개 산출물 검사
         run: uv run python scripts/check_public_outputs.py
+
+  calls:
+    # 공개 투자 콜 기록(calls/ — ADR 0042): 형식·칸 모순 + 직전 버전 대비 판단 칸·논리 본문 고침, 콜 지우기,
+    # 소급 기록(새 콜 날짜가 오늘보다 3일 넘게 이름)을 막는다. 기준: PR 은 base 브랜치, push 는 직전 커밋
+    # (새 브랜치면 origin/main). 커밋 시각이 판단 시점 기록이 되게 하는 장치라 이력이 필요하다(fetch-depth 0)
+    name: calls (공개 콜 기록 검사)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: 의존성(dev)
+        run: uv sync --frozen
+      - name: 콜 검사(직전 버전 대비)
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT" = "pull_request" ]; then
+            base="origin/$BASE_REF"
+          elif [ -n "$BEFORE" ] && ! [[ "$BEFORE" =~ ^0+$ ]] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            base="$BEFORE"
+          else
+            base="origin/main"
+          fi
+          uv run python -m kbj.services.personal calls check --against "$base"
 
   demo:
     # P9 WRAP(§0.3 첫 줄, ADR 0034): `docker compose -f docker-compose.demo.yml up` 한 줄 데모가 뜨고 데모
