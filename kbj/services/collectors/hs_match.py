@@ -27,6 +27,8 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import IO, Any, Final, Protocol
 
+from kbj.data.public.customs.models import sgg_base
+
 __all__ = ["Series", "Source", "Target", "find_subsets", "main", "match_target"]
 
 TOL: Final = 0.005  # 달마다 허용 상대 오차(정정·판독 오차)
@@ -178,8 +180,9 @@ def _best(series: Series, want: Mapping[str, float]) -> tuple[tuple[str, ...], f
 
 
 def _same_place(api_name: str, name: str) -> bool:
-    """API 시군구 이름 ↔ 매핑 이름 — 같거나, 구가 붙은 시('수원시 영통구')면 같은 곳."""
-    a, b = api_name.replace(" ", ""), name.replace(" ", "")
+    """API 시군구 이름 ↔ 매핑 이름 — 앞의 시도('충청남도 ')를 떼고 같거나, 구가 붙은 시
+    ('수원시 영통구')면 같은 곳."""
+    a, b = sgg_base(api_name).replace(" ", ""), sgg_base(name).replace(" ", "")
     return a == b or (b.endswith("시") and a.startswith(b))
 
 

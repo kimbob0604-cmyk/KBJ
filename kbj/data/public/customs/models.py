@@ -141,6 +141,18 @@ SIDO_CODES: Final[Mapping[str, SidoCode]] = {
     )
 }
 
+_SIDO_SUFFIX: Final = ("특별자치시", "특별자치도", "특별시", "광역시", "도")
+
+
+def sgg_base(name: str) -> str:
+    """시군구 이름에서 앞의 시도 이름을 뗀다 — 시군구 API(15134343)의 sggNm 은 '충청남도 아산시'처럼
+    시도를 붙여 온다(2026-10-26 실측). 매핑·지역표는 '아산시'. 시도 하나뿐이면 그대로(세종)."""
+    head, _, rest = name.strip().partition(" ")
+    if rest and head.endswith(_SIDO_SUFFIX):
+        return rest.strip()
+    return name.strip()
+
+
 # 합계 행으로 보는 기간 표기 [추정 — 합계 행이 오는지 자체가 실측 필요(probe_results §2.2 ④)]
 _TOTAL_MARKERS: Final = frozenset({"총계", "합계", "계", "전체"})
 _MISSING: Final = frozenset({"", "-"})  # HS·기간 빈 값 표기

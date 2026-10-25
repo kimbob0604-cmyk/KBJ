@@ -100,6 +100,7 @@ from kbj.data.public.customs.models import (
     SigunguRow,
     TenDayKind,
     TradeRow,
+    sgg_base,
 )
 from kbj.data.public.customs.models import TenDayRow as RawTenDay
 from kbj.data.ratelimit import RateLimitTimeout
@@ -274,7 +275,7 @@ def sigungu_hs6(maps: Iterable[TradeMap]) -> tuple[str, ...]:
 
 def _region_id(regions: TradeRegions, sido: str, name: str, ym: str) -> str | None:
     for rg in regions.regions:
-        if rg.sido_cd != sido or rg.sgg_nm != name:
+        if rg.sido_cd != sido or sgg_base(rg.sgg_nm) != sgg_base(name):
             continue
         if (rg.valid_from is None or ym >= rg.valid_from) and (
             rg.valid_to is None or ym <= rg.valid_to

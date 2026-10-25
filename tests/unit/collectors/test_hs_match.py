@@ -69,9 +69,10 @@ def test_national_match_and_nomatch():
 def test_sigungu_sums_regions_and_city_with_gu():
     sgg = {
         ("41", "848620"): {
-            "수원시 영통구": s(10.0, 10.0, 10.0),
-            "화성시": s(5.0, 5.0, 5.0),
-            "용인시": s(1.0, 1.0, 1.0),
+            # API 는 시도를 붙여 온다('충청남도 아산시' — 2026-10-26 실측)
+            "경기도 수원시 영통구": s(10.0, 10.0, 10.0),
+            "경기도 화성시": s(5.0, 5.0, 5.0),
+            "경기도 용인시": s(1.0, 1.0, 1.0),
         },
         ("41", "848640"): {"화성시": s(3.0, 3.0, 3.0)},
     }
@@ -140,3 +141,14 @@ def test_whole_prefix_group_is_short():
     r = match_target(Target("R6", "exp", "national", s(1200.0, 1200.0, 1200.0), ("8708",)), src)
     assert r.status == "match" and len(r.codes) == 12
     assert r.line() == "R6 match 87089900* err=0.00%"
+
+
+def test_sgg_base_drops_sido_prefix_only():
+    from kbj.data.public.customs.models import sgg_base
+
+    assert sgg_base("충청남도 아산시") == "아산시"
+    assert sgg_base("경기도 수원시 영통구") == "수원시 영통구"
+    assert sgg_base("인천광역시 서구") == "서구"
+    assert sgg_base("강원특별자치도 원주시") == "원주시"
+    assert sgg_base("수원시 영통구") == "수원시 영통구"
+    assert sgg_base("세종특별자치시") == "세종특별자치시"

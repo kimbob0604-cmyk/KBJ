@@ -439,3 +439,13 @@ def test_backfill_cli_portal_quota_stops_like_the_budget() -> None:
                    "15134343"], out=buf, build=lambda: _cli_deps(rig))  # fmt: skip
     out = buf.getvalue()
     assert code == 0 and "멈춤: 2026-09~2026-10 포털 한도 초과" in out and "실패" not in out
+
+
+def test_region_id_matches_api_name_with_sido_prefix() -> None:
+    from kbj.config.trade import load_trade_regions
+
+    regions = load_trade_regions()
+    # 시군구 API 의 sggNm 은 시도를 붙여 온다(2026-10-26 실측) — 지역표는 '아산시'
+    assert C._region_id(regions, "44", "충청남도 아산시", "2026-08") == "KR-44-asan"
+    assert C._region_id(regions, "44", "아산시", "2026-08") == "KR-44-asan"
+    assert C._region_id(regions, "43", "충청남도 아산시", "2026-08") is None
