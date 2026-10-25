@@ -72,6 +72,16 @@ def _plain(v: Decimal | int | None) -> str:
     return "" if v is None else str(int(v))
 
 
+def _comma_thousand(v: Decimal | int | None) -> str:
+    """시군구(15134343) 금액 — 실제처럼 천 달러. 세계 값은 1000 의 배수다
+    (`p6_world._make_sigungu`)."""
+    if v is None:
+        return ""
+    if int(v) % 1000:
+        raise ValueError(f"시군구 합성 값은 1000 달러 단위여야 한다: {v}")
+    return f"{int(v) // 1000:,}"
+
+
 def _dotted(ym: str) -> str:
     return ym.replace("-", ".")
 
@@ -294,12 +304,12 @@ class CustomsWorld:
                 continue
             out.append(
                 {
-                    "cmtrBlncAmt": _comma(r.bal_usd),
+                    "cmtrBlncAmt": _comma_thousand(r.bal_usd),
                     "expCnt": _comma(r.exp_cnt),
-                    "expUsdAmt": _comma(r.exp_usd),
+                    "expUsdAmt": _comma_thousand(r.exp_usd),
                     "hsSgn": r.hs6,
                     "impCnt": _comma(r.imp_cnt),
-                    "impUsdAmt": _comma(r.imp_usd),
+                    "impUsdAmt": _comma_thousand(r.imp_usd),
                     "korePrlstNm": self._names.get(r.hs6, f"가상품목 {r.hs6}"),
                     "priodTitle": _dotted(r.ym),
                     "sggNm": r.sgg_nm,

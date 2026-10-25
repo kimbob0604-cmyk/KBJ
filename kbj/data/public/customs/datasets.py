@@ -69,8 +69,8 @@ DATASETS: Final[tuple[DatasetSpec, ...]] = (
         published=_MONTHLY,
         notes=(
             "시군구별 품목별 getSigunguPerPrlstPerAcrs. 시도(sidoCd)×HS6(HsSgn) 필수, 시군구는 "
-            "이름만. 2026-07 시도 코드 개편(12 신설, 29·46 은 이전 신고분). 관심 HS6 만 받는다 "
-            "(probe_results F3). 운영 심의승인"
+            "이름만. 금액은 천 달러(2026-10-26 실측 — 클라이언트가 달러로). 2026-07 시도 코드 개편"
+            "(12 신설, 29·46 은 이전 신고분). 관심 HS6 만 받는다(probe_results F3). 운영 심의승인"
         ),
     ),
     _dg(

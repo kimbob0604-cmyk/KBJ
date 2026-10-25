@@ -14,7 +14,7 @@
       {
         "code": "992031",
         "name": "가상상장31",
-        "yoy_3m": 0.1809002236020727,
+        "yoy_3m": 0.18089993989254483,
         "status": "ok",
         "reviewed": false,
         "quality": "estimated"
@@ -22,7 +22,7 @@
       {
         "code": "99K170",
         "name": "모의로보틱스",
-        "yoy_3m": 0.12056625900025719,
+        "yoy_3m": 0.12056624351549772,
         "status": "ok",
         "reviewed": false,
         "quality": "ok"
@@ -86,7 +86,7 @@
       {
         "code": "992045",
         "name": "가상상장45",
-        "yoy_3m": 0.09113542129137242,
+        "yoy_3m": 0.0911354179856867,
         "status": "ok",
         "reviewed": false,
         "quality": "ok"
@@ -94,7 +94,7 @@
       {
         "code": "992024",
         "name": "가상상장24",
-        "yoy_3m": 0.08861966389570863,
+        "yoy_3m": 0.08861965853144049,
         "status": "ok",
         "reviewed": false,
         "quality": "ok"
@@ -126,7 +126,7 @@
       {
         "code": "992005",
         "name": "가상상장05",
-        "yoy_3m": 0.06349350400985632,
+        "yoy_3m": 0.06349423195243764,
         "status": "ok",
         "reviewed": false,
         "quality": "estimated"
@@ -142,7 +142,7 @@
       {
         "code": "992018",
         "name": "가상상장18",
-        "yoy_3m": 0.04964437335725047,
+        "yoy_3m": 0.0496441702430106,
         "status": "ok",
         "reviewed": false,
         "quality": "estimated"
@@ -158,7 +158,7 @@
       {
         "code": "992014",
         "name": "가상상장14",
-        "yoy_3m": 0.041084911779451616,
+        "yoy_3m": 0.04108506295574488,
         "status": "ok",
         "reviewed": false,
         "quality": "ok"
@@ -166,7 +166,7 @@
       {
         "code": "994110",
         "name": "모의기계",
-        "yoy_3m": 0.03639786621935559,
+        "yoy_3m": 0.03639782522292223,
         "status": "ok",
         "reviewed": false,
         "quality": "ok"
@@ -198,7 +198,7 @@
       {
         "code": "992044",
         "name": "가상상장44",
-        "yoy_3m": 0.013513178633401512,
+        "yoy_3m": 0.013513138938180402,
         "status": "ok",
         "reviewed": false,
         "quality": "ok"
@@ -222,7 +222,7 @@
       {
         "code": "992050",
         "name": "가상상장50",
-        "yoy_3m": -0.03396740190145564,
+        "yoy_3m": -0.033967048679350964,
         "status": "ok",
         "reviewed": false,
         "quality": "estimated"
@@ -230,7 +230,7 @@
       {
         "code": "992047",
         "name": "가상상장47",
-        "yoy_3m": -0.04001929730915532,
+        "yoy_3m": -0.040019546564740494,
         "status": "ok",
         "reviewed": false,
         "quality": "ok"
@@ -238,7 +238,7 @@
       {
         "code": "992004",
         "name": "가상상장04",
-        "yoy_3m": -0.05061256313164453,
+        "yoy_3m": -0.0506131344896974,
         "status": "ok",
         "reviewed": false,
         "quality": "ok"

@@ -50,421 +50,421 @@
     "monthly": [
       {
         "period": "2021-11",
-        "export_usd": 61591012,
+        "export_usd": 61590952,
         "yoy": null,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2021-12",
-        "export_usd": 66359103,
+        "export_usd": 66359056,
         "yoy": null,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2022-01",
-        "export_usd": 80352073,
+        "export_usd": 80352045,
         "yoy": null,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2022-02",
-        "export_usd": 67267698,
+        "export_usd": 67267627,
         "yoy": null,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2022-03",
-        "export_usd": 77551196,
+        "export_usd": 77551180,
         "yoy": null,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2022-04",
-        "export_usd": 80568440,
+        "export_usd": 80568366,
         "yoy": null,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2022-05",
-        "export_usd": 80786597,
+        "export_usd": 80786504,
         "yoy": null,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2022-06",
-        "export_usd": 69738326,
+        "export_usd": 69738321,
         "yoy": null,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2022-07",
-        "export_usd": 72499404,
+        "export_usd": 72499372,
         "yoy": null,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2022-08",
-        "export_usd": 87837495,
+        "export_usd": 87837416,
         "yoy": null,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2022-09",
-        "export_usd": 75545160,
+        "export_usd": 75545098,
         "yoy": null,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2022-10",
-        "export_usd": 88199803,
+        "export_usd": 88199802,
         "yoy": null,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2022-11",
-        "export_usd": 81325140,
-        "yoy": 0.32040595637360547,
+        "export_usd": 81325138,
+        "yoy": 0.320407233387799,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2022-12",
-        "export_usd": 78081942,
-        "yoy": 0.17665758984114066,
+        "export_usd": 78081882,
+        "yoy": 0.1766575062038669,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2023-01",
-        "export_usd": 78154812,
-        "yoy": -0.027345415186307176,
+        "export_usd": 78154743,
+        "yoy": -0.027345938669399272,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2023-02",
-        "export_usd": 81008599,
-        "yoy": 0.20427191074884044,
+        "export_usd": 81008500,
+        "yoy": 0.20427170831682062,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2023-03",
-        "export_usd": 70033973,
-        "yoy": -0.09693239210357185,
+        "export_usd": 70033932,
+        "yoy": -0.09693273667393942,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2023-04",
-        "export_usd": 87305241,
-        "yoy": 0.08361588659043107,
+        "export_usd": 87305218,
+        "yoy": 0.08361659194226023,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2023-05",
-        "export_usd": 81662737,
-        "yoy": 0.01084511460797799,
+        "export_usd": 81662647,
+        "yoy": 0.010845161657966118,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2023-06",
-        "export_usd": 74281549,
-        "yoy": 0.06514672471574223,
+        "export_usd": 74281455,
+        "yoy": 0.0651454410618284,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2023-07",
-        "export_usd": 75581738,
-        "yoy": 0.04251531111905593,
+        "export_usd": 75581731,
+        "yoy": 0.042515673335850046,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2023-08",
-        "export_usd": 85140928,
-        "yoy": -0.030699491285353653,
+        "export_usd": 85140829,
+        "yoy": -0.03069975893792254,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2023-09",
-        "export_usd": 81044510,
-        "yoy": 0.07279552738523876,
+        "export_usd": 81044412,
+        "yoy": 0.07279511259034988,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2023-10",
-        "export_usd": 82363909,
-        "yoy": -0.06616674748563012,
+        "export_usd": 82363825,
+        "yoy": -0.06616769041480652,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2023-11",
-        "export_usd": 75210025,
-        "yoy": -0.07519341420865311,
+        "export_usd": 75209980,
+        "yoy": -0.07519394519714706,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2023-12",
-        "export_usd": 78675218,
-        "yoy": 0.007598122988287992,
+        "export_usd": 78675185,
+        "yoy": 0.007598473385663773,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2024-01",
-        "export_usd": 78751908,
-        "yoy": 0.0076399121490819955,
+        "export_usd": 78751872,
+        "yoy": 0.007640339873371094,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2024-02",
-        "export_usd": 78973130,
-        "yoy": -0.025126578353128037,
+        "export_usd": 78973126,
+        "yoy": -0.02512543634371922,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2024-03",
-        "export_usd": 88173947,
-        "yoy": 0.2590167800091112,
+        "export_usd": 88173908,
+        "yoy": 0.25901696126105556,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2024-04",
-        "export_usd": 83706477,
-        "yoy": -0.04122047839029508,
+        "export_usd": 83706470,
+        "yoy": -0.04122030923182485,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2024-05",
-        "export_usd": 88157086,
-        "yoy": 0.07952647523693201,
+        "export_usd": 88157079,
+        "yoy": 0.07952756775135206,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2024-06",
-        "export_usd": 86627119,
-        "yoy": 0.16619968686140396,
+        "export_usd": 86627058,
+        "yoy": 0.16620033627505015,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2024-07",
-        "export_usd": 81922295,
-        "yoy": 0.08389006713279046,
+        "export_usd": 81922196,
+        "yoy": 0.08388885911096988,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2024-08",
-        "export_usd": 81261343,
-        "yoy": -0.04556663148993012,
+        "export_usd": 81261311,
+        "yoy": -0.04556588729276234,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2024-09",
-        "export_usd": 88120844,
-        "yoy": 0.08731416198093811,
+        "export_usd": 88120778,
+        "yoy": 0.08731466798962528,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2024-10",
-        "export_usd": 79333098,
-        "yoy": -0.036797799385650865,
+        "export_usd": 79333035,
+        "yoy": -0.036797586849320774,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2024-11",
-        "export_usd": 69451462,
-        "yoy": -0.07656643021494236,
+        "export_usd": 69451368,
+        "yoy": -0.07656713735827536,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2024-12",
-        "export_usd": 78363464,
-        "yoy": -0.0039625463562742436,
+        "export_usd": 78363427,
+        "yoy": -0.00396259634842322,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2025-01",
-        "export_usd": 78246252,
-        "yoy": -0.006420869177110267,
+        "export_usd": 78246181,
+        "yoy": -0.006421322919690442,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2025-02",
-        "export_usd": 75064140,
-        "yoy": -0.04949772428735344,
+        "export_usd": 75064109,
+        "yoy": -0.04949806741662244,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2025-03",
-        "export_usd": 94064015,
-        "yoy": 0.06680054612231556,
+        "export_usd": 94063992,
+        "yoy": 0.0668007649156257,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2025-04",
-        "export_usd": 78686535,
-        "yoy": -0.059970774878099875,
+        "export_usd": 78686456,
+        "yoy": -0.05997163877545553,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2025-05",
-        "export_usd": 93749561,
-        "yoy": 0.06343760826341827,
+        "export_usd": 93749554,
+        "yoy": 0.06343762039447243,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2025-06",
-        "export_usd": 98102332,
-        "yoy": 0.1324667458958202,
+        "export_usd": 98102265,
+        "yoy": 0.13246678222055475,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2025-07",
-        "export_usd": 86340381,
-        "yoy": 0.05393020274185334,
+        "export_usd": 86340328,
+        "yoy": 0.05393082331957588,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2025-08",
-        "export_usd": 80704514,
-        "yoy": -0.006852324612518834,
+        "export_usd": 80704498,
+        "yoy": -0.0068521328511371715,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2025-09",
-        "export_usd": 96874155,
-        "yoy": 0.09933303430306006,
+        "export_usd": 96874150,
+        "yoy": 0.0993338022927297,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2025-10",
-        "export_usd": 97336750,
-        "yoy": 0.22693745565344003,
+        "export_usd": 97336730,
+        "yoy": 0.22693818309981229,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2025-11",
-        "export_usd": 82882749,
-        "yoy": 0.1933909943709391,
+        "export_usd": 82882715,
+        "yoy": 0.19339212003276973,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2025-12",
-        "export_usd": 86871386,
-        "yoy": 0.10857000882817025,
+        "export_usd": 86871365,
+        "yoy": 0.10857027120207552,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2026-01",
-        "export_usd": 76490157,
-        "yoy": -0.022443187295135947,
+        "export_usd": 76490080,
+        "yoy": -0.022443270512243707,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2026-02",
-        "export_usd": 76331525,
-        "yoy": 0.01688403421982887,
+        "export_usd": 76331477,
+        "yoy": 0.016883814697028265,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2026-03",
-        "export_usd": 89893386,
-        "yoy": -0.04433819689426699,
+        "export_usd": 89893334,
+        "yoy": -0.04433852518007886,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2026-04",
-        "export_usd": 79861589,
-        "yoy": 0.014933352974474401,
+        "export_usd": 79861520,
+        "yoy": 0.014933492474316745,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2026-05",
-        "export_usd": 83945878,
-        "yoy": -0.10457310525920549,
+        "export_usd": 83945844,
+        "yoy": -0.10457341044569302,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2026-06",
-        "export_usd": 82135822,
-        "yoy": -0.1627536266546178,
+        "export_usd": 82135762,
+        "yoy": -0.1627536686833737,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2026-07",
-        "export_usd": 96562508,
-        "yoy": 0.11839334427586867,
+        "export_usd": 96562459,
+        "yoy": 0.11839347207297313,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2026-08",
-        "export_usd": 88716729,
-        "yoy": 0.09927840492113837,
+        "export_usd": 88716707,
+        "yoy": 0.09927834765700205,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2026-09",
-        "export_usd": 85730663,
-        "yoy": -0.11503059764508128,
+        "export_usd": 85730576,
+        "yoy": -0.11503144396638032,
         "revenue_yoy": null,
         "quality": "ok"
       },
       {
         "period": "2026-10",
-        "export_usd": 86553853,
-        "yoy": -0.11077929570360556,
+        "export_usd": 86553766,
+        "yoy": -0.11078000599808524,
         "revenue_yoy": null,
         "quality": "ok"
       }
@@ -479,134 +479,134 @@
       },
       {
         "period": "2022Q1",
-        "export_usd": 225170966,
+        "export_usd": 225170852,
         "yoy": null,
         "revenue_yoy": 0.11602435659972743,
         "quality": "ok"
       },
       {
         "period": "2022Q2",
-        "export_usd": 231093362,
+        "export_usd": 231093192,
         "yoy": null,
         "revenue_yoy": -0.40826075493561853,
         "quality": "ok"
       },
       {
         "period": "2022Q3",
-        "export_usd": 235882059,
+        "export_usd": 235881886,
         "yoy": null,
         "revenue_yoy": -0.02152469028135018,
         "quality": "ok"
       },
       {
         "period": "2022Q4",
-        "export_usd": 247606885,
+        "export_usd": 247606822,
         "yoy": null,
         "revenue_yoy": 0.23418562071206095,
         "quality": "ok"
       },
       {
         "period": "2023Q1",
-        "export_usd": 229197384,
-        "yoy": 0.017881601113811874,
+        "export_usd": 229197174,
+        "yoy": 0.017881190081229237,
         "revenue_yoy": 0.22964820575011768,
         "quality": "ok"
       },
       {
         "period": "2023Q2",
-        "export_usd": 243249527,
-        "yoy": 0.052602830325003236,
+        "export_usd": 243249320,
+        "yoy": 0.05260271191918231,
         "revenue_yoy": 2.199379305479228,
         "quality": "ok"
       },
       {
         "period": "2023Q3",
-        "export_usd": 241767177,
-        "yoy": 0.02494940960085823,
+        "export_usd": 241766972,
+        "yoy": 0.024949291835298704,
         "revenue_yoy": -0.41212219553246987,
         "quality": "ok"
       },
       {
         "period": "2023Q4",
-        "export_usd": 236249152,
-        "yoy": -0.045870020169972214,
+        "export_usd": 236248990,
+        "yoy": -0.045870432805869554,
         "revenue_yoy": 0.9937319759047336,
         "quality": "ok"
       },
       {
         "period": "2024Q1",
-        "export_usd": 245898985,
-        "yoy": 0.07286994658345658,
+        "export_usd": 245898906,
+        "yoy": 0.07287058026101456,
         "revenue_yoy": 0.26886213805723513,
         "quality": "ok"
       },
       {
         "period": "2024Q2",
-        "export_usd": 258490683,
-        "yoy": 0.06265646723661233,
+        "export_usd": 258490607,
+        "yoy": 0.06265705642536412,
         "revenue_yoy": -0.1859780216857818,
         "quality": "ok"
       },
       {
         "period": "2024Q3",
-        "export_usd": 251304482,
-        "yoy": 0.039448304878414664,
+        "export_usd": 251304285,
+        "yoy": 0.03944837312072624,
         "revenue_yoy": 2.0022649830921537,
         "quality": "ok"
       },
       {
         "period": "2024Q4",
-        "export_usd": 227148024,
-        "yoy": -0.03852343097510891,
+        "export_usd": 227147829,
+        "yoy": -0.03852359705811925,
         "revenue_yoy": -0.5430854419990301,
         "quality": "ok"
       },
       {
         "period": "2025Q1",
-        "export_usd": 247374407,
-        "yoy": 0.006000113834548904,
+        "export_usd": 247374282,
+        "yoy": 0.005999929915914137,
         "revenue_yoy": -0.08834589265909265,
         "quality": "ok"
       },
       {
         "period": "2025Q2",
-        "export_usd": 270538428,
-        "yoy": 0.04660804356334358,
+        "export_usd": 270538276,
+        "yoy": 0.04660776205558892,
         "revenue_yoy": 0.7431561940244757,
         "quality": "ok"
       },
       {
         "period": "2025Q3",
-        "export_usd": 263919050,
-        "yoy": 0.050196349840590404,
+        "export_usd": 263918975,
+        "yoy": 0.05019687622899327,
         "revenue_yoy": -0.6940277666667132,
         "quality": "ok"
       },
       {
         "period": "2025Q4",
-        "export_usd": 267090885,
-        "yoy": 0.1758450722090168,
+        "export_usd": 267090810,
+        "yoy": 0.1758457504994726,
         "revenue_yoy": 1.9477654345049404,
         "quality": "ok"
       },
       {
         "period": "2026Q1",
-        "export_usd": 242715068,
-        "yoy": -0.018835168375094136,
+        "export_usd": 242714891,
+        "yoy": -0.018835387276705973,
         "revenue_yoy": 0.639890536281924,
         "quality": "ok"
       },
       {
         "period": "2026Q2",
-        "export_usd": 245943288,
-        "yoy": -0.0909118139300844,
+        "export_usd": 245943125,
+        "yoy": -0.09091190718005748,
         "revenue_yoy": -0.3434969204619285,
         "quality": "ok"
       },
       {
         "period": "2026Q3",
-        "export_usd": 271009900,
-        "yoy": 0.026867518678070024,
+        "export_usd": 271009742,
+        "yoy": 0.026867212150774034,
         "revenue_yoy": 4.300311509360816,
         "quality": "ok"
       },
@@ -619,9 +619,9 @@
       }
     ],
     "lag_corr": {
-      "0": 0.31045316808297324,
-      "1": -0.3000064802726244,
-      "2": -0.18633756675151644
+      "0": 0.3104508148774245,
+      "1": -0.3000045553903446,
+      "2": -0.1863373197766196
     }
   }
 }

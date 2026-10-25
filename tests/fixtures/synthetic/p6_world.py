@@ -465,8 +465,9 @@ def _make_sigungu(
                 noise = r.uniform(0.8, 1.2)  # 달마다 한 번(결정적 — 순서 고정)
                 if (reg.valid_from and ym < reg.valid_from) or (reg.valid_to and ym > reg.valid_to):
                     continue
-                e = int(level * noise)
-                i = e // 3
+                # 시군구 API 는 천 달러 단위다 — 가짜 서버가 1000 으로 나눠 낸다
+                e = int(level * noise) // 1000 * 1000
+                i = e // 3 // 1000 * 1000
                 out.append(
                     SigunguMonthRow(
                         ym=ym,

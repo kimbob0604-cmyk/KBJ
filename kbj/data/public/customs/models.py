@@ -238,7 +238,8 @@ class TradeRow(BaseModel):
 
 
 class SigunguRow(BaseModel):
-    """시군구별 품목별 한 행(15134343). 금액 미화 달러, 중량 없음, 시군구는 이름만(코드 없음)."""
+    """시군구별 품목별 한 행(15134343). 금액 미화 달러(응답은 천 달러 — 클라이언트가 바꾼다),
+    중량 없음, 시군구는 이름만(코드 없음)."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 

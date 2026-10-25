@@ -21,6 +21,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from decimal import Decimal
 from typing import Final
 
 from kbj.data.datago import DatagoFormatError, DatagoTransport, parse_amount
@@ -70,6 +71,10 @@ PATHS: Final[Mapping[str, str]] = {
 
 ITEM_COUNTRY_MAX_MONTHS: Final = 12  # "조회기간 1년 이내"(DOC:15100475 2-2)
 TEN_DAY_MAX_MONTHS: Final = 120  # "조회기간 10년 이내"(15157909 는 같은 계열 기준 [실측 필요])
+# 시군구(15134343) 금액 열은 천 달러다(문서엔 단위가 없다). 2026-10-26 맥 실측(probe_results §2.5):
+# 한 HS6 의 전 시도 시군구 합 ÷ 품목별(15101609) 전국 합 = 0.001(903149·330499, 2026-01~06 달마다).
+# 다른 표와 같게 달러로 바꿔 둔다
+SIGUNGU_USD_PER_UNIT: Final = Decimal(1000)
 
 
 class CustomsTruncated(DatagoFormatError):
@@ -227,10 +232,10 @@ class CustomsClient:
                         hs6=normalize_hs(r["hsSgn"]),
                         item_name=_text(r.get("korePrlstNm")),
                         exp_count=parse_amount(r["expCnt"]),
-                        exp_usd=parse_amount(r["expUsdAmt"]),
+                        exp_usd=_thousand_usd(r["expUsdAmt"]),
                         imp_count=parse_amount(r["impCnt"]),
-                        imp_usd=parse_amount(r["impUsdAmt"]),
-                        balance_usd=parse_amount(r["cmtrBlncAmt"]),
+                        imp_usd=_thousand_usd(r["impUsdAmt"]),
+                        balance_usd=_thousand_usd(r["cmtrBlncAmt"]),
                     )
                 )
             except ValueError as e:
@@ -322,3 +327,9 @@ def _need(dataset: str, row: Mapping[str, object], keys: Sequence[str]) -> None:
 def _text(v: object) -> str | None:
     s = str(v).strip() if v is not None else ""
     return s or None
+
+
+def _thousand_usd(raw: object) -> Decimal | None:
+    """시군구 금액(천 달러) → 달러(`SIGUNGU_USD_PER_UNIT`). 빈 값은 None 그대로."""
+    v = parse_amount(raw)
+    return None if v is None else v * SIGUNGU_USD_PER_UNIT

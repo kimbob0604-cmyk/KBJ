@@ -19,6 +19,7 @@ from kbj.data.datago import DatagoAgencyError, DatagoQuotaExceeded
 from kbj.data.public.customs.client import (
     DATASET_IDS,
     PATHS,
+    SIGUNGU_USD_PER_UNIT,
     TEN_DAY,
     CustomsClient,
     CustomsTruncated,
@@ -147,6 +148,21 @@ def test_sigungu_parses_comma_strings_and_keeps_requested_sido() -> None:
     )
     assert r.exp_usd is not None and r.imp_usd is not None and r.balance_usd is not None
     assert r.exp_usd == r.imp_usd + r.balance_usd
+
+
+def test_sigungu_amounts_are_thousand_dollars_and_stored_as_dollars() -> None:
+    """2026-10-26 맥 실측: 시군구 금액은 천 달러(전 시도 합 ÷ 품목별 전국 합 = 0.001) — 달러로
+    바꾼다."""
+    body = synth("customs_sigungu.xml")
+    raw = re.search(r"<expUsdAmt>([^<]*)</expUsdAmt>", body)
+    bal = re.search(r"<cmtrBlncAmt>([^<]*)</cmtrBlncAmt>", body)
+    assert raw is not None and bal is not None
+    c, _server = _client(body)
+    r = c.sigungu("202607", "202608", "41", "330499")[0]
+    assert r.exp_usd == Decimal(raw.group(1).replace(",", "")) * SIGUNGU_USD_PER_UNIT
+    assert r.balance_usd == Decimal(bal.group(1).replace(",", "")) * 1000
+    assert r.exp_count is not None and r.exp_usd is not None
+    assert r.exp_count < r.exp_usd / 1000  # 건수는 그대로
 
 
 def test_sigungu_without_item_name_column() -> None:
