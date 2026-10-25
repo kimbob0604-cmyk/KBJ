@@ -9,12 +9,13 @@
 # 규칙: 회사 이름 + 시군구 글 → 시군구 흐름(HS6, 회사 출하). 여러 종목이 함께 걸린 전국 글 → 업황 혼합.
 # 가중치는 수출 흐름만 — 회사 출하·관계사 흐름이 있으면 그 품목들끼리, 없으면 업황 흐름끼리 1/N(지수 = 수출 합 × 상수).
 # 같은 HS6 를 시군구 회사 흐름이 덮으면 전국 회사 흐름은 0(이중 계산 방지). 수입 흐름은 0 — 수입만 있는 종목은 수입이 지수.
-# reviewed 는 맥 검증(verify_trade) 뒤에 바꾼다. 형식은 판 2 와 같다(version 2 스키마).
+# reviewed: 맥 verify-trade(2026-10-26) 종목별 문제 0(code_missing·name_mismatch·hs_missing·no_recent) — 채널
+# 근거가 있는 종목 전부 true. 형식은 판 2 와 같다(version 2 스키마).
 version: 2
 stocks:
   - code: '000150'
     name: 두산
-    reviewed: false
+    reviewed: true
     sector: "PCB"
     flows:
       - {id: s1, name: "동박적층판(CCL) — 증평군·김천시·김제시·익산시", kind: sigungu, nature: company, regions: [KR-43-jeungpyeong, KR-47-gimcheon, KR-52-gimje, KR-52-iksan], products: [{hs: '741021', weight: 1.0}], basis: "채널 글 50건(2025-10~2026-07) · 회사 출하"}
@@ -22,7 +23,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 88건 — 최근 글 번호 36009, 36011, 38090, 38849, 40233, 41928, 41930, 41932, 41934, 41936, 41938, 44004"}]
   - code: '007660'
     name: 이수페타시스
-    reviewed: false
+    reviewed: true
     sector: "PCB"
     flows:
       - {id: s1, name: "인쇄회로기판(PCB) — 달성군", kind: sigungu, nature: company, regions: [KR-27-dalseong], products: [{hs: '853400', weight: 1.0}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -30,7 +31,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 58건 — 최근 글 번호 34321, 35007, 36099, 36101, 36105, 38100, 38859, 40243, 42026, 42028, 42032, 44014"}]
   - code: '007810'
     name: 코리아써키트
-    reviewed: false
+    reviewed: true
     sector: "PCB"
     flows:
       - {id: s1, name: "인쇄회로기판(PCB) — 안산시", kind: sigungu, nature: mixed, regions: [KR-41-ansan], products: [{hs: '853400', weight: 0.5}], basis: "채널 글 14건(2026-01~2026-07) · 업황 혼합"}
@@ -38,7 +39,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 52건 — 최근 글 번호 34321, 35007, 36099, 36107, 36109, 38100, 38859, 40243, 42026, 42034, 42036, 44014"}]
   - code: '222800'
     name: 심텍
-    reviewed: false
+    reviewed: true
     sector: "PCB"
     flows:
       - {id: s1, name: "메모리모듈 PCB·패키지 기판 — 청주시", kind: sigungu, nature: company, regions: [KR-43-cheongju], products: [{hs: '853400', weight: 1.0}], basis: "채널 글 3건(2025-10~2025-12) · 회사 출하"}
@@ -46,7 +47,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 41건 — 최근 글 번호 29852, 30523, 31591, 33593, 34321, 35007, 36099, 38100, 38859, 40243, 42026, 44014"}]
   - code: '353200'
     name: 대덕전자
-    reviewed: false
+    reviewed: true
     sector: "PCB"
     flows:
       - {id: s1, name: "인쇄회로기판(PCB) — 안산시", kind: sigungu, nature: mixed, regions: [KR-41-ansan], products: [{hs: '853400', weight: 0.5}], basis: "채널 글 14건(2026-01~2026-07) · 업황 혼합"}
@@ -54,14 +55,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 52건 — 최근 글 번호 34321, 35007, 36099, 36107, 36109, 38100, 38859, 40243, 42026, 42034, 42036, 44014"}]
   - code: '356860'
     name: 티엘비
-    reviewed: false
+    reviewed: true
     sector: "PCB"
     flows:
       - {id: s1, name: "인쇄회로기판(PCB) — 안산시", kind: sigungu, nature: mixed, regions: [KR-41-ansan], products: [{hs: '853400', weight: 1.0}], basis: "채널 글 14건(2026-01~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 14건 — 최근 글 번호 17994, 17996, 22980, 22982, 27293, 27295, 31599, 31601, 36107, 36109, 42034, 42036"}]
   - code: '009450'
     name: 경동나비엔
-    reviewed: false
+    reviewed: true
     sector: "가전"
     flows:
       - {id: s1, name: "가스 순간온수기 — 평택시", kind: sigungu, nature: company, regions: [KR-41-pyeongtaek], products: [{hs: '841911', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -69,7 +70,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 33193, 34065, 34793, 35479, 37732, 37738, 38574, 39333, 40717, 43666, 43672, 44488"}]
   - code: '066570'
     name: LG전자
-    reviewed: false
+    reviewed: true
     sector: "가전"
     flows:
       - {id: s1, name: "태양광 셀 — 파주시", kind: sigungu, nature: mixed, regions: [KR-41-paju], products: [{hs: '854142', weight: 0.5}], basis: "채널 글 2건(2026-06~2026-07) · 업황 혼합"}
@@ -77,7 +78,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 8건 — 최근 글 번호 36593, 36597, 38222, 38981, 40365, 42520, 42524, 44136"}]
   - code: '008490'
     name: 서흥
-    reviewed: false
+    reviewed: true
     sector: "건강기능식품"
     flows:
       - {id: s1, name: "젤라틴 — 강서구", kind: sigungu, nature: affiliate, regions: [KR-26-gangseo], products: [{hs: '350300', weight: 1.0}], basis: "채널 글 6건(2026-05~2026-07) · 관계사 물량"}
@@ -85,21 +86,21 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 44건 — 최근 글 번호 34521, 35207, 36849, 36871, 36873, 38302, 39061, 40445, 42786, 42806, 42808, 44216"}]
   - code: '049960'
     name: 쎌바이오텍
-    reviewed: false
+    reviewed: true
     sector: "건강기능식품"
     flows:
       - {id: n1, name: "김치 — 전국", kind: national, nature: mixed, products: [{hs: '2005991000', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30220, 30897, 32911, 33967, 34695, 35381, 37452, 38476, 39235, 40619, 43386, 44390"}]
   - code: '194700'
     name: 노바렉스
-    reviewed: false
+    reviewed: true
     sector: "건강기능식품"
     flows:
       - {id: n1, name: "건강기능식품 — 전국", kind: national, nature: mixed, products: [{hs: '2106909040', weight: 0.5}, {hs: '2106909099', weight: 0.5}], basis: "채널 글 76건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 76건 — 최근 글 번호 36849, 36851, 38302, 38304, 39061, 39063, 40445, 40447, 42786, 42788, 44216, 44218"}]
   - code: '098460'
     name: 고영
-    reviewed: false
+    reviewed: true
     sector: "검사장비"
     flows:
       - {id: n1, name: "반도체 장비 — 전국", kind: national, nature: mixed, products: [{hs: '8486101000', weight: 0.0128}, {hs: '8486102000', weight: 0.0128}, {hs: '8486103010', weight: 0.0128}, {hs: '8486103020', weight: 0.0128}, {hs: '8486103090', weight: 0.0128}, {hs: '8486104010', weight: 0.0128}, {hs: '8486104020', weight: 0.0128}, {hs: '8486105010', weight: 0.0128}, {hs: '8486105030', weight: 0.0128}, {hs: '8486109000', weight: 0.0128}, {hs: '8486201000', weight: 0.0128}, {hs: '8486202100', weight: 0.0128}, {hs: '8486202200', weight: 0.0128}, {hs: '8486202300', weight: 0.0128}, {hs: '8486203000', weight: 0.0128}, {hs: '8486204000', weight: 0.0128}, {hs: '8486205000', weight: 0.0128}, {hs: '8486206010', weight: 0.0128}, {hs: '8486206020', weight: 0.0128}, {hs: '8486206091', weight: 0.0128}, {hs: '8486206099', weight: 0.0128}, {hs: '8486207000', weight: 0.0128}, {hs: '8486208100', weight: 0.0128}, {hs: '8486208410', weight: 0.0128}, {hs: '8486208420', weight: 0.0128}, {hs: '8486208490', weight: 0.0128}, {hs: '8486209100', weight: 0.0128}, {hs: '8486209200', weight: 0.0128}, {hs: '8486209310', weight: 0.0128}, {hs: '8486209320', weight: 0.0128}, {hs: '8486209390', weight: 0.0128}, {hs: '8486209400', weight: 0.0128}, {hs: '8486209500', weight: 0.0128}, {hs: '8486209600', weight: 0.0128}, {hs: '8486209900', weight: 0.0128}, {hs: '8486301010', weight: 0.0128}, {hs: '8486301020', weight: 0.0128}, {hs: '8486301031', weight: 0.0128}, {hs: '8486301040', weight: 0.0128}, {hs: '8486301050', weight: 0.0128}, {hs: '8486301060', weight: 0.0128}, {hs: '8486301090', weight: 0.0128}, {hs: '8486302010', weight: 0.0128}, {hs: '8486302020', weight: 0.0128}, {hs: '8486302031', weight: 0.0128}, {hs: '8486302050', weight: 0.0128}, {hs: '8486302060', weight: 0.0128}, {hs: '8486302070', weight: 0.0128}, {hs: '8486302090', weight: 0.0128}, {hs: '8486401010', weight: 0.0128}, {hs: '8486401030', weight: 0.0128}, {hs: '8486401040', weight: 0.0128}, {hs: '8486401090', weight: 0.0128}, {hs: '8486402010', weight: 0.0128}, {hs: '8486402020', weight: 0.0128}, {hs: '8486402031', weight: 0.0128}, {hs: '8486402039', weight: 0.0128}, {hs: '8486402040', weight: 0.0128}, {hs: '8486402070', weight: 0.0128}, {hs: '8486402080', weight: 0.0128}, {hs: '8486402091', weight: 0.0128}, {hs: '8486402093', weight: 0.0128}, {hs: '8486402095', weight: 0.0128}, {hs: '8486402099', weight: 0.0128}, {hs: '8486403010', weight: 0.0128}, {hs: '8486403020', weight: 0.0128}, {hs: '8486403090', weight: 0.0128}, {hs: '8486901000', weight: 0.0128}, {hs: '8486902030', weight: 0.0128}, {hs: '8486902040', weight: 0.0128}, {hs: '8486902090', weight: 0.0128}, {hs: '8486903050', weight: 0.0128}, {hs: '8486903060', weight: 0.0128}, {hs: '8486903090', weight: 0.0128}, {hs: '8486904000', weight: 0.0128}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
@@ -107,7 +108,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 76건 — 최근 글 번호 35701, 35721, 38004, 38014, 38763, 38773, 40147, 40157, 41628, 41648, 43918, 43928"}]
   - code: '140860'
     name: 파크시스템스
-    reviewed: false
+    reviewed: true
     sector: "검사장비"
     flows:
       - {id: s1, name: "자동화 원자현미경 — 수원시", kind: sigungu, nature: company, regions: [KR-41-suwon], products: [{hs: '901210', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -116,14 +117,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 86건 — 최근 글 번호 35739, 38004, 38018, 38763, 38777, 40147, 40161, 41628, 41664, 41666, 43918, 43932"}]
   - code: '322310'
     name: 오로스테크놀로지
-    reviewed: false
+    reviewed: true
     sector: "검사장비"
     flows:
       - {id: s1, name: "패턴결함·오버레이 계측기 — 화성시", kind: sigungu, nature: mixed, regions: [KR-41-hwaseong], products: [{hs: '903141', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 10건 — 최근 글 번호 205, 4438, 8683, 13088, 17508, 22636, 26937, 31245, 35733, 41660"}]
   - code: '348210'
     name: 넥스틴
-    reviewed: false
+    reviewed: true
     sector: "검사장비"
     flows:
       - {id: s1, name: "패턴결함·오버레이 계측기 — 화성시", kind: sigungu, nature: company, regions: [KR-41-hwaseong], products: [{hs: '903141', weight: 1.0}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -132,14 +133,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 96건 — 최근 글 번호 38004, 38016, 38763, 38775, 40147, 40159, 41628, 41658, 41660, 41662, 43918, 43930"}]
   - code: '0015G0'
     name: 그린광학
-    reviewed: false
+    reviewed: true
     sector: "광학"
     flows:
       - {id: s1, name: "적외선 광학소재(ZnS) — 청주시", kind: sigungu, nature: company, regions: [KR-43-cheongju], products: [{hs: '283090', weight: 1.0}], basis: "채널 글 1건(2026-07~2026-07) · 회사 출하"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 1건 — 최근 글 번호 42654"}]
   - code: '119610'
     name: 인터로조
-    reviewed: false
+    reviewed: true
     sector: "광학"
     flows:
       - {id: s1, name: "콘택트렌즈 — 평택시", kind: sigungu, nature: company, regions: [KR-41-pyeongtaek], products: [{hs: '900130', weight: 0.2}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -148,7 +149,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 32631, 33871, 34599, 35285, 37170, 37172, 38380, 39139, 40523, 43104, 43106, 44294"}]
   - code: '475960'
     name: 토모큐브
-    reviewed: false
+    reviewed: true
     sector: "광학"
     flows:
       - {id: s1, name: "생물 현미경 — 유성구", kind: sigungu, nature: company, regions: [KR-30-yuseong], products: [{hs: '901180', weight: 1.0}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -156,7 +157,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 96건 — 최근 글 번호 38346, 38348, 39105, 39107, 40489, 40491, 42960, 42962, 42964, 42966, 44260, 44262"}]
   - code: '011760'
     name: 현대코퍼레이션
-    reviewed: false
+    reviewed: true
     sector: "기계"
     flows:
       - {id: s1, name: "굴착기 — 종로구", kind: sigungu, nature: company, regions: [KR-11-jongno], products: [{hs: '842952', weight: 1.0}], basis: "채널 글 1건(2026-02~2026-02) · 회사 출하"}
@@ -165,7 +166,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 37건 — 최근 글 번호 37888, 37894, 38624, 38626, 39383, 39385, 40767, 40769, 43822, 43828, 44538, 44540"}]
   - code: '049800'
     name: 우진플라임
-    reviewed: false
+    reviewed: true
     sector: "기계"
     flows:
       - {id: s1, name: "플라스틱 사출성형기 — 보은군", kind: sigungu, nature: company, regions: [KR-43-boeun], products: [{hs: '847710', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -173,7 +174,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 32735, 33909, 34637, 35323, 37274, 37276, 38418, 39177, 40561, 43208, 43210, 44332"}]
   - code: '241560'
     name: 두산밥캣
-    reviewed: false
+    reviewed: true
     sector: "기계"
     flows:
       - {id: s1, name: "불도저 — 성남시", kind: sigungu, nature: mixed, regions: [KR-41-seongnam], products: [{hs: '842911', weight: 0.1111}], basis: "채널 글 4건(2026-02~2026-07) · 업황 혼합"}
@@ -183,7 +184,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 49건 — 최근 글 번호 38626, 39383, 39385, 40767, 40769, 43822, 43824, 43828, 43832, 43834, 44538, 44540"}]
   - code: '267270'
     name: HD건설기계
-    reviewed: false
+    reviewed: true
     sector: "기계"
     flows:
       - {id: s1, name: "불꽃점화식 엔진 — 동구", kind: sigungu, nature: company, regions: [KR-28-dong], products: [{hs: '840790', weight: 0.1428}], basis: "채널 글 6건(2025-10~2026-03) · 회사 출하"}
@@ -199,14 +200,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 110건 — 최근 글 번호 40767, 40769, 43804, 43814, 43822, 43824, 43828, 43830, 43832, 43834, 44538, 44540"}]
   - code: '210540'
     name: 디와이파워
-    reviewed: false
+    reviewed: true
     sector: "기계 부품"
     flows:
       - {id: n1, name: "유압실린더 — 전국", kind: national, nature: company, products: [{hs: '8412211000', weight: 0.5}, {hs: '8412902000', weight: 0.5}], basis: "채널 글 38건(2025-10~2026-07) · 회사 출하"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30298, 30983, 33167, 34053, 34781, 35467, 37712, 38562, 39321, 40705, 43646, 44476"}]
   - code: '000490'
     name: 대동
-    reviewed: false
+    reviewed: true
     sector: "농기계"
     flows:
       - {id: s1, name: "트랙터(18kW 이하) — 달성군", kind: sigungu, nature: company, regions: [KR-27-dalseong], products: [{hs: '870191', weight: 0.25}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -218,7 +219,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 124건 — 최근 글 번호 39325, 39327, 40707, 40709, 40711, 43648, 43650, 43652, 43658, 44478, 44480, 44482"}]
   - code: '002900'
     name: TYM
-    reviewed: false
+    reviewed: true
     sector: "농기계"
     flows:
       - {id: s1, name: "트랙터(18kW 이하) — 옥천군·익산시", kind: sigungu, nature: company, regions: [KR-43-okcheon, KR-52-iksan], products: [{hs: '870191', weight: 0.25}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -230,7 +231,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 124건 — 최근 글 번호 39325, 39327, 40707, 40709, 40711, 43648, 43650, 43652, 43654, 44478, 44480, 44482"}]
   - code: '033780'
     name: 케이티앤지
-    reviewed: false
+    reviewed: true
     sector: "담배"
     flows:
       - {id: s1, name: "담배 — 북구·대덕구·영주시", kind: sigungu, nature: company, regions: [KR-29-buk, KR-30-daedeok, KR-47-yeongju], products: [{hs: '240220', weight: 1.0}], basis: "채널 글 25건(2025-10~2026-07) · 회사 출하"}
@@ -238,7 +239,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 63건 — 최근 글 번호 33249, 34087, 34815, 35501, 37792, 37794, 38596, 39355, 40739, 43726, 43728, 44510"}]
   - code: '034220'
     name: LG디스플레이
-    reviewed: false
+    reviewed: true
     sector: "디스플레이"
     flows:
       - {id: s1, name: "OLED 모듈 — 파주시·아산시·구미시", kind: sigungu, nature: company, regions: [KR-41-paju, KR-44-asan, KR-47-gumi], products: [{hs: '852412', weight: 0.5}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -248,7 +249,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 106건 — 최근 글 번호 38132, 38887, 38891, 40271, 40275, 42178, 42182, 42184, 42190, 42192, 44042, 44046"}]
   - code: '051360'
     name: 토비스
-    reviewed: false
+    reviewed: true
     sector: "디스플레이"
     flows:
       - {id: s1, name: "카지노 모니터 — 연수구", kind: sigungu, nature: mixed, regions: [KR-28-yeonsu], products: [{hs: '852859', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 업황 혼합"}
@@ -256,7 +257,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 33281, 34099, 34827, 35513, 37824, 37826, 38608, 39367, 40751, 43758, 43760, 44522"}]
   - code: '052330'
     name: 코텍
-    reviewed: false
+    reviewed: true
     sector: "디스플레이"
     flows:
       - {id: s1, name: "카지노 모니터 — 연수구", kind: sigungu, nature: mixed, regions: [KR-28-yeonsu], products: [{hs: '852859', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 업황 혼합"}
@@ -264,14 +265,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 33281, 34099, 34827, 35513, 37824, 37826, 38608, 39367, 40751, 43758, 43760, 44522"}]
   - code: '317330'
     name: 덕산테코피아
-    reviewed: false
+    reviewed: true
     sector: "디스플레이 소재"
     flows:
       - {id: n1, name: "전해액 — 전국", kind: national, nature: mixed, products: [{hs: '3824999053', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29938, 30613, 31969, 33683, 34411, 35097, 36491, 38190, 38949, 40333, 42418, 44104"}]
   - code: '265520'
     name: AP시스템
-    reviewed: false
+    reviewed: true
     sector: "디스플레이 장비"
     flows:
       - {id: s1, name: "급속열처리(RTP) 장비 — 화성시", kind: sigungu, nature: company, regions: [KR-41-hwaseong], products: [{hs: '848620', weight: 0.0131}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -279,7 +280,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 86건 — 최근 글 번호 35809, 38004, 38042, 38763, 38801, 40147, 40185, 41628, 41734, 41736, 43918, 43956"}]
   - code: '215000'
     name: 골프존
-    reviewed: false
+    reviewed: true
     sector: "레저"
     flows:
       - {id: s1, name: "골프용품 — 강남구", kind: sigungu, nature: company, regions: [KR-11-gangnam], products: [{hs: '950639', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -287,42 +288,42 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 33217, 34071, 34799, 35485, 37760, 37762, 38580, 39339, 40723, 43694, 43696, 44494"}]
   - code: '365900'
     name: 브이씨
-    reviewed: false
+    reviewed: true
     sector: "레저"
     flows:
       - {id: n1, name: "골프용품 — 전국", kind: national, nature: mixed, products: [{hs: '9506399000', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30316, 31001, 33215, 34071, 34799, 35485, 37760, 38580, 39339, 40723, 43694, 44494"}]
   - code: '000640'
     name: 동아제약
-    reviewed: false
+    reviewed: true
     sector: "바이오"
     flows:
       - {id: n1, name: "바이오의약품·바이오의약품·원료 — 전국", kind: national, nature: mixed, products: [{hs: '3002150000', weight: 0.5}, {hs: '3002492000', weight: 0.5}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30004, 30681, 32193, 33751, 34479, 35165, 36729, 38260, 39019, 40403, 42666, 44174"}]
   - code: '003060'
     name: 에이프로젠바이오로직스
-    reviewed: false
+    reviewed: true
     sector: "바이오"
     flows:
       - {id: n1, name: "바이오의약품·바이오의약품·원료 — 전국", kind: national, nature: mixed, products: [{hs: '3002150000', weight: 0.5}, {hs: '3002492000', weight: 0.5}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30004, 30681, 32193, 33751, 34479, 35165, 36729, 38260, 39019, 40403, 42666, 44174"}]
   - code: '048410'
     name: 현대바이오
-    reviewed: false
+    reviewed: true
     sector: "바이오"
     flows:
       - {id: n1, name: "백신 — 전국", kind: national, nature: mixed, products: [{hs: '3002122000', weight: 0.3333}, {hs: '3002410000', weight: 0.3333}, {hs: '3002493000', weight: 0.3333}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30050, 30727, 32347, 33797, 34525, 35211, 36887, 38306, 39065, 40449, 42822, 44220"}]
   - code: '053030'
     name: 바이넥스
-    reviewed: false
+    reviewed: true
     sector: "바이오"
     flows:
       - {id: n1, name: "바이오의약품·바이오의약품·원료 — 전국", kind: national, nature: mixed, products: [{hs: '3002150000', weight: 0.5}, {hs: '3002492000', weight: 0.5}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30004, 30681, 32193, 33751, 34479, 35165, 36729, 38260, 39019, 40403, 42666, 44174"}]
   - code: '068270'
     name: 셀트리온
-    reviewed: false
+    reviewed: true
     sector: "바이오"
     flows:
       - {id: s1, name: "바이오의약품·바이오의약품·원료 — 연수구", kind: sigungu, nature: mixed, regions: [KR-28-yeonsu], products: [{hs: '300215', weight: 0.1428}], basis: "채널 글 20건(2025-10~2026-07) · 업황 혼합"}
@@ -332,14 +333,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 96건 — 최근 글 번호 38260, 38306, 39019, 39065, 40403, 40449, 42666, 42668, 42670, 42822, 44174, 44220"}]
   - code: '086890'
     name: 이수앱지스
-    reviewed: false
+    reviewed: true
     sector: "바이오"
     flows:
       - {id: n1, name: "바이오의약품·바이오의약품·원료 — 전국", kind: national, nature: mixed, products: [{hs: '3002150000', weight: 0.5}, {hs: '3002492000', weight: 0.5}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30004, 30681, 32193, 33751, 34479, 35165, 36729, 38260, 39019, 40403, 42666, 44174"}]
   - code: '086900'
     name: 메디톡스
-    reviewed: false
+    reviewed: true
     sector: "바이오"
     flows:
       - {id: s1, name: "보툴리눔 톡신 — 청주시", kind: sigungu, nature: company, regions: [KR-43-cheongju], products: [{hs: '300212', weight: 0.5}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -349,7 +350,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 476건 — 최근 글 번호 44186, 44188, 44190, 44192, 44194, 44196, 44198, 44200, 44202, 44204, 44206, 44208"}]
   - code: '106190'
     name: 하이텍팜
-    reviewed: false
+    reviewed: true
     sector: "바이오"
     flows:
       - {id: s1, name: "카바페넴 항생제 — 충주시", kind: sigungu, nature: company, regions: [KR-43-chungju], products: [{hs: '294190', weight: 1.0}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -357,7 +358,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 96건 — 최근 글 번호 38298, 38300, 39057, 39059, 40441, 40443, 42778, 42780, 42782, 42784, 44212, 44214"}]
   - code: '145020'
     name: 휴젤
-    reviewed: false
+    reviewed: true
     sector: "바이오"
     flows:
       - {id: s1, name: "보툴리눔 톡신 — 춘천시", kind: sigungu, nature: company, regions: [KR-51-chuncheon], products: [{hs: '300212', weight: 0.5}], basis: "채널 글 33건(2025-11~2026-07) · 회사 출하"}
@@ -367,14 +368,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 492건 — 최근 글 번호 44186, 44188, 44190, 44192, 44194, 44196, 44198, 44200, 44202, 44204, 44206, 44208"}]
   - code: '206650'
     name: 유바이오로직스
-    reviewed: false
+    reviewed: true
     sector: "바이오"
     flows:
       - {id: n1, name: "백신 — 전국", kind: national, nature: mixed, products: [{hs: '3002122000', weight: 0.3333}, {hs: '3002410000', weight: 0.3333}, {hs: '3002493000', weight: 0.3333}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30050, 30727, 32347, 33797, 34525, 35211, 36887, 38306, 39065, 40449, 42822, 44220"}]
   - code: '207940'
     name: 삼성바이오로직스
-    reviewed: false
+    reviewed: true
     sector: "바이오"
     flows:
       - {id: s1, name: "바이오의약품·바이오의약품·원료 — 연수구", kind: sigungu, nature: mixed, regions: [KR-28-yeonsu], products: [{hs: '300215', weight: 0.25}], basis: "채널 글 20건(2025-10~2026-07) · 업황 혼합"}
@@ -383,7 +384,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 58건 — 최근 글 번호 34479, 35165, 36729, 36731, 36733, 38260, 39019, 40403, 42666, 42668, 42670, 44174"}]
   - code: '214370'
     name: 케어젠
-    reviewed: false
+    reviewed: true
     sector: "바이오"
     flows:
       - {id: s1, name: "건강기능식품 — 강남구·안양시", kind: sigungu, nature: company, regions: [KR-11-gangnam, KR-41-anyang], products: [{hs: '210690', weight: 1.0}], basis: "채널 글 19건(2025-10~2026-07) · 회사 출하"}
@@ -391,28 +392,28 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 57건 — 최근 글 번호 33793, 34521, 35207, 36849, 36853, 36855, 38302, 39061, 40445, 42786, 42790, 44216"}]
   - code: '249420'
     name: 일동제약
-    reviewed: false
+    reviewed: true
     sector: "바이오"
     flows:
       - {id: n1, name: "백신 — 전국", kind: national, nature: mixed, products: [{hs: '3002122000', weight: 0.3333}, {hs: '3002410000', weight: 0.3333}, {hs: '3002493000', weight: 0.3333}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30050, 30727, 32347, 33797, 34525, 35211, 36887, 38306, 39065, 40449, 42822, 44220"}]
   - code: '326030'
     name: 에스케이바이오팜
-    reviewed: false
+    reviewed: true
     sector: "바이오"
     flows:
       - {id: n1, name: "바이오의약품·바이오의약품·원료 — 전국", kind: national, nature: mixed, products: [{hs: '3002150000', weight: 0.5}, {hs: '3002492000', weight: 0.5}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30004, 30681, 32193, 33751, 34479, 35165, 36729, 38260, 39019, 40403, 42666, 44174"}]
   - code: '334970'
     name: 프레스티지바이오로직스
-    reviewed: false
+    reviewed: true
     sector: "바이오"
     flows:
       - {id: n1, name: "바이오의약품·바이오의약품·원료 — 전국", kind: national, nature: mixed, products: [{hs: '3002150000', weight: 0.5}, {hs: '3002492000', weight: 0.5}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30004, 30681, 32193, 33751, 34479, 35165, 36729, 38260, 39019, 40403, 42666, 44174"}]
   - code: '000660'
     name: SK하이닉스
-    reviewed: false
+    reviewed: true
     sector: "반도체"
     flows:
       - {id: s1, name: "D램 모듈 — 이천시·수원시·청주시·아산시", kind: sigungu, nature: company, regions: [KR-41-icheon, KR-41-suwon, KR-43-cheongju, KR-44-asan], products: [{hs: '847330', weight: 0.5}], basis: "채널 글 15건(2025-10~2026-07) · 회사 출하"}
@@ -426,7 +427,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 649건 — 최근 글 번호 43894, 43896, 43898, 43900, 43902, 43908, 43910, 43912, 43914, 44570, 44572, 44576"}]
   - code: '000990'
     name: DB하이텍
-    reviewed: false
+    reviewed: true
     sector: "반도체"
     flows:
       - {id: n1, name: "CMOS 이미지센서 — 전국", kind: national, nature: mixed, products: [{hs: '8541609000', weight: 0.3333}, {hs: '8542391000', weight: 0.3333}], basis: "채널 글 43건(2025-10~2026-07) · 업황 혼합"}
@@ -434,7 +435,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 81건 — 최근 글 번호 35631, 35947, 37990, 38082, 38749, 38841, 40133, 40225, 41558, 41874, 43904, 43996"}]
   - code: '005930'
     name: 삼성전자
-    reviewed: false
+    reviewed: true
     sector: "반도체"
     flows:
       - {id: s1, name: "D램 모듈 — 이천시·수원시·청주시·아산시", kind: sigungu, nature: company, regions: [KR-41-icheon, KR-41-suwon, KR-43-cheongju, KR-44-asan], products: [{hs: '847330', weight: 0.1666}], basis: "채널 글 31건(2025-10~2026-07) · 회사 출하"}
@@ -454,7 +455,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 899건 — 최근 글 번호 43900, 43902, 43904, 43908, 43910, 43912, 43914, 44032, 44034, 44570, 44572, 44576"}]
   - code: '080220'
     name: 제주반도체
-    reviewed: false
+    reviewed: true
     sector: "반도체"
     flows:
       - {id: s1, name: "프로세서·컨트롤러·컨트롤러 IC — 제주시", kind: sigungu, nature: company, regions: [KR-50-jeju], products: [{hs: '854231', weight: 0.3333}], basis: "채널 글 4건(2026-06~2026-07) · 회사 출하"}
@@ -463,14 +464,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 23건 — 최근 글 번호 26803, 31105, 31109, 31111, 35591, 35593, 35595, 35597, 41518, 41520, 41522, 41524"}]
   - code: '108320'
     name: LX세미콘
-    reviewed: false
+    reviewed: true
     sector: "반도체"
     flows:
       - {id: n1, name: "실리콘카바이드(SiC) — 전국", kind: national, nature: mixed, products: [{hs: '8486902040', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29834, 30505, 31443, 33575, 34303, 34989, 35947, 38082, 38841, 40225, 41874, 43996"}]
   - code: '004710'
     name: 한솔테크닉스
-    reviewed: false
+    reviewed: true
     sector: "반도체 부품"
     flows:
       - {id: s1, name: "프로브카드·인터페이스보드 — 수원시", kind: sigungu, nature: affiliate, regions: [KR-41-suwon], products: [{hs: '903039', weight: 0.5}], basis: "채널 글 4건(2026-04~2026-07) · 관계사 물량"}
@@ -478,7 +479,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 4건 — 최근 글 번호 27113, 31419, 35923, 41850"}]
   - code: '058470'
     name: 리노공업
-    reviewed: false
+    reviewed: true
     sector: "반도체 부품"
     flows:
       - {id: s1, name: "테스트 소켓 — 강서구", kind: sigungu, nature: company, regions: [KR-26-gangseo], products: [{hs: '853661', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -488,28 +489,28 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 86건 — 최근 글 번호 35965, 38074, 38084, 38833, 38843, 40217, 40227, 41846, 41890, 41892, 43988, 43998"}]
   - code: '092220'
     name: KEC
-    reviewed: false
+    reviewed: true
     sector: "반도체 부품"
     flows:
       - {id: n1, name: "실리콘카바이드(SiC) — 전국", kind: national, nature: mixed, products: [{hs: '8486902040', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29834, 30505, 31443, 33575, 34303, 34989, 35947, 38082, 38841, 40225, 41874, 43996"}]
   - code: '095340'
     name: ISC
-    reviewed: false
+    reviewed: true
     sector: "반도체 부품"
     flows:
       - {id: n1, name: "러버 소켓 — 전국", kind: national, nature: mixed, products: [{hs: '8536909090', weight: 0.3333}, {hs: '9030332000', weight: 0.3333}, {hs: '9030392000', weight: 0.3333}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29824, 30495, 31407, 33565, 34293, 34979, 35911, 38072, 38831, 40215, 41838, 43986"}]
   - code: '098120'
     name: 마이크로컨텍솔
-    reviewed: false
+    reviewed: true
     sector: "반도체 부품"
     flows:
       - {id: n1, name: "러버 소켓 — 전국", kind: national, nature: mixed, products: [{hs: '8536909090', weight: 0.3333}, {hs: '9030332000', weight: 0.3333}, {hs: '9030392000', weight: 0.3333}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29824, 30495, 31407, 33565, 34293, 34979, 35911, 38072, 38831, 40215, 41838, 43986"}]
   - code: '101160'
     name: 월덱스
-    reviewed: false
+    reviewed: true
     sector: "반도체 부품"
     flows:
       - {id: s1, name: "쿼츠웨어 — 구미시", kind: sigungu, nature: mixed, regions: [KR-47-gumi], products: [{hs: '702000', weight: 0.5}], basis: "채널 글 19건(2025-10~2026-07) · 업황 혼합"}
@@ -517,7 +518,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 57건 — 최근 글 번호 34303, 34989, 35943, 35945, 35947, 38082, 38841, 40225, 41870, 41872, 41874, 43996"}]
   - code: '131290'
     name: 티에스이
-    reviewed: false
+    reviewed: true
     sector: "반도체 부품"
     flows:
       - {id: s1, name: "프로브카드·인터페이스보드 — 천안시", kind: sigungu, nature: company, regions: [KR-44-cheonan], products: [{hs: '903039', weight: 0.5}], basis: "채널 글 26건(2025-10~2026-07) · 회사 출하"}
@@ -526,7 +527,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 102건 — 최근 글 번호 35921, 38072, 38074, 38831, 38833, 40215, 40217, 41838, 41846, 41848, 43986, 43988"}]
   - code: '146320'
     name: 비씨엔씨
-    reviewed: false
+    reviewed: true
     sector: "반도체 부품"
     flows:
       - {id: s1, name: "쿼츠 — 이천시", kind: sigungu, nature: company, regions: [KR-41-icheon], products: [{hs: '702000', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -534,14 +535,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 31435, 33571, 34299, 34985, 35935, 35939, 38078, 38837, 40221, 41862, 41866, 43992"}]
   - code: '155650'
     name: 와이엠씨
-    reviewed: false
+    reviewed: true
     sector: "반도체 부품"
     flows:
       - {id: n1, name: "실리콘카바이드(SiC) — 전국", kind: national, nature: mixed, products: [{hs: '8486902040', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29834, 30505, 31443, 33575, 34303, 34989, 35947, 38082, 38841, 40225, 41874, 43996"}]
   - code: '166090'
     name: 하나머티리얼즈
-    reviewed: false
+    reviewed: true
     sector: "반도체 부품"
     flows:
       - {id: s1, name: "실리콘카바이드(SiC) — 성남시·천안시", kind: sigungu, nature: company, regions: [KR-41-seongnam, KR-44-cheonan], products: [{hs: '848690', weight: 1.0}], basis: "채널 글 29건(2025-10~2026-07) · 회사 출하"}
@@ -549,7 +550,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 67건 — 최근 글 번호 35955, 35957, 35959, 38082, 38841, 40225, 41874, 41880, 41882, 41884, 41886, 43996"}]
   - code: '195870'
     name: 해성디에스
-    reviewed: false
+    reviewed: true
     sector: "반도체 부품"
     flows:
       - {id: s1, name: "리드프레임 — 창원시", kind: sigungu, nature: company, regions: [KR-48-changwon], products: [{hs: '854290', weight: 1.0}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -558,14 +559,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 96건 — 최근 글 번호 38102, 38104, 38861, 38863, 40245, 40247, 42044, 42062, 42064, 42066, 44016, 44018"}]
   - code: '219130'
     name: 타이거일렉
-    reviewed: false
+    reviewed: true
     sector: "반도체 부품"
     flows:
       - {id: n1, name: "프로브카드·인터페이스보드 — 전국", kind: national, nature: mixed, products: [{hs: '9030392000', weight: 0.25}, {hs: '9030393000', weight: 0.25}, {hs: '9030394000', weight: 0.25}, {hs: '9030901000', weight: 0.25}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29826, 30497, 31415, 33567, 34295, 34981, 35919, 38074, 38833, 40217, 41846, 43988"}]
   - code: '252990'
     name: 샘씨엔에스
-    reviewed: false
+    reviewed: true
     sector: "반도체 부품"
     flows:
       - {id: n1, name: "프로브카드·인터페이스보드 — 전국", kind: national, nature: mixed, products: [{hs: '9030392000', weight: 0.2}, {hs: '9030393000', weight: 0.2}, {hs: '9030394000', weight: 0.2}, {hs: '9030901000', weight: 0.2}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
@@ -573,21 +574,21 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 76건 — 최근 글 번호 35919, 36099, 38074, 38100, 38833, 38859, 40217, 40243, 41846, 42026, 43988, 44014"}]
   - code: '272110'
     name: 케이엔제이
-    reviewed: false
+    reviewed: true
     sector: "반도체 부품"
     flows:
       - {id: n1, name: "실리콘카바이드(SiC) — 전국", kind: national, nature: mixed, products: [{hs: '8486902040', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29834, 30505, 31443, 33575, 34303, 34989, 35947, 38082, 38841, 40225, 41874, 43996"}]
   - code: '424980'
     name: 마이크로투나노
-    reviewed: false
+    reviewed: true
     sector: "반도체 부품"
     flows:
       - {id: n1, name: "프로브카드·인터페이스보드 — 전국", kind: national, nature: mixed, products: [{hs: '9030392000', weight: 0.25}, {hs: '9030393000', weight: 0.25}, {hs: '9030394000', weight: 0.25}, {hs: '9030901000', weight: 0.25}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29826, 30497, 31415, 33567, 34295, 34981, 35919, 38074, 38833, 40217, 41846, 43988"}]
   - code: '005290'
     name: 동진쎄미켐
-    reviewed: false
+    reviewed: true
     sector: "반도체 소재"
     flows:
       - {id: s1, name: "CMP 슬러리 — 서구·안성시·공주시", kind: sigungu, nature: company, regions: [KR-28-seo, KR-41-anseong, KR-44-gongju], products: [{hs: '340540', weight: 1.0}], basis: "채널 글 11건(2025-10~2026-07) · 회사 출하"}
@@ -595,7 +596,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 49건 — 최근 글 번호 31219, 33499, 34227, 34913, 35703, 35707, 38006, 38765, 40149, 41630, 41634, 43920"}]
   - code: '014680'
     name: 한솔케미칼
-    reviewed: false
+    reviewed: true
     sector: "반도체 소재"
     flows:
       - {id: s1, name: "반도체용 과산화수소 — 울주군", kind: sigungu, nature: company, regions: [KR-31-ulju], products: [{hs: '284700', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -603,14 +604,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 31483, 33579, 34307, 34993, 35989, 35991, 38086, 38845, 40229, 41916, 41918, 44000"}]
   - code: '064760'
     name: 티씨케이
-    reviewed: false
+    reviewed: true
     sector: "반도체 소재"
     flows:
       - {id: n1, name: "실리콘카바이드(SiC) — 전국", kind: national, nature: mixed, products: [{hs: '8486902040', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29834, 30505, 31443, 33575, 34303, 34989, 35947, 38082, 38841, 40225, 41874, 43996"}]
   - code: '074600'
     name: 원익QnC
-    reviewed: false
+    reviewed: true
     sector: "반도체 소재"
     flows:
       - {id: s1, name: "쿼츠·쿼츠웨어 — 구미시", kind: sigungu, nature: company, regions: [KR-47-gumi], products: [{hs: '702000', weight: 1.0}], basis: "채널 글 29건(2025-10~2026-07) · 회사 출하"}
@@ -619,7 +620,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 105건 — 최근 글 번호 38080, 38837, 38839, 40221, 40223, 41862, 41864, 41868, 41870, 41872, 43992, 43994"}]
   - code: '077360'
     name: 덕산하이메탈
-    reviewed: false
+    reviewed: true
     sector: "반도체 소재"
     flows:
       - {id: s1, name: "솔더 페이스트 — 북구", kind: sigungu, nature: company, regions: [KR-31-buk], products: [{hs: '381010', weight: 0.5}], basis: "채널 글 6건(2026-02~2026-07) · 회사 출하"}
@@ -627,7 +628,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 12건 — 최근 글 번호 17796, 17804, 22852, 22860, 27161, 27169, 31467, 31475, 35971, 35979, 41898, 41906"}]
   - code: '101490'
     name: 에스앤에스텍
-    reviewed: false
+    reviewed: true
     sector: "반도체 소재"
     flows:
       - {id: s1, name: "블랭크마스크(FPD용)·블랭크마스크 — 달서구", kind: sigungu, nature: company, regions: [KR-27-dalseo], products: [{hs: '370130', weight: 0.5}], basis: "채널 글 44건(2025-10~2026-07) · 회사 출하"}
@@ -637,14 +638,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 354건 — 최근 글 번호 41804, 41806, 41810, 41812, 41828, 43972, 43974, 43976, 43978, 43980, 43982, 43984"}]
   - code: '102710'
     name: 이엔에프테크놀로지
-    reviewed: false
+    reviewed: true
     sector: "반도체 소재"
     flows:
       - {id: s1, name: "CMP 슬러리 — 천안시", kind: sigungu, nature: company, regions: [KR-44-cheonan], products: [{hs: '340540', weight: 1.0}], basis: "채널 글 2건(2026-01~2026-02) · 회사 출하"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 2건 — 최근 글 번호 13058, 17476"}]
   - code: '357780'
     name: 솔브레인
-    reviewed: false
+    reviewed: true
     sector: "반도체 소재"
     flows:
       - {id: s1, name: "CMP 슬러리 — 서구·안성시·공주시", kind: sigungu, nature: company, regions: [KR-28-seo, KR-41-anseong, KR-44-gongju], products: [{hs: '340540', weight: 1.0}], basis: "채널 글 11건(2025-10~2026-07) · 회사 출하"}
@@ -652,7 +653,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 49건 — 최근 글 번호 31221, 33499, 34227, 34913, 35703, 35709, 38006, 38765, 40149, 41630, 41636, 43920"}]
   - code: '456040'
     name: OCI
-    reviewed: false
+    reviewed: true
     sector: "반도체 소재"
     flows:
       - {id: s1, name: "반도체용 과산화수소 — 익산시", kind: sigungu, nature: company, regions: [KR-52-iksan], products: [{hs: '284700', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -660,7 +661,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 31485, 33579, 34307, 34993, 35989, 35993, 38086, 38845, 40229, 41916, 41920, 44000"}]
   - code: '031980'
     name: 피에스케이홀딩스
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: s1, name: "디스컴·세정장비 — 화성시", kind: sigungu, nature: company, regions: [KR-41-hwaseong], products: [{hs: '848620', weight: 0.0129}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -669,7 +670,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 134건 — 최근 글 번호 38785, 40147, 40167, 40169, 41628, 41676, 41678, 41680, 41682, 43918, 43938, 43940"}]
   - code: '036810'
     name: 에프에스티
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: s1, name: "펠리클 — 화성시·오산시", kind: sigungu, nature: company, regions: [KR-41-hwaseong, KR-41-osan], products: [{hs: '848690', weight: 1.0}], basis: "채널 글 27건(2025-11~2026-07) · 회사 출하"}
@@ -677,7 +678,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 65건 — 최근 글 번호 35901, 35903, 35905, 35907, 38070, 38829, 40213, 41828, 41830, 41832, 41834, 43984"}]
   - code: '036930'
     name: 주성엔지니어링
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: s1, name: "증착장비 — 광주시", kind: sigungu, nature: company, regions: [KR-41-gwangju], products: [{hs: '848620', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -685,7 +686,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 86건 — 최근 글 번호 35773, 38004, 38030, 38763, 38789, 40147, 40173, 41628, 41698, 41700, 43918, 43944"}]
   - code: '039030'
     name: 이오테크닉스
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: s1, name: "레이저 마커 — 안양시", kind: sigungu, nature: company, regions: [KR-41-anyang], products: [{hs: '848640', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -693,14 +694,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 86건 — 최근 글 번호 35789, 38004, 38034, 38763, 38793, 40147, 40177, 41628, 41712, 41716, 43918, 43948"}]
   - code: '039440'
     name: 에스티아이
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: s1, name: "CCSS(약액공급장치) — 안성시", kind: sigungu, nature: company, regions: [KR-41-anseong], products: [{hs: '847989', weight: 1.0}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 20건 — 최근 글 번호 17536, 17540, 22664, 22668, 26965, 26969, 31273, 31277, 35761, 35765, 41688, 41692"}]
   - code: '042700'
     name: 한미반도체
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: s1, name: "레이저 마커·TC 본더 — 서구", kind: sigungu, nature: company, regions: [KR-28-seo], products: [{hs: '848640', weight: 0.0131}], basis: "채널 글 38건(2025-10~2026-07) · 회사 출하"}
@@ -708,21 +709,21 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 200건 — 최근 글 번호 40181, 41628, 41712, 41714, 41718, 41720, 41722, 41726, 43918, 43948, 43950, 43952"}]
   - code: '045100'
     name: 한양이엔지
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: n1, name: "반도체 장비 — 전국", kind: national, nature: mixed, products: [{hs: '8486101000', weight: 0.0133}, {hs: '8486102000', weight: 0.0133}, {hs: '8486103010', weight: 0.0133}, {hs: '8486103020', weight: 0.0133}, {hs: '8486103090', weight: 0.0133}, {hs: '8486104010', weight: 0.0133}, {hs: '8486104020', weight: 0.0133}, {hs: '8486105010', weight: 0.0133}, {hs: '8486105030', weight: 0.0133}, {hs: '8486109000', weight: 0.0133}, {hs: '8486201000', weight: 0.0133}, {hs: '8486202100', weight: 0.0133}, {hs: '8486202200', weight: 0.0133}, {hs: '8486202300', weight: 0.0133}, {hs: '8486203000', weight: 0.0133}, {hs: '8486204000', weight: 0.0133}, {hs: '8486205000', weight: 0.0133}, {hs: '8486206010', weight: 0.0133}, {hs: '8486206020', weight: 0.0133}, {hs: '8486206091', weight: 0.0133}, {hs: '8486206099', weight: 0.0133}, {hs: '8486207000', weight: 0.0133}, {hs: '8486208100', weight: 0.0133}, {hs: '8486208410', weight: 0.0133}, {hs: '8486208420', weight: 0.0133}, {hs: '8486208490', weight: 0.0133}, {hs: '8486209100', weight: 0.0133}, {hs: '8486209200', weight: 0.0133}, {hs: '8486209310', weight: 0.0133}, {hs: '8486209320', weight: 0.0133}, {hs: '8486209390', weight: 0.0133}, {hs: '8486209400', weight: 0.0133}, {hs: '8486209500', weight: 0.0133}, {hs: '8486209600', weight: 0.0133}, {hs: '8486209900', weight: 0.0133}, {hs: '8486301010', weight: 0.0133}, {hs: '8486301020', weight: 0.0133}, {hs: '8486301031', weight: 0.0133}, {hs: '8486301040', weight: 0.0133}, {hs: '8486301050', weight: 0.0133}, {hs: '8486301060', weight: 0.0133}, {hs: '8486301090', weight: 0.0133}, {hs: '8486302010', weight: 0.0133}, {hs: '8486302020', weight: 0.0133}, {hs: '8486302031', weight: 0.0133}, {hs: '8486302050', weight: 0.0133}, {hs: '8486302060', weight: 0.0133}, {hs: '8486302070', weight: 0.0133}, {hs: '8486302090', weight: 0.0133}, {hs: '8486401010', weight: 0.0133}, {hs: '8486401030', weight: 0.0133}, {hs: '8486401040', weight: 0.0133}, {hs: '8486401090', weight: 0.0133}, {hs: '8486402010', weight: 0.0133}, {hs: '8486402020', weight: 0.0133}, {hs: '8486402031', weight: 0.0133}, {hs: '8486402039', weight: 0.0133}, {hs: '8486402040', weight: 0.0133}, {hs: '8486402070', weight: 0.0133}, {hs: '8486402080', weight: 0.0133}, {hs: '8486402091', weight: 0.0133}, {hs: '8486402093', weight: 0.0133}, {hs: '8486402095', weight: 0.0133}, {hs: '8486402099', weight: 0.0133}, {hs: '8486403010', weight: 0.0133}, {hs: '8486403020', weight: 0.0133}, {hs: '8486403090', weight: 0.0133}, {hs: '8486901000', weight: 0.0133}, {hs: '8486902030', weight: 0.0133}, {hs: '8486902040', weight: 0.0133}, {hs: '8486902090', weight: 0.0133}, {hs: '8486903050', weight: 0.0133}, {hs: '8486903060', weight: 0.0133}, {hs: '8486903090', weight: 0.0133}, {hs: '8486904000', weight: 0.0133}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29756, 30427, 31213, 33497, 34225, 34911, 35701, 38004, 38763, 40147, 41628, 43918"}]
   - code: '045300'
     name: 성우테크론
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: n1, name: "반도체 장비 — 전국", kind: national, nature: mixed, products: [{hs: '8486101000', weight: 0.0133}, {hs: '8486102000', weight: 0.0133}, {hs: '8486103010', weight: 0.0133}, {hs: '8486103020', weight: 0.0133}, {hs: '8486103090', weight: 0.0133}, {hs: '8486104010', weight: 0.0133}, {hs: '8486104020', weight: 0.0133}, {hs: '8486105010', weight: 0.0133}, {hs: '8486105030', weight: 0.0133}, {hs: '8486109000', weight: 0.0133}, {hs: '8486201000', weight: 0.0133}, {hs: '8486202100', weight: 0.0133}, {hs: '8486202200', weight: 0.0133}, {hs: '8486202300', weight: 0.0133}, {hs: '8486203000', weight: 0.0133}, {hs: '8486204000', weight: 0.0133}, {hs: '8486205000', weight: 0.0133}, {hs: '8486206010', weight: 0.0133}, {hs: '8486206020', weight: 0.0133}, {hs: '8486206091', weight: 0.0133}, {hs: '8486206099', weight: 0.0133}, {hs: '8486207000', weight: 0.0133}, {hs: '8486208100', weight: 0.0133}, {hs: '8486208410', weight: 0.0133}, {hs: '8486208420', weight: 0.0133}, {hs: '8486208490', weight: 0.0133}, {hs: '8486209100', weight: 0.0133}, {hs: '8486209200', weight: 0.0133}, {hs: '8486209310', weight: 0.0133}, {hs: '8486209320', weight: 0.0133}, {hs: '8486209390', weight: 0.0133}, {hs: '8486209400', weight: 0.0133}, {hs: '8486209500', weight: 0.0133}, {hs: '8486209600', weight: 0.0133}, {hs: '8486209900', weight: 0.0133}, {hs: '8486301010', weight: 0.0133}, {hs: '8486301020', weight: 0.0133}, {hs: '8486301031', weight: 0.0133}, {hs: '8486301040', weight: 0.0133}, {hs: '8486301050', weight: 0.0133}, {hs: '8486301060', weight: 0.0133}, {hs: '8486301090', weight: 0.0133}, {hs: '8486302010', weight: 0.0133}, {hs: '8486302020', weight: 0.0133}, {hs: '8486302031', weight: 0.0133}, {hs: '8486302050', weight: 0.0133}, {hs: '8486302060', weight: 0.0133}, {hs: '8486302070', weight: 0.0133}, {hs: '8486302090', weight: 0.0133}, {hs: '8486401010', weight: 0.0133}, {hs: '8486401030', weight: 0.0133}, {hs: '8486401040', weight: 0.0133}, {hs: '8486401090', weight: 0.0133}, {hs: '8486402010', weight: 0.0133}, {hs: '8486402020', weight: 0.0133}, {hs: '8486402031', weight: 0.0133}, {hs: '8486402039', weight: 0.0133}, {hs: '8486402040', weight: 0.0133}, {hs: '8486402070', weight: 0.0133}, {hs: '8486402080', weight: 0.0133}, {hs: '8486402091', weight: 0.0133}, {hs: '8486402093', weight: 0.0133}, {hs: '8486402095', weight: 0.0133}, {hs: '8486402099', weight: 0.0133}, {hs: '8486403010', weight: 0.0133}, {hs: '8486403020', weight: 0.0133}, {hs: '8486403090', weight: 0.0133}, {hs: '8486901000', weight: 0.0133}, {hs: '8486902030', weight: 0.0133}, {hs: '8486902040', weight: 0.0133}, {hs: '8486902090', weight: 0.0133}, {hs: '8486903050', weight: 0.0133}, {hs: '8486903060', weight: 0.0133}, {hs: '8486903090', weight: 0.0133}, {hs: '8486904000', weight: 0.0133}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29756, 30427, 31213, 33497, 34225, 34911, 35701, 38004, 38763, 40147, 41628, 43918"}]
   - code: '064290'
     name: 인텍플러스
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: s1, name: "반도체 외관검사장비 — 유성구", kind: sigungu, nature: company, regions: [KR-30-yuseong], products: [{hs: '903141', weight: 1.0}], basis: "채널 글 1건(2026-07~2026-07) · 회사 출하"}
@@ -731,14 +732,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 77건 — 최근 글 번호 35721, 38004, 38014, 38763, 38773, 40147, 40157, 41628, 41648, 41652, 43918, 43928"}]
   - code: '065130'
     name: 탑엔지니어링
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: n1, name: "반도체 장비 — 전국", kind: national, nature: mixed, products: [{hs: '8486101000', weight: 0.0133}, {hs: '8486102000', weight: 0.0133}, {hs: '8486103010', weight: 0.0133}, {hs: '8486103020', weight: 0.0133}, {hs: '8486103090', weight: 0.0133}, {hs: '8486104010', weight: 0.0133}, {hs: '8486104020', weight: 0.0133}, {hs: '8486105010', weight: 0.0133}, {hs: '8486105030', weight: 0.0133}, {hs: '8486109000', weight: 0.0133}, {hs: '8486201000', weight: 0.0133}, {hs: '8486202100', weight: 0.0133}, {hs: '8486202200', weight: 0.0133}, {hs: '8486202300', weight: 0.0133}, {hs: '8486203000', weight: 0.0133}, {hs: '8486204000', weight: 0.0133}, {hs: '8486205000', weight: 0.0133}, {hs: '8486206010', weight: 0.0133}, {hs: '8486206020', weight: 0.0133}, {hs: '8486206091', weight: 0.0133}, {hs: '8486206099', weight: 0.0133}, {hs: '8486207000', weight: 0.0133}, {hs: '8486208100', weight: 0.0133}, {hs: '8486208410', weight: 0.0133}, {hs: '8486208420', weight: 0.0133}, {hs: '8486208490', weight: 0.0133}, {hs: '8486209100', weight: 0.0133}, {hs: '8486209200', weight: 0.0133}, {hs: '8486209310', weight: 0.0133}, {hs: '8486209320', weight: 0.0133}, {hs: '8486209390', weight: 0.0133}, {hs: '8486209400', weight: 0.0133}, {hs: '8486209500', weight: 0.0133}, {hs: '8486209600', weight: 0.0133}, {hs: '8486209900', weight: 0.0133}, {hs: '8486301010', weight: 0.0133}, {hs: '8486301020', weight: 0.0133}, {hs: '8486301031', weight: 0.0133}, {hs: '8486301040', weight: 0.0133}, {hs: '8486301050', weight: 0.0133}, {hs: '8486301060', weight: 0.0133}, {hs: '8486301090', weight: 0.0133}, {hs: '8486302010', weight: 0.0133}, {hs: '8486302020', weight: 0.0133}, {hs: '8486302031', weight: 0.0133}, {hs: '8486302050', weight: 0.0133}, {hs: '8486302060', weight: 0.0133}, {hs: '8486302070', weight: 0.0133}, {hs: '8486302090', weight: 0.0133}, {hs: '8486401010', weight: 0.0133}, {hs: '8486401030', weight: 0.0133}, {hs: '8486401040', weight: 0.0133}, {hs: '8486401090', weight: 0.0133}, {hs: '8486402010', weight: 0.0133}, {hs: '8486402020', weight: 0.0133}, {hs: '8486402031', weight: 0.0133}, {hs: '8486402039', weight: 0.0133}, {hs: '8486402040', weight: 0.0133}, {hs: '8486402070', weight: 0.0133}, {hs: '8486402080', weight: 0.0133}, {hs: '8486402091', weight: 0.0133}, {hs: '8486402093', weight: 0.0133}, {hs: '8486402095', weight: 0.0133}, {hs: '8486402099', weight: 0.0133}, {hs: '8486403010', weight: 0.0133}, {hs: '8486403020', weight: 0.0133}, {hs: '8486403090', weight: 0.0133}, {hs: '8486901000', weight: 0.0133}, {hs: '8486902030', weight: 0.0133}, {hs: '8486902040', weight: 0.0133}, {hs: '8486902090', weight: 0.0133}, {hs: '8486903050', weight: 0.0133}, {hs: '8486903060', weight: 0.0133}, {hs: '8486903090', weight: 0.0133}, {hs: '8486904000', weight: 0.0133}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29756, 30427, 31213, 33497, 34225, 34911, 35701, 38004, 38763, 40147, 41628, 43918"}]
   - code: '071280'
     name: 로체시스템즈
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: s1, name: "반도체·FPD 이송장치 — 용인시", kind: sigungu, nature: company, regions: [KR-41-yongin], products: [{hs: '848640', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -746,7 +747,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 31259, 33515, 34243, 34929, 35745, 35747, 38022, 38781, 40165, 41672, 41674, 43936"}]
   - code: '079370'
     name: 제우스
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: s1, name: "습식 식각·세정장비 — 화성시", kind: sigungu, nature: mixed, regions: [KR-41-hwaseong], products: [{hs: '848620', weight: 0.0131}], basis: "채널 글 10건(2025-10~2026-07) · 업황 혼합"}
@@ -754,7 +755,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 86건 — 최근 글 번호 35769, 38004, 38028, 38763, 38787, 40147, 40171, 41628, 41694, 41696, 43918, 43942"}]
   - code: '083310'
     name: 엘오티베큠
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: s1, name: "진공펌프 — 오산시", kind: sigungu, nature: company, regions: [KR-41-osan], products: [{hs: '841410', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -762,7 +763,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 31333, 33541, 34269, 34955, 35819, 35821, 38048, 38807, 40191, 41746, 41748, 43962"}]
   - code: '084370'
     name: 유진테크
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: s1, name: "증착장비 — 용인시", kind: sigungu, nature: mixed, regions: [KR-41-yongin], products: [{hs: '848620', weight: 0.0131}], basis: "채널 글 10건(2025-10~2026-07) · 업황 혼합"}
@@ -770,7 +771,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 86건 — 최근 글 번호 35777, 38004, 38030, 38763, 38789, 40147, 40173, 41628, 41698, 41704, 43918, 43944"}]
   - code: '089030'
     name: 테크윙
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: s1, name: "테스트 핸들러 — 화성시", kind: sigungu, nature: company, regions: [KR-41-hwaseong], products: [{hs: '848640', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -778,14 +779,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 86건 — 최근 글 번호 35743, 38004, 38020, 38763, 38779, 40147, 40163, 41628, 41668, 41670, 43918, 43934"}]
   - code: '089790'
     name: 제이티
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: n1, name: "테스트 핸들러 — 전국", kind: national, nature: mixed, products: [{hs: '8486403090', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29772, 30443, 31253, 33513, 34241, 34927, 35741, 38020, 38779, 40163, 41668, 43934"}]
   - code: '089970'
     name: 브이엠
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: s1, name: "건식 식각장비 — 이천시", kind: sigungu, nature: company, regions: [KR-41-icheon], products: [{hs: '848620', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -793,14 +794,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 31293, 33525, 34253, 34939, 35779, 35781, 38032, 38791, 40175, 41706, 41708, 43946"}]
   - code: '092870'
     name: 엑시콘
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: n1, name: "반도체 장비 — 전국", kind: national, nature: mixed, products: [{hs: '8486101000', weight: 0.0133}, {hs: '8486102000', weight: 0.0133}, {hs: '8486103010', weight: 0.0133}, {hs: '8486103020', weight: 0.0133}, {hs: '8486103090', weight: 0.0133}, {hs: '8486104010', weight: 0.0133}, {hs: '8486104020', weight: 0.0133}, {hs: '8486105010', weight: 0.0133}, {hs: '8486105030', weight: 0.0133}, {hs: '8486109000', weight: 0.0133}, {hs: '8486201000', weight: 0.0133}, {hs: '8486202100', weight: 0.0133}, {hs: '8486202200', weight: 0.0133}, {hs: '8486202300', weight: 0.0133}, {hs: '8486203000', weight: 0.0133}, {hs: '8486204000', weight: 0.0133}, {hs: '8486205000', weight: 0.0133}, {hs: '8486206010', weight: 0.0133}, {hs: '8486206020', weight: 0.0133}, {hs: '8486206091', weight: 0.0133}, {hs: '8486206099', weight: 0.0133}, {hs: '8486207000', weight: 0.0133}, {hs: '8486208100', weight: 0.0133}, {hs: '8486208410', weight: 0.0133}, {hs: '8486208420', weight: 0.0133}, {hs: '8486208490', weight: 0.0133}, {hs: '8486209100', weight: 0.0133}, {hs: '8486209200', weight: 0.0133}, {hs: '8486209310', weight: 0.0133}, {hs: '8486209320', weight: 0.0133}, {hs: '8486209390', weight: 0.0133}, {hs: '8486209400', weight: 0.0133}, {hs: '8486209500', weight: 0.0133}, {hs: '8486209600', weight: 0.0133}, {hs: '8486209900', weight: 0.0133}, {hs: '8486301010', weight: 0.0133}, {hs: '8486301020', weight: 0.0133}, {hs: '8486301031', weight: 0.0133}, {hs: '8486301040', weight: 0.0133}, {hs: '8486301050', weight: 0.0133}, {hs: '8486301060', weight: 0.0133}, {hs: '8486301090', weight: 0.0133}, {hs: '8486302010', weight: 0.0133}, {hs: '8486302020', weight: 0.0133}, {hs: '8486302031', weight: 0.0133}, {hs: '8486302050', weight: 0.0133}, {hs: '8486302060', weight: 0.0133}, {hs: '8486302070', weight: 0.0133}, {hs: '8486302090', weight: 0.0133}, {hs: '8486401010', weight: 0.0133}, {hs: '8486401030', weight: 0.0133}, {hs: '8486401040', weight: 0.0133}, {hs: '8486401090', weight: 0.0133}, {hs: '8486402010', weight: 0.0133}, {hs: '8486402020', weight: 0.0133}, {hs: '8486402031', weight: 0.0133}, {hs: '8486402039', weight: 0.0133}, {hs: '8486402040', weight: 0.0133}, {hs: '8486402070', weight: 0.0133}, {hs: '8486402080', weight: 0.0133}, {hs: '8486402091', weight: 0.0133}, {hs: '8486402093', weight: 0.0133}, {hs: '8486402095', weight: 0.0133}, {hs: '8486402099', weight: 0.0133}, {hs: '8486403010', weight: 0.0133}, {hs: '8486403020', weight: 0.0133}, {hs: '8486403090', weight: 0.0133}, {hs: '8486901000', weight: 0.0133}, {hs: '8486902030', weight: 0.0133}, {hs: '8486902040', weight: 0.0133}, {hs: '8486902090', weight: 0.0133}, {hs: '8486903050', weight: 0.0133}, {hs: '8486903060', weight: 0.0133}, {hs: '8486903090', weight: 0.0133}, {hs: '8486904000', weight: 0.0133}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29756, 30427, 31213, 33497, 34225, 34911, 35701, 38004, 38763, 40147, 41628, 43918"}]
   - code: '095610'
     name: 테스
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: s1, name: "증착장비 — 용인시", kind: sigungu, nature: mixed, regions: [KR-41-yongin], products: [{hs: '848620', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 업황 혼합"}
@@ -808,21 +809,21 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 31289, 33523, 34251, 34937, 35771, 35777, 38030, 38789, 40173, 41698, 41704, 43944"}]
   - code: '122640'
     name: 예스티
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: n1, name: "고압 수소 어닐링 장비 — 전국", kind: national, nature: mixed, products: [{hs: '8486105030', weight: 1.0}], basis: "채널 글 76건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 76건 — 최근 글 번호 35811, 35813, 38044, 38046, 38803, 38805, 40187, 40189, 41738, 41740, 43958, 43960"}]
   - code: '160980'
     name: 싸이맥스
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: n1, name: "반도체·FPD 이송장치 — 전국", kind: national, nature: mixed, products: [{hs: '8486403010', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29774, 30445, 31257, 33515, 34243, 34929, 35745, 38022, 38781, 40165, 41672, 43936"}]
   - code: '168360'
     name: 펨트론
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: s1, name: "3D AOI·SPI 검사장비 — 금천구", kind: sigungu, nature: company, regions: [KR-11-geumcheon], products: [{hs: '903149', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -831,7 +832,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 86건 — 최근 글 번호 35723, 38004, 38014, 38763, 38773, 40147, 40157, 41628, 41648, 41650, 43918, 43928"}]
   - code: '170920'
     name: 엘티씨
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: s1, name: "습식 식각·세정장비 — 화성시", kind: sigungu, nature: mixed, regions: [KR-41-hwaseong], products: [{hs: '848620', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 업황 혼합"}
@@ -839,28 +840,28 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 31281, 33521, 34249, 34935, 35767, 35769, 38028, 38787, 40171, 41694, 41696, 43942"}]
   - code: '217190'
     name: 제너셈
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: n1, name: "반도체 장비 — 전국", kind: national, nature: mixed, products: [{hs: '8486101000', weight: 0.0133}, {hs: '8486102000', weight: 0.0133}, {hs: '8486103010', weight: 0.0133}, {hs: '8486103020', weight: 0.0133}, {hs: '8486103090', weight: 0.0133}, {hs: '8486104010', weight: 0.0133}, {hs: '8486104020', weight: 0.0133}, {hs: '8486105010', weight: 0.0133}, {hs: '8486105030', weight: 0.0133}, {hs: '8486109000', weight: 0.0133}, {hs: '8486201000', weight: 0.0133}, {hs: '8486202100', weight: 0.0133}, {hs: '8486202200', weight: 0.0133}, {hs: '8486202300', weight: 0.0133}, {hs: '8486203000', weight: 0.0133}, {hs: '8486204000', weight: 0.0133}, {hs: '8486205000', weight: 0.0133}, {hs: '8486206010', weight: 0.0133}, {hs: '8486206020', weight: 0.0133}, {hs: '8486206091', weight: 0.0133}, {hs: '8486206099', weight: 0.0133}, {hs: '8486207000', weight: 0.0133}, {hs: '8486208100', weight: 0.0133}, {hs: '8486208410', weight: 0.0133}, {hs: '8486208420', weight: 0.0133}, {hs: '8486208490', weight: 0.0133}, {hs: '8486209100', weight: 0.0133}, {hs: '8486209200', weight: 0.0133}, {hs: '8486209310', weight: 0.0133}, {hs: '8486209320', weight: 0.0133}, {hs: '8486209390', weight: 0.0133}, {hs: '8486209400', weight: 0.0133}, {hs: '8486209500', weight: 0.0133}, {hs: '8486209600', weight: 0.0133}, {hs: '8486209900', weight: 0.0133}, {hs: '8486301010', weight: 0.0133}, {hs: '8486301020', weight: 0.0133}, {hs: '8486301031', weight: 0.0133}, {hs: '8486301040', weight: 0.0133}, {hs: '8486301050', weight: 0.0133}, {hs: '8486301060', weight: 0.0133}, {hs: '8486301090', weight: 0.0133}, {hs: '8486302010', weight: 0.0133}, {hs: '8486302020', weight: 0.0133}, {hs: '8486302031', weight: 0.0133}, {hs: '8486302050', weight: 0.0133}, {hs: '8486302060', weight: 0.0133}, {hs: '8486302070', weight: 0.0133}, {hs: '8486302090', weight: 0.0133}, {hs: '8486401010', weight: 0.0133}, {hs: '8486401030', weight: 0.0133}, {hs: '8486401040', weight: 0.0133}, {hs: '8486401090', weight: 0.0133}, {hs: '8486402010', weight: 0.0133}, {hs: '8486402020', weight: 0.0133}, {hs: '8486402031', weight: 0.0133}, {hs: '8486402039', weight: 0.0133}, {hs: '8486402040', weight: 0.0133}, {hs: '8486402070', weight: 0.0133}, {hs: '8486402080', weight: 0.0133}, {hs: '8486402091', weight: 0.0133}, {hs: '8486402093', weight: 0.0133}, {hs: '8486402095', weight: 0.0133}, {hs: '8486402099', weight: 0.0133}, {hs: '8486403010', weight: 0.0133}, {hs: '8486403020', weight: 0.0133}, {hs: '8486403090', weight: 0.0133}, {hs: '8486901000', weight: 0.0133}, {hs: '8486902030', weight: 0.0133}, {hs: '8486902040', weight: 0.0133}, {hs: '8486902090', weight: 0.0133}, {hs: '8486903050', weight: 0.0133}, {hs: '8486903060', weight: 0.0133}, {hs: '8486903090', weight: 0.0133}, {hs: '8486904000', weight: 0.0133}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29756, 30427, 31213, 33497, 34225, 34911, 35701, 38004, 38763, 40147, 41628, 43918"}]
   - code: '232140'
     name: 와이씨
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: n1, name: "반도체 장비 — 전국", kind: national, nature: mixed, products: [{hs: '8486101000', weight: 0.0133}, {hs: '8486102000', weight: 0.0133}, {hs: '8486103010', weight: 0.0133}, {hs: '8486103020', weight: 0.0133}, {hs: '8486103090', weight: 0.0133}, {hs: '8486104010', weight: 0.0133}, {hs: '8486104020', weight: 0.0133}, {hs: '8486105010', weight: 0.0133}, {hs: '8486105030', weight: 0.0133}, {hs: '8486109000', weight: 0.0133}, {hs: '8486201000', weight: 0.0133}, {hs: '8486202100', weight: 0.0133}, {hs: '8486202200', weight: 0.0133}, {hs: '8486202300', weight: 0.0133}, {hs: '8486203000', weight: 0.0133}, {hs: '8486204000', weight: 0.0133}, {hs: '8486205000', weight: 0.0133}, {hs: '8486206010', weight: 0.0133}, {hs: '8486206020', weight: 0.0133}, {hs: '8486206091', weight: 0.0133}, {hs: '8486206099', weight: 0.0133}, {hs: '8486207000', weight: 0.0133}, {hs: '8486208100', weight: 0.0133}, {hs: '8486208410', weight: 0.0133}, {hs: '8486208420', weight: 0.0133}, {hs: '8486208490', weight: 0.0133}, {hs: '8486209100', weight: 0.0133}, {hs: '8486209200', weight: 0.0133}, {hs: '8486209310', weight: 0.0133}, {hs: '8486209320', weight: 0.0133}, {hs: '8486209390', weight: 0.0133}, {hs: '8486209400', weight: 0.0133}, {hs: '8486209500', weight: 0.0133}, {hs: '8486209600', weight: 0.0133}, {hs: '8486209900', weight: 0.0133}, {hs: '8486301010', weight: 0.0133}, {hs: '8486301020', weight: 0.0133}, {hs: '8486301031', weight: 0.0133}, {hs: '8486301040', weight: 0.0133}, {hs: '8486301050', weight: 0.0133}, {hs: '8486301060', weight: 0.0133}, {hs: '8486301090', weight: 0.0133}, {hs: '8486302010', weight: 0.0133}, {hs: '8486302020', weight: 0.0133}, {hs: '8486302031', weight: 0.0133}, {hs: '8486302050', weight: 0.0133}, {hs: '8486302060', weight: 0.0133}, {hs: '8486302070', weight: 0.0133}, {hs: '8486302090', weight: 0.0133}, {hs: '8486401010', weight: 0.0133}, {hs: '8486401030', weight: 0.0133}, {hs: '8486401040', weight: 0.0133}, {hs: '8486401090', weight: 0.0133}, {hs: '8486402010', weight: 0.0133}, {hs: '8486402020', weight: 0.0133}, {hs: '8486402031', weight: 0.0133}, {hs: '8486402039', weight: 0.0133}, {hs: '8486402040', weight: 0.0133}, {hs: '8486402070', weight: 0.0133}, {hs: '8486402080', weight: 0.0133}, {hs: '8486402091', weight: 0.0133}, {hs: '8486402093', weight: 0.0133}, {hs: '8486402095', weight: 0.0133}, {hs: '8486402099', weight: 0.0133}, {hs: '8486403010', weight: 0.0133}, {hs: '8486403020', weight: 0.0133}, {hs: '8486403090', weight: 0.0133}, {hs: '8486901000', weight: 0.0133}, {hs: '8486902030', weight: 0.0133}, {hs: '8486902040', weight: 0.0133}, {hs: '8486902090', weight: 0.0133}, {hs: '8486903050', weight: 0.0133}, {hs: '8486903060', weight: 0.0133}, {hs: '8486903090', weight: 0.0133}, {hs: '8486904000', weight: 0.0133}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29756, 30427, 31213, 33497, 34225, 34911, 35701, 38004, 38763, 40147, 41628, 43918"}]
   - code: '232680'
     name: 라온로보틱스
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: n1, name: "반도체·FPD 이송장치 — 전국", kind: national, nature: mixed, products: [{hs: '8486403010', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29774, 30445, 31257, 33515, 34243, 34929, 35745, 38022, 38781, 40165, 41672, 43936"}]
   - code: '240810'
     name: 원익IPS
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: s1, name: "증착장비 — 평택시", kind: sigungu, nature: company, regions: [KR-41-pyeongtaek], products: [{hs: '848620', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -868,14 +869,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 86건 — 최근 글 번호 35775, 38004, 38030, 38763, 38789, 40147, 40173, 41628, 41698, 41702, 43918, 43944"}]
   - code: '253590'
     name: 네오셈
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: n1, name: "반도체 장비 — 전국", kind: national, nature: mixed, products: [{hs: '8486101000', weight: 0.0133}, {hs: '8486102000', weight: 0.0133}, {hs: '8486103010', weight: 0.0133}, {hs: '8486103020', weight: 0.0133}, {hs: '8486103090', weight: 0.0133}, {hs: '8486104010', weight: 0.0133}, {hs: '8486104020', weight: 0.0133}, {hs: '8486105010', weight: 0.0133}, {hs: '8486105030', weight: 0.0133}, {hs: '8486109000', weight: 0.0133}, {hs: '8486201000', weight: 0.0133}, {hs: '8486202100', weight: 0.0133}, {hs: '8486202200', weight: 0.0133}, {hs: '8486202300', weight: 0.0133}, {hs: '8486203000', weight: 0.0133}, {hs: '8486204000', weight: 0.0133}, {hs: '8486205000', weight: 0.0133}, {hs: '8486206010', weight: 0.0133}, {hs: '8486206020', weight: 0.0133}, {hs: '8486206091', weight: 0.0133}, {hs: '8486206099', weight: 0.0133}, {hs: '8486207000', weight: 0.0133}, {hs: '8486208100', weight: 0.0133}, {hs: '8486208410', weight: 0.0133}, {hs: '8486208420', weight: 0.0133}, {hs: '8486208490', weight: 0.0133}, {hs: '8486209100', weight: 0.0133}, {hs: '8486209200', weight: 0.0133}, {hs: '8486209310', weight: 0.0133}, {hs: '8486209320', weight: 0.0133}, {hs: '8486209390', weight: 0.0133}, {hs: '8486209400', weight: 0.0133}, {hs: '8486209500', weight: 0.0133}, {hs: '8486209600', weight: 0.0133}, {hs: '8486209900', weight: 0.0133}, {hs: '8486301010', weight: 0.0133}, {hs: '8486301020', weight: 0.0133}, {hs: '8486301031', weight: 0.0133}, {hs: '8486301040', weight: 0.0133}, {hs: '8486301050', weight: 0.0133}, {hs: '8486301060', weight: 0.0133}, {hs: '8486301090', weight: 0.0133}, {hs: '8486302010', weight: 0.0133}, {hs: '8486302020', weight: 0.0133}, {hs: '8486302031', weight: 0.0133}, {hs: '8486302050', weight: 0.0133}, {hs: '8486302060', weight: 0.0133}, {hs: '8486302070', weight: 0.0133}, {hs: '8486302090', weight: 0.0133}, {hs: '8486401010', weight: 0.0133}, {hs: '8486401030', weight: 0.0133}, {hs: '8486401040', weight: 0.0133}, {hs: '8486401090', weight: 0.0133}, {hs: '8486402010', weight: 0.0133}, {hs: '8486402020', weight: 0.0133}, {hs: '8486402031', weight: 0.0133}, {hs: '8486402039', weight: 0.0133}, {hs: '8486402040', weight: 0.0133}, {hs: '8486402070', weight: 0.0133}, {hs: '8486402080', weight: 0.0133}, {hs: '8486402091', weight: 0.0133}, {hs: '8486402093', weight: 0.0133}, {hs: '8486402095', weight: 0.0133}, {hs: '8486402099', weight: 0.0133}, {hs: '8486403010', weight: 0.0133}, {hs: '8486403020', weight: 0.0133}, {hs: '8486403090', weight: 0.0133}, {hs: '8486901000', weight: 0.0133}, {hs: '8486902030', weight: 0.0133}, {hs: '8486902040', weight: 0.0133}, {hs: '8486902090', weight: 0.0133}, {hs: '8486903050', weight: 0.0133}, {hs: '8486903060', weight: 0.0133}, {hs: '8486903090', weight: 0.0133}, {hs: '8486904000', weight: 0.0133}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29756, 30427, 31213, 33497, 34225, 34911, 35701, 38004, 38763, 40147, 41628, 43918"}]
   - code: '281820'
     name: 케이씨텍
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: s1, name: "CMP 슬러리 — 서구·안성시·공주시", kind: sigungu, nature: company, regions: [KR-28-seo, KR-41-anseong, KR-44-gongju], products: [{hs: '340540', weight: 1.0}], basis: "채널 글 11건(2025-10~2026-07) · 회사 출하"}
@@ -884,21 +885,21 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 87건 — 최근 글 번호 35705, 38004, 38006, 38763, 38765, 40147, 40149, 41628, 41630, 41632, 43918, 43920"}]
   - code: '319660'
     name: 피에스케이
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: n1, name: "반도체 장비 — 전국", kind: national, nature: mixed, products: [{hs: '8486101000', weight: 0.0133}, {hs: '8486102000', weight: 0.0133}, {hs: '8486103010', weight: 0.0133}, {hs: '8486103020', weight: 0.0133}, {hs: '8486103090', weight: 0.0133}, {hs: '8486104010', weight: 0.0133}, {hs: '8486104020', weight: 0.0133}, {hs: '8486105010', weight: 0.0133}, {hs: '8486105030', weight: 0.0133}, {hs: '8486109000', weight: 0.0133}, {hs: '8486201000', weight: 0.0133}, {hs: '8486202100', weight: 0.0133}, {hs: '8486202200', weight: 0.0133}, {hs: '8486202300', weight: 0.0133}, {hs: '8486203000', weight: 0.0133}, {hs: '8486204000', weight: 0.0133}, {hs: '8486205000', weight: 0.0133}, {hs: '8486206010', weight: 0.0133}, {hs: '8486206020', weight: 0.0133}, {hs: '8486206091', weight: 0.0133}, {hs: '8486206099', weight: 0.0133}, {hs: '8486207000', weight: 0.0133}, {hs: '8486208100', weight: 0.0133}, {hs: '8486208410', weight: 0.0133}, {hs: '8486208420', weight: 0.0133}, {hs: '8486208490', weight: 0.0133}, {hs: '8486209100', weight: 0.0133}, {hs: '8486209200', weight: 0.0133}, {hs: '8486209310', weight: 0.0133}, {hs: '8486209320', weight: 0.0133}, {hs: '8486209390', weight: 0.0133}, {hs: '8486209400', weight: 0.0133}, {hs: '8486209500', weight: 0.0133}, {hs: '8486209600', weight: 0.0133}, {hs: '8486209900', weight: 0.0133}, {hs: '8486301010', weight: 0.0133}, {hs: '8486301020', weight: 0.0133}, {hs: '8486301031', weight: 0.0133}, {hs: '8486301040', weight: 0.0133}, {hs: '8486301050', weight: 0.0133}, {hs: '8486301060', weight: 0.0133}, {hs: '8486301090', weight: 0.0133}, {hs: '8486302010', weight: 0.0133}, {hs: '8486302020', weight: 0.0133}, {hs: '8486302031', weight: 0.0133}, {hs: '8486302050', weight: 0.0133}, {hs: '8486302060', weight: 0.0133}, {hs: '8486302070', weight: 0.0133}, {hs: '8486302090', weight: 0.0133}, {hs: '8486401010', weight: 0.0133}, {hs: '8486401030', weight: 0.0133}, {hs: '8486401040', weight: 0.0133}, {hs: '8486401090', weight: 0.0133}, {hs: '8486402010', weight: 0.0133}, {hs: '8486402020', weight: 0.0133}, {hs: '8486402031', weight: 0.0133}, {hs: '8486402039', weight: 0.0133}, {hs: '8486402040', weight: 0.0133}, {hs: '8486402070', weight: 0.0133}, {hs: '8486402080', weight: 0.0133}, {hs: '8486402091', weight: 0.0133}, {hs: '8486402093', weight: 0.0133}, {hs: '8486402095', weight: 0.0133}, {hs: '8486402099', weight: 0.0133}, {hs: '8486403010', weight: 0.0133}, {hs: '8486403020', weight: 0.0133}, {hs: '8486403090', weight: 0.0133}, {hs: '8486901000', weight: 0.0133}, {hs: '8486902030', weight: 0.0133}, {hs: '8486902040', weight: 0.0133}, {hs: '8486902090', weight: 0.0133}, {hs: '8486903050', weight: 0.0133}, {hs: '8486903060', weight: 0.0133}, {hs: '8486903090', weight: 0.0133}, {hs: '8486904000', weight: 0.0133}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29756, 30427, 31213, 33497, 34225, 34911, 35701, 38004, 38763, 40147, 41628, 43918"}]
   - code: '360350'
     name: 코셈
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: s1, name: "주사전자현미경(SEM) — 유성구", kind: sigungu, nature: company, regions: [KR-30-yuseong], products: [{hs: '901210', weight: 1.0}], basis: "채널 글 2건(2026-06~2026-07) · 회사 출하"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 2건 — 최근 글 번호 35837, 41764"}]
   - code: '403870'
     name: HPSP
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: s1, name: "고압 수소 어닐링 장비 — 화성시", kind: sigungu, nature: company, regions: [KR-41-hwaseong], products: [{hs: '848610', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -906,7 +907,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 124건 — 최근 글 번호 38803, 38805, 40147, 40187, 40189, 41628, 41738, 41740, 41742, 43918, 43958, 43960"}]
   - code: '425420'
     name: 티에프이
-    reviewed: false
+    reviewed: true
     sector: "반도체 장비"
     flows:
       - {id: s1, name: "체인지오버키트(COK) — 화성시", kind: sigungu, nature: company, regions: [KR-41-hwaseong], products: [{hs: '903082', weight: 1.0}], basis: "채널 글 2건(2026-06~2026-07) · 회사 출하"}
@@ -914,7 +915,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 33건 — 최근 글 번호 24821, 25492, 26164, 27101, 29106, 29824, 30495, 31407, 33565, 34293, 35985, 41912"}]
   - code: '033640'
     name: 네패스
-    reviewed: false
+    reviewed: true
     sector: "반도체 후공정"
     flows:
       - {id: s1, name: "웨이퍼레벨패키지 — 청주시·음성군", kind: sigungu, nature: company, regions: [KR-43-cheongju, KR-43-eumseong], products: [{hs: '854231', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -922,21 +923,21 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 31209, 33495, 34223, 34909, 35695, 35697, 38002, 38761, 40145, 41622, 41624, 43916"}]
   - code: '036540'
     name: SFA반도체
-    reviewed: false
+    reviewed: true
     sector: "반도체 후공정"
     flows:
       - {id: n1, name: "반도체 장비 — 전국", kind: national, nature: mixed, products: [{hs: '8486101000', weight: 0.0133}, {hs: '8486102000', weight: 0.0133}, {hs: '8486103010', weight: 0.0133}, {hs: '8486103020', weight: 0.0133}, {hs: '8486103090', weight: 0.0133}, {hs: '8486104010', weight: 0.0133}, {hs: '8486104020', weight: 0.0133}, {hs: '8486105010', weight: 0.0133}, {hs: '8486105030', weight: 0.0133}, {hs: '8486109000', weight: 0.0133}, {hs: '8486201000', weight: 0.0133}, {hs: '8486202100', weight: 0.0133}, {hs: '8486202200', weight: 0.0133}, {hs: '8486202300', weight: 0.0133}, {hs: '8486203000', weight: 0.0133}, {hs: '8486204000', weight: 0.0133}, {hs: '8486205000', weight: 0.0133}, {hs: '8486206010', weight: 0.0133}, {hs: '8486206020', weight: 0.0133}, {hs: '8486206091', weight: 0.0133}, {hs: '8486206099', weight: 0.0133}, {hs: '8486207000', weight: 0.0133}, {hs: '8486208100', weight: 0.0133}, {hs: '8486208410', weight: 0.0133}, {hs: '8486208420', weight: 0.0133}, {hs: '8486208490', weight: 0.0133}, {hs: '8486209100', weight: 0.0133}, {hs: '8486209200', weight: 0.0133}, {hs: '8486209310', weight: 0.0133}, {hs: '8486209320', weight: 0.0133}, {hs: '8486209390', weight: 0.0133}, {hs: '8486209400', weight: 0.0133}, {hs: '8486209500', weight: 0.0133}, {hs: '8486209600', weight: 0.0133}, {hs: '8486209900', weight: 0.0133}, {hs: '8486301010', weight: 0.0133}, {hs: '8486301020', weight: 0.0133}, {hs: '8486301031', weight: 0.0133}, {hs: '8486301040', weight: 0.0133}, {hs: '8486301050', weight: 0.0133}, {hs: '8486301060', weight: 0.0133}, {hs: '8486301090', weight: 0.0133}, {hs: '8486302010', weight: 0.0133}, {hs: '8486302020', weight: 0.0133}, {hs: '8486302031', weight: 0.0133}, {hs: '8486302050', weight: 0.0133}, {hs: '8486302060', weight: 0.0133}, {hs: '8486302070', weight: 0.0133}, {hs: '8486302090', weight: 0.0133}, {hs: '8486401010', weight: 0.0133}, {hs: '8486401030', weight: 0.0133}, {hs: '8486401040', weight: 0.0133}, {hs: '8486401090', weight: 0.0133}, {hs: '8486402010', weight: 0.0133}, {hs: '8486402020', weight: 0.0133}, {hs: '8486402031', weight: 0.0133}, {hs: '8486402039', weight: 0.0133}, {hs: '8486402040', weight: 0.0133}, {hs: '8486402070', weight: 0.0133}, {hs: '8486402080', weight: 0.0133}, {hs: '8486402091', weight: 0.0133}, {hs: '8486402093', weight: 0.0133}, {hs: '8486402095', weight: 0.0133}, {hs: '8486402099', weight: 0.0133}, {hs: '8486403010', weight: 0.0133}, {hs: '8486403020', weight: 0.0133}, {hs: '8486403090', weight: 0.0133}, {hs: '8486901000', weight: 0.0133}, {hs: '8486902030', weight: 0.0133}, {hs: '8486902040', weight: 0.0133}, {hs: '8486902090', weight: 0.0133}, {hs: '8486903050', weight: 0.0133}, {hs: '8486903060', weight: 0.0133}, {hs: '8486903090', weight: 0.0133}, {hs: '8486904000', weight: 0.0133}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29756, 30427, 31213, 33497, 34225, 34911, 35701, 38004, 38763, 40147, 41628, 43918"}]
   - code: '067310'
     name: 하나마이크론
-    reviewed: false
+    reviewed: true
     sector: "반도체 후공정"
     flows:
       - {id: n1, name: "반도체 장비 — 전국", kind: national, nature: mixed, products: [{hs: '8486101000', weight: 0.0133}, {hs: '8486102000', weight: 0.0133}, {hs: '8486103010', weight: 0.0133}, {hs: '8486103020', weight: 0.0133}, {hs: '8486103090', weight: 0.0133}, {hs: '8486104010', weight: 0.0133}, {hs: '8486104020', weight: 0.0133}, {hs: '8486105010', weight: 0.0133}, {hs: '8486105030', weight: 0.0133}, {hs: '8486109000', weight: 0.0133}, {hs: '8486201000', weight: 0.0133}, {hs: '8486202100', weight: 0.0133}, {hs: '8486202200', weight: 0.0133}, {hs: '8486202300', weight: 0.0133}, {hs: '8486203000', weight: 0.0133}, {hs: '8486204000', weight: 0.0133}, {hs: '8486205000', weight: 0.0133}, {hs: '8486206010', weight: 0.0133}, {hs: '8486206020', weight: 0.0133}, {hs: '8486206091', weight: 0.0133}, {hs: '8486206099', weight: 0.0133}, {hs: '8486207000', weight: 0.0133}, {hs: '8486208100', weight: 0.0133}, {hs: '8486208410', weight: 0.0133}, {hs: '8486208420', weight: 0.0133}, {hs: '8486208490', weight: 0.0133}, {hs: '8486209100', weight: 0.0133}, {hs: '8486209200', weight: 0.0133}, {hs: '8486209310', weight: 0.0133}, {hs: '8486209320', weight: 0.0133}, {hs: '8486209390', weight: 0.0133}, {hs: '8486209400', weight: 0.0133}, {hs: '8486209500', weight: 0.0133}, {hs: '8486209600', weight: 0.0133}, {hs: '8486209900', weight: 0.0133}, {hs: '8486301010', weight: 0.0133}, {hs: '8486301020', weight: 0.0133}, {hs: '8486301031', weight: 0.0133}, {hs: '8486301040', weight: 0.0133}, {hs: '8486301050', weight: 0.0133}, {hs: '8486301060', weight: 0.0133}, {hs: '8486301090', weight: 0.0133}, {hs: '8486302010', weight: 0.0133}, {hs: '8486302020', weight: 0.0133}, {hs: '8486302031', weight: 0.0133}, {hs: '8486302050', weight: 0.0133}, {hs: '8486302060', weight: 0.0133}, {hs: '8486302070', weight: 0.0133}, {hs: '8486302090', weight: 0.0133}, {hs: '8486401010', weight: 0.0133}, {hs: '8486401030', weight: 0.0133}, {hs: '8486401040', weight: 0.0133}, {hs: '8486401090', weight: 0.0133}, {hs: '8486402010', weight: 0.0133}, {hs: '8486402020', weight: 0.0133}, {hs: '8486402031', weight: 0.0133}, {hs: '8486402039', weight: 0.0133}, {hs: '8486402040', weight: 0.0133}, {hs: '8486402070', weight: 0.0133}, {hs: '8486402080', weight: 0.0133}, {hs: '8486402091', weight: 0.0133}, {hs: '8486402093', weight: 0.0133}, {hs: '8486402095', weight: 0.0133}, {hs: '8486402099', weight: 0.0133}, {hs: '8486403010', weight: 0.0133}, {hs: '8486403020', weight: 0.0133}, {hs: '8486403090', weight: 0.0133}, {hs: '8486901000', weight: 0.0133}, {hs: '8486902030', weight: 0.0133}, {hs: '8486902040', weight: 0.0133}, {hs: '8486902090', weight: 0.0133}, {hs: '8486903050', weight: 0.0133}, {hs: '8486903060', weight: 0.0133}, {hs: '8486903090', weight: 0.0133}, {hs: '8486904000', weight: 0.0133}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29756, 30427, 31213, 33497, 34225, 34911, 35701, 38004, 38763, 40147, 41628, 43918"}]
   - code: '005870'
     name: 휴니드테크놀러지스
-    reviewed: false
+    reviewed: true
     sector: "방산"
     flows:
       - {id: n1, name: "항공기 부품 — 전국", kind: national, nature: mixed, products: [{hs: '8807301000', weight: 0.5}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
@@ -944,7 +945,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 114건 — 최근 글 번호 39373, 39375, 39377, 40757, 40759, 40761, 43768, 43780, 43782, 44528, 44530, 44532"}]
   - code: '079550'
     name: LIG디펜스앤에어로스페이스
-    reviewed: false
+    reviewed: true
     sector: "방산"
     flows:
       - {id: s1, name: "로켓 발사기 — 용인시", kind: sigungu, nature: company, regions: [KR-41-yongin], products: [{hs: '930120', weight: 0.5}], basis: "채널 글 14건(2026-01~2026-07) · 회사 출하"}
@@ -954,35 +955,35 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 142건 — 최근 글 번호 40759, 40761, 43404, 43406, 43408, 43410, 43768, 43780, 43782, 44528, 44530, 44532"}]
   - code: '096630'
     name: 에스코넥
-    reviewed: false
+    reviewed: true
     sector: "방산·드론"
     flows:
       - {id: n1, name: "드론 — 전국", kind: national, nature: mixed, products: [{hs: '8806220000', weight: 1.0}], basis: "채널 글 76건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 76건 — 최근 글 번호 37830, 37832, 38610, 38612, 39369, 39371, 40753, 40755, 43764, 43766, 44524, 44526"}]
   - code: '099320'
     name: 쎄트렉아이
-    reviewed: false
+    reviewed: true
     sector: "방산·드론"
     flows:
       - {id: n1, name: "드론 — 전국", kind: national, nature: mixed, products: [{hs: '8806220000', weight: 1.0}], basis: "채널 글 76건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 76건 — 최근 글 번호 37830, 37832, 38610, 38612, 39369, 39371, 40753, 40755, 43764, 43766, 44524, 44526"}]
   - code: '177350'
     name: 베셀
-    reviewed: false
+    reviewed: true
     sector: "방산·드론"
     flows:
       - {id: n1, name: "드론 — 전국", kind: national, nature: mixed, products: [{hs: '8806220000', weight: 1.0}], basis: "채널 글 76건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 76건 — 최근 글 번호 37830, 37832, 38610, 38612, 39369, 39371, 40753, 40755, 43764, 43766, 44524, 44526"}]
   - code: '306620'
     name: 지아이에스
-    reviewed: false
+    reviewed: true
     sector: "방산·드론"
     flows:
       - {id: n1, name: "드론 — 전국", kind: national, nature: mixed, products: [{hs: '8806220000', weight: 1.0}], basis: "채널 글 76건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 76건 — 최근 글 번호 37830, 37832, 38610, 38612, 39369, 39371, 40753, 40755, 43764, 43766, 44524, 44526"}]
   - code: '064350'
     name: 현대로템
-    reviewed: false
+    reviewed: true
     sector: "방산·철도"
     flows:
       - {id: s1, name: "전차·장갑차 — 창원시", kind: sigungu, nature: mixed, regions: [KR-48-changwon], products: [{hs: '871000', weight: 0.3333}], basis: "채널 글 10건(2025-10~2026-07) · 업황 혼합"}
@@ -990,7 +991,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 200건 — 최근 글 번호 40633, 43418, 43420, 43422, 43424, 43426, 43428, 44396, 44398, 44400, 44402, 44404"}]
   - code: '012450'
     name: 한화에어로스페이스
-    reviewed: false
+    reviewed: true
     sector: "방산·항공"
     flows:
       - {id: s1, name: "전차·장갑차 — 창원시", kind: sigungu, nature: mixed, regions: [KR-48-changwon], products: [{hs: '871000', weight: 0.3333}], basis: "채널 글 10건(2025-10~2026-07) · 업황 혼합"}
@@ -998,28 +999,28 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 200건 — 최근 글 번호 40633, 43418, 43420, 43422, 43424, 43426, 43428, 44396, 44398, 44400, 44402, 44404"}]
   - code: '015710'
     name: 코콤
-    reviewed: false
+    reviewed: true
     sector: "보안기기"
     flows:
       - {id: n1, name: "CCTV 카메라 — 전국", kind: national, nature: mixed, products: [{hs: '8525502000', weight: 0.5}, {hs: '8525892000', weight: 0.5}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30312, 30997, 33197, 34067, 34795, 35481, 37742, 38576, 39335, 40719, 43676, 44490"}]
   - code: '036690'
     name: 코맥스
-    reviewed: false
+    reviewed: true
     sector: "보안기기"
     flows:
       - {id: n1, name: "CCTV 카메라 — 전국", kind: national, nature: mixed, products: [{hs: '8525502000', weight: 0.5}, {hs: '8525892000', weight: 0.5}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30312, 30997, 33197, 34067, 34795, 35481, 37742, 38576, 39335, 40719, 43676, 44490"}]
   - code: '143160'
     name: 아이디스
-    reviewed: false
+    reviewed: true
     sector: "보안기기"
     flows:
       - {id: n1, name: "CCTV 카메라 — 전국", kind: national, nature: mixed, products: [{hs: '8525502000', weight: 0.5}, {hs: '8525892000', weight: 0.5}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30312, 30997, 33197, 34067, 34795, 35481, 37742, 38576, 39335, 40719, 43676, 44490"}]
   - code: '006110'
     name: 삼아알미늄
-    reviewed: false
+    reviewed: true
     sector: "비철"
     flows:
       - {id: s1, name: "알루미늄박 — 안산시·평택시·천안시", kind: sigungu, nature: company, regions: [KR-41-ansan, KR-41-pyeongtaek, KR-44-cheonan], products: [{hs: '760711', weight: 1.0}], basis: "채널 글 29건(2025-10~2026-07) · 회사 출하"}
@@ -1027,21 +1028,21 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 102건 — 최근 글 번호 38180, 38182, 38939, 38941, 40323, 40325, 42378, 42380, 42382, 42386, 44094, 44096"}]
   - code: '047050'
     name: 포스코인터내셔널
-    reviewed: false
+    reviewed: true
     sector: "상사"
     flows:
       - {id: s1, name: "불도저 — 연수구", kind: sigungu, nature: company, regions: [KR-28-yeonsu], products: [{hs: '842911', weight: 1.0}], basis: "채널 글 4건(2026-02~2026-07) · 회사 출하"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 4건 — 최근 글 번호 19708, 33347, 37892, 43826"}]
   - code: '298020'
     name: 효성티앤씨
-    reviewed: false
+    reviewed: true
     sector: "섬유·화학"
     flows:
       - {id: n1, name: "스판덱스 — 전국", kind: national, nature: company, products: [{hs: '5402191090', weight: 0.25}, {hs: '5402440000', weight: 0.25}, {hs: '5402451020', weight: 0.25}, {hs: '5402599000', weight: 0.25}], basis: "채널 글 38건(2025-10~2026-07) · 회사 출하"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30260, 30937, 33003, 34007, 34735, 35421, 37548, 38516, 39275, 40659, 43482, 44430"}]
   - code: '003720'
     name: 삼영
-    reviewed: false
+    reviewed: true
     sector: "소재"
     flows:
       - {id: s1, name: "커패시터 필름 — 청주시", kind: sigungu, nature: company, regions: [KR-43-cheongju], products: [{hs: '392020', weight: 0.3333}], basis: "채널 글 62건(2025-12~2026-07) · 회사 출하"}
@@ -1049,14 +1050,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 93건 — 최근 글 번호 42270, 42272, 42274, 42276, 42278, 42280, 42282, 42284, 42286, 42288, 42290, 44066"}]
   - code: '120110'
     name: 코오롱인더
-    reviewed: false
+    reviewed: true
     sector: "소재"
     flows:
       - {id: n1, name: "아라미드 섬유 — 전국", kind: national, nature: mixed, products: [{hs: '5402110000', weight: 1.0}], basis: "채널 글 76건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 76건 — 최근 글 번호 36155, 36157, 38106, 38108, 38865, 38867, 40249, 40251, 42082, 42084, 44020, 44022"}]
   - code: '178920'
     name: PI첨단소재
-    reviewed: false
+    reviewed: true
     sector: "소재"
     flows:
       - {id: s1, name: "PI 필름 — 진천군·구미시", kind: sigungu, nature: company, regions: [KR-43-jincheon, KR-47-gumi], products: [{hs: '392099', weight: 1.0}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -1064,7 +1065,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 58건 — 최근 글 번호 34309, 34995, 35995, 35997, 35999, 38088, 38847, 40231, 41922, 41924, 41926, 44002"}]
   - code: '298050'
     name: HS효성첨단소재
-    reviewed: false
+    reviewed: true
     sector: "소재"
     flows:
       - {id: s1, name: "탄소섬유 — 전주시", kind: sigungu, nature: company, regions: [KR-52-jeonju], products: [{hs: '681511', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -1072,7 +1073,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 32063, 33711, 34439, 35125, 36583, 36585, 38218, 38977, 40361, 42510, 42512, 44132"}]
   - code: '049630'
     name: 재영솔루텍
-    reviewed: false
+    reviewed: true
     sector: "스마트폰 부품"
     flows:
       - {id: s1, name: "스마트폰 부품 — 연수구", kind: sigungu, nature: company, regions: [KR-28-yeonsu], products: [{hs: '851779', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -1080,42 +1081,42 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 31713, 33615, 34343, 35029, 36231, 36233, 38122, 38881, 40265, 42158, 42160, 44036"}]
   - code: '076610'
     name: 해성옵틱스
-    reviewed: false
+    reviewed: true
     sector: "스마트폰 부품"
     flows:
       - {id: n1, name: "OIS 액추에이터 — 전국", kind: national, nature: mixed, products: [{hs: '8501101000', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29962, 30639, 32055, 33709, 34437, 35123, 36577, 38216, 38975, 40359, 42504, 44130"}]
   - code: '094170'
     name: 동운아나텍
-    reviewed: false
+    reviewed: true
     sector: "스마트폰 부품"
     flows:
       - {id: n1, name: "OIS 액추에이터 — 전국", kind: national, nature: mixed, products: [{hs: '8501101000', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29962, 30639, 32055, 33709, 34437, 35123, 36577, 38216, 38975, 40359, 42504, 44130"}]
   - code: '192650'
     name: 드림텍
-    reviewed: false
+    reviewed: true
     sector: "스마트폰 부품"
     flows:
       - {id: n1, name: "스마트폰 부품 — 전국", kind: national, nature: mixed, products: [{hs: '8517791020', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29874, 30545, 31711, 33615, 34343, 35029, 36231, 38122, 38881, 40265, 42158, 44036"}]
   - code: '285490'
     name: 노바텍
-    reviewed: false
+    reviewed: true
     sector: "스마트폰 부품"
     flows:
       - {id: n1, name: "스마트폰 부품 — 전국", kind: national, nature: mixed, products: [{hs: '8517791020', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29874, 30545, 31711, 33615, 34343, 35029, 36231, 38122, 38881, 40265, 42158, 44036"}]
   - code: '290740'
     name: 액트로
-    reviewed: false
+    reviewed: true
     sector: "스마트폰 부품"
     flows:
       - {id: n1, name: "OIS 액추에이터 — 전국", kind: national, nature: mixed, products: [{hs: '8501101000', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29962, 30639, 32055, 33709, 34437, 35123, 36577, 38216, 38975, 40359, 42504, 44130"}]
   - code: '003230'
     name: 삼양식품
-    reviewed: false
+    reviewed: true
     sector: "식품"
     flows:
       - {id: s1, name: "라면 — 익산시", kind: sigungu, nature: company, regions: [KR-52-iksan], products: [{hs: '190211', weight: 0.3333}], basis: "채널 글 44건(2025-10~2026-07) · 회사 출하"}
@@ -1126,14 +1127,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 790건 — 최근 글 번호 44364, 44366, 44368, 44370, 44372, 44374, 44376, 44378, 44380, 44382, 44384, 44386"}]
   - code: '003680'
     name: 한성기업
-    reviewed: false
+    reviewed: true
     sector: "식품"
     flows:
       - {id: n1, name: "김치 — 전국", kind: national, nature: mixed, products: [{hs: '2005991000', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30220, 30897, 32911, 33967, 34695, 35381, 37452, 38476, 39235, 40619, 43386, 44390"}]
   - code: '004370'
     name: 농심
-    reviewed: false
+    reviewed: true
     sector: "식품"
     flows:
       - {id: s1, name: "라면 — 강서구·사상구·안양시·구미시", kind: sigungu, nature: company, regions: [KR-26-gangseo, KR-26-sasang, KR-41-anyang, KR-47-gumi], products: [{hs: '190230', weight: 1.0}], basis: "채널 글 74건(2025-10~2026-07) · 회사 출하"}
@@ -1141,7 +1142,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 644건 — 최근 글 번호 44362, 44364, 44366, 44368, 44370, 44372, 44374, 44376, 44378, 44380, 44382, 44384"}]
   - code: '005180'
     name: 빙그레
-    reviewed: false
+    reviewed: true
     sector: "식품"
     flows:
       - {id: s1, name: "아이스크림 — 남양주시·경산시", kind: sigungu, nature: company, regions: [KR-41-namyangju, KR-47-gyeongsan], products: [{hs: '210500', weight: 1.0}], basis: "채널 글 21건(2025-10~2026-07) · 회사 출하"}
@@ -1149,7 +1150,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 59건 — 최근 글 번호 37330, 37332, 37334, 37336, 38440, 39199, 40583, 43264, 43266, 43268, 43270, 44354"}]
   - code: '007310'
     name: 오뚜기
-    reviewed: false
+    reviewed: true
     sector: "식품"
     flows:
       - {id: s1, name: "라면 — 평택시", kind: sigungu, nature: company, regions: [KR-41-pyeongtaek], products: [{hs: '190230', weight: 1.0}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -1157,7 +1158,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 96건 — 최근 글 번호 38442, 38444, 39201, 39203, 40585, 40587, 43274, 43276, 43354, 43358, 44356, 44358"}]
   - code: '017810'
     name: 풀무원
-    reviewed: false
+    reviewed: true
     sector: "식품"
     flows:
       - {id: n1, name: "김치 — 전국", kind: national, nature: mixed, products: [{hs: '2005991000', weight: 0.5}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
@@ -1165,14 +1166,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 76건 — 최근 글 번호 37452, 37460, 38476, 38480, 39235, 39239, 40619, 40623, 43386, 43394, 44390, 44394"}]
   - code: '084690'
     name: 대상홀딩스
-    reviewed: false
+    reviewed: true
     sector: "식품"
     flows:
       - {id: n1, name: "김치 — 전국", kind: national, nature: mixed, products: [{hs: '2005991000', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30220, 30897, 32911, 33967, 34695, 35381, 37452, 38476, 39235, 40619, 43386, 44390"}]
   - code: '103840'
     name: 우양
-    reviewed: false
+    reviewed: true
     sector: "식품"
     flows:
       - {id: s1, name: "핫도그 — 강남구", kind: sigungu, nature: company, regions: [KR-11-gangnam], products: [{hs: '160290', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -1181,21 +1182,21 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 124건 — 최근 글 번호 39195, 39197, 40577, 40579, 40581, 43256, 43258, 43260, 43262, 44348, 44350, 44352"}]
   - code: '136480'
     name: 하림
-    reviewed: false
+    reviewed: true
     sector: "식품"
     flows:
       - {id: n1, name: "개 사료 — 전국", kind: national, nature: mixed, products: [{hs: '2309101000', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30224, 30901, 32919, 33971, 34699, 35385, 37460, 38480, 39239, 40623, 43394, 44394"}]
   - code: '248170'
     name: 샘표식품
-    reviewed: false
+    reviewed: true
     sector: "식품"
     flows:
       - {id: n1, name: "고추장 — 전국", kind: national, nature: company, products: [{hs: '2103901030', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 회사 출하"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30222, 30899, 32913, 33969, 34697, 35383, 37454, 38478, 39237, 40621, 43388, 44392"}]
   - code: '260970'
     name: 에스앤디
-    reviewed: false
+    reviewed: true
     sector: "식품"
     flows:
       - {id: s1, name: "소스·장류 — 성북구·밀양시·원주시", kind: sigungu, nature: mixed, regions: [KR-11-seongbuk, KR-48-miryang, KR-51-wonju], products: [{hs: '210390', weight: 0.5}], basis: "채널 글 32건(2025-10~2026-05) · 업황 혼합"}
@@ -1203,7 +1204,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 70건 — 최근 글 번호 32889, 32891, 32893, 33963, 34691, 35377, 37426, 38472, 39231, 40615, 43360, 44386"}]
   - code: '280360'
     name: 롯데웰푸드
-    reviewed: false
+    reviewed: true
     sector: "식품"
     flows:
       - {id: s1, name: "스위트 비스킷 — 영등포구", kind: sigungu, nature: company, regions: [KR-11-yeongdeungpo], products: [{hs: '190531', weight: 0.5}], basis: "채널 글 1건(2025-10~2025-10) · 회사 출하"}
@@ -1211,7 +1212,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 5건 — 최근 글 번호 1637, 14618, 14620, 19196, 19198"}]
   - code: '368970'
     name: 오에스피
-    reviewed: false
+    reviewed: true
     sector: "식품"
     flows:
       - {id: s1, name: "개 사료 — 기장군", kind: sigungu, nature: affiliate, regions: [KR-26-gijang], products: [{hs: '230910', weight: 1.0}], basis: "채널 글 20건(2025-10~2026-07) · 관계사 물량"}
@@ -1219,7 +1220,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 58건 — 최근 글 번호 34699, 35385, 37460, 37462, 37464, 38480, 39239, 40623, 43394, 43396, 43398, 44394"}]
   - code: '097950'
     name: CJ제일제당
-    reviewed: false
+    reviewed: true
     sector: "식품·바이오"
     flows:
       - {id: s1, name: "라이신·라이신 염 — 군산시", kind: sigungu, nature: mixed, regions: [KR-52-gunsan], products: [{hs: '292241', weight: 0.3333}], basis: "채널 글 50건(2025-10~2026-07) · 업황 혼합"}
@@ -1228,7 +1229,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 239건 — 최근 글 번호 42678, 42680, 42682, 42684, 42686, 42688, 42690, 44176, 44178, 44180, 44182, 44184"}]
   - code: '001680'
     name: 대상
-    reviewed: false
+    reviewed: true
     sector: "식품·소재"
     flows:
       - {id: s1, name: "라이신·라이신 염 — 군산시", kind: sigungu, nature: mixed, regions: [KR-52-gunsan], products: [{hs: '292241', weight: 0.3333}], basis: "채널 글 50건(2025-10~2026-07) · 업황 혼합"}
@@ -1237,7 +1238,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 239건 — 최근 글 번호 42678, 42680, 42682, 42684, 42686, 42688, 42690, 44176, 44178, 44180, 44182, 44184"}]
   - code: '005300'
     name: 롯데칠성음료
-    reviewed: false
+    reviewed: true
     sector: "음료·주류"
     flows:
       - {id: s1, name: "소주 — 강릉시", kind: sigungu, nature: company, regions: [KR-51-gangneung], products: [{hs: '220890', weight: 1.0}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -1245,7 +1246,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 58건 — 최근 글 번호 34693, 35379, 37440, 37446, 37448, 38474, 39233, 40617, 43374, 43380, 43382, 44388"}]
   - code: '039840'
     name: 디오
-    reviewed: false
+    reviewed: true
     sector: "의료기기"
     flows:
       - {id: s1, name: "치과 임플란트 — 해운대구", kind: sigungu, nature: company, regions: [KR-26-haeundae], products: [{hs: '902129', weight: 1.0}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -1253,35 +1254,35 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 182건 — 최근 글 번호 40517, 43064, 43066, 43068, 43070, 43082, 43084, 43094, 44282, 44284, 44286, 44288"}]
   - code: '041830'
     name: 인바디
-    reviewed: false
+    reviewed: true
     sector: "의료기기"
     flows:
       - {id: n1, name: "체성분 분석기 — 전국", kind: national, nature: mixed, products: [{hs: '9018198000', weight: 1.0}], basis: "채널 글 76건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 76건 — 최근 글 번호 37162, 37164, 38376, 38378, 39135, 39137, 40519, 40521, 43096, 43098, 44290, 44292"}]
   - code: '041920'
     name: 메디아나
-    reviewed: false
+    reviewed: true
     sector: "의료기기"
     flows:
       - {id: n1, name: "인공호흡기 — 전국", kind: national, nature: mixed, products: [{hs: '9019204000', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30054, 30731, 32355, 33801, 34529, 35215, 36896, 38310, 39069, 40453, 42830, 44224"}]
   - code: '058110'
     name: 멕아이씨에스
-    reviewed: false
+    reviewed: true
     sector: "의료기기"
     flows:
       - {id: n1, name: "인공호흡기 — 전국", kind: national, nature: mixed, products: [{hs: '9019204000', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30054, 30731, 32355, 33801, 34529, 35215, 36896, 38310, 39069, 40453, 42830, 44224"}]
   - code: '115480'
     name: 씨유메디칼
-    reviewed: false
+    reviewed: true
     sector: "의료기기"
     flows:
       - {id: n1, name: "인공호흡기 — 전국", kind: national, nature: mixed, products: [{hs: '9019204000', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30054, 30731, 32355, 33801, 34529, 35215, 36896, 38310, 39069, 40453, 42830, 44224"}]
   - code: '122310'
     name: 제노레이
-    reviewed: false
+    reviewed: true
     sector: "의료기기"
     flows:
       - {id: s1, name: "C-arm 엑스선기기 — 성남시", kind: sigungu, nature: company, regions: [KR-41-seongnam], products: [{hs: '902214', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -1290,7 +1291,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 86건 — 최근 글 번호 37206, 38388, 38390, 39147, 39149, 40531, 40533, 43134, 43138, 43140, 44302, 44304"}]
   - code: '145720'
     name: 덴티움
-    reviewed: false
+    reviewed: true
     sector: "의료기기"
     flows:
       - {id: s1, name: "치과 임플란트 — 수원시", kind: sigungu, nature: company, regions: [KR-41-suwon], products: [{hs: '902129', weight: 1.0}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -1298,7 +1299,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 182건 — 최근 글 번호 40517, 43064, 43066, 43068, 43070, 43072, 43074, 43094, 44282, 44284, 44286, 44288"}]
   - code: '179290'
     name: 엠아이텍
-    reviewed: false
+    reviewed: true
     sector: "의료기기"
     flows:
       - {id: s1, name: "스텐트 — 평택시", kind: sigungu, nature: company, regions: [KR-41-pyeongtaek], products: [{hs: '902190', weight: 1.0}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -1306,7 +1307,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 96건 — 최근 글 번호 38382, 38384, 39141, 39143, 40525, 40527, 43108, 43110, 43112, 43116, 44296, 44298"}]
   - code: '206640'
     name: 바디텍메드
-    reviewed: false
+    reviewed: true
     sector: "의료기기"
     flows:
       - {id: s1, name: "진단시약·키트 — 춘천시", kind: sigungu, nature: company, regions: [KR-51-chuncheon], products: [{hs: '382219', weight: 0.2}], basis: "채널 글 36건(2025-10~2026-07) · 회사 출하"}
@@ -1321,14 +1322,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 262건 — 최근 글 번호 43178, 43182, 43184, 43186, 43188, 43190, 43192, 44316, 44318, 44322, 44324, 44326"}]
   - code: '208370'
     name: 셀바스헬스케어
-    reviewed: false
+    reviewed: true
     sector: "의료기기"
     flows:
       - {id: n1, name: "체성분 분석기 — 전국", kind: national, nature: mixed, products: [{hs: '9018198000', weight: 1.0}], basis: "채널 글 76건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 76건 — 최근 글 번호 37162, 37164, 38376, 38378, 39135, 39137, 40519, 40521, 43096, 43098, 44290, 44292"}]
   - code: '214150'
     name: 클래시스
-    reviewed: false
+    reviewed: true
     sector: "의료기기"
     flows:
       - {id: s1, name: "피부과 레이저기기 — 강남구", kind: sigungu, nature: company, regions: [KR-11-gangnam], products: [{hs: '901819', weight: 0.5}], basis: "채널 글 12건(2025-10~2026-07) · 회사 출하"}
@@ -1339,7 +1340,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 124건 — 최근 글 번호 39111, 39151, 40493, 40495, 40535, 42968, 42986, 42988, 43142, 44264, 44266, 44306"}]
   - code: '226400'
     name: 오스테오닉
-    reviewed: false
+    reviewed: true
     sector: "의료기기"
     flows:
       - {id: n1, name: "외과수술 기기 — 전국", kind: national, nature: company, products: [{hs: '9018902090', weight: 0.5}], basis: "채널 글 38건(2025-10~2026-07) · 회사 출하"}
@@ -1347,14 +1348,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 76건 — 최근 글 번호 37214, 37216, 38396, 38398, 39155, 39157, 40539, 40541, 43148, 43150, 44310, 44312"}]
   - code: '240550'
     name: 동방메디컬
-    reviewed: false
+    reviewed: true
     sector: "의료기기"
     flows:
       - {id: s1, name: "의료용 캐뉼러 — 보령시", kind: sigungu, nature: company, regions: [KR-44-boryeong], products: [{hs: '901839', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 10건 — 최근 글 번호 1487, 5812, 10075, 14590, 19162, 24074, 28425, 32767, 37308, 43242"}]
   - code: '303360'
     name: 프로티아
-    reviewed: false
+    reviewed: true
     sector: "의료기기"
     flows:
       - {id: s1, name: "진단시약 — 강서구", kind: sigungu, nature: company, regions: [KR-11-gangseo], products: [{hs: '382219', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -1363,7 +1364,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 86건 — 최근 글 번호 37266, 38402, 38412, 39161, 39171, 40545, 40555, 43160, 43178, 43200, 44316, 44326"}]
   - code: '336570'
     name: 원텍
-    reviewed: false
+    reviewed: true
     sector: "의료기기"
     flows:
       - {id: s1, name: "피부과 레이저기기 — 유성구", kind: sigungu, nature: company, regions: [KR-30-yuseong], products: [{hs: '901819', weight: 0.5}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -1373,7 +1374,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 94건 — 최근 글 번호 38350, 38352, 39109, 39111, 40493, 40495, 42968, 42978, 42980, 42988, 44264, 44266"}]
   - code: '340570'
     name: 티앤엘
-    reviewed: false
+    reviewed: true
     sector: "의료기기"
     flows:
       - {id: s1, name: "창상피복재 — 안성시", kind: sigungu, nature: company, regions: [KR-41-anseong], products: [{hs: '300590', weight: 1.0}], basis: "채널 글 28건(2025-10~2026-07) · 회사 출하"}
@@ -1381,14 +1382,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 104건 — 최근 글 번호 38420, 38422, 39179, 39181, 40563, 40565, 43212, 43214, 43216, 43220, 44334, 44336"}]
   - code: '372910'
     name: 한컴라이프케어
-    reviewed: false
+    reviewed: true
     sector: "의료기기"
     flows:
       - {id: n1, name: "인공호흡기 — 전국", kind: national, nature: mixed, products: [{hs: '9019204000', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30054, 30731, 32355, 33801, 34529, 35215, 36896, 38310, 39069, 40453, 42830, 44224"}]
   - code: '389650'
     name: 넥스트바이오메디컬
-    reviewed: false
+    reviewed: true
     sector: "의료기기"
     flows:
       - {id: s1, name: "지혈제 — 연수구", kind: sigungu, nature: company, regions: [KR-28-yeonsu], products: [{hs: '300610', weight: 1.0}], basis: "채널 글 21건(2025-10~2026-07) · 회사 출하"}
@@ -1396,7 +1397,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 100건 — 최근 글 번호 38424, 38426, 39183, 39185, 40567, 40569, 43222, 43224, 43226, 43230, 44338, 44340"}]
   - code: '445680'
     name: 큐리옥스바이오시스템즈
-    reviewed: false
+    reviewed: true
     sector: "의료기기"
     flows:
       - {id: s1, name: "세포 세척장비 — 금천구", kind: sigungu, nature: company, regions: [KR-11-geumcheon], products: [{hs: '847989', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -1404,28 +1405,28 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 32481, 33835, 34563, 35249, 37020, 37022, 38344, 39103, 40487, 42954, 42956, 44258"}]
   - code: '086450'
     name: 동국제약
-    reviewed: false
+    reviewed: true
     sector: "의료기기·미용기기"
     flows:
       - {id: n1, name: "가정용 미용기기 — 전국", kind: national, nature: mixed, products: [{hs: '8543701000', weight: 0.25}, {hs: '8543702020', weight: 0.25}, {hs: '8543709070', weight: 0.25}, {hs: '8543901000', weight: 0.25}], basis: "채널 글 76건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 76건 — 최근 글 번호 37298, 37300, 38428, 38430, 39187, 39189, 40571, 40573, 43232, 43234, 44342, 44344"}]
   - code: '149980'
     name: 하이로닉
-    reviewed: false
+    reviewed: true
     sector: "의료기기·미용기기"
     flows:
       - {id: n1, name: "가정용 미용기기 — 전국", kind: national, nature: mixed, products: [{hs: '8543701000', weight: 0.25}, {hs: '8543702020', weight: 0.25}, {hs: '8543709070', weight: 0.25}, {hs: '8543901000', weight: 0.25}], basis: "채널 글 76건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 76건 — 최근 글 번호 37298, 37300, 38428, 38430, 39187, 39189, 40571, 40573, 43232, 43234, 44342, 44344"}]
   - code: '199550'
     name: 레이저옵텍
-    reviewed: false
+    reviewed: true
     sector: "의료기기·미용기기"
     flows:
       - {id: n1, name: "가정용 미용기기 — 전국", kind: national, nature: mixed, products: [{hs: '8543701000', weight: 0.25}, {hs: '8543702020', weight: 0.25}, {hs: '8543709070', weight: 0.25}, {hs: '8543901000', weight: 0.25}], basis: "채널 글 76건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 76건 — 최근 글 번호 37298, 37300, 38428, 38430, 39187, 39189, 40571, 40573, 43232, 43234, 44342, 44344"}]
   - code: '006400'
     name: 삼성SDI
-    reviewed: false
+    reviewed: true
     sector: "이차전지"
     flows:
       - {id: s1, name: "CMP 슬러리 — 구미시", kind: sigungu, nature: company, regions: [KR-47-gumi], products: [{hs: '340540', weight: 0.5}], basis: "채널 글 1건(2026-02~2026-02) · 회사 출하"}
@@ -1436,7 +1437,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 169건 — 최근 글 번호 40285, 40287, 42224, 42226, 42228, 42230, 42236, 42240, 44052, 44054, 44056, 44058"}]
   - code: '373220'
     name: LG에너지솔루션
-    reviewed: false
+    reviewed: true
     sector: "이차전지"
     flows:
       - {id: s1, name: "전기차 배터리·리튬이온 축전지 — 영등포구·청주시", kind: sigungu, nature: company, regions: [KR-11-yeongdeungpo, KR-43-cheongju], products: [{hs: '850760', weight: 1.0}], basis: "채널 글 11건(2025-10~2026-07) · 회사 출하"}
@@ -1446,7 +1447,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 163건 — 최근 글 번호 40283, 40285, 40287, 42224, 42226, 42230, 42236, 42238, 44052, 44054, 44056, 44058"}]
   - code: '091580'
     name: 상신이디피
-    reviewed: false
+    reviewed: true
     sector: "이차전지 부품"
     flows:
       - {id: s1, name: "2차전지 캡·모듈부품 — 천안시", kind: sigungu, nature: company, regions: [KR-44-cheonan], products: [{hs: '850760', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -1454,7 +1455,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 10건 — 최근 글 번호 793, 5070, 9341, 13852, 18378, 23352, 27687, 32021, 36543, 42470"}]
   - code: '243840'
     name: 신흥에스이씨
-    reviewed: false
+    reviewed: true
     sector: "이차전지 부품"
     flows:
       - {id: s1, name: "2차전지 캡 어셈블리 — 오산시", kind: sigungu, nature: company, regions: [KR-41-osan], products: [{hs: '850760', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -1462,7 +1463,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 10건 — 최근 글 번호 795, 5072, 9343, 13854, 18380, 23354, 27689, 32023, 36545, 42472"}]
   - code: '416180'
     name: 신성에스티
-    reviewed: false
+    reviewed: true
     sector: "이차전지 부품"
     flows:
       - {id: s1, name: "배터리 케이스 — 창원시", kind: sigungu, nature: company, regions: [KR-48-changwon], products: [{hs: '850790', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -1470,7 +1471,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 31997, 33689, 34417, 35103, 36517, 36519, 38196, 38955, 40339, 42444, 42446, 44110"}]
   - code: '003670'
     name: 포스코퓨처엠
-    reviewed: false
+    reviewed: true
     sector: "이차전지 소재"
     flows:
       - {id: s1, name: "인조흑연 음극재 — 포항시", kind: sigungu, nature: company, regions: [KR-47-pohang], products: [{hs: '380110', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -1483,14 +1484,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 368건 — 최근 글 번호 43856, 43858, 44070, 44072, 44078, 44550, 44552, 44554, 44556, 44558, 44560, 44562"}]
   - code: '025900'
     name: 동화기업
-    reviewed: false
+    reviewed: true
     sector: "이차전지 소재"
     flows:
       - {id: n1, name: "전해액 — 전국", kind: national, nature: mixed, products: [{hs: '3824999053', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29938, 30613, 31969, 33683, 34411, 35097, 36491, 38190, 38949, 40333, 42418, 44104"}]
   - code: '036830'
     name: 솔브레인홀딩스
-    reviewed: false
+    reviewed: true
     sector: "이차전지 소재"
     flows:
       - {id: s1, name: "전해액 — 성남시", kind: sigungu, nature: company, regions: [KR-41-seongnam], products: [{hs: '382499', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -1498,7 +1499,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 53건 — 최근 글 번호 31973, 33683, 34411, 35097, 36491, 36495, 38190, 38949, 40333, 42418, 42422, 44104"}]
   - code: '055490'
     name: 테이팩스
-    reviewed: false
+    reviewed: true
     sector: "이차전지 소재"
     flows:
       - {id: s1, name: "이차전지용 테이프 — 화성시·수원시·군산시", kind: sigungu, nature: company, regions: [KR-41-hwaseong, KR-41-suwon, KR-52-gunsan], products: [{hs: '391990', weight: 1.0}], basis: "채널 글 61건(2025-10~2026-07) · 회사 출하"}
@@ -1506,7 +1507,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 99건 — 최근 글 번호 38198, 38957, 40341, 42448, 42450, 42454, 42456, 42458, 42460, 42462, 42464, 44112"}]
   - code: '066970'
     name: 엘앤에프
-    reviewed: false
+    reviewed: true
     sector: "이차전지 소재"
     flows:
       - {id: n1, name: "NCM 양극재 — 전국", kind: national, nature: company, products: [{hs: '2841909020', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 회사 출하"}
@@ -1516,21 +1517,21 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 282건 — 최근 글 번호 43852, 43854, 43856, 43858, 44070, 44550, 44552, 44554, 44556, 44558, 44560, 44562"}]
   - code: '114190'
     name: 강원에너지
-    reviewed: false
+    reviewed: true
     sector: "이차전지 소재"
     flows:
       - {id: n1, name: "탈철기 — 전국", kind: national, nature: mixed, products: [{hs: '8474100000', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29948, 30625, 32025, 33695, 34423, 35109, 36547, 38202, 38961, 40345, 42474, 44116"}]
   - code: '121600'
     name: 나노신소재
-    reviewed: false
+    reviewed: true
     sector: "이차전지 소재"
     flows:
       - {id: s1, name: "CNT 도전재 — 세종시", kind: sigungu, nature: company, regions: [KR-36-sejong], products: [{hs: '380120', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 10건 — 최근 글 번호 717, 4986, 9251, 13762, 18288, 23274, 27605, 31927, 36449, 42376"}]
   - code: '247540'
     name: 에코프로비엠
-    reviewed: false
+    reviewed: true
     sector: "이차전지 소재"
     flows:
       - {id: n1, name: "NCM 양극재 — 전국", kind: national, nature: company, products: [{hs: '2841909020', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 회사 출하"}
@@ -1541,14 +1542,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 320건 — 최근 글 번호 43854, 43856, 43858, 44070, 44072, 44550, 44552, 44554, 44556, 44558, 44560, 44562"}]
   - code: '278280'
     name: 천보
-    reviewed: false
+    reviewed: true
     sector: "이차전지 소재"
     flows:
       - {id: n1, name: "전해액 — 전국", kind: national, nature: mixed, products: [{hs: '3824999053', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29938, 30613, 31969, 33683, 34411, 35097, 36491, 38190, 38949, 40333, 42418, 44104"}]
   - code: '290670'
     name: 대보마그네틱
-    reviewed: false
+    reviewed: true
     sector: "이차전지 소재"
     flows:
       - {id: s1, name: "전자석 탈철기 — 화성시", kind: sigungu, nature: company, regions: [KR-41-hwaseong], products: [{hs: '847410', weight: 1.0}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -1556,7 +1557,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 58건 — 최근 글 번호 34423, 35109, 36547, 36549, 36551, 38202, 38961, 40345, 42474, 42476, 42478, 44116"}]
   - code: '348370'
     name: 엔켐
-    reviewed: false
+    reviewed: true
     sector: "이차전지 소재"
     flows:
       - {id: s1, name: "전해액 — 제천시", kind: sigungu, nature: company, regions: [KR-43-jecheon], products: [{hs: '382499', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -1564,7 +1565,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 31971, 33683, 34411, 35097, 36491, 36493, 38190, 38949, 40333, 42418, 42420, 44104"}]
   - code: '361610'
     name: SK아이이테크놀로지
-    reviewed: false
+    reviewed: true
     sector: "이차전지 소재"
     flows:
       - {id: s1, name: "분리막(PP) — 청주시", kind: sigungu, nature: company, regions: [KR-43-cheongju], products: [{hs: '392111', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -1572,14 +1573,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 58건 — 최근 글 번호 34415, 35101, 36511, 36513, 36515, 38194, 38953, 40337, 42438, 42440, 42442, 44108"}]
   - code: '393890'
     name: 더블유씨피
-    reviewed: false
+    reviewed: true
     sector: "이차전지 소재"
     flows:
       - {id: n1, name: "분리막(PE·PP) — 전국", kind: national, nature: mixed, products: [{hs: '3921191010', weight: 0.5}, {hs: '3921192010', weight: 0.5}], basis: "채널 글 48건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 31991, 33687, 34415, 35101, 36511, 36513, 38194, 38953, 40337, 42438, 42440, 44108"}]
   - code: '261200'
     name: 덴티스
-    reviewed: false
+    reviewed: true
     sector: "임플란트"
     flows:
       - {id: s1, name: "치과 임플란트 — 달서구", kind: sigungu, nature: company, regions: [KR-27-dalseo], products: [{hs: '902129', weight: 1.0}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -1587,7 +1588,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 182건 — 최근 글 번호 40517, 43064, 43066, 43068, 43070, 43086, 43088, 43094, 44282, 44284, 44286, 44288"}]
   - code: '004490'
     name: 세방전지
-    reviewed: false
+    reviewed: true
     sector: "자동차 부품"
     flows:
       - {id: s1, name: "납축전지 — 광산구·구미시·창원시", kind: sigungu, nature: company, regions: [KR-29-gwangsan, KR-47-gumi, KR-48-changwon], products: [{hs: '850710', weight: 1.0}], basis: "채널 글 30건(2025-10~2026-07) · 회사 출하"}
@@ -1595,28 +1596,28 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 68건 — 최근 글 번호 36315, 36317, 36319, 36321, 38146, 38905, 40289, 42242, 42244, 42246, 42248, 44060"}]
   - code: '005850'
     name: 에스엘
-    reviewed: false
+    reviewed: true
     sector: "자동차 부품"
     flows:
       - {id: n1, name: "자동차 LED 램프 — 전국", kind: national, nature: company, products: [{hs: '8512101000', weight: 0.3333}, {hs: '8512109000', weight: 0.3333}, {hs: '8512201010', weight: 0.3333}], basis: "채널 글 38건(2025-10~2026-07) · 회사 출하"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29950, 30627, 32031, 33697, 34425, 35111, 36553, 38204, 38963, 40347, 42480, 44118"}]
   - code: '009900'
     name: 명신산업
-    reviewed: false
+    reviewed: true
     sector: "자동차 부품"
     flows:
       - {id: n1, name: "차체 부품 — 전국", kind: national, nature: mixed, products: [{hs: '8708290000', weight: 0.3333}, {hs: '8708991010', weight: 0.3333}, {hs: '8708991040', weight: 0.3333}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29952, 30629, 32033, 33699, 34427, 35113, 36555, 38206, 38965, 40349, 42482, 44120"}]
   - code: '010690'
     name: 화신
-    reviewed: false
+    reviewed: true
     sector: "자동차 부품"
     flows:
       - {id: n1, name: "자동차 부품 — 전국", kind: national, nature: mixed, products: [{hs: '8708301000', weight: 0.2}, {hs: '8708991010', weight: 0.2}, {hs: '8708991020', weight: 0.2}, {hs: '8708991040', weight: 0.2}, {hs: '8708999000', weight: 0.2}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29956, 30633, 32047, 33703, 34431, 35117, 36569, 38210, 38969, 40353, 42496, 44124"}]
   - code: '012330'
     name: 현대모비스
-    reviewed: false
+    reviewed: true
     sector: "자동차 부품"
     flows:
       - {id: s1, name: "범퍼 레일 — 강남구", kind: sigungu, nature: company, regions: [KR-11-gangnam], products: [{hs: '870810', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -1624,7 +1625,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 32039, 33701, 34429, 35115, 36559, 36561, 38208, 38967, 40351, 42486, 42488, 44122"}]
   - code: '015750'
     name: 성우하이텍
-    reviewed: false
+    reviewed: true
     sector: "자동차 부품"
     flows:
       - {id: s1, name: "범퍼 레일 — 경산시", kind: sigungu, nature: company, regions: [KR-47-gyeongsan], products: [{hs: '870810', weight: 0.3333}], basis: "채널 글 19건(2025-10~2026-07) · 회사 출하"}
@@ -1635,42 +1636,42 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 143건 — 최근 글 번호 40349, 40351, 40353, 42482, 42484, 42486, 42490, 42492, 42496, 44120, 44122, 44124"}]
   - code: '018880'
     name: 한온시스템
-    reviewed: false
+    reviewed: true
     sector: "자동차 부품"
     flows:
       - {id: n1, name: "자동차 부품 — 전국", kind: national, nature: mixed, products: [{hs: '8708301000', weight: 0.2}, {hs: '8708991010', weight: 0.2}, {hs: '8708991020', weight: 0.2}, {hs: '8708991040', weight: 0.2}, {hs: '8708999000', weight: 0.2}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29956, 30633, 32047, 33703, 34431, 35117, 36569, 38210, 38969, 40353, 42496, 44124"}]
   - code: '019180'
     name: 티에이치엔
-    reviewed: false
+    reviewed: true
     sector: "자동차 부품"
     flows:
       - {id: n1, name: "와이어링 하네스 — 전국", kind: national, nature: company, products: [{hs: '8544300000', weight: 0.5}, {hs: '8544429010', weight: 0.5}], basis: "채널 글 38건(2025-10~2026-07) · 회사 출하"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29958, 30635, 32049, 33705, 34433, 35119, 36571, 38212, 38971, 40355, 42498, 44126"}]
   - code: '101330'
     name: 모베이스
-    reviewed: false
+    reviewed: true
     sector: "자동차 부품"
     flows:
       - {id: n1, name: "자동차 부품 — 전국", kind: national, nature: mixed, products: [{hs: '8708301000', weight: 0.2}, {hs: '8708991010', weight: 0.2}, {hs: '8708991020', weight: 0.2}, {hs: '8708991040', weight: 0.2}, {hs: '8708999000', weight: 0.2}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29956, 30633, 32047, 33703, 34431, 35117, 36569, 38210, 38969, 40353, 42496, 44124"}]
   - code: '123410'
     name: 코리아에프티
-    reviewed: false
+    reviewed: true
     sector: "자동차 부품"
     flows:
       - {id: n1, name: "자동차 부품 — 전국", kind: national, nature: mixed, products: [{hs: '8708301000', weight: 0.2}, {hs: '8708991010', weight: 0.2}, {hs: '8708991020', weight: 0.2}, {hs: '8708991040', weight: 0.2}, {hs: '8708999000', weight: 0.2}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29956, 30633, 32047, 33703, 34431, 35117, 36569, 38210, 38969, 40353, 42496, 44124"}]
   - code: '170030'
     name: 현대공업
-    reviewed: false
+    reviewed: true
     sector: "자동차 부품"
     flows:
       - {id: n1, name: "자동차 부품 — 전국", kind: national, nature: mixed, products: [{hs: '8708301000', weight: 0.2}, {hs: '8708991010', weight: 0.2}, {hs: '8708991020', weight: 0.2}, {hs: '8708991040', weight: 0.2}, {hs: '8708999000', weight: 0.2}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29956, 30633, 32047, 33703, 34431, 35117, 36569, 38210, 38969, 40353, 42496, 44124"}]
   - code: '011210'
     name: 현대위아
-    reviewed: false
+    reviewed: true
     sector: "자동차 부품·기계"
     flows:
       - {id: n1, name: "항공기 부품 — 전국", kind: national, nature: mixed, products: [{hs: '8807301000', weight: 0.5}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
@@ -1678,14 +1679,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 114건 — 최근 글 번호 39373, 39375, 39377, 40757, 40759, 40761, 43768, 43780, 43782, 44528, 44530, 44532"}]
   - code: '056190'
     name: SFA
-    reviewed: false
+    reviewed: true
     sector: "장비"
     flows:
       - {id: n1, name: "반도체 장비 — 전국", kind: national, nature: mixed, products: [{hs: '8486101000', weight: 0.0133}, {hs: '8486102000', weight: 0.0133}, {hs: '8486103010', weight: 0.0133}, {hs: '8486103020', weight: 0.0133}, {hs: '8486103090', weight: 0.0133}, {hs: '8486104010', weight: 0.0133}, {hs: '8486104020', weight: 0.0133}, {hs: '8486105010', weight: 0.0133}, {hs: '8486105030', weight: 0.0133}, {hs: '8486109000', weight: 0.0133}, {hs: '8486201000', weight: 0.0133}, {hs: '8486202100', weight: 0.0133}, {hs: '8486202200', weight: 0.0133}, {hs: '8486202300', weight: 0.0133}, {hs: '8486203000', weight: 0.0133}, {hs: '8486204000', weight: 0.0133}, {hs: '8486205000', weight: 0.0133}, {hs: '8486206010', weight: 0.0133}, {hs: '8486206020', weight: 0.0133}, {hs: '8486206091', weight: 0.0133}, {hs: '8486206099', weight: 0.0133}, {hs: '8486207000', weight: 0.0133}, {hs: '8486208100', weight: 0.0133}, {hs: '8486208410', weight: 0.0133}, {hs: '8486208420', weight: 0.0133}, {hs: '8486208490', weight: 0.0133}, {hs: '8486209100', weight: 0.0133}, {hs: '8486209200', weight: 0.0133}, {hs: '8486209310', weight: 0.0133}, {hs: '8486209320', weight: 0.0133}, {hs: '8486209390', weight: 0.0133}, {hs: '8486209400', weight: 0.0133}, {hs: '8486209500', weight: 0.0133}, {hs: '8486209600', weight: 0.0133}, {hs: '8486209900', weight: 0.0133}, {hs: '8486301010', weight: 0.0133}, {hs: '8486301020', weight: 0.0133}, {hs: '8486301031', weight: 0.0133}, {hs: '8486301040', weight: 0.0133}, {hs: '8486301050', weight: 0.0133}, {hs: '8486301060', weight: 0.0133}, {hs: '8486301090', weight: 0.0133}, {hs: '8486302010', weight: 0.0133}, {hs: '8486302020', weight: 0.0133}, {hs: '8486302031', weight: 0.0133}, {hs: '8486302050', weight: 0.0133}, {hs: '8486302060', weight: 0.0133}, {hs: '8486302070', weight: 0.0133}, {hs: '8486302090', weight: 0.0133}, {hs: '8486401010', weight: 0.0133}, {hs: '8486401030', weight: 0.0133}, {hs: '8486401040', weight: 0.0133}, {hs: '8486401090', weight: 0.0133}, {hs: '8486402010', weight: 0.0133}, {hs: '8486402020', weight: 0.0133}, {hs: '8486402031', weight: 0.0133}, {hs: '8486402039', weight: 0.0133}, {hs: '8486402040', weight: 0.0133}, {hs: '8486402070', weight: 0.0133}, {hs: '8486402080', weight: 0.0133}, {hs: '8486402091', weight: 0.0133}, {hs: '8486402093', weight: 0.0133}, {hs: '8486402095', weight: 0.0133}, {hs: '8486402099', weight: 0.0133}, {hs: '8486403010', weight: 0.0133}, {hs: '8486403020', weight: 0.0133}, {hs: '8486403090', weight: 0.0133}, {hs: '8486901000', weight: 0.0133}, {hs: '8486902030', weight: 0.0133}, {hs: '8486902040', weight: 0.0133}, {hs: '8486902090', weight: 0.0133}, {hs: '8486903050', weight: 0.0133}, {hs: '8486903060', weight: 0.0133}, {hs: '8486903090', weight: 0.0133}, {hs: '8486904000', weight: 0.0133}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29756, 30427, 31213, 33497, 34225, 34911, 35701, 38004, 38763, 40147, 41628, 43918"}]
   - code: '010120'
     name: 엘에스일렉트릭
-    reviewed: false
+    reviewed: true
     sector: "전력기기"
     flows:
       - {id: s1, name: "초고압 변압기 — 기장군·안양시", kind: sigungu, nature: company, regions: [KR-26-gijang, KR-41-anyang], products: [{hs: '850423', weight: 0.25}], basis: "채널 글 46건(2025-10~2026-07) · 회사 출하"}
@@ -1701,7 +1702,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 488건 — 최근 글 번호 42616, 42618, 42626, 44146, 44148, 44150, 44154, 44156, 44158, 44160, 44162, 44164"}]
   - code: '033100'
     name: 제룡전기
-    reviewed: false
+    reviewed: true
     sector: "전력기기"
     flows:
       - {id: s1, name: "변압기(100kVA 이하)·변압기 — 광진구", kind: sigungu, nature: company, regions: [KR-11-gwangjin], products: [{hs: '850421', weight: 0.1666}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -1712,7 +1713,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 96건 — 최근 글 번호 38228, 38230, 38987, 38989, 40371, 40373, 42538, 42540, 42548, 42558, 44142, 44144"}]
   - code: '062040'
     name: 산일전기
-    reviewed: false
+    reviewed: true
     sector: "전력기기"
     flows:
       - {id: s1, name: "변압기 — 안산시", kind: sigungu, nature: company, regions: [KR-41-ansan], products: [{hs: '850421', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -1721,7 +1722,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 32091, 33719, 34447, 35133, 36611, 36627, 38228, 38987, 40371, 42538, 42554, 44142"}]
   - code: '103590'
     name: 일진전기
-    reviewed: false
+    reviewed: true
     sector: "전력기기"
     flows:
       - {id: s1, name: "초고압 변압기 — 화성시", kind: sigungu, nature: company, regions: [KR-41-hwaseong], products: [{hs: '850423', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -1734,7 +1735,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 296건 — 최근 글 번호 42604, 42610, 42616, 42620, 42626, 44146, 44148, 44150, 44158, 44160, 44162, 44164"}]
   - code: '178320'
     name: 서진시스템
-    reviewed: false
+    reviewed: true
     sector: "전력기기"
     flows:
       - {id: n1, name: "반도체 장비 — 전국", kind: national, nature: mixed, products: [{hs: '8486101000', weight: 0.0131}, {hs: '8486102000', weight: 0.0131}, {hs: '8486103010', weight: 0.0131}, {hs: '8486103020', weight: 0.0131}, {hs: '8486103090', weight: 0.0131}, {hs: '8486104010', weight: 0.0131}, {hs: '8486104020', weight: 0.0131}, {hs: '8486105010', weight: 0.0131}, {hs: '8486105030', weight: 0.0131}, {hs: '8486109000', weight: 0.0131}, {hs: '8486201000', weight: 0.0131}, {hs: '8486202100', weight: 0.0131}, {hs: '8486202200', weight: 0.0131}, {hs: '8486202300', weight: 0.0131}, {hs: '8486203000', weight: 0.0131}, {hs: '8486204000', weight: 0.0131}, {hs: '8486205000', weight: 0.0131}, {hs: '8486206010', weight: 0.0131}, {hs: '8486206020', weight: 0.0131}, {hs: '8486206091', weight: 0.0131}, {hs: '8486206099', weight: 0.0131}, {hs: '8486207000', weight: 0.0131}, {hs: '8486208100', weight: 0.0131}, {hs: '8486208410', weight: 0.0131}, {hs: '8486208420', weight: 0.0131}, {hs: '8486208490', weight: 0.0131}, {hs: '8486209100', weight: 0.0131}, {hs: '8486209200', weight: 0.0131}, {hs: '8486209310', weight: 0.0131}, {hs: '8486209320', weight: 0.0131}, {hs: '8486209390', weight: 0.0131}, {hs: '8486209400', weight: 0.0131}, {hs: '8486209500', weight: 0.0131}, {hs: '8486209600', weight: 0.0131}, {hs: '8486209900', weight: 0.0131}, {hs: '8486301010', weight: 0.0131}, {hs: '8486301020', weight: 0.0131}, {hs: '8486301031', weight: 0.0131}, {hs: '8486301040', weight: 0.0131}, {hs: '8486301050', weight: 0.0131}, {hs: '8486301060', weight: 0.0131}, {hs: '8486301090', weight: 0.0131}, {hs: '8486302010', weight: 0.0131}, {hs: '8486302020', weight: 0.0131}, {hs: '8486302031', weight: 0.0131}, {hs: '8486302050', weight: 0.0131}, {hs: '8486302060', weight: 0.0131}, {hs: '8486302070', weight: 0.0131}, {hs: '8486302090', weight: 0.0131}, {hs: '8486401010', weight: 0.0131}, {hs: '8486401030', weight: 0.0131}, {hs: '8486401040', weight: 0.0131}, {hs: '8486401090', weight: 0.0131}, {hs: '8486402010', weight: 0.0131}, {hs: '8486402020', weight: 0.0131}, {hs: '8486402031', weight: 0.0131}, {hs: '8486402039', weight: 0.0131}, {hs: '8486402040', weight: 0.0131}, {hs: '8486402070', weight: 0.0131}, {hs: '8486402080', weight: 0.0131}, {hs: '8486402091', weight: 0.0131}, {hs: '8486402093', weight: 0.0131}, {hs: '8486402095', weight: 0.0131}, {hs: '8486402099', weight: 0.0131}, {hs: '8486403010', weight: 0.0131}, {hs: '8486403020', weight: 0.0131}, {hs: '8486403090', weight: 0.0131}, {hs: '8486901000', weight: 0.0131}, {hs: '8486902030', weight: 0.0131}, {hs: '8486902040', weight: 0.0131}, {hs: '8486902090', weight: 0.0131}, {hs: '8486903050', weight: 0.0131}, {hs: '8486903060', weight: 0.0131}, {hs: '8486903090', weight: 0.0131}, {hs: '8486904000', weight: 0.0131}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
@@ -1742,7 +1743,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 76건 — 최근 글 번호 35701, 36303, 38004, 38142, 38763, 38901, 40147, 40285, 41628, 42230, 43918, 44056"}]
   - code: '267260'
     name: HD현대일렉트릭
-    reviewed: false
+    reviewed: true
     sector: "전력기기"
     flows:
       - {id: s1, name: "초고압 변압기 — 성남시", kind: sigungu, nature: company, regions: [KR-41-seongnam], products: [{hs: '850423', weight: 0.3333}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -1756,7 +1757,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 364건 — 최근 글 번호 42610, 42616, 42622, 42624, 44146, 44148, 44150, 44154, 44156, 44158, 44160, 44162"}]
   - code: '298040'
     name: 효성중공업
-    reviewed: false
+    reviewed: true
     sector: "전력기기"
     flows:
       - {id: s1, name: "초고압 변압기 — 창원시", kind: sigungu, nature: company, regions: [KR-48-changwon], products: [{hs: '850423', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -1764,14 +1765,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 134건 — 최근 글 번호 38995, 40375, 40377, 40379, 42560, 42562, 42564, 42570, 42582, 44146, 44148, 44150"}]
   - code: '000500'
     name: 가온전선
-    reviewed: false
+    reviewed: true
     sector: "전선"
     flows:
       - {id: s1, name: "광섬유 케이블 — 익산시", kind: sigungu, nature: company, regions: [KR-52-iksan], products: [{hs: '854470', weight: 1.0}], basis: "채널 글 22건(2025-10~2026-07) · 회사 출하"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 22건 — 최근 글 번호 18048, 18050, 23032, 23034, 27345, 27347, 31651, 31653, 36169, 36171, 42096, 42098"}]
   - code: '084730'
     name: 팅크웨어
-    reviewed: false
+    reviewed: true
     sector: "전자기기"
     flows:
       - {id: s1, name: "블랙박스 — 성남시", kind: sigungu, nature: company, regions: [KR-41-seongnam], products: [{hs: '852589', weight: 1.0}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -1779,7 +1780,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 96건 — 최근 글 번호 38602, 38604, 39361, 39363, 40745, 40747, 43746, 43748, 43750, 43752, 44516, 44518"}]
   - code: '001820'
     name: 삼화콘덴서공업
-    reviewed: false
+    reviewed: true
     sector: "전자부품"
     flows:
       - {id: s1, name: "전력용 필름콘덴서 — 용인시", kind: sigungu, nature: company, regions: [KR-41-yongin], products: [{hs: '853210', weight: 0.25}], basis: "채널 글 12건(2026-04~2026-07) · 회사 출하"}
@@ -1790,7 +1791,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 78건 — 최근 글 번호 36073, 36083, 38098, 38857, 40241, 41972, 41994, 41996, 41998, 42000, 42010, 44012"}]
   - code: '009150'
     name: 삼성전기
-    reviewed: false
+    reviewed: true
     sector: "전자부품"
     flows:
       - {id: s1, name: "티탄산바륨 — 수원시", kind: sigungu, nature: company, regions: [KR-41-suwon], products: [{hs: '284190', weight: 0.2}], basis: "채널 글 27건(2025-12~2026-07) · 회사 출하"}
@@ -1805,7 +1806,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 314건 — 최근 글 번호 41972, 41974, 41978, 41980, 41982, 41984, 41986, 41988, 44006, 44008, 44010, 44012"}]
   - code: '009470'
     name: 삼화전기
-    reviewed: false
+    reviewed: true
     sector: "전자부품"
     flows:
       - {id: s1, name: "알루미늄 전해콘덴서·전해콘덴서 — 청주시", kind: sigungu, nature: company, regions: [KR-43-cheongju], products: [{hs: '853222', weight: 0.5}], basis: "채널 글 10건(2026-02~2026-07) · 회사 출하"}
@@ -1813,7 +1814,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 15건 — 최근 글 번호 27273, 27275, 27277, 31579, 31581, 31583, 36087, 36089, 36091, 42014, 42016, 42018"}]
   - code: '010170'
     name: 대한광통신
-    reviewed: false
+    reviewed: true
     sector: "전자부품"
     flows:
       - {id: s1, name: "광섬유 케이블 — 안산시·예산군", kind: sigungu, nature: company, regions: [KR-41-ansan, KR-44-yesan], products: [{hs: '854470', weight: 0.5}], basis: "채널 글 75건(2025-10~2026-07) · 회사 출하"}
@@ -1822,7 +1823,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 189건 — 최근 글 번호 42114, 42116, 42118, 42120, 42126, 42128, 42130, 42132, 42134, 42136, 44028, 44030"}]
   - code: '011070'
     name: LG이노텍
-    reviewed: false
+    reviewed: true
     sector: "전자부품"
     flows:
       - {id: s1, name: "OIS 액추에이터 — 구미시", kind: sigungu, nature: mixed, regions: [KR-47-gumi], products: [{hs: '850110', weight: 0.0}], basis: "채널 글 10건(2025-10~2026-07) · 업황 혼합"}
@@ -1833,7 +1834,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 134건 — 최근 글 번호 38975, 40157, 40357, 40359, 41648, 42500, 42502, 42504, 42506, 43928, 44128, 44130"}]
   - code: '033240'
     name: 자화전자
-    reviewed: false
+    reviewed: true
     sector: "전자부품"
     flows:
       - {id: s1, name: "OIS 액추에이터 — 청주시·구미시", kind: sigungu, nature: company, regions: [KR-43-cheongju, KR-47-gumi], products: [{hs: '850110', weight: 1.0}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -1841,14 +1842,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 58건 — 최근 글 번호 34437, 35123, 36577, 36579, 36581, 38216, 38975, 40359, 42504, 42506, 42508, 44130"}]
   - code: '049070'
     name: 인탑스
-    reviewed: false
+    reviewed: true
     sector: "전자부품"
     flows:
       - {id: n1, name: "스마트폰 부품 — 전국", kind: national, nature: mixed, products: [{hs: '8517791020', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29874, 30545, 31711, 33615, 34343, 35029, 36231, 38122, 38881, 40265, 42158, 44036"}]
   - code: '052710'
     name: 아모텍
-    reviewed: false
+    reviewed: true
     sector: "전자부품"
     flows:
       - {id: s1, name: "적층세라믹콘덴서(MLCC) — 남동구", kind: sigungu, nature: company, regions: [KR-28-namdong], products: [{hs: '853224', weight: 1.0}], basis: "채널 글 41건(2026-01~2026-07) · 회사 출하"}
@@ -1856,7 +1857,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 84건 — 최근 글 번호 34319, 35005, 36045, 36093, 36095, 38098, 38857, 40241, 41972, 42020, 42022, 44012"}]
   - code: '082920'
     name: 비츠로셀
-    reviewed: false
+    reviewed: true
     sector: "전자부품"
     flows:
       - {id: s1, name: "리튬 1차전지 — 당진시", kind: sigungu, nature: company, regions: [KR-44-dangjin], products: [{hs: '850650', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -1864,42 +1865,42 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 31771, 33629, 34357, 35043, 36289, 36291, 38136, 38895, 40279, 42216, 42218, 44050"}]
   - code: '083930'
     name: 아바코
-    reviewed: false
+    reviewed: true
     sector: "전자부품"
     flows:
       - {id: n1, name: "적층세라믹콘덴서(MLCC) — 전국", kind: national, nature: mixed, products: [{hs: '8532240000', weight: 1.0}], basis: "채널 글 43건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 43건 — 최근 글 번호 29850, 30521, 31537, 33591, 34319, 35005, 36045, 38098, 38857, 40241, 41972, 44012"}]
   - code: '090460'
     name: 비에이치
-    reviewed: false
+    reviewed: true
     sector: "전자부품"
     flows:
       - {id: n1, name: "테이프형 회로기판 — 전국", kind: national, nature: mixed, products: [{hs: '8534002000', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29854, 30525, 31609, 33595, 34323, 35009, 36117, 38102, 38861, 40245, 42044, 44016"}]
   - code: '091700'
     name: 파트론
-    reviewed: false
+    reviewed: true
     sector: "전자부품"
     flows:
       - {id: n1, name: "스마트폰 부품 — 전국", kind: national, nature: mixed, products: [{hs: '8517791020', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29874, 30545, 31711, 33615, 34343, 35029, 36231, 38122, 38881, 40265, 42158, 44036"}]
   - code: '149950'
     name: 아바텍
-    reviewed: false
+    reviewed: true
     sector: "전자부품"
     flows:
       - {id: n1, name: "적층세라믹콘덴서(MLCC) — 전국", kind: national, nature: mixed, products: [{hs: '8532240000', weight: 1.0}], basis: "채널 글 43건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 43건 — 최근 글 번호 29850, 30521, 31537, 33591, 34319, 35005, 36045, 38098, 38857, 40241, 41972, 44012"}]
   - code: '417200'
     name: LS머트리얼즈
-    reviewed: false
+    reviewed: true
     sector: "전자부품"
     flows:
       - {id: s1, name: "리튬 1차전지 — 안양시", kind: sigungu, nature: company, regions: [KR-41-anyang], products: [{hs: '850650', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 10건 — 최근 글 번호 623, 4892, 9153, 13658, 18176, 23150, 27463, 31775, 36295, 42222"}]
   - code: '006280'
     name: 녹십자
-    reviewed: false
+    reviewed: true
     sector: "제약"
     flows:
       - {id: s1, name: "면역글로불린 — 청주시", kind: sigungu, nature: company, regions: [KR-43-cheongju], products: [{hs: '300212', weight: 1.0}], basis: "채널 글 18건(2025-10~2026-07) · 회사 출하"}
@@ -1907,7 +1908,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 56건 — 최근 글 번호 34527, 35213, 36889, 36892, 36894, 38308, 39067, 40451, 42824, 42826, 42828, 44222"}]
   - code: '069620'
     name: 대웅제약
-    reviewed: false
+    reviewed: true
     sector: "제약"
     flows:
       - {id: s1, name: "보툴리눔 톡신 — 화성시", kind: sigungu, nature: company, regions: [KR-41-hwaseong], products: [{hs: '300249', weight: 0.5}], basis: "채널 글 25건(2025-10~2026-07) · 회사 출하"}
@@ -1917,7 +1918,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 481건 — 최근 글 번호 44186, 44188, 44190, 44192, 44194, 44196, 44198, 44200, 44202, 44204, 44206, 44208"}]
   - code: '237690'
     name: 에스티팜
-    reviewed: false
+    reviewed: true
     sector: "제약"
     flows:
       - {id: s1, name: "올리고뉴클레오타이드 — 안산시·시흥시", kind: sigungu, nature: company, regions: [KR-41-ansan, KR-41-siheung], products: [{hs: '293499', weight: 1.0}], basis: "채널 글 12건(2025-10~2026-07) · 회사 출하"}
@@ -1925,7 +1926,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 50건 — 최근 글 번호 32187, 33749, 34477, 35163, 36721, 36723, 38258, 39017, 40401, 42658, 42660, 44172"}]
   - code: '214450'
     name: 파마리서치
-    reviewed: false
+    reviewed: true
     sector: "제약·의료"
     flows:
       - {id: s1, name: "태반 주사제 — 강릉시", kind: sigungu, nature: company, regions: [KR-51-gangneung], products: [{hs: '300490', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -1935,7 +1936,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 324건 — 최근 글 번호 42770, 42772, 43232, 43234, 44198, 44200, 44202, 44204, 44206, 44208, 44342, 44344"}]
   - code: '002200'
     name: 한국수출포장공업
-    reviewed: false
+    reviewed: true
     sector: "제지"
     flows:
       - {id: s1, name: "골심지 — 오산시", kind: sigungu, nature: company, regions: [KR-41-osan], products: [{hs: '480511', weight: 1.0}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
@@ -1943,35 +1944,35 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 14건 — 최근 글 번호 33159, 34045, 34773, 35459, 37698, 37704, 38554, 39313, 40697, 43632, 43638, 44468"}]
   - code: '002310'
     name: 아세아제지
-    reviewed: false
+    reviewed: true
     sector: "제지"
     flows:
       - {id: n1, name: "골심지 — 전국", kind: national, nature: mixed, products: [{hs: '4805110000', weight: 1.0}], basis: "채널 글 11건(2026-05~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 11건 — 최근 글 번호 30975, 33153, 34045, 34773, 35459, 37698, 38554, 39313, 40697, 43632, 44468"}]
   - code: '004540'
     name: 깨끗한나라
-    reviewed: false
+    reviewed: true
     sector: "제지"
     flows:
       - {id: i1, name: "수입 펄프 — 전국", kind: national, nature: mixed, direction: imp, products: [{hs: '4703292000', weight: 1.0}], basis: "채널 글 9건(2026-05~2026-07) · 업황 혼합 · 수입만 있는 종목 — 수입이 지수"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 9건 — 최근 글 번호 31085, 34193, 34883, 37956, 38704, 39423, 40807, 43890, 44578"}]
   - code: '009200'
     name: 무림페이퍼
-    reviewed: false
+    reviewed: true
     sector: "제지"
     flows:
       - {id: n1, name: "인쇄용지 — 전국", kind: national, nature: mixed, products: [{hs: '4810191000', weight: 1.0}], basis: "채널 글 11건(2026-05~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 11건 — 최근 글 번호 30977, 33161, 34047, 34775, 35461, 37706, 38556, 39315, 40699, 43640, 44470"}]
   - code: '009580'
     name: 무림P&P
-    reviewed: false
+    reviewed: true
     sector: "제지"
     flows:
       - {id: n1, name: "인쇄용지 — 전국", kind: national, nature: mixed, products: [{hs: '4810191000', weight: 1.0}], basis: "채널 글 11건(2026-05~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 11건 — 최근 글 번호 30977, 33161, 34047, 34775, 35461, 37706, 38556, 39315, 40699, 43640, 44470"}]
   - code: '016590'
     name: 신대양제지
-    reviewed: false
+    reviewed: true
     sector: "제지"
     flows:
       - {id: s1, name: "골심지 — 안산시", kind: sigungu, nature: company, regions: [KR-41-ansan], products: [{hs: '480511', weight: 1.0}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
@@ -1979,14 +1980,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 14건 — 최근 글 번호 33155, 34045, 34773, 35459, 37698, 37700, 38554, 39313, 40697, 43632, 43634, 44468"}]
   - code: '017650'
     name: 대림제지
-    reviewed: false
+    reviewed: true
     sector: "제지"
     flows:
       - {id: n1, name: "골심지 — 전국", kind: national, nature: mixed, products: [{hs: '4805110000', weight: 1.0}], basis: "채널 글 11건(2026-05~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 11건 — 최근 글 번호 30975, 33153, 34045, 34773, 35459, 37698, 38554, 39313, 40697, 43632, 44468"}]
   - code: '027970'
     name: 한국제지
-    reviewed: false
+    reviewed: true
     sector: "제지"
     flows:
       - {id: n1, name: "인쇄용지 — 전국", kind: national, nature: mixed, products: [{hs: '4810191000', weight: 1.0}], basis: "채널 글 11건(2026-05~2026-07) · 업황 혼합"}
@@ -1994,7 +1995,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 20건 — 최근 글 번호 37706, 37956, 38556, 38704, 39315, 39423, 40699, 40807, 43640, 43890, 44470, 44578"}]
   - code: '213500'
     name: 한솔제지
-    reviewed: false
+    reviewed: true
     sector: "제지"
     flows:
       - {id: n1, name: "인쇄용지 — 전국", kind: national, nature: mixed, products: [{hs: '4810191000', weight: 1.0}], basis: "채널 글 11건(2026-05~2026-07) · 업황 혼합"}
@@ -2002,7 +2003,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 20건 — 최근 글 번호 37706, 37956, 38556, 38704, 39315, 39423, 40699, 40807, 43640, 43890, 44470, 44578"}]
   - code: '010140'
     name: 삼성중공업
-    reviewed: false
+    reviewed: true
     sector: "조선"
     flows:
       - {id: s1, name: "탱커(LNG선·VLCC) — 거제시", kind: sigungu, nature: mixed, regions: [KR-48-geoje], products: [{hs: '890120', weight: 0.2}], basis: "채널 글 10건(2025-10~2026-07) · 업황 혼합"}
@@ -2012,7 +2013,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 96건 — 최근 글 번호 38522, 38524, 39281, 39283, 40665, 40667, 43488, 43490, 43504, 43512, 44436, 44438"}]
   - code: '042660'
     name: 한화오션
-    reviewed: false
+    reviewed: true
     sector: "조선"
     flows:
       - {id: s1, name: "탱커(LNG선·VLCC) — 거제시", kind: sigungu, nature: mixed, regions: [KR-48-geoje], products: [{hs: '890120', weight: 0.2}], basis: "채널 글 10건(2025-10~2026-07) · 업황 혼합"}
@@ -2022,7 +2023,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 96건 — 최근 글 번호 38522, 38524, 39281, 39283, 40665, 40667, 43488, 43490, 43504, 43512, 44436, 44438"}]
   - code: '329180'
     name: HD현대중공업
-    reviewed: false
+    reviewed: true
     sector: "조선"
     flows:
       - {id: s1, name: "대형 선박엔진 — 동구", kind: sigungu, nature: company, regions: [KR-31-dong], products: [{hs: '840810', weight: 0.5}], basis: "채널 글 30건(2025-10~2026-07) · 회사 출하"}
@@ -2038,7 +2039,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 364건 — 최근 글 번호 43522, 43526, 43528, 43530, 43532, 44436, 44438, 44440, 44442, 44444, 44446, 44448"}]
   - code: '439260'
     name: 대한조선
-    reviewed: false
+    reviewed: true
     sector: "조선"
     flows:
       - {id: s1, name: "탱커(LNG선·VLCC) — 해남군", kind: sigungu, nature: company, regions: [KR-46-haenam], products: [{hs: '890120', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -2048,7 +2049,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 96건 — 최근 글 번호 38522, 38524, 39281, 39283, 40665, 40667, 43488, 43500, 43504, 43514, 44436, 44438"}]
   - code: '013030'
     name: 하이록코리아
-    reviewed: false
+    reviewed: true
     sector: "조선 기자재"
     flows:
       - {id: s1, name: "배관 피팅 — 강서구", kind: sigungu, nature: mixed, regions: [KR-26-gangseo], products: [{hs: '730729', weight: 0.25}], basis: "채널 글 10건(2025-10~2026-07) · 업황 혼합"}
@@ -2058,7 +2059,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 96건 — 최근 글 번호 38536, 38538, 39295, 39297, 40679, 40681, 43552, 43556, 43558, 43562, 44450, 44452"}]
   - code: '014620'
     name: 성광벤드
-    reviewed: false
+    reviewed: true
     sector: "조선 기자재"
     flows:
       - {id: s1, name: "배관 피팅 — 강서구", kind: sigungu, nature: mixed, regions: [KR-26-gangseo], products: [{hs: '730729', weight: 0.3333}], basis: "채널 글 10건(2025-10~2026-07) · 업황 혼합"}
@@ -2067,7 +2068,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 58건 — 최근 글 번호 34755, 35441, 37618, 37622, 37628, 38536, 39295, 40679, 43552, 43556, 43562, 44450"}]
   - code: '023160'
     name: 태광
-    reviewed: false
+    reviewed: true
     sector: "조선 기자재"
     flows:
       - {id: s1, name: "배관 피팅 — 강서구", kind: sigungu, nature: mixed, regions: [KR-26-gangseo], products: [{hs: '730729', weight: 0.25}], basis: "채널 글 10건(2025-10~2026-07) · 업황 혼합"}
@@ -2077,7 +2078,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 96건 — 최근 글 번호 38536, 38538, 39295, 39297, 40679, 40681, 43552, 43556, 43558, 43562, 44450, 44452"}]
   - code: '071970'
     name: HD현대마린엔진
-    reviewed: false
+    reviewed: true
     sector: "조선 기자재"
     flows:
       - {id: s1, name: "대형 선박엔진 — 창원시", kind: sigungu, nature: mixed, regions: [KR-48-changwon], products: [{hs: '840810', weight: 0.1428}], basis: "채널 글 15건(2025-10~2026-07) · 업황 혼합"}
@@ -2089,7 +2090,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 195건 — 최근 글 번호 43516, 43524, 43526, 43528, 43530, 43536, 43538, 43540, 44440, 44444, 44446, 44448"}]
   - code: '082740'
     name: 한화엔진
-    reviewed: false
+    reviewed: true
     sector: "조선 기자재"
     flows:
       - {id: s1, name: "대형 선박엔진 — 창원시", kind: sigungu, nature: mixed, regions: [KR-48-changwon], products: [{hs: '840810', weight: 0.1428}], basis: "채널 글 15건(2025-10~2026-07) · 업황 혼합"}
@@ -2101,7 +2102,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 195건 — 최근 글 번호 43516, 43524, 43526, 43528, 43530, 43536, 43538, 43540, 44440, 44444, 44446, 44448"}]
   - code: '077970'
     name: STX엔진
-    reviewed: false
+    reviewed: true
     sector: "조선 기자재·방산"
     flows:
       - {id: s1, name: "대형 선박엔진 — 창원시", kind: sigungu, nature: mixed, regions: [KR-48-changwon], products: [{hs: '840810', weight: 0.1428}], basis: "채널 글 15건(2025-10~2026-07) · 업황 혼합"}
@@ -2113,7 +2114,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 195건 — 최근 글 번호 43516, 43524, 43526, 43528, 43530, 43536, 43538, 43540, 44440, 44444, 44446, 44448"}]
   - code: '000080'
     name: 하이트진로
-    reviewed: false
+    reviewed: true
     sector: "주류"
     flows:
       - {id: s1, name: "소주 — 창원시", kind: sigungu, nature: company, regions: [KR-48-changwon], products: [{hs: '220890', weight: 1.0}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -2121,7 +2122,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 58건 — 최근 글 번호 34693, 35379, 37440, 37442, 37444, 38474, 39233, 40617, 43374, 43376, 43378, 44388"}]
   - code: '099190'
     name: 아이센스
-    reviewed: false
+    reviewed: true
     sector: "진단"
     flows:
       - {id: s1, name: "혈당측정기 — 서초구", kind: sigungu, nature: company, regions: [KR-11-seocho], products: [{hs: '902790', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -2129,7 +2130,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 32683, 33891, 34619, 35305, 37222, 37224, 38400, 39159, 40543, 43156, 43158, 44314"}]
   - code: '002710'
     name: TCC스틸
-    reviewed: false
+    reviewed: true
     sector: "철강"
     flows:
       - {id: s1, name: "니켈도금강판 — 포항시", kind: sigungu, nature: company, regions: [KR-47-pohang], products: [{hs: '721250', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -2137,7 +2138,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 124건 — 최근 글 번호 38933, 38935, 40315, 40317, 40319, 42364, 42366, 42368, 42370, 44086, 44088, 44090"}]
   - code: '004020'
     name: 현대제철
-    reviewed: false
+    reviewed: true
     sector: "철강"
     flows:
       - {id: s1, name: "H형강(300mm 미만)·H형강(300~600mm) 외 2 — 동구", kind: sigungu, nature: company, regions: [KR-28-dong], products: [{hs: '721633', weight: 0.1666}], basis: "채널 글 40건(2025-10~2026-07) · 회사 출하"}
@@ -2150,7 +2151,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 198건 — 최근 글 번호 43604, 43606, 43608, 43610, 43612, 43614, 43616, 43618, 44460, 44462, 44464, 44466"}]
   - code: '005010'
     name: 휴스틸
-    reviewed: false
+    reviewed: true
     sector: "철강"
     flows:
       - {id: s1, name: "대구경 강관 — 강남구", kind: sigungu, nature: company, regions: [KR-11-gangnam], products: [{hs: '730511', weight: 0.25}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
@@ -2160,7 +2161,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 3건 — 최근 글 번호 33097, 37642, 43576"}]
   - code: '008970'
     name: KBI동양철관
-    reviewed: false
+    reviewed: true
     sector: "철강"
     flows:
       - {id: s1, name: "대구경 강관 — 천안시", kind: sigungu, nature: company, regions: [KR-44-cheonan], products: [{hs: '730511', weight: 0.3333}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
@@ -2169,7 +2170,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 3건 — 최근 글 번호 33099, 37644, 43578"}]
   - code: '092790'
     name: 넥스틸
-    reviewed: false
+    reviewed: true
     sector: "철강"
     flows:
       - {id: s1, name: "대구경 강관 — 경주시", kind: sigungu, nature: company, regions: [KR-47-gyeongju], products: [{hs: '730512', weight: 0.5}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
@@ -2177,7 +2178,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 3건 — 최근 글 번호 33101, 37646, 43580"}]
   - code: '306200'
     name: 세아제강
-    reviewed: false
+    reviewed: true
     sector: "철강"
     flows:
       - {id: s1, name: "대구경 강관 — 마포구", kind: sigungu, nature: company, regions: [KR-11-mapo], products: [{hs: '730511', weight: 0.1666}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
@@ -2189,7 +2190,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 3건 — 최근 글 번호 33089, 37634, 43568"}]
   - code: '460860'
     name: 동국제강
-    reviewed: false
+    reviewed: true
     sector: "철강"
     flows:
       - {id: s1, name: "H형강(300mm 미만)·H형강(300~600mm) 외 1 — 포항시", kind: sigungu, nature: company, regions: [KR-47-pohang], products: [{hs: '721633', weight: 1.0}], basis: "채널 글 30건(2025-10~2026-07) · 회사 출하"}
@@ -2197,7 +2198,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 144건 — 최근 글 번호 40689, 40691, 40695, 43604, 43606, 43610, 43620, 43622, 43624, 44460, 44462, 44466"}]
   - code: '002350'
     name: 넥센타이어
-    reviewed: false
+    reviewed: true
     sector: "타이어"
     flows:
       - {id: s1, name: "승용차 타이어 — 양산시", kind: sigungu, nature: company, regions: [KR-48-yangsan], products: [{hs: '401110', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -2206,7 +2207,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 33211, 34069, 34797, 35483, 37746, 37756, 38578, 39337, 40721, 43680, 43690, 44492"}]
   - code: '073240'
     name: 금호타이어
-    reviewed: false
+    reviewed: true
     sector: "타이어"
     flows:
       - {id: s1, name: "승용차 타이어 — 광산구", kind: sigungu, nature: company, regions: [KR-29-gwangsan], products: [{hs: '401110', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -2215,7 +2216,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 33203, 34069, 34797, 35483, 37746, 37748, 38578, 39337, 40721, 43680, 43682, 44492"}]
   - code: '161390'
     name: 한국타이어앤테크놀로지
-    reviewed: false
+    reviewed: true
     sector: "타이어"
     flows:
       - {id: s1, name: "승용차 타이어 — 유성구·성남시", kind: sigungu, nature: company, regions: [KR-30-yuseong, KR-41-seongnam], products: [{hs: '401110', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -2224,7 +2225,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 33207, 34069, 34797, 35483, 37746, 37752, 38578, 39337, 40721, 43680, 43686, 44492"}]
   - code: '011930'
     name: 신성이엔지
-    reviewed: false
+    reviewed: true
     sector: "태양광"
     flows:
       - {id: s1, name: "태양광 셀 — 익산시", kind: sigungu, nature: company, regions: [KR-52-iksan], products: [{hs: '854142', weight: 1.0}], basis: "채널 글 2건(2026-06~2026-07) · 회사 출하"}
@@ -2232,7 +2233,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 8건 — 최근 글 번호 36593, 36599, 38222, 38981, 40365, 42520, 42526, 44136"}]
   - code: '322000'
     name: HD현대에너지솔루션
-    reviewed: false
+    reviewed: true
     sector: "태양광"
     flows:
       - {id: s1, name: "태양광 셀 — 음성군", kind: sigungu, nature: company, regions: [KR-43-eumseong], products: [{hs: '854142', weight: 0.5}], basis: "채널 글 2건(2026-06~2026-07) · 회사 출하"}
@@ -2242,7 +2243,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 38220, 38222, 38979, 38981, 40363, 40365, 42514, 42518, 42520, 42528, 44134, 44136"}]
   - code: '189300'
     name: 인텔리안테크
-    reviewed: false
+    reviewed: true
     sector: "통신장비"
     flows:
       - {id: s1, name: "해상 위성안테나 부품 — 평택시·성남시", kind: sigungu, nature: company, regions: [KR-41-pyeongtaek, KR-41-seongnam], products: [{hs: '852910', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -2250,7 +2251,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 33243, 34085, 34813, 35499, 37776, 37788, 38594, 39353, 40737, 43710, 43722, 44508"}]
   - code: '001530'
     name: 디아이동일
-    reviewed: false
+    reviewed: true
     sector: "포장재"
     flows:
       - {id: s1, name: "알루미늄박 — 안산시·평택시·천안시", kind: sigungu, nature: company, regions: [KR-41-ansan, KR-41-pyeongtaek, KR-44-cheonan], products: [{hs: '760711', weight: 1.0}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -2258,7 +2259,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 93건 — 최근 글 번호 36461, 38180, 38182, 38939, 38941, 40323, 40325, 42378, 42380, 42388, 44094, 44096"}]
   - code: '014820'
     name: 동원시스템즈
-    reviewed: false
+    reviewed: true
     sector: "포장재"
     flows:
       - {id: s1, name: "알루미늄박 — 안산시·평택시·천안시", kind: sigungu, nature: mixed, regions: [KR-41-ansan, KR-41-pyeongtaek, KR-44-cheonan], products: [{hs: '760711', weight: 0.5}], basis: "채널 글 25건(2025-10~2026-07) · 업황 혼합"}
@@ -2266,7 +2267,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 98건 — 최근 글 번호 38180, 38182, 38939, 38941, 40323, 40325, 42378, 42380, 42392, 42394, 44094, 44096"}]
   - code: '044490'
     name: 태웅
-    reviewed: false
+    reviewed: true
     sector: "풍력"
     flows:
       - {id: s1, name: "풍력타워 플랜지 — 강서구", kind: sigungu, nature: company, regions: [KR-26-gangseo], products: [{hs: '730840', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -2275,7 +2276,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 32073, 33717, 34445, 35131, 36607, 36609, 38226, 38985, 40369, 42534, 42536, 44140"}]
   - code: '100090'
     name: SK오션플랜트
-    reviewed: false
+    reviewed: true
     sector: "풍력"
     flows:
       - {id: s1, name: "풍력 하부구조물 — 고성군", kind: sigungu, nature: company, regions: [KR-48-goseong], products: [{hs: '730890', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -2283,14 +2284,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 32069, 33715, 34443, 35129, 36603, 36605, 38224, 38983, 40367, 42530, 42532, 44138"}]
   - code: '093190'
     name: 빅솔론
-    reviewed: false
+    reviewed: true
     sector: "프린터"
     flows:
       - {id: n1, name: "카드·모바일 프린터 — 전국", kind: national, nature: mixed, products: [{hs: '8443321090', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30336, 31021, 33257, 34091, 34819, 35505, 37802, 38600, 39359, 40743, 43736, 44514"}]
   - code: '332370'
     name: 아이디피
-    reviewed: false
+    reviewed: true
     sector: "프린터"
     flows:
       - {id: s1, name: "카드 프린터 — 구로구", kind: sigungu, nature: company, regions: [KR-11-guro], products: [{hs: '844332', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -2298,21 +2299,21 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 33259, 34091, 34819, 35505, 37802, 37804, 38600, 39359, 40743, 43736, 43738, 44514"}]
   - code: '039610'
     name: 화성밸브
-    reviewed: false
+    reviewed: true
     sector: "피팅·밸브"
     flows:
       - {id: n1, name: "산업용 밸브 — 전국", kind: national, nature: mixed, products: [{hs: '8481801090', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30282, 30959, 33079, 34029, 34757, 35443, 37624, 38538, 39297, 40681, 43558, 44452"}]
   - code: '043340'
     name: 에쎈테크
-    reviewed: false
+    reviewed: true
     sector: "피팅·밸브"
     flows:
       - {id: n1, name: "산업용 밸브 — 전국", kind: national, nature: mixed, products: [{hs: '8481801090', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30282, 30959, 33079, 34029, 34757, 35443, 37624, 38538, 39297, 40681, 43558, 44452"}]
   - code: '086670'
     name: 비엠티
-    reviewed: false
+    reviewed: true
     sector: "피팅·밸브"
     flows:
       - {id: s1, name: "배관 피팅 — 기장군", kind: sigungu, nature: company, regions: [KR-26-gijang], products: [{hs: '730729', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -2322,35 +2323,35 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 96건 — 최근 글 번호 38536, 38538, 39295, 39297, 40679, 40681, 43552, 43554, 43558, 43560, 44450, 44452"}]
   - code: '105740'
     name: 디케이락
-    reviewed: false
+    reviewed: true
     sector: "피팅·밸브"
     flows:
       - {id: n1, name: "배관 피팅 — 전국", kind: national, nature: mixed, products: [{hs: '7307290000', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30280, 30957, 33073, 34027, 34755, 35441, 37618, 38536, 39295, 40679, 43552, 44450"}]
   - code: '159010'
     name: 아스플로
-    reviewed: false
+    reviewed: true
     sector: "피팅·밸브"
     flows:
       - {id: n1, name: "배관 피팅 — 전국", kind: national, nature: mixed, products: [{hs: '7307290000', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30280, 30957, 33073, 34027, 34755, 35441, 37618, 38536, 39295, 40679, 43552, 44450"}]
   - code: '099430'
     name: 바이오플러스
-    reviewed: false
+    reviewed: true
     sector: "필러"
     flows:
       - {id: n1, name: "필러 — 전국", kind: national, nature: mixed, products: [{hs: '3304999000', weight: 0.5}, {hs: '9021310000', weight: 0.5}], basis: "채널 글 228건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 228건 — 최근 글 번호 42720, 42722, 42724, 42726, 42728, 42730, 44198, 44200, 44202, 44204, 44206, 44208"}]
   - code: '200670'
     name: 휴메딕스
-    reviewed: false
+    reviewed: true
     sector: "필러"
     flows:
       - {id: n1, name: "필러 — 전국", kind: national, nature: mixed, products: [{hs: '3304999000', weight: 0.5}, {hs: '9021310000', weight: 0.5}], basis: "채널 글 228건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 228건 — 최근 글 번호 42720, 42722, 42724, 42726, 42728, 42730, 44198, 44200, 44202, 44204, 44206, 44208"}]
   - code: '003490'
     name: 대한항공
-    reviewed: false
+    reviewed: true
     sector: "항공 부품"
     flows:
       - {id: n1, name: "항공기 부품 — 전국", kind: national, nature: mixed, products: [{hs: '8807301000', weight: 0.5}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
@@ -2358,7 +2359,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 114건 — 최근 글 번호 39373, 39375, 39377, 40757, 40759, 40761, 43768, 43780, 43782, 44528, 44530, 44532"}]
   - code: '046120'
     name: 오르비텍
-    reviewed: false
+    reviewed: true
     sector: "항공 부품"
     flows:
       - {id: n1, name: "항공기 부품 — 전국", kind: national, nature: mixed, products: [{hs: '8807301000', weight: 0.5}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
@@ -2366,21 +2367,21 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 114건 — 최근 글 번호 39373, 39375, 39377, 40757, 40759, 40761, 43768, 43780, 43782, 44528, 44530, 44532"}]
   - code: '067390'
     name: 아스트
-    reviewed: false
+    reviewed: true
     sector: "항공 부품"
     flows:
       - {id: s1, name: "항공기 부품 — 사천시", kind: sigungu, nature: mixed, regions: [KR-48-sacheon], products: [{hs: '880730', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 10건 — 최근 글 번호 1971, 6292, 10559, 15086, 19668, 24550, 28907, 33291, 37836, 43770"}]
   - code: '221840'
     name: 하이즈항공
-    reviewed: false
+    reviewed: true
     sector: "항공 부품"
     flows:
       - {id: s1, name: "항공기 부품 — 강서구·진주시·사천시", kind: sigungu, nature: company, regions: [KR-26-gangseo, KR-48-jinju, KR-48-sacheon], products: [{hs: '880730', weight: 1.0}], basis: "채널 글 39건(2025-10~2026-07) · 회사 출하"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 39건 — 최근 글 번호 33291, 33293, 33295, 33297, 37836, 37838, 37840, 37842, 43770, 43772, 43774, 43776"}]
   - code: '274090'
     name: 켄코아에어로스페이스
-    reviewed: false
+    reviewed: true
     sector: "항공 부품"
     flows:
       - {id: s1, name: "항공기 부품 — 사천시", kind: sigungu, nature: mixed, regions: [KR-48-sacheon], products: [{hs: '880730', weight: 0.3333}], basis: "채널 글 10건(2025-10~2026-07) · 업황 혼합"}
@@ -2389,7 +2390,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 124건 — 최근 글 번호 39375, 39377, 40757, 40759, 40761, 43768, 43770, 43780, 43782, 44528, 44530, 44532"}]
   - code: '330350'
     name: 위더스제약
-    reviewed: false
+    reviewed: true
     sector: "항공 부품"
     flows:
       - {id: n1, name: "항공기 부품 — 전국", kind: national, nature: mixed, products: [{hs: '8807301000', weight: 0.5}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
@@ -2397,7 +2398,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 114건 — 최근 글 번호 39373, 39375, 39377, 40757, 40759, 40761, 43768, 43780, 43782, 44528, 44530, 44532"}]
   - code: '047810'
     name: 한국항공우주
-    reviewed: false
+    reviewed: true
     sector: "항공·방산"
     flows:
       - {id: n1, name: "항공기 부품 — 전국", kind: national, nature: mixed, products: [{hs: '8807301000', weight: 0.5}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
@@ -2405,42 +2406,42 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 114건 — 최근 글 번호 39373, 39375, 39377, 40757, 40759, 40761, 43768, 43780, 43782, 44528, 44530, 44532"}]
   - code: '090430'
     name: 아모레퍼시픽
-    reviewed: false
+    reviewed: true
     sector: "화장품"
     flows:
       - {id: n1, name: "클렌징 제품 — 전국", kind: national, nature: mixed, products: [{hs: '3401111000', weight: 0.5}, {hs: '3401300000', weight: 0.5}], basis: "채널 글 113건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 113건 — 최근 글 번호 30064, 30741, 32435, 33811, 34539, 35225, 36976, 38320, 39079, 40463, 42910, 44234"}]
   - code: '123330'
     name: 제닉
-    reviewed: false
+    reviewed: true
     sector: "화장품"
     flows:
       - {id: n1, name: "마스크팩 — 전국", kind: national, nature: mixed, products: [{hs: '3307109000', weight: 0.2}, {hs: '3307301000', weight: 0.2}, {hs: '3307410000', weight: 0.2}, {hs: '3307901000', weight: 0.2}, {hs: '3307904000', weight: 0.2}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30040, 30717, 32283, 33787, 34515, 35201, 36819, 38296, 39055, 40439, 42756, 44210"}]
   - code: '250030'
     name: 진코스텍
-    reviewed: false
+    reviewed: true
     sector: "화장품"
     flows:
       - {id: n1, name: "마스크팩 — 전국", kind: national, nature: mixed, products: [{hs: '3307109000', weight: 0.2}, {hs: '3307301000', weight: 0.2}, {hs: '3307410000', weight: 0.2}, {hs: '3307901000', weight: 0.2}, {hs: '3307904000', weight: 0.2}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30040, 30717, 32283, 33787, 34515, 35201, 36819, 38296, 39055, 40439, 42756, 44210"}]
   - code: '318160'
     name: 셀바이오휴먼텍
-    reviewed: false
+    reviewed: true
     sector: "화장품"
     flows:
       - {id: n1, name: "마스크팩 — 전국", kind: national, nature: mixed, products: [{hs: '3307109000', weight: 0.2}, {hs: '3307301000', weight: 0.2}, {hs: '3307410000', weight: 0.2}, {hs: '3307901000', weight: 0.2}, {hs: '3307904000', weight: 0.2}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30040, 30717, 32283, 33787, 34515, 35201, 36819, 38296, 39055, 40439, 42756, 44210"}]
   - code: '161890'
     name: 한국콜마
-    reviewed: false
+    reviewed: true
     sector: "화장품 ODM"
     flows:
       - {id: n1, name: "클렌징 제품 — 전국", kind: national, nature: mixed, products: [{hs: '3401111000', weight: 0.5}, {hs: '3401300000', weight: 0.5}], basis: "채널 글 113건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 113건 — 최근 글 번호 30064, 30741, 32435, 33811, 34539, 35225, 36976, 38320, 39079, 40463, 42910, 44234"}]
   - code: '192820'
     name: 코스맥스
-    reviewed: false
+    reviewed: true
     sector: "화장품 ODM"
     flows:
       - {id: s1, name: "립 메이크업 — 화성시", kind: sigungu, nature: company, regions: [KR-41-hwaseong], products: [{hs: '330410', weight: 0.3333}], basis: "채널 글 5건(2026-03~2026-07) · 회사 출하"}
@@ -2450,7 +2451,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 128건 — 최근 글 번호 36940, 36942, 36952, 36976, 38320, 39079, 40463, 42874, 42876, 42886, 42910, 44234"}]
   - code: '086710'
     name: 선진뷰티사이언스
-    reviewed: false
+    reviewed: true
     sector: "화장품 소재"
     flows:
       - {id: s1, name: "실리카 마이크로비드 — 서천군", kind: sigungu, nature: company, regions: [KR-44-seocheon], products: [{hs: '281122', weight: 0.5}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -2459,14 +2460,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 58건 — 최근 글 번호 34559, 35245, 37004, 37010, 37012, 38340, 39099, 40483, 42938, 42944, 42946, 44254"}]
   - code: '101240'
     name: 씨큐브
-    reviewed: false
+    reviewed: true
     sector: "화장품 소재"
     flows:
       - {id: s1, name: "진주광택안료 — 진천군", kind: sigungu, nature: company, regions: [KR-43-jincheon], products: [{hs: '320649', weight: 1.0}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 20건 — 최근 글 번호 18874, 18876, 23790, 23792, 28133, 28135, 32475, 32477, 37016, 37018, 42950, 42952"}]
   - code: '278470'
     name: 에이피알
-    reviewed: false
+    reviewed: true
     sector: "화장품·뷰티기기"
     flows:
       - {id: s1, name: "마스크팩 — 송파구", kind: sigungu, nature: company, regions: [KR-11-songpa], products: [{hs: '330710', weight: 0.2}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -2479,21 +2480,21 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 134건 — 최근 글 번호 39189, 40439, 40571, 40573, 42756, 42758, 43232, 43234, 43236, 44210, 44342, 44344"}]
   - code: '051900'
     name: LG생활건강
-    reviewed: false
+    reviewed: true
     sector: "화장품·생활용품"
     flows:
       - {id: n1, name: "클렌징 제품 — 전국", kind: national, nature: mixed, products: [{hs: '3401111000', weight: 0.5}, {hs: '3401300000', weight: 0.5}], basis: "채널 글 113건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 113건 — 최근 글 번호 30064, 30741, 32435, 33811, 34539, 35225, 36976, 38320, 39079, 40463, 42910, 44234"}]
   - code: '001340'
     name: PKC
-    reviewed: false
+    reviewed: true
     sector: "화학"
     flows:
       - {id: n1, name: "가성소다 — 전국", kind: national, nature: mixed, products: [{hs: '2815120000', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30258, 30935, 32999, 34005, 34733, 35419, 37544, 38514, 39273, 40657, 43478, 44428"}]
   - code: '004000'
     name: 롯데정밀화학
-    reviewed: false
+    reviewed: true
     sector: "화학"
     flows:
       - {id: s1, name: "에피클로로히드린(ECH) — 남구", kind: sigungu, nature: company, regions: [KR-31-nam], products: [{hs: '291030', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -2501,7 +2502,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 10건 — 최근 글 번호 1709, 6030, 10285, 14812, 19392, 24296, 28649, 32997, 37542, 43476"}]
   - code: '004430'
     name: 송원산업
-    reviewed: false
+    reviewed: true
     sector: "화학"
     flows:
       - {id: s1, name: "페놀계 산화방지제 — 남구", kind: sigungu, nature: company, regions: [KR-31-nam], products: [{hs: '291829', weight: 0.2}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -2510,7 +2511,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 86건 — 최근 글 번호 37526, 38502, 38506, 39261, 39265, 40645, 40649, 43452, 43456, 43460, 44416, 44420"}]
   - code: '011170'
     name: 롯데케미칼
-    reviewed: false
+    reviewed: true
     sector: "화학"
     flows:
       - {id: s1, name: "전해액 — 여수시", kind: sigungu, nature: company, regions: [KR-46-yeosu], products: [{hs: '382499', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
@@ -2519,7 +2520,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 108건 — 최근 글 번호 38182, 38939, 38941, 40323, 40325, 42378, 42380, 42392, 42394, 42424, 44094, 44096"}]
   - code: '011780'
     name: 금호석유화학
-    reviewed: false
+    reviewed: true
     sector: "화학"
     flows:
       - {id: n1, name: "비스페놀A(BPA) — 전국", kind: national, nature: company, products: [{hs: '2907231000', weight: 0.5}], basis: "채널 글 38건(2025-10~2026-07) · 회사 출하"}
@@ -2527,7 +2528,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 76건 — 최근 글 번호 37540, 37550, 38512, 38518, 39271, 39277, 40655, 40661, 43474, 43484, 44426, 44432"}]
   - code: '014830'
     name: 유니드
-    reviewed: false
+    reviewed: true
     sector: "화학"
     flows:
       - {id: s1, name: "수산화칼륨 — 남구", kind: sigungu, nature: company, regions: [KR-31-nam], products: [{hs: '281520', weight: 0.5}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
@@ -2538,7 +2539,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 199건 — 최근 글 번호 43434, 43436, 43438, 43440, 43442, 43444, 43446, 43448, 44406, 44408, 44410, 44412"}]
   - code: '051910'
     name: LG화학
-    reviewed: false
+    reviewed: true
     sector: "화학"
     flows:
       - {id: n1, name: "라이신 — 전국", kind: national, nature: mixed, products: [{hs: '2922411000', weight: 0.5}], basis: "채널 글 114건(2025-10~2026-07) · 업황 혼합"}
@@ -2549,7 +2550,7 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 433건 — 최근 글 번호 44176, 44178, 44180, 44182, 44184, 44550, 44552, 44554, 44556, 44558, 44560, 44562"}]
   - code: '069260'
     name: 티케이지휴켐스
-    reviewed: false
+    reviewed: true
     sector: "화학"
     flows:
       - {id: n1, name: "라이신 — 전국", kind: national, nature: mixed, products: [{hs: '2922411000', weight: 0.5}], basis: "채널 글 114건(2025-10~2026-07) · 업황 혼합"}
@@ -2557,14 +2558,14 @@ stocks:
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 189건 — 최근 글 번호 40411, 40413, 42672, 42674, 42676, 42678, 42680, 44176, 44178, 44180, 44182, 44184"}]
   - code: '093370'
     name: 후성
-    reviewed: false
+    reviewed: true
     sector: "화학 소재"
     flows:
       - {id: n1, name: "전해액 — 전국", kind: national, nature: mixed, products: [{hs: '3824999053', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 29938, 30613, 31969, 33683, 34411, 35097, 36491, 38190, 38949, 40333, 42418, 44104"}]
   - code: '009830'
     name: 한화솔루션
-    reviewed: false
+    reviewed: true
     sector: "화학·태양광"
     flows:
       - {id: s1, name: "가성소다 — 여수시", kind: sigungu, nature: company, regions: [KR-46-yeosu], products: [{hs: '281512', weight: 0.3333}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}

@@ -11,7 +11,7 @@
 | 1 종목별 흐름 | 완료 | 판 2 `flows:`(해석기 `kbj/config/trade.py` — 판 1 자동 변환), `pub_trade.stock_map.flow_id·flow_meta`(0027), 엔진 `kbj/engines/trade/flows.py`, `/api/trade/stock/{code}/flows`, 페이지 7 맨 앞 '종목' 탭(`web/src/pages/p7/flows.ts`) |
 | 2 300종목 + 맵핑 트렌드 | 완료(초안) | `trade_map.yaml` 판 2 — 300종목·산업(sector)·흐름, 전부 `reviewed: false`(공개 정보 기반 초안). 시군구 14곳 추가. '맵핑 트렌드' 표(산업 칩·급등락·정렬·12개월 스파크라인). 로컬 채우기 `kbj.sh fill-trade` |
 | 3 실적 프리뷰 | 완료 | 엔진 `kbj/engines/trade/preview.py`, 계산 `kbj/services/engine/trade_preview.py`(로그인 — 계약 ⑰ 밖), `/api/trade/stock/{code}/preview`, '종목' 탭 흐름 위 카드, 작업 `trade.preview`(거래일 16:00 — ADR 0018, 알림 `trade.preview` 달마다 한 번) |
-| 2' 매핑표 판 3 | 진행 | 채널 1년치 근거로 재작성 — 아래 '매핑표 판 3' |
+| 2' 매핑표 판 3 | 완료 | 채널 1년치 근거로 재작성 — 308종목·흐름 714, 맥 verify-trade 종목별 문제 0 → reviewed: true(2026-10-26). 아래 '매핑표 판 3' |
 | 4 국가·산업 탭 | 완료 | `/api/trade/countries/{cc}/trend`(국가 탭 — 품목별 전월·전년 대비·24개월 스파크라인·관련 종목), `/api/trade/sectors` + 페이지 7 '산업' 탭(산업 → 종목 → 추적 품목, 산업 합 = 종목 지수 합, YoY 는 두 기간 모두 값이 있는 종목만). 둘 다 로그인 전용 — 공개 빌드는 자물쇠만(번들에서 뺌) |
 
 단계 3 은 계획과 다르게: 카드는 페이지 8 이 아니라 페이지 7 '종목' 탭(흐름과 같이 본다). 진행 중 분기는 10일 속보가 아니라
@@ -39,6 +39,9 @@
    있으면 전세계). 가중치는 수출 흐름만 1/N(회사·관계사 흐름 우선, 시군구 회사 흐름과 겹치는 전국 회사 흐름·수입은 0).
 5. 검증: CI `verify_trade --map-only`(형식·장·지역 ID), 맥 `kbj.sh verify-trade`(`--public` — 종목코드·이름·hs_dim·
    최근 12개월 값·시군구 이름). 문제 줄을 붙여 주면 고친다. reviewed 는 맥 검증 뒤.
+   2026-10-26 맥: code_missing·hs_missing·name_mismatch·no_recent 0 → 308종목 reviewed: true. region_unmatched 147 은
+   매핑이 쓰지 않는 시군구 이름(지역표는 수출 거점만 적는다 — trade_regions.yaml 머리) — 종목 문제가 아니다.
+   시군구 5년 백필은 최근 12개월 창만 받았다(하루 한도) — 나머지 창은 `kbj.sh fill-trade` 를 다음 날 다시.
 
 ## 0. 이미 있는 것(P6·P8) vs 없는 것
 
