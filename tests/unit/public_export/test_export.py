@@ -451,6 +451,7 @@ def test_fin_size_cap_fails_loudly_and_writes_nothing(tmp_path: Path, cal: Tradi
     with pytest.raises(ex.PublicExportError, match="상한") as ei:
         _p4(tmp_path, cal, fin_cfg=tiny)
     assert "자르지 않는다" in str(ei.value)
+    assert "MB ·" in str(ei.value) or "개 " in str(ei.value)  # 묶음별 크기(어디를 줄일지)
     assert _tree(tmp_path) == before  # 아무것도 바꾸지 않았다
 
 

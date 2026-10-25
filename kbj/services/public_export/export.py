@@ -189,6 +189,24 @@ def _write_atomic(path: Path, data: str | bytes) -> None:
     os.replace(tmp, path)
 
 
+def _breakdown(
+    sub: str, rendered: Sequence[tuple[PublicFile, str]], blobs: Sequence[BlobFile]
+) -> str:
+    """상한을 넘은 폴더의 묶음별 크기(큰 순 5개) — 한 단계 아래 폴더(`hs/`)·평평한 파일은 `파일`.
+    어디를 줄일지 고르는 데 쓴다(값은 내지 않고 크기만)."""
+    sizes: dict[str, int] = defaultdict(int)
+    count: dict[str, int] = defaultdict(int)
+    items = [(f.name, len(t.encode("utf-8"))) for f, t in rendered if f.subdir == sub]
+    items += [(b.name, len(b.body)) for b in blobs if b.subdir == sub]
+    for name, n in items:
+        rest = name[len(sub) + 1 :]
+        key = rest.split("/", 1)[0] + "/" if "/" in rest else "파일"
+        sizes[key] += n
+        count[key] += 1
+    top = sorted(sizes, key=lambda k: -sizes[k])[:5]
+    return " · ".join(f"{k} {count[k]}개 {sizes[k] / _MB:.1f} MB" for k in top)
+
+
 def _dir_entries(
     rendered: Sequence[tuple[PublicFile, str]], blobs: Sequence[BlobFile]
 ) -> tuple[DirEntry, ...]:
@@ -311,7 +329,8 @@ def write_files(
         cap = (caps or {}).get(d.name)
         if cap is not None and d.bytes > cap:
             raise PublicExportError(
-                f"{d.name}/ 합계 {d.bytes / _MB:.1f} MB 가 상한 {cap / _MB:.1f} MB 를 넘는다 — "
+                f"{d.name}/ 합계 {d.bytes / _MB:.1f} MB 가 상한 {cap / _MB:.1f} MB 를 넘는다"
+                f"({_breakdown(d.name, rendered, blobs)}) — "
                 "조용히 자르지 않는다([결정 필요]: 분기 수 줄이기 또는 상위 N)"
             )
     entries = tuple(
