@@ -449,3 +449,5 @@ def test_region_id_matches_api_name_with_sido_prefix() -> None:
     assert C._region_id(regions, "44", "충청남도 아산시", "2026-08") == "KR-44-asan"
     assert C._region_id(regions, "44", "아산시", "2026-08") == "KR-44-asan"
     assert C._region_id(regions, "43", "충청남도 아산시", "2026-08") is None
+    # 세종은 시도 이름 하나로 온다(187행 region_id 가 비었다 — 2026-10-26 실측)
+    assert C._region_id(regions, "36", "세종특별자치시", "2026-08") == "KR-36-sejong"

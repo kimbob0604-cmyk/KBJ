@@ -157,4 +157,6 @@ def test_sgg_base_drops_sido_prefix_only():
     assert sgg_base("인천광역시 서구") == "서구"
     assert sgg_base("강원특별자치도 원주시") == "원주시"
     assert sgg_base("수원시 영통구") == "수원시 영통구"
-    assert sgg_base("세종특별자치시") == "세종특별자치시"
+    # 세종은 시도 이름 하나로 온다 — 지역표·입력은 '세종시'(hs-match R114 no_data, 2026-10-26)
+    assert sgg_base("세종특별자치시") == "세종시"
+    assert sgg_base("세종시") == "세종시"

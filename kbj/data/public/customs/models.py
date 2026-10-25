@@ -142,15 +142,18 @@ SIDO_CODES: Final[Mapping[str, SidoCode]] = {
 }
 
 _SIDO_SUFFIX: Final = ("특별자치시", "특별자치도", "특별시", "광역시", "도")
+# 시군구가 없는 시도 — API 는 시도 이름 하나로 온다(2026-10-26 실측: 세종 187행
+# '세종특별자치시'). 지역표는 '세종시'
+_SGG_ALIAS: Final[Mapping[str, str]] = {"세종특별자치시": "세종시"}
 
 
 def sgg_base(name: str) -> str:
     """시군구 이름에서 앞의 시도 이름을 뗀다 — 시군구 API(15134343)의 sggNm 은 '충청남도 아산시'처럼
-    시도를 붙여 온다(2026-10-26 실측). 매핑·지역표는 '아산시'. 시도 하나뿐이면 그대로(세종)."""
+    시도를 붙여 온다(2026-10-26 실측). 매핑·지역표는 '아산시'. 세종은 `_SGG_ALIAS`."""
     head, _, rest = name.strip().partition(" ")
     if rest and head.endswith(_SIDO_SUFFIX):
         return rest.strip()
-    return name.strip()
+    return _SGG_ALIAS.get(name.strip(), name.strip())
 
 
 # 합계 행으로 보는 기간 표기 [추정 — 합계 행이 오는지 자체가 실측 필요(probe_results §2.2 ④)]
