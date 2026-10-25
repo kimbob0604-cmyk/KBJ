@@ -45,6 +45,9 @@ PUBLIC_MONTHS: Final = 24
 TOP_COUNTRIES: Final = 10
 NOTE_USD: Final = "금액은 미화 달러(원화 환산 없음 — 환율 미조정)"
 NOTE_PUBLIC: Final = "공개판은 HS2·4·6 최근 24개월 — HS10·더 긴 기간은 로그인판"
+# 비율(YoY·비중) 자릿수 — 화면은 % 소수 1자리. 17자리 그대로면 trade/ 가 상한 20 MB 를 넘었다
+# (2026-10-23 — hs/ 11.2·country/ 6.6 MB)
+RATIO_DIGITS: Final = 4
 _Q_ORDER: Final = {"ok": 0, "stale": 1, "estimated": 2, "invalid": 3}
 
 Q_ITEM_LAST: Final = Query("trade_x_item_last", "SELECT max(ym) AS ym FROM pub_trade.item_monthly")
@@ -145,13 +148,13 @@ def _float(v: object) -> float | None:
 def _yoy(cur: Decimal | None, prev: Decimal | None) -> float | None:
     if cur is None or prev is None or prev == 0:
         return None
-    return float(cur / prev) - 1.0
+    return round(float(cur / prev) - 1.0, RATIO_DIGITS)
 
 
 def _share(part: Decimal | None, total: Decimal | None) -> float | None:
     if part is None or total is None or total == 0:
         return None
-    return float(part / total)
+    return round(float(part / total), RATIO_DIGITS)
 
 
 def _worst(qs: Iterable[object]) -> Quality:

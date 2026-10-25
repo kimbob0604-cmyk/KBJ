@@ -221,7 +221,7 @@ describe('페이지 7 탐색 — 공개', () => {
     nodes.forEach((n, i) => {
       const a = api[i];
       expect(n.usd).toBe(a?.usd);
-      expect(n.yoy).toBeCloseTo(a?.yoy ?? NaN, 9);
+      expect(n.yoy).toBeCloseTo(a?.yoy ?? NaN, 3); // 공개 비율은 4자리 반올림(RATIO_DIGITS)
       expect(n.share).toBeCloseTo(a?.share ?? NaN, 9);
     });
     const ch = exploreFixture<Env<PubTree>>('public/trade/hs/85').data;

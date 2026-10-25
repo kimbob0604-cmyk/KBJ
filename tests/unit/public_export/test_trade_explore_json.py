@@ -25,6 +25,8 @@ from tests.fixtures.synthetic.p6_world import CLOCK, LAST_YM, P6World
 from tests.unit.api.web_fixtures_p6.explore import explore_api_world, memory_explore_reader
 from tests.unit.api.web_fixtures_p6.flash import FlashApiWorld
 
+TOL = 1e-3  # 공개 비율은 RATIO_DIGITS(4)자리 반올림 — 상위 10개 비중 합까지 덮는다
+
 
 @pytest.fixture(scope="module")
 def aw() -> FlashApiWorld:
@@ -93,7 +95,7 @@ def test_HS2_배열은_엔진과_같다(files: dict[str, Any], world: P6World) -
             assert code["exp"]["usd"][i] == (None if u is None else int(u))
             want = yoy(u, idx.usd(hs, f"{int(ym[:4]) - 1}{ym[4:]}"))
             got = code["exp"]["yoy"][i]
-            assert (got is None and want is None) or got == pytest.approx(want)
+            assert (got is None and want is None) or got == pytest.approx(want, abs=TOL)
 
 
 def test_장_파일_HS4·HS6·상위_국가(files: dict[str, Any]) -> None:
@@ -102,10 +104,10 @@ def test_장_파일_HS4·HS6·상위_국가(files: dict[str, Any]) -> None:
     assert set(codes) == {"8501", "8502", "850110", "850120", "850210", "850220"}
     assert all(len(h) in (4, 6) for h in codes)  # HS10 은 로그인만
     s = codes["8502"]["exp"]
-    assert s["usd"][-1] == 120_000_000 and s["yoy"][-1] == pytest.approx(1.0)
+    assert s["usd"][-1] == 120_000_000 and s["yoy"][-1] == pytest.approx(1.0, abs=TOL)
     top = d["countries"]["8502"]
-    assert len(top) == 10 and sum(t["share"] for t in top) == pytest.approx(1.0)
-    assert all(t["yoy"] == pytest.approx(1.0) for t in top)
+    assert len(top) == 10 and sum(t["share"] for t in top) == pytest.approx(1.0, abs=TOL)
+    assert all(t["yoy"] == pytest.approx(1.0, abs=TOL) for t in top)
     assert set(d["countries"]) <= {"8501", "8502"}
 
 
@@ -144,7 +146,8 @@ def test_로그인_API_와_같은_모양_같은_값(
     for a, b in zip(pub["rows"], api["rows"], strict=True):
         assert set(a) == set(b)
         for k, v in a.items():
-            assert (v == pytest.approx(b[k])) if isinstance(v, float) else v == b[k], (name, k)
+            same = v == pytest.approx(b[k], abs=TOL) if isinstance(v, float) else v == b[k]
+            assert same, (name, k)
 
 
 def test_지역_파일은_API_와_같다(files: dict[str, Any], c: TestClient) -> None:
@@ -160,4 +163,4 @@ def test_지역_파일은_API_와_같다(files: dict[str, Any], c: TestClient) -
         for a, b in zip(pub["rows"], api["rows"], strict=True):
             assert (a["exp_yoy"] is None) == (b["exp_yoy"] is None)
             if a["exp_yoy"] is not None:
-                assert a["exp_yoy"] == pytest.approx(b["exp_yoy"])
+                assert a["exp_yoy"] == pytest.approx(b["exp_yoy"], abs=TOL)
