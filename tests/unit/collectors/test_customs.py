@@ -371,6 +371,25 @@ def test_backfill_two_windows_then_resumes_with_nothing_to_do() -> None:
     assert again.skipped[C.SIGUNGU] == ["2024-11~2025-10", "2025-11~2026-10"]
 
 
+def test_backfill_sigungu_fetches_only_hs6_missing_from_the_window() -> None:
+    """매핑표에 새 HS6 가 들어오면 옛 HS6 행이 있는 창도 새 HS6 만 받는다(2026-10-26 — 168 중
+    7개만 있었다)."""
+    rig = Rig(kst(2026, 11, 20, 9, 0))
+    every = C.sigungu_hs6([rig.world.trade_map()])
+    assert len(every) >= 2
+    old, new = every[:1], every[1:]
+    first = _backfill(rig, "2025-11", "2026-10", datasets=(C.SIGUNGU,), hs6s=old)
+    assert first.done[C.SIGUNGU] == ["2025-11~2026-10"]
+    n = len(rig.fake.calls("getSigunguPerPrlstPerAcrs"))
+    again = _backfill(rig, "2025-11", "2026-10", datasets=(C.SIGUNGU,), hs6s=every)
+    assert again.done[C.SIGUNGU] == ["2025-11~2026-10"]
+    asked = {c.params.get("HsSgn") for c in rig.fake.calls("getSigunguPerPrlstPerAcrs")[n:]}
+    assert asked == set(new)
+    assert {r.hs6 for r in rig.repo.sigungu_monthly()} == set(every)
+    last = _backfill(rig, "2025-11", "2026-10", datasets=(C.SIGUNGU,), hs6s=every)
+    assert last.skipped[C.SIGUNGU] == ["2025-11~2026-10"] and not last.done
+
+
 def test_backfill_stops_a_dataset_at_the_daily_ratio() -> None:
     rig = Rig(kst(2026, 11, 20, 9, 0), cap=100)
     rep = _backfill(rig, "2025-11", "2026-10", cap=100)  # 장 97 > 100 × 0.9

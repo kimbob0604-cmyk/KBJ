@@ -730,6 +730,14 @@ def _present(repo: TradeRepo, ds: str, start: str, end: str) -> set[str]:
     return {ym_flat(r.ym) for r in rows}
 
 
+def _sigungu_present(repo: TradeRepo, start: str, end: str) -> set[str]:
+    """그 창에 행이 하나라도 있는 HS6. 시군구는 HS6 마다 본다 — 달로만 보면 매핑표에 새 HS6 가
+    들어와도 옛 HS6 행이 있는 창은 건너뛰었다(판 3 168개 중 7개만 있던 2026-10-26). 한 창은 다 받은
+    뒤 한 번에 쓰므로(`_fetch_sigungu`) 행이 있으면 그 창은 다 받은 것이다. 수출이 없는 달은 행이
+    없어 달로는 세지 않는다."""
+    return {r.hs6 for r in repo.sigungu_monthly(ym_from=ym_dash(start), ym_to=ym_dash(end))}
+
+
 def backfill(
     *,
     repo: TradeRepo,
@@ -768,13 +776,20 @@ def backfill(
         for lo, hi in _windows(start, end):
             label = f"{ym_dash(lo)}~{ym_dash(hi)}"
             want = set(_months(lo, hi))
-            if want <= _present(repo, ds, lo, hi):
+            todo: Sequence[str] = hs6s
+            if ds == SIGUNGU:
+                if not hs6s:
+                    rep.stopped[ds] = "매핑표에 지역 행(HS6)이 없다"
+                    break
+                have = _sigungu_present(repo, lo, hi)
+                todo = [h for h in hs6s if h not in have]
+                if not todo:
+                    rep.skipped.setdefault(ds, []).append(label)
+                    continue
+            elif want <= _present(repo, ds, lo, hi):
                 rep.skipped.setdefault(ds, []).append(label)
                 continue
             countries = _countries_in(d, lo, hi) if ds == ITEM_COUNTRY else []
-            if ds == SIGUNGU and not hs6s:
-                rep.stopped[ds] = "매핑표에 지역 행(HS6)이 없다"
-                break
             if ds == ITEM_COUNTRY and not countries:
                 rep.stopped[ds] = f"{label} 국가 목록(15101612)이 없다 — 국가부터 받는다"
                 break
@@ -782,7 +797,7 @@ def backfill(
                 COUNTRIES: 1,
                 ITEMS: 1 if cfg.monthly.items_mode == "all" else len(chapters),
                 ITEM_COUNTRY: len(countries),
-                SIGUNGU: len(_sidos(lo, hi)) * len(hs6s),
+                SIGUNGU: len(_sidos(lo, hi)) * len(todo),
             }[ds]
             if used(ds) + est > limit:
                 rep.stopped[ds] = (
@@ -801,7 +816,7 @@ def backfill(
                     irow = _fetch_item_country(d, lo, hi, countries, want, at)
                     n = repo.upsert_item_country_monthly(irow, loaded_by=loaded_by, received_at=at)
                 else:
-                    srow = _fetch_sigungu(d, lo, hi, hs6s, at)
+                    srow = _fetch_sigungu(d, lo, hi, todo, at)
                     n = repo.upsert_sigungu_monthly(srow, loaded_by=loaded_by, received_at=at)
             except BudgetExhausted as e:
                 rep.stopped[ds] = f"{label} 일 예산 닫힘: {e}"[:REASON_MAX]
