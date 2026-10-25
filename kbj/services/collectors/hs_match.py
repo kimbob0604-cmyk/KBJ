@@ -90,6 +90,13 @@ class Result:
             return f"{self.rid} nomatch best={best}{e} {self.note}".rstrip()
         return f"{self.rid} {self.status} {self.note}".rstrip()
 
+    def json_line(self) -> str:
+        """`--jsonl` 한 줄 — 코드를 줄이지 않고 전부(매핑표 반영용). 금액은 싣지 않는다."""
+        err = None if self.err is None else round(self.err, 6)
+        d = {"rid": self.rid, "status": self.status, "codes": list(self.codes), "err": err,
+             "alts": [list(a) for a in self.alts], "note": self.note}  # fmt: skip
+        return json.dumps(d, ensure_ascii=False)
+
 
 def _ok(total: float, want: float) -> bool:
     return abs(total - want) <= max(ABS_TOL, TOL * abs(want))
@@ -328,6 +335,7 @@ def main(
 ) -> int:
     i: IO[str] = inp if inp is not None else sys.stdin
     o: IO[str] = out if out is not None else sys.stdout
+    as_json = "--jsonl" in (argv or ())
     try:
         targets = [Target.parse(d) for d in json.load(i)["targets"]]
     except (ValueError, KeyError, TypeError) as e:
@@ -350,7 +358,7 @@ def main(
                 else:
                     r = Result(t.rid, "error", note=name)
         counts[r.status] = counts.get(r.status, 0) + 1
-        o.write(r.line() + "\n")
+        o.write((r.json_line() if as_json else r.line()) + "\n")
         o.flush()
     o.write("# " + " ".join(f"{k}={v}" for k, v in sorted(counts.items())) + "\n")
     return 0

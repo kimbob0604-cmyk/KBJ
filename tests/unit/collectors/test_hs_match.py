@@ -128,6 +128,12 @@ def test_main_lines_without_amounts():
     assert lines[0].startswith("R1 match 8542321010")
     assert lines[-1] == "# match=1"
     assert "300" not in lines[0]  # 금액은 내지 않는다
+    out = io.StringIO()
+    main(["--jsonl"], inp=io.StringIO(json.dumps(body)), out=out, source=lambda: FakeSource(ITEMS))
+    first, last = out.getvalue().splitlines()[0], out.getvalue().splitlines()[-1]
+    got = json.loads(first)
+    assert got["rid"] == "R1" and got["status"] == "match" and got["codes"][0] == "8542321010"
+    assert set(got) == {"rid", "status", "codes", "err", "alts", "note"} and last == "# match=1"
 
 
 def test_main_bad_input():
