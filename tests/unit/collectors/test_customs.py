@@ -390,6 +390,22 @@ def test_backfill_sigungu_fetches_only_hs6_missing_from_the_window() -> None:
     assert last.skipped[C.SIGUNGU] == ["2025-11~2026-10"] and not last.done
 
 
+def test_backfill_relinks_stored_sigungu_rows_without_region_id() -> None:
+    """지역 ID 없이 쌓인 행(이름 대조를 고치기 전 — 2026-10-26 옛 HS6 7개)에 지역표로 ID 를 붙인다.
+    받을 HS6 가 없어도(이미 있음) 붙이고, 값은 그대로다."""
+    from dataclasses import replace
+
+    rig = Rig(kst(2026, 11, 20, 9, 0))
+    src = next(r for r in W.sigungu if r.ym == "2026-05" and r.region_id and _sido_ok(r))
+    bare = replace(src, region_id=None)
+    rig.repo.upsert_sigungu_monthly([bare], loaded_by="test", received_at=rig.clock())
+    rep = _backfill(rig, "2025-11", "2026-10", datasets=(C.SIGUNGU,), hs6s=(src.hs6,))
+    assert rep.relinked == 1 and "지역 ID 다시 붙인 시군구 행 1" in rep.lines()
+    assert rig.fake.calls("getSigunguPerPrlstPerAcrs") == []  # 그 HS6 는 이미 있다
+    (row,) = rig.repo.sigungu_monthly(hs6=src.hs6, ym_from="2026-05", ym_to="2026-05")
+    assert row.region_id == src.region_id and row.exp_usd == src.exp_usd
+
+
 def test_backfill_stops_a_dataset_at_the_daily_ratio() -> None:
     rig = Rig(kst(2026, 11, 20, 9, 0), cap=100)
     rep = _backfill(rig, "2025-11", "2026-10", cap=100)  # 장 97 > 100 × 0.9

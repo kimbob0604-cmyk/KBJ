@@ -51,7 +51,7 @@ from __future__ import annotations
 import argparse
 import sys
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
@@ -117,6 +117,7 @@ __all__ = [
     "chapters_of",
     "main",
     "monthly",
+    "relink_regions",
     "sigungu_hs6",
     "ten_day_rows",
     "tenday",
@@ -687,6 +688,7 @@ class BackfillReport:
     stopped: dict[str, str] = field(default_factory=dict[str, str])
     failed: dict[str, str] = field(default_factory=dict[str, str])  # 호출·형식 오류 — 종료 1
     rows: int = 0
+    relinked: int = 0  # 이미 쌓인 시군구 행에 새로 붙인 지역 ID(`relink_regions`)
 
     def lines(self) -> list[str]:
         out: list[str] = []
@@ -699,6 +701,8 @@ class BackfillReport:
             if ds in self.failed:
                 tail += f" · 실패: {self.failed[ds]}"
             out.append(f"{SOURCE}:{ds} 받은 창 {d} · 이미 있음 {s}{tail}")
+        if self.relinked:
+            out.append(f"지역 ID 다시 붙인 시군구 행 {self.relinked}")
         out.append(f"쓴 행 {self.rows}")
         return out
 
@@ -728,6 +732,24 @@ def _present(repo: TradeRepo, ds: str, start: str, end: str) -> set[str]:
     else:
         rows = repo.sigungu_monthly(ym_from=lo, ym_to=hi)
     return {ym_flat(r.ym) for r in rows}
+
+
+def relink_regions(
+    repo: TradeRepo, regions: TradeRegions, start: str, end: str, *, now: datetime, loaded_by: str
+) -> int:
+    """그 기간의 시군구 행 중 지역 ID 가 빈 것에 지금 지역표로 ID 를 붙인다(값·as_of 는 그대로,
+    received_at 은 다시 쓴 시각). 지역표에 줄이 늘거나 이름 대조가 바뀌면(시도 머리 떼기 9e6aa88·
+    세종 별칭) 이미 받은 행은 그대로 비어 있었다 — 2026-10-26 판 3 의 옛 HS6 7개가 모두 비었다.
+    못 찾은 이름은 계속 None."""
+    rows = repo.sigungu_monthly(ym_from=ym_dash(start), ym_to=ym_dash(end))
+    fixed = [
+        replace(r, region_id=rid)
+        for r in rows
+        if r.region_id is None and (rid := _region_id(regions, r.sido_cd, r.sgg_nm, r.ym))
+    ]
+    if not fixed:
+        return 0
+    return repo.upsert_sigungu_monthly(fixed, loaded_by=loaded_by, received_at=now)
 
 
 def _sigungu_present(repo: TradeRepo, start: str, end: str) -> set[str]:
@@ -781,6 +803,7 @@ def backfill(
                 if not hs6s:
                     rep.stopped[ds] = "매핑표에 지역 행(HS6)이 없다"
                     break
+                rep.relinked += relink_regions(repo, regs, lo, hi, now=now(), loaded_by=loaded_by)
                 have = _sigungu_present(repo, lo, hi)
                 todo = [h for h in hs6s if h not in have]
                 if not todo:

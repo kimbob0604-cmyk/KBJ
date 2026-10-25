@@ -293,7 +293,7 @@ stocks:
       - {id: n1, name: "골프용품 — 전국", kind: national, nature: mixed, products: [{hs: '9506399000', weight: 1.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 38건 — 최근 글 번호 30316, 31001, 33215, 34071, 34799, 35485, 37760, 38580, 39339, 40723, 43694, 44494"}]
   - code: '000640'
-    name: 동아쏘시오홀딩스
+    name: 동아제약
     reviewed: false
     sector: "바이오"
     flows:
