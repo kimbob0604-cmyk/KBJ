@@ -1,9 +1,10 @@
 # 종목↔HS 매핑표(공개 — docs/p10_trade_stocks_plan.md, metrics §28). 해석기 kbj/config/trade.py.
 # 판 3(2026-10-22 — 사용자 결정): 텔레그램 수출입 채널(@BeOn_BeClear)의 1년치 글이 짚은 품목·지역·관련종목을
 # 근거로 다시 만들었다(판 2 초안은 버림). 글 본문은 옮기지 않았다 — 흐름 이름은 짧은 자체 이름(없으면 관세청
-# HS부호 2026 표 이름), 근거는 글 번호·건수·기간만. HS 는 표 이름 대조로 후보를 고르고, 글의 월별 표 금액과 관세청 통계의 합이 맞은 것만
-# 썼다(hs-match 2026-10-26 — 대표 글 453 중 일치 257·불일치 191·값 없음 5, 품목 556 중 확정 289·보류 267,
-# 보류 품목의 레코드 653 은 뺐다). 시군구 흐름은 API 한계로 HS6.
+# HS부호 2026 표 이름), 근거는 글 번호·건수·기간만. HS 는 표 이름 대조로 후보를 고르고, 글의 월별 표 금액과 관세청
+# 통계의 합이 맞은 것만 썼다(hs-match 2026-10-26 — 대표 글 453 중 일치 257·불일치 191·값 없음 5, 품목 556 중
+# 확정 289·보류 267, 보류 품목의 레코드 653 은 뺐다). 시군구 흐름은 API 한계로 HS6 이고, 맥 DB 에서 최근 12개월
+# 그 시군구 수출이 없는 레코드의 (지역, HS6) 135건은 뺐다(verify-trade no_recent).
 #
 # 규칙: 회사 이름 + 시군구 글 → 시군구 흐름(HS6, 회사 출하). 여러 종목이 함께 걸린 전국 글 → 업황 혼합.
 # 가중치는 수출 흐름만 — 회사 출하·관계사 흐름이 있으면 그 품목들끼리, 없으면 업황 흐름끼리 1/N(지수 = 수출 합 × 상수).
@@ -141,10 +142,9 @@ stocks:
     reviewed: false
     sector: "광학"
     flows:
-      - {id: s1, name: "콘택트렌즈 — 평택시", kind: sigungu, nature: company, regions: [KR-41-pyeongtaek], products: [{hs: '900130', weight: 0.3333}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
-      - {id: s2, name: "콘택트렌즈 — 평택시", kind: sigungu, nature: company, regions: [KR-41-pyeongtaek], products: [{hs: '900140', weight: 0.3333}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
-      - {id: s3, name: "콘택트렌즈 — 평택시", kind: sigungu, nature: company, regions: [KR-41-pyeongtaek], products: [{hs: '900150', weight: 0.3333}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
-      - {id: n1, name: "콘택트렌즈 — 전국", kind: national, nature: company, products: [{hs: '9001300000', weight: 0.0}, {hs: '9001400000', weight: 0.0}, {hs: '9001509000', weight: 0.0}], basis: "채널 글 38건(2025-10~2026-07) · 회사 출하 · 시군구 회사 흐름과 겹쳐 가중치 0"}
+      - {id: s1, name: "콘택트렌즈 — 평택시", kind: sigungu, nature: company, regions: [KR-41-pyeongtaek], products: [{hs: '900130', weight: 0.2}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
+      - {id: s2, name: "콘택트렌즈 — 평택시", kind: sigungu, nature: company, regions: [KR-41-pyeongtaek], products: [{hs: '900150', weight: 0.2}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
+      - {id: n1, name: "콘택트렌즈 — 전국", kind: national, nature: company, products: [{hs: '9001300000', weight: 0.2}, {hs: '9001400000', weight: 0.2}, {hs: '9001509000', weight: 0.2}], basis: "채널 글 38건(2025-10~2026-07) · 회사 출하"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 32631, 33871, 34599, 35285, 37170, 37172, 38380, 39139, 40523, 43104, 43106, 44294"}]
   - code: '475960'
     name: 토모큐브
@@ -224,7 +224,7 @@ stocks:
       - {id: s1, name: "트랙터(18kW 이하) — 옥천군·익산시", kind: sigungu, nature: company, regions: [KR-43-okcheon, KR-52-iksan], products: [{hs: '870191', weight: 0.25}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
       - {id: s2, name: "트랙터(18~37kW) — 옥천군·익산시", kind: sigungu, nature: company, regions: [KR-43-okcheon, KR-52-iksan], products: [{hs: '870192', weight: 0.25}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
       - {id: s3, name: "트랙터(37~75kW) — 옥천군·익산시", kind: sigungu, nature: company, regions: [KR-43-okcheon, KR-52-iksan], products: [{hs: '870193', weight: 0.25}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
-      - {id: s4, name: "트랙터(75~130kW) — 옥천군·익산시", kind: sigungu, nature: company, regions: [KR-43-okcheon, KR-52-iksan], products: [{hs: '870194', weight: 0.25}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
+      - {id: s4, name: "트랙터(75~130kW) — 익산시", kind: sigungu, nature: company, regions: [KR-52-iksan], products: [{hs: '870194', weight: 0.25}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
       - {id: n1, name: "트랙터(18kW 이하) — 전국", kind: national, nature: mixed, products: [{hs: '8701912000', weight: 0.0}], basis: "채널 글 76건(2025-10~2026-07) · 업황 혼합"}
       - {id: n2, name: "트랙터(18~37kW) — 전국", kind: national, nature: mixed, products: [{hs: '8701922000', weight: 0.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 124건 — 최근 글 번호 39325, 39327, 40707, 40709, 40711, 43648, 43650, 43652, 43654, 44478, 44480, 44482"}]
@@ -233,7 +233,7 @@ stocks:
     reviewed: false
     sector: "담배"
     flows:
-      - {id: s1, name: "담배 — 북구·대덕구·KR-47-yeongju", kind: sigungu, nature: company, regions: [KR-29-buk, KR-30-daedeok, KR-47-yeongju], products: [{hs: '240220', weight: 1.0}], basis: "채널 글 25건(2025-10~2026-07) · 회사 출하"}
+      - {id: s1, name: "담배 — 북구·대덕구·영주시", kind: sigungu, nature: company, regions: [KR-29-buk, KR-30-daedeok, KR-47-yeongju], products: [{hs: '240220', weight: 1.0}], basis: "채널 글 25건(2025-10~2026-07) · 회사 출하"}
       - {id: n1, name: "담배 — 전국", kind: national, nature: company, products: [{hs: '2402201000', weight: 0.0}], basis: "채널 글 38건(2025-10~2026-07) · 회사 출하 · 시군구 회사 흐름과 겹쳐 가중치 0"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 63건 — 최근 글 번호 33249, 34087, 34815, 35501, 37792, 37794, 38596, 39355, 40739, 43726, 43728, 44510"}]
   - code: '034220'
@@ -342,10 +342,8 @@ stocks:
     reviewed: false
     sector: "바이오"
     flows:
-      - {id: s1, name: "보툴리눔 톡신 — 청주시", kind: sigungu, nature: company, regions: [KR-43-cheongju], products: [{hs: '300212', weight: 0.25}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
-      - {id: s2, name: "보툴리눔 톡신 — 청주시", kind: sigungu, nature: company, regions: [KR-43-cheongju], products: [{hs: '300249', weight: 0.25}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
-      - {id: s3, name: "보툴리눔 톡신 — 청주시", kind: sigungu, nature: company, regions: [KR-43-cheongju], products: [{hs: '300251', weight: 0.25}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
-      - {id: s4, name: "보툴리눔 톡신 — 청주시", kind: sigungu, nature: company, regions: [KR-43-cheongju], products: [{hs: '300290', weight: 0.25}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
+      - {id: s1, name: "보툴리눔 톡신 — 청주시", kind: sigungu, nature: company, regions: [KR-43-cheongju], products: [{hs: '300212', weight: 0.5}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
+      - {id: s2, name: "보툴리눔 톡신 — 청주시", kind: sigungu, nature: company, regions: [KR-43-cheongju], products: [{hs: '300249', weight: 0.5}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
       - {id: n1, name: "보툴리눔 톡신 — 전국", kind: national, nature: mixed, products: [{hs: '3002122000', weight: 0.0}, {hs: '3002491000', weight: 0.0}, {hs: '3002493000', weight: 0.0}, {hs: '3002510000', weight: 0.0}, {hs: '3002902000', weight: 0.0}], basis: "채널 글 228건(2025-10~2026-07) · 업황 혼합"}
       - {id: n2, name: "필러 — 전국", kind: national, nature: mixed, products: [{hs: '3304999000', weight: 0.0}, {hs: '9021310000', weight: 0.0}], basis: "채널 글 228건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 476건 — 최근 글 번호 44186, 44188, 44190, 44192, 44194, 44196, 44198, 44200, 44202, 44204, 44206, 44208"}]
@@ -362,10 +360,8 @@ stocks:
     reviewed: false
     sector: "바이오"
     flows:
-      - {id: s1, name: "보툴리눔 톡신 — 춘천시", kind: sigungu, nature: company, regions: [KR-51-chuncheon], products: [{hs: '300212', weight: 0.25}], basis: "채널 글 33건(2025-11~2026-07) · 회사 출하"}
-      - {id: s2, name: "보툴리눔 톡신 — 춘천시", kind: sigungu, nature: company, regions: [KR-51-chuncheon], products: [{hs: '300249', weight: 0.25}], basis: "채널 글 36건(2025-10~2026-07) · 회사 출하"}
-      - {id: s3, name: "보툴리눔 톡신 — 춘천시", kind: sigungu, nature: company, regions: [KR-51-chuncheon], products: [{hs: '300251', weight: 0.25}], basis: "채널 글 33건(2025-11~2026-07) · 회사 출하"}
-      - {id: s4, name: "보툴리눔 톡신 — 춘천시", kind: sigungu, nature: company, regions: [KR-51-chuncheon], products: [{hs: '300290', weight: 0.25}], basis: "채널 글 33건(2025-11~2026-07) · 회사 출하"}
+      - {id: s1, name: "보툴리눔 톡신 — 춘천시", kind: sigungu, nature: company, regions: [KR-51-chuncheon], products: [{hs: '300212', weight: 0.5}], basis: "채널 글 33건(2025-11~2026-07) · 회사 출하"}
+      - {id: s2, name: "보툴리눔 톡신 — 춘천시", kind: sigungu, nature: company, regions: [KR-51-chuncheon], products: [{hs: '300249', weight: 0.5}], basis: "채널 글 36건(2025-10~2026-07) · 회사 출하"}
       - {id: n1, name: "보툴리눔 톡신 — 전국", kind: national, nature: mixed, products: [{hs: '3002122000', weight: 0.0}, {hs: '3002491000', weight: 0.0}, {hs: '3002493000', weight: 0.0}, {hs: '3002510000', weight: 0.0}, {hs: '3002902000', weight: 0.0}], basis: "채널 글 228건(2025-10~2026-07) · 업황 혼합"}
       - {id: n2, name: "필러 — 전국", kind: national, nature: mixed, products: [{hs: '3304999000', weight: 0.0}, {hs: '9021310000', weight: 0.0}], basis: "채널 글 228건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 492건 — 최근 글 번호 44186, 44188, 44190, 44192, 44194, 44196, 44198, 44200, 44202, 44204, 44206, 44208"}]
@@ -594,7 +590,7 @@ stocks:
     reviewed: false
     sector: "반도체 소재"
     flows:
-      - {id: s1, name: "CMP 슬러리 — 서구·안성시·KR-44-gongju", kind: sigungu, nature: company, regions: [KR-28-seo, KR-41-anseong, KR-44-gongju], products: [{hs: '340540', weight: 1.0}], basis: "채널 글 11건(2025-10~2026-07) · 회사 출하"}
+      - {id: s1, name: "CMP 슬러리 — 서구·안성시·공주시", kind: sigungu, nature: company, regions: [KR-28-seo, KR-41-anseong, KR-44-gongju], products: [{hs: '340540', weight: 1.0}], basis: "채널 글 11건(2025-10~2026-07) · 회사 출하"}
       - {id: n1, name: "CMP 슬러리 — 전국", kind: national, nature: mixed, products: [{hs: '3405400000', weight: 0.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 49건 — 최근 글 번호 31219, 33499, 34227, 34913, 35703, 35707, 38006, 38765, 40149, 41630, 41634, 43920"}]
   - code: '014680'
@@ -651,7 +647,7 @@ stocks:
     reviewed: false
     sector: "반도체 소재"
     flows:
-      - {id: s1, name: "CMP 슬러리 — 서구·안성시·KR-44-gongju", kind: sigungu, nature: company, regions: [KR-28-seo, KR-41-anseong, KR-44-gongju], products: [{hs: '340540', weight: 1.0}], basis: "채널 글 11건(2025-10~2026-07) · 회사 출하"}
+      - {id: s1, name: "CMP 슬러리 — 서구·안성시·공주시", kind: sigungu, nature: company, regions: [KR-28-seo, KR-41-anseong, KR-44-gongju], products: [{hs: '340540', weight: 1.0}], basis: "채널 글 11건(2025-10~2026-07) · 회사 출하"}
       - {id: n1, name: "CMP 슬러리 — 전국", kind: national, nature: mixed, products: [{hs: '3405400000', weight: 0.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 49건 — 최근 글 번호 31221, 33499, 34227, 34913, 35703, 35709, 38006, 38765, 40149, 41630, 41636, 43920"}]
   - code: '456040'
@@ -829,7 +825,7 @@ stocks:
     reviewed: false
     sector: "반도체 장비"
     flows:
-      - {id: s1, name: "3D AOI·SPI 검사장비 — KR-11-geumcheon", kind: sigungu, nature: company, regions: [KR-11-geumcheon], products: [{hs: '903149', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
+      - {id: s1, name: "3D AOI·SPI 검사장비 — 금천구", kind: sigungu, nature: company, regions: [KR-11-geumcheon], products: [{hs: '903149', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
       - {id: n1, name: "반도체 장비 — 전국", kind: national, nature: mixed, products: [{hs: '8486101000', weight: 0.0}, {hs: '8486102000', weight: 0.0}, {hs: '8486103010', weight: 0.0}, {hs: '8486103020', weight: 0.0}, {hs: '8486103090', weight: 0.0}, {hs: '8486104010', weight: 0.0}, {hs: '8486104020', weight: 0.0}, {hs: '8486105010', weight: 0.0}, {hs: '8486105030', weight: 0.0}, {hs: '8486109000', weight: 0.0}, {hs: '8486201000', weight: 0.0}, {hs: '8486202100', weight: 0.0}, {hs: '8486202200', weight: 0.0}, {hs: '8486202300', weight: 0.0}, {hs: '8486203000', weight: 0.0}, {hs: '8486204000', weight: 0.0}, {hs: '8486205000', weight: 0.0}, {hs: '8486206010', weight: 0.0}, {hs: '8486206020', weight: 0.0}, {hs: '8486206091', weight: 0.0}, {hs: '8486206099', weight: 0.0}, {hs: '8486207000', weight: 0.0}, {hs: '8486208100', weight: 0.0}, {hs: '8486208410', weight: 0.0}, {hs: '8486208420', weight: 0.0}, {hs: '8486208490', weight: 0.0}, {hs: '8486209100', weight: 0.0}, {hs: '8486209200', weight: 0.0}, {hs: '8486209310', weight: 0.0}, {hs: '8486209320', weight: 0.0}, {hs: '8486209390', weight: 0.0}, {hs: '8486209400', weight: 0.0}, {hs: '8486209500', weight: 0.0}, {hs: '8486209600', weight: 0.0}, {hs: '8486209900', weight: 0.0}, {hs: '8486301010', weight: 0.0}, {hs: '8486301020', weight: 0.0}, {hs: '8486301031', weight: 0.0}, {hs: '8486301040', weight: 0.0}, {hs: '8486301050', weight: 0.0}, {hs: '8486301060', weight: 0.0}, {hs: '8486301090', weight: 0.0}, {hs: '8486302010', weight: 0.0}, {hs: '8486302020', weight: 0.0}, {hs: '8486302031', weight: 0.0}, {hs: '8486302050', weight: 0.0}, {hs: '8486302060', weight: 0.0}, {hs: '8486302070', weight: 0.0}, {hs: '8486302090', weight: 0.0}, {hs: '8486401010', weight: 0.0}, {hs: '8486401030', weight: 0.0}, {hs: '8486401040', weight: 0.0}, {hs: '8486401090', weight: 0.0}, {hs: '8486402010', weight: 0.0}, {hs: '8486402020', weight: 0.0}, {hs: '8486402031', weight: 0.0}, {hs: '8486402039', weight: 0.0}, {hs: '8486402040', weight: 0.0}, {hs: '8486402070', weight: 0.0}, {hs: '8486402080', weight: 0.0}, {hs: '8486402091', weight: 0.0}, {hs: '8486402093', weight: 0.0}, {hs: '8486402095', weight: 0.0}, {hs: '8486402099', weight: 0.0}, {hs: '8486403010', weight: 0.0}, {hs: '8486403020', weight: 0.0}, {hs: '8486403090', weight: 0.0}, {hs: '8486901000', weight: 0.0}, {hs: '8486902030', weight: 0.0}, {hs: '8486902040', weight: 0.0}, {hs: '8486902090', weight: 0.0}, {hs: '8486903050', weight: 0.0}, {hs: '8486903060', weight: 0.0}, {hs: '8486903090', weight: 0.0}, {hs: '8486904000', weight: 0.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
       - {id: n2, name: "3D 검사장비·모듈 — 전국", kind: national, nature: mixed, products: [{hs: '9031100000', weight: 0.0}, {hs: '9031499000', weight: 0.0}, {hs: '9031802000', weight: 0.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 86건 — 최근 글 번호 35723, 38004, 38014, 38763, 38773, 40147, 40157, 41628, 41648, 41650, 43918, 43928"}]
@@ -882,7 +878,7 @@ stocks:
     reviewed: false
     sector: "반도체 장비"
     flows:
-      - {id: s1, name: "CMP 슬러리 — 서구·안성시·KR-44-gongju", kind: sigungu, nature: company, regions: [KR-28-seo, KR-41-anseong, KR-44-gongju], products: [{hs: '340540', weight: 1.0}], basis: "채널 글 11건(2025-10~2026-07) · 회사 출하"}
+      - {id: s1, name: "CMP 슬러리 — 서구·안성시·공주시", kind: sigungu, nature: company, regions: [KR-28-seo, KR-41-anseong, KR-44-gongju], products: [{hs: '340540', weight: 1.0}], basis: "채널 글 11건(2025-10~2026-07) · 회사 출하"}
       - {id: n1, name: "반도체 장비 — 전국", kind: national, nature: mixed, products: [{hs: '8486101000', weight: 0.0}, {hs: '8486102000', weight: 0.0}, {hs: '8486103010', weight: 0.0}, {hs: '8486103020', weight: 0.0}, {hs: '8486103090', weight: 0.0}, {hs: '8486104010', weight: 0.0}, {hs: '8486104020', weight: 0.0}, {hs: '8486105010', weight: 0.0}, {hs: '8486105030', weight: 0.0}, {hs: '8486109000', weight: 0.0}, {hs: '8486201000', weight: 0.0}, {hs: '8486202100', weight: 0.0}, {hs: '8486202200', weight: 0.0}, {hs: '8486202300', weight: 0.0}, {hs: '8486203000', weight: 0.0}, {hs: '8486204000', weight: 0.0}, {hs: '8486205000', weight: 0.0}, {hs: '8486206010', weight: 0.0}, {hs: '8486206020', weight: 0.0}, {hs: '8486206091', weight: 0.0}, {hs: '8486206099', weight: 0.0}, {hs: '8486207000', weight: 0.0}, {hs: '8486208100', weight: 0.0}, {hs: '8486208410', weight: 0.0}, {hs: '8486208420', weight: 0.0}, {hs: '8486208490', weight: 0.0}, {hs: '8486209100', weight: 0.0}, {hs: '8486209200', weight: 0.0}, {hs: '8486209310', weight: 0.0}, {hs: '8486209320', weight: 0.0}, {hs: '8486209390', weight: 0.0}, {hs: '8486209400', weight: 0.0}, {hs: '8486209500', weight: 0.0}, {hs: '8486209600', weight: 0.0}, {hs: '8486209900', weight: 0.0}, {hs: '8486301010', weight: 0.0}, {hs: '8486301020', weight: 0.0}, {hs: '8486301031', weight: 0.0}, {hs: '8486301040', weight: 0.0}, {hs: '8486301050', weight: 0.0}, {hs: '8486301060', weight: 0.0}, {hs: '8486301090', weight: 0.0}, {hs: '8486302010', weight: 0.0}, {hs: '8486302020', weight: 0.0}, {hs: '8486302031', weight: 0.0}, {hs: '8486302050', weight: 0.0}, {hs: '8486302060', weight: 0.0}, {hs: '8486302070', weight: 0.0}, {hs: '8486302090', weight: 0.0}, {hs: '8486401010', weight: 0.0}, {hs: '8486401030', weight: 0.0}, {hs: '8486401040', weight: 0.0}, {hs: '8486401090', weight: 0.0}, {hs: '8486402010', weight: 0.0}, {hs: '8486402020', weight: 0.0}, {hs: '8486402031', weight: 0.0}, {hs: '8486402039', weight: 0.0}, {hs: '8486402040', weight: 0.0}, {hs: '8486402070', weight: 0.0}, {hs: '8486402080', weight: 0.0}, {hs: '8486402091', weight: 0.0}, {hs: '8486402093', weight: 0.0}, {hs: '8486402095', weight: 0.0}, {hs: '8486402099', weight: 0.0}, {hs: '8486403010', weight: 0.0}, {hs: '8486403020', weight: 0.0}, {hs: '8486403090', weight: 0.0}, {hs: '8486901000', weight: 0.0}, {hs: '8486902030', weight: 0.0}, {hs: '8486902040', weight: 0.0}, {hs: '8486902090', weight: 0.0}, {hs: '8486903050', weight: 0.0}, {hs: '8486903060', weight: 0.0}, {hs: '8486903090', weight: 0.0}, {hs: '8486904000', weight: 0.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
       - {id: n2, name: "CMP 슬러리 — 전국", kind: national, nature: mixed, products: [{hs: '3405400000', weight: 0.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 87건 — 최근 글 번호 35705, 38004, 38006, 38763, 38765, 40147, 40149, 41628, 41630, 41632, 43918, 43920"}]
@@ -921,7 +917,7 @@ stocks:
     reviewed: false
     sector: "반도체 후공정"
     flows:
-      - {id: s1, name: "웨이퍼레벨패키지 — 청주시·음성군·KR-43-goesan", kind: sigungu, nature: company, regions: [KR-43-cheongju, KR-43-eumseong, KR-43-goesan], products: [{hs: '854231', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
+      - {id: s1, name: "웨이퍼레벨패키지 — 청주시·음성군", kind: sigungu, nature: company, regions: [KR-43-cheongju, KR-43-eumseong], products: [{hs: '854231', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
       - {id: n1, name: "모노리식 집적회로 — 전국", kind: national, nature: company, products: [{hs: '8542311000', weight: 0.0}], basis: "채널 글 38건(2025-10~2026-07) · 회사 출하 · 시군구 회사 흐름과 겹쳐 가중치 0"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 31209, 33495, 34223, 34909, 35695, 35697, 38002, 38761, 40145, 41622, 41624, 43916"}]
   - code: '036540'
@@ -1048,18 +1044,16 @@ stocks:
     reviewed: false
     sector: "소재"
     flows:
-      - {id: s1, name: "커패시터 필름 — 청주시", kind: sigungu, nature: company, regions: [KR-43-cheongju], products: [{hs: '392020', weight: 0.5}], basis: "채널 글 62건(2025-12~2026-07) · 회사 출하"}
-      - {id: s2, name: "커패시터 필름 — 청주시", kind: sigungu, nature: company, regions: [KR-43-cheongju], products: [{hs: '392094', weight: 0.5}], basis: "채널 글 62건(2025-12~2026-07) · 회사 출하"}
-      - {id: n1, name: "커패시터 필름 — 전국", kind: national, nature: company, products: [{hs: '3920200000', weight: 0.0}, {hs: '3920940000', weight: 0.0}], basis: "채널 글 31건(2025-12~2026-07) · 회사 출하 · 시군구 회사 흐름과 겹쳐 가중치 0"}
+      - {id: s1, name: "커패시터 필름 — 청주시", kind: sigungu, nature: company, regions: [KR-43-cheongju], products: [{hs: '392020', weight: 0.3333}], basis: "채널 글 62건(2025-12~2026-07) · 회사 출하"}
+      - {id: n1, name: "커패시터 필름 — 전국", kind: national, nature: company, products: [{hs: '3920200000', weight: 0.3333}, {hs: '3920940000', weight: 0.3333}], basis: "채널 글 31건(2025-12~2026-07) · 회사 출하"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 93건 — 최근 글 번호 42270, 42272, 42274, 42276, 42278, 42280, 42282, 42284, 42286, 42288, 42290, 44066"}]
   - code: '120110'
     name: 코오롱인더
     reviewed: false
     sector: "소재"
     flows:
-      - {id: s1, name: "아라미드 섬유 — 구미시", kind: sigungu, nature: mixed, regions: [KR-47-gumi], products: [{hs: '540211', weight: 0.5}], basis: "채널 글 30건(2025-10~2026-07) · 업황 혼합"}
-      - {id: n1, name: "아라미드 섬유 — 전국", kind: national, nature: mixed, products: [{hs: '5402110000', weight: 0.5}], basis: "채널 글 76건(2025-10~2026-07) · 업황 혼합"}
-    evidence: [{kind: channel, note: "@BeOn_BeClear 글 106건 — 최근 글 번호 38108, 38865, 38867, 40249, 40251, 42082, 42084, 42086, 42088, 42090, 44020, 44022"}]
+      - {id: n1, name: "아라미드 섬유 — 전국", kind: national, nature: mixed, products: [{hs: '5402110000', weight: 1.0}], basis: "채널 글 76건(2025-10~2026-07) · 업황 혼합"}
+    evidence: [{kind: channel, note: "@BeOn_BeClear 글 76건 — 최근 글 번호 36155, 36157, 38106, 38108, 38865, 38867, 40249, 40251, 42082, 42084, 44020, 44022"}]
   - code: '178920'
     name: PI첨단소재
     reviewed: false
@@ -1124,7 +1118,7 @@ stocks:
     reviewed: false
     sector: "식품"
     flows:
-      - {id: s1, name: "라면 — 성북구·밀양시·원주시·익산시", kind: sigungu, nature: company, regions: [KR-11-seongbuk, KR-48-miryang, KR-51-wonju, KR-52-iksan], products: [{hs: '190211', weight: 0.3333}], basis: "채널 글 132건(2025-10~2026-07) · 회사 출하"}
+      - {id: s1, name: "라면 — 익산시", kind: sigungu, nature: company, regions: [KR-52-iksan], products: [{hs: '190211', weight: 0.3333}], basis: "채널 글 44건(2025-10~2026-07) · 회사 출하"}
       - {id: s2, name: "라면 — 성북구·밀양시·원주시·익산시", kind: sigungu, nature: company, regions: [KR-11-seongbuk, KR-48-miryang, KR-51-wonju, KR-52-iksan], products: [{hs: '190230', weight: 0.3333}], basis: "채널 글 142건(2025-10~2026-07) · 회사 출하"}
       - {id: s3, name: "소스·장류 — 성북구·밀양시·원주시·익산시", kind: sigungu, nature: company, regions: [KR-11-seongbuk, KR-48-miryang, KR-51-wonju, KR-52-iksan], products: [{hs: '210390', weight: 0.3333}], basis: "채널 글 50건(2025-10~2026-07) · 회사 출하"}
       - {id: n1, name: "라면 — 전국", kind: national, nature: mixed, products: [{hs: '1902111000', weight: 0.0}, {hs: '1902119000', weight: 0.0}, {hs: '1902301010', weight: 0.0}], basis: "채널 글 570건(2025-10~2026-07) · 업황 혼합"}
@@ -1142,8 +1136,7 @@ stocks:
     reviewed: false
     sector: "식품"
     flows:
-      - {id: s1, name: "라면 — 강서구·사상구·안양시·구미시", kind: sigungu, nature: company, regions: [KR-26-gangseo, KR-26-sasang, KR-41-anyang, KR-47-gumi], products: [{hs: '190211', weight: 0.5}], basis: "채널 글 74건(2025-10~2026-07) · 회사 출하"}
-      - {id: s2, name: "라면 — 강서구·사상구·안양시·구미시", kind: sigungu, nature: company, regions: [KR-26-gangseo, KR-26-sasang, KR-41-anyang, KR-47-gumi], products: [{hs: '190230', weight: 0.5}], basis: "채널 글 74건(2025-10~2026-07) · 회사 출하"}
+      - {id: s1, name: "라면 — 강서구·사상구·안양시·구미시", kind: sigungu, nature: company, regions: [KR-26-gangseo, KR-26-sasang, KR-41-anyang, KR-47-gumi], products: [{hs: '190230', weight: 1.0}], basis: "채널 글 74건(2025-10~2026-07) · 회사 출하"}
       - {id: n1, name: "라면 — 전국", kind: national, nature: mixed, products: [{hs: '1902111000', weight: 0.0}, {hs: '1902119000', weight: 0.0}, {hs: '1902301010', weight: 0.0}], basis: "채널 글 570건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 644건 — 최근 글 번호 44362, 44364, 44366, 44368, 44370, 44372, 44374, 44376, 44378, 44380, 44382, 44384"}]
   - code: '005180'
@@ -1159,8 +1152,7 @@ stocks:
     reviewed: false
     sector: "식품"
     flows:
-      - {id: s1, name: "라면 — 평택시", kind: sigungu, nature: company, regions: [KR-41-pyeongtaek], products: [{hs: '190211', weight: 0.5}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
-      - {id: s2, name: "라면 — 평택시", kind: sigungu, nature: company, regions: [KR-41-pyeongtaek], products: [{hs: '190230', weight: 0.5}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
+      - {id: s1, name: "라면 — 평택시", kind: sigungu, nature: company, regions: [KR-41-pyeongtaek], products: [{hs: '190230', weight: 1.0}], basis: "채널 글 20건(2025-10~2026-07) · 회사 출하"}
       - {id: n1, name: "라면 — 전국", kind: national, nature: mixed, products: [{hs: '1902111000', weight: 0.0}, {hs: '1902119000', weight: 0.0}, {hs: '1902301010', weight: 0.0}], basis: "채널 글 76건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 96건 — 최근 글 번호 38442, 38444, 39201, 39203, 40585, 40587, 43274, 43276, 43354, 43358, 44356, 44358"}]
   - code: '017810'
@@ -1183,7 +1175,7 @@ stocks:
     reviewed: false
     sector: "식품"
     flows:
-      - {id: s1, name: "핫도그 — 강남구·서천군", kind: sigungu, nature: company, regions: [KR-11-gangnam, KR-44-seocheon], products: [{hs: '160290', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
+      - {id: s1, name: "핫도그 — 강남구", kind: sigungu, nature: company, regions: [KR-11-gangnam], products: [{hs: '160290', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
       - {id: s2, name: "핫도그 — 강남구·서천군", kind: sigungu, nature: company, regions: [KR-11-gangnam, KR-44-seocheon], products: [{hs: '190590', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
       - {id: n1, name: "핫도그 — 전국", kind: national, nature: company, products: [{hs: '1602901000', weight: 0.0}, {hs: '1905901090', weight: 0.0}], basis: "채널 글 114건(2025-10~2026-07) · 회사 출하 · 시군구 회사 흐름과 겹쳐 가중치 0"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 124건 — 최근 글 번호 39195, 39197, 40577, 40579, 40581, 43256, 43258, 43260, 43262, 44348, 44350, 44352"}]
@@ -1365,7 +1357,7 @@ stocks:
     reviewed: false
     sector: "의료기기"
     flows:
-      - {id: s1, name: "진단시약 — KR-11-gangseo", kind: sigungu, nature: company, regions: [KR-11-gangseo], products: [{hs: '382219', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
+      - {id: s1, name: "진단시약 — 강서구", kind: sigungu, nature: company, regions: [KR-11-gangseo], products: [{hs: '382219', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
       - {id: n1, name: "면역진단기기 — 전국", kind: national, nature: mixed, products: [{hs: '9018191000', weight: 0.0}, {hs: '9018901000', weight: 0.0}, {hs: '9027509000', weight: 0.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
       - {id: n2, name: "진단시약·키트 — 전국", kind: national, nature: mixed, products: [{hs: '3822192099', weight: 0.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 86건 — 최근 글 번호 37266, 38402, 38412, 39161, 39171, 40545, 40555, 43160, 43178, 43200, 44316, 44326"}]
@@ -1407,7 +1399,7 @@ stocks:
     reviewed: false
     sector: "의료기기"
     flows:
-      - {id: s1, name: "세포 세척장비 — KR-11-geumcheon", kind: sigungu, nature: company, regions: [KR-11-geumcheon], products: [{hs: '847989', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
+      - {id: s1, name: "세포 세척장비 — 금천구", kind: sigungu, nature: company, regions: [KR-11-geumcheon], products: [{hs: '847989', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
       - {id: n1, name: "세포 세척장비 — 전국", kind: national, nature: company, products: [{hs: '8479899099', weight: 0.0}], basis: "채널 글 38건(2025-10~2026-07) · 회사 출하 · 시군구 회사 흐름과 겹쳐 가중치 0"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 32481, 33835, 34563, 35249, 37020, 37022, 38344, 39103, 40487, 42954, 42956, 44258"}]
   - code: '086450'
@@ -1918,10 +1910,8 @@ stocks:
     reviewed: false
     sector: "제약"
     flows:
-      - {id: s1, name: "보툴리눔 톡신 — 화성시", kind: sigungu, nature: company, regions: [KR-41-hwaseong], products: [{hs: '300212', weight: 0.25}], basis: "채널 글 20건(2025-11~2026-07) · 회사 출하"}
-      - {id: s2, name: "보툴리눔 톡신 — 화성시", kind: sigungu, nature: company, regions: [KR-41-hwaseong], products: [{hs: '300249', weight: 0.25}], basis: "채널 글 25건(2025-10~2026-07) · 회사 출하"}
-      - {id: s3, name: "보툴리눔 톡신 — 화성시", kind: sigungu, nature: company, regions: [KR-41-hwaseong], products: [{hs: '300251', weight: 0.25}], basis: "채널 글 20건(2025-11~2026-07) · 회사 출하"}
-      - {id: s4, name: "보툴리눔 톡신 — 화성시", kind: sigungu, nature: company, regions: [KR-41-hwaseong], products: [{hs: '300290', weight: 0.25}], basis: "채널 글 20건(2025-11~2026-07) · 회사 출하"}
+      - {id: s1, name: "보툴리눔 톡신 — 화성시", kind: sigungu, nature: company, regions: [KR-41-hwaseong], products: [{hs: '300249', weight: 0.5}], basis: "채널 글 25건(2025-10~2026-07) · 회사 출하"}
+      - {id: s2, name: "보툴리눔 톡신 — 화성시", kind: sigungu, nature: company, regions: [KR-41-hwaseong], products: [{hs: '300290', weight: 0.5}], basis: "채널 글 20건(2025-11~2026-07) · 회사 출하"}
       - {id: n1, name: "보툴리눔 톡신 — 전국", kind: national, nature: mixed, products: [{hs: '3002122000', weight: 0.0}, {hs: '3002491000', weight: 0.0}, {hs: '3002493000', weight: 0.0}, {hs: '3002510000', weight: 0.0}, {hs: '3002902000', weight: 0.0}], basis: "채널 글 228건(2025-10~2026-07) · 업황 혼합"}
       - {id: n2, name: "필러 — 전국", kind: national, nature: mixed, products: [{hs: '3304999000', weight: 0.0}, {hs: '9021310000', weight: 0.0}], basis: "채널 글 228건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 481건 — 최근 글 번호 44186, 44188, 44190, 44192, 44194, 44196, 44198, 44200, 44202, 44204, 44206, 44208"}]
@@ -1938,11 +1928,8 @@ stocks:
     reviewed: false
     sector: "제약·의료"
     flows:
-      - {id: s1, name: "태반 주사제 — 강릉시", kind: sigungu, nature: company, regions: [KR-51-gangneung], products: [{hs: '300490', weight: 0.2}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
-      - {id: s2, name: "마스크팩 — 강릉시", kind: sigungu, nature: company, regions: [KR-51-gangneung], products: [{hs: '330710', weight: 0.2}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
-      - {id: s3, name: "마스크팩 — 강릉시", kind: sigungu, nature: company, regions: [KR-51-gangneung], products: [{hs: '330730', weight: 0.2}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
-      - {id: s4, name: "마스크팩 — 강릉시", kind: sigungu, nature: company, regions: [KR-51-gangneung], products: [{hs: '330741', weight: 0.2}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
-      - {id: s5, name: "마스크팩 — 강릉시", kind: sigungu, nature: company, regions: [KR-51-gangneung], products: [{hs: '330790', weight: 0.2}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
+      - {id: s1, name: "태반 주사제 — 강릉시", kind: sigungu, nature: company, regions: [KR-51-gangneung], products: [{hs: '300490', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
+      - {id: s2, name: "마스크팩 — 강릉시", kind: sigungu, nature: company, regions: [KR-51-gangneung], products: [{hs: '330790', weight: 0.5}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
       - {id: n1, name: "필러 — 전국", kind: national, nature: mixed, products: [{hs: '3304999000', weight: 0.0}, {hs: '9021310000', weight: 0.0}], basis: "채널 글 228건(2025-10~2026-07) · 업황 혼합"}
       - {id: n2, name: "가정용 미용기기 — 전국", kind: national, nature: mixed, products: [{hs: '8543701000', weight: 0.0}, {hs: '8543702020', weight: 0.0}, {hs: '8543709070', weight: 0.0}, {hs: '8543901000', weight: 0.0}], basis: "채널 글 76건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 324건 — 최근 글 번호 42770, 42772, 43232, 43234, 44198, 44200, 44202, 44204, 44206, 44208, 44342, 44344"}]
@@ -2153,13 +2140,12 @@ stocks:
     reviewed: false
     sector: "철강"
     flows:
-      - {id: s1, name: "H형강(300mm 미만)·H형강(300~600mm) 외 2 — 동구", kind: sigungu, nature: company, regions: [KR-28-dong], products: [{hs: '721633', weight: 0.1428}], basis: "채널 글 40건(2025-10~2026-07) · 회사 출하"}
-      - {id: s2, name: "대구경 강관 — 북구·울주군", kind: sigungu, nature: company, regions: [KR-31-buk, KR-31-ulju], products: [{hs: '730511', weight: 0.1428}], basis: "채널 글 6건(2026-05~2026-07) · 회사 출하"}
-      - {id: s3, name: "대구경 강관 — 북구·울주군", kind: sigungu, nature: company, regions: [KR-31-buk, KR-31-ulju], products: [{hs: '730512', weight: 0.1428}], basis: "채널 글 6건(2026-05~2026-07) · 회사 출하"}
-      - {id: s4, name: "대구경 강관 — 북구·울주군", kind: sigungu, nature: company, regions: [KR-31-buk, KR-31-ulju], products: [{hs: '730519', weight: 0.1428}], basis: "채널 글 6건(2026-05~2026-07) · 회사 출하"}
-      - {id: s5, name: "대구경 강관 — 북구·울주군", kind: sigungu, nature: company, regions: [KR-31-buk, KR-31-ulju], products: [{hs: '730520', weight: 0.1428}], basis: "채널 글 6건(2026-05~2026-07) · 회사 출하"}
-      - {id: s6, name: "대구경 강관 — 북구·울주군", kind: sigungu, nature: company, regions: [KR-31-buk, KR-31-ulju], products: [{hs: '730531', weight: 0.1428}], basis: "채널 글 6건(2026-05~2026-07) · 회사 출하"}
-      - {id: s7, name: "대구경 강관 — 북구·울주군", kind: sigungu, nature: company, regions: [KR-31-buk, KR-31-ulju], products: [{hs: '730539', weight: 0.1428}], basis: "채널 글 6건(2026-05~2026-07) · 회사 출하"}
+      - {id: s1, name: "H형강(300mm 미만)·H형강(300~600mm) 외 2 — 동구", kind: sigungu, nature: company, regions: [KR-28-dong], products: [{hs: '721633', weight: 0.1666}], basis: "채널 글 40건(2025-10~2026-07) · 회사 출하"}
+      - {id: s2, name: "대구경 강관 — 북구·울주군", kind: sigungu, nature: company, regions: [KR-31-buk, KR-31-ulju], products: [{hs: '730511', weight: 0.1666}], basis: "채널 글 6건(2026-05~2026-07) · 회사 출하"}
+      - {id: s3, name: "대구경 강관 — 북구", kind: sigungu, nature: company, regions: [KR-31-buk], products: [{hs: '730512', weight: 0.1666}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
+      - {id: s4, name: "대구경 강관 — 북구", kind: sigungu, nature: company, regions: [KR-31-buk], products: [{hs: '730519', weight: 0.1666}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
+      - {id: s5, name: "대구경 강관 — 북구·울주군", kind: sigungu, nature: company, regions: [KR-31-buk, KR-31-ulju], products: [{hs: '730531', weight: 0.1666}], basis: "채널 글 6건(2026-05~2026-07) · 회사 출하"}
+      - {id: s6, name: "대구경 강관 — 북구", kind: sigungu, nature: company, regions: [KR-31-buk], products: [{hs: '730539', weight: 0.1666}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
       - {id: n1, name: "H형강(300mm 미만)·H형강(300~600mm) 외 2 — 전국", kind: national, nature: company, products: [{hs: '7216333000', weight: 0.0}, {hs: '7216334000', weight: 0.0}, {hs: '7216335000', weight: 0.0}], basis: "채널 글 152건(2025-10~2026-07) · 회사 출하 · 시군구 회사 흐름과 겹쳐 가중치 0"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 198건 — 최근 글 번호 43604, 43606, 43608, 43610, 43612, 43614, 43616, 43618, 44460, 44462, 44464, 44466"}]
   - code: '005010'
@@ -2167,36 +2153,27 @@ stocks:
     reviewed: false
     sector: "철강"
     flows:
-      - {id: s1, name: "대구경 강관 — 강남구", kind: sigungu, nature: company, regions: [KR-11-gangnam], products: [{hs: '730511', weight: 0.1666}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
-      - {id: s2, name: "대구경 강관 — 강남구", kind: sigungu, nature: company, regions: [KR-11-gangnam], products: [{hs: '730512', weight: 0.1666}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
-      - {id: s3, name: "대구경 강관 — 강남구", kind: sigungu, nature: company, regions: [KR-11-gangnam], products: [{hs: '730519', weight: 0.1666}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
-      - {id: s4, name: "대구경 강관 — 강남구", kind: sigungu, nature: company, regions: [KR-11-gangnam], products: [{hs: '730520', weight: 0.1666}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
-      - {id: s5, name: "대구경 강관 — 강남구", kind: sigungu, nature: company, regions: [KR-11-gangnam], products: [{hs: '730531', weight: 0.1666}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
-      - {id: s6, name: "대구경 강관 — 강남구", kind: sigungu, nature: company, regions: [KR-11-gangnam], products: [{hs: '730539', weight: 0.1666}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
+      - {id: s1, name: "대구경 강관 — 강남구", kind: sigungu, nature: company, regions: [KR-11-gangnam], products: [{hs: '730511', weight: 0.25}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
+      - {id: s2, name: "대구경 강관 — 강남구", kind: sigungu, nature: company, regions: [KR-11-gangnam], products: [{hs: '730512', weight: 0.25}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
+      - {id: s3, name: "대구경 강관 — 강남구", kind: sigungu, nature: company, regions: [KR-11-gangnam], products: [{hs: '730519', weight: 0.25}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
+      - {id: s4, name: "대구경 강관 — 강남구", kind: sigungu, nature: company, regions: [KR-11-gangnam], products: [{hs: '730531', weight: 0.25}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 3건 — 최근 글 번호 33097, 37642, 43576"}]
   - code: '008970'
     name: KBI동양철관
     reviewed: false
     sector: "철강"
     flows:
-      - {id: s1, name: "대구경 강관 — 천안시", kind: sigungu, nature: company, regions: [KR-44-cheonan], products: [{hs: '730511', weight: 0.1666}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
-      - {id: s2, name: "대구경 강관 — 천안시", kind: sigungu, nature: company, regions: [KR-44-cheonan], products: [{hs: '730512', weight: 0.1666}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
-      - {id: s3, name: "대구경 강관 — 천안시", kind: sigungu, nature: company, regions: [KR-44-cheonan], products: [{hs: '730519', weight: 0.1666}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
-      - {id: s4, name: "대구경 강관 — 천안시", kind: sigungu, nature: company, regions: [KR-44-cheonan], products: [{hs: '730520', weight: 0.1666}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
-      - {id: s5, name: "대구경 강관 — 천안시", kind: sigungu, nature: company, regions: [KR-44-cheonan], products: [{hs: '730531', weight: 0.1666}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
-      - {id: s6, name: "대구경 강관 — 천안시", kind: sigungu, nature: company, regions: [KR-44-cheonan], products: [{hs: '730539', weight: 0.1666}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
+      - {id: s1, name: "대구경 강관 — 천안시", kind: sigungu, nature: company, regions: [KR-44-cheonan], products: [{hs: '730511', weight: 0.3333}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
+      - {id: s2, name: "대구경 강관 — 천안시", kind: sigungu, nature: company, regions: [KR-44-cheonan], products: [{hs: '730520', weight: 0.3333}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
+      - {id: s3, name: "대구경 강관 — 천안시", kind: sigungu, nature: company, regions: [KR-44-cheonan], products: [{hs: '730531', weight: 0.3333}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 3건 — 최근 글 번호 33099, 37644, 43578"}]
   - code: '092790'
     name: 넥스틸
     reviewed: false
     sector: "철강"
     flows:
-      - {id: s1, name: "대구경 강관 — 경주시", kind: sigungu, nature: company, regions: [KR-47-gyeongju], products: [{hs: '730511', weight: 0.1666}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
-      - {id: s2, name: "대구경 강관 — 경주시", kind: sigungu, nature: company, regions: [KR-47-gyeongju], products: [{hs: '730512', weight: 0.1666}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
-      - {id: s3, name: "대구경 강관 — 경주시", kind: sigungu, nature: company, regions: [KR-47-gyeongju], products: [{hs: '730519', weight: 0.1666}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
-      - {id: s4, name: "대구경 강관 — 경주시", kind: sigungu, nature: company, regions: [KR-47-gyeongju], products: [{hs: '730520', weight: 0.1666}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
-      - {id: s5, name: "대구경 강관 — 경주시", kind: sigungu, nature: company, regions: [KR-47-gyeongju], products: [{hs: '730531', weight: 0.1666}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
-      - {id: s6, name: "대구경 강관 — 경주시", kind: sigungu, nature: company, regions: [KR-47-gyeongju], products: [{hs: '730539', weight: 0.1666}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
+      - {id: s1, name: "대구경 강관 — 경주시", kind: sigungu, nature: company, regions: [KR-47-gyeongju], products: [{hs: '730512', weight: 0.5}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
+      - {id: s2, name: "대구경 강관 — 경주시", kind: sigungu, nature: company, regions: [KR-47-gyeongju], products: [{hs: '730531', weight: 0.5}], basis: "채널 글 3건(2026-05~2026-07) · 회사 출하"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 3건 — 최근 글 번호 33101, 37646, 43580"}]
   - code: '306200'
     name: 세아제강
@@ -2301,7 +2278,7 @@ stocks:
     reviewed: false
     sector: "풍력"
     flows:
-      - {id: s1, name: "풍력 하부구조물 — KR-48-goseong", kind: sigungu, nature: company, regions: [KR-48-goseong], products: [{hs: '730890', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
+      - {id: s1, name: "풍력 하부구조물 — 고성군", kind: sigungu, nature: company, regions: [KR-48-goseong], products: [{hs: '730890', weight: 1.0}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
       - {id: n1, name: "풍력 하부구조물 — 전국", kind: national, nature: company, products: [{hs: '7308909000', weight: 0.0}], basis: "채널 글 38건(2025-10~2026-07) · 회사 출하 · 시군구 회사 흐름과 겹쳐 가중치 0"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 48건 — 최근 글 번호 32069, 33715, 34443, 35129, 36603, 36605, 38224, 38983, 40367, 42530, 42532, 44138"}]
   - code: '093190'
@@ -2492,12 +2469,11 @@ stocks:
     reviewed: false
     sector: "화장품·뷰티기기"
     flows:
-      - {id: s1, name: "마스크팩 — 송파구", kind: sigungu, nature: company, regions: [KR-11-songpa], products: [{hs: '330710', weight: 0.1666}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
-      - {id: s2, name: "마스크팩 — 송파구", kind: sigungu, nature: company, regions: [KR-11-songpa], products: [{hs: '330730', weight: 0.1666}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
-      - {id: s3, name: "마스크팩 — 송파구", kind: sigungu, nature: company, regions: [KR-11-songpa], products: [{hs: '330741', weight: 0.1666}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
-      - {id: s4, name: "마스크팩 — 송파구", kind: sigungu, nature: company, regions: [KR-11-songpa], products: [{hs: '330790', weight: 0.1666}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
-      - {id: s5, name: "가정용 미용기기 — 송파구", kind: sigungu, nature: company, regions: [KR-11-songpa], products: [{hs: '854370', weight: 0.1666}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
-      - {id: s6, name: "가정용 미용기기 — 송파구", kind: sigungu, nature: company, regions: [KR-11-songpa], products: [{hs: '854390', weight: 0.1666}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
+      - {id: s1, name: "마스크팩 — 송파구", kind: sigungu, nature: company, regions: [KR-11-songpa], products: [{hs: '330710', weight: 0.2}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
+      - {id: s2, name: "마스크팩 — 송파구", kind: sigungu, nature: company, regions: [KR-11-songpa], products: [{hs: '330730', weight: 0.2}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
+      - {id: s3, name: "마스크팩 — 송파구", kind: sigungu, nature: company, regions: [KR-11-songpa], products: [{hs: '330790', weight: 0.2}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
+      - {id: s4, name: "가정용 미용기기 — 송파구", kind: sigungu, nature: company, regions: [KR-11-songpa], products: [{hs: '854370', weight: 0.2}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
+      - {id: s5, name: "가정용 미용기기 — 송파구", kind: sigungu, nature: company, regions: [KR-11-songpa], products: [{hs: '854390', weight: 0.2}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
       - {id: n1, name: "마스크팩 — 전국", kind: national, nature: mixed, products: [{hs: '3307109000', weight: 0.0}, {hs: '3307301000', weight: 0.0}, {hs: '3307410000', weight: 0.0}, {hs: '3307901000', weight: 0.0}, {hs: '3307904000', weight: 0.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
       - {id: n2, name: "가정용 미용기기 — 전국", kind: national, nature: mixed, products: [{hs: '8543701000', weight: 0.0}, {hs: '8543702020', weight: 0.0}, {hs: '8543709070', weight: 0.0}, {hs: '8543901000', weight: 0.0}], basis: "채널 글 76건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 134건 — 최근 글 번호 39189, 40439, 40571, 40573, 42756, 42758, 43232, 43234, 43236, 44210, 44342, 44344"}]
@@ -2528,11 +2504,9 @@ stocks:
     reviewed: false
     sector: "화학"
     flows:
-      - {id: s1, name: "페놀계 산화방지제 — 남구", kind: sigungu, nature: company, regions: [KR-31-nam], products: [{hs: '291814', weight: 0.25}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
-      - {id: s2, name: "페놀계 산화방지제 — 남구", kind: sigungu, nature: company, regions: [KR-31-nam], products: [{hs: '291816', weight: 0.25}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
-      - {id: s3, name: "페놀계 산화방지제 — 남구", kind: sigungu, nature: company, regions: [KR-31-nam], products: [{hs: '291829', weight: 0.25}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
-      - {id: n1, name: "페놀계 산화방지제 — 전국", kind: national, nature: company, products: [{hs: '2918140000', weight: 0.0}, {hs: '2918162000', weight: 0.0}, {hs: '2918299090', weight: 0.0}], basis: "채널 글 38건(2025-10~2026-07) · 회사 출하 · 시군구 회사 흐름과 겹쳐 가중치 0"}
-      - {id: n2, name: "산화방지제(조제품) — 전국", kind: national, nature: company, products: [{hs: '3812391000', weight: 0.25}], basis: "채널 글 38건(2025-10~2026-07) · 회사 출하"}
+      - {id: s1, name: "페놀계 산화방지제 — 남구", kind: sigungu, nature: company, regions: [KR-31-nam], products: [{hs: '291829', weight: 0.2}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
+      - {id: n1, name: "페놀계 산화방지제 — 전국", kind: national, nature: company, products: [{hs: '2918140000', weight: 0.2}, {hs: '2918162000', weight: 0.2}, {hs: '2918299090', weight: 0.2}], basis: "채널 글 38건(2025-10~2026-07) · 회사 출하"}
+      - {id: n2, name: "산화방지제(조제품) — 전국", kind: national, nature: company, products: [{hs: '3812391000', weight: 0.2}], basis: "채널 글 38건(2025-10~2026-07) · 회사 출하"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 86건 — 최근 글 번호 37526, 38502, 38506, 39261, 39265, 40645, 40649, 43452, 43456, 43460, 44416, 44420"}]
   - code: '011170'
     name: 롯데케미칼
@@ -2595,7 +2569,7 @@ stocks:
     flows:
       - {id: s1, name: "가성소다 — 여수시", kind: sigungu, nature: company, regions: [KR-46-yeosu], products: [{hs: '281512', weight: 0.3333}], basis: "채널 글 10건(2025-10~2026-07) · 회사 출하"}
       - {id: s2, name: "태양광 셀 — 진천군", kind: sigungu, nature: company, regions: [KR-43-jincheon], products: [{hs: '854142', weight: 0.3333}], basis: "채널 글 2건(2026-06~2026-07) · 회사 출하"}
-      - {id: s3, name: "태양광 모듈 — 음성군·진천군", kind: sigungu, nature: company, regions: [KR-43-eumseong, KR-43-jincheon], products: [{hs: '854143', weight: 0.3333}], basis: "채널 글 2건(2026-06~2026-07) · 회사 출하"}
+      - {id: s3, name: "태양광 모듈 — 진천군", kind: sigungu, nature: company, regions: [KR-43-jincheon], products: [{hs: '854143', weight: 0.3333}], basis: "채널 글 2건(2026-06~2026-07) · 회사 출하"}
       - {id: n1, name: "태양광 모듈 — 전국", kind: national, nature: mixed, products: [{hs: '8541430000', weight: 0.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
       - {id: n2, name: "가성소다 — 전국", kind: national, nature: mixed, products: [{hs: '2815120000', weight: 0.0}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
       - {id: n3, name: "태양광 셀 — 전국", kind: national, nature: mixed, products: [{hs: '8541420000', weight: 0.0}], basis: "채널 글 6건(2026-06~2026-07) · 업황 혼합"}
