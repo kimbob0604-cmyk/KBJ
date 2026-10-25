@@ -29,12 +29,13 @@ ROOT = Path(__file__).resolve().parents[3]
 FILE = ROOT / "config" / "knowledge" / "trade_map.yaml"
 
 
-def test_판_2는_300종목_산업·흐름이_있다() -> None:
+def test_판_3은_채널_근거_종목·산업·흐름이_있다() -> None:
     tm = load_trade_map()
-    # 판 2(사용자 결정 2026-10-21 — 300종목). 검토 전 출시 — 검토하면 reviewed: true
-    assert tm.version == 2 and len(tm.stocks) >= 300
+    # 판 3(사용자 결정 2026-10-22 — 채널 근거 재작성, 스키마는 version 2). 맥 검증 뒤 reviewed: true
+    assert tm.version == 2 and len(tm.stocks) >= 200
     assert all(isinstance(s.reviewed, bool) for s in tm.stocks)
     assert all(s.sector and s.flows for s in tm.stocks)
+    assert all(any(e.kind == "channel" for e in s.evidence) for s in tm.stocks)
 
 
 def test_파일_사이_대조_통과() -> None:

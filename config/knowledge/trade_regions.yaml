@@ -95,3 +95,41 @@ regions:
   - {id: KR-29-seo, sido_cd: "12", sgg_nm: 서구, valid_from: "2026-07"}
   - {id: KR-46-gokseong, sido_cd: "46", sgg_nm: 곡성군, valid_to: "2026-06"}
   - {id: KR-46-gokseong, sido_cd: "12", sgg_nm: 곡성군, valid_from: "2026-07"}
+  # 판 3 매핑(채널 근거)이 쓰는 시군구 — 2026-10-22
+  - {id: KR-11-guro, sido_cd: "11", sgg_nm: 구로구}
+  - {id: KR-11-gwangjin, sido_cd: "11", sgg_nm: 광진구}
+  - {id: KR-11-jongno, sido_cd: "11", sgg_nm: 종로구}
+  - {id: KR-11-mapo, sido_cd: "11", sgg_nm: 마포구}
+  - {id: KR-11-seocho, sido_cd: "11", sgg_nm: 서초구}
+  - {id: KR-11-seongbuk, sido_cd: "11", sgg_nm: 성북구}
+  - {id: KR-11-songpa, sido_cd: "11", sgg_nm: 송파구}
+  - {id: KR-26-gijang, sido_cd: "26", sgg_nm: 기장군}
+  - {id: KR-26-haeundae, sido_cd: "26", sgg_nm: 해운대구}
+  - {id: KR-26-sasang, sido_cd: "26", sgg_nm: 사상구}
+  - {id: KR-28-dong, sido_cd: "28", sgg_nm: 동구}
+  - {id: KR-28-jung, sido_cd: "28", sgg_nm: 중구}
+  - {id: KR-41-anyang, sido_cd: "41", sgg_nm: 안양시}
+  - {id: KR-41-bucheon, sido_cd: "41", sgg_nm: 부천시}
+  - {id: KR-41-gwangju, sido_cd: "41", sgg_nm: 광주시}
+  - {id: KR-41-namyangju, sido_cd: "41", sgg_nm: 남양주시}
+  - {id: KR-43-boeun, sido_cd: "43", sgg_nm: 보은군}
+  - {id: KR-43-jecheon, sido_cd: "43", sgg_nm: 제천시}
+  - {id: KR-43-jeungpyeong, sido_cd: "43", sgg_nm: 증평군}
+  - {id: KR-43-okcheon, sido_cd: "43", sgg_nm: 옥천군}
+  - {id: KR-44-boryeong, sido_cd: "44", sgg_nm: 보령시}
+  - {id: KR-44-nonsan, sido_cd: "44", sgg_nm: 논산시}
+  - {id: KR-44-seocheon, sido_cd: "44", sgg_nm: 서천군}
+  - {id: KR-44-yesan, sido_cd: "44", sgg_nm: 예산군}
+  - {id: KR-46-haenam, sido_cd: "46", sgg_nm: 해남군, valid_to: "2026-06"}
+  - {id: KR-46-haenam, sido_cd: "12", sgg_nm: 해남군, valid_from: "2026-07"}
+  - {id: KR-47-gimcheon, sido_cd: "47", sgg_nm: 김천시}
+  - {id: KR-48-jinju, sido_cd: "48", sgg_nm: 진주시}
+  - {id: KR-51-gangneung, sido_cd: "51", sgg_nm: 강릉시}
+  - {id: KR-52-gimje, sido_cd: "52", sgg_nm: 김제시}
+  # 판 3 hs-match 시군구 일치로 새로 들어온 흐름의 시군구 — 2026-10-26(이름은 시군구 API sggNm 실측)
+  - {id: KR-11-gangseo, sido_cd: "11", sgg_nm: 강서구}
+  - {id: KR-11-geumcheon, sido_cd: "11", sgg_nm: 금천구}
+  - {id: KR-43-goesan, sido_cd: "43", sgg_nm: 괴산군}
+  - {id: KR-44-gongju, sido_cd: "44", sgg_nm: 공주시}
+  - {id: KR-47-yeongju, sido_cd: "47", sgg_nm: 영주시}
+  - {id: KR-48-goseong, sido_cd: "48", sgg_nm: 고성군}
