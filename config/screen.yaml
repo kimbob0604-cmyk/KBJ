@@ -17,7 +17,7 @@ cis:
   max_rows: 60                       # 화면에 싣는 줄 상한(통과 먼저, 거래량 배수 큰 순)
   # 다음 날 계획(표에 함께 보이는 값 — 백테스트 기본값과 같다)
   plan:
-    stop_pct: 2.0                    # 최초 손절: 진입가 −2%
+    stop_pct: 2.0                    # 최초 손절 −2%(stop_mode pct 일 때·신호일 저가가 진입가 이상일 때)
     trail_pct: 8.0                   # 추적 손절: 보유 중 최고가 −8%
     gap_skip_pct: 8.0                # 다음 날 시가가 종가 +8% 넘으면 건너뜀(추격 금지)
     add_at_pct: 5.0                  # 불타기: +5% 이고 신고가일 때 처음 수량의 50% 한 번
@@ -38,9 +38,10 @@ cis_backtest:
   time_stop_gain_pct: 3.0
   flat_band_pct: 0.5           # |수익률| < 0.5% 는 '본전'으로 센다
   # 최초 손절 방식: pct = 진입가 −plan.stop_pct · signal_low = 신호일 저가 · atr = 진입가 − ATR(atr_days)×atr_mult
-  stop_mode: pct
+  # 2026-10-26 비교(3년·2,579종목): 일봉에서 −2~7% 는 다 −83% 이하, 확인·신호일 저가만 +6.5%(최대 낙폭 −37%)
+  stop_mode: signal_low
   atr_days: 14
   atr_mult: 2.0
   # 진입 방식: open = 다음 날 시가 · confirm = 다음 날 신호일 고가를 넘을 때(그 값 또는 더 높은 시가)
-  entry_mode: open
+  entry_mode: confirm
   costs: {fee_bps: 1.5, sell_tax_pct: 0.20, slippage_bps: 10}  # 수수료 양쪽·매도 거래세(2026)·슬리피지 양쪽

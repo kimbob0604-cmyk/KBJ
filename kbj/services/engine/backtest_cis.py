@@ -2,7 +2,10 @@
 
     python -m kbj.services.engine.backtest_cis [--years 3] [--stop 2] [--trail 8] [--vol-mult 3]
         [--lookback 20] [--no-regime] [--no-pyramid] [--capital 10000000] [--trades 20]
-        [--json|--csv]
+        [--json|--csv|--sweep [entry|exit]|--edge]
+
+`--sweep entry` 손절·진입 조합 비교, `--sweep exit` 지금 손절·진입에서 청산 규칙 비교, `--edge` 매매
+규칙 없이 신호 뒤 1·5·10·20일 움직임을 '전 종목·모든 날' 기준선과 비교(신호 자체에 우위가 있나).
 
 규칙·기본값은 config/screen.yaml(`cis`·`cis_backtest`), 계산은 엔진(`kbj.engines.screen.backtest` —
 스크리너 화면과 같은 판정). 결과는 화면(표준 출력)에만 — 저장하지 않는다. 주문 코드 없음.
@@ -33,8 +36,9 @@ from kbj.engines.screen.backtest import (
     summarize,
 )
 from kbj.engines.screen.cis import StockMeta, eligible
+from kbj.engines.screen.edge import HORIZONS, EdgeRow, baseline, edge_row, forward_of
 
-__all__ = ["SWEEP", "Loaded", "main", "report", "sweep_table"]
+__all__ = ["EXIT_SWEEP", "SWEEP", "Loaded", "edge_table", "main", "report", "sweep_table"]
 
 DAYS_PER_YEAR: Final = 250
 BATCH: Final = 300
@@ -113,7 +117,10 @@ def _args(argv: Sequence[str] | None) -> argparse.Namespace:
                     help="진입: open(다음 날 시가)·confirm(다음 날 신호일 고가 돌파)")  # fmt: skip
     ap.add_argument("--trades", type=int, default=15, help="끝에 보일 최근 거래 수")
     fmt = ap.add_mutually_exclusive_group()
-    fmt.add_argument("--sweep", action="store_true", help="손절·진입 조합 9개를 한 번에 — 비교 표")
+    fmt.add_argument("--sweep", nargs="?", const="entry", choices=("entry", "exit"), default=None,
+                     help="entry(기본): 손절·진입 조합 9개 · exit: 청산 규칙 비교")  # fmt: skip
+    fmt.add_argument("--edge", action="store_true",
+                     help="신호 우위 — 신호 뒤 n일 움직임 vs 전 종목·모든 날")  # fmt: skip
     fmt.add_argument("--json", action="store_true")
     fmt.add_argument("--csv", action="store_true", help="거래 목록 CSV")
     return ap.parse_args(argv)
@@ -165,13 +172,29 @@ SWEEP: Final[tuple[tuple[str, dict[str, Any], dict[str, Any]], ...]] = (
     ("확인·신호일 저가", {}, {"entry_mode": "confirm", "stop_mode": "signal_low"}),
     ("확인·ATR×2", {}, {"entry_mode": "confirm", "stop_mode": "atr", "atr_mult": 2.0}),
 )
+OFF: Final = {"time_stop_days": 250}
+NO_MA: Final = {"ma_exit_breaks": 10}
+# 청산 규칙 비교 — 진입·최초 손절은 지금 설정(config·옵션) 그대로
+EXIT_SWEEP: Final[tuple[tuple[str, dict[str, Any], dict[str, Any]], ...]] = (
+    ("지금 설정", {}, {}),
+    ("시간 손절 끔", {}, OFF),
+    ("이평 청산 끔", {}, NO_MA),
+    ("시간·이평 끔", {}, {**OFF, **NO_MA}),
+    ("20일선 청산", {}, {"ma_exit_days": 20}),
+    ("본전 이동 끔", {}, {"breakeven_at_pct": 1000.0}),
+    ("불타기 끔", {}, {"add_frac": 0.0}),
+    ("추적 −12%", {"trail_pct": 12.0}, {}),
+    ("추적 −15%·시간·이평 끔", {"trail_pct": 15.0}, {**OFF, **NO_MA}),
+)
+SWEEPS: Final = {"entry": SWEEP, "exit": EXIT_SWEEP}
 
 
 def sweep_table(rows: Sequence[tuple[str, Summary]]) -> str:
     head = (
         f"{'조합':<16} {'거래':>6} {'이김/짐/본전':>14} {'평균이익':>8} {'평균손실':>8} "
         f"{'손익비':>6} "
-        f"{'기대값':>7} {'총수익':>8} {'연':>7} {'최대낙폭':>8} {'보유일':>5}"
+        f"{'기대값':>7} {'평균R':>6} {'이익계수':>6} {'총수익':>8} {'연':>7} {'최대낙폭':>8} "
+        f"{'보유일':>5}"
     )
     out = [head]
     for name, s in rows:
@@ -179,7 +202,8 @@ def sweep_table(rows: Sequence[tuple[str, Summary]]) -> str:
         hold = "—" if s.avg_days is None else f"{s.avg_days:.1f}"
         out.append(
             f"{name:<16} {s.trades:>6,} {wl:>14} {_p(s.avg_win_pct):>8} {_p(s.avg_loss_pct):>8} "
-            f"{_x(s.payoff):>6} {_p(s.expectancy_pct, 2):>7} {_p(s.total_return_pct):>8} "
+            f"{_x(s.payoff):>6} {_p(s.expectancy_pct, 2):>7} {_x(s.avg_r):>6} "
+            f"{_x(s.profit_factor):>6} {_p(s.total_return_pct):>8} "
             f"{_p(s.cagr_pct):>7} {_p(s.mdd_pct):>8} {hold:>5}"
         )
     return "\n".join(out) + "\n"
@@ -252,6 +276,63 @@ def report(
     return "\n".join(lines) + "\n"
 
 
+def edge_table(rows: Sequence[EdgeRow]) -> str:
+    hs = " ".join(f"{f'{h}일':>7}" for h in HORIZONS)
+    far = HORIZONS[-1]
+    out = [
+        f"{'구분':<22} {'개수':>8} {hs} {f'{far}일 오른비율':>10} {f'{far}일 중앙':>8} "
+        f"{'최고(평균)':>9} {'최저(평균)':>9}"
+    ]
+    for r in rows:
+        ms = " ".join(f"{_p(m, 2):>7}" for m in r.mean)
+        out.append(
+            f"{r.label:<22} {r.n:>8,} {ms} {_p(r.up_pct[-1], 0, False):>10} "
+            f"{_p(r.median_last, 2):>8} {_p(r.mfe):>9} {_p(r.mae):>9}"
+        )
+    return "\n".join(out) + "\n"
+
+
+def _edge(got: Loaded, cfg: CisCfg, bt: CisBacktestCfg, *, start: date, no_regime: bool) -> str:
+    """신호 우위 표 — 신호는 시장 국면을 거르지 않고 내서 강세·약세로 나눈다."""
+    regimes = {} if no_regime else regime_series(got.index_bars, cfg)
+
+    def on(code: str, d: date) -> bool:
+        m = got.meta.get(code)
+        return regimes.get(str(m.market) if m else "", {}).get(d) is not False
+
+    sig = signals_of(got.series, got.meta, {}, cfg, start=start, atr_days=bt.atr_days)
+    on_sig = {d: [x for x in v if on(x.code, d)] for d, v in sig.items()}
+    fwd = forward_of(got.series, sig)
+    fwd_on = [f for f in fwd if on(f.code, f.date)]
+    vm = cfg.vol_mult
+    codes = sorted(c for c, m in got.meta.items() if eligible(c, m) is None)
+    rows = [
+        baseline(got.series, codes, start=start),
+        edge_row("신호 전체(시장 무시)", fwd),
+        edge_row("시장 강세 날", fwd_on),
+        edge_row("시장 약세 날", fwd, lambda f: not on(f.code, f.date)),
+        edge_row(f"강세·거래량 {vm:g}~5배", fwd_on, lambda f: f.vol_ratio < 5),
+        edge_row("강세·거래량 5~10배", fwd_on, lambda f: 5 <= f.vol_ratio < 10),
+        edge_row("강세·거래량 10배 이상", fwd_on, lambda f: f.vol_ratio >= 10),
+        edge_row("강세·확인 진입", forward_of(got.series, on_sig, confirm=True)),
+    ]
+    c = bt.costs
+    trip = 2 * (c.fee_bps + c.slippage_bps) / 100 + c.sell_tax_pct
+    return (
+        f"cis 신호 우위 — {start} ~ {max(got.days)} · 대상 {len(got.series):,}종목\n"
+        "진입 = 신호 다음 날 시가(확인 진입은 신호일 고가 돌파 값) → n일째 종가 · "
+        f"비용 빼기 전(왕복 약 {trip:.2f}%) · 최고·최저 = {HORIZONS[-1]}일 안 고가·저가\n"
+        "읽는 법: 신호 줄이 기준선보다 뚜렷이 높아야 신호에 우위가 있다 — 비슷하면 손절·청산을 "
+        "바꿔도 소용없다\n"
+        + ("시장 국면 끔(--no-regime) — 강세·약세를 나누지 않는다\n" if no_regime else "")
+        + "\n"
+        + edge_table(rows)
+        + "\n주의: "
+        + " / ".join(CAVEATS)
+        + "\n"
+    )
+
+
 def main(
     argv: Sequence[str] | None = None, *, out: IO[str] | None = None, load: Loader | None = None
 ) -> int:
@@ -272,9 +353,12 @@ def main(
     regimes = {} if a.no_regime else regime_series(got.index_bars, cfg)
     sig = signals_of(got.series, got.meta, regimes, cfg, start=start, atr_days=bt.atr_days)
     sim_days = [d for d in days if d >= start]
+    if a.edge:
+        o.write(_edge(got, cfg, bt, start=start, no_regime=a.no_regime))
+        return 0
     if a.sweep:
         rows: list[tuple[str, Summary]] = []
-        for name, plan_upd, bt_upd in SWEEP:
+        for name, plan_upd, bt_upd in SWEEPS[a.sweep]:
             c2 = cfg.model_copy(update={"plan": cfg.plan.model_copy(update=plan_upd)})
             b2 = bt.model_copy(update=bt_upd)
             r2 = run_backtest(got.series, sig, sim_days, c2, b2)
@@ -284,8 +368,14 @@ def main(
             f"cis 순추세 백테스트 비교 — {sim_days[0]} ~ {sim_days[-1]} · "
             f"대상 {len(got.series):,}종목"
             f" · 신호 {sum(len(v) for v in sig.values()):,}\n"
-            "시가 = 다음 날 시가 진입 · 확인 = 다음 날 신호일 고가를 넘을 때 진입 · "
-            "나머지 규칙은 같다\n\n"
+            + (
+                "시가 = 다음 날 시가 진입 · 확인 = 다음 날 신호일 고가를 넘을 때 진입 · "
+                "나머지 규칙은 같다\n"
+                if a.sweep == "entry"
+                else f"진입 {bt.entry_mode} · 최초 손절 {bt.stop_mode} 고정 — 청산 규칙만 바꾼다\n"
+            )
+            + "평균R = 거래당 손익 ÷ 처음 건 위험(돈 기준) · "
+            "기대값 = 거래당 수익률 평균(비중 무시)\n\n"
         )
         o.write(sweep_table(rows))
         o.write("\n주의: " + " / ".join(CAVEATS) + "\n")

@@ -21,7 +21,8 @@ from kbj.engines.screen.backtest import (
 from kbj.engines.screen.cis import StockMeta, screen_cis
 
 CONF = load_screen()
-CFG, BT = CONF.cis, CONF.cis_backtest
+CFG = CONF.cis
+BT = CONF.cis_backtest.model_copy(update={"stop_mode": "pct", "entry_mode": "open"})
 N = CFG.lookback_days
 D0 = date(2026, 1, 1)
 META = {"000100": StockMeta("가나", "KOSPI", "common", False)}

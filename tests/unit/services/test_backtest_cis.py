@@ -108,3 +108,20 @@ def test_sweep_비교_표() -> None:
         assert name in text, name
     rc, text = _run("--years", "1", "--stop-mode", "atr", "--entry", "confirm", "--trades", "0")
     assert rc == 0 and "손절 방식 atr" in text and "진입 confirm" in text
+
+
+def test_sweep_청산_규칙_비교() -> None:
+    from kbj.services.engine.backtest_cis import EXIT_SWEEP
+
+    rc, text = _run("--years", "1", "--sweep", "exit")
+    assert rc == 0 and "청산 규칙만 바꾼다" in text and "평균R" in text
+    for name, _, _ in EXIT_SWEEP:
+        assert name in text, name
+
+
+def test_edge_신호_우위_표() -> None:
+    rc, text = _run("--years", "1", "--edge")
+    assert rc == 0 and "기준: 전 종목·모든 날" in text and "강세·확인 진입" in text
+    assert "NaN" not in text
+    rc, text = _run("--years", "1", "--edge", "--no-regime")
+    assert rc == 0 and "시장 국면 끔" in text
