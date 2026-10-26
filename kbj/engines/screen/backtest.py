@@ -51,10 +51,10 @@ __all__ = [
     "summarize",
 ]
 
-Reason = Literal["stop", "breakeven", "trail", "ma", "time", "end"]
+Reason = Literal["stop", "breakeven", "trail", "ma", "time", "end", "eod", "hold"]
 REASONS: Final[Mapping[str, str]] = {
     "stop": "손절", "breakeven": "본전 손절", "trail": "추적 손절", "ma": "이평 두 번째 이탈",
-    "time": "시간 손절", "end": "기간 끝",
+    "time": "시간 손절", "end": "기간 끝", "eod": "당일 청산", "hold": "보유 기한",
 }  # fmt: skip
 
 
@@ -135,8 +135,11 @@ def signals_of(
     *,
     start: date,
     atr_days: int = 14,
+    passed_only: bool = True,
 ) -> dict[date, list[Signal]]:
-    """날짜 → 통과 신호(거래량 배수 큰 순). 판정은 스크리너와 같은 `judge`."""
+    """날짜 → 통과 신호(거래량 배수 큰 순). 판정은 스크리너와 같은 `judge`.
+
+    passed_only=False 면 거래량 급증(표에 싣는 조건)만 — 박스·캔들·국면 판정은 보지 않는다."""
     out: dict[date, list[Signal]] = defaultdict(list)
     n = cfg.lookback_days
     for code in sorted(series):
@@ -162,7 +165,7 @@ def signals_of(
                 box_high=max(s.high[i - n : i]),
             )  # fmt: skip
             row = judge(code, m, d, reg.get(s.dates[i]), cfg)
-            if isinstance(row, CisRow) and row.passed:
+            if isinstance(row, CisRow) and (row.passed or not passed_only):
                 out[s.dates[i]].append(
                     Signal(s.dates[i], code, row.vol_ratio, s.close[i], s.high[i], s.low[i],
                            _atr(s, i, atr_days))

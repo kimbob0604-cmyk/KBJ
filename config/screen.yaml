@@ -47,3 +47,28 @@ cis_backtest:
   #          · close = 신호일 종가(장 마감 동시호가)
   entry_mode: confirm
   costs: {fee_bps: 1.5, sell_tax_pct: 0.20, slippage_bps: 10}  # 수수료 양쪽·매도 거래세(2026)·슬리피지 양쪽
+
+# cis 30분봉(연습게임 규칙 — kbj/engines/screen/intraday.py, `kbj.sh cis30`). 일봉 신호(pool)를 본 다음 날부터
+# entry_days 동안 30분봉 박스 돌파 + 거래량으로 사고, 5분봉으로 손절·추적을 본다. 분봉은 KIS 주식일별분봉조회로
+# 신호일 D ~ D+window_days 만 받는다(KIS 보관 최대 1년 — `kbj.sh cis30 fetch`). 값은 출발점, 백테스트로 다시 정한다.
+cis30:
+  pool: passed               # passed = 일봉 통과 신호(스크리너와 같다) · spikes = 거래량 급증 전부(국면·박스 안 봄)
+  window_days: 5             # 분봉 받는 창: 신호일 D(박스 기준) ~ D+5
+  entry_days: 3              # D+1 ~ D+3 에만 새로 산다
+  max_hold_days: 3           # 진입일 포함 보유 거래일 상한 — 그날 종가에 판다
+  overnight: true            # false = 당일 매매(그날 종가에 다 판다)
+  bar_minutes: 30
+  box_bars: 13               # 박스 = 직전 13개 30분봉(하루치) 고가
+  vol_mult: 2.0              # 돌파 봉 거래량 ≥ 직전 13봉 평균 × 2
+  skip_first_bar: true       # 09:00~09:30 봉 돌파는 사지 않는다(시가 변동)
+  stop_mode: pct             # pct = 진입가 −stop_pct · bar_low = 돌파 봉 저가
+  stop_pct: 2.0              # 연습게임 −2%
+  trail_pct: 4.0             # 보유 중 최고가(5분봉 고가) −4%
+  breakeven_at_pct: 3.0      # +3% 닿으면 손절을 본전으로
+  add_at_pct: 3.0            # 불타기: 30분봉 종가가 +3% 이상이고 보유 중 신고가면 다음 봉 시가에 한 번
+  add_frac: 0.5
+  risk_pct: 1.0
+  max_positions: 5
+  max_weight_pct: 20.0
+  capital_won: 10000000
+  costs: {fee_bps: 1.5, sell_tax_pct: 0.20, slippage_bps: 10}

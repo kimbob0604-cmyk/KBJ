@@ -14,6 +14,7 @@ from kbj.config.settings import Settings
 
 __all__ = [
     "SCREEN_FILE",
+    "Cis30Cfg",
     "CisBacktestCfg",
     "CisCfg",
     "CisPlan",
@@ -80,9 +81,35 @@ class CisBacktestCfg(_Model):
     costs: CostsCfg
 
 
+class Cis30Cfg(_Model):
+    """cis 30분봉(연습게임 규칙) — 일봉 신호 종목을 다음 날부터 30분봉으로 매매."""
+
+    pool: Literal["passed", "spikes"]
+    window_days: int = Field(ge=1, le=20)
+    entry_days: int = Field(ge=1, le=20)
+    max_hold_days: int = Field(ge=1, le=20)
+    overnight: bool
+    bar_minutes: int = Field(ge=5, le=60, multiple_of=5)
+    box_bars: int = Field(ge=2, le=100)
+    vol_mult: float = Field(gt=0)
+    skip_first_bar: bool
+    stop_mode: Literal["pct", "bar_low"]
+    stop_pct: float = Field(gt=0, lt=50)
+    trail_pct: float = Field(gt=0, lt=50)
+    breakeven_at_pct: float = Field(gt=0)
+    add_at_pct: float = Field(gt=0)
+    add_frac: float = Field(ge=0, le=2)
+    risk_pct: float = Field(gt=0, le=10)
+    max_positions: int = Field(ge=1, le=50)
+    max_weight_pct: float = Field(gt=0, le=100)
+    capital_won: int = Field(gt=0)
+    costs: CostsCfg
+
+
 class ScreenConfig(_Model):
     cis: CisCfg
     cis_backtest: CisBacktestCfg
+    cis30: Cis30Cfg
 
 
 def parse_screen(data: dict[str, Any]) -> ScreenConfig:

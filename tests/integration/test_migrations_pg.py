@@ -69,6 +69,7 @@ P2 = [
     "0026_largest_holder.sql",
     "0027_trade_stock_flow.sql",
     "0028_sigungu_thousand_usd.sql",
+    "0029_stock_minute.sql",
 ]  # 이름은 P2 시험 그대로 — 0001~0023 전부(P3 0007~0009, P4 0010~0013, P5 0014~0017,
 #   P5 2차 IDX 0018, P6 0019, P7 0020, P8 0021, P9 GXI 0022 — 쓰기 주인 COMMENT 만,
 #   페이지 9 테마 0023 — ADR 0039)

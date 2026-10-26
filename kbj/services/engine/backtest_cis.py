@@ -44,6 +44,7 @@ __all__ = [
     "SWEEP",
     "Loaded",
     "edge_table",
+    "load_daily",
     "main",
     "report",
     "sweep_table",
@@ -70,7 +71,8 @@ class Loaded:
 Loader = Callable[[int, date | None, CisCfg], Loaded]
 
 
-def _load_pg(n: int, end: date | None, cfg: CisCfg) -> Loaded:  # pragma: no cover — 운영(DB)
+def load_daily(n: int, end: date | None, cfg: CisCfg) -> Loaded:  # pragma: no cover — 운영(DB)
+    """맥 DB 에서 대상 종목 일봉 n 거래일·메타·지수(cis30 도 쓴다)."""
     from kbj.config.settings import Settings
     from kbj.core.time import KST
     from kbj.store.db import connect
@@ -373,7 +375,7 @@ def main(
     cfg, bt = _configs(a)
     n = bt.years * DAYS_PER_YEAR + cfg.lookback_days + bt.ma_exit_days + 5
     try:
-        got = (load or _load_pg)(n, a.end, cfg)
+        got = (load or load_daily)(n, a.end, cfg)
     except RuntimeError as e:
         o.write(f"오류: {e}\n")
         return 2
