@@ -1,0 +1,99 @@
+{
+  "source": "KRX",
+  "as_of": "2026-09-14T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "09/14 종가 기준 — 다음 거래일 계획(매매 권유 아님)",
+    "관리·정지 상태를 모르는 종목 1개 포함(스냅 없음)"
+  ],
+  "generated_at": "2026-09-15T18:00:00+09:00",
+  "data": {
+    "date": "2026-09-14",
+    "scanned": 31,
+    "spikes": 2,
+    "passed": 1,
+    "excluded": {
+      "종류(우선주·스팩·리츠·ETF)": 8,
+      "이력 부족": 1,
+      "시장(코스피·코스닥 밖·정보 없음)": 1,
+      "관리·정지": 1
+    },
+    "status_unknown": 1,
+    "regimes": [
+      {
+        "market": "KOSPI",
+        "index_code": "0001",
+        "close": 20153.2166,
+        "ma": 17328.950245,
+        "on": true
+      },
+      {
+        "market": "KOSDAQ",
+        "index_code": "1001",
+        "close": 13159.2151,
+        "ma": 13434.94882,
+        "on": false
+      }
+    ],
+    "params": {
+      "lookback_days": 20,
+      "vol_mult": 3.0,
+      "min_turnover_won": 5000000000,
+      "min_avg_turnover_won": 1000000000,
+      "min_price": 1000.0,
+      "close_pos_min": 0.75,
+      "limit_pct": 29.0,
+      "regime_ma": 20,
+      "stop_pct": 2.0,
+      "trail_pct": 8.0,
+      "gap_skip_pct": 8.0,
+      "add_at_pct": 5.0,
+      "risk_pct": 1.0,
+      "max_positions": 5
+    },
+    "rows": [
+      {
+        "code": "990001",
+        "name": "합성돌파",
+        "market": "KOSPI",
+        "close": 10950.0,
+        "chg_pct": 9.5,
+        "volume": 600000,
+        "vol_ratio": 6.0,
+        "turnover": 6570000000,
+        "avg_turnover": 2000000000,
+        "box_high": 10200.0,
+        "breakout": true,
+        "close_pos": 0.947,
+        "limit_up": false,
+        "regime_on": true,
+        "passed": true,
+        "why_not": [],
+        "stop": 10731.0,
+        "gap_skip": 11826.0
+      },
+      {
+        "code": "990002",
+        "name": "합성꼬리",
+        "market": "KOSPI",
+        "close": 10500.0,
+        "chg_pct": 5.0,
+        "volume": 600000,
+        "vol_ratio": 6.0,
+        "turnover": 6300000000,
+        "avg_turnover": 2000000000,
+        "box_high": 10200.0,
+        "breakout": true,
+        "close_pos": 0.25,
+        "limit_up": false,
+        "regime_on": true,
+        "passed": false,
+        "why_not": [
+          "윗꼬리"
+        ],
+        "stop": 10290.0,
+        "gap_skip": 11340.0
+      }
+    ]
+  }
+}

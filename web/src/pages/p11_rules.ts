@@ -1,5 +1,6 @@
 // 페이지 11 알림·규칙(docs/p8_design.md §6 — 진입 모듈, 웨이브 1 FND 가 패널 순서·칸 폭·하위 모듈 import 를 고정).
-// 위에서 아래(휴대폰은 한 줄): ① 규칙(12) ② 편집기(6) ③ 발송 이력(6) ④ 알림 후 성과 표(6) ⑤ 수익 분포(6 — 차트는 반폭).
+// 위에서 아래(휴대폰은 한 줄): ⓪ 스크리너(12 — cis 순추세, p11/screen) ① 규칙(12) ② 편집기(6) ③ 발송 이력(6)
+// ④ 알림 후 성과 표(6) ⑤ 수익 분포(6 — 차트는 반폭).
 //
 // - 페이지 11 은 개인 기능(DATA_TIERS §2 — 로그인 전부). 공개판은 자물쇠만 그리고 요청하지 않는다. 하위 모듈은 공개 빌드
 //   번들에서 뺀다(p8_stock LOGIN_VALUE 방식 — 공개 JS 예산, ADR 0025).
@@ -12,12 +13,14 @@ import { fillEditor } from './p11/editor';
 import { fillHistory } from './p11/history';
 import { fillPerf, fillPerfDist } from './p11/perf';
 import { fillRules } from './p11/rules';
+import { fillScreen } from './p11/screen';
 
 /** 패널 순서(§6) — 시험이 고정한다 */
-export const P11_SECTIONS = ['rules', 'editor', 'history', 'perf', 'perf_dist'] as const;
+export const P11_SECTIONS = ['screen', 'rules', 'editor', 'history', 'perf', 'perf_dist'] as const;
 export type P11Section = (typeof P11_SECTIONS)[number];
 
 export const P11_PANELS: Readonly<Record<P11Section, { title: string; span: Span }>> = {
+  screen: { title: '스크리너 — cis 순추세', span: 12 },
   rules: { title: '규칙', span: 12 },
   editor: { title: '편집기', span: 6 },
   history: { title: '발송 이력', span: 6 },
@@ -31,7 +34,14 @@ type Fill = (ctx: PageContext, p: Panel) => Promise<void>;
 const LOGIN_FILLS: Readonly<Record<P11Section, Fill>> | null =
   import.meta.env.MODE === 'public'
     ? null
-    : { rules: fillRules, editor: fillEditor, history: fillHistory, perf: fillPerf, perf_dist: fillPerfDist };
+    : {
+        screen: fillScreen,
+        rules: fillRules,
+        editor: fillEditor,
+        history: fillHistory,
+        perf: fillPerf,
+        perf_dist: fillPerfDist,
+      };
 
 async function mount(ctx: PageContext): Promise<void> {
   const panels = P11_SECTIONS.map((id) => {

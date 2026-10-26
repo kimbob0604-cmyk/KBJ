@@ -94,6 +94,8 @@ DOMAIN_JOBS: Final[Mapping[str, tuple[str, ...]]] = {
     "backtest": ("rules.outcome", "rules.backtest_nightly"),
     # 페이지 9(ADR 0039) — 대테마 분류·편입(주 1회) + 강도의 시세(보드 종목 하루)
     "themes": ("theme.master_sync", "theme.classes_sync", "board.daily", "board.confirm"),
+    # 페이지 11 스크리너 — 전 종목 일봉·스냅(마감 수집·KRX 일별)
+    "screen": ("krx.daily", "market.backfill", "market.close_collect"),
 }  # fmt: skip
 # 작업 기록 말고 표의 최신 시각으로도 버전을 정하는 영역(상시 서비스가 쓰는 표 — 상수 SQL)
 DOMAIN_TS: Final[Mapping[str, str]] = {

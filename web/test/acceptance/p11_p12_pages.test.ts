@@ -104,7 +104,7 @@ describe('P8 완료 — 페이지 11·12 두 등급', () => {
     expect(hz.paths().length).toBeGreaterThan(0);
   });
 
-  it('로그인: 레이아웃 — 페이지 격자의 span 칸, 차트 패널은 반폭 이하, 표·탭 묶음만 전체 폭', async () => {
+  it('로그인: 레이아웃 — 페이지 격자의 span 칸, 차트 패널은 반폭 이하, 표·탭 묶음(스크리너 포함)만 전체 폭', async () => {
     const pages = await mountBoth('login', loginSource().source);
     for (const { root } of pages) {
       expect(root.classList.contains('grid')).toBe(true);
@@ -121,7 +121,7 @@ describe('P8 완료 — 페이지 11·12 두 등급', () => {
     const wide = pages.flatMap(({ root }) =>
       [...root.querySelectorAll('section.panel.span-12')].map((p) => p.querySelector('h3 span')?.textContent ?? ''),
     );
-    expect(wide.sort()).toEqual([P11_PANELS.rules.title, P12_PANELS.vs_live.title].sort());
+    expect(wide.sort()).toEqual([P11_PANELS.screen.title, P11_PANELS.rules.title, P12_PANELS.vs_live.title].sort());
   });
 
   it('로그인: 쓰기 채널(CSRF)이 있으면 쓰기 단추가 켜진다 — 그리기만으로는 쓰기 요청 0', async () => {

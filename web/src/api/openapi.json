@@ -9737,6 +9737,86 @@
         }
       }
     },
+    "/api/screen/cis": {
+      "get": {
+        "tags": [
+          "screen"
+        ],
+        "summary": "Cis",
+        "operationId": "cis_api_screen_cis_get",
+        "parameters": [
+          {
+            "name": "day",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Day"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ScreenCis_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/telegram/webhook": {
       "post": {
         "tags": [
@@ -12563,6 +12643,272 @@
         ],
         "title": "ChipValue",
         "description": "상단 띠 칩 값(수·문자 — 원천·시각·품질 필수)."
+      },
+      "CisParams": {
+        "properties": {
+          "lookback_days": {
+            "type": "integer",
+            "title": "Lookback Days"
+          },
+          "vol_mult": {
+            "type": "number",
+            "title": "Vol Mult"
+          },
+          "min_turnover_won": {
+            "type": "integer",
+            "title": "Min Turnover Won"
+          },
+          "min_avg_turnover_won": {
+            "type": "integer",
+            "title": "Min Avg Turnover Won"
+          },
+          "min_price": {
+            "type": "number",
+            "title": "Min Price"
+          },
+          "close_pos_min": {
+            "type": "number",
+            "title": "Close Pos Min"
+          },
+          "limit_pct": {
+            "type": "number",
+            "title": "Limit Pct"
+          },
+          "regime_ma": {
+            "type": "integer",
+            "title": "Regime Ma"
+          },
+          "stop_pct": {
+            "type": "number",
+            "title": "Stop Pct"
+          },
+          "trail_pct": {
+            "type": "number",
+            "title": "Trail Pct"
+          },
+          "gap_skip_pct": {
+            "type": "number",
+            "title": "Gap Skip Pct"
+          },
+          "add_at_pct": {
+            "type": "number",
+            "title": "Add At Pct"
+          },
+          "risk_pct": {
+            "type": "number",
+            "title": "Risk Pct"
+          },
+          "max_positions": {
+            "type": "integer",
+            "title": "Max Positions"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "lookback_days",
+          "vol_mult",
+          "min_turnover_won",
+          "min_avg_turnover_won",
+          "min_price",
+          "close_pos_min",
+          "limit_pct",
+          "regime_ma",
+          "stop_pct",
+          "trail_pct",
+          "gap_skip_pct",
+          "add_at_pct",
+          "risk_pct",
+          "max_positions"
+        ],
+        "title": "CisParams",
+        "description": "판정 문턱·다음 날 계획(config/screen.yaml — 화면이 그대로 보여 준다)."
+      },
+      "CisRegime": {
+        "properties": {
+          "market": {
+            "type": "string",
+            "enum": [
+              "KOSPI",
+              "KOSDAQ"
+            ],
+            "title": "Market"
+          },
+          "index_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Index Code"
+          },
+          "close": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close"
+          },
+          "ma": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ma"
+          },
+          "on": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "On"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "market",
+          "index_code",
+          "close",
+          "ma",
+          "on"
+        ],
+        "title": "CisRegime"
+      },
+      "CisRowOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "market": {
+            "type": "string",
+            "enum": [
+              "KOSPI",
+              "KOSDAQ"
+            ],
+            "title": "Market"
+          },
+          "close": {
+            "type": "number",
+            "title": "Close"
+          },
+          "chg_pct": {
+            "type": "number",
+            "title": "Chg Pct"
+          },
+          "volume": {
+            "type": "integer",
+            "title": "Volume"
+          },
+          "vol_ratio": {
+            "type": "number",
+            "title": "Vol Ratio"
+          },
+          "turnover": {
+            "type": "integer",
+            "title": "Turnover"
+          },
+          "avg_turnover": {
+            "type": "integer",
+            "title": "Avg Turnover"
+          },
+          "box_high": {
+            "type": "number",
+            "title": "Box High"
+          },
+          "breakout": {
+            "type": "boolean",
+            "title": "Breakout"
+          },
+          "close_pos": {
+            "type": "number",
+            "title": "Close Pos"
+          },
+          "limit_up": {
+            "type": "boolean",
+            "title": "Limit Up"
+          },
+          "regime_on": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regime On"
+          },
+          "passed": {
+            "type": "boolean",
+            "title": "Passed"
+          },
+          "why_not": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Why Not"
+          },
+          "stop": {
+            "type": "number",
+            "title": "Stop"
+          },
+          "gap_skip": {
+            "type": "number",
+            "title": "Gap Skip"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "market",
+          "close",
+          "chg_pct",
+          "volume",
+          "vol_ratio",
+          "turnover",
+          "avg_turnover",
+          "box_high",
+          "breakout",
+          "close_pos",
+          "limit_up",
+          "regime_on",
+          "passed",
+          "why_not",
+          "stop",
+          "gap_skip"
+        ],
+        "title": "CisRowOut"
       },
       "ClassCap": {
         "properties": {
@@ -17182,6 +17528,49 @@
           "data"
         ],
         "title": "Envelope[Scenario]"
+      },
+      "Envelope_ScreenCis_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ScreenCis"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[ScreenCis]"
       },
       "Envelope_ScreenResponse_": {
         "properties": {
@@ -26685,6 +27074,69 @@
         ],
         "title": "ScheduleView",
         "description": "실적 일정 — pre_announce(결산실적공시예고 본문 — ok)·statutory(법정 제출기한 — 추정)."
+      },
+      "ScreenCis": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "scanned": {
+            "type": "integer",
+            "title": "Scanned"
+          },
+          "spikes": {
+            "type": "integer",
+            "title": "Spikes"
+          },
+          "passed": {
+            "type": "integer",
+            "title": "Passed"
+          },
+          "excluded": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Excluded"
+          },
+          "status_unknown": {
+            "type": "integer",
+            "title": "Status Unknown"
+          },
+          "regimes": {
+            "items": {
+              "$ref": "#/components/schemas/CisRegime"
+            },
+            "type": "array",
+            "title": "Regimes"
+          },
+          "params": {
+            "$ref": "#/components/schemas/CisParams"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/CisRowOut"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "scanned",
+          "spikes",
+          "passed",
+          "excluded",
+          "status_unknown",
+          "regimes",
+          "params",
+          "rows"
+        ],
+        "title": "ScreenCis"
       },
       "ScreenResponse": {
         "properties": {

@@ -2,7 +2,7 @@
 // rules.py). 칸 폭: 규칙 표만 전체 폭, 편집기·이력은 반폭. 404 는 '.msg', 그 밖 실패만 '.msg.err'. 쓰기 채널(데이터 소스
 // `post`·`put`)이 없으면 쓰기 단추를 끄고 요청하지 않는다. 공개판은 자물쇠만(요청 0).
 import { describe, expect, it } from 'vitest';
-import p11, { P11_PANELS } from '../../src/pages/p11_rules';
+import p11, { P11_PANELS, P11_SECTIONS } from '../../src/pages/p11_rules';
 import { blankModel, fillEditor, fromDsl, toDsl } from '../../src/pages/p11/editor';
 import { evidenceLine, fillHistory, statusText } from '../../src/pages/p11/history';
 import { fillRules } from '../../src/pages/p11/rules';
@@ -41,14 +41,17 @@ const examples = (): { id: string; dsl: Dsl }[] =>
   rulesFixture<Env<{ examples: { id: string; dsl: Dsl }[] }>>('examples').data.examples;
 
 describe('페이지 11 — 배치', () => {
-  it('패널 순서·칸 폭 — 규칙 표만 전체 폭, 나머지 반폭(차트 반폭 규칙)', async () => {
+  it('패널 순서·칸 폭 — 스크리너·규칙 표만 전체 폭, 나머지 반폭(차트 반폭 규칙)', async () => {
     const hz = rulesHarness();
     const { ctx, root } = pageCtx(11, 'login', hz.source, { now: () => RULES_NOW });
     await p11.mount(ctx);
     await flush();
     const spans = [...root.querySelectorAll('section.panel')].map((p) => p.className);
-    expect(spans[0]).toContain('span-12');
-    for (const s of spans.slice(1)) expect(s).toContain('span-6');
+    expect(spans).toHaveLength(P11_SECTIONS.length);
+    P11_SECTIONS.forEach((id, i) => {
+      expect(spans[i]).toContain(`span-${String(P11_PANELS[id].span)}`);
+    });
+    expect(P11_SECTIONS.filter((id) => P11_PANELS[id].span === 12)).toEqual(['screen', 'rules']);
     expect(text(panelByTitle(root, P11_PANELS.rules.title))).toContain('RSI 과매도');
     expect(text(root)).not.toMatch(/NaN|undefined/);
   });

@@ -296,7 +296,7 @@ def test_p8_domains_and_modules(monkeypatch: pytest.MonkeyPatch) -> None:
     from tests.unit.api import make_web_fixtures as mk
     from tests.unit.api.web_fixtures_p8 import rules
 
-    assert P8_DOMAINS == ("rules", "backtest", "journal")
+    assert P8_DOMAINS == ("rules", "backtest", "journal", "screen")
     for d in P8_DOMAINS:
         assert importlib.import_module(f"tests.unit.api.web_fixtures_p8.{d}").DOMAIN == d
     with pytest.raises(ValueError, match="모르는 P8 도메인"):

@@ -1814,6 +1814,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/screen/cis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cis */
+        get: operations["cis_api_screen_cis_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/telegram/webhook": {
         parameters: {
             query?: never;
@@ -2669,6 +2686,98 @@ export interface components {
              */
             as_of: string;
             quality: components["schemas"]["Quality"];
+        };
+        /**
+         * CisParams
+         * @description 판정 문턱·다음 날 계획(config/screen.yaml — 화면이 그대로 보여 준다).
+         */
+        CisParams: {
+            /** Lookback Days */
+            lookback_days: number;
+            /** Vol Mult */
+            vol_mult: number;
+            /** Min Turnover Won */
+            min_turnover_won: number;
+            /** Min Avg Turnover Won */
+            min_avg_turnover_won: number;
+            /** Min Price */
+            min_price: number;
+            /** Close Pos Min */
+            close_pos_min: number;
+            /** Limit Pct */
+            limit_pct: number;
+            /** Regime Ma */
+            regime_ma: number;
+            /** Stop Pct */
+            stop_pct: number;
+            /** Trail Pct */
+            trail_pct: number;
+            /** Gap Skip Pct */
+            gap_skip_pct: number;
+            /** Add At Pct */
+            add_at_pct: number;
+            /** Risk Pct */
+            risk_pct: number;
+            /** Max Positions */
+            max_positions: number;
+        };
+        /** CisRegime */
+        CisRegime: {
+            /**
+             * Market
+             * @enum {string}
+             */
+            market: "KOSPI" | "KOSDAQ";
+            /** Index Code */
+            index_code: string | null;
+            /** Close */
+            close: number | null;
+            /** Ma */
+            ma: number | null;
+            /** On */
+            on: boolean | null;
+        };
+        /** CisRowOut */
+        CisRowOut: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string | null;
+            /**
+             * Market
+             * @enum {string}
+             */
+            market: "KOSPI" | "KOSDAQ";
+            /** Close */
+            close: number;
+            /** Chg Pct */
+            chg_pct: number;
+            /** Volume */
+            volume: number;
+            /** Vol Ratio */
+            vol_ratio: number;
+            /** Turnover */
+            turnover: number;
+            /** Avg Turnover */
+            avg_turnover: number;
+            /** Box High */
+            box_high: number;
+            /** Breakout */
+            breakout: boolean;
+            /** Close Pos */
+            close_pos: number;
+            /** Limit Up */
+            limit_up: boolean;
+            /** Regime On */
+            regime_on: boolean | null;
+            /** Passed */
+            passed: boolean;
+            /** Why Not */
+            why_not: string[];
+            /** Stop */
+            stop: number;
+            /** Gap Skip */
+            gap_skip: number;
         };
         /** ClassCap */
         ClassCap: {
@@ -4489,6 +4598,25 @@ export interface components {
              */
             generated_at: string;
             data: components["schemas"]["Scenario"];
+        };
+        /** Envelope[ScreenCis] */
+        Envelope_ScreenCis_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["ScreenCis"];
         };
         /** Envelope[ScreenResponse] */
         Envelope_ScreenResponse_: {
@@ -7591,6 +7719,31 @@ export interface components {
             /** Is Watch */
             is_watch: boolean;
             quality: components["schemas"]["Quality"];
+        };
+        /** ScreenCis */
+        ScreenCis: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Scanned */
+            scanned: number;
+            /** Spikes */
+            spikes: number;
+            /** Passed */
+            passed: number;
+            /** Excluded */
+            excluded: {
+                [key: string]: number;
+            };
+            /** Status Unknown */
+            status_unknown: number;
+            /** Regimes */
+            regimes: components["schemas"]["CisRegime"][];
+            params: components["schemas"]["CisParams"];
+            /** Rows */
+            rows: components["schemas"]["CisRowOut"][];
         };
         /** ScreenResponse */
         ScreenResponse: {
@@ -16153,6 +16306,64 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_ThemeDetail_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    cis_api_screen_cis_get: {
+        parameters: {
+            query?: {
+                day?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_ScreenCis_"];
                 };
             };
             /** @description 세션 없음·만료 */
