@@ -12,7 +12,16 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from kbj.config.files import ConfigFileError, load_yaml_mapping
 from kbj.config.settings import Settings
 
-__all__ = ["SCREEN_FILE", "CisCfg", "CisPlan", "ScreenConfig", "load_screen", "parse_screen"]
+__all__ = [
+    "SCREEN_FILE",
+    "CisBacktestCfg",
+    "CisCfg",
+    "CisPlan",
+    "CostsCfg",
+    "ScreenConfig",
+    "load_screen",
+    "parse_screen",
+]
 
 SCREEN_FILE: Final = "screen.yaml"
 
@@ -46,8 +55,29 @@ class CisCfg(_Model):
     plan: CisPlan
 
 
+class CostsCfg(_Model):
+    fee_bps: float = Field(ge=0)
+    sell_tax_pct: float = Field(ge=0)
+    slippage_bps: float = Field(ge=0)
+
+
+class CisBacktestCfg(_Model):
+    years: int = Field(ge=1, le=20)
+    capital_won: int = Field(gt=0)
+    max_weight_pct: float = Field(gt=0, le=100)
+    add_frac: float = Field(ge=0, le=2)
+    breakeven_at_pct: float = Field(gt=0)
+    ma_exit_days: int = Field(ge=2, le=250)
+    ma_exit_breaks: int = Field(ge=1, le=10)
+    time_stop_days: int = Field(ge=1, le=250)
+    time_stop_gain_pct: float = Field(ge=0)
+    flat_band_pct: float = Field(ge=0, le=10)
+    costs: CostsCfg
+
+
 class ScreenConfig(_Model):
     cis: CisCfg
+    cis_backtest: CisBacktestCfg
 
 
 def parse_screen(data: dict[str, Any]) -> ScreenConfig:

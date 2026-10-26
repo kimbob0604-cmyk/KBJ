@@ -23,3 +23,18 @@ cis:
     add_at_pct: 5.0                  # 불타기: +5% 이고 신고가일 때 처음 수량의 50% 한 번
     risk_pct: 1.0                    # 한 번에 거는 위험 = 시험 자금의 1%
     max_positions: 5
+
+# cis 순추세 백테스트(kbj/engines/screen/backtest.py, `kbj.sh backtest-cis`). 손절·추적·갭·불타기·위험·동시 보유는
+# 위 cis.plan 을 쓴다. 여기는 그 밖의 값 — 바꿔 가며 돌려 보는 출발점(백테스트로 다시 정한다).
+cis_backtest:
+  years: 3                     # 기본 기간(끝 = 일봉이 있는 마지막 거래일)
+  capital_won: 10000000        # 시험 자금 1,000만 원
+  max_weight_pct: 20.0         # 한 종목 비중 상한(자금 대비)
+  add_frac: 0.5                # 불타기 수량 = 처음 수량 × 이 값(한 번)
+  breakeven_at_pct: 5.0        # 고가가 진입가 +5% 를 넘으면 손절을 본전으로
+  ma_exit_days: 10             # 'n일선 아래 두 번째 마감'에서 청산(cis '두 번째 하락에서 판다')
+  ma_exit_breaks: 2
+  time_stop_days: 5            # 5거래일 안에 종가가 +3% 를 한 번도 넘지 못하면 정리
+  time_stop_gain_pct: 3.0
+  flat_band_pct: 0.5           # |수익률| < 0.5% 는 '본전'으로 센다
+  costs: {fee_bps: 1.5, sell_tax_pct: 0.20, slippage_bps: 10}  # 수수료 양쪽·매도 거래세(2026)·슬리피지 양쪽

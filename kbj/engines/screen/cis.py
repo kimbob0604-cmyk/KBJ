@@ -30,11 +30,20 @@ from kbj.core.rows import Bar, IndexBar
 from kbj.engines.board import kinds
 
 __all__ = [
+    "EX_ILLIQUID",
+    "EX_KIND",
+    "EX_MARKET",
+    "EX_MISSING",
+    "EX_SHORT",
+    "EX_STATUS",
     "MARKETS",
     "CisResult",
     "CisRow",
+    "Day",
     "Regime",
     "StockMeta",
+    "eligible",
+    "judge",
     "regime_of",
     "screen_cis",
 ]
@@ -128,6 +137,89 @@ def _mean(xs: Sequence[float]) -> float | None:
     return sum(xs) / len(xs) if xs else None
 
 
+EX_MARKET: Final = "시장(코스피·코스닥 밖·정보 없음)"
+EX_KIND: Final = "종류(우선주·스팩·리츠·ETF)"
+EX_STATUS: Final = "관리·정지"
+EX_SHORT: Final = "이력 부족"
+EX_MISSING: Final = "값 빠짐"
+EX_ILLIQUID: Final = "유동성 부족"
+
+
+@dataclass(frozen=True)
+class Day:
+    """그날 값과 직전 창 요약 — 화면(스냅 하루)과 백테스트(구르는 창)가 같은 판정을 쓰게."""
+
+    close: float
+    open: float
+    high: float
+    low: float
+    volume: int
+    turnover: int
+    prev_close: float
+    vol_avg: float  # 직전 창 평균 거래량
+    avg_turnover: float  # 직전 창 평균 거래대금
+    box_high: float  # 직전 창 최고가
+
+
+def eligible(code: str, m: StockMeta | None) -> str | None:
+    """대상인가 — 아니면 까닭(시장·종류·관리정지). 상태를 모르면(None) 대상으로 둔다."""
+    if m is None or m.market not in MARKETS:
+        return EX_MARKET
+    if _kind(code, m) != kinds.COMMON:
+        return EX_KIND
+    if m.flagged:
+        return EX_STATUS
+    return None
+
+
+def judge(
+    code: str, m: StockMeta, d: Day, regime_on: bool | None, cfg: CisCfg
+) -> CisRow | str | None:
+    """한 종목 하루 판정 — 유동성 부족이면 까닭(str), 거래량이 안 튀면 None,
+    튀면 행(통과 여부 포함)."""
+    if d.close < cfg.min_price or d.avg_turnover < cfg.min_avg_turnover_won:
+        return EX_ILLIQUID
+    ratio = d.volume / d.vol_avg
+    if ratio < cfg.vol_mult or d.turnover < cfg.min_turnover_won:
+        return None
+    chg = (d.close / d.prev_close - 1.0) * 100.0
+    pos = (d.close - d.low) / (d.high - d.low) if d.high > d.low else 1.0
+    breakout = d.close > d.box_high
+    limit_up = chg >= cfg.limit_pct
+    why: list[str] = []
+    if not breakout:
+        why.append(WHY_BOX)
+    if d.close <= d.open:
+        why.append(WHY_RED)
+    if pos < cfg.close_pos_min:
+        why.append(WHY_WICK)
+    if limit_up:
+        why.append(WHY_LIMIT)
+    if regime_on is False:
+        why.append(WHY_REGIME)
+    return CisRow(
+        code=code,
+        name=m.name,
+        market=str(m.market),
+        close=d.close,
+        chg_pct=chg,
+        volume=d.volume,
+        vol_avg=d.vol_avg,
+        vol_ratio=ratio,
+        turnover=d.turnover,
+        avg_turnover=d.avg_turnover,
+        box_high=d.box_high,
+        breakout=breakout,
+        close_pos=pos,
+        limit_up=limit_up,
+        regime_on=regime_on,
+        passed=not why,
+        why_not=tuple(why),
+        stop=d.close * (1.0 - cfg.plan.stop_pct / 100.0),
+        gap_skip=d.close * (1.0 + cfg.plan.gap_skip_pct / 100.0),
+    )
+
+
 def screen_cis(
     bars: Mapping[str, Sequence[Bar]],
     meta: Mapping[str, StockMeta],
@@ -148,82 +240,39 @@ def screen_cis(
         if not seq or seq[-1].date != as_of:
             continue  # 그날 거래가 없다(정지·휴장 종목) — 대상이 아니다
         m = meta.get(code)
-        if m is None or m.market not in MARKETS:
-            excluded["시장(코스피·코스닥 밖·정보 없음)"] += 1
-            continue
-        if _kind(code, m) != kinds.COMMON:
-            excluded["종류(우선주·스팩·리츠·ETF)"] += 1
-            continue
-        if m.flagged:
-            excluded["관리·정지"] += 1
+        why_out = eligible(code, m)
+        if why_out is not None or m is None:
+            excluded[why_out or EX_MARKET] += 1
             continue
         scanned += 1
         today, prior = seq[-1], seq[:-1][-n:]
         if len(prior) < n:
-            excluded["이력 부족"] += 1
+            excluded[EX_SHORT] += 1
             continue
         c, o, h, lo = today.close, today.open, today.high, today.low
         vol, to, prev_close = today.volume, today.turnover, prior[-1].close
-        if c is None or o is None or h is None or lo is None or vol is None or to is None:
-            excluded["값 빠짐"] += 1
-            continue
-        if not prev_close:
-            excluded["값 빠짐"] += 1
-            continue
         vol_avg = _mean([float(b.volume) for b in prior if b.volume is not None])
         avg_to = _mean([float(b.turnover) for b in prior if b.turnover is not None])
         highs = [b.high if b.high is not None else b.close for b in prior]
         box = max((x for x in highs if x is not None), default=None)
-        if not vol_avg or avg_to is None or box is None:
-            excluded["값 빠짐"] += 1
+        if (
+            c is None or o is None or h is None or lo is None or vol is None or to is None
+            or not prev_close or not vol_avg or avg_to is None or box is None
+        ):  # fmt: skip
+            excluded[EX_MISSING] += 1
             continue
-        if c < cfg.min_price or avg_to < cfg.min_avg_turnover_won:
-            excluded["유동성 부족"] += 1
+        got = judge(
+            code, m, Day(c, o, h, lo, vol, to, prev_close, vol_avg, avg_to, box),
+            regimes[str(m.market)].on, cfg,
+        )  # fmt: skip
+        if isinstance(got, str):
+            excluded[got] += 1
             continue
+        if got is None:
+            continue  # 거래량이 튀지 않았다 — 표에 싣지 않는다
         if m.flagged is None:
             unknown += 1
-        ratio = vol / vol_avg
-        if ratio < cfg.vol_mult or to < cfg.min_turnover_won:
-            continue  # 거래량이 튀지 않았다 — 표에 싣지 않는다
-        chg = (c / prev_close - 1.0) * 100.0
-        pos = (c - lo) / (h - lo) if h > lo else 1.0
-        breakout = c > box
-        limit_up = chg >= cfg.limit_pct
-        reg = regimes[m.market].on  # pyright: ignore[reportArgumentType]
-        why: list[str] = []
-        if not breakout:
-            why.append(WHY_BOX)
-        if c <= o:
-            why.append(WHY_RED)
-        if pos < cfg.close_pos_min:
-            why.append(WHY_WICK)
-        if limit_up:
-            why.append(WHY_LIMIT)
-        if reg is False:
-            why.append(WHY_REGIME)
-        rows.append(
-            CisRow(
-                code=code,
-                name=m.name,
-                market=m.market,  # pyright: ignore[reportArgumentType]
-                close=c,
-                chg_pct=chg,
-                volume=vol,
-                vol_avg=vol_avg,
-                vol_ratio=ratio,
-                turnover=to,
-                avg_turnover=avg_to,
-                box_high=box,
-                breakout=breakout,
-                close_pos=pos,
-                limit_up=limit_up,
-                regime_on=reg,
-                passed=not why,
-                why_not=tuple(why),
-                stop=c * (1.0 - cfg.plan.stop_pct / 100.0),
-                gap_skip=c * (1.0 + cfg.plan.gap_skip_pct / 100.0),
-            )
-        )
+        rows.append(got)
     rows.sort(key=lambda r: (not r.passed, -r.vol_ratio, r.code))
     return CisResult(
         as_of=as_of,

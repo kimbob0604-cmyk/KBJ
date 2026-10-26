@@ -19,6 +19,7 @@
 #   bash scripts/local/kbj.sh fill-trade        # 수출입 '종목' 탭: 매핑표 다시 싣기·시군구 5년 백필·종목 수출 지수 다시 계산(공공데이터 키 필요)
 #   bash scripts/local/kbj.sh verify-trade      # 공개 매핑표 전체를 맥 DB 와 대조(종목코드·이름·HS·최근 12개월 실적·시군구 이름) — 문제 줄만 찍는다
 #   bash scripts/local/kbj.sh hs-match <파일> [--jsonl]   # 월별 금액 파일(JSON)과 관세청 통계가 맞는 HS 코드를 찾아 한 줄씩 찍는다(공공데이터 키 필요 — 금액은 안 찍음)
+#   bash scripts/local/kbj.sh backtest-cis [옵션]   # cis 순추세(거래량 급증 + 박스 돌파) 백테스트 — 맥 DB 일봉, 결과는 화면만(--help 로 옵션)
 #   bash scripts/local/kbj.sh job <작업> [--as-of 값]   # 작업 하나를 지금 한 번(예: job market.close_collect)
 #   bash scripts/local/kbj.sh budget [--day YYYY-MM-DD]   # 오늘 DART·KRX 등 호출 예산을 어느 작업이 얼마나 썼는지
 #   bash scripts/local/kbj.sh audit [--show 경로]   # 화면 API 전체 점검(상태·기준 시각·빈 칸) — 로그인 없이, 값은 --show 로 하나씩
@@ -442,6 +443,10 @@ main() {
       require_scheduler
       f="$1"; shift
       kbj_compose exec -T scheduler python -m kbj.services.collectors.hs_match "$@" < "$f"
+      ;;
+    backtest-cis)
+      require_scheduler
+      kbj_compose exec -T scheduler python -m kbj.services.engine.backtest_cis "$@"
       ;;
     budget)
       require_scheduler
