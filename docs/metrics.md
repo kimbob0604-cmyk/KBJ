@@ -1270,3 +1270,20 @@ test_index_review_repo.py·tests/unit/engines/index_review/test_service.py·test
 - **예외**: 분류 없음 → 404(theme.classes_sync), 편입 없음 → 404(theme.master_sync), 보드 종목 하루 없음 → 강도 404
   (board.daily) — 상세는 시세 칸 None 으로 200.
 - **시험**: `tests/unit/theme/test_strength.py`(손계산·보드 롤업 대조), `tests/unit/api/test_routes_themes.py`.
+
+## 32. 공개 투자 콜 성과 (공개 콜 파일 · 평가 시총은 로그인 — ADR 0042)
+
+- **입력**: 콜 파일(`calls/**` — 진입 시총 `entry_mcap_eok`·목표 시총 `target_mcap_eok`·방향·벤치마크, 사용자 기록),
+  평가 시총(열린 콜: 평가일 시총 — KRX·KIS 로그인 등급 / 닫힌 콜: `close_mcap_eok` — 사용자 기록), 벤치마크 지수의
+  진입일·평가일 값(선택). 단위: 시총은 억(시장 통화 — KR 원·HK 홍콩달러·US 달러), 결과는 소수(×100 = %).
+- **종목 변화율** r = 평가 시총 / 진입 시총 − 1.
+- **콜 수익률** = r(롱) · −r(숏). 숏은 시총이 내려야 +.
+- **벤치 변화율** b = 벤치 평가값 / 벤치 진입값 − 1. **상대 성과** = r − b(롱) · b − r(숏).
+- **목표 진척** = (평가 − 진입) / (목표 − 진입) — 롱·숏 같은 식, 1 이상이면 `target_hit`. **기대 변화율**
+  (`implied_move`) = 목표 / 진입 − 1.
+- **예외**: 평가 시총이 없거나 0 이하이거나 품질 invalid → 모든 결과 None·품질 invalid(0 으로 채우지 않는다). 벤치값이
+  없거나 invalid → 벤치·상대 성과만 None.
+- **품질**: 평가 시총·벤치값 품질 중 가장 나쁜 것(ok < stale < estimated < invalid). 진입·목표·종료 시총은 사용자 기록이라
+  품질 판정 대상이 아니다 — 출처 칸(`entry_mcap_source`)과 기준일(`entry_mcap_as_of` — 콜 날짜 이하·7일 이내)을 필수로 둔다.
+- **한계**: 시총 기준(사용자 결정)이라 증자·CB 전환으로 주식 수가 늘면 주주 수익률보다 좋게 나온다. 배당은 넣지 않는다.
+- **시험**: `tests/unit/engines/journal/test_calls.py`(롱·숏 손계산, 벤치 없음, invalid).

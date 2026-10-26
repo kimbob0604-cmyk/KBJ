@@ -103,18 +103,18 @@ KIS 토큰은 `auth` 한 곳에서만 발급하고 나머지는 읽기만 한다
 | 구조 검사 | import-linter 계약 18개, 직접 호출 금지 검사(모든 그룹 목표 0 — `scripts/check_canonical.py`) |
 | 공개 산출물 검사 | 원시세·키·로그인 출처가 레포·공개 사이트·번들·데모 미디어에 없는지(`scripts/check_public_outputs.py`) |
 | 번들 예산 | 공개 JS 88 KB·로그인 131 KB(gzip — `web/scripts/check-bundle.mjs`) |
-| CI | lint·test·kbj-integration(TimescaleDB)·canonical·sim·web·public-outputs·demo(compose) |
+| CI | lint·test·kbj-integration(TimescaleDB)·canonical·sim·web·public-outputs·calls(공개 콜 기록)·demo(compose) |
 
 커버리지 배지는 넣지 않았다(외부 배지 서비스·새 의존성 없이).
 
 ## 결정 기록(ADR)
 
-0001~0038 — 목록·상태·대체 관계는 [`docs/adr/README.md`](docs/adr/README.md). 몇 개만:
+0001~0042 — 목록·상태·대체 관계는 [`docs/adr/README.md`](docs/adr/README.md). 몇 개만:
 KIS 발급 차단 세 겹 [`0004`](docs/adr/0004-kis-issuance.md) · 작업 등록부·데이터 키 선점 [`0006`](docs/adr/0006-job-registry-claims.md) ·
 공개 정적 사이트 [`0011`](docs/adr/0011-public-static-site.md) · 장 마감 뒤 발송 16:00 [`0018`](docs/adr/0018-post-close-1600.md) ·
 GEX 이식 경계 [`0029`](docs/adr/0029-gex-port-boundary.md) · 규칙 알림 [`0031`](docs/adr/0031-rule-alerts.md) ·
 데모 모드 [`0034`](docs/adr/0034-demo-mode.md) · 공개 산출물 검사 [`0035`](docs/adr/0035-public-outputs-check.md) ·
-옛 코드 비우기 [`0038`](docs/adr/0038-legacy-removal.md).
+옛 코드 비우기 [`0038`](docs/adr/0038-legacy-removal.md) · 공개 투자 콜 기록 [`0042`](docs/adr/0042-public-call-log.md).
 
 ## 구조
 
@@ -125,6 +125,7 @@ kbj/            Python 3.12(uv)
   data/public/  공개 등급 어댑터      data/private/  로그인 등급 어댑터
   store/        Postgres+Timescale — pub_*·prv_*·ops, 마이그레이션 0001~0022
   engines/  services/  reports/       도메인 엔진 · 서비스(auth·scheduler·notifier·api·gex_*·ops…) · 브리핑·리포트
+calls/          공개 투자 콜 기록 — 콜 하나 = 파일 하나, 커밋 시각이 판단 시점 기록(calls/README.md)
 config/         작업 등록부 jobs.yaml · 호출 상한 limits.yaml · 발송 규칙 notify.yaml · 휴장 덮어쓰기
 web/            SPA(Vite + TypeScript, 런타임 의존성 0) — 공개(정적 Pages)·로그인(같은 출처 /api) 두 빌드
 tests/  scripts/  docs/
@@ -137,6 +138,7 @@ uv sync && uv run pytest -m "not sim and not integration"   # 단위(시뮬레�
 uv run ruff check && uv run ruff format --check && uv run pyright && uv run lint-imports
 uv run python scripts/check_canonical.py                     # 직접 호출 금지 검사(정본 경계)
 uv run python scripts/check_public_outputs.py                # 공개 산출물 검사(커밋 전)
+uv run python -m kbj.services.personal calls check           # 공개 콜 기록 검사(calls/ — CI 는 직전 버전과 비교)
 cd web && npm ci --ignore-scripts && npm run lint && npm run typecheck && npm test   # 프런트(web/README.md)
 docker compose up -d                                         # 로컬 DB·Redis(.env 에 KBJ_POSTGRES_PASSWORD·KBJ_REDIS_PASSWORD)
 docker compose --profile app up -d --build                   # + migrate·auth·scheduler·notifier·ws-gateway·recorder·gex-engine·api
@@ -174,4 +176,5 @@ bash scripts/vm/start.sh        # 매일: status.sh · 새 버전: update.sh · 
 [`docs/PLAN.md`](docs/PLAN.md)(계획·단계별 결과) · [`docs/DATA_TIERS.md`](docs/DATA_TIERS.md)(공개/로그인 정본) ·
 [`docs/metrics.md`](docs/metrics.md)(지표 공식) · [`docs/probe_results.md`](docs/probe_results.md)(실측 체크리스트) ·
 [`docs/runbook.md`](docs/runbook.md)(운영) · [`docs/deploy_oracle.md`](docs/deploy_oracle.md)(VM 배포) · [`docs/local_run.md`](docs/local_run.md)(내 컴퓨터 혼자 쓰기) · [`docs/secrets.md`](docs/secrets.md)(키·환경변수) ·
-[`docs/migration/`](docs/migration/)(옮겨 온 세 프로젝트의 이식 기록) · [`docs/adr/`](docs/adr/README.md)(결정).
+[`docs/migration/`](docs/migration/)(옮겨 온 세 프로젝트의 이식 기록) · [`docs/adr/`](docs/adr/README.md)(결정) ·
+[`calls/`](calls/README.md)(공개 투자 콜 기록).

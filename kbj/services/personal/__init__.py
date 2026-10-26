@@ -1,6 +1,7 @@
 """개인 기록 쓰기 모듈(P8 — docs/p8_design.md D-P8-15·16). 표마다 쓰는 쪽 하나:
-규칙·판(`rules` — 묶음 EVL)·분석 일지·매매(`journal` — 묶음 JNL). API 라우트와 CLI 가 같은 함수를
-부른다. 로그인 원천 어댑터·수집기를 import 하지 않는다(저장소·엔진만).
+규칙·판(`rules` — 묶음 EVL)·분석 일지·매매(`journal` — 묶음 JNL)·공개 콜 기록 검사
+(`calls` — 파일만, DB 없음 — ADR 0042). API 라우트와 CLI 가 같은 함수를 부른다.
+로그인 원천 어댑터·수집기를 import 하지 않는다(저장소·엔진만).
 
 CLI: `python -m kbj.services.personal <그룹> …` — 그룹 모듈(`kbj.services.personal.<그룹>`)의
 `cli(argv, repos, …)` 를 부른다(그룹을 더할 때 이 파일을 고치지 않는다).
@@ -15,7 +16,7 @@ from typing import Any, Final
 
 __all__ = ["GROUPS", "main"]
 
-GROUPS: Final = ("rules", "journal")
+GROUPS: Final = ("rules", "journal", "calls")
 SERVICE: Final = "personal"
 
 
