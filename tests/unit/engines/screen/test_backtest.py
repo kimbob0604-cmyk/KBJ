@@ -171,3 +171,22 @@ def test_확인_진입은_신호일_고가를_넘을_때만() -> None:
     assert res.trades == () and res.skipped == {"확인 실패(신호일 고가 못 넘음)": 1}
     _, res = _run(_series([SPIKE, (10_900, 11_300, 10_850, 11_250)]), entry_mode="confirm")
     assert res.trades[0].entry_px == SPIKE[1]  # 신호일 고가 11,000 에 체결
+
+
+def test_신호일_종가_진입() -> None:
+    _, res = _run(_series([SPIKE, (11_000, 11_100, 10_900, 11_000)]), entry_mode="close")
+    t = res.trades[0]
+    assert t.entry_px == SPIKE[3] and t.entry_date == D0 + timedelta(days=N)  # 신호일 종가 10,950
+    assert t.days == 2  # 신호일 + 다음 날
+
+
+def test_종가_진입_다음_날_시가가_손절_아래면_시가에_손절() -> None:
+    _, res = _run(_series([SPIKE, (10_500, 10_600, 10_400, 10_500)]), entry_mode="close")
+    t = res.trades[0]
+    assert t.reason == "stop" and t.exit_px == 10_500  # 손절가 10,950 × 0.98 = 10,731 아래 시가
+
+
+def test_시간·이평_청산_0_이면_끈다() -> None:
+    flat = [(11_000, 11_050, 10_950, 11_000)] * 6
+    _, res = _run(_series([SPIKE, *flat]), time_stop_days=0, ma_exit_breaks=0)
+    assert res.trades[0].reason == "end"

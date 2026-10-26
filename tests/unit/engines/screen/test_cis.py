@@ -9,6 +9,7 @@ from kbj.core.quality import Quality
 from kbj.core.rows import Bar, IndexBar
 from kbj.engines.screen.cis import (
     WHY_BOX,
+    WHY_HOT,
     WHY_LIMIT,
     WHY_REGIME,
     WHY_WICK,
@@ -116,3 +117,12 @@ def test_그날_봉이_없거나_이력이_짧으면_뺀다() -> None:
     r = screen_cis(w, META, {}, CFG, AS_OF)
     assert "000100" not in {x.code for x in r.rows}
     assert r.excluded["이력 부족"] == 1
+
+
+def test_거래량_배수_상한을_넘으면_과열() -> None:
+    idx = {"코스피": _idx("코스피", UP), "코스닥": _idx("코스닥", UP)}
+    hot = CFG.model_copy(update={"vol_max": 5.0})
+    by = {x.code: x for x in screen_cis(_world(), META, idx, hot, AS_OF).rows}
+    assert not by["000100"].passed and by["000100"].why_not == (WHY_HOT,)  # 6배 > 5배
+    ok = CFG.model_copy(update={"vol_max": 6.0})
+    assert {x.code: x for x in screen_cis(_world(), META, idx, ok, AS_OF).rows}["000100"].passed

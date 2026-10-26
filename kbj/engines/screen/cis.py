@@ -12,7 +12,8 @@
    거래대금 ≥ `min_turnover_won`.
 5. 통과(cis 후보)는 4 에 더해 — 종가가 직전 최고가(고가) 위(박스권 돌파), 양봉(종가 > 시가),
    (종가−저가)/(고가−저가) ≥ `close_pos_min`(윗꼬리 짧음), 상한가 근처가 아님(`limit_pct` 미만 —
-   재료로 튄 날은 따로 표시), 그 시장 지수가 `regime_ma` 일선 위(모르면 막지 않고 표시).
+   재료로 튄 날은 따로 표시), 거래량 배수 ≤ `vol_max`(있으면 — 넘으면 '거래량 과열'), 그 시장
+   지수가 `regime_ma` 일선 위(모르면 막지 않고 표시).
 
 표는 통과 먼저, 그 안은 거래량 배수 큰 순 — 상한 `max_rows`(전체 수는 따로 센다).
 """
@@ -55,6 +56,7 @@ WHY_RED: Final = "음봉"
 WHY_WICK: Final = "윗꼬리"
 WHY_LIMIT: Final = "상한가 근처"
 WHY_REGIME: Final = "시장 약세"
+WHY_HOT: Final = "거래량 과열"
 
 
 @dataclass(frozen=True)
@@ -195,6 +197,8 @@ def judge(
         why.append(WHY_WICK)
     if limit_up:
         why.append(WHY_LIMIT)
+    if cfg.vol_max is not None and ratio > cfg.vol_max:
+        why.append(WHY_HOT)
     if regime_on is False:
         why.append(WHY_REGIME)
     return CisRow(

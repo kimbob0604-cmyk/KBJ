@@ -104,7 +104,7 @@ def test_sweep_비교_표() -> None:
 
     rc, text = _run("--years", "1", "--sweep")
     assert rc == 0 and "비교" in text
-    for name, _, _ in SWEEP:
+    for name, *_ in SWEEP:
         assert name in text, name
     rc, text = _run("--years", "1", "--stop-mode", "atr", "--entry", "confirm", "--trades", "0")
     assert rc == 0 and "손절 방식 atr" in text and "진입 confirm" in text
@@ -115,7 +115,7 @@ def test_sweep_청산_규칙_비교() -> None:
 
     rc, text = _run("--years", "1", "--sweep", "exit")
     assert rc == 0 and "청산 규칙만 바꾼다" in text and "평균R" in text
-    for name, _, _ in EXIT_SWEEP:
+    for name, *_ in EXIT_SWEEP:
         assert name in text, name
 
 
@@ -125,3 +125,22 @@ def test_edge_신호_우위_표() -> None:
     assert "NaN" not in text
     rc, text = _run("--years", "1", "--edge", "--no-regime")
     assert rc == 0 and "시장 국면 끔" in text
+
+
+def test_sweep_견고성_격자·연도별() -> None:
+    from kbj.services.engine.backtest_cis import ROBUST_SWEEP
+
+    rc, text = _run("--years", "1", "--sweep", "robust")
+    assert rc == 0 and "격자" in text and "연도별" in text and "24년" in text
+    for name, *_ in ROBUST_SWEEP:
+        assert name in text, name
+
+
+def test_배수_상한·종가_진입·청산_끔() -> None:
+    rc, text = _run("--years", "1", "--vol-max", "5", "--entry", "close", "--no-time-stop",
+                    "--no-ma-exit", "--trades", "0")  # fmt: skip
+    assert rc == 0 and "×3~5" in text and "진입 close" in text
+    assert "시간 손절 끔" in text and "이평 청산 끔" in text
+    _, capped = _run("--years", "1", "--vol-max", "5.5", "--json")
+    _, free = _run("--years", "1", "--json")
+    assert json.loads(capped)["signals"] < json.loads(free)["signals"]  # 합성 급증은 6배

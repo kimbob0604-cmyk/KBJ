@@ -48,9 +48,9 @@ def test_확인_진입은_신호일_고가를_넘을_때만() -> None:
     closes = [100.0] * 30
     s = _s("000100", closes, highs=[100.5] * 30)
     sig = {D0: [Signal(D0, s.code, 4.0, 100.0, high=101.0)]}
-    assert forward_of({s.code: s}, sig, confirm=True) == []
+    assert forward_of({s.code: s}, sig, entry="confirm") == []
     s2 = _s("000100", closes, highs=[102.0] * 30)
-    (f,) = forward_of({s2.code: s2}, sig, confirm=True)
+    (f,) = forward_of({s2.code: s2}, sig, entry="confirm")
     assert f.rets[0] == pytest.approx((100 / 101 - 1) * 100)  # 신호일 고가 101 에 체결
 
 

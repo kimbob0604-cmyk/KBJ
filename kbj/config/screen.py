@@ -44,6 +44,7 @@ class CisPlan(_Model):
 class CisCfg(_Model):
     lookback_days: int = Field(ge=5, le=250)
     vol_mult: float = Field(gt=1)
+    vol_max: float | None = Field(gt=1)  # 넘으면 '거래량 과열'(통과 빼기), None = 상한 없음
     min_turnover_won: int = Field(ge=0)
     min_avg_turnover_won: int = Field(ge=0)
     min_price: float = Field(ge=0)
@@ -68,14 +69,14 @@ class CisBacktestCfg(_Model):
     add_frac: float = Field(ge=0, le=2)
     breakeven_at_pct: float = Field(gt=0)
     ma_exit_days: int = Field(ge=2, le=250)
-    ma_exit_breaks: int = Field(ge=1, le=10)
-    time_stop_days: int = Field(ge=1, le=250)
+    ma_exit_breaks: int = Field(ge=0, le=10)  # 0 = 이평 청산 끔
+    time_stop_days: int = Field(ge=0, le=250)  # 0 = 시간 손절 끔
     time_stop_gain_pct: float = Field(ge=0)
     flat_band_pct: float = Field(ge=0, le=10)
     stop_mode: Literal["pct", "signal_low", "atr"]
     atr_days: int = Field(ge=2, le=100)
     atr_mult: float = Field(gt=0, le=10)
-    entry_mode: Literal["open", "confirm"]
+    entry_mode: Literal["open", "confirm", "close"]
     costs: CostsCfg
 
 

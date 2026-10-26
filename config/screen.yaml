@@ -7,6 +7,7 @@
 cis:
   lookback_days: 20                  # 평균 거래량·평균 거래대금·박스권 창(오늘을 뺀 직전 거래일 수)
   vol_mult: 3.0                      # 오늘 거래량 ≥ 직전 평균 × 이 값 → '거래량 급증'
+  vol_max: null                      # 이 배수 넘으면 '거래량 과열'(통과 빼기) — null = 상한 없음
   min_turnover_won: 5000000000       # 오늘 거래대금 ≥ 50억 원
   min_avg_turnover_won: 1000000000   # 직전 평균 거래대금 ≥ 10억 원(평소 유동성)
   min_price: 1000                    # 종가 ≥ 1,000원
@@ -33,8 +34,8 @@ cis_backtest:
   add_frac: 0.5                # 불타기 수량 = 처음 수량 × 이 값(한 번)
   breakeven_at_pct: 5.0        # 고가가 진입가 +5% 를 넘으면 손절을 본전으로
   ma_exit_days: 10             # 'n일선 아래 두 번째 마감'에서 청산(cis '두 번째 하락에서 판다')
-  ma_exit_breaks: 2
-  time_stop_days: 5            # 5거래일 안에 종가가 +3% 를 한 번도 넘지 못하면 정리
+  ma_exit_breaks: 2            # 0 = 이평 청산 끔
+  time_stop_days: 5            # 5거래일 안에 종가가 +3% 를 한 번도 넘지 못하면 정리(0 = 끔)
   time_stop_gain_pct: 3.0
   flat_band_pct: 0.5           # |수익률| < 0.5% 는 '본전'으로 센다
   # 최초 손절 방식: pct = 진입가 −plan.stop_pct · signal_low = 신호일 저가 · atr = 진입가 − ATR(atr_days)×atr_mult
@@ -43,5 +44,6 @@ cis_backtest:
   atr_days: 14
   atr_mult: 2.0
   # 진입 방식: open = 다음 날 시가 · confirm = 다음 날 신호일 고가를 넘을 때(그 값 또는 더 높은 시가)
+  #          · close = 신호일 종가(장 마감 동시호가)
   entry_mode: confirm
   costs: {fee_bps: 1.5, sell_tax_pct: 0.20, slippage_bps: 10}  # 수수료 양쪽·매도 거래세(2026)·슬리피지 양쪽

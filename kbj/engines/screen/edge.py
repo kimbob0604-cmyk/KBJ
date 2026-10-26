@@ -1,10 +1,11 @@
 """cis 신호 우위(순수 계산) — 매매 규칙 없이 '신호 뒤 n일 동안 어떻게 움직였나'만 본다.
 
 손절·청산 규칙을 바꿔 가며 돌리기 전에 신호 자체가 아무 날 아무 종목보다 나은지 먼저 확인한다.
-- 진입: 신호일 다음 날 시가(확인 진입은 다음 날 고가가 신호일 고가 이상일 때
-  max(시가, 신호일 고가)).
-- n일 수익률: 진입가 → 신호 다음 날부터 n번째 거래일 종가(1일 = 진입일 종가). 비용 빼기 전.
-- 최고·최저: 가장 긴 n일 안 고가 최고·저가 최저(진입가 대비).
+- 진입: open = 신호일 다음 날 시가 · confirm = 다음 날 고가가 신호일 고가 이상일 때
+  max(시가, 신호일 고가) · close = 신호일 종가(장 마감 동시호가에 산다고 본다).
+- n일 수익률: 진입가 → 신호일 뒤 n번째 거래일 종가(1일 = 다음 날 종가 — 진입 방식이 달라도 같은
+  날 종가와 비교한다). 비용 빼기 전.
+- 최고·최저: 신호일 뒤 가장 긴 n일 안 고가 최고·저가 최저(진입가 대비).
 - 기준선: 같은 기간 대상 종목 전부·모든 날(다음 날 시가 → n일 뒤 종가) — 신호가 이걸 넘어야 우위다.
 n일 뒤 봉이 없으면(기간 끝·정지) 그 n 에서만 뺀다.
 """
@@ -15,7 +16,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
 from statistics import median
-from typing import Final
+from typing import Final, Literal
 
 from kbj.engines.screen.backtest import OhlcSeries, Signal
 
@@ -55,7 +56,7 @@ def forward_of(
     series: Mapping[str, OhlcSeries],
     signals: Mapping[date, Sequence[Signal]],
     *,
-    confirm: bool = False,
+    entry: Literal["open", "confirm", "close"] = "open",
     horizons: Sequence[int] = HORIZONS,
 ) -> list[Fwd]:
     """신호마다 앞날. 다음 날 봉이 없거나(정지·기간 끝) 확인 실패면 뺀다."""
@@ -70,12 +71,12 @@ def forward_of(
             if i is None or i + 1 >= len(s.dates):
                 continue
             e = i + 1
-            px = s.open[e]
-            if confirm:
+            px = s.close[i] if entry == "close" else s.open[e]
+            if entry == "confirm":
                 if s.high[e] < sig.high:
                     continue
                 px = max(px, sig.high)
-            rets = tuple(_pct(s.close[e + h - 1], px) if e + h - 1 < len(s.dates) else None
+            rets = tuple(_pct(s.close[i + h], px) if i + h < len(s.dates) else None
                          for h in horizons)  # fmt: skip
             end = min(e + far, len(s.dates))
             out.append(

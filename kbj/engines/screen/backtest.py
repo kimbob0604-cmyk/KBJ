@@ -2,7 +2,8 @@
 일봉으로 굴린다.
 
 규칙(config/screen.yaml `cis.plan`·`cis_backtest` — 값은 출발점, 백테스트로 다시 정한다)
-- 신호: D일 종가로 통과(`judge(...).passed`) — 거래량 배수 큰 순으로 D+1 시가 진입. 이미 들고
+- 신호: D일 종가로 통과(`judge(...).passed`) — 거래량 배수 큰 순으로 D+1 시가 진입(`entry_mode`
+  confirm = D+1 고가가 D 고가를 넘을 때 그 값, close = D 종가 — 동시호가에 산다고 본다). 이미 들고
   있는 종목·동시 보유 상한(`max_positions`)·갭(시가 > D 종가 × (1 + `gap_skip_pct`))은
   건너뛴다(센다).
 - 수량: 위험 = 전날 평가액 × `risk_pct`, 1주 위험 = 진입가 × `stop_pct` → 수량 = 위험 ÷ 1주 위험
@@ -12,8 +13,8 @@
   닿으면 손절가 체결. **같은 날 손절과 새 고가가 다 나오면 손절이 먼저**(일봉이라 순서를 모른다 —
   보수적).
 - 그 밖의 청산(종가): `ma_exit_days` 일선 아래 마감이 `ma_exit_breaks` 번째(cis '두 번째 하락에서
-  판다'), `time_stop_days` 거래일 안에 종가가 +`time_stop_gain_pct` 를 한 번도 못 넘음. 기간 끝은
-  마지막 종가.
+  판다'), `time_stop_days` 거래일 안에 종가가 +`time_stop_gain_pct` 를 한 번도 못 넘음(둘 다 0 이면
+  끈다). 기간 끝은 마지막 종가.
 - 불타기(한 번): 종가가 +`add_at_pct` 이상이고 보유 중 종가 신고가면 다음 날 시가에 처음 수량 ×
   `add_frac`(시가가 손절 위일 때만). 물타기는 없다.
 - 비용: `kbj.engines.backtest.costs`(수수료 양쪽·매도세·슬리피지 양쪽).
@@ -309,10 +310,11 @@ def run_backtest(
                 continue
             s = s_cache.setdefault(sig.code, series[sig.code])
             o = s.open[i]
-            if o > sig.close * (1 + plan.gap_skip_pct / 100):
+            at_close = bt.entry_mode == "close"
+            if not at_close and o > sig.close * (1 + plan.gap_skip_pct / 100):
                 skipped["갭 추격 금지"] += 1
                 continue
-            px = o
+            px = sig.close if at_close else o
             if bt.entry_mode == "confirm":
                 if s.high[i] < sig.high:
                     skipped["확인 실패(신호일 고가 못 넘음)"] += 1
@@ -331,9 +333,12 @@ def run_backtest(
                 continue
             cost = qty * buy_cost(px, costs)
             cash -= cost
-            held[sig.code] = _Pos(code=sig.code, entry_date=d, entry_px=px, qty=qty, init_qty=qty,
-                                  cost=cost, risk=qty * per, stop=stop, kind="stop", high=px,
-                                  max_close=px)  # fmt: skip
+            pos = _Pos(code=sig.code, entry_date=sig.date if at_close else d, entry_px=px, qty=qty,
+                       init_qty=qty, cost=cost, risk=qty * per, stop=stop, kind="stop", high=px,
+                       max_close=px, days=1 if at_close else 0)  # fmt: skip
+            held[sig.code] = pos
+            if at_close and o <= stop:
+                close_out(pos, d, o, "stop")  # 신호일 종가에 샀는데 다음 날 시가가 손절 아래
         # 3) 장중 저가 손절 → 4) 종가 판정·손절 올리기·불타기 예약
         for p in list(held.values()):
             i = at(p.code, d)
@@ -348,7 +353,7 @@ def run_backtest(
             last_close[p.code] = c
             p.high = max(p.high, s.high[i])
             k = bt.ma_exit_days
-            if i + 1 >= k and c < sum(s.close[i - k + 1 : i + 1]) / k:
+            if bt.ma_exit_breaks and i + 1 >= k and c < sum(s.close[i - k + 1 : i + 1]) / k:
                 p.breaks += 1
                 if p.breaks >= bt.ma_exit_breaks:
                     close_out(p, d, c, "ma")
@@ -356,7 +361,7 @@ def run_backtest(
             new_high = c > p.max_close
             p.max_close = max(p.max_close, c)
             gain_seen = p.max_close >= p.entry_px * (1 + bt.time_stop_gain_pct / 100)
-            if p.days >= bt.time_stop_days and not gain_seen:
+            if bt.time_stop_days and p.days >= bt.time_stop_days and not gain_seen:
                 close_out(p, d, c, "time")
                 continue
             if p.high >= p.entry_px * (1 + bt.breakeven_at_pct / 100) and p.stop < p.entry_px:
