@@ -17,7 +17,7 @@
         "sido_cd": "50",
         "sgg_nm": "가상시50A",
         "hs6": "030220",
-        "exp_usd": 57342786,
+        "exp_usd": 57342000,
         "exp_yoy": -0.0172,
         "share": 0.1561,
         "quality": "ok"
@@ -27,7 +27,7 @@
         "sido_cd": "30",
         "sgg_nm": "가상시30A",
         "hs6": "030220",
-        "exp_usd": 43622538,
+        "exp_usd": 43622000,
         "exp_yoy": 0.2569,
         "share": 0.1187,
         "quality": "ok"
@@ -37,9 +37,9 @@
         "sido_cd": "51",
         "sgg_nm": "가상시51A",
         "hs6": "030220",
-        "exp_usd": 41791928,
+        "exp_usd": 41791000,
         "exp_yoy": -0.0377,
-        "share": 0.1137,
+        "share": 0.1138,
         "quality": "ok"
       },
       {
@@ -47,8 +47,8 @@
         "sido_cd": "47",
         "sgg_nm": "가상시47A",
         "hs6": "030220",
-        "exp_usd": 28238665,
-        "exp_yoy": 0.2124,
+        "exp_usd": 28238000,
+        "exp_yoy": 0.2123,
         "share": 0.0769,
         "quality": "ok"
       },
@@ -57,7 +57,7 @@
         "sido_cd": "26",
         "sgg_nm": "가상시26A",
         "hs6": "030220",
-        "exp_usd": 25557567,
+        "exp_usd": 25557000,
         "exp_yoy": 0.0502,
         "share": 0.0696,
         "quality": "ok"
@@ -67,7 +67,7 @@
         "sido_cd": "48",
         "sgg_nm": "가상시48A",
         "hs6": "030220",
-        "exp_usd": 25319801,
+        "exp_usd": 25319000,
         "exp_yoy": -0.1245,
         "share": 0.0689,
         "quality": "ok"
@@ -77,7 +77,7 @@
         "sido_cd": "52",
         "sgg_nm": "가상시52A",
         "hs6": "030220",
-        "exp_usd": 24054883,
+        "exp_usd": 24054000,
         "exp_yoy": -0.1799,
         "share": 0.0655,
         "quality": "ok"
@@ -87,7 +87,7 @@
         "sido_cd": "11",
         "sgg_nm": "가상시11A",
         "hs6": "030220",
-        "exp_usd": 22318734,
+        "exp_usd": 22318000,
         "exp_yoy": 0.2785,
         "share": 0.0607,
         "quality": "ok"
@@ -97,7 +97,7 @@
         "sido_cd": "43",
         "sgg_nm": "가상시43A",
         "hs6": "030220",
-        "exp_usd": 19611356,
+        "exp_usd": 19611000,
         "exp_yoy": -0.1202,
         "share": 0.0534,
         "quality": "ok"
@@ -107,7 +107,7 @@
         "sido_cd": "41",
         "sgg_nm": "가상시41A",
         "hs6": "030220",
-        "exp_usd": 18602656,
+        "exp_usd": 18602000,
         "exp_yoy": 0.0583,
         "share": 0.0506,
         "quality": "ok"
@@ -117,7 +117,7 @@
         "sido_cd": "36",
         "sgg_nm": "가상시36A",
         "hs6": "030220",
-        "exp_usd": 13841127,
+        "exp_usd": 13841000,
         "exp_yoy": -0.1446,
         "share": 0.0377,
         "quality": "ok"
@@ -127,7 +127,7 @@
         "sido_cd": "12",
         "sgg_nm": "가상시을",
         "hs6": "030220",
-        "exp_usd": 11363486,
+        "exp_usd": 11363000,
         "exp_yoy": null,
         "share": 0.0309,
         "quality": "ok"
@@ -137,8 +137,8 @@
         "sido_cd": "27",
         "sgg_nm": "가상시27A",
         "hs6": "030220",
-        "exp_usd": 11059953,
-        "exp_yoy": 0.2413,
+        "exp_usd": 11059000,
+        "exp_yoy": 0.2412,
         "share": 0.0301,
         "quality": "ok"
       },
@@ -147,7 +147,7 @@
         "sido_cd": "28",
         "sgg_nm": "가상시28A",
         "hs6": "030220",
-        "exp_usd": 9048246,
+        "exp_usd": 9048000,
         "exp_yoy": 0.0582,
         "share": 0.0246,
         "quality": "ok"
@@ -157,7 +157,7 @@
         "sido_cd": "12",
         "sgg_nm": "가상군갑",
         "hs6": "030220",
-        "exp_usd": 6917738,
+        "exp_usd": 6917000,
         "exp_yoy": 0.0962,
         "share": 0.0188,
         "quality": "ok"
@@ -167,8 +167,8 @@
         "sido_cd": "44",
         "sgg_nm": "가상시44A",
         "hs6": "030220",
-        "exp_usd": 3430841,
-        "exp_yoy": -0.2789,
+        "exp_usd": 3430000,
+        "exp_yoy": -0.279,
         "share": 0.0093,
         "quality": "ok"
       },
@@ -177,8 +177,8 @@
         "sido_cd": "29",
         "sgg_nm": "가상시29A",
         "hs6": "030220",
-        "exp_usd": 2926558,
-        "exp_yoy": -0.1326,
+        "exp_usd": 2926000,
+        "exp_yoy": -0.1328,
         "share": 0.008,
         "quality": "ok"
       },
@@ -187,7 +187,7 @@
         "sido_cd": "31",
         "sgg_nm": "가상시31A",
         "hs6": "030220",
-        "exp_usd": 2354151,
+        "exp_usd": 2354000,
         "exp_yoy": -0.2208,
         "share": 0.0064,
         "quality": "ok"
