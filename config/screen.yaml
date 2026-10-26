@@ -37,4 +37,10 @@ cis_backtest:
   time_stop_days: 5            # 5거래일 안에 종가가 +3% 를 한 번도 넘지 못하면 정리
   time_stop_gain_pct: 3.0
   flat_band_pct: 0.5           # |수익률| < 0.5% 는 '본전'으로 센다
+  # 최초 손절 방식: pct = 진입가 −plan.stop_pct · signal_low = 신호일 저가 · atr = 진입가 − ATR(atr_days)×atr_mult
+  stop_mode: pct
+  atr_days: 14
+  atr_mult: 2.0
+  # 진입 방식: open = 다음 날 시가 · confirm = 다음 날 신호일 고가를 넘을 때(그 값 또는 더 높은 시가)
+  entry_mode: open
   costs: {fee_bps: 1.5, sell_tax_pct: 0.20, slippage_bps: 10}  # 수수료 양쪽·매도 거래세(2026)·슬리피지 양쪽

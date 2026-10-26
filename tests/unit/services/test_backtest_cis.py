@@ -97,3 +97,14 @@ def test_일봉이_모자라면_오류() -> None:
 
     out = io.StringIO()
     assert main([], out=out, load=few) == 2 and "오류" in out.getvalue()
+
+
+def test_sweep_비교_표() -> None:
+    from kbj.services.engine.backtest_cis import SWEEP
+
+    rc, text = _run("--years", "1", "--sweep")
+    assert rc == 0 and "비교" in text
+    for name, _, _ in SWEEP:
+        assert name in text, name
+    rc, text = _run("--years", "1", "--stop-mode", "atr", "--entry", "confirm", "--trades", "0")
+    assert rc == 0 and "손절 방식 atr" in text and "진입 confirm" in text

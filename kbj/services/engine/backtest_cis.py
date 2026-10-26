@@ -34,7 +34,7 @@ from kbj.engines.screen.backtest import (
 )
 from kbj.engines.screen.cis import StockMeta, eligible
 
-__all__ = ["Loaded", "main", "report"]
+__all__ = ["SWEEP", "Loaded", "main", "report", "sweep_table"]
 
 DAYS_PER_YEAR: Final = 250
 BATCH: Final = 300
@@ -105,8 +105,15 @@ def _args(argv: Sequence[str] | None) -> argparse.Namespace:
     ap.add_argument("--no-pyramid", action="store_true", help="불타기 끔")
     ap.add_argument("--no-ma-exit", action="store_true", help="이평 두 번째 이탈 청산 끔")
     ap.add_argument("--no-time-stop", action="store_true", help="시간 손절 끔")
+    ap.add_argument("--stop-mode", choices=("pct", "signal_low", "atr"), default=None,
+                    help="최초 손절: pct(진입가 −%%)·signal_low(신호일 저가)·"
+                         "atr(ATR×배수)")  # fmt: skip
+    ap.add_argument("--atr-mult", type=float, default=None)
+    ap.add_argument("--entry", choices=("open", "confirm"), default=None,
+                    help="진입: open(다음 날 시가)·confirm(다음 날 신호일 고가 돌파)")  # fmt: skip
     ap.add_argument("--trades", type=int, default=15, help="끝에 보일 최근 거래 수")
     fmt = ap.add_mutually_exclusive_group()
+    fmt.add_argument("--sweep", action="store_true", help="손절·진입 조합 9개를 한 번에 — 비교 표")
     fmt.add_argument("--json", action="store_true")
     fmt.add_argument("--csv", action="store_true", help="거래 목록 CSV")
     return ap.parse_args(argv)
@@ -137,7 +144,45 @@ def _configs(a: argparse.Namespace) -> tuple[CisCfg, CisBacktestCfg]:
         upd["ma_exit_breaks"] = 10
     if a.no_time_stop:
         upd["time_stop_days"] = 250
+    if a.stop_mode is not None:
+        upd["stop_mode"] = a.stop_mode
+    if a.atr_mult is not None:
+        upd["atr_mult"] = a.atr_mult
+    if a.entry is not None:
+        upd["entry_mode"] = a.entry
     return cfg, bt.model_copy(update=upd)
+
+
+# 비교 조합(이름, plan 덮기, cis_backtest 덮기) — 나머지는 지금 설정·옵션 그대로
+SWEEP: Final[tuple[tuple[str, dict[str, Any], dict[str, Any]], ...]] = (
+    ("시가·−2%", {"stop_pct": 2.0}, {"entry_mode": "open", "stop_mode": "pct"}),
+    ("시가·−3%", {"stop_pct": 3.0}, {"entry_mode": "open", "stop_mode": "pct"}),
+    ("시가·−5%", {"stop_pct": 5.0}, {"entry_mode": "open", "stop_mode": "pct"}),
+    ("시가·−7%", {"stop_pct": 7.0}, {"entry_mode": "open", "stop_mode": "pct"}),
+    ("시가·신호일 저가", {}, {"entry_mode": "open", "stop_mode": "signal_low"}),
+    ("시가·ATR×2", {}, {"entry_mode": "open", "stop_mode": "atr", "atr_mult": 2.0}),
+    ("확인·−2%", {"stop_pct": 2.0}, {"entry_mode": "confirm", "stop_mode": "pct"}),
+    ("확인·신호일 저가", {}, {"entry_mode": "confirm", "stop_mode": "signal_low"}),
+    ("확인·ATR×2", {}, {"entry_mode": "confirm", "stop_mode": "atr", "atr_mult": 2.0}),
+)
+
+
+def sweep_table(rows: Sequence[tuple[str, Summary]]) -> str:
+    head = (
+        f"{'조합':<16} {'거래':>6} {'이김/짐/본전':>14} {'평균이익':>8} {'평균손실':>8} "
+        f"{'손익비':>6} "
+        f"{'기대값':>7} {'총수익':>8} {'연':>7} {'최대낙폭':>8} {'보유일':>5}"
+    )
+    out = [head]
+    for name, s in rows:
+        wl = f"{s.win_pct:.0f}/{s.loss_pct:.0f}/{s.flat_pct:.0f}"
+        hold = "—" if s.avg_days is None else f"{s.avg_days:.1f}"
+        out.append(
+            f"{name:<16} {s.trades:>6,} {wl:>14} {_p(s.avg_win_pct):>8} {_p(s.avg_loss_pct):>8} "
+            f"{_x(s.payoff):>6} {_p(s.expectancy_pct, 2):>7} {_p(s.total_return_pct):>8} "
+            f"{_p(s.cagr_pct):>7} {_p(s.mdd_pct):>8} {hold:>5}"
+        )
+    return "\n".join(out) + "\n"
 
 
 def _z(v: float, digits: int) -> float:
@@ -172,7 +217,7 @@ def report(
             f"손절 −{p.stop_pct:g}% · "
             f"추적 −{p.trail_pct:g}% · 갭 +{p.gap_skip_pct:g}% 건너뜀 · 불타기 +{p.add_at_pct:g}% "
             f"×{bt.add_frac:g} · 위험 {p.risk_pct:g}% · 최대 {p.max_positions}종목 · 비중 "
-            f"{bt.max_weight_pct:g}%"
+            f"{bt.max_weight_pct:g}% · 손절 방식 {bt.stop_mode} · 진입 {bt.entry_mode}"
         ),
         f"비용: 수수료 {c.fee_bps:g}bp · 매도 거래세 {c.sell_tax_pct:g}% · "
         f"슬리피지 {c.slippage_bps:g}bp"
@@ -225,8 +270,27 @@ def main(
         return 2
     start = days[max(cfg.lookback_days + 1, len(days) - bt.years * DAYS_PER_YEAR)]
     regimes = {} if a.no_regime else regime_series(got.index_bars, cfg)
-    sig = signals_of(got.series, got.meta, regimes, cfg, start=start)
-    res = run_backtest(got.series, sig, [d for d in days if d >= start], cfg, bt)
+    sig = signals_of(got.series, got.meta, regimes, cfg, start=start, atr_days=bt.atr_days)
+    sim_days = [d for d in days if d >= start]
+    if a.sweep:
+        rows: list[tuple[str, Summary]] = []
+        for name, plan_upd, bt_upd in SWEEP:
+            c2 = cfg.model_copy(update={"plan": cfg.plan.model_copy(update=plan_upd)})
+            b2 = bt.model_copy(update=bt_upd)
+            r2 = run_backtest(got.series, sig, sim_days, c2, b2)
+            rows.append((name, summarize(r2, flat_band_pct=b2.flat_band_pct,
+                                         max_positions=c2.plan.max_positions)))  # fmt: skip
+        o.write(
+            f"cis 순추세 백테스트 비교 — {sim_days[0]} ~ {sim_days[-1]} · "
+            f"대상 {len(got.series):,}종목"
+            f" · 신호 {sum(len(v) for v in sig.values()):,}\n"
+            "시가 = 다음 날 시가 진입 · 확인 = 다음 날 신호일 고가를 넘을 때 진입 · "
+            "나머지 규칙은 같다\n\n"
+        )
+        o.write(sweep_table(rows))
+        o.write("\n주의: " + " / ".join(CAVEATS) + "\n")
+        return 0
+    res = run_backtest(got.series, sig, sim_days, cfg, bt)
     s = summarize(res, flat_band_pct=bt.flat_band_pct, max_positions=cfg.plan.max_positions)
     if a.json:
         body = {"summary": asdict(s), "skipped": dict(res.skipped), "signals": res.signals,

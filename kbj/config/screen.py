@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Final
+from typing import Any, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
@@ -72,6 +72,10 @@ class CisBacktestCfg(_Model):
     time_stop_days: int = Field(ge=1, le=250)
     time_stop_gain_pct: float = Field(ge=0)
     flat_band_pct: float = Field(ge=0, le=10)
+    stop_mode: Literal["pct", "signal_low", "atr"]
+    atr_days: int = Field(ge=2, le=100)
+    atr_mult: float = Field(gt=0, le=10)
+    entry_mode: Literal["open", "confirm"]
     costs: CostsCfg
 
 

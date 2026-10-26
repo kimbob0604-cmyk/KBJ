@@ -110,6 +110,20 @@ class Signal:
     code: str
     vol_ratio: float
     close: float
+    high: float = 0.0  # 신호일 고가(확인 진입 문턱)
+    low: float = 0.0  # 신호일 저가(신호일 저가 손절)
+    atr: float | None = None  # 신호일까지 ATR(`atr_days`)
+
+
+def _atr(s: OhlcSeries, i: int, n: int) -> float | None:
+    """i 일까지 n 일 평균 진폭(true range) — 모자라면 None."""
+    if i < n:
+        return None
+    tr = [
+        max(s.high[k] - s.low[k], abs(s.high[k] - s.close[k - 1]), abs(s.low[k] - s.close[k - 1]))
+        for k in range(i - n + 1, i + 1)
+    ]
+    return sum(tr) / n
 
 
 def signals_of(
@@ -119,6 +133,7 @@ def signals_of(
     cfg: CisCfg,
     *,
     start: date,
+    atr_days: int = 14,
 ) -> dict[date, list[Signal]]:
     """날짜 → 통과 신호(거래량 배수 큰 순). 판정은 스크리너와 같은 `judge`."""
     out: dict[date, list[Signal]] = defaultdict(list)
@@ -147,7 +162,10 @@ def signals_of(
             )  # fmt: skip
             row = judge(code, m, d, reg.get(s.dates[i]), cfg)
             if isinstance(row, CisRow) and row.passed:
-                out[s.dates[i]].append(Signal(s.dates[i], code, row.vol_ratio, s.close[i]))
+                out[s.dates[i]].append(
+                    Signal(s.dates[i], code, row.vol_ratio, s.close[i], s.high[i], s.low[i],
+                           _atr(s, i, atr_days))
+                )  # fmt: skip
     for day in out:
         out[day].sort(key=lambda x: (-x.vol_ratio, x.code))
     return dict(out)
@@ -203,6 +221,19 @@ class BacktestResult:
 def _costs(bt: CisBacktestCfg) -> Costs:
     c = bt.costs
     return Costs(fee_bps=c.fee_bps, sell_tax_pct=c.sell_tax_pct, slippage_bps=c.slippage_bps)
+
+
+def _first_stop(px: float, sig: Signal, stop_pct: float, bt: CisBacktestCfg) -> float | None:
+    """최초 손절가 — 진입가 아래여야 한다(신호일 저가가 진입가 이상이면 % 손절로)."""
+    pct = px * (1 - stop_pct / 100)
+    if bt.stop_mode == "signal_low":
+        return sig.low if 0 < sig.low < px else pct
+    if bt.stop_mode == "atr":
+        if sig.atr is None:
+            return None
+        stop = px - sig.atr * bt.atr_mult
+        return stop if 0 < stop < px else None
+    return pct
 
 
 def run_backtest(
@@ -281,19 +312,28 @@ def run_backtest(
             if o > sig.close * (1 + plan.gap_skip_pct / 100):
                 skipped["갭 추격 금지"] += 1
                 continue
-            stop = o * (1 - plan.stop_pct / 100)
-            per = o - stop
+            px = o
+            if bt.entry_mode == "confirm":
+                if s.high[i] < sig.high:
+                    skipped["확인 실패(신호일 고가 못 넘음)"] += 1
+                    continue
+                px = max(o, sig.high)
+            stop = _first_stop(px, sig, plan.stop_pct, bt)
+            if stop is None:
+                skipped["손절가 없음(ATR 이력 부족)"] += 1
+                continue
+            per = px - stop
             qty = floor(equity_prev * plan.risk_pct / 100 / per)
-            qty = min(qty, floor(equity_prev * bt.max_weight_pct / 100 / o))
-            qty = min(qty, floor(cash / buy_cost(o, costs)))
+            qty = min(qty, floor(equity_prev * bt.max_weight_pct / 100 / px))
+            qty = min(qty, floor(cash / buy_cost(px, costs)))
             if qty < 1:
                 skipped["현금·비중 부족"] += 1
                 continue
-            cost = qty * buy_cost(o, costs)
+            cost = qty * buy_cost(px, costs)
             cash -= cost
-            held[sig.code] = _Pos(code=sig.code, entry_date=d, entry_px=o, qty=qty, init_qty=qty,
-                                  cost=cost, risk=qty * per, stop=stop, kind="stop", high=o,
-                                  max_close=o)  # fmt: skip
+            held[sig.code] = _Pos(code=sig.code, entry_date=d, entry_px=px, qty=qty, init_qty=qty,
+                                  cost=cost, risk=qty * per, stop=stop, kind="stop", high=px,
+                                  max_close=px)  # fmt: skip
         # 3) 장중 저가 손절 → 4) 종가 판정·손절 올리기·불타기 예약
         for p in list(held.values()):
             i = at(p.code, d)

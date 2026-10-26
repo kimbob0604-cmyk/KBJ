@@ -56,7 +56,9 @@ def _rise(step: float, n: int, low_gap: float = 50) -> list[Ohlc]:
 
 
 def _run(s: OhlcSeries, **bt: object):
-    sig = signals_of({s.code: s}, META, {}, CFG, start=s.dates[0])
+    atr_days = bt.get("atr_days", 5)
+    assert isinstance(atr_days, int)
+    sig = signals_of({s.code: s}, META, {}, CFG, start=s.dates[0], atr_days=atr_days)
     cfg_bt = BT.model_copy(update=bt)
     res = run_backtest({s.code: s}, sig, s.dates[N:], CFG, cfg_bt)
     return sig, res
@@ -148,3 +150,23 @@ def test_보유_상한() -> None:
     res = run_backtest({s.code: s}, sig, s.dates[N:], CFG,
                        BT.model_copy(update={"capital_won": 1}))  # fmt: skip
     assert res.trades == () and res.skipped == {"현금·비중 부족": 1}
+
+
+def test_신호일_저가_손절() -> None:
+    _, res = _run(_series([SPIKE, (11_000, 11_050, 10_000, 10_100)]), stop_mode="signal_low")
+    t = res.trades[0]
+    assert t.reason == "stop" and t.exit_px == SPIKE[2]  # 신호일 저가 10,050
+
+
+def test_ATR_손절은_이력이_모자라면_건너뛴다() -> None:
+    _, res = _run(_series([SPIKE, (11_000, 11_100, 10_900, 11_000)]), stop_mode="atr", atr_days=99)
+    assert res.trades == () and res.skipped == {"손절가 없음(ATR 이력 부족)": 1}
+    _, res = _run(_series([SPIKE, (11_000, 11_100, 10_900, 11_000)]), stop_mode="atr")
+    assert res.trades and res.trades[0].entry_px == 11_000
+
+
+def test_확인_진입은_신호일_고가를_넘을_때만() -> None:
+    _, res = _run(_series([SPIKE, (10_900, 10_990, 10_800, 10_950)]), entry_mode="confirm")
+    assert res.trades == () and res.skipped == {"확인 실패(신호일 고가 못 넘음)": 1}
+    _, res = _run(_series([SPIKE, (10_900, 11_300, 10_850, 11_250)]), entry_mode="confirm")
+    assert res.trades[0].entry_px == SPIKE[1]  # 신호일 고가 11,000 에 체결
