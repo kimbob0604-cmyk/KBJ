@@ -1,6 +1,6 @@
 """코스피200 선물 미결제약정(OI)·해석 라벨·파생 투자자 일별 — 순수 계산.
 
-근거: metrics §32, ADR 0042. 계약 ⑨(엔진은 저장소·어댑터를 모른다) — 입력은 리더가 저장소
+근거: metrics §33, ADR 0043. 계약 ⑨(엔진은 저장소·어댑터를 모른다) — 입력은 리더가 저장소
 행을 옮긴 값, 출력은 화면이 그대로 싣는 일별 행.
 
 - 확정 행: KRX 선물 일별 정규 행(`prv_gex.krx_fut_daily` — family kospi200). 합계 OI = 전 월물
@@ -229,7 +229,7 @@ def _chg_pct(close: Decimal | None, cmp_prev: Decimal | None) -> float | None:
 
 
 def oi_label(price_pct: float | None, oi_pct: float | None) -> tuple[Label, str]:
-    """가격 등락률·OI 증감률(%) → 라벨과 사유(metrics §32 해석 라벨)."""
+    """가격 등락률·OI 증감률(%) → 라벨과 사유(metrics §33 해석 라벨)."""
     if price_pct is None or oi_pct is None:
         missing = [n for n, v in (("가격 등락", price_pct), ("OI 증감", oi_pct)) if v is None]
         return "unknown", f"{'·'.join(missing)} 없음"

@@ -437,14 +437,14 @@ class GexRepo(Protocol):
 
     def krx_futures_days(self, first: date, last: date) -> list[KrxFuturesDay]:
         """KRX 코스피200 선물 정규 행(만기 있는 것)의 OI·종가·전일비 — (거래일, 만기) 순
-        (metrics §32 — 선물 OI 패널)."""
+        (metrics §33 — 선물 OI 패널)."""
         ...
 
     def investor_closes(
         self, first: date, last: date, markets: Sequence[str], upto: datetime
     ) -> list[InvestorRecord]:
         """investor_flow 날마다 정규장(day) 마지막 행 — (거래일, 시장, 업종, 투자자)마다 ts 가장
-        늦은 것(invalid 제외, ts ≤ upto). (거래일, 시장, 업종, 투자자) 순(metrics §32)."""
+        늦은 것(invalid 제외, ts ≤ upto). (거래일, 시장, 업종, 투자자) 순(metrics §33)."""
         ...
 
 

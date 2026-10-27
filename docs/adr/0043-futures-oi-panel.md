@@ -1,8 +1,8 @@
-# ADR 0042 — 코스피200 선물 미결제약정(OI) 패널: 페이지 3·합계 OI 기준·기존 원천만·잠정 표시 (2026-10-27)
+# ADR 0043 — 코스피200 선물 미결제약정(OI) 패널: 페이지 3·합계 OI 기준·기존 원천만·잠정 표시 (2026-10-27)
 
 상태: **제안**(사용자가 맥에서 화면을 확인하면 확정). 근거: 사용자 요청(2026-10-27 — 18시 '국장 신고가' 정리에서
 "외국인 선물 순매수가 신규 매수인지 숏 커버인지" 판별 근거. 2026-10-26 외국인 코스피200 선물 +3,451계약 3거래일 연속
-매수였으나 미결제약정 미확인이라 판별 불가), metrics §32(정본 정의), ADR 0036(KRX 파생 일별·전광판 수집), ADR 0019
+매수였으나 미결제약정 미확인이라 판별 불가), metrics §33(정본 정의), ADR 0036(KRX 파생 일별·전광판 수집), ADR 0019
 (`investor_flow` 쓰기 주인), DATA_TIERS(KRX·KIS = 로그인).
 구현: 엔진 `kbj/engines/gex/futures_oi.py`, 저장소 `PgGexRepo`·`MemoryGexRepo` 의 `krx_futures_days`·`investor_closes`,
 리더 `kbj/services/api/readers/gex_oi.py`, 라우트 `GET /api/gex/futures-oi?days=`(모델 `FuturesOi`), 캐시 영역 `gex_oi`,

@@ -1271,7 +1271,7 @@ test_index_review_repo.py·tests/unit/engines/index_review/test_service.py·test
   (board.daily) — 상세는 시세 칸 None 으로 200.
 - **시험**: `tests/unit/theme/test_strength.py`(손계산·보드 롤업 대조), `tests/unit/api/test_routes_themes.py`.
 
-## 32. 코스피200 선물 미결제약정(OI)·해석 라벨·파생 투자자 일별 (로그인 — 페이지 3, ADR 0042)
+## 33. 코스피200 선물 미결제약정(OI)·해석 라벨·파생 투자자 일별 (로그인 — 페이지 3, ADR 0043)
 
 > 용도: 마감 뒤 "외국인 선물 순매수가 신규 매수인가 숏 커버인가"를 OI 증감과 가격으로 가르는 근거(사용자 2026-10-27 요청).
 > 라벨은 **규칙 결과**일 뿐 누가 그 포지션을 만들었는지 단정하지 않는다 — 외국인 순매수와 겹쳐 읽는 것은 사용자 몫.

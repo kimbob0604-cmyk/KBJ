@@ -11,7 +11,7 @@
 #         `synthetic:hand-written`(손으로 쓴 모양 예시 — 숫자·이름이 합성) 또는 `public:<공개 출처>`.
 # - 사유: 필수(4자 이상). 무엇으로 만들었고 왜 실데이터가 아닌지.
 web/test/fixtures/api/themes/* | synthetic:tests/unit/api/web_fixtures_p9/themes.py | 페이지 9 — 합성 테마 마스터(tests/fixtures/synthetic/theme_master.py 고정 시드, 실제 stock-dashboard 내용 아님) + 합성 골든 300종목 보드 하루로 만든 API 응답·공개 themes.json 모양. test_routes_themes 가 최신인지 본다
-web/test/fixtures/api/gex/futures_oi* | synthetic:tests/fixtures/synthetic/oi_world.py | 페이지 3 선물 미결제약정 패널(ADR 0042) — 합성 OI 세계(고정 시드 20261104, 가짜 코드 A0…, KRX·KIS 원자료 아님)를 메모리 저장소에 올린 /api/gex/futures-oi 응답. test_p7_fixtures_are_fresh 가 최신인지 본다
+web/test/fixtures/api/gex/futures_oi* | synthetic:tests/fixtures/synthetic/oi_world.py | 페이지 3 선물 미결제약정 패널(ADR 0043) — 합성 OI 세계(고정 시드 20261104, 가짜 코드 A0…, KRX·KIS 원자료 아님)를 메모리 저장소에 올린 /api/gex/futures-oi 응답. test_p7_fixtures_are_fresh 가 최신인지 본다
 web/test/fixtures/api/* | synthetic:tests/unit/api/make_web_fixtures.py | 합성 세계(api_world·p4~p8_world·index_world — 고정 시드)를 메모리 저장소에 올린 API 응답. test_web_fixtures_are_fresh 가 지금 코드 출력과 같은지 본다
 web/test/fixtures/public/manifest_p4.json | synthetic:tests/unit/public_export/pub_rows.py | 합성 P4 세계(가짜 종목 Q0000N)로 공개 내보내기가 만든 manifest
 web/test/fixtures/public/corp_index.json | synthetic:tests/unit/public_export/pub_rows.py | 합성 P4 세계 공개 내보내기 산출

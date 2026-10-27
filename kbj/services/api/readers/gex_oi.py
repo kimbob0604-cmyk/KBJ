@@ -1,4 +1,4 @@
-"""코스피200 선물 미결제약정(OI) 리더 — `/api/gex/futures-oi`(metrics §32, ADR 0042 — 로그인).
+"""코스피200 선물 미결제약정(OI) 리더 — `/api/gex/futures-oi`(metrics §33, ADR 0043 — 로그인).
 
 `ctx.repos.gex`(DB 만 — 계약 ⑩)의 세 표를 엔진 입력으로 옮기고 계산은 순수 엔진
 `kbj.engines.gex.futures_oi` 에 맡긴다(절대 규칙 3 — 숫자를 지어내지 않는다).

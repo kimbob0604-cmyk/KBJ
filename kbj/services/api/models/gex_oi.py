@@ -1,6 +1,6 @@
 """코스피200 선물 미결제약정(OI) 패널 응답 모델 — `GET /api/gex/futures-oi`(로그인).
 
-근거: metrics §32, ADR 0042.
+근거: metrics §33, ADR 0043.
 - 행마다 source·as_of·quality(절대 규칙 1). 확정 행 = KRX 일별(전 거래일분 — 다음 날
   08:05), 잠정 행 = KIS 선물 전광판(오늘 — estimated). 투자자 칸도 각자 ts·quality·사유.
 - 단위: OI·순매수 수량 계약, 대금 **원**(investor_flow 백만원 × 10⁶ — API 가 바꾼다),

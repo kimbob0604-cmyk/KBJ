@@ -164,7 +164,7 @@ describe('profile — 행사가별 GEX', () => {
 describe('페이지 3 자리표시(p3_diag.ts) — 패널 순서·등급 갈림', () => {
   const never: DataSource = { tier: 'public', get: () => Promise.reject(new Error('부르지 않는다')) };
 
-  it('순서 고정: 판정 띠 → 공공지표 → 시장 진단 → GEX → 선물 OI(ADR 0042) → 이벤트', () => {
+  it('순서 고정: 판정 띠 → 공공지표 → 시장 진단 → GEX → 선물 OI(ADR 0043) → 이벤트', () => {
     expect(P3_SECTIONS).toEqual(['verdict', 'public', 'market', 'gex', 'oi', 'events']);
   });
 

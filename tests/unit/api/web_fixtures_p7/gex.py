@@ -5,7 +5,7 @@
 CLOCK 14:00 KST — 장 중, 마지막 사이클 13:30 이라 '지연')에서 앱 응답을 `{상대 경로: JSON 글자}`
 로 낸다(결정적 — 실데이터 없음). 장 밖(16:30 — '마지막 세션') 응답도 하나 싣는다.
 
-선물 미결제약정 패널(`/api/gex/futures-oi` — metrics §32, ADR 0042)은 따로 합성 세계
+선물 미결제약정 패널(`/api/gex/futures-oi` — metrics §33, ADR 0043)은 따로 합성 세계
 (`tests/fixtures/synthetic/oi_world.py` — 2026-11-04 18:00, KRX 확정 11-03 까지 + 11-04
 잠정)로 만든다(`OI_FILES` — GEX 엔진 응답 시험이 `FILES` 만 돈다).
 """

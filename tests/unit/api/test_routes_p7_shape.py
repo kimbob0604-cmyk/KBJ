@@ -94,6 +94,6 @@ def test_p7_cache_domains() -> None:
     assert set(DOMAIN_JOBS["diag"]) == {"diag.public", "diag.daily", "krx.vkospi"}
     # GEX 는 상시 서비스가 쓴다 — 버전에 마지막 엔진 사이클 시각이 든다
     assert "prv_gex.levels" in DOMAIN_TS["gex"] and "gex" in DOMAIN_JOBS
-    # 선물 미결제약정 패널(ADR 0042) — KRX 파생 일별·장중 투자자 작업 + 전광판 최신 시각
+    # 선물 미결제약정 패널(ADR 0043) — KRX 파생 일별·장중 투자자 작업 + 전광판 최신 시각
     assert set(DOMAIN_JOBS["gex_oi"]) == {"gex.krx_derivatives", "flows.market_minute"}
     assert "prv_gex.fut_board" in DOMAIN_TS["gex_oi"]

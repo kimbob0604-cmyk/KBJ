@@ -86,7 +86,7 @@ DOMAIN_JOBS: Final[Mapping[str, tuple[str, ...]]] = {
     # prv_gex.levels max(ts))
     # 과 알림 작업 중 늦은 것. 진단은 작업 셋(공개·로그인·VKOSPI).
     "gex": ("gex.alert",),
-    # 선물 미결제약정 패널(metrics §32, ADR 0042) — KRX 파생 일별(08:05)·장중 투자자
+    # 선물 미결제약정 패널(metrics §33, ADR 0043) — KRX 파생 일별(08:05)·장중 투자자
     # + 전광판 최신 시각
     "gex_oi": ("gex.krx_derivatives", "flows.market_minute"),
     "diag": ("diag.public", "diag.daily", "krx.vkospi"),

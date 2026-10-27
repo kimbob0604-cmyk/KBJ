@@ -1,4 +1,4 @@
-"""`/api/gex/futures-oi` — 코스피200 선물 미결제약정 패널(metrics §32, ADR 0042 — 로그인).
+"""`/api/gex/futures-oi` — 코스피200 선물 미결제약정 패널(metrics §33, ADR 0043 — 로그인).
 
 합성 OI 세계(`tests/fixtures/synthetic/oi_world.py` — 2026-11-04 18:00 KST)를 메모리 저장소에
 싣고 앱으로 본다.

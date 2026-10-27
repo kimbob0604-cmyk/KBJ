@@ -666,7 +666,7 @@ def test_flow_inputs_are_read_with_parameters_only() -> None:
         s.investor_latest(D, "day", datetime(2026, 9, 28, 10, 0))  # noqa: DTZ001
 
 
-# ── 선물 미결제약정 패널 읽기(metrics §32, ADR 0042) ──
+# ── 선물 미결제약정 패널 읽기(metrics §33, ADR 0043) ──
 
 
 def test_futures_oi_reads_use_parameters_and_pick_day_session_last_rows() -> None:

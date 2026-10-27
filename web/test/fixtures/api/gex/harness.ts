@@ -1,6 +1,6 @@
 // GEX 시험 도우미 — 합성 픽스처(tests/unit/api/web_fixtures_p7/gex.py 가 만든 이 폴더의 JSON)를 실제 데이터 소스에
 // 가짜 fetch 로 물린다. 로그인: /api/gex/levels?scope=…·/api/gex/profile?scope=…·/api/gex/metrics?name=…·/api/gex/flow·
-// /api/gex/futures-oi(합성 OI 세계 — 2026-11-04 18:00, ADR 0042).
+// /api/gex/futures-oi(합성 OI 세계 — 2026-11-04 18:00, ADR 0043).
 import { createApiSource } from '../../../../src/data/api';
 import type { DataSource } from '../../../../src/data/source';
 import { type FakeCall, fakeFetch, json } from '../../../helpers';

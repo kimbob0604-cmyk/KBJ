@@ -1,4 +1,4 @@
-// 페이지 3 ⑤ 코스피200 선물 미결제약정(OI) 패널(metrics §32, ADR 0042): 최근 날 칸(잠정이면 '잠정' 꼬리표)·OI 선·증감
+// 페이지 3 ⑤ 코스피200 선물 미결제약정(OI) 패널(metrics §33, ADR 0043): 최근 날 칸(잠정이면 '잠정' 꼬리표)·OI 선·증감
 // 막대·일별 표·옵션 투자자 표. 응답 한 번을 두 패널이 나눈다. 로그인만 — 공개판은 자물쇠, 요청 0. 404 는 '.msg'.
 // 픽스처는 합성 OI 세계(tests/fixtures/synthetic/oi_world.py → tests/unit/api/web_fixtures_p7/gex.py).
 import { describe, expect, it } from 'vitest';

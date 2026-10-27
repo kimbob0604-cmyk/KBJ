@@ -1,4 +1,4 @@
-"""`kbj.engines.gex.futures_oi` — 코스피200 선물 OI·해석 라벨·파생 투자자 일별(metrics §32).
+"""`kbj.engines.gex.futures_oi` — 코스피200 선물 OI·해석 라벨·파생 투자자 일별(metrics §33).
 
 손계산 값과 비교한다(비율은 허용오차 — CLAUDE §4). 시계는 쓰지 않는다(입력 날짜·시각만).
 """
