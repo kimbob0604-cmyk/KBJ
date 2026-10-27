@@ -14,7 +14,7 @@ import pytest
 
 from kbj.core.quality import Quality
 from kbj.core.rows import EtfDay, EtfMeta, EtfType, HoldingRow, SplitEvent
-from kbj.data.private.etf_issuers.base import FundRef, IssuerHttp
+from kbj.data.private.etf_issuers.base import FundRef, IssuerHttp, holding
 from kbj.data.private.etf_issuers.registry import build
 from kbj.data.spec import DataKey
 from kbj.services.collectors import etf_holdings
@@ -283,3 +283,25 @@ def test_record_flow_checks_writes_c3_and_detected_splits(repos: MemoryRepos) ->
     empty = etf_holdings.record_flow_checks(repos, date(2026, 10, 9), now=now, loaded_by="x",
                                             tol=0.02, ratios=(2,))  # fmt: skip
     assert empty == {"flows": 0, "split_detected": 0, "c3_failed": 0}
+
+
+class _ThrottledAdapter(_DownAdapter):
+    """펀드 8개 중 홀수 번째 PDF 는 요청 과다로 실패 — 이어서 실패하지 않아 건너뛰기는 없다."""
+
+    def holdings(self, fund_key: str, day: date) -> tuple[dict[str, HoldingRow], date]:
+        self.calls += 1
+        if self.calls % 2:
+            raise RuntimeError("HTTP 429 요청 과다")
+        return {"005930": holding("kodex", "005930", "가짜", 10.0, 5.0, 1_000.0)}, day
+
+
+def test_partially_fetched_issuer_is_reported(repos: MemoryRepos) -> None:
+    """통째 실패는 아니지만 펀드 10% 넘게 못 받은 운용사는 detail `partial_issuers` — 리포트
+    머리 줄이
+    '일부만 받음'으로 적는다(KODEX 7/94 가 10-20 부터 매일 드러나지 않았다)."""
+    thr = _ThrottledAdapter()
+    c = ctx(JOB, "2026-10-07", [key("2026-10-07")], now=kst(2026, 10, 7, 8), repos=repos,
+            etf_issuers=[thr], parallel=False)  # fmt: skip
+    res = etf_holdings.run(c)
+    assert res.status == "ok" and "failed_issuers" not in res.detail
+    assert res.detail["partial_issuers"] == {"kodex": "가짜 KODEX 4/8"}

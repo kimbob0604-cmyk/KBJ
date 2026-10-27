@@ -162,6 +162,7 @@ class _Pending:
     done: set[DataKey] = field(
         default_factory=set[DataKey]
     )  # 이 시리즈가 이미 받은 키(재시도 제외)
+    force: bool = False  # 수동 --force — 이 작업이 이미 받은(done) 키도 다시 잡는다
     waiting_logged: bool = False
     soft_since: datetime | None = None  # UTC — 굳은 의존이 다 준비된 때(무른 의존 wait_min 의 기준)
     soft_logged: bool = False
@@ -614,6 +615,7 @@ class JobRunner:
             attempt=attempt0,
             next_at=now,
             skip_deps=skip_deps,
+            force=force,
         )
         log_event(
             log, logging.INFO, SERVICE, "job_fired", job=job.name, as_of=as_of, catch_up=catch_up
@@ -777,7 +779,7 @@ class JobRunner:
             wanted = [k for k in wanted_all if k not in p.done]
             got: list[DataKey] = []
             for k in wanted:
-                if self.claims.claim(k, job.name, run_id, now):
+                if self.claims.claim(k, job.name, run_id, now, reopen=p.force):
                     got.append(k)
         except Exception as e:  # 선점 저장소 오류 — 이번 시도 실패로
             p.attempt = attempt

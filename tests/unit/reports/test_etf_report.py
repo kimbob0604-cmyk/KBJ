@@ -146,3 +146,12 @@ def test_입력은_직전_완료_영업일_기준(loaded: MemoryRepos) -> None:
     assert inp.base == date(2026, 11, 16) and inp.notes == ()
     assert inp.pair_count == 4 and len(inp.changes) == 3
     assert all(k in inp.snaps for c in inp.changes for k in ((c.fund_id, c.prev_asof),))
+
+
+def test_일부만_받은_운용사도_머리_줄에(loaded: MemoryRepos) -> None:
+    day = RUN_DATE.isoformat()
+    detail = {"partial_issuers": {"kodex": "삼성 KODEX 7/94", "sol": "신한 SOL 15/28"}}
+    n = FakeNotify()
+    res = job.report(ctx(loaded, n, runs=FakeRuns({("etf.collect", day): Rec("ok", detail)})))
+    assert "구성종목 일부만 받음 2곳: 삼성 KODEX 7/94·신한 SOL 15/28" in n.calls[0][0]
+    assert res.detail["partial_issuers"] == 2 and res.detail["failed_issuers"] == 0

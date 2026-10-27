@@ -34,7 +34,9 @@ D-P3-12).
 (키 → 이름)·`degraded` 에 남긴다. 운용사 한 곳이 무너져도(RISE 이전 10-20·TIGER 목록 변경
 10-27) 굳은 의존인 `etf.report` 가 통째로 막히지 않게 — 리포트는 받은 운용사로 보내고 머리 줄에
 빠진 운용사를 적는다(절대 규칙 4 — 한 운용사 실패가 다른 운용사를 멈추지 않는다. ADR 0010 갱신
-2026-10-27).
+2026-10-27). 통째 실패가 아니어도 추적 펀드의 `PARTIAL_SHARE`(10%) 넘게 못 받은 운용사는 detail
+`partial_issuers`(키 → "이름 받음/부름")에 남겨 리포트가 '일부만 받음'으로 적는다(KODEX·SOL 요청
+과다로 10-20 부터 매일 7/94·15/28 만 받으면서 리포트에 드러나지 않았다).
 detail 에 운용사별 수(펀드·스냅·빈 응답·오류·제외·건너뜀)와 변동 수.
 
 자원(`JobContext.resources`): `repos`(없으면 Pg), `markets`, `etf_issuers`(어댑터 목록 — 없으면
@@ -86,6 +88,9 @@ DOWN_AFTER: Final = 5  # 펀드 PDF 오류가 이만큼 이어지면 그 운용�
 DOWN_REASON: Final = "운용사 응답 없음 — 앞 펀드 오류가 이어져 부르지 않았다"
 EMPTY_UNIVERSE: Final = "목록이 0건 — 사이트 모양이 바뀌었을 수 있다(저장된 추적 펀드로 받는다)"
 FAIL_SHARE_MAX: Final = 0.5  # 통째로 실패한 운용사 비율이 이를 넘으면 작업 failed
+PARTIAL_SHARE: Final = (
+    0.1  # 추적 펀드의 이 비율 넘게 못 받은 운용사는 '일부만 받음'(리포트 머리 줄)
+)
 
 
 @dataclass
@@ -103,6 +108,17 @@ class IssuerRun:
     universe_error: str | None = None
     skipped: int = 0  # 목록에서 뺀 펀드(이름 없음·추적 유형 아님)
     down_skipped: int = 0  # 운용사가 내려가 부르지 않은 펀드(`DOWN_AFTER`)
+
+    @property
+    def attempted(self) -> int:
+        """PDF 를 부르려 한 추적 펀드 수(연속 실패로 건너뛴 것 포함)."""
+        return len(self.snaps) + len(self.empty) + len(self.errors)
+
+    @property
+    def partial(self) -> bool:
+        """통째 실패는 아니지만 추적 펀드의 `PARTIAL_SHARE` 넘게 못 받았다(요청 과다 등)."""
+        n = self.attempted
+        return not self.failed and n > 0 and len(self.errors) > PARTIAL_SHARE * n
 
     @property
     def failed(self) -> bool:
@@ -279,6 +295,7 @@ def run(ctx: JobContext) -> JobResult:
     detail: dict[str, Any] = {"meta_typed": n_typed, "issuers": {}}
     errors: dict[str, str] = {}
     failed: dict[str, str] = {}
+    partial: dict[str, str] = {}
     rows = 0
     for res in results:
         funds, dropped = _streaks(res, EMPTY_LIMIT)
@@ -296,6 +313,9 @@ def run(ctx: JobContext) -> JobResult:
             errors[fid] = why
         if res.failed:
             failed[res.key] = res.name or res.key
+        elif res.partial:
+            got = res.attempted - len(res.errors)
+            partial[res.key] = f"{res.name or res.key} {got}/{res.attempted}"
         if res.errors or res.universe_error:
             log_event(log, logging.WARNING, SERVICE, "etf_issuer_partial", job=ctx.job,
                       issuer=res.key, errors=len(res.errors),
@@ -309,6 +329,8 @@ def run(ctx: JobContext) -> JobResult:
     if errors:
         detail["errors"] = dict(sorted(errors.items())[:DETAIL_ERRORS_MAX])
     detail["rows"] = rows
+    if partial:  # 받은 것만 쓰고 끝낸다 — 리포트가 머리 줄에 '일부만 받음'으로 적는다
+        detail["partial_issuers"] = dict(sorted(partial.items()))
     if failed:
         why = f"운용사 {len(failed)}곳 통째로 실패 — {', '.join(failed)}"
         detail["failed_issuers"] = dict(sorted(failed.items()))

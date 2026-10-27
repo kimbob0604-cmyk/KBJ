@@ -18,7 +18,8 @@
 - 알림을 넣지 못하면(대기열 거절) 실패로 끝낸다(에러를 삼키지 않는다).
 - 그날 `etf.collect` 가 일부 운용사를 통째로 못 받고 `ok` 로 끝났으면(실행 기록 detail
   `failed_issuers`) 머리 줄에 빠진 운용사를 적는다 — 받은 운용사로 보내되 '전체'인 척하지 않는다
-  (ADR 0010 갱신 2026-10-27). 실행 기록은 자원 `runs`(스케줄러가 넣는다 — 없으면 적지 않는다).
+  (ADR 0010 갱신 2026-10-27). 일부 펀드만 받은 운용사(`partial_issuers` — "이름 받음/부름")도
+  같은 머리 줄 아래에 적는다. 실행 기록은 자원 `runs`(스케줄러가 넣는다 — 없으면 적지 않는다).
 
 자원: `repos`(없으면 `connect` 로 `pg_repos`), `notify`(필수), `kr`(없으면
 `TradingCalendar.default()`), `runs`(선택 — 실행 기록).
@@ -39,7 +40,17 @@ from kbj.services.scheduler.handlers import JobContext, JobResult
 from kbj.store.repos import pg_repos
 from kbj.store.repos.etf import EtfRepo
 
-__all__ = ["COLLECT_JOB", "JOB", "KIND", "WINDOW", "failed_issuers", "make_input", "report", "run"]
+__all__ = [
+    "COLLECT_JOB",
+    "JOB",
+    "KIND",
+    "WINDOW",
+    "failed_issuers",
+    "make_input",
+    "partial_issuers",
+    "report",
+    "run",
+]
 
 JOB: Final = "etf.report"
 KIND: Final = "etf.report"
@@ -84,25 +95,37 @@ def _calendar(ctx: JobContext) -> TradingCalendar:
     return kr if isinstance(kr, TradingCalendar) else TradingCalendar.default()
 
 
-def failed_issuers(runs: _Runs | None, run_day: date) -> tuple[str, ...]:
-    """그날 `etf.collect` 가 `ok` 로 끝났지만 통째로 못 받은 운용사 이름(실행 기록 detail
-    `failed_issuers` — 키 → 이름). 기록·자원이 없으면 빈 튜플."""
+def _collect_detail(runs: _Runs | None, run_day: date, key: str) -> tuple[str, ...]:
+    """그날 `ok` 로 끝난 `etf.collect` 실행 기록 detail[key](키 → 글)의 값들. 없으면 빈 튜플."""
     if runs is None:
         return ()
     rec = runs.latest(COLLECT_JOB, run_day.isoformat())
     if rec is None or rec.status != "ok":
         return ()
-    got = rec.detail.get("failed_issuers")
+    got = rec.detail.get(key)
     if not isinstance(got, Mapping):
         return ()
     return tuple(str(v or k) for k, v in sorted(cast(Mapping[str, Any], got).items()))
 
 
+def failed_issuers(runs: _Runs | None, run_day: date) -> tuple[str, ...]:
+    """그날 `etf.collect` 가 `ok` 로 끝났지만 통째로 못 받은 운용사 이름(실행 기록 detail
+    `failed_issuers` — 키 → 이름). 기록·자원이 없으면 빈 튜플."""
+    return _collect_detail(runs, run_day, "failed_issuers")
+
+
+def partial_issuers(runs: _Runs | None, run_day: date) -> tuple[str, ...]:
+    """그날 일부 펀드만 받은 운용사("이름 받음/부름" — detail `partial_issuers`)."""
+    return _collect_detail(runs, run_day, "partial_issuers")
+
+
 def make_input(
-    repo: EtfRepo, run_day: date, cal: TradingCalendar, *, failed: Sequence[str] = ()
-) -> ReportInput | None:
+    repo: EtfRepo, run_day: date, cal: TradingCalendar, *, failed: Sequence[str] = (),
+    partial: Sequence[str] = (),
+) -> ReportInput | None:  # fmt: skip
     """저장소 → 리포트 입력. ETF 일별이 하나도 없으면 None(보낼 것이 없다 — 실패로 남긴다).
-    `failed` = 그날 구성종목을 못 받은 운용사 이름(머리 줄에 적는다)."""
+    `failed` = 그날 구성종목을 못 받은 운용사 이름, `partial` = 일부만 받은 운용사("이름 받음/부름")
+    — 머리 줄에 적는다."""
     want = cal.prev_trading_day(run_day)
     days = repo.etf_days(want, WINDOW)
     dates = sorted({r.date for rows in days.values() for r in rows})
@@ -117,6 +140,11 @@ def make_input(
     if failed:
         notes.append(
             f"⚠ 구성종목 수집 실패 {len(failed)}곳: {'·'.join(failed)} — 그 운용사 변동은 빠졌다"
+        )
+    if partial:
+        notes.append(
+            f"⚠ 구성종목 일부만 받음 {len(partial)}곳: {'·'.join(partial)} — "
+            "못 받은 펀드 변동은 빠졌다"
         )
     changes = repo.changes(run_day)
     snaps: dict[tuple[str, date], Collection[str]] = {}
@@ -146,11 +174,12 @@ def run(
     notify: Any,
     source: str = JOB,
     failed: Sequence[str] = (),
+    partial: Sequence[str] = (),
 ) -> dict[str, Any]:
     """리포트를 만들어 알림 대기열에 넣는다. 반환 = 작업 기록 detail(값·키 없이 수만)."""
     if notify is None:
         raise RuntimeError("자원 notify 가 주입되지 않았다 — ETF 리포트를 넣지 못했다")
-    inp = make_input(repo, run_day, cal, failed=failed)
+    inp = make_input(repo, run_day, cal, failed=failed, partial=partial)
     if inp is None:
         raise RuntimeError("ETF 일별이 없다 — krx.daily(08:05)·etf.collect(08:00) 확인")
     msgs = build(assemble(inp))
@@ -165,6 +194,7 @@ def run(
         "chars": len(text),
         "duplicate": bool(getattr(ticket, "duplicate", False)),
         "failed_issuers": len(failed),
+        "partial_issuers": len(partial),
     }
 
 
@@ -178,5 +208,6 @@ def report(ctx: JobContext) -> JobResult:
         notify=ctx.resources.get("notify"),
         source=ctx.job or JOB,
         failed=failed_issuers(ctx.resources.get("runs"), day),
+        partial=partial_issuers(ctx.resources.get("runs"), day),
     )
     return JobResult("ok", collected=tuple(ctx.keys), rows=detail["messages"], detail=detail)

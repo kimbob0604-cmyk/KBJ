@@ -1120,6 +1120,20 @@ def test_run_once_force_reruns_a_finished_as_of() -> None:
     assert forced[-1].attempt == first[-1].attempt + 1
 
 
+def test_run_once_force_reclaims_its_own_done_keys() -> None:
+    """2026-10-27 실측: etf.collect 를 고친 코드로 같은 날 다시 받으려 --force 를 줬는데, 앞 실행이
+    끝낸(done) 데이터 키 때문에 '중복'으로 건너뛰었다 — 맥에서 선점 줄을 손으로 고쳐야 했다."""
+    pub = Publisher(kst(2026, 10, 6, 15, 0))
+    rig = Rig(close_and_brief(), {"tests.fake:close": pub, "tests.fake:brief": Publisher(None)},
+              kst(2026, 10, 6, 17, 0))  # fmt: skip
+    run = rig.runner.run_once
+    first = run("market.close_collect", rig.now, as_of="2026-10-06")
+    assert first[-1].kind == "ok" and len(pub.calls) == 1
+    forced = run("market.close_collect", rig.now, as_of="2026-10-06", force=True)
+    assert [e.kind for e in forced] == ["started", "ok"] and len(pub.calls) == 2
+    assert pub.calls[-1].keys  # 키를 다시 잡아 처리기에 넘겼다(빈 키로 돌지 않았다)
+
+
 def test_run_once_lines_carry_the_failure_reason() -> None:
     # 2026-10-22 fill-trade: run-once 가 'failed … 시도 2' 만 찍어 무엇이 실패했는지 몰랐다
     from kbj.services.scheduler.__main__ import event_lines

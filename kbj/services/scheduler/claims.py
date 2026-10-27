@@ -6,6 +6,10 @@
   이미 `done` 이면 False(받지 않는다 → `skipped(duplicate)`). 다른 작업이 `claimed` 로 쥐고 있으면
   False. **같은 작업**이 쥐고 있으면 True — 재시도(아직 공표 전 등)·재기동이 같은 선점을 이어 쓴다
   (run_id 만 바꾼다).
+  `reopen=True`(수동 `run-once --force` 만)면 **같은 작업**이 이미 `done` 으로 끝낸 키를
+  `claimed` 로 되돌려 다시 잡는다 — 그날 받은 것을 고친 코드로 다시 받기(2026-10-27: --force 가
+  실행 기록만 보고 선점에서 '중복'으로 건너뛰어 맥에서 기록을 손으로 고쳤다). 다른 작업의 `done` 은
+  그대로 거절.
 - `complete(key, run_id, rows, now)`: `claimed` → `done`(done_at 필수 — 0002 CHECK).
 - `fail(key, run_id, reason, now)`: `claimed` → `failed`. 실패 줄은 여러 개 남아도 되고,
   뒤의 claim 이
@@ -86,7 +90,9 @@ class ClaimRow:
 
 
 class ClaimStore(Protocol):
-    def claim(self, key: DataKey, job: str, run_id: str, now: datetime) -> bool: ...
+    def claim(
+        self, key: DataKey, job: str, run_id: str, now: datetime, *, reopen: bool = False
+    ) -> bool: ...
 
     def complete(self, key: DataKey, run_id: str, rows: int | None, now: datetime) -> None: ...
 
@@ -109,7 +115,9 @@ class MemoryClaimStore:
                 return i
         return None
 
-    def claim(self, key: DataKey, job: str, run_id: str, now: datetime) -> bool:
+    def claim(
+        self, key: DataKey, job: str, run_id: str, now: datetime, *, reopen: bool = False
+    ) -> bool:
         with self._lock:
             i = self._live_index(key)
             if i is None:
@@ -118,6 +126,10 @@ class MemoryClaimStore:
             cur = self.rows[i]
             if cur.status == "claimed" and cur.job == job:
                 self.rows[i] = replace(cur, run_id=run_id)
+                return True
+            if reopen and cur.status == "done" and cur.job == job:
+                self.rows[i] = replace(cur, run_id=run_id, status="claimed",
+                                       claimed_at=_utc(now), done_at=None, rows=None)  # fmt: skip
                 return True
             self.refused.append((key, job))
             return False
@@ -181,7 +193,9 @@ class PgClaimStore:
     def __repr__(self) -> str:
         return "PgClaimStore()"
 
-    def claim(self, key: DataKey, job: str, run_id: str, now: datetime) -> bool:
+    def claim(
+        self, key: DataKey, job: str, run_id: str, now: datetime, *, reopen: bool = False
+    ) -> bool:
         k = tuple(key)
         try:
             with self._connect() as conn, conn.cursor() as cur:
@@ -193,6 +207,13 @@ class PgClaimStore:
                 if row[3] == "claimed" and row[1] == job:
                     cur.execute(
                         "UPDATE ops.data_claim SET run_id = %s WHERE id = %s", (run_id, row[0])
+                    )
+                    return True
+                if reopen and row[3] == "done" and row[1] == job:
+                    cur.execute(
+                        "UPDATE ops.data_claim SET status = 'claimed', run_id = %s, "
+                        "claimed_at = %s, done_at = NULL, rows = NULL WHERE id = %s",
+                        (run_id, _utc(now), row[0]),
                     )
                     return True
                 return False
