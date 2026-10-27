@@ -234,6 +234,16 @@ def test_estimate_shape_errors() -> None:
         parse_estimate({"rt_cd": "0"}, "994010", snap_date=DAY)
 
 
+def test_estimate_short_indicator_table_keeps_income_rows() -> None:
+    """투자지표(output3)가 8행보다 적게 오는 종목(2026-10-26 맥: 304종목 중 25종목 3행 — 컨센서스
+    작업 전체가 실패했다) — 어느 행인지 몰라 지표는 버리고 손익은 싣는다."""
+    body = _body(["202612E"], revenue=["100"], op=["10"], eps=["1500"])
+    body[OUT_IND] = body[OUT_IND][:3]
+    (r,) = parse_estimate(body, "994010", snap_date=DAY)
+    assert r.revenue == 100 * AMOUNT_UNIT_KRW and r.op == 10 * AMOUNT_UNIT_KRW
+    assert r.eps is None and r.ebitda is None and r.extra["ind_rows"] == 3
+
+
 @pytest.mark.parametrize(
     ("text", "want"),
     [

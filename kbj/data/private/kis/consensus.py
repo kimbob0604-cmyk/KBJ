@@ -202,7 +202,18 @@ def parse_estimate(
         raise KisParseError(f"{what}: 응답 종목코드가 다르다({got})")
     periods = rows_of(body, OUT_PERIODS, what=what)
     pl = _table(body, OUT_PL, PL_ROWS, what)
-    ind = _table(body, OUT_IND, IND_ROWS, what) if OUT_IND in body else {}
+    # 투자지표(output3)는 종목에 따라 행이 모자라게 온다(2026-10-26 맥 실측: 304종목 중 25종목이
+    # 3행 — 금융업 등 지표 구성이 다른 종목으로 보인다 [추정]). 행 이름 칸이 없어 순서로만 맞추므로
+    # 모자란 표는 어느 행인지 모른다 — 지표는 버리고(EPS·PER 등 None) 손익(output2)은 그대로 싣는다.
+    # 예전에는 형식 오류로 종목이 통째로 실패해 허용치를 넘기면 컨센서스 작업 전체가 실패했다.
+    ind_short: int | None = None
+    ind: dict[str, Any] = {}
+    if OUT_IND in body:
+        ind_rows = rows_of(body, OUT_IND, what=what)
+        if ind_rows and len(ind_rows) < len(IND_ROWS):
+            ind_short = len(ind_rows)
+        else:
+            ind = _table(body, OUT_IND, IND_ROWS, what)
     if not periods or not pl:
         raise KisEmpty(f"{what}: 결과가 비었다(커버 없음)")
     if len(periods) > len(COLUMNS):
@@ -246,6 +257,8 @@ def parse_estimate(
             quality = Quality.ESTIMATED
             extra["is_estimate_inferred"] = True
         extra["period"] = "annual"
+        if ind_short is not None:
+            extra["ind_rows"] = ind_short  # 지표 표가 모자라 버렸다(위)
         if est_day is not None:
             extra["estdate"] = est_day.isoformat()
         out.append(
