@@ -33,6 +33,7 @@ from math import floor
 from typing import Final, Literal
 
 from kbj.config.screen import CisBacktestCfg, CisCfg
+from kbj.core.indicators import atr
 from kbj.core.rows import Bar, IndexBar
 from kbj.engines.backtest.costs import Costs, buy_cost, sell_proceeds
 from kbj.engines.screen.cis import MARKETS, CisRow, Day, StockMeta, eligible, judge
@@ -113,18 +114,7 @@ class Signal:
     close: float
     high: float = 0.0  # 신호일 고가(확인 진입 문턱)
     low: float = 0.0  # 신호일 저가(신호일 저가 손절)
-    atr: float | None = None  # 신호일까지 ATR(`atr_days`)
-
-
-def _atr(s: OhlcSeries, i: int, n: int) -> float | None:
-    """i 일까지 n 일 평균 진폭(true range) — 모자라면 None."""
-    if i < n:
-        return None
-    tr = [
-        max(s.high[k] - s.low[k], abs(s.high[k] - s.close[k - 1]), abs(s.low[k] - s.close[k - 1]))
-        for k in range(i - n + 1, i + 1)
-    ]
-    return sum(tr) / n
+    atr: float | None = None  # 신호일까지 ATR(`atr_days`, 정본 `kbj.core.indicators.atr`)
 
 
 def signals_of(
@@ -152,6 +142,7 @@ def signals_of(
             pv.append(pv[-1] + v)
             pt.append(pt[-1] + t)
         reg = regimes.get(str(m.market), {})
+        atrs = atr(s.high, s.low, s.close, atr_days)  # 정본 지표(와일더 평균) — 직접 계산 금지
         for i in range(n, len(s.dates)):
             if s.dates[i] < start:
                 continue
@@ -168,7 +159,7 @@ def signals_of(
             if isinstance(row, CisRow) and (row.passed or not passed_only):
                 out[s.dates[i]].append(
                     Signal(s.dates[i], code, row.vol_ratio, s.close[i], s.high[i], s.low[i],
-                           _atr(s, i, atr_days))
+                           atrs[i])
                 )  # fmt: skip
     for day in out:
         out[day].sort(key=lambda x: (-x.vol_ratio, x.code))
