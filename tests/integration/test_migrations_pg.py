@@ -106,6 +106,8 @@ P5_INTRADAY = {
 }
 # P8(0021): 관심종목 장중 시세 슬롯 — 7일 청크·730일 보존(백테스트·일치 감시가 읽는다)
 P8_INTRADAY = {"prv_alerts.watch_quote_slot": "730 days"}
+# cis 30분봉 — 신호 종목 D~D+5 5분봉(0029_stock_minute.sql, chunk 30일)
+CIS_INTRADAY = {"prv_market.stock_bar_5m": "30 days"}
 P3_TABLES = {
     "prv_board.alltime", "prv_board.label", "prv_board.split_check", "prv_board.stock_day",
     "prv_board.artifact", "prv_market.index_intraday", "prv_market.sector_intraday",
@@ -172,8 +174,10 @@ def test_hypertables_and_chunk_intervals(dsn: str) -> None:
         "JOIN timescaledb_information.dimensions d USING (hypertable_schema, hypertable_name)",
     )
     got = {name: (col, iv) for name, col, iv in ht}
-    assert set(got) == GX_DAILY | YEARLY | set(P3_INTRADAY) | set(P5_INTRADAY) | set(P8_INTRADAY)
+    intraday = set(P3_INTRADAY) | set(P5_INTRADAY) | set(P8_INTRADAY) | set(CIS_INTRADAY)
+    assert set(got) == GX_DAILY | YEARLY | intraday
     assert {got[t] for t in P8_INTRADAY} == {("slot_ts", timedelta(days=7))}
+    assert {got[t] for t in CIS_INTRADAY} == {("ts", timedelta(days=30))}
     assert {t: iv for t, (_, iv) in got.items() if t in YEARLY} == dict.fromkeys(
         YEARLY, timedelta(days=365)
     )
