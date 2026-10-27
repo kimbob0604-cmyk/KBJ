@@ -53,10 +53,28 @@ def loaded() -> MemoryRepos:
     return repos
 
 
-def ctx(repos: Any, notify: Any, as_of: str = RUN_DATE.isoformat()) -> JobContext:
+@dataclass(frozen=True)
+class Rec:
+    status: str
+    detail: dict[str, Any]
+
+
+@dataclass
+class FakeRuns:
+    """실행 기록 — (작업, as_of) → 기록."""
+
+    recs: dict[tuple[str, str], Rec] = field(default_factory=dict[tuple[str, str], Rec])
+
+    def latest(self, job: str, as_of: str) -> Rec | None:
+        return self.recs.get((job, as_of))
+
+
+def ctx(repos: Any, notify: Any, as_of: str = RUN_DATE.isoformat(), runs: Any = None) -> JobContext:
     res: dict[str, Any] = {"repos": repos, "kr": TradingCalendar.default()}
     if notify is not None:
         res["notify"] = notify
+    if runs is not None:
+        res["runs"] = runs
     return JobContext(job="etf.report", as_of=as_of, run_id="r1", attempt=1, now=NOW, resources=res)
 
 
@@ -86,6 +104,24 @@ def test_변동_없는_날도_한_통(loaded: MemoryRepos) -> None:
     assert "감지된 변동 없음" in text and "🆕 신규 편입" not in text
     assert kw["subject"] == "2026-11-16"  # 11-17 ETF 일별은 아직 없다 — 있는 마지막 날
     assert "전 영업일 2026-11-17 아직 없음" in text
+
+
+def test_빠진_운용사를_머리_줄에_적는다(loaded: MemoryRepos) -> None:
+    """etf.collect 가 일부 운용사를 통째로 못 받고 ok 로 끝난 날 — 받은 운용사로 보내되 빠진
+    운용사를 적는다(2026-10-27: 운용사 한 곳 실패가 리포트 전체를 막았다)."""
+    day = RUN_DATE.isoformat()
+    detail = {"failed_issuers": {"rise": "KB RISE", "tiger": "미래에셋 TIGER"}}
+    n = FakeNotify()
+    res = job.report(ctx(loaded, n, runs=FakeRuns({("etf.collect", day): Rec("ok", detail)})))
+    text = n.calls[0][0]
+    assert "구성종목 수집 실패 2곳: KB RISE·미래에셋 TIGER" in text
+    assert res.detail["failed_issuers"] == 2
+    # 실패 없는 날·기록 없는 날·자원 없는 날은 적지 않는다
+    for runs in (FakeRuns({("etf.collect", day): Rec("ok", {})}), FakeRuns(), None):
+        n2 = FakeNotify()
+        job.report(ctx(loaded, n2, runs=runs))
+        assert "수집 실패" not in n2.calls[0][0]
+    assert job.failed_issuers(FakeRuns(), RUN_DATE) == ()
 
 
 def test_대기열이_거절하면_실패(loaded: MemoryRepos) -> None:

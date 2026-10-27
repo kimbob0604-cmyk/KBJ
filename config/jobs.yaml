@@ -233,7 +233,7 @@ jobs:
       - {source: ETF_ISSUERS, dataset: pdf, as_of: trade_date}
     writes: [prv_etf.fund, prv_etf.holding, prv_etf.change_log, prv_etf.meta]
     absorbs: ["ET:daily.yml"]
-    note: "운용사 9곳 어댑터마다 격리(한 운용사 실패가 다른 운용사를 멈추지 않는다), 끝에 구성종목 변동 분석. ETF 리포트 발송(notify etf.report)은 P5"
+    note: "운용사 9곳 어댑터마다 격리(한 운용사 실패가 다른 운용사를 멈추지 않는다), 끝에 구성종목 변동 분석. ETF 리포트 발송(notify etf.report)은 P5. 통째로 실패한 운용사가 절반을 넘을 때만 failed(재시도) — 아니면 ok + detail failed_issuers 로 etf.report(굳은 의존)가 받은 운용사로 보내고 빠진 운용사를 적는다(ADR 0010 갱신 2026-10-27)"
 
   - name: kis.master
     phase: P9

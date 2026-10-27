@@ -20,6 +20,7 @@
   날짜를 무시하고 최신. RISE(kbam.co.kr — 2026-10 이전)는 공시일 목록(`available_dates`)을 주고,
   공시가 없는 날을 달라면 **최신 날**을 준다(실측 2026-10-20). JSON 은 비중 상위 `rise_top` 줄만,
   `download=xlsx` 는 전체를 엑셀로(종목코드는 ISIN 을 6자리로 줄인 값 — 비주식도 코드처럼 보인다).
+  TIGER 목록은 2026-10 모양(`javascript:cmmCtrl.getEtfDtlPop('ISIN','이름')` — 실측 2026-10-27).
 
 장애 심기: `fail[운용사] = 상태`(그 운용사 모든 요청), `flaky[운용사] = n`(처음 n 번 503),
 `challenge[운용사] = n`(처음 n 번 200 + HTML — Cloudflare 챌린지 흉내). 기록: `calls`.
@@ -297,9 +298,14 @@ class FakeIssuers:
 
     def _tiger(self, path: str, p: dict[str, str]) -> httpx.Response:
         if path.endswith("/search/list.ajax"):
-            links = "".join(f'<a href="detail/index.do?ksdFund={f.isin}">상품</a>'
-                            f'<a href="x?ksdFund={f.isin}">다시</a>'
-                            for f in funds_of("tiger"))  # fmt: skip
+            # 2026-10 모양 — 상품 링크가 javascript:cmmCtrl.getEtfDtlPop('ISIN','이름')(같은 펀드가
+            # 이름 링크·사진 링크로 두 번 나온다)
+            links = "".join(
+                f"<a href=\"javascript:cmmCtrl.getEtfDtlPop('{f.isin}','"
+                f'{f.name.replace("&", "&amp;")}\');" title="상품상세 새창열림">{f.name}</a>'
+                f"<a href=\"javascript:cmmCtrl.getEtfDtlPop('{f.isin}','x');\">다시</a>"
+                for f in funds_of("tiger")
+            )
             return httpx.Response(200, text=f"<div>{links}</div>")
         if path.endswith("/pdfListAjax.ajax"):
             fund = next((f for f in funds_of("tiger") if f.isin == p.get("ksdFund")), None)
