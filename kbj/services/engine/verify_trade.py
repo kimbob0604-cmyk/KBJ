@@ -137,7 +137,7 @@ def verify_public(v: PublicView) -> dict[str, Any]:
             lines.append(f"{r.code} no_recent {r.flow} HS {r.hs} {where} — 최근 12개월 값 없음")
     for sido, nm in sorted(v.unmatched_sgg):
         lines.append(
-            f"- region_unmatched 시도 {sido} '{nm}' — trade_regions.yaml 에 없음(매핑 HS6 행)"
+            f"- 참고 region_unmatched 시도 {sido} '{nm}' — trade_regions.yaml 에 없음(매핑 HS6 행)"
         )
     kinds = Counter(p.kind for p in probs)
     return {
@@ -267,7 +267,10 @@ def main(
             return 2
         summary = verify_public(pv)
         _write(summary, o, as_json=args.json)
-        bad = ("code_missing", "hs_missing", "name_mismatch", "no_recent", "region_unmatched")
+        # region_unmatched 는 참고 — 지역표는 수출 거점만 적어서(trade_regions.yaml 머리)
+        # 그 밖 시군구는 어느 흐름도 가리키지 않는다. 실패로 세면 매번 '문제'로 보였다
+        # (2026-10-27 — 10-26 판정과 같다)
+        bad = ("code_missing", "hs_missing", "name_mismatch", "no_recent")
         return 0 if all(summary[k] == 0 for k in bad) else 1
     try:
         view = (db or _production)(args.watchlist)

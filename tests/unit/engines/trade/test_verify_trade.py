@@ -139,3 +139,13 @@ def test_public_전부_통과와_문제_줄() -> None:
     out = io.StringIO()
     assert main(["--public", "--json"], out=out, err=io.StringIO(), public=lambda: bad) == 1
     assert json.loads(out.getvalue())["no_recent"] == 2
+    only_region = PublicView(
+        smap=rows,
+        corp={"990001": "가나전자"},
+        hs_codes={"8542321010"},
+        live_hs={("8542321010", "exp")},
+        live_sgg={("KR-41-hwaseong", "854232")},
+        unmatched_sgg={("41", "수원시 영통구")},
+    )
+    # 지역표 밖 시군구는 참고 줄만 — 실패로 세지 않는다
+    assert main(["--public"], out=io.StringIO(), err=io.StringIO(), public=lambda: only_region) == 0
