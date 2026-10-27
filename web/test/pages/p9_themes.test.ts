@@ -6,9 +6,11 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { route } from '../../src/app/route';
 import { createApiSource } from '../../src/data/api';
 import { createStaticSource } from '../../src/data/static';
-import type { DataSource } from '../../src/data/source';
+import type { DataSource, Envelope, Params } from '../../src/data/source';
 import p9, { P9_LOGIN_PANELS, P9_SECTIONS } from '../../src/pages/p9_themes';
 import { CATALOG_PANELS } from '../../src/pages/p9/catalog';
+import { fillMembers } from '../../src/pages/p9/strength';
+import { panel } from '../../src/ui/panel';
 import { type FakeCall, fakeFetch, json } from '../helpers';
 import { flush, pageCtx, text } from './support';
 
@@ -174,5 +176,34 @@ describe('페이지 9 — 로그인판', () => {
     await flush();
     expect(c2.root.querySelector('#p9-rank .msg.err')).not.toBeNull();
     expect(c2.root.querySelector('.theme-section')).not.toBeNull(); // 분류 패널은 계속(격리)
+  });
+});
+
+describe('페이지 9 — 편입 종목 경쟁', () => {
+  it('대테마를 빨리 바꾸면 마지막 테마만 — 먼저 고른 테마의 늦은 응답이 덮지 않는다', async () => {
+    const hz = loginHarness();
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((r) => {
+      release = r;
+    });
+    // syn_1_1 응답만 늦게 온다(데모 감사 2026-10-27 — 페이지 7 종목 흐름과 같은 경쟁)
+    const slow: DataSource = {
+      tier: 'login',
+      get: async <T,>(key: string, params?: Params): Promise<Envelope<T>> => {
+        if (key === 'themes/syn_1_1') await gate;
+        return hz.source.get<T>(key, params);
+      },
+    };
+    const p = panel('login', { title: P9_LOGIN_PANELS.members.title, tier: 'login', span: 12 });
+    const t = { tier: 'login' as const, source: slow, now: NOW };
+    const first = fillMembers(t, p, 'syn_1_1');
+    await fillMembers(t, p, 'syn_1_2');
+    release();
+    await first;
+    await flush();
+    const later = fx<{ data: { name: string; members: unknown[] } }>('detail_plain');
+    expect(text(p.head)).toContain(later.data.name);
+    expect(text(p.head)).not.toContain('테마 1');
+    expect(p.body.querySelectorAll('tbody tr').length).toBe(Math.min(50, later.data.members.length));
   });
 });

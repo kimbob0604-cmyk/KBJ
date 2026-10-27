@@ -57,6 +57,21 @@ export function errorText(err: unknown): string {
   return '불러오지 못함';
 }
 
+/**
+ * 실패 한 줄 + 예정 작업 안내. 404 `no_data` 는 서버 문구가 이미 '아직 없음 — <작업 시각>'이라 그대로 쓴다 — 힌트를 또
+ * 붙이면 같은 안내가 두 번 나왔다('아직 없음 — macro.morning 06:20 … — macro.morning 06:20 …', 페이지 6·3·7). 서버 문구가
+ * 없는 실패(공개 파일 404·500·형식 오류)만 '오류 — 힌트'.
+ */
+export function failText(err: unknown, hint: string): string {
+  if (err instanceof DataError && err.status === 404 && err.serverMessage) return err.serverMessage;
+  return `${errorText(err)} — ${hint}`;
+}
+
+/** 404(아직 수집 전 — 데이터·입력값 없음)인가 — 안내(.msg)로 그리고, 그 밖만 오류(.msg.err) */
+export function isNoDataError(err: unknown): boolean {
+  return err instanceof DataError && err.status === 404;
+}
+
 export function panel(viewer: Tier, opts: PanelOptions): Panel {
   const locked = viewer === 'public' && opts.tier === 'login';
   const pending = !locked && opts.pending !== undefined;

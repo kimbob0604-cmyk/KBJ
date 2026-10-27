@@ -1052,3 +1052,21 @@ svg text.warn {
 .flow-block .seg { margin: 6px 0; }
 .trend-filters { display: flex; flex-wrap: wrap; gap: 6px 12px; margin: 0 0 8px; }
 .trend-table svg { vertical-align: middle; }
+/* 크기를 준 스파크라인(표 칸 — ui/svg.ts sparkline w·h) — 글줄 안에 두어 칸 정렬(오른쪽)·머리와 맞게 */
+svg.spark-cell { display: inline-block; vertical-align: middle; }
+/* 표 안 '이름 = 링크' 단추(페이지 7 랭킹 — 누르면 아래 흐름). 브라우저 기본 단추(회색 바탕·시스템 글꼴)로 보였다.
+   .btn link(페이지 8 — 테두리 단추)는 그대로 */
+button.link:not(.btn) {
+  font: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--fg);
+  cursor: pointer;
+  text-align: left;
+}
+button.link:not(.btn):hover,
+button.link:not(.btn):focus-visible {
+  color: var(--accent);
+  text-decoration: underline;
+}

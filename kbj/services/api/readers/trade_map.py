@@ -8,6 +8,10 @@
 
 - 랭킹: 지수가 있는 마지막 달까지 최근 `overlay.rank_months`(3)개월 E 합 / 전년 같은 달 합 − 1
   내림차순(None 은 뒤, 동률 코드 순 — `overlay.rank`). 품질은 그 종목 마지막 달 행.
+  매핑표에는 있는데 지수 행이 아직 없는 종목(매핑판이 바뀐 뒤 `trade.stock_index` 21:00 전)도
+  맨 뒤에 '자료 없음'(no_trade·estimated)으로 싣는다 — 빼면 그 종목은 랭킹·흐름 고르기 상자에서
+  사라져 흐름(지수와 무관 — 원천 표만 읽는다)도 열 수 없었다. 지수 행의 매핑판이 지금 판과 다르면
+  한 줄 알린다(지수는 이전 판 가중치).
 - 종목: 매핑 줄(품목명 = `hs_dim`, 없으면 None)·근거·월/분기 지수·매출 YoY·시차 상관·상태.
   매핑표에 없는 종목은 404 `no_data` '매핑 없음'(화면은 오류가 아니라 안내 한 줄 — §6).
   매핑은 있는데 지수가 아직 없으면 404 `no_data`(trade.stock_index 예정 시각).
@@ -57,6 +61,8 @@ from kbj.services.api.readers._common import NoData, ReadContext, envelope, wors
 
 __all__ = [
     "FLOW_MONTHS",
+    "NOTE_OLD_MAP",
+    "NOTE_PENDING",
     "NOT_MAPPED",
     "NO_MAP",
     "NO_STOCK_INDEX",
@@ -77,6 +83,13 @@ FLOW_MONTHS: Final = 36  # 흐름 차트·표 — YoY 를 위해 12개월 더 �
 NOTE_DAYS: Final = "일평균 = 금액 ÷ 그 달 영업일(거래일 달력 — 관세청 조업일수와 다를 수 있다)"
 NOTE_RAW: Final = "흐름 금액은 통관 합(가중치 미적용) — 회사 매출이 아니라 그 품목·지역의 통관 금액"
 NOTE_USD: Final = "금액은 미화 달러(원화 환산 없음 — 환율 미조정)"
+NOTE_PENDING: Final = (
+    "지수 계산 전 {n}종목 — 매핑표에 새로 든 종목(trade.stock_index 21:00 에 계산)."
+    " 맨 뒤 '자료 없음', 흐름은 볼 수 있다"
+)
+NOTE_OLD_MAP: Final = (
+    "{n}종목의 지수는 이전 매핑판 가중치 — 매핑판이 바뀐 뒤 trade.stock_index 21:00 전"
+)
 NOTE_DRAFT: Final = (
     "매핑 가중치는 자체 큐레이션 초안 — '검토 전' 종목은 사람이 아직 확인하지 않았다"
 )
@@ -110,6 +123,7 @@ def trade_stocks(ctx: ReadContext) -> Envelope[TradeStocks]:
     have = [c for c in res.codes() if exports.get(c)]
     if not have:
         raise NoData(NO_STOCK_INDEX)
+    pending = [c for c in res.codes() if not exports.get(c)]
     months = [r.period for c in have for r in _monthly(exports[c]) if r.export_usd is not None]
     last = max(months) if months else None
     n = load_trade().overlay.rank_months
@@ -121,6 +135,7 @@ def trade_stocks(ctx: ReadContext) -> Envelope[TradeStocks]:
     qs: list[Quality] = []
     ats: list[datetime] = []
     versions: set[str] = set()
+    stale_ver = 0  # 지수 행의 매핑판 ≠ 지금 매핑판
     for code, v in rank(vals.items()):
         lines = res.lines[code]
         ex = exports[code]
@@ -143,10 +158,27 @@ def trade_stocks(ctx: ReadContext) -> Envelope[TradeStocks]:
         qs.append(tail.quality)
         ats.append(tail.as_of)
         versions.add(lines[0].map_version)
+        stale_ver += tail.map_version != lines[0].map_version
+    for code in pending:  # 지수 계산 전 — 맨 뒤(코드 순), 값 없음
+        lines = res.lines[code]
+        sector = next((str(x.flow_meta["sector"]) for x in lines if x.flow_meta.get("sector")),
+                      None)  # fmt: skip
+        rows.append(
+            TradeStockRank(
+                code=code, name=lines[0].name, yoy_3m=None, status="no_trade",
+                reviewed=all(x.reviewed for x in lines), origin=lines[0].origin,
+                quality=Quality.ESTIMATED, sector=sector,
+            )
+        )  # fmt: skip
+        versions.add(lines[0].map_version)
     data = TradeStocks(map_version="+".join(sorted(versions)), rows=rows)
     notes = [NOTE_USD, NOTE_DRAFT]
     if last is not None:
         notes.append(f"랭킹 = {last} 까지 최근 {n}개월 수출 지수 YoY")
+    if pending:
+        notes.append(NOTE_PENDING.format(n=len(pending)))
+    if stale_ver:
+        notes.append(NOTE_OLD_MAP.format(n=stale_ver))
     return envelope(
         data, source=SOURCE, as_of=max(ats), quality=worst(qs), notes=notes,
         generated_at=ctx.now(),

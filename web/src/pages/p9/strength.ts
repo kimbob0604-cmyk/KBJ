@@ -112,15 +112,21 @@ export interface StrengthPanels {
   members: Panel;
 }
 
-/** 편입 종목 패널을 그 대테마로 채운다 */
+/** 패널마다 마지막 편입 종목 요청 번호 — 대테마를 빨리 바꾸면 먼저 고른 테마의 늦은 응답이 나중 테마를 덮었다 */
+const memberSeq = new WeakMap<Panel, number>();
+
+/** 편입 종목 패널을 그 대테마로 채운다(같은 패널에 더 새 요청이 나갔으면 이 응답은 버린다) */
 export async function fillMembers(t: P9Ctx, p: Panel, id: string): Promise<void> {
+  const seq = (memberSeq.get(p) ?? 0) + 1;
+  memberSeq.set(p, seq);
   let env: Envelope<ThemeDetail>;
   try {
     env = await t.source.get<ThemeDetail>(`themes/${id}`);
   } catch (err) {
-    failed(p, err, HINT_STRENGTH);
+    if (memberSeq.get(p) === seq) failed(p, err, HINT_STRENGTH);
     return;
   }
+  if (memberSeq.get(p) !== seq) return;
   const d = env.data;
   const naver = new Map(d.naver.map((n) => [n.no, n.name] as const));
   p.clearBody();

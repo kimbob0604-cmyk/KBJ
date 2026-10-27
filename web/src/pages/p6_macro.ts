@@ -7,7 +7,7 @@
 // - 패널마다 따로 불러와 한 패널의 실패가 다른 패널을 멈추지 않는다(절대 규칙 4). 값을 지어내지 않는다.
 import type { PageContext, PageModule } from '../app/types';
 import type { Envelope } from '../data/source';
-import { errorText } from '../ui/panel';
+import { failText } from '../ui/panel';
 import { createCalendar } from './p5/calendar';
 import { type MacroTabs, MACRO_HINT } from './p6/common';
 import { createMarketPanel } from './p6/market';
@@ -27,7 +27,7 @@ async function mount(ctx: PageContext): Promise<void> {
   }
   const publicTabs = (tabsEnv?.data.tabs ?? []).filter((t) => t.public);
   const series = createSeriesPanel(c, publicTabs);
-  if (tabsErr !== null) series.panel.showMessage(`${errorText(tabsErr)} — ${MACRO_HINT}`);
+  if (tabsErr !== null) series.panel.showMessage(failText(tabsErr, MACRO_HINT));
   else if (tabsEnv) series.panel.setSrcText(`탭 ${publicTabs.length}개 · ${tabsEnv.source}`);
   const calendar = createCalendar(c, 4);
   const market = createMarketPanel(c);
