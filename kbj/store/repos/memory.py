@@ -70,6 +70,7 @@ from kbj.store.repos.journal import MemoryJournalRepo
 from kbj.store.repos.macro import MemoryMacroPublicRepo
 from kbj.store.repos.macro_prv import MemoryMacroPrivateRepo
 from kbj.store.repos.market import (
+    PRELIM_SNAP_SOURCE,
     Asset,
     best_universe,
     group_best_bars,
@@ -200,7 +201,7 @@ class MemoryMarketRepo:
         return len(rows)
 
     def snapshot(self, asof: date) -> tuple[dict[str, Snap], date | None]:
-        days = _days_desc([k[1] for k in self.snaps], asof)
+        days = _days_desc([k[1] for k in self.snaps if k[2].lower() != PRELIM_SNAP_SOURCE], asof)
         if not days:
             return {}, None
         used = days[0]

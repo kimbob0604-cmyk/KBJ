@@ -7,6 +7,9 @@
 // - 웨이브 2 는 하위 모듈 본문만: EVL = p11/rules·editor·history, BKT = p11/perf. 진입 파일·칸 폭은 FND.
 // - 데이터 없음(404)은 '.msg' 안내(p.showMessage), 그 밖 실패만 '.msg.err'(p.showError). 한 패널의 실패는 그 패널 안에서
 //   끝난다(다른 패널은 계속 — 절대 규칙 4).
+// - 장중 새로 고침: ③ 발송 이력만 — 신호가 장중 10분(rules.intraday)·16:00(rules.close)에 늘어난다. 벽시계 10분
+//   슬롯 + 2분 30초에 다시 읽는다(app/refresh.ts onSlot). 다른 패널은 하루 한 번 바뀌거나 사용자가 고친다.
+import { onSlot, SLOT_TICK_MS } from '../app/refresh';
 import type { PageContext, PageModule } from '../app/types';
 import { type Panel, panel, type Span } from '../ui/panel';
 import { fillEditor } from './p11/editor';
@@ -30,6 +33,9 @@ export const P11_PANELS: Readonly<Record<P11Section, { title: string; span: Span
 
 type Fill = (ctx: PageContext, p: Panel) => Promise<void>;
 
+/** 발송 이력 새로 고침 주기(벽시계 — rules.intraday 10분 슬롯) */
+export const HISTORY_REFRESH_PERIOD_MS = 600_000;
+
 // 로그인 본문 — 공개 빌드에서는 번들에서 뺀다
 const LOGIN_FILLS: Readonly<Record<P11Section, Fill>> | null =
   import.meta.env.MODE === 'public'
@@ -51,13 +57,22 @@ async function mount(ctx: PageContext): Promise<void> {
     return [id, p] as const;
   });
   if (LOGIN_FILLS === null) return;
-  for (const [id, p] of panels) {
-    if (p.locked) continue;
+  const fills = LOGIN_FILLS;
+  const run = async (id: P11Section, p: Panel): Promise<void> => {
     try {
-      await LOGIN_FILLS[id](ctx, p);
+      await fills[id](ctx, p);
     } catch (err) {
       p.showError(err);
     }
+  };
+  for (const [id, p] of panels) {
+    if (p.locked) continue;
+    await run(id, p);
+  }
+  // 첫 불러오기 중에 앱이 내려갔으면(격자가 문서에서 빠짐) 주기 작업을 걸지 않는다
+  const history = panels.find(([id]) => id === 'history')?.[1];
+  if (history && !history.locked && ctx.root.isConnected) {
+    ctx.every(SLOT_TICK_MS, onSlot(ctx.now, () => void run('history', history), HISTORY_REFRESH_PERIOD_MS));
   }
 }
 

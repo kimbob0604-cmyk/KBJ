@@ -1,6 +1,7 @@
 // 페이지 1 시장 — A 의 합성 응답 픽스처로 위젯 렌더·기간 토글·품질 표시·검산 줄·공개판 자물쇠(§6.8 pages/*.test).
 import { describe, expect, it, vi } from 'vitest';
-import page, { CREDIT_TITLE, PENDING_TILES, REFRESH_MS } from '../../src/pages/p1_market';
+import { SLOT_PERIOD_MS, SLOT_TICK_MS } from '../../src/app/refresh';
+import page, { CREDIT_TITLE, PENDING_TILES } from '../../src/pages/p1_market';
 import { MINUTE_REFRESH_MS } from '../../src/pages/p1/flows_minute';
 import { macPublicHarness, macroFixture } from '../fixtures/api/macro/harness';
 import { json } from '../helpers';
@@ -25,9 +26,10 @@ const F2 = {
   program_top: F2_FX['../fixtures/api/program/top_K_buy_intraday.json'] as object,
 };
 
-async function mountLogin(over: Parameters<typeof apiHarness>[0] = {}) {
+async function mountLogin(over: Parameters<typeof apiHarness>[0] = {}, clock?: { t: number }) {
   const hz = apiHarness({ ...F2, ...over });
-  const { ctx, root, every } = pageCtx(1, 'login', hz.source);
+  const extra = clock ? { now: () => new Date(clock.t) } : {};
+  const { ctx, root, every } = pageCtx(1, 'login', hz.source, extra);
   await page.mount(ctx);
   return { hz, root, every };
 }
@@ -176,13 +178,23 @@ describe('페이지 1 시장 — 로그인', () => {
     expect(text(idx.querySelector('.notes'))).toContain('검산 실패 1행 제외');
   });
 
-  it('10분 슬롯 + 여유로 새로 고침을 건다', async () => {
-    const { hz, every } = await mountLogin();
-    expect(every.map((e) => e.ms)).toEqual([REFRESH_MS, MINUTE_REFRESH_MS]); // P3 10분 슬롯 + F2 60초
+  it('벽시계 슬롯에 맞춰 새로 고침을 건다(마운트 시각 기준 630초가 아니다 — 2026-10-27)', async () => {
+    const clock = { t: Date.parse('2026-10-27T01:01:00Z') }; // 10:01 KST — 10:00 슬롯 직후
+    const { hz, every } = await mountLogin({}, clock);
+    expect(every.map((e) => e.ms)).toEqual([SLOT_TICK_MS, MINUTE_REFRESH_MS]); // 슬롯 맞춤 + F2 60초
     const before = hz.calls.length;
+    every[0]?.fn(); // 같은 구간 — 다시 읽지 않는다
+    await flush();
+    expect(hz.calls.length).toBe(before);
+    clock.t += 90_000; // 10:02:30 — 슬롯 + 2분 30초
     every[0]?.fn();
     await flush();
     expect(hz.calls.length).toBe(before + 4); // 요약·업종·투자자·신용
+    clock.t += SLOT_PERIOD_MS; // 10:07:30 — 늦게 끝난 슬롯을 한 번 더
+    every[0]?.fn();
+    every[0]?.fn();
+    await flush();
+    expect(hz.calls.length).toBe(before + 8);
   });
 });
 

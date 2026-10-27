@@ -16,7 +16,7 @@ import { checkLine, qValue, roundTol, visibleRows } from '../ui/quality';
 import { type Option, seg, select } from '../ui/seg';
 import { centerLevel, s, svgBox } from '../ui/svg';
 import { type Column, table } from '../ui/table';
-import { fill, filters, INVESTOR_LABEL, kv, nameCell, REFRESH_MS } from './p1_market';
+import { fill, filters, INVESTOR_LABEL, kv, nameCell, slotEvery } from './p1_market';
 
 type S = components['schemas'];
 type Screen = S['ScreenResponse'];
@@ -627,7 +627,7 @@ async function mountLogin(ctx: PageContext, { pScr, pInv, pDet, pIntra }: FlowPa
   await loadIntraday(); // 종목 이름을 스크리너에서 빌려 쓴다
   // 첫 불러오기 중에 앱이 내려갔으면(격자가 문서에서 빠짐) 주기 작업을 걸지 않는다
   if (root.isConnected) {
-    ctx.every(REFRESH_MS, () => {
+    slotEvery(ctx, () => {
       void loadScreen();
       void loadInvestors();
       void loadIntraday();
