@@ -1329,6 +1329,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/gex/futures-oi": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Futures Oi Route */
+        get: operations["futures_oi_route_api_gex_futures_oi_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/diag/summary": {
         parameters: {
             query?: never;
@@ -3972,6 +3989,25 @@ export interface components {
             generated_at: string;
             data: components["schemas"]["Financials"];
         };
+        /** Envelope[FuturesOi] */
+        Envelope_FuturesOi_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["FuturesOi"];
+        };
         /** Envelope[GexBriefing] */
         Envelope_GexBriefing_: {
             /** Source */
@@ -5597,6 +5633,157 @@ export interface components {
             rows: components["schemas"]["FinRow"][];
             ratios: components["schemas"]["RatioView"] | null;
             checks: components["schemas"]["FinChecks"];
+        };
+        /**
+         * FutOiDay
+         * @description 하루 — 합계 OI·증감·근월물 가격·해석 라벨·선물 투자자 순매수.
+         */
+        FutOiDay: {
+            /**
+             * Trade Date
+             * Format: date
+             */
+            trade_date: string;
+            /** Provisional */
+            provisional: boolean;
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Total Oi */
+            total_oi: number | null;
+            /** Oi Change */
+            oi_change: number | null;
+            /** Oi Change Raw */
+            oi_change_raw: number | null;
+            /** Oi Change Pct */
+            oi_change_pct: number | null;
+            /** Near Expiry */
+            near_expiry?: string | null;
+            /** Near Oi */
+            near_oi: number | null;
+            /** Near Close */
+            near_close: number | null;
+            /** Near Change */
+            near_change: number | null;
+            /** Near Change Pct */
+            near_change_pct: number | null;
+            /** Expiry Day */
+            expiry_day: boolean;
+            /**
+             * Label
+             * @enum {string}
+             */
+            label: "new_long" | "new_short" | "short_cover" | "long_liquidation" | "flat" | "unknown";
+            /** Label Text */
+            label_text: string;
+            /** Reasons */
+            reasons?: string[];
+            /** Flows */
+            flows?: components["schemas"]["FutOiInvestor"][];
+        };
+        /**
+         * FutOiInvestor
+         * @description 코스피200 선물(K2I·F001) 투자자 하나의 그날 순매수 — investor_flow 정규장 마지막 행.
+         */
+        FutOiInvestor: {
+            /**
+             * Investor
+             * @enum {string}
+             */
+            investor: "foreign" | "institution" | "individual";
+            /** Net Qty */
+            net_qty: number | null;
+            /** Net Value Won */
+            net_value_won: number | null;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
+        };
+        /**
+         * FutOiOption
+         * @description 옵션 투자자 일별 순매수 — 월물(K2I OC01/OP01)·위클리 월(WKM)·위클리 목(WKI) 콜/풋.
+         */
+        FutOiOption: {
+            /**
+             * Trade Date
+             * Format: date
+             */
+            trade_date: string;
+            /**
+             * Series
+             * @enum {string}
+             */
+            series: "monthly" | "weekly_mon" | "weekly_thu";
+            /**
+             * Cp
+             * @enum {string}
+             */
+            cp: "C" | "P";
+            /**
+             * Investor
+             * @enum {string}
+             */
+            investor: "foreign" | "institution" | "individual";
+            /** Net Qty */
+            net_qty: number | null;
+            /** Net Value Won */
+            net_value_won: number | null;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
+        };
+        /**
+         * FutOiThresholds
+         * @description 라벨 보합 임계(%) — 기본값 [확인 필요](엔진 상수).
+         */
+        FutOiThresholds: {
+            /** Price Flat Pct */
+            price_flat_pct: number;
+            /** Oi Flat Pct */
+            oi_flat_pct: number;
+            /** Board Sanity Pct */
+            board_sanity_pct: number;
+        };
+        /**
+         * FuturesOi
+         * @description `/api/gex/futures-oi?days=` — 확정 행(오래된 것부터)·잠정 행·옵션 일별·외국인 연속일.
+         */
+        FuturesOi: {
+            /** Days */
+            days: components["schemas"]["FutOiDay"][];
+            provisional: components["schemas"]["FutOiDay"] | null;
+            /** Options */
+            options: components["schemas"]["FutOiOption"][];
+            /** Foreign Streak */
+            foreign_streak: number | null;
+            thresholds: components["schemas"]["FutOiThresholds"];
+            /**
+             * Basis
+             * @default total
+             * @constant
+             */
+            basis: "total";
         };
         /** FyEstimateView */
         FyEstimateView: {
@@ -14020,6 +14207,64 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_GexFlow_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    futures_oi_route_api_gex_futures_oi_get: {
+        parameters: {
+            query?: {
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_FuturesOi_"];
                 };
             };
             /** @description 세션 없음·만료 */

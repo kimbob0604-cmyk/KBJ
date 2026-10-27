@@ -4,6 +4,10 @@
 선물·투자자별 + 엔진 산출 하루치)를 메모리 저장소(`P7World.fill_gex`)에 싣고, 가짜 시계(세계의
 CLOCK 14:00 KST — 장 중, 마지막 사이클 13:30 이라 '지연')에서 앱 응답을 `{상대 경로: JSON 글자}`
 로 낸다(결정적 — 실데이터 없음). 장 밖(16:30 — '마지막 세션') 응답도 하나 싣는다.
+
+선물 미결제약정 패널(`/api/gex/futures-oi` — metrics §32, ADR 0042)은 따로 합성 세계
+(`tests/fixtures/synthetic/oi_world.py` — 2026-11-04 18:00, KRX 확정 11-03 까지 + 11-04
+잠정)로 만든다(`OI_FILES` — GEX 엔진 응답 시험이 `FILES` 만 돈다).
 """
 
 from __future__ import annotations
@@ -20,10 +24,21 @@ from kbj.config.markets import load_calendar_events, load_markets
 from kbj.core.calendar import TradingCalendar
 from kbj.services.api.app import create_app
 from kbj.store.repos import MemoryRepos, memory_repos
+from tests.fixtures.synthetic.oi_world import CLOCK as OI_CLOCK
+from tests.fixtures.synthetic.oi_world import build_oi_world
 from tests.fixtures.synthetic.p7_world import CLOCK, P7World, build_world
 from tests.unit.api.api_world import BASE, PASSWORD, USER, FakeClock, make_settings
 
-__all__ = ["CLOSED", "DOMAIN", "FILES", "GexApiWorld", "gex_api_world", "render"]
+__all__ = [
+    "CLOSED",
+    "DOMAIN",
+    "FILES",
+    "OI_FILES",
+    "GexApiWorld",
+    "gex_api_world",
+    "oi_api_world",
+    "render",
+]
 
 DOMAIN: Final = "gex"
 CLOSED: Final[datetime] = CLOCK.replace(hour=16, minute=30)  # 장 밖(POST_DAY)
@@ -39,6 +54,9 @@ FILES: Final[tuple[tuple[str, str], ...]] = (
     ("flow.json", "/api/gex/flow"),
     ("briefing_all.json", "/api/gex/briefing?scope=all"),
 )
+
+# (파일, 경로) — 선물 미결제약정 패널(합성 OI 세계)
+OI_FILES: Final[tuple[tuple[str, str], ...]] = (("futures_oi.json", "/api/gex/futures-oi?days=60"),)
 
 
 @dataclass
@@ -81,6 +99,14 @@ def gex_api_world(*, empty: bool = False, at: datetime = CLOCK) -> GexApiWorld:
     return GexApiWorld(w, repos, FakeClock(at))
 
 
+def oi_api_world(*, empty: bool = False, at: datetime = OI_CLOCK) -> GexApiWorld:
+    """합성 OI 세계(KRX 선물 일별·투자자·전광판)를 실은 저장소 — 가짜 시계 11-04 18:00."""
+    repos = memory_repos()
+    if not empty:
+        build_oi_world().fill(repos.gex)
+    return GexApiWorld(None, repos, FakeClock(at))
+
+
 def _dump(body: object) -> str:
     return json.dumps(body, ensure_ascii=False, indent=2) + "\n"
 
@@ -101,4 +127,12 @@ def render() -> dict[str, str]:
     out["levels_closed.json"] = _dump(r.json())
     r = gex_api_world(empty=True).authed().get("/api/gex/levels?scope=all")
     out["levels_empty.json"] = _dump({"status": r.status_code, **r.json()})
+    oi = oi_api_world().authed()
+    for name, path in OI_FILES:
+        r = oi.get(path)
+        if r.status_code != 200:
+            raise RuntimeError(f"{path}: HTTP {r.status_code}")
+        out[name] = _dump(r.json())
+    r = oi_api_world(empty=True).authed().get("/api/gex/futures-oi")
+    out["futures_oi_empty.json"] = _dump({"status": r.status_code, **r.json()})
     return out

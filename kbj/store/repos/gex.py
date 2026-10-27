@@ -66,6 +66,8 @@ __all__ = [
 
 Row = tuple[Any, ...]
 Tag = tuple[date | None, str | None]
+# KRX 코스피200 선물 정규 행 — (거래일, 만기 YYYYMM, 종가, 전일비, 미결제약정, 행 ts)
+KrxFuturesDay = tuple[date, str, Decimal | None, Decimal | None, int | None, datetime]
 _SESSIONS: Final = frozenset({"day", "night"})
 _IDENT = re.compile(r"^[a-z_][a-z0-9_]*$")
 KRX_MONTHLY_FAMILY: Final = "kospi200"
@@ -433,6 +435,18 @@ class GexRepo(Protocol):
         """그 사이클에 저장된 지표·레벨 이름 → 계산 당시 기능 플래그."""
         ...
 
+    def krx_futures_days(self, first: date, last: date) -> list[KrxFuturesDay]:
+        """KRX 코스피200 선물 정규 행(만기 있는 것)의 OI·종가·전일비 — (거래일, 만기) 순
+        (metrics §32 — 선물 OI 패널)."""
+        ...
+
+    def investor_closes(
+        self, first: date, last: date, markets: Sequence[str], upto: datetime
+    ) -> list[InvestorRecord]:
+        """investor_flow 날마다 정규장(day) 마지막 행 — (거래일, 시장, 업종, 투자자)마다 ts 가장
+        늦은 것(invalid 제외, ts ≤ upto). (거래일, 시장, 업종, 투자자) 순(metrics §32)."""
+        ...
+
 
 # ── Postgres ───────────────────────────────────────────────────────────────────────────────
 
@@ -686,6 +700,30 @@ class PgGexRepo:
             "WHERE ts = %s"
         ).format(l=LEVELS.ident, m=METRICS.ident)
         return {str(n): f for n, f in self._query(q, (_utc(ts), _utc(ts)))}
+
+    def krx_futures_days(self, first: date, last: date) -> list[KrxFuturesDay]:
+        q = sql.SQL(
+            "SELECT trade_date, expiry, close, cmp_prev, acc_opnint_qty, ts FROM {} "
+            "WHERE family = %s AND session = %s AND expiry IS NOT NULL "
+            "AND trade_date BETWEEN %s AND %s ORDER BY trade_date, expiry"
+        ).format(sql.Identifier("prv_gex", KRX_FUT_DAILY))
+        rows = self._query(q, (KRX_MONTHLY_FAMILY, "day", first, last))
+        return [(d, str(e), c, cmp, None if oi is None else int(oi), ts)
+                for d, e, c, cmp, oi, ts in rows]  # fmt: skip
+
+    def investor_closes(
+        self, first: date, last: date, markets: Sequence[str], upto: datetime
+    ) -> list[InvestorRecord]:
+        on = "trade_date, market_code, sector_code, investor"
+        q = sql.SQL(
+            "SELECT DISTINCT ON (" + on + ") {} FROM {} "  # noqa: S608 — 상수 열 목록만
+            "WHERE trade_date BETWEEN %s AND %s AND session = %s AND ts <= %s AND quality <> %s "
+            "AND market_code = ANY(%s) ORDER BY " + on + ", ts DESC"
+        ).format(
+            sql.SQL(", ").join(map(sql.Identifier, INVESTOR_FLOW.columns)), INVESTOR_FLOW.ident
+        )
+        params = (first, last, "day", _utc(upto), "invalid", list(markets))
+        return [_record(InvestorRecord, INVESTOR_FLOW.columns, r) for r in self._query(q, params)]
 
 
 # ── 메모리(시험) ───────────────────────────────────────────────────────────────────────────
@@ -1026,3 +1064,39 @@ class MemoryGexRepo:
         out: dict[str, Flag] = {r.name: r.flag for r in self._levels() if r.ts == ts}
         out.update({m.metric: m.flag for m in self._metric_records() if m.ts == ts})
         return out
+
+    def krx_futures_days(self, first: date, last: date) -> list[KrxFuturesDay]:
+        rows = [
+            r
+            for r in self.krx_futures
+            if r["family"] == KRX_MONTHLY_FAMILY
+            and r["session"] == "day"
+            and r.get("expiry") is not None
+            and first <= r["trade_date"] <= last
+        ]
+        rows.sort(key=lambda r: (r["trade_date"], r["expiry"]))
+        return [
+            (r["trade_date"], str(r["expiry"]), r.get("close"), r.get("cmp_prev"),
+             r.get("acc_opnint_qty"), r["ts"])
+            for r in rows
+        ]  # fmt: skip
+
+    def investor_closes(
+        self, first: date, last: date, markets: Sequence[str], upto: datetime
+    ) -> list[InvestorRecord]:
+        names = set(markets)
+        rows = [
+            r
+            for r in self._rows(INVESTOR_FLOW)
+            if first <= r["trade_date"] <= last
+            and r["session"] == "day"
+            and r["quality"] != "invalid"
+            and r["ts"] <= upto
+            and r["market_code"] in names
+        ]
+        on = ("trade_date", "market_code", "sector_code", "investor")
+        best = self._latest_by(rows, on)
+        best.sort(
+            key=lambda r: (r["trade_date"], r["market_code"], r["sector_code"], r["investor"])
+        )
+        return [InvestorRecord.model_validate(r) for r in best]

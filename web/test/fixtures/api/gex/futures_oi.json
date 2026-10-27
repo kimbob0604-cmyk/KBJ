@@ -1,0 +1,3944 @@
+{
+  "source": "KRX:drv/fut_bydd_trd+KIS(선물 전광판·투자자별)",
+  "as_of": "2026-11-04T06:44:00Z",
+  "quality": "estimated",
+  "notes": [
+    "확정 OI 는 KRX 일별 — 다음 거래일 08:05 뒤",
+    "2026-11-04 은 KRX 확정 전 — 선물 전광판 잠정(estimated)",
+    "투자자 대금은 원(investor_flow 백만원 × 10⁶)"
+  ],
+  "generated_at": "2026-11-04T18:00:00+09:00",
+  "data": {
+    "days": [
+      {
+        "trade_date": "2026-08-05",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-08-05T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 327406,
+        "oi_change": -2136,
+        "oi_change_raw": -2136,
+        "oi_change_pct": -0.6482,
+        "near_expiry": "202609",
+        "near_oi": 281506,
+        "near_close": 556.17,
+        "near_change": -9.14,
+        "near_change_pct": -1.6168,
+        "expiry_day": false,
+        "label": "long_liquidation",
+        "label_text": "롱 청산 우위",
+        "reasons": [
+          "가격↓·OI↓"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 3091,
+            "net_value_won": 432740000000,
+            "as_of": "2026-08-05T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -373,
+            "net_value_won": -52220000000,
+            "as_of": "2026-08-05T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -2718,
+            "net_value_won": -380520000000,
+            "as_of": "2026-08-05T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-08-06",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-08-06T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 324330,
+        "oi_change": -3076,
+        "oi_change_raw": -3076,
+        "oi_change_pct": -0.9395,
+        "near_expiry": "202609",
+        "near_oi": 278430,
+        "near_close": 557.4,
+        "near_change": 1.23,
+        "near_change_pct": 0.2212,
+        "expiry_day": false,
+        "label": "short_cover",
+        "label_text": "숏 커버 우위",
+        "reasons": [
+          "가격↑·OI↓"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -2723,
+            "net_value_won": -381220000000,
+            "as_of": "2026-08-06T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 1064,
+            "net_value_won": 148960000000,
+            "as_of": "2026-08-06T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 1659,
+            "net_value_won": 232260000000,
+            "as_of": "2026-08-06T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-08-07",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-08-09T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 327376,
+        "oi_change": 3046,
+        "oi_change_raw": 3046,
+        "oi_change_pct": 0.9392,
+        "near_expiry": "202609",
+        "near_oi": 281476,
+        "near_close": 551.18,
+        "near_change": -6.22,
+        "near_change_pct": -1.1159,
+        "expiry_day": false,
+        "label": "new_short",
+        "label_text": "신규 매도 우위",
+        "reasons": [
+          "가격↓·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 360,
+            "net_value_won": 50400000000,
+            "as_of": "2026-08-07T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 721,
+            "net_value_won": 100940000000,
+            "as_of": "2026-08-07T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -1081,
+            "net_value_won": -151340000000,
+            "as_of": "2026-08-07T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-08-10",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-08-10T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 322575,
+        "oi_change": -4801,
+        "oi_change_raw": -4801,
+        "oi_change_pct": -1.4665,
+        "near_expiry": "202609",
+        "near_oi": 276675,
+        "near_close": 551.83,
+        "near_change": 0.65,
+        "near_change_pct": 0.1179,
+        "expiry_day": false,
+        "label": "short_cover",
+        "label_text": "숏 커버 우위",
+        "reasons": [
+          "가격↑·OI↓"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 1759,
+            "net_value_won": 246260000000,
+            "as_of": "2026-08-10T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -19,
+            "net_value_won": -2660000000,
+            "as_of": "2026-08-10T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -1740,
+            "net_value_won": -243600000000,
+            "as_of": "2026-08-10T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-08-11",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-08-11T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 324064,
+        "oi_change": 1489,
+        "oi_change_raw": 1489,
+        "oi_change_pct": 0.4616,
+        "near_expiry": "202609",
+        "near_oi": 278164,
+        "near_close": 547.61,
+        "near_change": -4.22,
+        "near_change_pct": -0.7647,
+        "expiry_day": false,
+        "label": "new_short",
+        "label_text": "신규 매도 우위",
+        "reasons": [
+          "가격↓·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -2783,
+            "net_value_won": -389620000000,
+            "as_of": "2026-08-11T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 605,
+            "net_value_won": 84700000000,
+            "as_of": "2026-08-11T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 2178,
+            "net_value_won": 304920000000,
+            "as_of": "2026-08-11T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-08-12",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-08-12T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 323325,
+        "oi_change": -739,
+        "oi_change_raw": -739,
+        "oi_change_pct": -0.228,
+        "near_expiry": "202609",
+        "near_oi": 277425,
+        "near_close": 554.57,
+        "near_change": 6.96,
+        "near_change_pct": 1.271,
+        "expiry_day": false,
+        "label": "flat",
+        "label_text": "보합(해석 보류)",
+        "reasons": [
+          "OI 보합(가격 ±0.1%·OI ±0.3% 안)"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -127,
+            "net_value_won": -17780000000,
+            "as_of": "2026-08-12T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 651,
+            "net_value_won": 91140000000,
+            "as_of": "2026-08-12T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -524,
+            "net_value_won": -73360000000,
+            "as_of": "2026-08-12T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-08-13",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-08-13T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 327885,
+        "oi_change": 4560,
+        "oi_change_raw": 4560,
+        "oi_change_pct": 1.4103,
+        "near_expiry": "202609",
+        "near_oi": 281985,
+        "near_close": 550.31,
+        "near_change": -4.26,
+        "near_change_pct": -0.7682,
+        "expiry_day": false,
+        "label": "new_short",
+        "label_text": "신규 매도 우위",
+        "reasons": [
+          "가격↓·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 3632,
+            "net_value_won": 508480000000,
+            "as_of": "2026-08-13T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -97,
+            "net_value_won": -13580000000,
+            "as_of": "2026-08-13T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -3535,
+            "net_value_won": -494900000000,
+            "as_of": "2026-08-13T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-08-14",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-08-17T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 322098,
+        "oi_change": -5787,
+        "oi_change_raw": -5787,
+        "oi_change_pct": -1.7649,
+        "near_expiry": "202609",
+        "near_oi": 276198,
+        "near_close": 546.89,
+        "near_change": -3.42,
+        "near_change_pct": -0.6215,
+        "expiry_day": false,
+        "label": "long_liquidation",
+        "label_text": "롱 청산 우위",
+        "reasons": [
+          "가격↓·OI↓"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -1408,
+            "net_value_won": -197120000000,
+            "as_of": "2026-08-14T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -111,
+            "net_value_won": -15540000000,
+            "as_of": "2026-08-14T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 1519,
+            "net_value_won": 212660000000,
+            "as_of": "2026-08-14T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-08-18",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-08-18T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 324003,
+        "oi_change": 1905,
+        "oi_change_raw": 1905,
+        "oi_change_pct": 0.5914,
+        "near_expiry": "202609",
+        "near_oi": 278103,
+        "near_close": 543.26,
+        "near_change": -3.63,
+        "near_change_pct": -0.6638,
+        "expiry_day": false,
+        "label": "new_short",
+        "label_text": "신규 매도 우위",
+        "reasons": [
+          "가격↓·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 2961,
+            "net_value_won": 414540000000,
+            "as_of": "2026-08-18T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 110,
+            "net_value_won": 15400000000,
+            "as_of": "2026-08-18T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -3071,
+            "net_value_won": -429940000000,
+            "as_of": "2026-08-18T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-08-19",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-08-19T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 324968,
+        "oi_change": 965,
+        "oi_change_raw": 965,
+        "oi_change_pct": 0.2978,
+        "near_expiry": "202609",
+        "near_oi": 279068,
+        "near_close": 541.95,
+        "near_change": -1.31,
+        "near_change_pct": -0.2411,
+        "expiry_day": false,
+        "label": "flat",
+        "label_text": "보합(해석 보류)",
+        "reasons": [
+          "OI 보합(가격 ±0.1%·OI ±0.3% 안)"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -1235,
+            "net_value_won": -172900000000,
+            "as_of": "2026-08-19T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -489,
+            "net_value_won": -68460000000,
+            "as_of": "2026-08-19T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 1724,
+            "net_value_won": 241360000000,
+            "as_of": "2026-08-19T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-08-20",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-08-20T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 326631,
+        "oi_change": 1663,
+        "oi_change_raw": 1663,
+        "oi_change_pct": 0.5117,
+        "near_expiry": "202609",
+        "near_oi": 280731,
+        "near_close": 536.8,
+        "near_change": -5.15,
+        "near_change_pct": -0.9503,
+        "expiry_day": false,
+        "label": "new_short",
+        "label_text": "신규 매도 우위",
+        "reasons": [
+          "가격↓·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 3652,
+            "net_value_won": 511280000000,
+            "as_of": "2026-08-20T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -1781,
+            "net_value_won": -249340000000,
+            "as_of": "2026-08-20T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -1871,
+            "net_value_won": -261940000000,
+            "as_of": "2026-08-20T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-08-21",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-08-23T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 330368,
+        "oi_change": 3737,
+        "oi_change_raw": 3737,
+        "oi_change_pct": 1.1441,
+        "near_expiry": "202609",
+        "near_oi": 284468,
+        "near_close": 538.74,
+        "near_change": 1.94,
+        "near_change_pct": 0.3614,
+        "expiry_day": false,
+        "label": "new_long",
+        "label_text": "신규 매수 우위",
+        "reasons": [
+          "가격↑·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 1957,
+            "net_value_won": 273980000000,
+            "as_of": "2026-08-21T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 1720,
+            "net_value_won": 240800000000,
+            "as_of": "2026-08-21T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -3677,
+            "net_value_won": -514780000000,
+            "as_of": "2026-08-21T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-08-24",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-08-24T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 329465,
+        "oi_change": -903,
+        "oi_change_raw": -903,
+        "oi_change_pct": -0.2733,
+        "near_expiry": "202609",
+        "near_oi": 283565,
+        "near_close": 541.61,
+        "near_change": 2.87,
+        "near_change_pct": 0.5327,
+        "expiry_day": false,
+        "label": "flat",
+        "label_text": "보합(해석 보류)",
+        "reasons": [
+          "OI 보합(가격 ±0.1%·OI ±0.3% 안)"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -3605,
+            "net_value_won": -504700000000,
+            "as_of": "2026-08-24T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -1546,
+            "net_value_won": -216440000000,
+            "as_of": "2026-08-24T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 5151,
+            "net_value_won": 721140000000,
+            "as_of": "2026-08-24T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-08-25",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-08-25T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 328972,
+        "oi_change": -493,
+        "oi_change_raw": -493,
+        "oi_change_pct": -0.1496,
+        "near_expiry": "202609",
+        "near_oi": 283072,
+        "near_close": 545.13,
+        "near_change": 3.52,
+        "near_change_pct": 0.6499,
+        "expiry_day": false,
+        "label": "flat",
+        "label_text": "보합(해석 보류)",
+        "reasons": [
+          "OI 보합(가격 ±0.1%·OI ±0.3% 안)"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -1092,
+            "net_value_won": -152880000000,
+            "as_of": "2026-08-25T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 1980,
+            "net_value_won": 277200000000,
+            "as_of": "2026-08-25T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -888,
+            "net_value_won": -124320000000,
+            "as_of": "2026-08-25T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-08-26",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-08-26T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 329599,
+        "oi_change": 627,
+        "oi_change_raw": 627,
+        "oi_change_pct": 0.1906,
+        "near_expiry": "202609",
+        "near_oi": 283699,
+        "near_close": 544.57,
+        "near_change": -0.56,
+        "near_change_pct": -0.1027,
+        "expiry_day": false,
+        "label": "flat",
+        "label_text": "보합(해석 보류)",
+        "reasons": [
+          "OI 보합(가격 ±0.1%·OI ±0.3% 안)"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -1814,
+            "net_value_won": -253960000000,
+            "as_of": "2026-08-26T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -1295,
+            "net_value_won": -181300000000,
+            "as_of": "2026-08-26T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 3109,
+            "net_value_won": 435260000000,
+            "as_of": "2026-08-26T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-08-27",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-08-27T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 333815,
+        "oi_change": 4216,
+        "oi_change_raw": 4216,
+        "oi_change_pct": 1.2791,
+        "near_expiry": "202609",
+        "near_oi": 287915,
+        "near_close": 538.83,
+        "near_change": -5.74,
+        "near_change_pct": -1.054,
+        "expiry_day": false,
+        "label": "new_short",
+        "label_text": "신규 매도 우위",
+        "reasons": [
+          "가격↓·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 3828,
+            "net_value_won": 535920000000,
+            "as_of": "2026-08-27T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -691,
+            "net_value_won": -96740000000,
+            "as_of": "2026-08-27T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -3137,
+            "net_value_won": -439180000000,
+            "as_of": "2026-08-27T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-08-28",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-08-30T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 332899,
+        "oi_change": -916,
+        "oi_change_raw": -916,
+        "oi_change_pct": -0.2744,
+        "near_expiry": "202609",
+        "near_oi": 286999,
+        "near_close": 543.99,
+        "near_change": 5.16,
+        "near_change_pct": 0.9576,
+        "expiry_day": false,
+        "label": "flat",
+        "label_text": "보합(해석 보류)",
+        "reasons": [
+          "OI 보합(가격 ±0.1%·OI ±0.3% 안)"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 2491,
+            "net_value_won": 348740000000,
+            "as_of": "2026-08-28T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 305,
+            "net_value_won": 42700000000,
+            "as_of": "2026-08-28T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -2796,
+            "net_value_won": -391440000000,
+            "as_of": "2026-08-28T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-08-31",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-08-31T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 334668,
+        "oi_change": 1769,
+        "oi_change_raw": 1769,
+        "oi_change_pct": 0.5314,
+        "near_expiry": "202609",
+        "near_oi": 288768,
+        "near_close": 547.0,
+        "near_change": 3.01,
+        "near_change_pct": 0.5533,
+        "expiry_day": false,
+        "label": "new_long",
+        "label_text": "신규 매수 우위",
+        "reasons": [
+          "가격↑·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 1579,
+            "net_value_won": 221060000000,
+            "as_of": "2026-08-31T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 1356,
+            "net_value_won": 189840000000,
+            "as_of": "2026-08-31T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -2935,
+            "net_value_won": -410900000000,
+            "as_of": "2026-08-31T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-09-01",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-09-01T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 330010,
+        "oi_change": -4658,
+        "oi_change_raw": -4658,
+        "oi_change_pct": -1.3918,
+        "near_expiry": "202609",
+        "near_oi": 284110,
+        "near_close": 540.06,
+        "near_change": -6.94,
+        "near_change_pct": -1.2687,
+        "expiry_day": false,
+        "label": "long_liquidation",
+        "label_text": "롱 청산 우위",
+        "reasons": [
+          "가격↓·OI↓"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -543,
+            "net_value_won": -76020000000,
+            "as_of": "2026-09-01T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 572,
+            "net_value_won": 80080000000,
+            "as_of": "2026-09-01T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -29,
+            "net_value_won": -4060000000,
+            "as_of": "2026-09-01T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-09-02",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-09-02T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 329685,
+        "oi_change": -325,
+        "oi_change_raw": -325,
+        "oi_change_pct": -0.0985,
+        "near_expiry": "202609",
+        "near_oi": 283785,
+        "near_close": 524.63,
+        "near_change": -15.43,
+        "near_change_pct": -2.8571,
+        "expiry_day": false,
+        "label": "flat",
+        "label_text": "보합(해석 보류)",
+        "reasons": [
+          "OI 보합(가격 ±0.1%·OI ±0.3% 안)"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 1117,
+            "net_value_won": 156380000000,
+            "as_of": "2026-09-02T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 688,
+            "net_value_won": 96320000000,
+            "as_of": "2026-09-02T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -1805,
+            "net_value_won": -252700000000,
+            "as_of": "2026-09-02T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-09-03",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-09-03T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 332097,
+        "oi_change": 2412,
+        "oi_change_raw": 2412,
+        "oi_change_pct": 0.7316,
+        "near_expiry": "202609",
+        "near_oi": 286197,
+        "near_close": 524.51,
+        "near_change": -0.12,
+        "near_change_pct": -0.0229,
+        "expiry_day": false,
+        "label": "flat",
+        "label_text": "보합(해석 보류)",
+        "reasons": [
+          "가격 보합(가격 ±0.1%·OI ±0.3% 안)"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -3670,
+            "net_value_won": -513800000000,
+            "as_of": "2026-09-03T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 1553,
+            "net_value_won": 217420000000,
+            "as_of": "2026-09-03T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 2117,
+            "net_value_won": 296380000000,
+            "as_of": "2026-09-03T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-09-04",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-09-06T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 327074,
+        "oi_change": -5023,
+        "oi_change_raw": -5023,
+        "oi_change_pct": -1.5125,
+        "near_expiry": "202609",
+        "near_oi": 200338,
+        "near_close": 523.92,
+        "near_change": -0.59,
+        "near_change_pct": -0.1125,
+        "expiry_day": false,
+        "label": "long_liquidation",
+        "label_text": "롱 청산 우위",
+        "reasons": [
+          "가격↓·OI↓"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 1013,
+            "net_value_won": 141820000000,
+            "as_of": "2026-09-04T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -620,
+            "net_value_won": -86800000000,
+            "as_of": "2026-09-04T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -393,
+            "net_value_won": -55020000000,
+            "as_of": "2026-09-04T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-09-07",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-09-07T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 326861,
+        "oi_change": -213,
+        "oi_change_raw": -213,
+        "oi_change_pct": -0.0651,
+        "near_expiry": "202609",
+        "near_oi": 140236,
+        "near_close": 521.24,
+        "near_change": -2.68,
+        "near_change_pct": -0.5115,
+        "expiry_day": false,
+        "label": "flat",
+        "label_text": "보합(해석 보류)",
+        "reasons": [
+          "OI 보합(가격 ±0.1%·OI ±0.3% 안)"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 790,
+            "net_value_won": 110600000000,
+            "as_of": "2026-09-07T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -159,
+            "net_value_won": -22260000000,
+            "as_of": "2026-09-07T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -631,
+            "net_value_won": -88340000000,
+            "as_of": "2026-09-07T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-09-08",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-09-08T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 327817,
+        "oi_change": 956,
+        "oi_change_raw": 956,
+        "oi_change_pct": 0.2925,
+        "near_expiry": "202609",
+        "near_oi": 98165,
+        "near_close": 515.98,
+        "near_change": -5.26,
+        "near_change_pct": -1.0091,
+        "expiry_day": false,
+        "label": "flat",
+        "label_text": "보합(해석 보류)",
+        "reasons": [
+          "OI 보합(가격 ±0.1%·OI ±0.3% 안)"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -1561,
+            "net_value_won": -218540000000,
+            "as_of": "2026-09-08T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -23,
+            "net_value_won": -3220000000,
+            "as_of": "2026-09-08T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 1584,
+            "net_value_won": 221760000000,
+            "as_of": "2026-09-08T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-09-09",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-09-09T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 327337,
+        "oi_change": -480,
+        "oi_change_raw": -480,
+        "oi_change_pct": -0.1464,
+        "near_expiry": "202609",
+        "near_oi": 68716,
+        "near_close": 518.04,
+        "near_change": 2.06,
+        "near_change_pct": 0.3992,
+        "expiry_day": false,
+        "label": "flat",
+        "label_text": "보합(해석 보류)",
+        "reasons": [
+          "OI 보합(가격 ±0.1%·OI ±0.3% 안)"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -3726,
+            "net_value_won": -521640000000,
+            "as_of": "2026-09-09T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 1420,
+            "net_value_won": 198800000000,
+            "as_of": "2026-09-09T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 2306,
+            "net_value_won": 322840000000,
+            "as_of": "2026-09-09T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-09-10",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-09-10T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 323428,
+        "oi_change": -3909,
+        "oi_change_raw": -3909,
+        "oi_change_pct": -1.1942,
+        "near_expiry": "202612",
+        "near_oi": 265427,
+        "near_close": 524.78,
+        "near_change": 5.93,
+        "near_change_pct": 1.1429,
+        "expiry_day": true,
+        "label": "short_cover",
+        "label_text": "숏 커버 우위",
+        "reasons": [
+          "만기일 — 근월물은 다음 월물(만기 종목 OI 0 이면 증감에서 뺀다)",
+          "가격↑·OI↓"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 3285,
+            "net_value_won": 459900000000,
+            "as_of": "2026-09-10T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -23,
+            "net_value_won": -3220000000,
+            "as_of": "2026-09-10T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -3262,
+            "net_value_won": -456680000000,
+            "as_of": "2026-09-10T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-09-11",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-09-13T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 269916,
+        "oi_change": -5411,
+        "oi_change_raw": -53512,
+        "oi_change_pct": -1.9653,
+        "near_expiry": "202612",
+        "near_oi": 259916,
+        "near_close": 528.36,
+        "near_change": 3.58,
+        "near_change_pct": 0.6822,
+        "expiry_day": false,
+        "label": "short_cover",
+        "label_text": "숏 커버 우위",
+        "reasons": [
+          "가격↑·OI↓"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 3770,
+            "net_value_won": 527800000000,
+            "as_of": "2026-09-11T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -1020,
+            "net_value_won": -142800000000,
+            "as_of": "2026-09-11T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -2750,
+            "net_value_won": -385000000000,
+            "as_of": "2026-09-11T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-09-14",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-09-14T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 268720,
+        "oi_change": -1196,
+        "oi_change_raw": -1196,
+        "oi_change_pct": -0.4431,
+        "near_expiry": "202612",
+        "near_oi": 258720,
+        "near_close": 521.26,
+        "near_change": -7.1,
+        "near_change_pct": -1.3438,
+        "expiry_day": false,
+        "label": "long_liquidation",
+        "label_text": "롱 청산 우위",
+        "reasons": [
+          "가격↓·OI↓"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -2797,
+            "net_value_won": -391580000000,
+            "as_of": "2026-09-14T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -1838,
+            "net_value_won": -257320000000,
+            "as_of": "2026-09-14T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 4635,
+            "net_value_won": 648900000000,
+            "as_of": "2026-09-14T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-09-15",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-09-15T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 266278,
+        "oi_change": -2442,
+        "oi_change_raw": -2442,
+        "oi_change_pct": -0.9088,
+        "near_expiry": "202612",
+        "near_oi": 256278,
+        "near_close": 520.19,
+        "near_change": -1.07,
+        "near_change_pct": -0.2053,
+        "expiry_day": false,
+        "label": "long_liquidation",
+        "label_text": "롱 청산 우위",
+        "reasons": [
+          "가격↓·OI↓"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 682,
+            "net_value_won": 95480000000,
+            "as_of": "2026-09-15T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 1777,
+            "net_value_won": 248780000000,
+            "as_of": "2026-09-15T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -2459,
+            "net_value_won": -344260000000,
+            "as_of": "2026-09-15T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-09-16",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-09-16T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 265233,
+        "oi_change": -1045,
+        "oi_change_raw": -1045,
+        "oi_change_pct": -0.3924,
+        "near_expiry": "202612",
+        "near_oi": 255233,
+        "near_close": 525.75,
+        "near_change": 5.56,
+        "near_change_pct": 1.0688,
+        "expiry_day": false,
+        "label": "short_cover",
+        "label_text": "숏 커버 우위",
+        "reasons": [
+          "가격↑·OI↓"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -1278,
+            "net_value_won": -178920000000,
+            "as_of": "2026-09-16T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 849,
+            "net_value_won": 118860000000,
+            "as_of": "2026-09-16T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 429,
+            "net_value_won": 60060000000,
+            "as_of": "2026-09-16T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-09-17",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-09-17T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 268438,
+        "oi_change": 3205,
+        "oi_change_raw": 3205,
+        "oi_change_pct": 1.2084,
+        "near_expiry": "202612",
+        "near_oi": 258438,
+        "near_close": 533.09,
+        "near_change": 7.34,
+        "near_change_pct": 1.3961,
+        "expiry_day": false,
+        "label": "new_long",
+        "label_text": "신규 매수 우위",
+        "reasons": [
+          "가격↑·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 1642,
+            "net_value_won": 229880000000,
+            "as_of": "2026-09-17T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 156,
+            "net_value_won": 21840000000,
+            "as_of": "2026-09-17T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -1798,
+            "net_value_won": -251720000000,
+            "as_of": "2026-09-17T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-09-18",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-09-20T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 272242,
+        "oi_change": 3804,
+        "oi_change_raw": 3804,
+        "oi_change_pct": 1.4171,
+        "near_expiry": "202612",
+        "near_oi": 262242,
+        "near_close": 535.41,
+        "near_change": 2.32,
+        "near_change_pct": 0.4352,
+        "expiry_day": false,
+        "label": "new_long",
+        "label_text": "신규 매수 우위",
+        "reasons": [
+          "가격↑·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -3361,
+            "net_value_won": -470540000000,
+            "as_of": "2026-09-18T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 176,
+            "net_value_won": 24640000000,
+            "as_of": "2026-09-18T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 3185,
+            "net_value_won": 445900000000,
+            "as_of": "2026-09-18T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-09-21",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-09-21T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 271875,
+        "oi_change": -367,
+        "oi_change_raw": -367,
+        "oi_change_pct": -0.1348,
+        "near_expiry": "202612",
+        "near_oi": 261875,
+        "near_close": 531.2,
+        "near_change": -4.21,
+        "near_change_pct": -0.7863,
+        "expiry_day": false,
+        "label": "flat",
+        "label_text": "보합(해석 보류)",
+        "reasons": [
+          "OI 보합(가격 ±0.1%·OI ±0.3% 안)"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 230,
+            "net_value_won": 32200000000,
+            "as_of": "2026-09-21T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -376,
+            "net_value_won": -52640000000,
+            "as_of": "2026-09-21T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 146,
+            "net_value_won": 20440000000,
+            "as_of": "2026-09-21T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-09-22",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-09-22T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 271203,
+        "oi_change": -672,
+        "oi_change_raw": -672,
+        "oi_change_pct": -0.2472,
+        "near_expiry": "202612",
+        "near_oi": 261203,
+        "near_close": 534.02,
+        "near_change": 2.82,
+        "near_change_pct": 0.5309,
+        "expiry_day": false,
+        "label": "flat",
+        "label_text": "보합(해석 보류)",
+        "reasons": [
+          "OI 보합(가격 ±0.1%·OI ±0.3% 안)"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -3270,
+            "net_value_won": -457800000000,
+            "as_of": "2026-09-22T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 1581,
+            "net_value_won": 221340000000,
+            "as_of": "2026-09-22T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 1689,
+            "net_value_won": 236460000000,
+            "as_of": "2026-09-22T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-09-23",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-09-27T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 273375,
+        "oi_change": 2172,
+        "oi_change_raw": 2172,
+        "oi_change_pct": 0.8009,
+        "near_expiry": "202612",
+        "near_oi": 263375,
+        "near_close": 530.79,
+        "near_change": -3.23,
+        "near_change_pct": -0.6048,
+        "expiry_day": false,
+        "label": "new_short",
+        "label_text": "신규 매도 우위",
+        "reasons": [
+          "가격↓·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 3280,
+            "net_value_won": 459200000000,
+            "as_of": "2026-09-23T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -1940,
+            "net_value_won": -271600000000,
+            "as_of": "2026-09-23T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -1340,
+            "net_value_won": -187600000000,
+            "as_of": "2026-09-23T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-09-28",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-09-28T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 275122,
+        "oi_change": 1747,
+        "oi_change_raw": 1747,
+        "oi_change_pct": 0.639,
+        "near_expiry": "202612",
+        "near_oi": 265122,
+        "near_close": 531.37,
+        "near_change": 0.58,
+        "near_change_pct": 0.1093,
+        "expiry_day": false,
+        "label": "new_long",
+        "label_text": "신규 매수 우위",
+        "reasons": [
+          "가격↑·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -2268,
+            "net_value_won": -317520000000,
+            "as_of": "2026-09-28T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -633,
+            "net_value_won": -88620000000,
+            "as_of": "2026-09-28T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 2901,
+            "net_value_won": 406140000000,
+            "as_of": "2026-09-28T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-09-29",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-09-29T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 275199,
+        "oi_change": 77,
+        "oi_change_raw": 77,
+        "oi_change_pct": 0.028,
+        "near_expiry": "202612",
+        "near_oi": 265199,
+        "near_close": 532.21,
+        "near_change": 0.84,
+        "near_change_pct": 0.1581,
+        "expiry_day": false,
+        "label": "flat",
+        "label_text": "보합(해석 보류)",
+        "reasons": [
+          "OI 보합(가격 ±0.1%·OI ±0.3% 안)"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 128,
+            "net_value_won": 17920000000,
+            "as_of": "2026-09-29T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -1706,
+            "net_value_won": -238840000000,
+            "as_of": "2026-09-29T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 1578,
+            "net_value_won": 220920000000,
+            "as_of": "2026-09-29T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-09-30",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-09-30T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 271208,
+        "oi_change": -3991,
+        "oi_change_raw": -3991,
+        "oi_change_pct": -1.4502,
+        "near_expiry": "202612",
+        "near_oi": 261208,
+        "near_close": 525.55,
+        "near_change": -6.66,
+        "near_change_pct": -1.2514,
+        "expiry_day": false,
+        "label": "long_liquidation",
+        "label_text": "롱 청산 우위",
+        "reasons": [
+          "가격↓·OI↓"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 2662,
+            "net_value_won": 372680000000,
+            "as_of": "2026-09-30T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 344,
+            "net_value_won": 48160000000,
+            "as_of": "2026-09-30T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -3006,
+            "net_value_won": -420840000000,
+            "as_of": "2026-09-30T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-10-01",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-10-01T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 271290,
+        "oi_change": 82,
+        "oi_change_raw": 82,
+        "oi_change_pct": 0.0302,
+        "near_expiry": "202612",
+        "near_oi": 261290,
+        "near_close": 520.36,
+        "near_change": -5.19,
+        "near_change_pct": -0.9875,
+        "expiry_day": false,
+        "label": "flat",
+        "label_text": "보합(해석 보류)",
+        "reasons": [
+          "OI 보합(가격 ±0.1%·OI ±0.3% 안)"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 2263,
+            "net_value_won": 316820000000,
+            "as_of": "2026-10-01T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -1394,
+            "net_value_won": -195160000000,
+            "as_of": "2026-10-01T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -869,
+            "net_value_won": -121660000000,
+            "as_of": "2026-10-01T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-10-02",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-10-05T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 269016,
+        "oi_change": -2274,
+        "oi_change_raw": -2274,
+        "oi_change_pct": -0.8382,
+        "near_expiry": "202612",
+        "near_oi": 259016,
+        "near_close": 521.82,
+        "near_change": 1.46,
+        "near_change_pct": 0.2806,
+        "expiry_day": false,
+        "label": "short_cover",
+        "label_text": "숏 커버 우위",
+        "reasons": [
+          "가격↑·OI↓"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 457,
+            "net_value_won": 63980000000,
+            "as_of": "2026-10-02T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 1973,
+            "net_value_won": 276220000000,
+            "as_of": "2026-10-02T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -2430,
+            "net_value_won": -340200000000,
+            "as_of": "2026-10-02T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-10-06",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-10-06T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 271020,
+        "oi_change": 2004,
+        "oi_change_raw": 2004,
+        "oi_change_pct": 0.7449,
+        "near_expiry": "202612",
+        "near_oi": 261020,
+        "near_close": 528.56,
+        "near_change": 6.74,
+        "near_change_pct": 1.2916,
+        "expiry_day": false,
+        "label": "new_long",
+        "label_text": "신규 매수 우위",
+        "reasons": [
+          "가격↑·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 2256,
+            "net_value_won": 315840000000,
+            "as_of": "2026-10-06T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -1440,
+            "net_value_won": -201600000000,
+            "as_of": "2026-10-06T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -816,
+            "net_value_won": -114240000000,
+            "as_of": "2026-10-06T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-10-07",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-10-07T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 268973,
+        "oi_change": -2047,
+        "oi_change_raw": -2047,
+        "oi_change_pct": -0.7553,
+        "near_expiry": "202612",
+        "near_oi": 258973,
+        "near_close": 531.89,
+        "near_change": 3.33,
+        "near_change_pct": 0.63,
+        "expiry_day": false,
+        "label": "short_cover",
+        "label_text": "숏 커버 우위",
+        "reasons": [
+          "가격↑·OI↓"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 3627,
+            "net_value_won": 507780000000,
+            "as_of": "2026-10-07T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 1505,
+            "net_value_won": 210700000000,
+            "as_of": "2026-10-07T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -5132,
+            "net_value_won": -718480000000,
+            "as_of": "2026-10-07T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-10-08",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-10-11T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 272047,
+        "oi_change": 3074,
+        "oi_change_raw": 3074,
+        "oi_change_pct": 1.1429,
+        "near_expiry": "202612",
+        "near_oi": 262047,
+        "near_close": 526.91,
+        "near_change": -4.98,
+        "near_change_pct": -0.9363,
+        "expiry_day": false,
+        "label": "new_short",
+        "label_text": "신규 매도 우위",
+        "reasons": [
+          "가격↓·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 3802,
+            "net_value_won": 532280000000,
+            "as_of": "2026-10-08T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 757,
+            "net_value_won": 105980000000,
+            "as_of": "2026-10-08T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -4559,
+            "net_value_won": -638260000000,
+            "as_of": "2026-10-08T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-10-12",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-10-12T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 270447,
+        "oi_change": -1600,
+        "oi_change_raw": -1600,
+        "oi_change_pct": -0.5881,
+        "near_expiry": "202612",
+        "near_oi": 260447,
+        "near_close": 529.49,
+        "near_change": 2.58,
+        "near_change_pct": 0.4896,
+        "expiry_day": false,
+        "label": "short_cover",
+        "label_text": "숏 커버 우위",
+        "reasons": [
+          "가격↑·OI↓"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -3553,
+            "net_value_won": -497420000000,
+            "as_of": "2026-10-12T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 953,
+            "net_value_won": 133420000000,
+            "as_of": "2026-10-12T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 2600,
+            "net_value_won": 364000000000,
+            "as_of": "2026-10-12T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-10-13",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-10-13T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 271504,
+        "oi_change": 1057,
+        "oi_change_raw": 1057,
+        "oi_change_pct": 0.3908,
+        "near_expiry": "202612",
+        "near_oi": 261504,
+        "near_close": 538.55,
+        "near_change": 9.06,
+        "near_change_pct": 1.7111,
+        "expiry_day": false,
+        "label": "new_long",
+        "label_text": "신규 매수 우위",
+        "reasons": [
+          "가격↑·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 1275,
+            "net_value_won": 178500000000,
+            "as_of": "2026-10-13T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -87,
+            "net_value_won": -12180000000,
+            "as_of": "2026-10-13T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -1188,
+            "net_value_won": -166320000000,
+            "as_of": "2026-10-13T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-10-14",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-10-14T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 272767,
+        "oi_change": 1263,
+        "oi_change_raw": 1263,
+        "oi_change_pct": 0.4652,
+        "near_expiry": "202612",
+        "near_oi": 262767,
+        "near_close": 539.39,
+        "near_change": 0.84,
+        "near_change_pct": 0.156,
+        "expiry_day": false,
+        "label": "new_long",
+        "label_text": "신규 매수 우위",
+        "reasons": [
+          "가격↑·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -1805,
+            "net_value_won": -252700000000,
+            "as_of": "2026-10-14T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -1821,
+            "net_value_won": -254940000000,
+            "as_of": "2026-10-14T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 3626,
+            "net_value_won": 507640000000,
+            "as_of": "2026-10-14T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-10-15",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-10-15T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 273129,
+        "oi_change": 362,
+        "oi_change_raw": 362,
+        "oi_change_pct": 0.1327,
+        "near_expiry": "202612",
+        "near_oi": 263129,
+        "near_close": 549.02,
+        "near_change": 9.63,
+        "near_change_pct": 1.7854,
+        "expiry_day": false,
+        "label": "flat",
+        "label_text": "보합(해석 보류)",
+        "reasons": [
+          "OI 보합(가격 ±0.1%·OI ±0.3% 안)"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 3747,
+            "net_value_won": 524580000000,
+            "as_of": "2026-10-15T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 130,
+            "net_value_won": 18200000000,
+            "as_of": "2026-10-15T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -3877,
+            "net_value_won": -542780000000,
+            "as_of": "2026-10-15T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-10-16",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-10-18T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 277276,
+        "oi_change": 4147,
+        "oi_change_raw": 4147,
+        "oi_change_pct": 1.5183,
+        "near_expiry": "202612",
+        "near_oi": 267276,
+        "near_close": 546.79,
+        "near_change": -2.23,
+        "near_change_pct": -0.4062,
+        "expiry_day": false,
+        "label": "new_short",
+        "label_text": "신규 매도 우위",
+        "reasons": [
+          "가격↓·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 767,
+            "net_value_won": 107380000000,
+            "as_of": "2026-10-16T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -862,
+            "net_value_won": -120680000000,
+            "as_of": "2026-10-16T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 95,
+            "net_value_won": 13300000000,
+            "as_of": "2026-10-16T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-10-19",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-10-19T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 274110,
+        "oi_change": -3166,
+        "oi_change_raw": -3166,
+        "oi_change_pct": -1.1418,
+        "near_expiry": "202612",
+        "near_oi": 264110,
+        "near_close": 552.37,
+        "near_change": 5.58,
+        "near_change_pct": 1.0205,
+        "expiry_day": false,
+        "label": "short_cover",
+        "label_text": "숏 커버 우위",
+        "reasons": [
+          "가격↑·OI↓"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 1824,
+            "net_value_won": 255360000000,
+            "as_of": "2026-10-19T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 1932,
+            "net_value_won": 270480000000,
+            "as_of": "2026-10-19T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -3756,
+            "net_value_won": -525840000000,
+            "as_of": "2026-10-19T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-10-20",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-10-20T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 272880,
+        "oi_change": -1230,
+        "oi_change_raw": -1230,
+        "oi_change_pct": -0.4487,
+        "near_expiry": "202612",
+        "near_oi": 262880,
+        "near_close": 542.61,
+        "near_change": -9.76,
+        "near_change_pct": -1.7669,
+        "expiry_day": false,
+        "label": "long_liquidation",
+        "label_text": "롱 청산 우위",
+        "reasons": [
+          "가격↓·OI↓"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -3569,
+            "net_value_won": -499660000000,
+            "as_of": "2026-10-20T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 1638,
+            "net_value_won": 229320000000,
+            "as_of": "2026-10-20T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 1931,
+            "net_value_won": 270340000000,
+            "as_of": "2026-10-20T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-10-21",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-10-21T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 273701,
+        "oi_change": 821,
+        "oi_change_raw": 821,
+        "oi_change_pct": 0.3009,
+        "near_expiry": "202612",
+        "near_oi": 263701,
+        "near_close": 544.87,
+        "near_change": 2.26,
+        "near_change_pct": 0.4165,
+        "expiry_day": false,
+        "label": "new_long",
+        "label_text": "신규 매수 우위",
+        "reasons": [
+          "가격↑·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 3413,
+            "net_value_won": 477820000000,
+            "as_of": "2026-10-21T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 976,
+            "net_value_won": 136640000000,
+            "as_of": "2026-10-21T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -4389,
+            "net_value_won": -614460000000,
+            "as_of": "2026-10-21T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-10-22",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-10-22T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 278234,
+        "oi_change": 4533,
+        "oi_change_raw": 4533,
+        "oi_change_pct": 1.6562,
+        "near_expiry": "202612",
+        "near_oi": 268234,
+        "near_close": 547.12,
+        "near_change": 2.25,
+        "near_change_pct": 0.4129,
+        "expiry_day": false,
+        "label": "new_long",
+        "label_text": "신규 매수 우위",
+        "reasons": [
+          "가격↑·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -1748,
+            "net_value_won": -244720000000,
+            "as_of": "2026-10-22T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 1148,
+            "net_value_won": 160720000000,
+            "as_of": "2026-10-22T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 600,
+            "net_value_won": 84000000000,
+            "as_of": "2026-10-22T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-10-23",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-10-25T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 282656,
+        "oi_change": 4422,
+        "oi_change_raw": 4422,
+        "oi_change_pct": 1.5893,
+        "near_expiry": "202612",
+        "near_oi": 272656,
+        "near_close": 555.61,
+        "near_change": 8.49,
+        "near_change_pct": 1.5518,
+        "expiry_day": false,
+        "label": "new_long",
+        "label_text": "신규 매수 우위",
+        "reasons": [
+          "가격↑·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 1845,
+            "net_value_won": 258300000000,
+            "as_of": "2026-10-23T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 1199,
+            "net_value_won": 167860000000,
+            "as_of": "2026-10-23T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -3044,
+            "net_value_won": -426160000000,
+            "as_of": "2026-10-23T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-10-26",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-10-26T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 284546,
+        "oi_change": 1890,
+        "oi_change_raw": 1890,
+        "oi_change_pct": 0.6687,
+        "near_expiry": "202612",
+        "near_oi": 274546,
+        "near_close": 562.67,
+        "near_change": 7.06,
+        "near_change_pct": 1.2707,
+        "expiry_day": false,
+        "label": "new_long",
+        "label_text": "신규 매수 우위",
+        "reasons": [
+          "가격↑·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 3243,
+            "net_value_won": 454020000000,
+            "as_of": "2026-10-26T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 898,
+            "net_value_won": 125720000000,
+            "as_of": "2026-10-26T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -4141,
+            "net_value_won": -579740000000,
+            "as_of": "2026-10-26T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-10-27",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-10-27T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 283094,
+        "oi_change": -1452,
+        "oi_change_raw": -1452,
+        "oi_change_pct": -0.5103,
+        "near_expiry": "202612",
+        "near_oi": 273094,
+        "near_close": 561.67,
+        "near_change": -1.0,
+        "near_change_pct": -0.1777,
+        "expiry_day": false,
+        "label": "long_liquidation",
+        "label_text": "롱 청산 우위",
+        "reasons": [
+          "가격↓·OI↓"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -3948,
+            "net_value_won": -552720000000,
+            "as_of": "2026-10-27T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -323,
+            "net_value_won": -45220000000,
+            "as_of": "2026-10-27T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 4271,
+            "net_value_won": 597940000000,
+            "as_of": "2026-10-27T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-10-28",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-10-28T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 280710,
+        "oi_change": -2384,
+        "oi_change_raw": -2384,
+        "oi_change_pct": -0.8421,
+        "near_expiry": "202612",
+        "near_oi": 191166,
+        "near_close": 554.16,
+        "near_change": -7.51,
+        "near_change_pct": -1.3371,
+        "expiry_day": false,
+        "label": "long_liquidation",
+        "label_text": "롱 청산 우위",
+        "reasons": [
+          "가격↓·OI↓"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -1842,
+            "net_value_won": -257880000000,
+            "as_of": "2026-10-28T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 1729,
+            "net_value_won": 242060000000,
+            "as_of": "2026-10-28T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 113,
+            "net_value_won": 15820000000,
+            "as_of": "2026-10-28T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-10-29",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-10-29T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 282941,
+        "oi_change": 2231,
+        "oi_change_raw": 2231,
+        "oi_change_pct": 0.7948,
+        "near_expiry": "202612",
+        "near_oi": 133816,
+        "near_close": 559.01,
+        "near_change": 4.85,
+        "near_change_pct": 0.8752,
+        "expiry_day": false,
+        "label": "new_long",
+        "label_text": "신규 매수 우위",
+        "reasons": [
+          "가격↑·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 3375,
+            "net_value_won": 472500000000,
+            "as_of": "2026-10-29T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 487,
+            "net_value_won": 68180000000,
+            "as_of": "2026-10-29T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -3862,
+            "net_value_won": -540680000000,
+            "as_of": "2026-10-29T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-10-30",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-11-01T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 283860,
+        "oi_change": 919,
+        "oi_change_raw": 919,
+        "oi_change_pct": 0.3248,
+        "near_expiry": "202612",
+        "near_oi": 93671,
+        "near_close": 559.32,
+        "near_change": 0.31,
+        "near_change_pct": 0.0555,
+        "expiry_day": false,
+        "label": "flat",
+        "label_text": "보합(해석 보류)",
+        "reasons": [
+          "가격 보합(가격 ±0.1%·OI ±0.3% 안)"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": -1200,
+            "net_value_won": -168000000000,
+            "as_of": "2026-10-30T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": 1150,
+            "net_value_won": 161000000000,
+            "as_of": "2026-10-30T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": 50,
+            "net_value_won": 7000000000,
+            "as_of": "2026-10-30T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-11-02",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-11-02T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 287413,
+        "oi_change": 3553,
+        "oi_change_raw": 3553,
+        "oi_change_pct": 1.2517,
+        "near_expiry": "202612",
+        "near_oi": 65569,
+        "near_close": 553.91,
+        "near_change": -5.41,
+        "near_change_pct": -0.9672,
+        "expiry_day": false,
+        "label": "new_short",
+        "label_text": "신규 매도 우위",
+        "reasons": [
+          "가격↓·OI↑"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 2100,
+            "net_value_won": 294000000000,
+            "as_of": "2026-11-02T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -170,
+            "net_value_won": -23800000000,
+            "as_of": "2026-11-02T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -1930,
+            "net_value_won": -270200000000,
+            "as_of": "2026-11-02T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      },
+      {
+        "trade_date": "2026-11-03",
+        "provisional": false,
+        "source": "KRX:drv/fut_bydd_trd",
+        "as_of": "2026-11-03T23:05:00Z",
+        "quality": "ok",
+        "total_oi": 285991,
+        "oi_change": -1422,
+        "oi_change_raw": -1422,
+        "oi_change_pct": -0.4948,
+        "near_expiry": "202612",
+        "near_oi": 45898,
+        "near_close": 555.0,
+        "near_change": 1.09,
+        "near_change_pct": 0.1968,
+        "expiry_day": false,
+        "label": "short_cover",
+        "label_text": "숏 커버 우위",
+        "reasons": [
+          "가격↑·OI↓"
+        ],
+        "flows": [
+          {
+            "investor": "foreign",
+            "net_qty": 3451,
+            "net_value_won": 483140000000,
+            "as_of": "2026-11-03T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "institution",
+            "net_qty": -837,
+            "net_value_won": -117180000000,
+            "as_of": "2026-11-03T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          },
+          {
+            "investor": "individual",
+            "net_qty": -2614,
+            "net_value_won": -365960000000,
+            "as_of": "2026-11-03T06:40:00Z",
+            "quality": "estimated",
+            "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+          }
+        ]
+      }
+    ],
+    "provisional": {
+      "trade_date": "2026-11-04",
+      "provisional": true,
+      "source": "KIS:FHPIF05030200(선물 전광판 — 잠정)",
+      "as_of": "2026-11-04T06:44:00Z",
+      "quality": "estimated",
+      "total_oi": 289041,
+      "oi_change": 3050,
+      "oi_change_raw": 3050,
+      "oi_change_pct": 1.0665,
+      "near_expiry": "202612",
+      "near_oi": 48498,
+      "near_close": 558.06,
+      "near_change": 3.06,
+      "near_change_pct": 0.5514,
+      "expiry_day": false,
+      "label": "new_long",
+      "label_text": "신규 매수 우위",
+      "reasons": [
+        "KRX 확정 전 — 선물 전광판 잠정",
+        "가격↑·OI↑"
+      ],
+      "flows": [
+        {
+          "investor": "foreign",
+          "net_qty": 1800,
+          "net_value_won": 252000000000,
+          "as_of": "2026-11-04T06:40:00Z",
+          "quality": "estimated",
+          "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+        },
+        {
+          "investor": "institution",
+          "net_qty": -1299,
+          "net_value_won": -181860000000,
+          "as_of": "2026-11-04T06:40:00Z",
+          "quality": "estimated",
+          "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+        },
+        {
+          "investor": "individual",
+          "net_qty": -501,
+          "net_value_won": -70140000000,
+          "as_of": "2026-11-04T06:40:00Z",
+          "quality": "estimated",
+          "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+        }
+      ]
+    },
+    "options": [
+      {
+        "trade_date": "2026-10-29",
+        "series": "monthly",
+        "cp": "C",
+        "investor": "foreign",
+        "net_qty": -1634,
+        "net_value_won": -4902000000,
+        "as_of": "2026-10-29T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-29",
+        "series": "monthly",
+        "cp": "C",
+        "investor": "institution",
+        "net_qty": 3,
+        "net_value_won": 9000000,
+        "as_of": "2026-10-29T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-29",
+        "series": "monthly",
+        "cp": "C",
+        "investor": "individual",
+        "net_qty": 1631,
+        "net_value_won": 4893000000,
+        "as_of": "2026-10-29T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-29",
+        "series": "monthly",
+        "cp": "P",
+        "investor": "foreign",
+        "net_qty": -803,
+        "net_value_won": -2409000000,
+        "as_of": "2026-10-29T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-29",
+        "series": "monthly",
+        "cp": "P",
+        "investor": "institution",
+        "net_qty": -1637,
+        "net_value_won": -4911000000,
+        "as_of": "2026-10-29T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-29",
+        "series": "monthly",
+        "cp": "P",
+        "investor": "individual",
+        "net_qty": 2440,
+        "net_value_won": 7320000000,
+        "as_of": "2026-10-29T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-29",
+        "series": "weekly_mon",
+        "cp": "C",
+        "investor": "foreign",
+        "net_qty": -1142,
+        "net_value_won": -3426000000,
+        "as_of": "2026-10-29T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-29",
+        "series": "weekly_mon",
+        "cp": "C",
+        "investor": "institution",
+        "net_qty": 1009,
+        "net_value_won": 3027000000,
+        "as_of": "2026-10-29T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-29",
+        "series": "weekly_mon",
+        "cp": "C",
+        "investor": "individual",
+        "net_qty": 133,
+        "net_value_won": 399000000,
+        "as_of": "2026-10-29T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-29",
+        "series": "weekly_mon",
+        "cp": "P",
+        "investor": "foreign",
+        "net_qty": -2398,
+        "net_value_won": -7194000000,
+        "as_of": "2026-10-29T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-29",
+        "series": "weekly_mon",
+        "cp": "P",
+        "investor": "institution",
+        "net_qty": 1752,
+        "net_value_won": 5256000000,
+        "as_of": "2026-10-29T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-29",
+        "series": "weekly_mon",
+        "cp": "P",
+        "investor": "individual",
+        "net_qty": 646,
+        "net_value_won": 1938000000,
+        "as_of": "2026-10-29T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-29",
+        "series": "weekly_thu",
+        "cp": "C",
+        "investor": "foreign",
+        "net_qty": -1015,
+        "net_value_won": -3045000000,
+        "as_of": "2026-10-29T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-29",
+        "series": "weekly_thu",
+        "cp": "C",
+        "investor": "institution",
+        "net_qty": 405,
+        "net_value_won": 1215000000,
+        "as_of": "2026-10-29T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-29",
+        "series": "weekly_thu",
+        "cp": "C",
+        "investor": "individual",
+        "net_qty": 610,
+        "net_value_won": 1830000000,
+        "as_of": "2026-10-29T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-29",
+        "series": "weekly_thu",
+        "cp": "P",
+        "investor": "foreign",
+        "net_qty": 530,
+        "net_value_won": 1590000000,
+        "as_of": "2026-10-29T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-29",
+        "series": "weekly_thu",
+        "cp": "P",
+        "investor": "institution",
+        "net_qty": 646,
+        "net_value_won": 1938000000,
+        "as_of": "2026-10-29T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-29",
+        "series": "weekly_thu",
+        "cp": "P",
+        "investor": "individual",
+        "net_qty": -1176,
+        "net_value_won": -3528000000,
+        "as_of": "2026-10-29T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-30",
+        "series": "monthly",
+        "cp": "C",
+        "investor": "foreign",
+        "net_qty": -695,
+        "net_value_won": -2085000000,
+        "as_of": "2026-10-30T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-30",
+        "series": "monthly",
+        "cp": "C",
+        "investor": "institution",
+        "net_qty": 1648,
+        "net_value_won": 4944000000,
+        "as_of": "2026-10-30T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-30",
+        "series": "monthly",
+        "cp": "C",
+        "investor": "individual",
+        "net_qty": -953,
+        "net_value_won": -2859000000,
+        "as_of": "2026-10-30T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-30",
+        "series": "monthly",
+        "cp": "P",
+        "investor": "foreign",
+        "net_qty": -622,
+        "net_value_won": -1866000000,
+        "as_of": "2026-10-30T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-30",
+        "series": "monthly",
+        "cp": "P",
+        "investor": "institution",
+        "net_qty": -179,
+        "net_value_won": -537000000,
+        "as_of": "2026-10-30T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-30",
+        "series": "monthly",
+        "cp": "P",
+        "investor": "individual",
+        "net_qty": 801,
+        "net_value_won": 2403000000,
+        "as_of": "2026-10-30T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-30",
+        "series": "weekly_mon",
+        "cp": "C",
+        "investor": "foreign",
+        "net_qty": 2951,
+        "net_value_won": 8853000000,
+        "as_of": "2026-10-30T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-30",
+        "series": "weekly_mon",
+        "cp": "C",
+        "investor": "institution",
+        "net_qty": 1097,
+        "net_value_won": 3291000000,
+        "as_of": "2026-10-30T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-30",
+        "series": "weekly_mon",
+        "cp": "C",
+        "investor": "individual",
+        "net_qty": -4048,
+        "net_value_won": -12144000000,
+        "as_of": "2026-10-30T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-30",
+        "series": "weekly_mon",
+        "cp": "P",
+        "investor": "foreign",
+        "net_qty": -3352,
+        "net_value_won": -10056000000,
+        "as_of": "2026-10-30T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-30",
+        "series": "weekly_mon",
+        "cp": "P",
+        "investor": "institution",
+        "net_qty": 542,
+        "net_value_won": 1626000000,
+        "as_of": "2026-10-30T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-30",
+        "series": "weekly_mon",
+        "cp": "P",
+        "investor": "individual",
+        "net_qty": 2810,
+        "net_value_won": 8430000000,
+        "as_of": "2026-10-30T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-30",
+        "series": "weekly_thu",
+        "cp": "C",
+        "investor": "foreign",
+        "net_qty": -2431,
+        "net_value_won": -7293000000,
+        "as_of": "2026-10-30T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-30",
+        "series": "weekly_thu",
+        "cp": "C",
+        "investor": "institution",
+        "net_qty": 1427,
+        "net_value_won": 4281000000,
+        "as_of": "2026-10-30T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-30",
+        "series": "weekly_thu",
+        "cp": "C",
+        "investor": "individual",
+        "net_qty": 1004,
+        "net_value_won": 3012000000,
+        "as_of": "2026-10-30T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-30",
+        "series": "weekly_thu",
+        "cp": "P",
+        "investor": "foreign",
+        "net_qty": 816,
+        "net_value_won": 2448000000,
+        "as_of": "2026-10-30T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-30",
+        "series": "weekly_thu",
+        "cp": "P",
+        "investor": "institution",
+        "net_qty": 466,
+        "net_value_won": 1398000000,
+        "as_of": "2026-10-30T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-10-30",
+        "series": "weekly_thu",
+        "cp": "P",
+        "investor": "individual",
+        "net_qty": -1282,
+        "net_value_won": -3846000000,
+        "as_of": "2026-10-30T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-02",
+        "series": "monthly",
+        "cp": "C",
+        "investor": "foreign",
+        "net_qty": 1546,
+        "net_value_won": 4638000000,
+        "as_of": "2026-11-02T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-02",
+        "series": "monthly",
+        "cp": "C",
+        "investor": "institution",
+        "net_qty": 783,
+        "net_value_won": 2349000000,
+        "as_of": "2026-11-02T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-02",
+        "series": "monthly",
+        "cp": "C",
+        "investor": "individual",
+        "net_qty": -2329,
+        "net_value_won": -6987000000,
+        "as_of": "2026-11-02T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-02",
+        "series": "monthly",
+        "cp": "P",
+        "investor": "foreign",
+        "net_qty": -1458,
+        "net_value_won": -4374000000,
+        "as_of": "2026-11-02T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-02",
+        "series": "monthly",
+        "cp": "P",
+        "investor": "institution",
+        "net_qty": 1699,
+        "net_value_won": 5097000000,
+        "as_of": "2026-11-02T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-02",
+        "series": "monthly",
+        "cp": "P",
+        "investor": "individual",
+        "net_qty": -241,
+        "net_value_won": -723000000,
+        "as_of": "2026-11-02T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-02",
+        "series": "weekly_mon",
+        "cp": "C",
+        "investor": "foreign",
+        "net_qty": -2612,
+        "net_value_won": -7836000000,
+        "as_of": "2026-11-02T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-02",
+        "series": "weekly_mon",
+        "cp": "C",
+        "investor": "institution",
+        "net_qty": -1163,
+        "net_value_won": -3489000000,
+        "as_of": "2026-11-02T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-02",
+        "series": "weekly_mon",
+        "cp": "C",
+        "investor": "individual",
+        "net_qty": 3775,
+        "net_value_won": 11325000000,
+        "as_of": "2026-11-02T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-02",
+        "series": "weekly_mon",
+        "cp": "P",
+        "investor": "foreign",
+        "net_qty": 2899,
+        "net_value_won": 8697000000,
+        "as_of": "2026-11-02T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-02",
+        "series": "weekly_mon",
+        "cp": "P",
+        "investor": "institution",
+        "net_qty": 1667,
+        "net_value_won": 5001000000,
+        "as_of": "2026-11-02T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-02",
+        "series": "weekly_mon",
+        "cp": "P",
+        "investor": "individual",
+        "net_qty": -4566,
+        "net_value_won": -13698000000,
+        "as_of": "2026-11-02T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-02",
+        "series": "weekly_thu",
+        "cp": "C",
+        "investor": "foreign",
+        "net_qty": 3154,
+        "net_value_won": 9462000000,
+        "as_of": "2026-11-02T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-02",
+        "series": "weekly_thu",
+        "cp": "C",
+        "investor": "institution",
+        "net_qty": -1168,
+        "net_value_won": -3504000000,
+        "as_of": "2026-11-02T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-02",
+        "series": "weekly_thu",
+        "cp": "C",
+        "investor": "individual",
+        "net_qty": -1986,
+        "net_value_won": -5958000000,
+        "as_of": "2026-11-02T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-02",
+        "series": "weekly_thu",
+        "cp": "P",
+        "investor": "foreign",
+        "net_qty": 2937,
+        "net_value_won": 8811000000,
+        "as_of": "2026-11-02T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-02",
+        "series": "weekly_thu",
+        "cp": "P",
+        "investor": "institution",
+        "net_qty": 1434,
+        "net_value_won": 4302000000,
+        "as_of": "2026-11-02T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-02",
+        "series": "weekly_thu",
+        "cp": "P",
+        "investor": "individual",
+        "net_qty": -4371,
+        "net_value_won": -13113000000,
+        "as_of": "2026-11-02T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-03",
+        "series": "monthly",
+        "cp": "C",
+        "investor": "foreign",
+        "net_qty": 3041,
+        "net_value_won": 9123000000,
+        "as_of": "2026-11-03T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-03",
+        "series": "monthly",
+        "cp": "C",
+        "investor": "institution",
+        "net_qty": -981,
+        "net_value_won": -2943000000,
+        "as_of": "2026-11-03T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-03",
+        "series": "monthly",
+        "cp": "C",
+        "investor": "individual",
+        "net_qty": -2060,
+        "net_value_won": -6180000000,
+        "as_of": "2026-11-03T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-03",
+        "series": "monthly",
+        "cp": "P",
+        "investor": "foreign",
+        "net_qty": 999,
+        "net_value_won": 2997000000,
+        "as_of": "2026-11-03T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-03",
+        "series": "monthly",
+        "cp": "P",
+        "investor": "institution",
+        "net_qty": -1104,
+        "net_value_won": -3312000000,
+        "as_of": "2026-11-03T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-03",
+        "series": "monthly",
+        "cp": "P",
+        "investor": "individual",
+        "net_qty": 105,
+        "net_value_won": 315000000,
+        "as_of": "2026-11-03T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-03",
+        "series": "weekly_mon",
+        "cp": "C",
+        "investor": "foreign",
+        "net_qty": 3064,
+        "net_value_won": 9192000000,
+        "as_of": "2026-11-03T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-03",
+        "series": "weekly_mon",
+        "cp": "C",
+        "investor": "institution",
+        "net_qty": -1408,
+        "net_value_won": -4224000000,
+        "as_of": "2026-11-03T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-03",
+        "series": "weekly_mon",
+        "cp": "C",
+        "investor": "individual",
+        "net_qty": -1656,
+        "net_value_won": -4968000000,
+        "as_of": "2026-11-03T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-03",
+        "series": "weekly_mon",
+        "cp": "P",
+        "investor": "foreign",
+        "net_qty": -3224,
+        "net_value_won": -9672000000,
+        "as_of": "2026-11-03T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-03",
+        "series": "weekly_mon",
+        "cp": "P",
+        "investor": "institution",
+        "net_qty": -742,
+        "net_value_won": -2226000000,
+        "as_of": "2026-11-03T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-03",
+        "series": "weekly_mon",
+        "cp": "P",
+        "investor": "individual",
+        "net_qty": 3966,
+        "net_value_won": 11898000000,
+        "as_of": "2026-11-03T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-03",
+        "series": "weekly_thu",
+        "cp": "C",
+        "investor": "foreign",
+        "net_qty": -1075,
+        "net_value_won": -3225000000,
+        "as_of": "2026-11-03T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-03",
+        "series": "weekly_thu",
+        "cp": "C",
+        "investor": "institution",
+        "net_qty": -1121,
+        "net_value_won": -3363000000,
+        "as_of": "2026-11-03T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-03",
+        "series": "weekly_thu",
+        "cp": "C",
+        "investor": "individual",
+        "net_qty": 2196,
+        "net_value_won": 6588000000,
+        "as_of": "2026-11-03T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-03",
+        "series": "weekly_thu",
+        "cp": "P",
+        "investor": "foreign",
+        "net_qty": -3299,
+        "net_value_won": -9897000000,
+        "as_of": "2026-11-03T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-03",
+        "series": "weekly_thu",
+        "cp": "P",
+        "investor": "institution",
+        "net_qty": -1266,
+        "net_value_won": -3798000000,
+        "as_of": "2026-11-03T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-03",
+        "series": "weekly_thu",
+        "cp": "P",
+        "investor": "individual",
+        "net_qty": 4565,
+        "net_value_won": 13695000000,
+        "as_of": "2026-11-03T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-04",
+        "series": "monthly",
+        "cp": "C",
+        "investor": "foreign",
+        "net_qty": -2293,
+        "net_value_won": -6879000000,
+        "as_of": "2026-11-04T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-04",
+        "series": "monthly",
+        "cp": "C",
+        "investor": "institution",
+        "net_qty": -1066,
+        "net_value_won": -3198000000,
+        "as_of": "2026-11-04T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-04",
+        "series": "monthly",
+        "cp": "C",
+        "investor": "individual",
+        "net_qty": 3359,
+        "net_value_won": 10077000000,
+        "as_of": "2026-11-04T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-04",
+        "series": "monthly",
+        "cp": "P",
+        "investor": "foreign",
+        "net_qty": -3155,
+        "net_value_won": -9465000000,
+        "as_of": "2026-11-04T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-04",
+        "series": "monthly",
+        "cp": "P",
+        "investor": "institution",
+        "net_qty": 1486,
+        "net_value_won": 4458000000,
+        "as_of": "2026-11-04T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-04",
+        "series": "monthly",
+        "cp": "P",
+        "investor": "individual",
+        "net_qty": 1669,
+        "net_value_won": 5007000000,
+        "as_of": "2026-11-04T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-04",
+        "series": "weekly_mon",
+        "cp": "C",
+        "investor": "foreign",
+        "net_qty": 1306,
+        "net_value_won": 3918000000,
+        "as_of": "2026-11-04T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-04",
+        "series": "weekly_mon",
+        "cp": "C",
+        "investor": "institution",
+        "net_qty": 1699,
+        "net_value_won": 5097000000,
+        "as_of": "2026-11-04T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-04",
+        "series": "weekly_mon",
+        "cp": "C",
+        "investor": "individual",
+        "net_qty": -3005,
+        "net_value_won": -9015000000,
+        "as_of": "2026-11-04T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-04",
+        "series": "weekly_mon",
+        "cp": "P",
+        "investor": "foreign",
+        "net_qty": -2979,
+        "net_value_won": -8937000000,
+        "as_of": "2026-11-04T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-04",
+        "series": "weekly_mon",
+        "cp": "P",
+        "investor": "institution",
+        "net_qty": -678,
+        "net_value_won": -2034000000,
+        "as_of": "2026-11-04T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-04",
+        "series": "weekly_mon",
+        "cp": "P",
+        "investor": "individual",
+        "net_qty": 3657,
+        "net_value_won": 10971000000,
+        "as_of": "2026-11-04T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-04",
+        "series": "weekly_thu",
+        "cp": "C",
+        "investor": "foreign",
+        "net_qty": 1057,
+        "net_value_won": 3171000000,
+        "as_of": "2026-11-04T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-04",
+        "series": "weekly_thu",
+        "cp": "C",
+        "investor": "institution",
+        "net_qty": -1208,
+        "net_value_won": -3624000000,
+        "as_of": "2026-11-04T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-04",
+        "series": "weekly_thu",
+        "cp": "C",
+        "investor": "individual",
+        "net_qty": 151,
+        "net_value_won": 453000000,
+        "as_of": "2026-11-04T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-04",
+        "series": "weekly_thu",
+        "cp": "P",
+        "investor": "foreign",
+        "net_qty": -2842,
+        "net_value_won": -8526000000,
+        "as_of": "2026-11-04T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-04",
+        "series": "weekly_thu",
+        "cp": "P",
+        "investor": "institution",
+        "net_qty": -123,
+        "net_value_won": -369000000,
+        "as_of": "2026-11-04T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      },
+      {
+        "trade_date": "2026-11-04",
+        "series": "weekly_thu",
+        "cp": "P",
+        "investor": "individual",
+        "net_qty": 2965,
+        "net_value_won": 8895000000,
+        "as_of": "2026-11-04T06:40:00Z",
+        "quality": "estimated",
+        "reason": "선물 마감(15:45) 전 마지막 슬롯 15:40"
+      }
+    ],
+    "foreign_streak": 3,
+    "thresholds": {
+      "price_flat_pct": 0.1,
+      "oi_flat_pct": 0.3,
+      "board_sanity_pct": 20.0
+    },
+    "basis": "total"
+  }
+}
