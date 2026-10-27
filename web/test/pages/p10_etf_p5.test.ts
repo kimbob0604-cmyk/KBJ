@@ -2,6 +2,7 @@
 // 맵 칸 누르기), 액티브 동시 편입, 공개판 자물쇠. 픽스처 = test/fixtures/api/etf/*.json(합성 p5_world 응답 —
 // tests/unit/api/web_fixtures_p5/etf.py).
 import { describe, expect, it } from 'vitest';
+import { SLOT_PERIOD_MS } from '../../src/app/refresh';
 import page from '../../src/pages/p10_etf';
 import { TITLES } from '../../src/pages/p10/index';
 import { cellLabel, colorRange, type MapData, mapItems } from '../../src/pages/p10/map';
@@ -36,9 +37,9 @@ function p5Overrides(): Record<string, Override> {
   };
 }
 
-async function mountLogin(over: Record<string, Override> = {}) {
+async function mountLogin(over: Record<string, Override> = {}, clock?: { t: number }) {
   const hz = apiHarness({ ...p5Overrides(), ...over });
-  const { ctx, root, every } = pageCtx(10, 'login', hz.source);
+  const { ctx, root, every } = pageCtx(10, 'login', hz.source, clock ? { now: () => new Date(clock.t) } : {});
   await page.mount(ctx);
   await flush();
   return { hz, root, every };
@@ -156,9 +157,14 @@ describe('페이지 10 P5 — 로그인', () => {
     expect(panelByTitle(root, TITLES.cons).querySelectorAll('tbody tr')).toHaveLength(1);
   });
 
-  it('주기 새로 고침은 맵·동시 편입을 다시 부른다', async () => {
-    const { hz, every } = await mountLogin();
+  it('주기 새로 고침(벽시계 슬롯 경계)은 맵·동시 편입을 다시 부른다', async () => {
+    const clock = { t: Date.parse('2026-10-27T01:01:00Z') };
+    const { hz, every } = await mountLogin({}, clock);
     const before = hz.paths().filter((p) => p.startsWith('etf/map')).length;
+    for (const e of every) e.fn(); // 같은 구간 — 다시 읽지 않는다
+    await flush();
+    expect(hz.paths().filter((p) => p.startsWith('etf/map')).length).toBe(before);
+    clock.t += SLOT_PERIOD_MS;
     for (const e of every) e.fn();
     await flush();
     expect(hz.paths().filter((p) => p.startsWith('etf/map')).length).toBe(before + 1);

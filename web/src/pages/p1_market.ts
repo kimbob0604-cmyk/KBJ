@@ -9,7 +9,8 @@
 // - P5 묶음 F2(이 파일은 F2 만 고친다 — 패널 고리): 장중 투자자 수급(1분 선·카드 7 — ./p1/flows_minute.ts)·
 //   프로그램매매(일별 60거래일·상위 20 — ./p1/program.ts). 로그인 전용(KIS — 공개판은 자물쇠), 60초 갱신.
 import type { components } from '../api/types.gen';
-import type { PageContext, PageModule } from '../app/types';
+import { onSlot, SLOT_TICK_MS } from '../app/refresh';
+import type { AppContext, Cleanup, PageContext, PageModule } from '../app/types';
 import { DataError, type Envelope, type Quality, worstQuality } from '../data/source';
 import { h } from '../ui/dom';
 import { DASH, eok, joEok, num, pct, shortDate, signClass, times } from '../ui/fmt';
@@ -32,8 +33,13 @@ type Tile = S['IndexTile'];
 type CreditLine = S['CreditLine'];
 type ApiChip = S['Chip'];
 
-/** 장중 위젯 새로 고침 — 10분 슬롯 + 30초 여유(§6.9) */
+/** 하루 한두 번 바뀌는 위젯 새로 고침(페이지 2 보드) — 10분 슬롯 + 30초 여유(§6.9) */
 export const REFRESH_MS = 630_000;
+
+/** 장중 슬롯 위젯 새로 고침 — 벽시계 슬롯에 맞춘다(app/refresh.ts onSlot — 페이지 1·4·10) */
+export function slotEvery(ctx: AppContext, fn: () => void): Cleanup {
+  return ctx.every(SLOT_TICK_MS, onSlot(ctx.now, fn));
+}
 
 export const INVESTOR_LABEL: Record<string, string> = {
   foreign: '외국인',
@@ -514,7 +520,7 @@ async function mount(ctx: PageContext): Promise<void> {
   await Promise.all([loadSummary(), loadSectors(), loadInvestors(), loadCredit(), loadMinute(), loadProgram()]);
   // 첫 불러오기 중에 앱이 내려갔으면(격자가 문서에서 빠짐) 주기 작업을 걸지 않는다
   if (root.isConnected) {
-    ctx.every(REFRESH_MS, () => {
+    slotEvery(ctx, () => {
       void loadSummary();
       void loadSectors();
       void loadInvestors();

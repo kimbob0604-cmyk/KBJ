@@ -15,7 +15,7 @@ import { checkLine, qValue, visibleRows } from '../ui/quality';
 import { type Option, seg, select } from '../ui/seg';
 import { centerLevel } from '../ui/svg';
 import { type Column, table } from '../ui/table';
-import { fill, filters, nameCell, REFRESH_MS } from './p1_market';
+import { fill, filters, nameCell, slotEvery } from './p1_market';
 import { mountP5, type P5Panels, TITLES as P5_TITLES } from './p10/index';
 import { INDEX_LOCK, INDEX_TITLE, type IndexReviewWidget, mountIndexReview } from './p10/index_review';
 
@@ -537,7 +537,7 @@ async function mountLogin(ctx: PageContext, { pFlow, pType, pPrem, pHold, p5, id
   await Promise.all([loadFlows(), loadTypes(), loadPremium(), loadChanges(), p5.ready, idx.load()]);
   // 첫 불러오기 중에 앱이 내려갔으면(격자가 문서에서 빠짐) 주기 작업을 걸지 않는다
   if (root.isConnected) {
-    ctx.every(REFRESH_MS, () => {
+    slotEvery(ctx, () => {
       void loadFlows();
       void loadTypes();
       void loadPremium();
