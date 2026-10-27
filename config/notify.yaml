@@ -130,7 +130,8 @@ kinds:
 # 지우며 같이 지웠다 — 모든 발송은 kbj 작업이 kind 를 넘긴다(docs/p9_design.md 'LEGACY 구현 기록').
 
 delivery:
-  max_attempts: 3              # 네트워크·5xx·429 초과는 재시도, 그 밖 4xx 는 바로 failed
+  max_attempts: 8              # 네트워크·5xx·429 초과는 재시도, 그 밖 4xx 는 바로 failed.
+                               # 10·20·40·80·160·300·300초 — 맥이 깨어난 직후 DNS 가 몇 분 안 될 때도(10-27 08:47) 15분 버틴다
   retry_initial_s: 10
   retry_max_s: 300
   max_attachment_bytes: 20971520   # 20 MiB [제안] — 첨부는 대기열에 바이트로 싣는다(봇 API 한도 50 MB)

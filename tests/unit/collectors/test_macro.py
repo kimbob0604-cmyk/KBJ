@@ -14,6 +14,7 @@ import yaml
 from pydantic import SecretStr
 
 from kbj.config.macro import MacroConfig, parse_macro
+from kbj.config.settings import Settings
 from kbj.core.p5_rows import MacroSeriesRow
 from kbj.core.quality import Quality
 from kbj.data.public.ecos.client import EcosRow
@@ -304,3 +305,17 @@ def test_fred_daily_wants_the_previous_us_trading_day_and_blank_counts() -> None
     M.require_periods(daily, blank, "2026-11-13", count_blank=True)
     with pytest.raises(M.NotReady):
         M.require_periods(daily, blank, "2026-11-13")
+
+
+def test_missing_source_key_is_skipped_not_failed() -> None:
+    """출처 키(KBJ_FRED_KEY)가 비었으면 그 키는 실패가 아니라 건너뜀 — 사유에 키 이름만(값 없음)."""
+    cfg = cfg_with()
+    repos = memory_public_repos()
+    settings = Settings.model_construct(fred_key=None)
+    keys = (key("FRED:gov_series", US_DAY),)
+    c = JobContext("macro.morning", US_DAY, "run-1", 1, NOW, keys, settings,
+                   {"macro_config": cfg, "public_repos": repos})  # fmt: skip
+    res = M.morning(c)
+    assert res.status == "skipped" and res.collected == ()
+    assert "KBJ_FRED_KEY 가 비었다" in res.detail["skipped"]["FRED:gov_series@2026-11-16"]
+    assert "KBJ_FRED_KEY" in res.detail["reason"]

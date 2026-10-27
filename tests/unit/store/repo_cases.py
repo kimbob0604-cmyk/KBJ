@@ -164,6 +164,25 @@ def case_snapshot_latest_and_best(r: Repos) -> None:
     assert {s.source for s in m.snapshots(D2, source="KIS")} == {"kis"}
 
 
+def case_snapshot_skips_prelim_only_day(r: Repos) -> None:
+    """장중 잠정(kis.prelim — 거래대금 순위 목록 종목만)만 있는 오늘은 고르지 않는다 — 고르면 장중
+    내내 '전 종목 스냅'이 목록 종목뿐이었다(종목 헤더 '시세 없음'·원장 마지막 날 = 오늘)."""
+    m = r.market
+    m.upsert_snapshots([snap("000010", D2, 110.0), snap("000020", D2, 5.0)], loaded_by=JOB)
+    m.upsert_snapshots(
+        [snap("000010", D3, 120.0, source="kis.prelim", q=EST)], loaded_by=JOB, received_at=NOW
+    )
+    snaps, used = m.snapshot(D3)
+    assert used == D2 and set(snaps) == {"000010", "000020"}
+    assert snaps["000010"].close == 110.0
+    assert m.snapshots(D3, source="kis.prelim")[0].close == 120.0  # 잠정 행은 그대로 남는다
+    # 마감 수집(kis)이 오늘 행을 쓰면 오늘로 넘어간다 — 같은 날의 잠정 행은 우선순위 맨 뒤
+    m.upsert_snapshots([snap("000020", D3, 6.0)], loaded_by=JOB)
+    snaps, used = m.snapshot(D3)
+    assert used == D3 and snaps["000020"].close == 6.0
+    assert snaps["000010"].source == "kis.prelim"
+
+
 def case_snapshot_quality_can_be_invalidated(r: Repos) -> None:
     m = r.market
     m.upsert_snapshots([snap("000010", D1, 100.0)], loaded_by=JOB)
@@ -495,6 +514,7 @@ CASES: tuple[Callable[[Repos], None], ...] = (
     case_etf_assets_are_separate,
     case_index_bars_round_trip,
     case_snapshot_latest_and_best,
+    case_snapshot_skips_prelim_only_day,
     case_snapshot_quality_can_be_invalidated,
     case_universe_latest_per_source,
     case_intraday_history_windows,

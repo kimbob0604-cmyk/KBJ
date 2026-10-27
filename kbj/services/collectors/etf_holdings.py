@@ -14,19 +14,30 @@ D-P3-12).
    않는다. 한 운용사 실패가 다른 운용사를 멈추지 않는다 — 절대 규칙 4):
    - 목록(`universe`) → 추적 대상 = 유형이 국내 대표지수·국내 테마인 펀드(ET: 네이버 탭 1·2 +
      `classify` 가 None 아님. 해외·레버리지·채권·원자재는 국내 주식 시그널이 아니라 뺀다). 이름은
-     KRX 메타(티커로) → 운용사 목록 순. 이름이 없으면 건너뛴다. 목록이 실패하면 저장된 그 운용사의
-     추적 펀드로 PDF 만 받는다.
+     KRX 메타(티커로) → 운용사 목록 순. 이름이 없으면 건너뛴다. 목록이 실패하거나 **0건이면**
+     (사이트 모양이 바뀌어 파서가 하나도 못 찾은 것 — TIGER 2026-10-27) 저장된 그 운용사의 추적
+     펀드로 PDF 만 받는다(0건을 정상으로 두면 그 운용사가 조용히 빠진다).
    - PDF(`holdings`) → 국내 종목이 있으면 그 **실제 기준일**로 `prv_etf.holding` 스냅을 통째로
      바꾼다(재수집 멱등). 비면 `empty_streak` +1, `EMPTY_LIMIT`(3)회 연속이면 추적 제외(해외형
      오분류 — ET 그대로). 네트워크 오류는 연속에 세지 않는다. 기준일이 요청일보다 뒤면 받지 않는다.
+   - 펀드 PDF 오류가 `DOWN_AFTER`(5)번 이어지면(응답을 하나 받으면 0) 그 운용사는 내려간 것으로 보고
+     남은 펀드는 부르지 않는다(오류로 남긴다) — 접속이 안 되는 호스트에 펀드마다 재시도·시간 상한을
+     다 쓰면 한 운용사가 작업 전체를 수십 분 붙잡는다(market_close `NET_DOWN_AFTER` 와 같은 생각).
 3. 저장은 이 스레드(주 스레드)에서만 한다.
 4. 변동: 펀드별 최근 두 스냅(`fund_pairs` — 간격 ≤ `etf.holdings.max_gap_days`)을
    `analyze`(qty_floor·action_pp·min_base_for_cu)로 비교해 **실행일 행을 통째로 한 번에** 바꾼다
    (`EtfRepo.put_changes` — 펀드마다 부르면 앞 펀드 변동이 지워진다). ETF 가 담은 ETF 는 뺀다
    (코드 = `prv_etf.meta` 의 ETF 코드).
 
-결과: 운용사 하나라도 통째로 실패(목록·PDF 모두 못 받음)하면 `failed`(등록부 재시도 3×900초 —
-다시 돌려도 같은 결과), 아니면 `ok`. detail 에 운용사별 수(펀드·스냅·빈 응답·오류·제외)와 변동 수.
+결과: 통째로 실패(목록·PDF 모두 못 받음)한 운용사가 **절반을 넘으면** `failed`(네트워크·우리 쪽
+문제로 본다 — 등록부 재시도 3×900초), 아니면 `ok` 이고 실패한 운용사는 detail `failed_issuers`
+(키 → 이름)·`degraded` 에 남긴다. 운용사 한 곳이 무너져도(RISE 이전 10-20·TIGER 목록 변경
+10-27) 굳은 의존인 `etf.report` 가 통째로 막히지 않게 — 리포트는 받은 운용사로 보내고 머리 줄에
+빠진 운용사를 적는다(절대 규칙 4 — 한 운용사 실패가 다른 운용사를 멈추지 않는다. ADR 0010 갱신
+2026-10-27). 통째 실패가 아니어도 추적 펀드의 `PARTIAL_SHARE`(10%) 넘게 못 받은 운용사는 detail
+`partial_issuers`(키 → "이름 받음/부름")에 남겨 리포트가 '일부만 받음'으로 적는다(KODEX·SOL 요청
+과다로 10-20 부터 매일 7/94·15/28 만 받으면서 리포트에 드러나지 않았다).
+detail 에 운용사별 수(펀드·스냅·빈 응답·오류·제외·건너뜀)와 변동 수.
 
 자원(`JobContext.resources`): `repos`(없으면 Pg), `markets`, `etf_issuers`(어댑터 목록 — 없으면
 `IssuerHttp.for_service(redis)` 로 9곳), `etf_issuer_keys`(일부만), `parallel`(기본 True).
@@ -55,6 +66,7 @@ from kbj.services.scheduler.handlers import JobContext, JobResult
 from kbj.store.repos import EtfRepo
 
 __all__ = [
+    "DOWN_AFTER",
     "EMPTY_LIMIT",
     "ENGINE_VERSION",
     "IssuerRun",
@@ -72,6 +84,13 @@ ENGINE_VERSION: Final = "kbj.engines.etf.holdings/1"
 EMPTY_LIMIT: Final = 3
 TRACKED_TYPES: Final = frozenset({EtfType.KR_INDEX, EtfType.KR_THEME})
 DETAIL_ERRORS_MAX: Final = 8
+DOWN_AFTER: Final = 5  # 펀드 PDF 오류가 이만큼 이어지면 그 운용사의 남은 펀드는 부르지 않는다
+DOWN_REASON: Final = "운용사 응답 없음 — 앞 펀드 오류가 이어져 부르지 않았다"
+EMPTY_UNIVERSE: Final = "목록이 0건 — 사이트 모양이 바뀌었을 수 있다(저장된 추적 펀드로 받는다)"
+FAIL_SHARE_MAX: Final = 0.5  # 통째로 실패한 운용사 비율이 이를 넘으면 작업 failed
+PARTIAL_SHARE: Final = (
+    0.1  # 추적 펀드의 이 비율 넘게 못 받은 운용사는 '일부만 받음'(리포트 머리 줄)
+)
 
 
 @dataclass
@@ -79,6 +98,7 @@ class IssuerRun:
     """운용사 하나의 수집 결과(저장 전)."""
 
     key: str
+    name: str = ""
     funds: dict[str, Fund] = field(default_factory=dict[str, Fund])
     snaps: list[tuple[str, date, list[HoldingRow]]] = field(
         default_factory=list[tuple[str, date, list[HoldingRow]]]
@@ -87,6 +107,18 @@ class IssuerRun:
     errors: dict[str, str] = field(default_factory=dict[str, str])
     universe_error: str | None = None
     skipped: int = 0  # 목록에서 뺀 펀드(이름 없음·추적 유형 아님)
+    down_skipped: int = 0  # 운용사가 내려가 부르지 않은 펀드(`DOWN_AFTER`)
+
+    @property
+    def attempted(self) -> int:
+        """PDF 를 부르려 한 추적 펀드 수(연속 실패로 건너뛴 것 포함)."""
+        return len(self.snaps) + len(self.empty) + len(self.errors)
+
+    @property
+    def partial(self) -> bool:
+        """통째 실패는 아니지만 추적 펀드의 `PARTIAL_SHARE` 넘게 못 받았다(요청 과다 등)."""
+        n = self.attempted
+        return not self.failed and n > 0 and len(self.errors) > PARTIAL_SHARE * n
 
     @property
     def failed(self) -> bool:
@@ -143,7 +175,7 @@ def collect_issuer(
     old_funds: Mapping[str, Fund],
 ) -> IssuerRun:
     """운용사 하나 — 목록 → 추적 펀드마다 PDF. 저장하지 않는다(주 스레드가 쓴다)."""
-    res = IssuerRun(adapter.KEY)
+    res = IssuerRun(adapter.KEY, str(getattr(adapter, "NAME", "") or adapter.KEY))
     mine = {k: f for k, f in old_funds.items() if f.issuer == adapter.KEY}
     try:
         refs = adapter.universe()
@@ -151,16 +183,27 @@ def collect_issuer(
         res.universe_error = reason(e)
         res.funds = dict(mine)
     else:
-        res.funds, res.skipped = _fund_rows(adapter, refs, meta, mine)
+        if refs:
+            res.funds, res.skipped = _fund_rows(adapter, refs, meta, mine)
+        else:  # 0건은 정상이 아니다(9곳 모두 펀드가 있다) — 파서가 못 찾은 것으로 본다
+            res.universe_error = EMPTY_UNIVERSE
+            res.funds = dict(mine)
+    streak = 0
     for fid in sorted(res.funds):
         f = res.funds[fid]
         if not f.track:
+            continue
+        if streak >= DOWN_AFTER:
+            res.errors[fid] = DOWN_REASON
+            res.down_skipped += 1
             continue
         try:
             rows, real = adapter.holdings(f.fund_key, day)
         except Exception as e:  # 격리 — 이 펀드만 미완(연속 빈 응답에 세지 않는다)
             res.errors[fid] = reason(e)
+            streak += 1
             continue
+        streak = 0
         if real > day:
             res.errors[fid] = f"기준일 {real} 이 요청일 {day} 보다 뒤 — 받지 않았다"
             continue
@@ -251,7 +294,8 @@ def run(ctx: JobContext) -> JobResult:
 
     detail: dict[str, Any] = {"meta_typed": n_typed, "issuers": {}}
     errors: dict[str, str] = {}
-    failed: list[str] = []
+    failed: dict[str, str] = {}
+    partial: dict[str, str] = {}
     rows = 0
     for res in results:
         funds, dropped = _streaks(res, EMPTY_LIMIT)
@@ -261,14 +305,17 @@ def run(ctx: JobContext) -> JobResult:
         detail["issuers"][res.key] = {
             "funds": sum(1 for f in funds if f.track), "snapshots": len(res.snaps),
             "empty": len(res.empty), "errors": len(res.errors), "dropped": dropped,
-            "skipped": res.skipped,
+            "skipped": res.skipped, "down_skipped": res.down_skipped,
         }  # fmt: skip
         if res.universe_error is not None:
             errors[f"{res.key}:universe"] = res.universe_error
         for fid, why in sorted(res.errors.items())[:2]:
             errors[fid] = why
         if res.failed:
-            failed.append(res.key)
+            failed[res.key] = res.name or res.key
+        elif res.partial:
+            got = res.attempted - len(res.errors)
+            partial[res.key] = f"{res.name or res.key} {got}/{res.attempted}"
         if res.errors or res.universe_error:
             log_event(log, logging.WARNING, SERVICE, "etf_issuer_partial", job=ctx.job,
                       issuer=res.key, errors=len(res.errors),
@@ -282,9 +329,18 @@ def run(ctx: JobContext) -> JobResult:
     if errors:
         detail["errors"] = dict(sorted(errors.items())[:DETAIL_ERRORS_MAX])
     detail["rows"] = rows
+    if partial:  # 받은 것만 쓰고 끝낸다 — 리포트가 머리 줄에 '일부만 받음'으로 적는다
+        detail["partial_issuers"] = dict(sorted(partial.items()))
     if failed:
-        detail["reason"] = f"운용사 {len(failed)}곳 통째로 실패 — {', '.join(failed)}"
-        return JobResult("failed", collected=(), rows=rows, detail=detail)
+        why = f"운용사 {len(failed)}곳 통째로 실패 — {', '.join(failed)}"
+        detail["failed_issuers"] = dict(sorted(failed.items()))
+        if len(failed) > FAIL_SHARE_MAX * len(results):
+            detail["reason"] = why
+            return JobResult("failed", collected=(), rows=rows, detail=detail)
+        # 일부만 — 받은 운용사로 끝낸다(리포트가 빠진 운용사를 적는다)
+        detail["degraded"] = why
+        log_event(log, logging.WARNING, SERVICE, "etf_issuer_failed", job=ctx.job,
+                  issuers=",".join(sorted(failed)))  # fmt: skip
     return JobResult("ok", collected=tuple(ctx.keys), rows=rows, detail=detail)
 
 

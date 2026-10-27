@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import math
+from dataclasses import replace
 from typing import Any
 
 import pytest
@@ -19,6 +20,8 @@ from kbj.services.api.readers.trade_map import (
     NO_MAP,
     NO_STOCK_INDEX,
     NOT_MAPPED,
+    NOTE_OLD_MAP,
+    NOTE_PENDING,
     NOTE_RAW,
 )
 from kbj.services.api.readers.trade_preview import NO_CONSENSUS
@@ -117,6 +120,29 @@ def test_매핑_없음·빈_저장소() -> None:
     for path in ("/api/trade/stocks", "/api/trade/stock/992004"):
         r = noidx.get(path)
         assert r.status_code == 404 and r.json()["message"] == NO_STOCK_INDEX
+
+
+def test_매핑판이_바뀐_뒤_지수_전_종목도_랭킹_맨_뒤() -> None:
+    """매핑표에 새로 든 종목(지수 행 없음 — trade.stock_index 21:00 전)도 랭킹·고르기 상자에
+    남는다. 빼면 그 종목의 흐름(지수와 무관)을 열 수 없었다. 지수 행의 판이 지금 판과 다르면
+    한 줄 알린다."""
+    aw = map_api_world()
+    trade = aw.repos.trade
+    pub = trade.stock_map(origin="public")
+    new = replace(pub[0], code="994040", name="새매핑종목")
+    moved = [replace(r, map_version="v9-새판") for r in pub] + [replace(new, map_version="v9-새판")]
+    trade.replace_stock_map(moved, origin="public", loaded_by="test", received_at=aw.clock())
+    body = _get(aw.authed(), "/api/trade/stocks")
+    rows = body["data"]["rows"]
+    tail = rows[-1]
+    assert tail["code"] == "994040" and tail["name"] == "새매핑종목"
+    assert tail["status"] == "no_trade" and tail["yoy_3m"] is None
+    assert tail["quality"] == "estimated"
+    assert NOTE_PENDING.format(n=1) in body["notes"]
+    n_old = len({r.code for r in pub})
+    assert NOTE_OLD_MAP.format(n=n_old) in body["notes"]
+    # 흐름은 지수 없이 열린다
+    assert aw.authed().get("/api/trade/stock/994040/flows").status_code == 200
 
 
 def test_코드_형식은_422(c: TestClient) -> None:

@@ -6,7 +6,8 @@
    (주식 정규장 기준 — `TradingCalendar.equity_bounds` 라 연초·수능일 지연 개장을 따른다).
    `state_enter` 는 서비스가 상태 전이 때 `on_state` 로 알린다. `manual` 은 `run_once` 로만.
    조건(`when`)이 거짓이거나 as_of 가 없는 날(휴장일의 trade_date)이면 아무것도 하지 않는다.
-   첫 tick 은 지금 분의 발화만 본다(재기동이 지난 시각을 몰아서 돌리지 않는다). 지난 하루 1회
+   첫 tick 은 지금 분의 발화만 본다(재기동이 지난 시각을 몰아서 돌리지 않는다). 잠드는 호스트가
+   깬 tick 도 같다 — 잠든 동안의 발화는 켜질 때 따라잡기(작업마다 가장 최근 회차만)로. 지난 하루 1회
    작업은 `catch_up_until` 까지 따라잡는다(기록이 없을 때만).
 2. **계획됨**: 처리기가 없는 작업(꺼진 작업 — P2 의 대부분)은 실행하지 않고 실행 기록만
    `skipped` + `{"reason": "planned"}` 로 남긴다(§6.9 — legacy 를 부르지 않는다).
@@ -14,7 +15,11 @@
 3. **같은 (작업, as_of) 는 두 번 돌지 않는다**: 진행 중이거나 이미 `ok`·`skipped` 면 새 발화를
    무시한다. 앞 시도가 실패로 끝났으면(예: 월 15~17일 재시도) 시도 번호를 이어 다시 돈다.
 4. **의존**: 굳은 의존(hard)은 그 작업의 같은(또는 앞) as_of 실행이 `ok` 일 때까지 기다린다 —
-   `catch_up_until`(없으면 마감)까지. 의존 작업이 실패로 끝났으면 바로 실패. 무른 의존(soft)은
+   `catch_up_until`(없으면 마감)까지. 의존 작업이 실패(`failed`·`timeout`)로 끝났거나 기다림(아래
+   6 — `detail.wait`)으로 끝났으면 바로 `skipped` + `{"wait": "blocked", "blocked_by": …}` — 실패는
+   원인 작업 하나만 센다(2026-10-27 — 마감 수집 한 번의 실패가 16:00 작업 여덟의 실패·알림으로
+   불어났다, docs/ops_error_catalog.md). 끝난 실행으로 치지 않아 다음 발화·수동 실행이 다시
+   돈다. 무른 의존(soft)은
    기다리지 않고 상태만 기록한다 — 단 `wait_min` 을 준 무른 의존은 굳은 의존이 다 준비된 때부터
    최대 그 분(그리고 위 시한까지) 동안, 그 의존의 같은 as_of 실행이 이 실행기에서 진행 중(`_pending`
    — 제 의존 대기·실행·재시도 대기)이면 끝나기를 기다린다. 끝난 결과는 묻지 않는다(ADR 0018 — 16:00
@@ -25,7 +30,11 @@
    않는다(남은 키만).
 6. **재시도·마감**: `failed`·`not_ready` 는 `retry` 대로 다시(마감 안에서). 다 쓰거나 마감을
    넘기면 실패 — health `job_failed` + 알림 `ops.job_failed`(subject `<작업>:<as_of>`, 작업·as_of
-   마다 1회 — notify.yaml). 처리기가 마감을 넘겨 돌고 있으면 `timeout` 으로 기록한다(스레드는
+   마다 1회 — notify.yaml). 단 기간 단위 수집(as_of 월·분기·10일 — `PERIOD_AS_OF`)의 `not_ready`
+   는 실패가 아니라 공표 대기다: 다음 정시 발화가 같은 키를 다시 보므로 `skipped` +
+   `{"wait": "not_ready"}` 로 남기고 알리지 않는다(끝난 실행으로 치지 않는다 — 다시 돈다. 매일
+   공표 전으로 실패하던 macro.monthly·관세청 폴링, docs/ops_error_catalog.md). 처리기가 마감을 넘겨
+   돌고 있으면 `timeout` 으로 기록한다(스레드는
    멈출 수 없으니 결과가 나중에 와도 버리고 로그만). 잠드는 호스트(설정 `scheduler_catch_up_h` > 0
    — 로컬)는 잠든 시간을 하루 단위 작업의 마감·의존 시한에 세지 않는다(`_after_sleep`).
 7. **격리**: 처리기는 `submit`(기본 데몬 스레드)으로 돌아 상태 루프를 막지 않는다. 처리기 예외·
@@ -82,6 +91,13 @@ SLEEP_EXTEND_MIN_DEADLINE: Final = 60
 SLEEP_SETTLE_S: Final = 60
 REASON_MAX: Final = 300
 PLANNED: Final = "planned"
+# 실패가 아닌 기다림(detail 키 `wait`) — 공표 대기(not_ready)·굳은 의존이 끝나지 못해 막힘(blocked).
+# skipped 로 남기되 끝난 실행으로 치지 않는다(다음 발화가 다시 돈다). ops 점검은 실패로 세지 않는다
+WAIT_KEY: Final = "wait"
+WAIT_NOT_READY: Final = "not_ready"
+WAIT_BLOCKED: Final = "blocked"
+# 한 기간(월·분기·10일)을 여러 발화가 다시 보는 수집 — 공표 전은 다음 발화가 이어 본다
+PERIOD_AS_OF: Final = frozenset({"month", "quarter", "ten_day"})
 
 log = logging.getLogger("kbj.services.scheduler")
 
@@ -146,6 +162,7 @@ class _Pending:
     done: set[DataKey] = field(
         default_factory=set[DataKey]
     )  # 이 시리즈가 이미 받은 키(재시도 제외)
+    force: bool = False  # 수동 --force — 이 작업이 이미 받은(done) 키도 다시 잡는다
     waiting_logged: bool = False
     soft_since: datetime | None = None  # UTC — 굳은 의존이 다 준비된 때(무른 의존 wait_min 의 기준)
     soft_logged: bool = False
@@ -248,11 +265,17 @@ class JobRunner:
     def tick(self, now: datetime) -> list[RunEvent]:
         now = _utc(now)
         events: list[RunEvent] = []
-        self._after_sleep(now)
+        slept = self._after_sleep(now)
         self._collect(now, events)
         last = self._last
-        if last is None:
+        if last is None or slept:
+            # 처음 tick·잠든 호스트가 깬 tick: 지난 시각을 몰아서 발화하지 않는다 — 놓친 작업은
+            # 켜질 때 따라잡기 규칙(작업마다 가장 최근 회차만, 장중 슬롯 제외)으로. 깬 tick 에
+            # 잠든 동안의 매분·5분 발화를 다 띄우면 시작도 못 하고 '마감을 넘겼다'로 실패·알림이
+            # 쌓였다(2026-10-27 — docs/ops_error_catalog.md: 밤 8시간 잠듦 = ops.watchdog 약
+            # 95건·03:00 백업·05:30 내보내기 실패)
             last = now.replace(second=0, microsecond=0) - timedelta(microseconds=1)
+            self._behind.clear()
             self._startup_catch_up(now, events)
         if now > last:
             for job in self.registry.jobs:
@@ -375,10 +398,11 @@ class JobRunner:
             t += timedelta(minutes=eq.every_min)
         return out
 
-    def _after_sleep(self, now: datetime) -> None:
+    def _after_sleep(self, now: datetime) -> bool:
         """잠드는 호스트에서 tick 사이가 `SLEEP_GAP_S` 를 넘게 벌어졌으면(잠들었다 깸) 하루 단위
         작업(마감 `SLEEP_EXTEND_MIN_DEADLINE` 분 이상)의 마감·의존 시한을 벌어진 만큼 미루고, 아직
         시작하지 않은 시도는 깬 뒤 `SLEEP_SETTLE_S` 를 기다리게 한다 — 잠든 시간은 시한에 안 센다.
+        깼으면 True(tick 이 잠든 동안의 발화를 몰아 띄우지 않고 따라잡기로 바꾼다).
 
         2026-10-22: 15:35 마감 수집이 16:19 덮개를 닫아 멈췄고, 잠든 중 몇 초씩 깬 때(네트워크 없음)
         ETF 종목이 이름풀이 실패로 넘어갔으며, 재시도는 벽시계 마감(17:35)에 잘려 16:00 작업 여섯이
@@ -386,10 +410,10 @@ class JobRunner:
         sleeps = self._settings is not None and self._settings.scheduler_catch_up_h > 0
         last = self._last
         if not sleeps or last is None:
-            return
+            return False
         gap = now - last
         if gap.total_seconds() <= SLEEP_GAP_S:
-            return
+            return False
         self._settle_until = now + timedelta(seconds=SLEEP_SETTLE_S)
         moved = 0
         for p in self._pending.values():
@@ -403,6 +427,7 @@ class JobRunner:
         log_event(
             log, logging.INFO, SERVICE, "host_slept", gap_s=round(gap.total_seconds()), moved=moved
         )
+        return True
 
     def _startup_catch_up(self, now: datetime, events: list[RunEvent]) -> None:
         """켜진 직후 한 번 — 꺼져 있던 동안 놓친 켜진 작업을 작업마다 가장 최근 회차만(설정
@@ -504,7 +529,7 @@ class JobRunner:
             return
         self._caught.add((job.name, as_of))
         prev = self.runs.latest(job.name, as_of)
-        if prev is None or _was_planned(prev):
+        if prev is None or _reopens(prev):
             self._fire(job, fire_at, now, events, catch_up=True)
 
     def _fire(
@@ -545,7 +570,8 @@ class JobRunner:
         prev = self.runs.latest(job.name, as_of)
         # ok·skipped 는 끝난 실행 — 다시 돌지 않는다. running·queued 인데 진행 목록에 없으면 앞
         # 프로세스가 도중에 죽은 것이다 — 시도 번호를 이어 다시 돈다(선점은 같은 작업이 이어 쥔다).
-        done = prev is not None and prev.status in ("ok", "skipped") and not _was_planned(prev)
+        # 계획됨·기다림(공표 대기·의존 막힘)으로 건너뛴 기록도 끝난 실행이 아니다
+        done = prev is not None and prev.status in ("ok", "skipped") and not _reopens(prev)
         if prev is not None and done and not force:
             events.append(RunEvent("already", job.name, as_of, now, prev.attempt))
             return
@@ -589,6 +615,7 @@ class JobRunner:
             attempt=attempt0,
             next_at=now,
             skip_deps=skip_deps,
+            force=force,
         )
         log_event(
             log, logging.INFO, SERVICE, "job_fired", job=job.name, as_of=as_of, catch_up=catch_up
@@ -650,9 +677,12 @@ class JobRunner:
                 and rec.status in ("failed", "timeout")
                 and ((d.job, dep_as_of) not in self._pending)
             ):
-                self._give_up(p, now, events, f"굳은 의존 {d.job}@{dep_as_of} 가 {rec.status}")
+                self._blocked(p, now, events, f"{d.job}@{dep_as_of}", rec.status)
                 return False
-            if rec is not None and rec.status == "skipped":
+            if rec is not None and _waited(rec) and (d.job, dep_as_of) not in self._pending:
+                self._blocked(p, now, events, f"{d.job}@{dep_as_of}", "기다림")
+                return False
+            if rec is not None and rec.status == "skipped" and not _waited(rec):
                 self._give_up(p, now, events, f"굳은 의존 {d.job}@{dep_as_of} 가 실행되지 않았다")
                 return False
             waiting.append(f"{d.job}@{dep_as_of}")
@@ -749,7 +779,7 @@ class JobRunner:
             wanted = [k for k in wanted_all if k not in p.done]
             got: list[DataKey] = []
             for k in wanted:
-                if self.claims.claim(k, job.name, run_id, now):
+                if self.claims.claim(k, job.name, run_id, now, reopen=p.force):
                     got.append(k)
         except Exception as e:  # 선점 저장소 오류 — 이번 시도 실패로
             p.attempt = attempt
@@ -897,6 +927,17 @@ class JobRunner:
             events.append(RunEvent("retry", job.name, p.as_of, now, p.attempt, detail))
             return
         self._release(p, now, reason)
+        if status == "not_ready" and _polls_again(job):
+            # 공표 대기 — 다음 정시 발화가 같은 기간 키를 다시 본다. 실패·알림이 아니다
+            detail[WAIT_KEY] = WAIT_NOT_READY
+            self.runs.record(
+                RunRecord(
+                    run_id, job.name, p.as_of, p.attempt, "skipped", started, now, detail, p.source
+                )
+            )
+            events.append(RunEvent("skipped", job.name, p.as_of, now, p.attempt, detail))
+            del self._pending[(job.name, p.as_of)]
+            return
         self.runs.record(
             RunRecord(
                 run_id, job.name, p.as_of, p.attempt, "failed", started, now, detail, p.source
@@ -914,6 +955,21 @@ class JobRunner:
         events.append(RunEvent("failed", p.job.name, p.as_of, now, attempt, detail))
         del self._pending[(p.job.name, p.as_of)]
         self._alert(p.job, p.as_of, reason, now)
+
+    def _blocked(
+        self, p: _Pending, now: datetime, events: list[RunEvent], dep: str, why: str
+    ) -> None:
+        """굳은 의존이 실패·기다림으로 끝났다 — 이 실행은 돌지 않고 `skipped`(막힘)로 끝낸다.
+
+        실패·알림은 원인 작업 하나에만 남긴다(의존 사슬이 실패를 불리지 않게). 끝난 실행으로 치지
+        않으므로 원인을 고친 뒤 다음 발화·수동 실행(`kbj.sh job`)이 다시 돈다."""
+        attempt = max(p.attempt, 1)
+        reason = f"굳은 의존 {dep} 가 {why} — 원인은 그 작업(이 작업은 돌지 않았다)"
+        self._release(p, now, reason)
+        detail = {"reason": _reason(reason), WAIT_KEY: WAIT_BLOCKED, "blocked_by": dep}
+        self._record_final(p.job, p.as_of, attempt, "skipped", None, now, detail, p.source)
+        events.append(RunEvent("skipped", p.job.name, p.as_of, now, attempt, detail))
+        del self._pending[(p.job.name, p.as_of)]
 
     def _timeout(self, p: _Pending, now: datetime, events: list[RunEvent]) -> None:
         reason = f"마감({p.job.deadline_min}분)을 넘겨 아직 돌고 있다"
@@ -1023,3 +1079,23 @@ def _was_planned(rec: RunRecord) -> bool:
     """처리기가 없어(꺼진 작업) `planned` 로 건너뛴 기록 — 끝난 실행이 아니다. 작업을 켠 뒤 같은
     회차가 이 기록 때문에 다시 돌지 않았다(2026-10-20: trade.customs_monthly@2026-09)."""
     return rec.status == "skipped" and rec.detail.get("reason") == PLANNED
+
+
+def _waited(rec: RunRecord) -> bool:
+    """공표 대기·의존 막힘으로 건너뛴 기록(`detail.wait`) — 실패도, 끝난 실행도 아니다."""
+    return rec.status == "skipped" and bool(rec.detail.get(WAIT_KEY))
+
+
+def _reopens(rec: RunRecord) -> bool:
+    """같은 (작업, as_of) 를 다시 발화해도 되는 skipped 기록(계획됨·기다림)."""
+    return _was_planned(rec) or _waited(rec)
+
+
+def _polls_again(job: JobSpec) -> bool:
+    """공표 전(not_ready)을 다음 정시 발화가 다시 보는 작업인가 — 기간 단위(월·분기·10일) as_of 로
+    cron 이 같은 기간 안에 여러 번 발화한다(macro.monthly 는 실행 as_of 가 날짜지만 수집 키가 월·
+    분기라 다음 날 실행이 못 받은 키를 다시 잡는다)."""
+    if job.schedule.cron is None:
+        return False
+    kinds = {c.as_of for c in job.collects}
+    return job.run_as_of() in PERIOD_AS_OF or (bool(kinds) and kinds <= PERIOD_AS_OF)

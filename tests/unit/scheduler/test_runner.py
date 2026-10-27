@@ -253,7 +253,56 @@ def test_host_sleep_does_not_count_toward_the_deadline() -> None:
 
     off = _slept_close_day(None)  # 꺼 둔 기본값(VM) — 벽시계 마감(17:35)이 지나 잘린다
     assert off.kinds("market.close_collect") == ["started", "timeout"]
-    assert off.kinds("brief.closing")[-1] == "failed"
+    assert (
+        off.kinds("brief.closing")[-1] == "skipped"
+    )  # 굳은 의존 timeout 에 막힘(실패는 원인 하나)
+
+
+def test_overnight_sleep_catches_up_once_instead_of_failing_every_missed_fire() -> None:
+    """맥이 밤새 잠들었다 깨면(22:05 → 06:00) 잠든 동안의 5분 발화(워치독 약 95건)·03:00 백업을
+    몰아 띄워 '마감을 넘겼다(시작하지 못함)' 실패·알림이 쌓였다 — 켜질 때 따라잡기처럼 작업마다 가장
+    최근 회차만 돈다(2026-10-27, docs/ops_error_catalog.md)."""
+    ok = lambda ctx: JobResult("ok", collected=ctx.keys)  # noqa: E731
+    jobs = [
+        {
+            "name": "ops.watchdog",
+            "phase": "P2",
+            "enabled": True,
+            "owner": "tests.fake:watch",
+            "schedule": {"cron": "*/5 * * * *", "when": "always"},
+            "retry": {"max": 0},
+            "deadline_min": 10,
+            "as_of": "minute",
+        },
+        {
+            "name": "ops.nightly",
+            "phase": "P2",
+            "enabled": True,
+            "owner": "tests.fake:nightly",
+            "schedule": {"cron": "0 3 * * *", "when": "always"},
+            "retry": {"max": 1, "backoff_s": [600]},
+        },
+    ]
+    rig = Rig(
+        jobs,
+        {"tests.fake:watch": ok, "tests.fake:nightly": ok},
+        kst(2026, 10, 6, 22, 0),
+        settings=Settings.model_construct(scheduler_catch_up_h=20),
+    )
+    rig.run_until(kst(2026, 10, 6, 22, 5))
+    rig.now = kst(2026, 10, 7, 6, 0).astimezone(UTC)  # 깸
+    rig.run_until(kst(2026, 10, 7, 6, 10))
+    assert "failed" not in rig.kinds("ops.watchdog") + rig.kinds("ops.nightly")
+    assert rig.notes.sent == []
+    woke = [e for e in rig.events if e.kind == "started" and e.at >= kst(2026, 10, 7, 6, 0)]
+    # 워치독: 깬 분(06:00)부터 정시 회차만 — 잠든 동안의 약 95회차를 띄우지 않는다
+    assert sorted(e.as_of for e in woke if e.job == "ops.watchdog") == [
+        "2026-10-07T06:00",
+        "2026-10-07T06:05",
+        "2026-10-07T06:10",
+    ]
+    nightly = rig.runs.latest("ops.nightly", "2026-10-07")
+    assert nightly is not None and nightly.status == "ok"  # 03:00 백업은 깬 뒤 한 번
 
 
 def test_host_sleep_keeps_short_deadline_jobs_on_the_wall_clock() -> None:
@@ -366,7 +415,8 @@ def test_run_once_ignore_deps_skips_the_dependency_check() -> None:
     assert [e.kind for e in events] == ["started", "ok"] and len(briefs) == 1
 
 
-def test_hard_dependency_failure_fails_the_dependent() -> None:
+def test_hard_dependency_failure_blocks_the_dependent_without_a_second_failure() -> None:
+    """굳은 의존이 실패하면 의존 작업은 돌지 않고 skipped(막힘) — 실패·알림은 원인 작업 하나."""
     rig = Rig(
         close_and_brief(),
         {"tests.fake:close": Publisher(None), "tests.fake:brief": lambda c: JobResult("ok")},
@@ -374,10 +424,36 @@ def test_hard_dependency_failure_fails_the_dependent() -> None:
     )
     rig.run_until(kst(2026, 10, 6, 18, 0))
     assert rig.kinds("market.close_collect")[-1] == "failed"
-    assert rig.kinds("brief.closing")[-1] == "failed"
     assert "started" not in rig.kinds("brief.closing")
+    rec = rig.runs.latest("brief.closing", "2026-10-06")
+    assert rec is not None and rec.status == "skipped"
+    assert rec.detail["wait"] == "blocked"
+    assert rec.detail["blocked_by"] == "market.close_collect@2026-10-06"
     subjects = [n["subject"] for n in rig.notes.sent]
-    assert subjects == ["market.close_collect:2026-10-06", "brief.closing:2026-10-06"]
+    assert subjects == ["market.close_collect:2026-10-06"]
+
+
+def test_blocked_dependent_runs_again_once_the_cause_is_fixed() -> None:
+    """막힘(skipped·wait)은 끝난 실행이 아니다 — 원인을 다시 돌려 성공하면 수동 실행이 돈다."""
+    briefs: list[JobContext] = []
+
+    def brief(ctx: JobContext) -> JobResult:
+        briefs.append(ctx)
+        return JobResult("ok")
+
+    close = Publisher(None)
+    rig = Rig(
+        close_and_brief(),
+        {"tests.fake:close": close, "tests.fake:brief": brief},
+        kst(2026, 10, 6, 15, 30),
+    )
+    rig.run_until(kst(2026, 10, 6, 18, 0))
+    assert rig.runs.latest("brief.closing", "2026-10-06").status == "skipped"  # type: ignore[union-attr]
+    close.ready_at = rig.now
+    rig.runner.run_once("market.close_collect", rig.now, as_of="2026-10-06")
+    events = rig.runner.run_once("brief.closing", rig.now, as_of="2026-10-06")
+    assert "already" not in [e.kind for e in events]
+    assert len(briefs) == 1 and rig.runs.latest("brief.closing", "2026-10-06").status == "ok"  # type: ignore[union-attr]
 
 
 # ── 무른 의존 wait_min(ADR 0018 — 16:00 발송이 같은 16:00 보드를 기다린다) ──────────────────
@@ -606,11 +682,45 @@ def test_failed_series_continues_attempt_numbers_on_next_fire() -> None:
     rig = Rig([job], {"tests.fake:customs": pub}, kst(2026, 10, 15, 9, 0))
     rig.run_until(kst(2026, 10, 17, 11, 0), every=timedelta(minutes=10))
     recs = rig.runs.of("trade.customs_monthly")
+    # 15일은 공표 전 — 기간(월) 수집이라 실패가 아니라 공표 대기(skipped·wait), 16일에 이어 돈다
     assert [(r.as_of, r.attempt, r.status) for r in recs] == [
-        ("2026-09", 1, "failed"),
+        ("2026-09", 1, "skipped"),
         ("2026-09", 2, "ok"),
     ]
+    assert recs[0].detail["wait"] == "not_ready" and recs[0].detail["result"] == "not_ready"
     assert rig.kinds("trade.customs_monthly")[-1] == "already"  # 17일은 이미 받았다
+    assert rig.notes.sent == [] and "job_failed" not in rig.health.kinds()
+
+
+def test_period_not_ready_is_waiting_but_errors_still_fail() -> None:
+    """기간 수집의 공표 전은 알리지 않지만, 출처 오류(failed)는 그대로 실패·알림이다."""
+    job = {
+        "name": "trade.customs_monthly",
+        "phase": "P6",
+        "owner": "tests.fake:customs",
+        "schedule": {"cron": "0 10 * * *", "when": "month_days", "month_days": [15]},
+        "retry": {"max": 0},
+        "collects": [{"source": "DATAGO", "dataset": "15101609", "as_of": "month"}],
+        "budget": "datago",
+        "writes": ["pub_trade.item_monthly"],
+    }
+
+    def broken(ctx: JobContext) -> JobResult:
+        return JobResult("failed", detail={"reason": "HTTP 500"})
+
+    rig = Rig([job], {"tests.fake:customs": broken}, kst(2026, 10, 15, 9, 59))
+    rig.run_until(kst(2026, 10, 15, 10, 1))
+    rec = rig.runs.latest("trade.customs_monthly", "2026-09")
+    assert rec is not None and rec.status == "failed" and "wait" not in rec.detail
+    assert [n["kind"] for n in rig.notes.sent] == ["ops.job_failed"]
+
+
+def test_date_not_ready_still_fails() -> None:
+    """날짜 단위 수집(전 거래일 등)의 공표 전은 다음 날 as_of 가 달라 다시 보지 않는다 — 실패."""
+    rig = Rig([krx_like()], {"tests.fake:krx": Publisher(None)}, kst(2026, 10, 6, 8, 0))
+    rig.run_until(kst(2026, 10, 6, 11, 0))
+    rec = rig.runs.latest("krx.daily", "2026-10-02")
+    assert rec is not None and rec.status == "failed" and "wait" not in rec.detail
 
 
 # ── 계획됨·외부·선점 ─────────────────────────────────────────────────────────────────────
@@ -1008,6 +1118,20 @@ def test_run_once_force_reruns_a_finished_as_of() -> None:
     forced = run("brief.closing", rig.now, as_of="2026-10-06", ignore_deps=True, force=True)
     assert [e.kind for e in forced] == ["started", "ok"] and len(briefs) == 2
     assert forced[-1].attempt == first[-1].attempt + 1
+
+
+def test_run_once_force_reclaims_its_own_done_keys() -> None:
+    """2026-10-27 실측: etf.collect 를 고친 코드로 같은 날 다시 받으려 --force 를 줬는데, 앞 실행이
+    끝낸(done) 데이터 키 때문에 '중복'으로 건너뛰었다 — 맥에서 선점 줄을 손으로 고쳐야 했다."""
+    pub = Publisher(kst(2026, 10, 6, 15, 0))
+    rig = Rig(close_and_brief(), {"tests.fake:close": pub, "tests.fake:brief": Publisher(None)},
+              kst(2026, 10, 6, 17, 0))  # fmt: skip
+    run = rig.runner.run_once
+    first = run("market.close_collect", rig.now, as_of="2026-10-06")
+    assert first[-1].kind == "ok" and len(pub.calls) == 1
+    forced = run("market.close_collect", rig.now, as_of="2026-10-06", force=True)
+    assert [e.kind for e in forced] == ["started", "ok"] and len(pub.calls) == 2
+    assert pub.calls[-1].keys  # 키를 다시 잡아 처리기에 넘겼다(빈 키로 돌지 않았다)
 
 
 def test_run_once_lines_carry_the_failure_reason() -> None:

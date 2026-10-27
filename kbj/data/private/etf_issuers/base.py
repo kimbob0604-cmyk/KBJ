@@ -318,13 +318,19 @@ class IssuerHttp:
         total_s: float | None = None,
         ok: frozenset[int] = frozenset({200}),
         retry_wait_s: float | None = None,
+        limit_status: frozenset[int] = frozenset(),
     ) -> Reply:
-        """한 요청. `ok` 상태면 돌려주고, 일시 오류는 다시, 나머지는 `IssuerError`."""
+        """한 요청. `ok` 상태면 돌려주고, 일시 오류는 다시, 나머지는 `IssuerError`.
+
+        `limit_status` = 그 운용사가 '요청 과다'에 쓰는 429 밖의 상태(SOL 403 "Rate limit exceeded")
+        — 429 처럼 리미터를 감속하고 `retry_wait_s`(쿨다운) 쉬었다 다시 부른다. 전송 오류·5xx 는
+        `backoff_s` 로 짧게 쉰다(쿨다운을 쓰면 내려간 호스트에 펀드마다 몇 분씩 붙잡힌다)."""
         host = urlsplit(url).hostname or ""
         if not host:
             raise ValueError(f"절대 URL 이어야 한다: {url!r}")
         last: str = ""
         status: int | None = None
+        limited = False
         for i in range(self.retries):
             lim = self._limiter(host)
             if lim is not None:
@@ -335,17 +341,19 @@ class IssuerHttp:
             except IssuerError:
                 raise  # 크기·시간 상한 — 다시 불러도 같다
             except httpx.HTTPError as e:
-                status, last = None, scrub(f"{type(e).__name__}: {e}", params)
+                status, last, limited = None, scrub(f"{type(e).__name__}: {e}", params), False
             else:
                 if status in ok:
                     return Reply(status, body, enc)
                 last = f"HTTP {status} · {_snippet(body, enc)}"
-                if status not in RETRY_STATUS:
+                limited = status == 429 or status in limit_status
+                if status not in RETRY_STATUS and not limited:
                     raise IssuerError(issuer, status, scrub(f"{_path(url)} {last}", params))
-                if status == 429 and lim is not None:
+                if limited and lim is not None:
                     lim.on_rate_limited()
             if i < self.retries - 1:
-                wait = retry_wait_s if retry_wait_s is not None else self.backoff_s
+                # 요청 과다(429·limit_status)면 운용사 쿨다운, 전송 오류·5xx 는 짧게
+                wait = retry_wait_s if limited and retry_wait_s is not None else self.backoff_s
                 self.sleep(wait * (i + 1))
         raise IssuerError(issuer, status, scrub(f"{_path(url)} 재시도 소진 — {last}", params))
 

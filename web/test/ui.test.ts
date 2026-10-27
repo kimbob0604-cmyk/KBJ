@@ -239,6 +239,15 @@ describe('SVG', () => {
     expect(sparkline([], { label: 'x' }).querySelector('polyline')).toBeNull();
   });
 
+  it('스파크라인: 크기를 주면(표 칸) 그 크기 그대로 — 전역 svg 폭 100% 로 칸만큼 늘지 않게', () => {
+    const cell = sparkline([1, 2, 3], { label: '종목 12개월', w: 80, h: 20 });
+    expect(cell.style.width).toBe('80px');
+    expect(cell.style.height).toBe('20px');
+    expect(cell.classList.contains('spark-cell')).toBe(true);
+    // 크기를 안 주면(카드 — 폭을 채운다) 인라인 크기 없음
+    expect(sparkline([1, 2, 3], { label: '코스피' }).style.width).toBe('');
+  });
+
   it('막대: 음수·빈 값은 그리지 않고 기준선', () => {
     const s = barChart([10, null, -1, 20], { label: '거래대금', ref: 15 });
     expect(s.querySelectorAll('rect')).toHaveLength(2);

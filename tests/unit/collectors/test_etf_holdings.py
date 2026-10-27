@@ -14,11 +14,11 @@ import pytest
 
 from kbj.core.quality import Quality
 from kbj.core.rows import EtfDay, EtfMeta, EtfType, HoldingRow, SplitEvent
-from kbj.data.private.etf_issuers.base import FundRef, IssuerHttp
+from kbj.data.private.etf_issuers.base import FundRef, IssuerHttp, holding
 from kbj.data.private.etf_issuers.registry import build
 from kbj.data.spec import DataKey
 from kbj.services.collectors import etf_holdings
-from kbj.services.collectors.etf_holdings import EMPTY_LIMIT, ENGINE_VERSION, accept
+from kbj.services.collectors.etf_holdings import DOWN_AFTER, EMPTY_LIMIT, ENGINE_VERSION, accept
 from kbj.services.scheduler.handlers import JobResult
 from kbj.store.repos import MemoryRepos, memory_repos
 from tests.fakes.etf_issuer_server import ETF_IN_FUND, ISSUERS, FakeIssuers, funds_of
@@ -73,6 +73,7 @@ def test_first_run_snapshots_and_no_changes(repos: MemoryRepos) -> None:
         "errors": 0,
         "dropped": 0,
         "skipped": 1,
+        "down_skipped": 0,
     }
     # 메타 분류(운용사·테마·유형)를 채웠다
     m = repos.etf.meta()[funds_of("kodex")[0].ticker]
@@ -104,15 +105,31 @@ def test_second_day_changes_written_once_for_all_funds(repos: MemoryRepos) -> No
 
 
 def test_one_issuer_failure_is_isolated(repos: MemoryRepos) -> None:
+    """한 운용사가 통째로 무너져도 작업은 ok — 굳은 의존인 etf.report 가 막히지 않는다(2026-10-27:
+    운용사 한 곳 실패가 작업 failed → 리포트 미발송이었다). 빠진 운용사는 detail 에 이름으로."""
     w = FakeIssuers(latest=date(2026, 10, 6), fail={"kodex": 500})
     res = run(repos, w, "2026-10-07", kst(2026, 10, 7, 8))
-    assert res.status == "failed" and res.collected == ()
-    assert "kodex" in res.detail["reason"]
+    assert res.status == "ok" and res.collected == (key("2026-10-07"),)
+    assert res.detail["failed_issuers"] == {"kodex": "삼성 KODEX"}
+    assert "kodex" in res.detail["degraded"] and "reason" not in res.detail
     assert "xyz" not in str(res.detail)  # 사유의 키 꼴 값은 가렸다
     funds = repos.etf.funds()
     assert not any(f.startswith("kodex:") for f in funds)
     assert sum(1 for f in funds if f.startswith("tiger:")) == 2  # 해외형은 저장하지 않는다
     assert any(f.startswith("tiger:") for f in repos.etf.holding_dates())
+
+
+def test_most_issuers_failing_fails_the_job(repos: MemoryRepos) -> None:
+    """절반을 넘게 통째로 실패하면 네트워크·우리 쪽 문제로 보고 failed(등록부 재시도)."""
+    w = FakeIssuers(latest=date(2026, 10, 6), fail={"kodex": 500, "sol": 503})
+    res = run(repos, w, "2026-10-07", kst(2026, 10, 7, 8), keys=["kodex", "sol", "ace"])
+    assert res.status == "failed" and res.collected == ()
+    assert "kodex" in res.detail["reason"] and "sol" in res.detail["reason"]
+    assert set(res.detail["failed_issuers"]) == {"kodex", "sol"}
+    half = run(repos, w, "2026-10-07", kst(2026, 10, 7, 8, 15), keys=["kodex", "ace"])
+    assert half.status == "ok"  # 절반은 넘지 않는다
+    alone = run(repos, w, "2026-10-07", kst(2026, 10, 7, 8, 30), keys=["kodex"])
+    assert alone.status == "failed"  # 하나뿐인 운용사가 실패 — 받은 것이 없다
 
 
 def test_universe_failure_falls_back_to_known_funds(repos: MemoryRepos) -> None:
@@ -124,6 +141,59 @@ def test_universe_failure_falls_back_to_known_funds(repos: MemoryRepos) -> None:
     assert res.status == "ok"
     assert "kodex:universe" in res.detail["errors"]
     assert res.detail["issuers"]["kodex"]["snapshots"] == 2
+
+
+def test_empty_universe_is_a_universe_failure(
+    repos: MemoryRepos, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """목록 0건 = 파서가 못 찾은 것(TIGER 2026-10-27 모양 변경) — 저장된 추적 펀드로 PDF 를 받고
+    사유를 남긴다(전에는 0건을 정상으로 받아 TIGER 가 조용히 빠졌다)."""
+    w = FakeIssuers(latest=date(2026, 10, 6))
+    run(repos, w, "2026-10-07", kst(2026, 10, 7, 8), keys=["tiger"])
+    w.latest = date(2026, 10, 7)
+    http = IssuerHttp(httpx.Client(transport=w.transport()), sleep=lambda s: None)
+    [tiger] = build(http, ["tiger"])
+    monkeypatch.setattr(tiger, "universe", list)  # 바뀐 모양 — 0건
+    c = ctx(JOB, "2026-10-08", [key("2026-10-08")], now=kst(2026, 10, 8, 8), repos=repos,
+            etf_issuers=[tiger], parallel=False)  # fmt: skip
+    res = etf_holdings.run(c)
+    assert res.status == "ok"
+    assert "0건" in res.detail["errors"]["tiger:universe"]
+    assert res.detail["issuers"]["tiger"]["snapshots"] == 2
+    assert all(f.track for f in repos.etf.funds().values() if f.issuer == "tiger")
+
+
+class _DownAdapter:
+    """펀드 8개, PDF 는 늘 접속 오류 — 내려간 운용사."""
+
+    KEY = "kodex"
+    NAME = "가짜 KODEX"
+    DEPTH = "full"
+    HISTORY = True
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def universe(self) -> list[FundRef]:
+        f = funds_of("kodex")[0]
+        return [FundRef(f"KD{i:03d}", None, f"{f.name} {i}") for i in range(8)]
+
+    def holdings(self, fund_key: str, day: date) -> tuple[dict[str, HoldingRow], date]:
+        self.calls += 1
+        raise httpx.ConnectTimeout("handshake timed out")
+
+
+def test_issuer_down_skips_remaining_funds(repos: MemoryRepos) -> None:
+    """PDF 오류가 DOWN_AFTER 번 이어지면 남은 펀드는 부르지 않는다 — 접속 안 되는 호스트에 펀드마다
+    재시도·시간 상한을 다 쓰지 않게(한 운용사가 작업을 수십 분 붙잡았다)."""
+    down = _DownAdapter()
+    c = ctx(JOB, "2026-10-07", [key("2026-10-07")], now=kst(2026, 10, 7, 8), repos=repos,
+            etf_issuers=[down], parallel=False)  # fmt: skip
+    res = etf_holdings.run(c)
+    assert down.calls == DOWN_AFTER
+    d = res.detail["issuers"]["kodex"]
+    assert d["errors"] == 8 and d["down_skipped"] == 8 - DOWN_AFTER
+    assert res.status == "failed" and res.detail["failed_issuers"] == {"kodex": "가짜 KODEX"}
 
 
 def test_empty_streak_drops_fund_after_limit(repos: MemoryRepos) -> None:
@@ -213,3 +283,25 @@ def test_record_flow_checks_writes_c3_and_detected_splits(repos: MemoryRepos) ->
     empty = etf_holdings.record_flow_checks(repos, date(2026, 10, 9), now=now, loaded_by="x",
                                             tol=0.02, ratios=(2,))  # fmt: skip
     assert empty == {"flows": 0, "split_detected": 0, "c3_failed": 0}
+
+
+class _ThrottledAdapter(_DownAdapter):
+    """펀드 8개 중 홀수 번째 PDF 는 요청 과다로 실패 — 이어서 실패하지 않아 건너뛰기는 없다."""
+
+    def holdings(self, fund_key: str, day: date) -> tuple[dict[str, HoldingRow], date]:
+        self.calls += 1
+        if self.calls % 2:
+            raise RuntimeError("HTTP 429 요청 과다")
+        return {"005930": holding("kodex", "005930", "가짜", 10.0, 5.0, 1_000.0)}, day
+
+
+def test_partially_fetched_issuer_is_reported(repos: MemoryRepos) -> None:
+    """통째 실패는 아니지만 펀드 10% 넘게 못 받은 운용사는 detail `partial_issuers` — 리포트
+    머리 줄이
+    '일부만 받음'으로 적는다(KODEX 7/94 가 10-20 부터 매일 드러나지 않았다)."""
+    thr = _ThrottledAdapter()
+    c = ctx(JOB, "2026-10-07", [key("2026-10-07")], now=kst(2026, 10, 7, 8), repos=repos,
+            etf_issuers=[thr], parallel=False)  # fmt: skip
+    res = etf_holdings.run(c)
+    assert res.status == "ok" and "failed_issuers" not in res.detail
+    assert res.detail["partial_issuers"] == {"kodex": "가짜 KODEX 4/8"}

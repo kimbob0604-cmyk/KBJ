@@ -60,6 +60,63 @@ def test_p4_domain_jobs_exist_in_registry() -> None:
         assert set(DOMAIN_JOBS[domain]) <= names, domain
 
 
+# 영역 readers 가 읽는 표(2026-10-27 실시간 점검 — docs/realtime_audit.md). 이 표를 쓰는 켜진
+# 작업은 그 영역 DOMAIN_JOBS 에 있어야 한다 — 빠지면 그 작업이 쓴 값이 응답 TTL(5분·종목 1시간)까지
+# 옛 본문에 묶이고, 원장 캐시(market|flows 버전 토큰 — TTL 없음)는 다른 작업이 돌 때까지 옛
+# 원장이었다.
+_LEDGER = {"prv_market.daily_bar", "prv_market.stock_snapshot", "prv_market.universe",
+           "prv_flows.stock_investor_daily"}  # fmt: skip
+READS: dict[str, set[str]] = {
+    "market": _LEDGER | {
+        "prv_market.index_intraday", "prv_market.sector_intraday",
+        "prv_flows.market_investor_daily", "prv_board.label", "prv_board.stock_day",
+        "prv_board.artifact", "prv_diag.vol_index", "pub_market_stats.credit_balance",
+        "pub_trade.ten_day", "pub_macro.series", "prv_macro.series",
+    },
+    "flows": _LEDGER | {"prv_flows.market_investor_daily", "prv_flows.investor_intraday",
+                        "prv_market.turnover_rank_intraday", "prv_board.label"},
+    "flows_minute": {"prv_gex.investor_flow", "prv_market.index_intraday"},
+    "gex": {"prv_gex.investor_flow"},
+    "screen": {"prv_market.daily_bar", "prv_market.stock_snapshot", "prv_market.universe"},
+    "stock": {"prv_market.daily_bar", "prv_market.stock_snapshot", "prv_market.universe"},
+    "etf": {"prv_etf.etf_daily", "prv_etf.meta", "prv_etf.quote_intraday",
+            "prv_etf.split_event", "prv_etf.fund", "prv_etf.holding", "prv_etf.change_log"},
+}  # fmt: skip
+# (영역, 작업) — 표를 쓰지만 그 영역 readers 가 고르지 않는 행만 쓴다
+EXEMPT: dict[tuple[str, str], str] = {
+    ("flows", "us.eod"): "미국 일봉(market='US') — 국내 원장은 market='KR' 만",
+    ("screen", "us.eod"): "미국 일봉(market='US')",
+    ("stock", "us.eod"): "미국 일봉(market='US')",
+    ("screen", "flows.intraday"): "잠정 스냅(kis.prelim)만 — snapshot() 이 그 날을 고르지 않는다",
+    ("stock", "flows.intraday"): "잠정 스냅(kis.prelim)만 — snapshot() 이 그 날을 고르지 않는다",
+}
+
+
+def test_domain_jobs_cover_table_writers() -> None:
+    """영역 readers 가 읽는 표를 쓰는 켜진 작업은 모두 그 영역 버전에 든다."""
+    import yaml
+
+    from kbj.config.files import REPO_ROOT
+
+    doc = yaml.safe_load((REPO_ROOT / "config" / "jobs.yaml").read_text(encoding="utf-8"))
+    writers: dict[str, set[str]] = {}
+    for j in doc["jobs"]:
+        if j.get("enabled"):
+            for t in j.get("writes") or []:
+                writers.setdefault(t, set()).add(j["name"])
+    missing = {
+        (domain, job)
+        for domain, tables in READS.items()
+        for t in tables
+        for job in writers.get(t, set())
+        if job not in DOMAIN_JOBS[domain] and (domain, job) not in EXEMPT
+    }
+    assert not missing, sorted(missing)
+    for domain, tables in READS.items():  # 표 이름 오타(쓰는 작업이 없는 표)도 잡는다
+        unknown = sorted(t for t in tables if t not in writers)
+        assert not unknown, (domain, unknown)
+
+
 def test_response_cache_expiry_and_bound() -> None:
     clock = FakeClock(datetime(2026, 10, 7, tzinfo=UTC))
     c = ResponseCache(now=clock, max_entries=2)

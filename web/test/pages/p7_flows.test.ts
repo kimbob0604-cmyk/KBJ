@@ -2,6 +2,8 @@
 // 로그인: 종목을 고르면 /api/trade/stock/<코드>/preview·/flows 한 번씩, 프리뷰 카드 + 흐름 카드·차트·표·CSV.
 // 공개: 자물쇠(요청 0).
 import { describe, expect, it } from 'vitest';
+import type { DataSource, Envelope, Params } from '../../src/data/source';
+import type { TradeStocks } from '../../src/pages/p7/common';
 import { flowsCsv, flowsPanel, pick, TITLE, type TradeStockFlows } from '../../src/pages/p7/flows';
 import { type TradePreview, verdictText } from '../../src/pages/p7/preview';
 import { mount } from '../../src/pages/p7/stocks';
@@ -95,6 +97,39 @@ describe('종목별 무역 흐름', () => {
     await fp.show('994010');
     await flush();
     expect(text(fp.el)).toContain('매핑 없음');
+    // 404 no_data 는 서버 문구 그대로 — 지수 작업 시각 힌트를 덧붙이지 않는다(매핑 없음과 무관한 안내였다)
+    expect(fp.el.querySelector('.flows .msg.err')).toBeNull();
+    expect(text(fp.el.querySelector('.flows'))).not.toContain('trade.stock_index');
+  });
+
+  it('종목을 빨리 바꾸면 마지막 종목만 — 먼저 고른 종목의 늦은 응답이 덮지 않는다', async () => {
+    const hz = mapLoginHarness();
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((r) => {
+      release = r;
+    });
+    // 992004 응답만 늦게 온다(데모 감사 2026-10-27 — 상자는 B 인데 흐름은 A 로 남았다)
+    const slow: DataSource = {
+      tier: 'login',
+      get: async <T,>(key: string, params?: Params): Promise<Envelope<T>> => {
+        if (key.includes('992004')) await gate;
+        return hz.source.get<T>(key, params);
+      },
+    };
+    const fp = flowsPanel({ tier: 'login', source: slow, now: () => MAP_NOW }, [
+      { code: '992004', name: 'A' },
+      { code: '992060', name: 'B' },
+    ] as TradeStocks['rows']);
+    document.body.append(fp.el);
+    const first = fp.show('992004');
+    await fp.show('992060');
+    release();
+    await first;
+    await flush();
+    const later = mapFixture<{ data: TradeStockFlows }>('flows_992060');
+    expect(text(fp.el.querySelector('.flows-head'))).toContain(`(${later.data.code})`);
+    expect(text(fp.el.querySelector('.flows-head'))).not.toContain('992004');
+    expect(fp.el.querySelector<HTMLSelectElement>('select')?.value).toBe('992060');
   });
 
   it('공개: 자물쇠, 요청 0', async () => {

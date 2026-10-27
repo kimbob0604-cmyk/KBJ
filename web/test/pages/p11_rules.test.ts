@@ -2,7 +2,8 @@
 // rules.py). 칸 폭: 규칙 표만 전체 폭, 편집기·이력은 반폭. 404 는 '.msg', 그 밖 실패만 '.msg.err'. 쓰기 채널(데이터 소스
 // `post`·`put`)이 없으면 쓰기 단추를 끄고 요청하지 않는다. 공개판은 자물쇠만(요청 0).
 import { describe, expect, it } from 'vitest';
-import p11, { P11_PANELS, P11_SECTIONS } from '../../src/pages/p11_rules';
+import { SLOT_TICK_MS } from '../../src/app/refresh';
+import p11, { HISTORY_REFRESH_PERIOD_MS, P11_PANELS, P11_SECTIONS } from '../../src/pages/p11_rules';
 import { blankModel, fillEditor, fromDsl, toDsl } from '../../src/pages/p11/editor';
 import { evidenceLine, fillHistory, statusText } from '../../src/pages/p11/history';
 import { fillRules } from '../../src/pages/p11/rules';
@@ -63,6 +64,32 @@ describe('페이지 11 — 배치', () => {
     await flush();
     expect(hz.calls).toHaveLength(0);
     expect(root.querySelectorAll('section.panel.locked')).toHaveLength(Object.keys(P11_PANELS).length);
+  });
+});
+
+describe('페이지 11 — 장중 새로 고침', () => {
+  it('발송 이력만 벽시계 10분 슬롯에 맞춰 다시 읽는다(rules.intraday — 2026-10-27)', async () => {
+    const hz = rulesHarness();
+    let t = RULES_NOW.getTime();
+    const { ctx, every } = pageCtx(11, 'login', hz.source, { now: () => new Date(t) });
+    await p11.mount(ctx);
+    await flush();
+    expect(every.map((e) => e.ms)).toEqual([SLOT_TICK_MS]);
+    const signals = (): number => hz.paths().filter((x) => x === 'rules/signals').length;
+    const before = hz.paths().length;
+    expect(signals()).toBe(1);
+    t += HISTORY_REFRESH_PERIOD_MS;
+    every[0]?.fn();
+    await flush();
+    expect(signals()).toBe(2);
+    expect(hz.paths().length).toBe(before + 1); // 다른 패널은 다시 읽지 않는다
+  });
+
+  it('공개판은 주기 작업을 걸지 않는다', async () => {
+    const hz = rulesHarness();
+    const { ctx, every } = pageCtx(11, 'public', hz.source, { now: () => RULES_NOW });
+    await p11.mount(ctx);
+    expect(every).toHaveLength(0);
   });
 });
 

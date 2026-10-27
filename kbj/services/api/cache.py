@@ -50,10 +50,16 @@ DOMAIN_JOBS: Final[Mapping[str, tuple[str, ...]]] = {
         "board.daily",
         "board.confirm",
         "trade.customs_tenday",  # P6 — 상단 띠 '수출 속보' 칩(docs/p6_design.md §5)
+        # 2026-10-27 실시간 점검(docs/realtime_audit.md) — 요약 보조 타일·띠 칩이 읽는 표의 작업:
+        # 금융위 일봉(원장)·VKOSPI 타일·원/달러 타일과 신용스프레드 칩(매크로)·신용잔고 칩(금투협)·
+        # 한국 대 글로벌 칩(미국 지수 일봉). 빠지면 그 작업이 쓴 값이 TTL(5분)까지 옛 본문에 묶였다
+        "market.fsc_daily", "krx.vkospi", "market_stats.kofia", "us.eod",
+        "macro.morning", "macro.morning_prv", "macro.monthly", "macro.monthly_prv",
+        "macro.evening", "macro.evening_prv",
     ),
     "board": ("board.daily", "board.confirm", "market.close_collect", "krx.daily"),
     "flows": ("krx.daily", "market.backfill", "market.close_collect", "flows.intraday",
-              "board.daily", "board.confirm"),
+              "board.daily", "board.confirm", "market.fsc_daily"),
     "etf": ("krx.daily", "market.backfill", "market.close_collect", "flows.intraday",
             "etf.collect"),
     # P4(docs/p4_design.md §5.3 — 묶음 A): 종목 상세는 시세·보드 + 공시·재무·컨센서스·밸류 작업,
@@ -63,7 +69,7 @@ DOMAIN_JOBS: Final[Mapping[str, tuple[str, ...]]] = {
               "board.daily", "board.confirm", "filings.corp_code", "filings.company_profile",
               "filings.dart_feed", "filings.derive", "fin.quarterly", "fin.backfill",
               "reports.dart_excel", "consensus.snapshot", "fin.valuation_band", "earnings.alerts",
-              "earnings.backfill"),
+              "earnings.backfill", "market.fsc_daily"),
     "filings": ("filings.corp_code", "filings.company_profile", "filings.dart_feed",
                 "filings.derive", "fin.quarterly", "earnings.alerts", "earnings.backfill",
                 "krx.daily", "market.close_collect"),
@@ -73,7 +79,8 @@ DOMAIN_JOBS: Final[Mapping[str, tuple[str, ...]]] = {
               "macro.evening", "macro.evening_prv", "market_stats.kofia"),
     "program": ("program.intraday", "program.stock_scan", "program.daily", "program.stock_sweep",
                 "program.backfill"),
-    "flows_minute": ("flows.market_minute", "market.close_collect"),
+    # 1분 투자자 차트는 지수 장중(market.intraday)도 겹쳐 그린다
+    "flows_minute": ("flows.market_minute", "market.close_collect", "market.intraday"),
     "board_us": ("us.universe", "us.eod"),
     # P5 2차 묶음 IDX — 지수 정기변경 예측(구성종목·컷오프는 CLI 가 직접 쓴다 — 다음 예측
     # 실행 때 바뀐다)
@@ -85,7 +92,9 @@ DOMAIN_JOBS: Final[Mapping[str, tuple[str, ...]]] = {
     # 기록이 없다 — 버전은 마지막 엔진 사이클 시각(DOMAIN_TS 의 `gex:latest` 뜻 —
     # prv_gex.levels max(ts))
     # 과 알림 작업 중 늦은 것. 진단은 작업 셋(공개·로그인·VKOSPI).
-    "gex": ("gex.alert",),
+    # `/api/gex/flow` 는 1분 투자자(prv_gex.investor_flow — flows.market_minute, 마감+10분까지)도
+    # 읽는다
+    "gex": ("gex.alert", "flows.market_minute"),
     # 선물 미결제약정 패널(metrics §33, ADR 0043) — KRX 파생 일별(08:05)·장중 투자자
     # + 전광판 최신 시각
     "gex_oi": ("gex.krx_derivatives", "flows.market_minute"),
@@ -98,7 +107,7 @@ DOMAIN_JOBS: Final[Mapping[str, tuple[str, ...]]] = {
     # 페이지 9(ADR 0039) — 대테마 분류·편입(주 1회) + 강도의 시세(보드 종목 하루)
     "themes": ("theme.master_sync", "theme.classes_sync", "board.daily", "board.confirm"),
     # 페이지 11 스크리너 — 전 종목 일봉·스냅(마감 수집·KRX 일별)
-    "screen": ("krx.daily", "market.backfill", "market.close_collect"),
+    "screen": ("krx.daily", "market.backfill", "market.close_collect", "market.fsc_daily"),
 }  # fmt: skip
 # 작업 기록 말고 표의 최신 시각으로도 버전을 정하는 영역(상시 서비스가 쓰는 표 — 상수 SQL)
 DOMAIN_TS: Final[Mapping[str, str]] = {

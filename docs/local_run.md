@@ -68,6 +68,7 @@ bash scripts/local/kbj.sh start
 | 나머지 빈 칸(매크로·미국·신용·테마·진단) 한 번에 채우기 | `bash scripts/local/kbj.sh fill-all` (키가 없는 작업은 실패로 나오니 끝에 나오는 목록을 본다. 미국 일봉은 맨 끝 — 처음엔 약 1,700종목을 받느라 15~60분 조용하다) |
 | 통계청(KOSIS) 항목 코드표 보기 | `bash scripts/local/kbj.sh probe-kosis` (키는 안 보인다 — 출력을 그대로 보내 주면 매크로 KOSIS 칸을 켠다) |
 | 호출 예산을 누가 썼나 | `bash scripts/local/kbj.sh budget` — 오늘 DART·공공데이터 등 하루 예산의 쓴 수·닫힘 사유와 작업별 셈. 같은 사유의 작업 실패 알림은 하루 한 통만 온다 |
+| 작업 오류가 많다 | `bash scripts/local/kbj.sh errors --since 7d` — 작업마다 실패·시간 초과·건너뜀(공표 대기·의존 막힘)·마지막 사유(값·키 없음). 원인 분류와 고친 것은 `docs/ops_error_catalog.md` |
 | 화면 데이터 전체 점검 | `bash scripts/local/kbj.sh audit` — 화면 API 전부의 상태·기준 시각·빈 칸(로그인 없이). 한 화면 값은 `audit --show /api/market/summary` |
 | Claude 에게 맡기기 | 맥 터미널에서 `cd ~/kbj && claude remote-control` — 세션이 Claude 앱에 뜬다. 점검 절차는 `.claude/skills/local-verify/SKILL.md`, `.env` 읽기는 `.claude/settings.json` 에서 막는다 |
 | 종목 상세(8번) 재무·공시 채우기(DART 키 필요, 처음 한 번 + 며칠) | `bash scripts/local/kbj.sh fill-dart` |

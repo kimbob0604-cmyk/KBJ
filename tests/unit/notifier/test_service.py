@@ -163,7 +163,8 @@ def test_transient_failure_retries_then_succeeds_without_resending_sent_parts(on
     on.client.notify(body, kind="ops.universe", source="s")
     on.svc.drain_once()
     row = on.store.rows[0]
-    assert row.status == "queued" and "재시도 1/3" in row.reason
+    n = on.svc.config.delivery.max_attempts
+    assert row.status == "queued" and f"재시도 1/{n}" in row.reason
     assert on.svc.drain_once() == 0  # 아직 때가 아니다
     on.clock.advance(10)
     on.svc.drain_once()
@@ -225,9 +226,10 @@ def test_ack_failure_after_sending_does_not_resend(on: Rig, tmp_path: Path) -> N
 
 
 def test_transient_failures_exhaust_then_failed_and_gate_released(on: Rig) -> None:
-    on.tg.script["sendMessage"] = [httpx.Response(503, text="x")] * 3
+    n = on.svc.config.delivery.max_attempts
+    on.tg.script["sendMessage"] = [httpx.Response(503, text="x")] * n
     t = on.client.notify("x", kind="brief.morning", source="job")
-    for _ in range(3):
+    for _ in range(n):
         on.svc.drain_once()
         on.clock.advance(400)
     (row,) = on.store.rows

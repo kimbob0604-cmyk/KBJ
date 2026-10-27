@@ -444,6 +444,7 @@ P6 관세청 수집(`trade.customs_tenday`·`trade.customs_monthly`)을 막는 �
 | FHKST01010900 거래 없는 ETF | 당일 거래량 0 인 ETF(채권형)는 당일 행이 **빈 문자열 칸**으로 온다(공표 지연과 같은 모양). 응답에 거래량 칸은 없다 — 현재가(FHKST01010100 `acml_vol`)로만 안다 | `market_close._settle_unknown` |
 | KIS 마감 스냅 대 KRX 확정 거래대금 | 2026-10-19 2,761 종목 중 2,180 이 KIS 쪽이 **작고**(중앙 4.5%, 최대 92.7% — 시간외 대량매매), 큰 종목은 0. 종가는 전부 일치. KIS 스냅은 15:35 — 시간외 종가·단일가·대량매매가 빠진다 | `reconcile.reconcile` 거래대금 한쪽 검사 |
 | KB RISE 운용사 사이트 | www.riseetf.co.kr 전체가 302 → kbam.co.kr(2026-10). 새 JSON API: 목록 `/api/products/etfs?page=&page_size=`(쪽당 20 고정, `krx_cd` 있음), 구성종목 `/api/products/etfs/{fund_cd}/holdings?base_dt=`(상위 30줄·ISIN `item_cd`·`available_dates`; 공시 없는 날을 달라면 최신 날을 준다), 전체는 `?download=xlsx`(종목코드가 ISIN 을 6자리로 줄인 값 — 원화예금·채권도 코드처럼 보인다) | `etf_issuers.rise` |
+| 미래에셋 TIGER 목록(2026-10-27) | `list.ajax` 상품 링크가 `ksdFund=ISIN` 이 아니라 `javascript:cmmCtrl.getEtfDtlPop('ISIN','이름')` — 옛 정규식은 0건(TIGER 가 조용히 빠짐). PDF `pdfListAjax.ajax?ksdFund=…&fixDate=YYYY.MM.DD` 는 그대로(코드·이름·수량·평가금액·비중 순). 해외 IP 는 CloudFront 403(→ /magi/index.html) — 맥(국내)에서 확인 필요 | `etf_issuers.tiger`·`etf_holdings`(목록 0건 = 목록 실패) |
 | 프로그램 시장 일별(검산 ④) | 잔차가 대금 ±1(백만원)·수량 ±1 — 칸마다 따로 반올림. 허용 0 이면 매일 invalid | `engines.flows.program.CHECK4_TOL` |
 
 ---

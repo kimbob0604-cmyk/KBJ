@@ -255,8 +255,13 @@ export function flowsPanel(t: TabCtx, stocks: TradeStocks['rows'] = []): FlowsPa
     p.clearBody();
     p.body.append(select, out);
   }
+  // 요청 번호 — 종목을 빨리 바꾸면 먼저 누른 종목의 늦은 응답이 나중 종목 자리를 덮었다(상자는 B, 흐름·프리뷰는 A —
+  // 종목↔흐름 짝이 어긋나 보임). 마지막으로 고른 종목의 응답만 그린다(p8_stock.ts gen 과 같은 규칙)
+  let gen = 0;
   async function show(code: string): Promise<void> {
     if (p.locked || !code) return;
+    gen += 1;
+    const my = gen;
     select.value = code;
     out.replaceChildren(h('p', { class: 'msg' }, '불러오는 중…'));
     const pv = t.source
@@ -265,6 +270,8 @@ export function flowsPanel(t: TabCtx, stocks: TradeStocks['rows'] = []): FlowsPa
       .catch(() => h('p', { class: 'msg' }, '실적 프리뷰 없음(지수·매출 부족)'));
     try {
       const env = await t.source.get<TradeStockFlows>(`trade/stock/${code}/flows`);
+      const card = await pv;
+      if (my !== gen) return; // 그 사이 다른 종목을 골랐다
       const d = env.data;
       const basis = env.as_of.slice(0, 10);
       out.replaceChildren(
@@ -274,11 +281,12 @@ export function flowsPanel(t: TabCtx, stocks: TradeStocks['rows'] = []): FlowsPa
           `${d.name} (${d.code}) · 흐름 ${String(d.flows.length)}개`,
           d.reviewed ? null : h('span', { class: 'tag warn' }, '검토 전'),
         ),
-        await pv,
+        card,
         ...d.flows.map((f) => flowBlock(d, f, basis)),
       );
       p.setSource(env);
     } catch (err) {
+      if (my !== gen) return;
       out.replaceChildren(failNote(err, TRADE_HINT.stocks));
     }
   }

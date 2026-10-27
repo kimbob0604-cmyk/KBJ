@@ -87,3 +87,26 @@ def test_http_needs_absolute_url_and_passes_query() -> None:
         http.text("x", "/relative")
     with pytest.raises(ValueError):
         http.cap_rate("a.example", 0)
+
+
+def test_limit_status_is_retried_like_429() -> None:
+    """운용사가 '요청 과다'에 429 밖의 상태(SOL 403)를 쓰면 `limit_status` 로 알려 쉬었다
+    다시 부른다
+    (2026-10-27 실측 — SOL 은 403 `Rate limit exceeded`). 알려 주지 않은 403 은 바로 오류."""
+    from kbj.data.private.etf_issuers.base import IssuerError
+
+    n = {"calls": 0}
+
+    def h(req: httpx.Request) -> httpx.Response:
+        n["calls"] += 1
+        if n["calls"] == 1:
+            return httpx.Response(403, json={"error": "Rate limit exceeded"})
+        return httpx.Response(200, json={"ok": 1})
+
+    waits: list[float] = []
+    http = IssuerHttp(httpx.Client(transport=httpx.MockTransport(h)), sleep=waits.append)
+    got = http.json("sol", "https://a.example/p", retry_wait_s=60.0, limit_status=frozenset({403}))
+    assert got == {"ok": 1} and waits == [60.0]
+    n["calls"] = 0
+    with pytest.raises(IssuerError):
+        http.json("sol", "https://a.example/p")

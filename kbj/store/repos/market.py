@@ -10,7 +10,10 @@ ET `board/engine/db.py`(`iter_series`:158·`series_for`:176·`all_series`:195·`
 - `series`·`trading_days` 의 '거래일' 은 표에 행이 있는 날짜(전 종목 합집합 — ET 와 같다). 개별
   종목의 휴장·정지일은 그 종목 목록에 행이 없다.
 - `snapshot(asof)` 는 asof 이하 가장 최근 스냅 날짜를 쓴다(ET `snapshot` — 수집일과 기준일이
-  어긋나도 비지 않게). 반환 (스냅, 실제 날짜).
+  어긋나도 비지 않게). 반환 (스냅, 실제 날짜). 장중 잠정(`kis.prelim` — `flows.intraday` 가
+  거래대금 순위 목록 종목만 쓰는 오늘 행)만 있는 날은 고르지 않는다: 그 날을 고르면 장중 내내
+  '전 종목 스냅'이 수십 종목뿐이라(시총 없음) 종목 헤더 '시세 없음'·원장 마지막 날 = 오늘(시장폭·
+  거래대금이 목록 종목만)·시총 대비 순위가 비었다(2026-10-27 점검 — docs/realtime_audit.md).
 
 쓰기 규칙: 같은 기본 키는 덮어쓴다(ON CONFLICT DO UPDATE — 재실행 멱등). Postgres 오류는 그대로
 올라간다(삼키지 않는다 — 절대 규칙 4).
@@ -20,7 +23,7 @@ from __future__ import annotations
 
 from collections.abc import Collection, Sequence
 from datetime import date, datetime
-from typing import Any, Literal, Protocol
+from typing import Any, Final, Literal, Protocol
 
 from psycopg.types.json import Jsonb
 
@@ -48,6 +51,9 @@ from kbj.store.repos._common import (
 )
 
 Asset = Literal["stock", "etf", "etn"]
+# 장중 잠정 스냅 원천 — kbj.data.private.kis.ranks.PRELIM_SOURCE 와 같은 값(저장소는 data 를
+# import 하지 않는다). `snapshot` 이 날짜를 고를 때 이 원천만 있는 날은 건너뛴다
+PRELIM_SNAP_SOURCE: Final = "kis.prelim"
 
 
 class MarketRepo(Protocol):
@@ -87,7 +93,8 @@ class MarketRepo(Protocol):
     ) -> int: ...
 
     def snapshot(self, asof: date) -> tuple[dict[str, Snap], date | None]:
-        """asof 이하 가장 최근 스냅 날짜의 {code: 스냅}(원장 우선순위로 한 행)과 그 날짜."""
+        """asof 이하 가장 최근 스냅 날짜의 {code: 스냅}(원장 우선순위로 한 행)과 그 날짜. 장중 잠정
+        (`kis.prelim`)만 있는 날은 건너뛴다(고른 날의 잠정 행은 우선순위 맨 뒤로 함께 온다)."""
         ...
 
     def snapshots(self, day: date, *, source: str | None = None) -> list[Snap]:
@@ -450,8 +457,8 @@ class PgMarketRepo:
         with self._connect() as conn:
             row = conn.execute(
                 b"SELECT max(trade_date) FROM prv_market.stock_snapshot "
-                b"WHERE market = %s AND trade_date <= %s",
-                (MARKET, asof),
+                b"WHERE market = %s AND trade_date <= %s AND lower(source) <> %s",
+                (MARKET, asof, PRELIM_SNAP_SOURCE),
             ).fetchone()
             used: date | None = row[0] if row else None
             if used is None:

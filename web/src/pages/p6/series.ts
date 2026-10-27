@@ -4,7 +4,7 @@
 import type { Envelope } from '../../data/source';
 import { append, h } from '../../ui/dom';
 import { kstStamp } from '../../ui/fmt';
-import { errorText, panel, type Panel } from '../../ui/panel';
+import { failText, isNoDataError, panel, type Panel } from '../../ui/panel';
 import { sourceText } from '../../ui/quality';
 import { tabs } from '../../ui/tabs';
 import { MACRO_HINT, type MacroSeriesSet, type MacroTab, type P6Ctx, seriesGrid, seriesKey } from './common';
@@ -24,7 +24,8 @@ export async function loadTab(c: P6Ctx, tab: string, into: HTMLElement): Promise
     ]);
     return env;
   } catch (err) {
-    into.append(h('p', { class: 'msg err' }, `${errorText(err)} — ${MACRO_HINT}`));
+    // 404(아직 수집 전)는 안내(.msg), 그 밖만 오류(.msg.err) — 수집 전 탭이 빨간 오류로 보였다(페이지 3·7 과 같은 규칙)
+    into.append(h('p', { class: isNoDataError(err) ? 'msg' : 'msg err' }, failText(err, MACRO_HINT)));
     return null;
   }
 }

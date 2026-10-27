@@ -84,8 +84,8 @@
    classify' 대체) → PDF. 목록이 실패하면 저장된 추적 펀드로 PDF 만. ③ 저장은 주 스레드만 — 실제 기준일 스냅을
    통째로 바꾸고(멱등), 빈 응답 3회 연속(`EMPTY_LIMIT` — ET 그대로)이면 추적 제외, 네트워크 오류는 세지 않는다,
    기준일이 요청일보다 뒤면 받지 않는다. ④ 변동은 실행일 행을 **한 번에 통째로**(`put_changes` — 펀드마다 부르면
-   앞 펀드 것이 지워진다). 운용사 하나라도 통째로 실패하면 `failed`(등록부 재시도 3×900초 — 다시 돌려도 같은
-   결과), 아니면 `ok`. 텔레그램 리포트는 P5.
+   앞 펀드 것이 지워진다). ~~운용사 하나라도 통째로 실패하면 `failed`~~ → 통째로 실패한 운용사가 절반을 넘을 때만
+   `failed`(등록부 재시도 3×900초), 아니면 `ok` + detail `failed_issuers`(아래 '갱신 2026-10-27'). 텔레그램 리포트는 P5.
 7. **legacy shim**: `themes.py` 는 kbj 를 다시 내보내고, `tracker.py` 의 `fund_pairs`·`analyze` 는 sqlite 읽기·쓰기만
    남기고 kbj 엔진을 부르며 기준값은 markets.yaml 에서 읽는다. `collectors.py`·`adapters/*.py` 의 운용사 클래스는
    kbj 어댑터를 옛 인터페이스(dict 행·문자열 날짜)로 감싼다(`LegacyAdapter`, `IssuerHttp.local()`). `NaverTop10`
@@ -120,3 +120,20 @@
 - 새 canonical 그룹 `etf_issuers`(운용사 9곳 호스트 — kbj 안은 `kbj/data/private/etf_issuers/**` 만, legacy 0건).
 - legacy: `collectors.py:NaverTop10`·`tracker.py:naver_names`·`verify.py` 를 지웠다(D-P3-12·U4). legacy `build_universe` 는
   운용사 어댑터 목록 + `etf_type` 판정만 쓴다. `market.py`(네이버 ETF 목록·시세)는 tracker·live_update 가 써서 P5 로 이월.
+
+## 갱신 (2026-10-27 — 운용사 하나가 무너져도 리포트는 간다)
+
+- 맥락: P5 의 `etf.report`(08:20)는 `etf.collect` 를 **굳은 의존**으로 둔다. §2-6 의 '운용사 하나라도 통째로 실패하면
+  `failed`' 와 겹쳐, 운용사 한 곳의 사이트 변경(RISE 이전 2026-10-20 까지 매일)이 재시도 3번 내내 같은 실패 → 리포트
+  미발송이 됐다(2026-10-27 사용자 보고 '아침 ETF 트래커가 안 됐다'). 등록부 note·절대 규칙 4(한 운용사 실패가 다른 운용사를
+  멈추지 않는다)와 어긋난다.
+- 결정: ① 통째로 실패한 운용사가 **절반을 넘으면**(`FAIL_SHARE_MAX` 0.5 — 네트워크·우리 쪽 문제) `failed`·재시도, 아니면
+  `ok` 로 끝내고 detail `failed_issuers`(키 → 이름)·`degraded` 와 로그 `etf_issuer_failed` 를 남긴다. ② `etf.report` 는
+  실행 기록(자원 `runs`)의 그날 `etf.collect` detail 에서 빠진 운용사를 읽어 머리 줄에 적는다('⚠ 구성종목 수집 실패 N곳:
+  … — 그 운용사 변동은 빠졌다' — 전체인 척하지 않는다). ③ 목록 **0건**은 목록 실패로 본다(저장된 추적 펀드로 PDF —
+  TIGER 목록 모양 변경 `getEtfDtlPop` 이 0건으로 조용히 빠졌다). ④ 펀드 PDF 오류가 `DOWN_AFTER`(5)번 이어지면 그 운용사의
+  남은 펀드는 부르지 않는다(접속 안 되는 호스트에 펀드마다 재시도·시간 상한을 쓰면 작업이 수십 분 붙잡힌다).
+- 잃는 것: 일부 운용사만 일시 실패한 날은 작업 재시도가 없다 — 그 운용사는 그날 스냅이 없고 다음 날 쌍(간격 ≤ 14일)으로
+  변동이 하루 늦게 잡힌다. 일시 오류는 요청 단위 재시도(`IssuerHttp` 3회, KoAct 쿨다운)가 먼저 막는다.
+- 시험: `tests/unit/collectors/test_etf_holdings.py`(한 곳 실패 ok·과반 실패 failed·목록 0건·내려간 운용사 건너뛰기),
+  `tests/unit/reports/test_etf_report.py`(빠진 운용사 머리 줄), `tests/unit/etf_issuers/test_adapters.py`(TIGER 새·옛 목록 꼴).

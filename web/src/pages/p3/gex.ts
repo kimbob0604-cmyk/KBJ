@@ -18,7 +18,7 @@ import { h, replace } from '../../ui/dom';
 import { DASH, num, type Num } from '../../ui/fmt';
 import { kv, type KvItem } from '../../ui/kv';
 import { ladder, type Rung } from '../../ui/ladder';
-import { errorText, type Panel, panel } from '../../ui/panel';
+import { failText, type Panel, panel } from '../../ui/panel';
 import { profile, type ProfileBar } from '../../ui/profile';
 import { seg } from '../../ui/seg';
 import { BRIEF_DEF, BRIEF_TITLE, briefView, type GexBriefing } from './gex_brief';
@@ -133,7 +133,7 @@ function notFound(err: unknown): boolean {
 }
 
 function fail(p: Panel, err: unknown, hint: string): void {
-  if (notFound(err)) p.showMessage(`${errorText(err)} — ${hint}`);
+  if (notFound(err)) p.showMessage(failText(err, hint));
   else p.showError(err);
 }
 

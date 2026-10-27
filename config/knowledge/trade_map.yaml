@@ -2388,14 +2388,6 @@ stocks:
       - {id: n1, name: "항공기 부품 — 전국", kind: national, nature: mixed, products: [{hs: '8807301000', weight: 0.3333}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
       - {id: n2, name: "헬기 부품 — 전국", kind: national, nature: mixed, products: [{hs: '8807302000', weight: 0.3333}], basis: "채널 글 76건(2025-10~2026-07) · 업황 혼합"}
     evidence: [{kind: channel, note: "@BeOn_BeClear 글 124건 — 최근 글 번호 39375, 39377, 40757, 40759, 40761, 43768, 43770, 43780, 43782, 44528, 44530, 44532"}]
-  - code: '330350'
-    name: 위더스제약
-    reviewed: true
-    sector: "항공 부품"
-    flows:
-      - {id: n1, name: "항공기 부품 — 전국", kind: national, nature: mixed, products: [{hs: '8807301000', weight: 0.5}], basis: "채널 글 38건(2025-10~2026-07) · 업황 혼합"}
-      - {id: n2, name: "헬기 부품 — 전국", kind: national, nature: mixed, products: [{hs: '8807302000', weight: 0.5}], basis: "채널 글 76건(2025-10~2026-07) · 업황 혼합"}
-    evidence: [{kind: channel, note: "@BeOn_BeClear 글 114건 — 최근 글 번호 39373, 39375, 39377, 40757, 40759, 40761, 43768, 43780, 43782, 44528, 44530, 44532"}]
   - code: '047810'
     name: 한국항공우주
     reviewed: true

@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import socket
 from collections.abc import Iterator
+from dataclasses import replace
 from datetime import date
 from typing import Any
 
@@ -433,6 +434,16 @@ def mutated() -> Iterator[P4ApiWorld]:
             ],
             loaded_by="test",
         )
+        # 같은 날 스냅도 거래량 0(KRX 일별은 봉과 스냅을 같은 행에서 만든다 — 거래 없던 날 둘 다 0)
+        day = date(2026, 11, 13)
+        repos.market.upsert_snapshots(
+            [replace(x, volume=0, turnover=0) for x in repos.market.snapshots(day)
+             if x.code == "994090"],
+            loaded_by="test",
+        )  # fmt: skip
+        # 스냅(거래량 > 0)은 있는데 그날 일봉은 아직 없다 — 장중 순위 스냅·마감 수집 전(994010)
+        for k in [k for k in repos.market.bars if k[1] == "994010" and k[2] == day]:
+            del repos.market.bars[k]
         # 우선주 매핑이 없는 경우(R13) — 994015 의 share_class 를 지운다
         repos.consensus.share_class_t.remove(lambda sc: sc.code == "994015")
         # 관심종목을 비운다 — 컨센서스 수집 대상이 시총 상위(top_n=0)뿐이 된다
@@ -469,6 +480,22 @@ def test_no_trade_day_is_not_called_halted(mutated: P4ApiWorld) -> None:
     assert any(n.startswith("거래 없음") for n in chart["notes"])
     halted = c.get("/api/stock/994030/chart?days=5").json()
     assert any(n.startswith("정지 — 마지막 거래 2026-11-06") for n in halted["notes"])
+
+
+def test_snapshot_before_daily_bar_is_not_no_trade(mutated: P4ApiWorld) -> None:
+    """그날 스냅(거래량 > 0)이 있고 일봉만 아직 없으면 거래는 있었다 — '거래 없음'·stale 이 아니다
+    (장중 거래대금 상위 순위 스냅·마감 수집 전. 데모 감사 2026-10-27 — 페이지 8 머리가 모든 종목에
+    '거래 없음 — 마지막 거래 <전 거래일>')."""
+    c = mutated.authed()
+    head = c.get("/api/stock/994010/header").json()
+    last = head["data"]["last"]
+    assert last["date"] == "2026-11-13" and last["last_trade"] == "2026-11-13"
+    assert last["stale"] is False and head["quality"] != "stale"
+    assert not any(n.startswith(("거래 없음", "정지")) for n in head["notes"]), head["notes"]
+    chart = c.get("/api/stock/994010/chart?days=5").json()
+    assert chart["data"]["bars"][-1]["date"] < "2026-11-13"
+    assert not any(n.startswith("거래 없음") for n in chart["notes"]), chart["notes"]
+    assert any(n.startswith("2026-11-13 일봉은 아직") for n in chart["notes"]), chart["notes"]
 
 
 def test_pref_without_mapping_is_no_data(mutated: P4ApiWorld) -> None:

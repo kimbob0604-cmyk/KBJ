@@ -57,7 +57,34 @@ def test_universe(key: str) -> None:
     for f in want:
         r = ref_of(refs, f)
         assert r.ticker == f.ticker
-        assert r.name == (None if key == "tiger" else f.name)  # TIGER 목록엔 이름이 없다
+        assert r.name == f.name  # TIGER 도 2026-10 목록부터 이름이 있다(getEtfDtlPop 둘째 인자)
+
+
+def test_tiger_universe_reads_new_and_old_markup() -> None:
+    """TIGER 목록 2026-10 모양 변경(실측 2026-10-27) —
+    `href="javascript:cmmCtrl.getEtfDtlPop('ISIN','이름');"`. 옛 꼴(`ksdFund=ISIN` — 이름 없음)만
+    찾던 정규식이 0건을 내 TIGER 가 조용히 빠졌다.
+    둘 다 읽고, 같은 펀드가 여러 번 나와도 한 번, 이름의 HTML 엔티티는 푼다(합성 ISIN)."""
+    page = (
+        "<a href=\"javascript:cmmCtrl.getEtfDtlPop('KR7971000001','TIGER 합성&amp;반도체');\" "
+        'title="상품상세 새창열림">x</a>'
+        "<a href=\"javascript:cmmCtrl.getEtfDtlPop( 'KR7971000001' , 'TIGER 합성&amp;반도체' );\">"
+        "y</a>"
+        '<a href="detail/index.do?ksdFund=KR7971100001">상품</a>'
+        '<a href="javascript:cmmCtrl.getEtfDtlPop(&#39;KR7971200001&#39;);">z</a>'
+    )
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, text=page)
+
+    http = IssuerHttp(httpx.Client(transport=httpx.MockTransport(handler)), sleep=lambda s: None)
+    [a] = build(http, ["tiger"])
+    refs = a.universe()
+    assert refs == [
+        FundRef("KR7971000001", "971000", "TIGER 합성&반도체"),
+        FundRef("KR7971200001", "971200", None),  # 따옴표 엔티티·이름 없는 호출
+        FundRef("KR7971100001", "971100", None),
+    ]
 
 
 # ── PDF ──

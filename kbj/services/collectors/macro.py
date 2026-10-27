@@ -63,7 +63,9 @@ from kbj.services.scheduler.handlers import JobContext, JobResult
 from kbj.store.repos.public import PublicRepos, pg_public_repos
 
 __all__ = [
+    "KeyNotSet",
     "KeyRun",
+    "Lagging",
     "NotConfigured",
     "NotReady",
     "evening",
@@ -96,6 +98,17 @@ class NotReady(Exception):
 
 class NotConfigured(Exception):
     """부를 시리즈가 없다(설정 item 이 null — 실측 전). 키는 skipped."""
+
+
+class KeyNotSet(NotConfigured):
+    """출처 키(`KBJ_…`)가 설정에 없다 — 실패가 아니라 건너뜀(키는 skipped). 키를 넣고 다시 띄우면
+    다음 실행부터 받는다(2026-10-27 — 키 없는 출처가 날마다 '작업 실패'로 쌓였다,
+    docs/ops_error_catalog.md)."""
+
+
+class Lagging(Exception):
+    """출처가 늦게 연다 — 그날 값은 없지만 허용한 지연 안의 최근 값은 받아 썼다(키는 skipped).
+    더 늦으면 `NotReady`(→ 재시도·실패)로 드러낸다."""
 
 
 class MacroRepoLike(Protocol):
@@ -253,6 +266,11 @@ class KeyRun:
             detail["reason"] = "공표 전: " + ", ".join(list(self.not_ready)[:4])
         elif self.skipped:
             status = "skipped"
+            # 운영 기록(ops.job_run detail.reason)에 건너뛴 까닭을 남긴다(키 없음·실측 전·지연)
+            detail["reason"] = (
+                f"건너뜀 {len(self.skipped)}개: "
+                + "; ".join(f"{k} {v}" for k, v in list(self.skipped.items())[:3])
+            )[:REASON_MAX]
         else:
             status = "ok"
         return JobResult(status, tuple(self.collected), self.rows, detail)  # pyright: ignore[reportArgumentType]
@@ -275,7 +293,7 @@ def run_keys(
             run.rows += fn(key)
         except NotReady as e:
             run.not_ready[label] = str(e)[:REASON_MAX]
-        except NotConfigured as e:
+        except (NotConfigured, Lagging) as e:
             run.skipped[label] = str(e)[:REASON_MAX]
         except FetchError as e:
             run.failed[label] = e.reason[:REASON_MAX]
@@ -288,9 +306,17 @@ def config(ctx: JobContext) -> MacroConfig:
     return ctx.resources.get("macro_config") or load_macro(settings=ctx.settings)
 
 
-def client[T](ctx: JobContext, name: str, make: Callable[[], T]) -> T:
+def client[T](ctx: JobContext, name: str, make: Callable[[], T], *, need: str | None = None) -> T:
+    """주입된 자원 `name`, 없으면 `make()`. `need`(설정의 키 칸 이름)가 비었으면 만들지 않고
+    `KeyNotSet` — 키 없는 출처는 실패가 아니라 건너뜀이다(키 값은 보지 않는다 — 있는지만)."""
     got = ctx.resources.get(name)
-    return got if got is not None else make()
+    if got is not None:
+        return got
+    if need is not None and ctx.settings is not None and getattr(ctx.settings, need, None) is None:
+        raise KeyNotSet(
+            f"KBJ_{need.upper()} 가 비었다 — 키를 넣고 다시 띄우면 다음 실행부터 받는다"
+        )
+    return make()
 
 
 def _settings(ctx: JobContext) -> Any:
@@ -329,6 +355,7 @@ def _fred_gov(ctx: JobContext, cfg: MacroConfig, repos: PublicRepos, key: DataKe
         ctx,
         "fred",
         lambda: FredClient.from_settings(_settings(ctx), ctx.resource("redis"), gov_series=gov),
+        need="fred_key",
     )
     day = _day(key)
     rows: list[MacroSeriesRow] = []
@@ -362,6 +389,7 @@ def _fred_releases(ctx: JobContext, cfg: MacroConfig, repos: PublicRepos, key: D
         ctx,
         "fred",
         lambda: FredClient.from_settings(_settings(ctx), ctx.resource("redis"), gov_series=gov),
+        need="fred_key",
     )
     start, end = calendar_window(cfg, _day(key))
     rel = fred.release_dates(start, end)
@@ -466,7 +494,10 @@ def ecos_rows(
 def _ecos(ctx: JobContext, cfg: MacroConfig, repos: PublicRepos, key: DataKey) -> int:
     series = ready_series(cfg, key.dataset_id)
     ecos = client(
-        ctx, "ecos", lambda: EcosClient.from_settings(_settings(ctx), ctx.resource("redis"))
+        ctx,
+        "ecos",
+        lambda: EcosClient.from_settings(_settings(ctx), ctx.resource("redis")),
+        need="ecos_key",
     )
     want = as_of_period(key.as_of)
     end = ctx.now.astimezone(KST).date()
@@ -479,7 +510,10 @@ def _ecos(ctx: JobContext, cfg: MacroConfig, repos: PublicRepos, key: DataKey) -
 def _kosis(ctx: JobContext, cfg: MacroConfig, repos: PublicRepos, key: DataKey) -> int:
     series = ready_series(cfg, key.dataset_id)
     kosis = client(
-        ctx, "kosis", lambda: KosisClient.from_settings(_settings(ctx), ctx.resource("redis"))
+        ctx,
+        "kosis",
+        lambda: KosisClient.from_settings(_settings(ctx), ctx.resource("redis")),
+        need="kosis_key",
     )
     want = as_of_period(key.as_of)
     end = ctx.now.astimezone(KST).date()

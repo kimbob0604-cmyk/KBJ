@@ -1,8 +1,12 @@
 """미래에셋 TIGER(ET `etf_tracker_v9/collectors.py:Tiger`:111 승격).
 
-- 목록: `GET /tigeretf/ko/product/search/list.ajax?listCnt=1000&pageIndex=1`(HTML) 의
-  `ksdFund=KR…` ISIN — ISIN = KR7 + 종목코드(6) + 체크(3) → 티커 `isin[3:9]`. 이름은 목록에
-  없다(None — 부르는 쪽이 KRX 메타 이름을 쓴다). 응답이 커서 시간 상한 90초(ET 그대로).
+- 목록: `GET /tigeretf/ko/product/search/list.ajax?listCnt=1000&pageIndex=1`(HTML) 의 펀드 ISIN —
+  ISIN = KR7 + 종목코드(6) + 체크(3) → 티커 `isin[3:9]`. 응답이 커서 시간 상한 90초(ET 그대로).
+  **2026-10 목록 모양이 바뀌었다**(실측 2026-10-27, 값은 적지 않는다): 상품 링크가
+  `href="…?ksdFund=KR…"` 가 아니라 `href="javascript:cmmCtrl.getEtfDtlPop('KR…','이름');"` 이다 —
+  옛 꼴만 찾던 정규식이 0건을 내 TIGER 가 조용히 빠졌다(목록이 비면 수집 처리기가 목록 실패로 본다).
+  새 꼴(`_POP` — 이름도 함께)과 옛 꼴(`_ISIN` — 이름 None, 부르는 쪽이 KRX 메타 이름을 쓴다)을
+  둘 다 읽는다.
 - PDF: `GET …/detail/pdfListAjax.ajax?ksdFund=…&listCnt=1000&pageIndex=1&fixDate=YYYY.MM.DD`(HTML
   표 — 코드·이름·수량·평가금액·비중). **데이터가 없는 날은 빈 표**를 주고 직전 영업일로 폴백해 주지
   않는다 → 하루씩 `BACK_DAYS`(7)까지 거슬러 올라가 **실제 데이터가 있는 날**을 기준일로 돌려준다.
@@ -12,12 +16,17 @@ from __future__ import annotations
 
 import re
 from datetime import date, timedelta
+from html import unescape
 from typing import ClassVar, Final, Literal
 
 from kbj.core.rows import HoldingRow
 from kbj.data.private.etf_issuers.base import FundRef, IssuerHttp, rows_from_table
 
-_ISIN: Final = re.compile(r"ksdFund=(KR[0-9A-Z]{10})")
+_ISIN: Final = re.compile(r"ksdFund=(KR[0-9A-Z]{10})")  # 옛 꼴(~2026-10)
+_Q: Final = r"(?:['\"]|&#0?39;|&quot;)"  # 따옴표(속성 안에서 엔티티로 올 수도 있다)
+_POP: Final = re.compile(  # 새 꼴(2026-10~) — getEtfDtlPop('ISIN','이름'), 이름은 없어도 된다
+    rf"getEtfDtlPop\(\s*{_Q}(KR[0-9A-Z]{{10}}){_Q}\s*(?:,\s*{_Q}(.*?){_Q}\s*)?\)", re.S
+)
 
 
 class Tiger:
@@ -40,13 +49,15 @@ class Tiger:
                      "Referer": f"{self.BASE}/tigeretf/ko/product/search/list.do"},
             total_s=self.LIST_TIMEOUT_S,
         )  # fmt: skip
+        found = [(isin, unescape(nm).strip() or None) for isin, nm in _POP.findall(t)]
+        found += [(isin, None) for isin in _ISIN.findall(t)]
         out: list[FundRef] = []
         seen: set[str] = set()
-        for isin in _ISIN.findall(t):
+        for isin, name in found:
             if isin in seen:
                 continue
             seen.add(isin)
-            out.append(FundRef(isin, isin[3:9], None))
+            out.append(FundRef(isin, isin[3:9], name))
         return out
 
     def _fetch(self, fund_key: str, day: date) -> dict[str, HoldingRow]:
