@@ -45,6 +45,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "CLOSE_TIME",
+    "INTRADAY_SOURCE",
     "MAIN_MARKETS",
     "STOCK_KINDS",
     "WHO",
@@ -74,6 +75,9 @@ WHO_NAMES: Final[Mapping[str, str]] = {
 STOCK_KINDS: Final[tuple[str, ...]] = ("common", "pref", "spac")
 MAIN_MARKETS: Final[tuple[str, ...]] = ("KOSPI", "KOSDAQ")
 CLOSE_TIME: Final = time(15, 30)  # 마감 값의 as_of(KST — docs/p3_design.md §5.2)
+# 장중 잠정 스냅의 원천(`kbj.data.private.kis.ranks.PRELIM_SOURCE` 와 같은 값 — 거래대금 순위 목록
+# 종목만 들어온다). 이 원천의 종가뿐인 날은 마감 값이 있는 날이 아니다(`Ledger.last_closed_day`)
+INTRADAY_SOURCE: Final = "kis.prelim"
 
 _Q_ORDER: Final[Mapping[Quality, int]] = {
     Quality.OK: 0,
@@ -310,6 +314,21 @@ class Ledger:
     @property
     def last_day(self) -> date | None:
         return self.trading_days[-1] if self.trading_days else None
+
+    @property
+    def last_closed_day(self) -> date | None:
+        """마감 값이 있는 마지막 영업일 — 쓸 수 있는 종가가 장중 잠정(`INTRADAY_SOURCE`)뿐인 날은
+        건너뛴다. 장중 10분 수집(`flows.intraday` 거래대금 순위)이 오늘 잠정 스냅을 순위 목록 종목만
+        (시장 2 × 약 30행) 써서 원장 마지막 날이 '오늘'이 되면, 시장폭·확정 시장 거래대금이 그
+        60여 종목만으로 계산돼 '유니버스 61'·'오늘 3.2조(15:30 기준)'로 보였다(2026-10-27 09:31).
+        마감 수집(KIS `kis` — market.close_collect)·KRX 확정(`krx`)이 들어온 날은 마감 값이 있는
+        날이다. 없으면 None."""
+        for d in reversed(self.trading_days):
+            for r in self.day(d):
+                src = r.sources.get("close")
+                if r.usable and r.close is not None and src and src.lower() != INTRADAY_SOURCE:
+                    return d
+        return None
 
     def days_upto(self, end: date, n: int) -> tuple[date, ...]:
         """end 이하 최근 n 영업일(오름차순). 원장 영업일 밖은 없다."""

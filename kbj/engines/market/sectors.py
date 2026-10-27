@@ -74,6 +74,11 @@ def _missing(code: str, name: str | None, market: str | None, why: str) -> Secto
     return SectorCell(code, name, market, None, None, Quality.INVALID, "", None, why)
 
 
+def _slot_as_of(ts: datetime, slot_minutes: int, now: datetime | None) -> datetime:
+    end = ts + timedelta(minutes=slot_minutes)
+    return end if now is None or end <= now else now
+
+
 def sector_heat(
     index_bars: Mapping[str, Sequence[IndexBar]],
     intraday: Iterable[SectorQuote],
@@ -82,8 +87,13 @@ def sector_heat(
     *,
     names: Mapping[str, str] | None = None,
     slot_minutes: int = 10,
+    now: datetime | None = None,
 ) -> list[SectorCell]:
-    """업종지수 셀 목록(codes 순서). codes 가 비면 빈 목록(화면 '준비 중')."""
+    """업종지수 셀 목록(codes 순서). codes 가 비면 빈 목록(화면 '준비 중').
+
+    장중 셀의 기준 시각 = 슬롯 끝(슬롯 시작 + slot_minutes). `now` 를 주면 그보다 뒤로 적지 않는다 —
+    09:30 슬롯 값을 09:31 에 보면 슬롯 끝 09:40 은 아직 오지 않은 시각이라 봉투가 '기준 시각이 응답
+    시각보다 뒤' 경고를 붙였다(2026-10-27 09:31)."""
     if period not in PERIODS:
         raise ValueError(f"period 는 {PERIODS} 중 하나: {period!r}")
     latest: dict[str, SectorQuote] = {}
@@ -124,7 +134,7 @@ def sector_heat(
             out.append(
                 SectorCell(
                     code, name, market, chg, q.turnover, Quality.ESTIMATED,
-                    source_label([q.source]), q.ts + timedelta(minutes=slot_minutes),
+                    source_label([q.source]), _slot_as_of(q.ts, slot_minutes, now),
                 )
             )  # fmt: skip
             continue

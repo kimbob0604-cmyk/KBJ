@@ -113,6 +113,7 @@ def _index_tile(
     quotes: Sequence[IndexQuote],
     *,
     open_now: bool = True,
+    now: datetime | None = None,
 ) -> IndexTile | None:
     """KRX 일별(D+1)보다 새 장중 값이 있으면 그것(잠정). `open_now` 가 False(장 마감 뒤)면 같은
     잠정 값이라도 '장중'(live)이라 하지 않는다 — 마감 뒤에 '장중'이 보였다(2026-10-20)."""
@@ -133,7 +134,7 @@ def _index_tile(
             spark=[*spark[-(SPARK_N - 1) :], q.value],
             live=open_now,
             source=label([q.source]),
-            as_of=slot_end(q.ts),
+            as_of=slot_end(q.ts) if now is None else min(slot_end(q.ts), now),
             quality=Quality.ESTIMATED,
         )
     if not good:
@@ -256,7 +257,8 @@ def _night_tile(ctx: ReadContext, today: date) -> IndexTile | None:
 
 
 def _breadth(ctx: ReadContext, ledger: Ledger) -> Breadth | None:
-    day = ledger.last_day
+    # 마감 값이 있는 마지막 날 — 장중 잠정 스냅(순위 목록 60여 종목)뿐인 오늘로 세지 않는다
+    day = ledger.last_closed_day
     if day is None:
         return None
     labels = list(ctx.repos.board.labels(day, "close").values())
@@ -291,13 +293,15 @@ def _breadth(ctx: ReadContext, ledger: Ledger) -> Breadth | None:
 def _turnover(
     ctx: ReadContext, ledger: Ledger, quotes: Sequence[IndexQuote]
 ) -> tuple[TurnoverPanel | None, list[str]]:
-    day = ledger.last_day
+    # 확정(종목 합) 거래대금의 날 = 마감 값이 있는 마지막 날. 그 뒤 장중이면 지수 누적 값을 쓴다
+    day = ledger.last_closed_day
     if day is None:
         return None, []
     tags = ["NXT 미포함"] if ctx.venue_notes() else []
     live = intraday_market_turnover(
         (q for q in quotes if q.ts.astimezone(KST).date() > day),
         codes=INTRADAY_INDEX_CODES,
+        now=ctx.now_kst(),
     )
     if live is not None:
         ratio = turnover_ratio(ledger, live.as_of.date(), today=live)
@@ -370,7 +374,12 @@ def market_summary(ctx: ReadContext, *, day: date | None = None) -> Envelope[Mar
     open_now = with_live and _equity_open(ctx, now)
     for code in codes:
         t = _index_tile(
-            code, cfg.intraday_indices.get(code), bars.get(code, []), quotes, open_now=open_now
+            code,
+            cfg.intraday_indices.get(code),
+            bars.get(code, []),
+            quotes,
+            open_now=open_now,
+            now=now,
         )
         if t is None:
             notes.append(f"지수 {code} 자료 없음")
@@ -414,7 +423,7 @@ def market_summary(ctx: ReadContext, *, day: date | None = None) -> Envelope[Mar
         srcs += investors.source.split("+")
         notes += investors.notes
     data = MarketSummary(
-        date=None if ledger is None else ledger.last_day,
+        date=None if ledger is None else ledger.last_closed_day,
         indices=tiles,
         turnover=turnover,
         breadth=breadth,
@@ -448,7 +457,7 @@ def market_sectors(
     live = ctx.repos.market.sector_quotes(_live_since(ctx, end), now) if with_live else []
     # 코드가 KRX 지수 이름이면 화면 이름은 시장을 붙인다(접두어 없는 이름 = 코스피 목록)
     names = {c: _sector_name(c) for c in codes if not c.isascii()}
-    cells = sector_heat(bars, live, codes, period, names=names)
+    cells = sector_heat(bars, live, codes, period, names=names, now=now)
     rows = [
         SectorCell(
             code=c.code,
@@ -534,12 +543,13 @@ def market_ribbon(ctx: ReadContext) -> Envelope[Ribbon]:
     n_prior: int | None = None
     semi: SkewResult | None = None
     cyc: SkewResult | None = None
-    if ledger is not None and ledger.last_day is not None:
-        day = ledger.last_day
+    if ledger is not None and ledger.last_closed_day is not None:
+        day = ledger.last_closed_day
         quotes = ctx.repos.market.index_quotes(day_start(today), now)
         live = intraday_market_turnover(
             (q for q in quotes if q.ts.astimezone(KST).date() > day),
             codes=INTRADAY_INDEX_CODES,
+            now=now,
         )
         r = (
             turnover_ratio(ledger, live.as_of.date(), today=live)
