@@ -133,6 +133,7 @@ def intraday_market_turnover(
     *,
     codes: Collection[str] = INTRADAY_INDEX_CODES,
     slot_minutes: int = SLOT_MINUTES,
+    now: datetime | None = None,
 ) -> Sourced[int] | None:
     """가장 최근 슬롯 중 지정 지수가 **모두** 있는 슬롯의 누적 거래대금 합 — estimated.
 
@@ -150,7 +151,10 @@ def intraday_market_turnover(
     return Sourced[int](
         value=sum(q.turnover for q in got if q.turnover is not None),
         source=source_label(q.source for q in got),
-        as_of=ts + timedelta(minutes=slot_minutes),
+        # 슬롯 끝 — `now` 를 주면 그보다 뒤로 적지 않는다(진행 중인 슬롯의 끝은 아직 오지 않은 시각)
+        as_of=min(ts + timedelta(minutes=slot_minutes), now)
+        if now is not None
+        else (ts + timedelta(minutes=slot_minutes)),
         quality=Quality.ESTIMATED,
     )
 

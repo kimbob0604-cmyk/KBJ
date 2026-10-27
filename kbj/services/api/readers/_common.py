@@ -290,6 +290,11 @@ def ledger_days(repos: ApiRepos, end: date, n: int) -> list[date]:
     _, snap_day = repos.market.snapshot(end)
     if snap_day is not None:
         days.add(snap_day)
+        # 그 앞 스냅 날도 — 장중 잠정 스냅(오늘, 순위 목록 종목만)이 마지막 스냅 날을 차지하면
+        # 일봉이 아직 없는 직전 마감 스냅 날(KIS 마감 — KRX 확정 08:05 전)이 원장에서 빠진다
+        _, before = repos.market.snapshot(snap_day - timedelta(days=1))
+        if before is not None:
+            days.add(before)
     return sorted(days)[-n:]
 
 

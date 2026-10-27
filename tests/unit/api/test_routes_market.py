@@ -199,3 +199,53 @@ def test_summary_adds_k200_night_futures_tile(world: World, authed: TestClient) 
     k = idx["K200N"]
     assert k["name"] == "K200 야간선물" and k["value"] == 400.0
     assert round(k["chg_pct"], 4) == round((400 / 392 - 1) * 100, 4)
+
+
+def _prelim_rank_snaps(world: World) -> None:
+    """장중 거래대금 순위 수집(flows.intraday)이 쓰는 오늘 잠정 스냅 — 순위 목록 종목만."""
+    from kbj.core.quality import Quality
+    from kbj.core.rows import Snap
+
+    codes = [s.code for s in world.market.stocks if s.kind == "common"][:5]
+    world.repos.market.upsert_snapshots(
+        [
+            Snap(code, world.next_day, f"합성{code}", "KOSPI", None, 1000.0 + i, 1.0 + i, 10**5,
+                 10**11, True, None, None, None, "kis.prelim", "KRX", Quality.ESTIMATED)
+            for i, code in enumerate(codes)
+        ],
+        loaded_by="test",
+    )  # fmt: skip
+
+
+def test_summary_intraday_prelim_snaps_do_not_become_the_close_day(
+    world: World, authed: TestClient
+) -> None:
+    """장중 순위 잠정 스냅(60여 종목)이 원장 마지막 날을 '오늘'로 만들어 시장폭이 그 종목만으로,
+    확정 거래대금이 '오늘 15:30' 으로 나왔다(2026-10-27 09:31 — 유니버스 61·미지 91·3.2조)."""
+    after_close = authed.get("/api/market/summary").json()["data"]
+    _prelim_rank_snaps(world)
+    world.clock.set(world.slot.replace(minute=5))
+    body = authed.get("/api/market/summary").json()
+    d = body["data"]
+    last = world.market.last_day.isoformat()
+    assert d["date"] == last
+    assert d["breadth"]["date"] == last
+    assert d["breadth"]["total"] == after_close["breadth"]["total"]
+    t = d["turnover"]
+    assert t["basis"] == "intraday_index"
+    assert t["today"]["value"] == 4_100_000_000_000 + 3_200_000_000_000
+    assert t["today"]["as_of"] <= world.clock().isoformat()
+
+
+def test_live_slot_as_of_is_not_in_the_future(world: World, authed: TestClient) -> None:
+    """10:00 슬롯 값을 10:01 에 보면 슬롯 끝(10:10)은 아직 오지 않은 시각 — 지금으로 적는다."""
+    from kbj.services.api.models.common import FUTURE_AS_OF_NOTE
+
+    world.clock.set(world.slot.replace(minute=1))
+    now = world.clock()
+    sec = authed.get("/api/market/sectors?period=1").json()
+    assert FUTURE_AS_OF_NOTE not in sec["notes"]
+    assert all(c["as_of"] is None or c["as_of"] <= now.isoformat() for c in sec["data"]["cells"])
+    body = authed.get("/api/market/summary").json()
+    kospi = next(x for x in body["data"]["indices"] if x["code"] == "0001")
+    assert kospi["live"] and kospi["as_of"] <= now.isoformat()
