@@ -141,6 +141,8 @@ class JobRunRow:
     created_at: datetime
     source: str = "scheduler"
     reason: str | None = None
+    # 실행기가 skipped 에 단 기다림 종류(detail.wait — 'not_ready' 공표 대기·'blocked' 의존 막힘)
+    wait: str | None = None
 
     @property
     def at(self) -> datetime:
@@ -247,7 +249,7 @@ class MemoryOpsSource:
 
 _Q_RUNS: Final = sql.SQL(
     "SELECT job, as_of, attempt, status, started_at, finished_at, created_at, source, "
-    "left(detail->>'reason', 300) "
+    "left(detail->>'reason', 300), left(detail->>'wait', 20) "
     "FROM ops.job_run WHERE COALESCE(started_at, created_at) >= %s "
     "AND COALESCE(started_at, created_at) < %s"
 )
@@ -315,7 +317,7 @@ class PgOpsSource:
 
     def job_runs(self, start: datetime, end: datetime) -> list[JobRunRow]:
         rows = self._fetch(_Q_RUNS, (_aware(start), _aware(end)))
-        return [JobRunRow(r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8]) for r in rows]
+        return [JobRunRow(r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9]) for r in rows]
 
     def notifies(self, start: datetime, end: datetime) -> list[NotifyRow]:
         rows = self._fetch(_Q_NOTIFY, (_aware(start), _aware(end)))

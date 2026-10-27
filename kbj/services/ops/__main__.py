@@ -1,10 +1,12 @@
-"""`python -m kbj.services.ops check [--since 24h] [--json]` · `week [--end YYYY-MM-DD] [--json]`
-(docs/p9_design.md §6.2, ADR 0037).
+"""`python -m kbj.services.ops check [--since 24h] [--json]` · `week [--end YYYY-MM-DD] [--json]` ·
+`errors [--since 7d] [--json]`(docs/p9_design.md §6.2, ADR 0037, docs/ops_error_catalog.md).
 
 - check: 지금 하트비트 + 최근 기록(기본 24시간)으로 OK/WARN/FAIL 표, 표 크기 상위 10·DB 크기·디스크
   여유·마지막 백업. 종료 코드 0(OK·WARN) / 1(FAIL) / 2(설정·접속 오류).
 - week: end(기본 어제 KST)를 끝으로 7일 일자별 판정 + 최종 '통과/실패'. 종료 코드 0(통과) / 1(실패·
   판정 불가) / 2(설정·접속 오류).
+- errors: 최근 기록(기본 7일)을 작업마다 묶은 실패·시간 초과·건너뜀(대기) 수·마지막 시각·
+  사유 — 맥에서 찍어 오류 카탈로그를 실데이터로 고친다. 종료 코드 0(목록) / 2(설정·접속 오류).
 - DB·Redis 는 **읽기만**. 출력은 이름·상태·개수·시각뿐 — 키·접속 문자열·시세가 없다(오류 문장도
   가린다).
 """
@@ -32,6 +34,7 @@ from kbj.services.ops.check import (
     run_check,
     run_week,
 )
+from kbj.services.ops.errors import errors_json, job_errors, render_errors
 from kbj.services.ops.source import Expect, ExpectError, OpsSource, load_expect
 from kbj.store.db import StoreError
 
@@ -222,6 +225,9 @@ def _parser() -> argparse.ArgumentParser:
     w = sub.add_parser("week", help="7일 일자별 판정 + 통과/실패(종료 코드 0/1)")
     w.add_argument("--end", type=date.fromisoformat, default=None, help="마지막 날(기본 어제 KST)")
     w.add_argument("--json", action="store_true", help="JSON 으로")
+    x = sub.add_parser("errors", help="최근 작업 실패·시간 초과·건너뜀을 작업마다(종료 코드 0)")
+    x.add_argument("--since", type=_since, default=timedelta(days=7), help="기록 구간(24h·7d)")
+    x.add_argument("--json", action="store_true", help="JSON 으로")
     b = sub.add_parser("budget", help="오늘(또는 --day) 출처별 호출 예산·작업별 셈")
     b.add_argument("--day", type=date.fromisoformat, default=None, help="날짜(기본 오늘 KST)")
     return p
@@ -249,6 +255,15 @@ def main(
             )
             o.write(_dump(check_json(r)) if args.json else render_check(r))
             return r.exit_code
+        if args.cmd == "errors":
+            start = at - args.since
+            items = job_errors(d.source.job_runs(start, at))
+            o.write(
+                _dump(errors_json(items, start, at))
+                if args.json
+                else render_errors(items, start, at)
+            )
+            return 0
         end: date = args.end or (at.astimezone(KST).date() - timedelta(days=1))
         w = run_week(d.source, d.expect, d.cal, end)
         o.write(_dump(week_json(w)) if args.json else render_week(w))

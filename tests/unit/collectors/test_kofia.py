@@ -73,14 +73,23 @@ def test_rows_of_drops_other_days() -> None:
     assert K.rows_of("credit", [_row("credit", date(2026, 11, 13))], D) == []
 
 
-def test_late_portal_still_fills_earlier_days_and_waits_for_the_day() -> None:
+def test_late_portal_still_fills_earlier_days_and_skips_the_day() -> None:
     """포털이 2영업일쯤 늦다(실측 2026-10-20 — 15시에 최신이 전전 거래일). 그날 하루만 부르면 표가
-    한 번도 차지 않았다 — 창 안의 지난 날은 넣고, 그날은 공표 전으로 기다린다."""
+    한 번도 차지 않았다 — 창 안의 지난 날은 넣고, 그날은 허용 지연(3거래일) 안이라 실패가 아니라
+    건너뜀(날마다 '공표 전' 실패가 쌓이던 것 — 늦은 날은 다음 실행의 창이 채운다)."""
     repos = memory_public_repos()
-    older = date(2026, 11, 12)
+    older = date(2026, 11, 12)  # 목 — 그날(11-16 월)까지 거래일 2(금·월)
     k = _Kofia({"credit": [_row("credit", older, crdTrFingWhl="19000000000000")]})
     res = K.run(_ctx(["credit"], k, repos))
-    assert res.status == "not_ready"
-    assert "공표 전" in res.detail["reason"]
+    assert res.status == "skipped" and res.collected == ()
+    assert "공표 지연" in res.detail["reason"] and "2026-11-12" in res.detail["reason"]
     got = {r.item: r for r in repos.market_stats.series("credit_balance")}
     assert got["loan_total"].value == Decimal("19000000000000")
+
+
+def test_portal_too_far_behind_is_not_ready() -> None:
+    """허용 지연(3거래일)보다 늦으면 공표 전 — 재시도 뒤 실패로 드러난다(포털이 멈춘 것)."""
+    repos = memory_public_repos()
+    k = _Kofia({"credit": [_row("credit", date(2026, 11, 6))]})  # 금 — 그날까지 거래일 6
+    res = K.run(_ctx(["credit"], k, repos))
+    assert res.status == "not_ready" and "공표 전" in res.detail["reason"]
