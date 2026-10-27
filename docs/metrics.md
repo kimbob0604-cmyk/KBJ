@@ -1270,3 +1270,28 @@ test_index_review_repo.py·tests/unit/engines/index_review/test_service.py·test
 - **예외**: 분류 없음 → 404(theme.classes_sync), 편입 없음 → 404(theme.master_sync), 보드 종목 하루 없음 → 강도 404
   (board.daily) — 상세는 시세 칸 None 으로 200.
 - **시험**: `tests/unit/theme/test_strength.py`(손계산·보드 롤업 대조), `tests/unit/api/test_routes_themes.py`.
+
+## 33. 코스피200 선물 미결제약정(OI)·해석 라벨·파생 투자자 일별 (로그인 — 페이지 3, ADR 0043)
+
+> 용도: 마감 뒤 "외국인 선물 순매수가 신규 매수인가 숏 커버인가"를 OI 증감과 가격으로 가르는 근거(사용자 2026-10-27 요청).
+> 라벨은 **규칙 결과**일 뿐 누가 그 포지션을 만들었는지 단정하지 않는다 — 외국인 순매수와 겹쳐 읽는 것은 사용자 몫.
+
+| 항목 | 정의 |
+|---|---|
+| 원천 — 확정 OI·가격 | KRX `drv/fut_bydd_trd` → `prv_gex.krx_fut_daily`(작업 `gex.krx_derivatives` — 평일 08:05, **전 거래일분**). family `kospi200`(이름 `코스피200 F YYYYMM` — 미니·스프레드는 family 가 달라 빠진다), session `day`(정규 행)만. 야간 행은 쓰지 않는다 [확인 필요 — 야간 거래분 OI 는 다음 거래일 정규 행에 반영된다고 봄] |
+| 원천 — 오늘 잠정 OI | KRX 확정 전(오늘 거래일): KIS 선물 전광판 FHPIF05030200 → `prv_gex.fut_board`(market `F`·source `board`·session `day`) 그날 `upto` 이하 종목별 마지막 행의 `oi`(`hts_otst_stpl_qty`)·`price`. **quality estimated**. KIS 장중 OI 가 실시간 갱신값인지 [확인 필요] |
+| 원천 — 투자자 일별 | `prv_gex.investor_flow`(KIS FHPTJ04030000 — 호출 시점 오늘 누적 한 줄, metrics §21) 그날 정규장(session `day`) **마지막 행** = 그날 값. 선물 K2I·F001, 옵션 K2I·OC01/OP01(월물 콜/풋)·WKM·OC05/OP05(위클리 월)·WKI·OC04/OP04(위클리 목). 투자자 `frgn` 외국인·`orgn` 기관 합계·`prsn` 개인. 수량 계약, 대금 백만원 → **원**(× 10⁶ — API 가 바꾼다) |
+| 합계 OI (정의 확정) | `total_oi(d)` = d 의 정규 행 **전 월물** `acc_opnint_qty` 합(계약). 근월물이 아니라 합계를 기본으로 한다: 롤오버 주간에 근월물 OI 는 다음 월물로 옮겨 가며 줄어 '청산'처럼 보이고, 외국인 순매수(F001)도 전 월물 합이라 범위를 맞춘다. 한 종목이라도 OI 가 비면 합계 None(행 quality invalid) |
+| 근월물 | 그날 장 마감 뒤에도 살아 있는 가장 가까운 월물 = 최종거래일 `kbj.core.calendar.monthly_expiry(YYYY, MM)` **> d** 인 가장 이른 만기. **만기일엔 다음 월물로 넘긴다**(만기 종목은 그날 최종결제로 소멸). 근월물 OI·종가·전일비(KRX `cmpprevdd_prc` 그대로, pt)·등락률 `cmp ÷ (close − cmp) × 100`(%) |
+| OI 증감 (라벨 입력) | `oi_change(d) = Σ_{s∈L(d)} oi_d(s) − Σ_{s∈L(d)} oi_p(s)`. L(d) = d 의 정규 행 중 최종거래일 > d 인 종목 + **만기일(최종거래일 = d) 행 중 KRX OI > 0 인 종목**(최종결제 전 잔고로 본다), p = 캘린더 직전 거래일, p 에 없던 종목(만기 다음 날 신규 상장 원월물)은 0. **롤오버 처리**: 전날 있다가 그날 사라진 만기 종목은 L(d) 에 없으니 양쪽에서 빠진다 — 최종결제로 사라지는 OI 를 청산으로 읽지 않는다. 만기일 OI 0 행은 소멸분이라 양쪽에서 뺀다 [확인 필요 — KRX 만기일 행 OI 가 결제 전 잔고인지 0 인지 실측]. 롤오버 주간(만기 전)의 근월물→차월물 이동은 합계 안에서 상쇄된다 |
+| 단순 증감 | `oi_change_raw(d) = total_oi(d) − total_oi(p)` — 표시만(라벨에 쓰지 않는다) |
+| 증감률 | `oi_change ÷ Σ_{s∈L(d)} oi_p(s) × 100`(%). 분모 0·None → None |
+| 전일 없음 | p 의 정규 행이 하나도 없으면 증감·증감률·라벨 None — 사유 '전일 없음'(앞뒤를 지어내지 않는다) |
+| 해석 라벨 | 가격 = 근월물 등락률, OI = 증감률. **보합 임계** `|등락률| < 0.10%` 가격 보합, `|증감률| < 0.30%` OI 보합 [확인 필요 — 기본값, 엔진 상수 `PRICE_FLAT_PCT`·`OI_FLAT_PCT`]. 가격↑·OI↑ `new_long` 신규 매수 우위 · 가격↓·OI↑ `new_short` 신규 매도 우위 · 가격↑·OI↓ `short_cover` 숏 커버 우위 · 가격↓·OI↓ `long_liquidation` 롱 청산 우위 · 둘 중 하나라도 보합이면 `flat` 보합(해석 보류) · 입력이 없으면 `unknown` 판단 불가(사유) |
+| 잠정 행(오늘) | KRX 마지막 확정일 < 오늘 거래일이고 오늘 투자자 행 또는 전광판 행이 있으면 하나 붙인다(`provisional: true`). 합계 = 전광판 행 `oi` 합(빈 `oi` 가 하나라도 있으면 None), 근월물 = 잔존일 가장 짧은 행, 가격 전일비 = 그 행 가격 − 직전 확정일 근월물 종가(같은 종목: 직전 확정일 p 의 근월물 = 최종거래일 > p 인 가장 이른 만기 = 오늘 잔존일 가장 짧은 종목), OI 증감 = 합계 − Σ_{최종거래일 ≥ 오늘} oi_p. **직전 확정일이 오늘의 캘린더 직전 거래일이 아니면** 증감·라벨 None('전일 확정 없음'). 오늘이 만기일이거나 만기 다음 거래일이면 라벨 `unknown`(전광판 종목 구성이 바뀌는 날 [확인 필요]). **구성 검사**: 잠정 합계가 Σ_{최종거래일 ≥ 오늘} oi_p 의 ±20% 밖이면 그 행 invalid + 사유 '전광판 구성 불일치 의심'(스프레드·미니가 섞였을 수 있다 [확인 필요 — FHPIF05030200 행 구성 실측]) |
+| 투자자 일별 품질 | 원천 행 quality 그대로, 단 그날 마지막 행 `ts` < 선물 정규장 마감(15:45 KST — `session_bounds(d, "day")` 끝)이면 **estimated** + 사유 '선물 마감(15:45) 전 마지막 슬롯 HH:MM'. `flows.market_minute` 이 현물 마감 + 10분(15:40)까지만 돌아 15:35~15:45 선물 종가 단일가가 빠질 수 있다 [확인 필요 — 마감 뒤 확정치와 대조 전]. 야간은 수집하지 않는다(D-P7-6) |
+| 외국인 연속일 | `foreign_streak` = 가장 최근 날(잠정 포함)부터 거꾸로 외국인 선물 순매수 **수량** 부호가 같은 거래일 수(+ 매수 연속·− 매도 연속). 0·값 없음·수급 행이 없는 거래일에서 끊긴다. 최근 날 값이 없으면 None |
+| 창 | 쿼리 `days` 20~120(기본 60) 거래일 — 확정 행. 옵션 투자자 일별은 같은 창 |
+| 품질·봉투 | 확정 행: ok(합계 None 이면 invalid — 그 행 라벨 unknown). 잠정 행: estimated(구성 검사 실패 invalid). 봉투 quality = 실은 행(확정·잠정·수급) 중 가장 나쁜 것, as_of = 가장 늦은 행 시각(KRX `ts` = 수신 시각, 전광판·수급 `ts`), source `KRX:drv/fut_bydd_trd+KIS(전광판·투자자별)`. 확정·잠정 행이 모두 없으면 404 `no_data`(작업 `gex.krx_derivatives`) |
+| 계산 위치 | 순수 엔진 `kbj.engines.gex.futures_oi`(계약 ⑨) — 리더 `kbj.services.api.readers.gex_oi` 는 저장소 행을 엔진 입력으로 옮기기만 한다. LLM 은 쓰지 않는다 |
+| 시험 | `tests/unit/engines/gex/test_futures_oi.py`(라벨 네 칸·보합 경계·만기일 OI 0/양수·만기 다음 날 소멸 제외·신규 상장·근월물 넘김·전일 없음·잠정 증감·구성 검사·만기일 잠정 보류·수급 15:45 품질·연속일), `tests/unit/store/test_gex_repo_oi.py`(SQL 파라미터·메모리판), `tests/unit/api/test_routes_gex_oi.py`(봉투·404·422·원 단위), `web/test/pages/p3_oi.test.ts`(패널·라벨·잠정 표시·공개판 자물쇠) |

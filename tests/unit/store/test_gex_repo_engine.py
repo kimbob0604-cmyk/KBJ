@@ -664,3 +664,75 @@ def test_flow_inputs_are_read_with_parameters_only() -> None:
         s.kis_rest_outputs("FHKIF03020200", after, T, output="x'; --")
     with pytest.raises(ValueError):
         s.investor_latest(D, "day", datetime(2026, 9, 28, 10, 0))  # noqa: DTZ001
+
+
+# ── 선물 미결제약정 패널 읽기(metrics §33, ADR 0043) ──
+
+
+def test_futures_oi_reads_use_parameters_and_pick_day_session_last_rows() -> None:
+    """KRX 코스피200 정규 행·investor_flow 날마다 정규장 마지막 행 — 값은 파라미터로만."""
+    first, last = date(2026, 8, 3), date(2026, 11, 4)
+    cols = store.INVESTOR_FLOW.columns
+    inv_row = dict.fromkeys(cols)
+    inv_row.update(
+        ts=T, trade_date=D, session="day", market_code="K2I", sector_code="F001",
+        investor="frgn", net_qty=3451, net_value=345, quality="ok",
+    )  # fmt: skip
+    f = Factory(
+        results=[
+            [(D, "202612", Decimal("404.00"), Decimal("4.00"), 203000, T)],
+            [tuple(inv_row[c] for c in cols)],
+        ]
+    )
+    s = _sink(f)
+    assert s.krx_futures_days(first, last) == [
+        (D, "202612", Decimal("404.00"), Decimal("4.00"), 203000, T)
+    ]
+    (rec,) = s.investor_closes(first, last, ("K2I", "WKM"), T)
+    assert (rec.investor, rec.net_qty, rec.net_value) == ("frgn", 3451, 345)
+    reads = f.conns[0].reads
+    assert [_from(q) for q, _ in reads] == [
+        '"prv_gex"."krx_fut_daily"',
+        '"prv_gex"."investor_flow"',
+    ]
+    assert reads[0][1] == ("kospi200", "day", first, last)
+    assert "expiry IS NOT NULL" in reads[0][0] and "acc_opnint_qty" in reads[0][0]
+    assert reads[1][1] == (first, last, "day", T.astimezone(UTC), "invalid", ["K2I", "WKM"])
+    q1 = reads[1][0]
+    assert "DISTINCT ON (trade_date, market_code, sector_code, investor)" in q1
+    assert q1.rstrip().endswith("ts DESC")
+    assert all("2026" not in q and "kospi200" not in q for q, _ in reads)
+
+
+def test_memory_futures_oi_reads_match_the_pg_rules() -> None:
+    from kbj.core.gex.records import InvestorRecord
+
+    m = store.MemoryGexRepo()
+    m.krx_futures.extend([
+        {"trade_date": D, "session": "day", "family": "kospi200", "expiry": "202703",
+         "close": Decimal("405"), "cmp_prev": Decimal("4"), "acc_opnint_qty": 30500, "ts": T},
+        {"trade_date": D, "session": "day", "family": "kospi200", "expiry": "202612",
+         "close": Decimal("404"), "cmp_prev": Decimal("4"), "acc_opnint_qty": 203000, "ts": T},
+        {"trade_date": D, "session": "night", "family": "kospi200", "expiry": "202612",
+         "close": Decimal("1"), "cmp_prev": None, "acc_opnint_qty": 1, "ts": T},
+        {"trade_date": D, "session": "day", "family": "mini_kospi200", "expiry": "202611",
+         "close": Decimal("1"), "cmp_prev": None, "acc_opnint_qty": 1, "ts": T},
+    ])  # fmt: skip
+    assert [r[1] for r in m.krx_futures_days(D, D)] == ["202612", "202703"]
+
+    def inv(ts: datetime, qty: int, *, session: str = "day", market: str = "K2I",
+            quality: str = "ok") -> InvestorRecord:  # fmt: skip
+        return InvestorRecord.model_validate({
+            "ts": ts, "trade_date": D, "session": session, "market_code": market,
+            "sector_code": "F001", "investor": "frgn", "net_qty": qty, "net_value": qty,
+            "quality": quality,
+        })  # fmt: skip
+
+    m.seed_investor([
+        inv(T, 1), inv(T + timedelta(minutes=5), 2),
+        inv(T + timedelta(minutes=10), 3, quality="invalid"),
+        inv(T + timedelta(minutes=20), 9),  # upto 뒤
+        inv(T + timedelta(hours=5), 7, session="night"), inv(T, 8, market="999"),
+    ])  # fmt: skip
+    (got,) = m.investor_closes(D, D, ("K2I",), T + timedelta(minutes=15))
+    assert got.net_qty == 2

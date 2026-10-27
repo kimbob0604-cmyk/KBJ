@@ -425,6 +425,7 @@ GX 의 규약·공식·단위·품질 규칙을 바꾸지 않는다: 합성선�
 | `GET /api/gex/profile?scope=` | 행사가별 GEX(막대) + Flip·월 |
 | `GET /api/gex/metrics?name=&from=&to=` | 지표 시계열(visible 만 값, shadow 는 상태만) |
 | `GET /api/gex/flow` | HIRO-lite·투자자별(대금 **원**으로 — investor_flow 백만원 × 10⁶) |
+| `GET /api/gex/futures-oi?days=20..120` | 코스피200 선물 미결제약정(전 월물 합)·증감(만기 종목 제외)·근월물·OI 해석 라벨·선물/옵션 투자자 일별 — 확정 KRX·잠정 전광판(2026-10-27 추가, metrics §33·ADR 0043) |
 | `GET /api/diag/summary?date=` | 종합 판정·공포탐욕·지표 카드·이벤트 |
 | `GET /api/diag/history?key=&days=` | 지표·공포탐욕 시계열과 구간 |
 | `GET /api/diag/events?from=&to=` | 이벤트 표시 |

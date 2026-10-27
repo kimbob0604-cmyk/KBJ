@@ -6739,6 +6739,81 @@
         }
       }
     },
+    "/api/gex/futures-oi": {
+      "get": {
+        "tags": [
+          "gex"
+        ],
+        "summary": "Futures Oi Route",
+        "operationId": "futures_oi_route_api_gex_futures_oi_get",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 120,
+              "minimum": 20,
+              "default": 60,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_FuturesOi_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/diag/summary": {
       "get": {
         "tags": [
@@ -16110,6 +16185,49 @@
         ],
         "title": "Envelope[Financials]"
       },
+      "Envelope_FuturesOi_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/FuturesOi"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[FuturesOi]"
+      },
       "Envelope_GexBriefing_": {
         "properties": {
           "source": {
@@ -20245,6 +20363,415 @@
           "checks"
         ],
         "title": "Financials"
+      },
+      "FutOiDay": {
+        "properties": {
+          "trade_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Trade Date"
+          },
+          "provisional": {
+            "type": "boolean",
+            "title": "Provisional"
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "total_oi": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Oi"
+          },
+          "oi_change": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oi Change"
+          },
+          "oi_change_raw": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oi Change Raw"
+          },
+          "oi_change_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oi Change Pct"
+          },
+          "near_expiry": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{6}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Near Expiry"
+          },
+          "near_oi": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Near Oi"
+          },
+          "near_close": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Near Close"
+          },
+          "near_change": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Near Change"
+          },
+          "near_change_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Near Change Pct"
+          },
+          "expiry_day": {
+            "type": "boolean",
+            "title": "Expiry Day"
+          },
+          "label": {
+            "type": "string",
+            "enum": [
+              "new_long",
+              "new_short",
+              "short_cover",
+              "long_liquidation",
+              "flat",
+              "unknown"
+            ],
+            "title": "Label"
+          },
+          "label_text": {
+            "type": "string",
+            "title": "Label Text"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons"
+          },
+          "flows": {
+            "items": {
+              "$ref": "#/components/schemas/FutOiInvestor"
+            },
+            "type": "array",
+            "title": "Flows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "trade_date",
+          "provisional",
+          "source",
+          "as_of",
+          "quality",
+          "total_oi",
+          "oi_change",
+          "oi_change_raw",
+          "oi_change_pct",
+          "near_oi",
+          "near_close",
+          "near_change",
+          "near_change_pct",
+          "expiry_day",
+          "label",
+          "label_text"
+        ],
+        "title": "FutOiDay",
+        "description": "하루 — 합계 OI·증감·근월물 가격·해석 라벨·선물 투자자 순매수."
+      },
+      "FutOiInvestor": {
+        "properties": {
+          "investor": {
+            "type": "string",
+            "enum": [
+              "foreign",
+              "institution",
+              "individual"
+            ],
+            "title": "Investor"
+          },
+          "net_qty": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Qty"
+          },
+          "net_value_won": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Value Won"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "investor",
+          "net_qty",
+          "net_value_won",
+          "as_of",
+          "quality"
+        ],
+        "title": "FutOiInvestor",
+        "description": "코스피200 선물(K2I·F001) 투자자 하나의 그날 순매수 — investor_flow 정규장 마지막 행."
+      },
+      "FutOiOption": {
+        "properties": {
+          "trade_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Trade Date"
+          },
+          "series": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "weekly_mon",
+              "weekly_thu"
+            ],
+            "title": "Series"
+          },
+          "cp": {
+            "type": "string",
+            "enum": [
+              "C",
+              "P"
+            ],
+            "title": "Cp"
+          },
+          "investor": {
+            "type": "string",
+            "enum": [
+              "foreign",
+              "institution",
+              "individual"
+            ],
+            "title": "Investor"
+          },
+          "net_qty": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Qty"
+          },
+          "net_value_won": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Value Won"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "trade_date",
+          "series",
+          "cp",
+          "investor",
+          "net_qty",
+          "net_value_won",
+          "as_of",
+          "quality"
+        ],
+        "title": "FutOiOption",
+        "description": "옵션 투자자 일별 순매수 — 월물(K2I OC01/OP01)·위클리 월(WKM)·위클리 목(WKI) 콜/풋."
+      },
+      "FutOiThresholds": {
+        "properties": {
+          "price_flat_pct": {
+            "type": "number",
+            "title": "Price Flat Pct"
+          },
+          "oi_flat_pct": {
+            "type": "number",
+            "title": "Oi Flat Pct"
+          },
+          "board_sanity_pct": {
+            "type": "number",
+            "title": "Board Sanity Pct"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "price_flat_pct",
+          "oi_flat_pct",
+          "board_sanity_pct"
+        ],
+        "title": "FutOiThresholds",
+        "description": "라벨 보합 임계(%) — 기본값 [확인 필요](엔진 상수)."
+      },
+      "FuturesOi": {
+        "properties": {
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/FutOiDay"
+            },
+            "type": "array",
+            "title": "Days"
+          },
+          "provisional": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FutOiDay"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/FutOiOption"
+            },
+            "type": "array",
+            "title": "Options"
+          },
+          "foreign_streak": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Foreign Streak"
+          },
+          "thresholds": {
+            "$ref": "#/components/schemas/FutOiThresholds"
+          },
+          "basis": {
+            "type": "string",
+            "const": "total",
+            "title": "Basis",
+            "default": "total"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "days",
+          "provisional",
+          "options",
+          "foreign_streak",
+          "thresholds"
+        ],
+        "title": "FuturesOi",
+        "description": "`/api/gex/futures-oi?days=` — 확정 행(오래된 것부터)·잠정 행·옵션 일별·외국인 연속일."
       },
       "FyEstimateView": {
         "properties": {

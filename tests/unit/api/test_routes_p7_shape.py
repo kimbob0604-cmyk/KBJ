@@ -25,6 +25,7 @@ P7_ROUTES: dict[str, tuple[str, str]] = {
     ),
     "/api/gex/flow": ("GexFlow", "flows.market_minute"),
     "/api/gex/briefing?scope=all": ("GexBriefing", "gex.engine"),
+    "/api/gex/futures-oi?days=60": ("FuturesOi", "gex.krx_derivatives"),
     "/api/diag/summary?date=2026-10-13": ("DiagSummary", "diag.daily"),
     "/api/diag/history?key=credit_spread&days=250": ("DiagHistory", "diag.public"),
     "/api/diag/events?from=2026-10-01&to=2026-10-31": ("DiagEvents", "diag.public"),
@@ -60,6 +61,7 @@ def test_routes_need_a_session(client: TestClient, path: str) -> None:
         "/api/diag/history?key=DROP",
         "/api/diag/summary?date=2026-13-01",
         "/api/diag/events?from=soon",
+        "/api/gex/futures-oi?days=5",
     ],
 )
 def test_bad_queries_are_422_without_echo(authed: TestClient, path: str) -> None:
@@ -92,3 +94,6 @@ def test_p7_cache_domains() -> None:
     assert set(DOMAIN_JOBS["diag"]) == {"diag.public", "diag.daily", "krx.vkospi"}
     # GEX 는 상시 서비스가 쓴다 — 버전에 마지막 엔진 사이클 시각이 든다
     assert "prv_gex.levels" in DOMAIN_TS["gex"] and "gex" in DOMAIN_JOBS
+    # 선물 미결제약정 패널(ADR 0043) — KRX 파생 일별·장중 투자자 작업 + 전광판 최신 시각
+    assert set(DOMAIN_JOBS["gex_oi"]) == {"gex.krx_derivatives", "flows.market_minute"}
+    assert "prv_gex.fut_board" in DOMAIN_TS["gex_oi"]

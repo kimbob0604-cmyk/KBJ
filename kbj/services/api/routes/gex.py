@@ -2,6 +2,8 @@
 읽는다, 계약 ⑩). 경로·쿼리·응답 모델은 웨이브 1(FND-B)이 고정, 리더 본문은 ENG 묶음.
 
 캐시 영역 `gex`(cache.py — 마지막 엔진 사이클 시각이 버전). 장중 30초·그 밖 300초.
+`/futures-oi`(선물 미결제약정 — metrics §33, ADR 0043)는 영역 `gex_oi`(KRX 파생 일별·장중
+투자자 작업 + 선물 전광판 최신 시각 — 장 밖에 KRX 일별이 들어와도 버전이 바뀐다).
 """
 
 from __future__ import annotations
@@ -21,12 +23,15 @@ from kbj.services.api.models.gex import (
     GexProfile,
     GexScopeT,
 )
+from kbj.services.api.models.gex_oi import FuturesOi
 from kbj.services.api.readers.gex import gex_flow, gex_levels, gex_metrics, gex_profile
 from kbj.services.api.readers.gex_briefing import gex_briefing
+from kbj.services.api.readers.gex_oi import DEFAULT_DAYS, MAX_DAYS, MIN_DAYS, futures_oi
 from kbj.services.api.routes._common import data_router
 
 router = data_router("gex")
 DOMAIN: Final = "gex"
+OI_DOMAIN: Final = "gex_oi"
 NAME_PATTERN: Final = r"^[a-z][a-z0-9_]{0,40}$"
 ScopeQ = Annotated[GexScopeT, Query()]
 
@@ -76,3 +81,15 @@ def briefing(request: Request, scope: ScopeQ = "all") -> Response:
 def flow(request: Request) -> Response:
     st = get_state(request)
     return cached_json(request, domain=DOMAIN, ttl_s=live_ttl(st), build=lambda: gex_flow(st.read))
+
+
+@router.get("/futures-oi", response_model=Envelope[FuturesOi])
+def futures_oi_route(
+    request: Request,
+    days: Annotated[int, Query(ge=MIN_DAYS, le=MAX_DAYS)] = DEFAULT_DAYS,
+) -> Response:
+    st = get_state(request)
+    return cached_json(
+        request, domain=OI_DOMAIN, ttl_s=live_ttl(st),
+        build=lambda: futures_oi(st.read, days=days),
+    )  # fmt: skip

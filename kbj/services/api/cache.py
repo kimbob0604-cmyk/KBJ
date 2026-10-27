@@ -95,6 +95,9 @@ DOMAIN_JOBS: Final[Mapping[str, tuple[str, ...]]] = {
     # `/api/gex/flow` 는 1분 투자자(prv_gex.investor_flow — flows.market_minute, 마감+10분까지)도
     # 읽는다
     "gex": ("gex.alert", "flows.market_minute"),
+    # 선물 미결제약정 패널(metrics §33, ADR 0043) — KRX 파생 일별(08:05)·장중 투자자
+    # + 전광판 최신 시각
+    "gex_oi": ("gex.krx_derivatives", "flows.market_minute"),
     "diag": ("diag.public", "diag.daily", "krx.vkospi"),
     # P8(docs/p8_design.md §5 — 웨이브 1 FND). 신호·성과는 규칙 작업이 쓴다.
     # 규칙·일지·매매·포트폴리오는
@@ -109,6 +112,7 @@ DOMAIN_JOBS: Final[Mapping[str, tuple[str, ...]]] = {
 # 작업 기록 말고 표의 최신 시각으로도 버전을 정하는 영역(상시 서비스가 쓰는 표 — 상수 SQL)
 DOMAIN_TS: Final[Mapping[str, str]] = {
     "gex": "SELECT max(ts) FROM prv_gex.levels",
+    "gex_oi": "SELECT max(ts) FROM prv_gex.fut_board",
 }
 
 

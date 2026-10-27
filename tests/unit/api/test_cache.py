@@ -38,6 +38,7 @@ def test_domains_cover_routes() -> None:
         "index_review",  # P5 2차 묶음 IDX
         "trade",  # P6 묶음 FND
         "gex", "diag",  # P7 묶음 FND-B
+        "gex_oi",  # 페이지 3 선물 미결제약정(ADR 0043) — KRX 파생 일별·장중 투자자 + 전광판
         "rules", "backtest",  # P8 묶음 FND — 규칙·일지·포트폴리오(쓰기 모듈이 직접 씀)는 영역 없음
         "themes",  # 페이지 9(ADR 0039) — 테마 두 작업 + 보드
         "screen",  # 페이지 11 스크리너 — 일봉·스냅 수집 작업
