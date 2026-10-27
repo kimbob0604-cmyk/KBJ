@@ -8,7 +8,7 @@ from datetime import date, datetime
 __all__ = ["IntraBar"]
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)  # 백테스트가 수백만 개를 들고 있어 가볍게
 class IntraBar:
     """5분봉 하나 — ts = 봉 시작(시간대 있음), minutes = 그 안 1분봉 수."""
 
