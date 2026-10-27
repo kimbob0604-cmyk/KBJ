@@ -49,6 +49,13 @@ export function sparkline(
   const hh = opts.h ?? 32;
   const box = svgBox(`0 0 ${w} ${hh}`, opts.label);
   box.setAttribute('preserveAspectRatio', 'none');
+  // 크기를 준 스파크라인(표 칸 — 페이지 7 랭킹·산업·국가)은 그 크기 그대로. 전역 `svg { width: 100% }` 를 따르면 칸 폭만큼
+  // 늘고 높이도 비율대로 커져(80×20 → 약 400×100) 표 한 줄이 100px 를 넘었다(데모 감사 2026-10-27)
+  if (opts.w !== undefined || opts.h !== undefined) {
+    box.classList.add('spark-cell');
+    box.style.width = `${String(w)}px`;
+    box.style.height = `${String(hh)}px`;
+  }
   const f = scale(values);
   const n = values.length;
   const pts: string[] = [];

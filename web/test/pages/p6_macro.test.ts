@@ -64,7 +64,11 @@ describe('페이지 6 — 로그인', () => {
     await flush();
     expect(hz.paths()).toContain('macro/series?tab=labor');
     const labor = series.querySelector('[role="tabpanel"]:not([hidden])');
-    expect(text(labor?.querySelector('.msg.err'))).toContain('아직 없음');
+    // 404 no_data 는 안내(.msg — 빨간 오류 아님), 서버 문구의 예정 작업은 한 번만(힌트를 또 붙이면 두 번 나왔다)
+    expect(labor?.querySelector('.msg.err')).toBeNull();
+    const note = text(labor?.querySelector('.msg'));
+    expect(note).toContain('아직 없음');
+    expect(note.split('macro.morning').length - 1).toBe(1);
     tabButton(series, '미국').click();
     await flush();
     const us = series.querySelector('[role="tabpanel"]:not([hidden])');
@@ -96,7 +100,10 @@ describe('페이지 6 — 공개판', () => {
     expect([...cal.querySelectorAll('th')].map((t) => text(t))).not.toContain('예상치');
     tabButton(series, '성장·경기').click();
     await flush();
-    expect(text(series.querySelector('[role="tabpanel"]:not([hidden]) .msg.err'))).toContain('아직 없음');
+    // 공개 파일 404 는 서버 문구가 없다 — '아직 없음 — <작업 시각>' 안내(.msg)
+    const pub = series.querySelector('[role="tabpanel"]:not([hidden])');
+    expect(pub?.querySelector('.msg.err')).toBeNull();
+    expect(text(pub?.querySelector('.msg'))).toContain('아직 없음 — macro.morning');
   });
 });
 

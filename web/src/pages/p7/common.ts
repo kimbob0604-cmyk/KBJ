@@ -8,11 +8,11 @@
 // - 패널마다 출처 '관세청(공공데이터포털)'·기준 월·품질 칩·CSV 버튼(ui/csv.ts). 금액은 달러(원화 환산 없음 — Q8).
 // - 페이지 7 은 공개 등급 전부(DATA_TIERS §1) — 자물쇠 없음. HS10 단계는 로그인만('로그인판에서 HS10' 안내 한 줄).
 import type { components } from '../../api/types.gen';
-import { DataError, type DataSource, type Tier } from '../../data/source';
+import type { DataSource, Tier } from '../../data/source';
 import { downloadCsv } from '../../ui/csv';
 import { h } from '../../ui/dom';
 import { DASH, num, pct } from '../../ui/fmt';
-import { errorText, panel, type Panel, type PanelOptions } from '../../ui/panel';
+import { failText, isNoDataError, panel, type Panel, type PanelOptions } from '../../ui/panel';
 
 type S = components['schemas'];
 export type TradeFlash = S['TradeFlash'];
@@ -49,8 +49,7 @@ export const TRADE_HINT = {
 /** 페이지 7 패널(공개 등급 — 자물쇠 없음). 웨이브 2 전 껍데기는 pending 'P6' 로 그린다 */
 /** 불러오기 실패 한 줄 — 404(아직 수집 전)는 안내(msg), 그 밖은 오류(msg err). 삼키지 않는다. */
 export function failNote(err: unknown, hint: string): HTMLElement {
-  const cls = err instanceof DataError && err.status === 404 ? 'msg' : 'msg err';
-  return h('p', { class: cls }, `${errorText(err)} — ${hint}`);
+  return h('p', { class: isNoDataError(err) ? 'msg' : 'msg err' }, failText(err, hint));
 }
 
 export function tradePanel(t: TabCtx, opts: Omit<PanelOptions, 'tier'>): Panel {

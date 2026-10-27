@@ -297,11 +297,15 @@ def build_demo_world(at: str = "close", *, with_extras: bool = True) -> Any:
     from tests.fixtures.synthetic.p6_world import build_world as build_p6_world
     from tests.unit.api.api_world import build_world
     from tests.unit.api.web_fixtures_p6.explore import run_derive
+    from tests.unit.api.web_fixtures_p6.map import fill_map_world, run_index
 
     world = build_world(transform=scale_market)
-    # P6 페이지 7 — 합성 수출입 세계(고정 시드, 실데이터 아님)를 같은 저장소에 싣고 파생까지
-    build_p6_world().fill(world.repos.trade)
+    # P6 페이지 7 — 합성 수출입 세계(고정 시드, 실데이터 아님)를 같은 저장소에 싣고 파생까지.
+    # 매핑 종목 지수(trade.stock_index — 실제 처리기)도 웹 픽스처와 같이 돌린다: 없으면 '종목'·
+    # '산업' 탭이 404 안내뿐이라 종목 랭킹·종목별 흐름·실적 프리뷰를 데모에서 볼 수 없다
+    fill_map_world(world.repos, build_p6_world())
     run_derive(world.repos.trade)
+    run_index(world.repos)
     if at == "intraday":
         world.clock.set(world.slot + timedelta(minutes=5))
     if with_extras:

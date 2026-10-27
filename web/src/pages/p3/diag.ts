@@ -15,7 +15,7 @@ import { DASH, num } from '../../ui/fmt';
 import { gauge, type GaugeBand } from '../../ui/gauge';
 import { kv, type KvItem } from '../../ui/kv';
 import { lineChart } from '../../ui/line';
-import { errorText, type Panel, panel } from '../../ui/panel';
+import { failText, type Panel, panel } from '../../ui/panel';
 import { seg } from '../../ui/seg';
 
 type S = components['schemas'];
@@ -161,7 +161,7 @@ function notFound(err: unknown): boolean {
 }
 
 function fail(p: Panel, err: unknown, hint: string): void {
-  if (notFound(err)) p.showMessage(`${errorText(err)} — ${hint}`);
+  if (notFound(err)) p.showMessage(failText(err, hint));
   else p.showError(err);
 }
 

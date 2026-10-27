@@ -162,7 +162,7 @@ for _ in $(seq 1 480); do
   sleep 0.5
 done
 curl -fsS -o /dev/null "${URL}api/health"
-head -n 2 "$LOG"
+grep -E '^(KBJ 데모:|합성 마지막 거래일)' "$LOG" || head -n 2 "$LOG"
 
 if [[ -z "$SHOTS" ]]; then
   echo "브라우저: ${URL}  사용자 demo  비밀번호 ${KBJ_DEMO_PASSWORD}  (Ctrl+C 로 끝)"
@@ -170,8 +170,14 @@ if [[ -z "$SHOTS" ]]; then
   exit $?
 fi
 
-# 서버 시계(첫 줄 '서버 시계 <ISO>)') — 브라우저 시계를 여기에 맞춘다
-KBJ_DEMO_NOW="$(head -n 1 "$LOG" | sed -n 's/.*서버 시계 \([^)]*\)).*/\1/p')"
+# 서버 시계('KBJ 데모: … 서버 시계 <ISO>)' 줄) — 브라우저 시계를 여기에 맞춘다. 첫 줄로 찾지 않는다: 의존성의
+# 경고(stderr — 같은 로그)가 그 앞에 끼면 시계가 비어 브라우저가 벽시계로 돈다(띠의 세션·남은 시간이 서버와 어긋남)
+KBJ_DEMO_NOW="$(sed -n 's/^KBJ 데모:.*서버 시계 \([^)]*\)).*/\1/p' "$LOG" | head -n 1)"
+if [[ -z "$KBJ_DEMO_NOW" ]]; then
+  echo "서버 시계를 로그에서 찾지 못했다:" >&2
+  cat "$LOG" >&2
+  exit 1
+fi
 export KBJ_DEMO_NOW
 set +e
 run_shots

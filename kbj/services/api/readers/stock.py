@@ -435,10 +435,22 @@ def _traded(b: Bar) -> bool:
     return not (b.open is not None and b.open <= 0)
 
 
-def _last_trade(ctx: ReadContext, code: str) -> date | None:
+def _last_trade(ctx: ReadContext, code: str, snap: Snap | None = None) -> date | None:
+    """마지막 거래일 — 일봉(거래 있던 봉) 또는 그 스냅 자체(거래량 > 0 이면 그날 거래가 있었다).
+
+    스냅은 일봉보다 먼저 온다: 장중 거래대금 상위(`market.intraday` — 순위 스냅만, 일봉
+    없음)와 마감 수집 전. 일봉만 보면 그 사이 종목이 '거래 없음 — 마지막 거래 <전 거래일>'·
+    stale 로 보였다(데모 감사 2026-10-27 — 페이지 8 머리·차트)."""
     bars = ctx.repos.market.series([code], ctx.today(), 30).get(code, [])
     days = [b.date for b in bars if _traded(b)]
+    if snap is not None and _snap_traded(snap):
+        days.append(snap.date)
     return max(days) if days else None
+
+
+def _snap_traded(s: Snap) -> bool:
+    """그 스냅 날에 거래가 있었나 — 거래량 > 0(정지 배지는 따로 본다)."""
+    return s.volume is not None and s.volume > 0
 
 
 def _status_flags(lk: Lookup, s: Snap | None) -> list[str] | None:
@@ -520,7 +532,7 @@ def stock_header(ctx: ReadContext, code: str) -> Envelope[StockHeader]:
     quote: SourcedQuote | None = None
     quality: Quality | None = None
     if s is not None:
-        last_trade = _last_trade(ctx, code)
+        last_trade = _last_trade(ctx, code, s)
         flags = _status_flags(lk, s)
         stale = (last_trade is not None and last_trade < s.date) or bool(
             flags and "halted" in flags
@@ -615,8 +627,14 @@ def stock_chart(ctx: ReadContext, code: str, *, days: int) -> Envelope[PriceChar
     notes = ["KRX 일별 — 비수정 가격(분할은 events 로 표시)"]
     s = lk.snap(code)
     if s is not None and s.date > keep[-1].date:
-        why = _why_no_trade(_status_flags(lk, s))
-        notes.append(f"{why} — 마지막 거래 {keep[-1].date.isoformat()}(거래 없는 날은 봉에서 뺐다)")
+        flags = _status_flags(lk, s)
+        if _snap_traded(s) and not (flags and "halted" in flags):
+            # 거래는 있었다 — 그날 일봉이 아직 없을 뿐(장중·마감 수집 전). '거래 없음'이 아니다
+            notes.append(f"{s.date.isoformat()} 일봉은 아직 — {MARKET_ETA}(시세는 머리의 잠정값)")
+        else:
+            why = _why_no_trade(flags)
+            last = keep[-1].date.isoformat()
+            notes.append(f"{why} — 마지막 거래 {last}(거래 없는 날은 봉에서 뺐다)")
     return envelope(
         data,
         source=label(b.source for b in keep),
