@@ -52,12 +52,17 @@ class Watch:
 
     def at(self, name: str, when: datetime) -> tuple[datetime, Callable[[SimDay], None]]:
         def take(sim: SimDay) -> None:
-            snaps, _ = sim.repos.market.snapshot(D7)
+            snaps, used = sim.repos.market.snapshot(D7)
             snap = snaps.get(CODE)
+            prelim = [
+                x for x in sim.repos.market.snapshots(D7, source="kis.prelim") if x.code == CODE
+            ]
             inv = sim.repos.flows.days([CODE], D7, D7).get(CODE, [])
             newhigh = sim.repos.board.artifact(D7, "newhigh")
             self.shots[name] = {
                 "snap": None if snap is None else (snap.source, snap.quality),
+                "snap_day": used,
+                "prelim": [(x.source, x.quality) for x in prelim],
                 "inv": sorted({(r.source, r.quality) for r in inv}),
                 "board": None if newhigh is None else (newhigh.source, newhigh.quality),
             }
@@ -157,7 +162,10 @@ def test_p3_jobs_ran_ok_and_claimed_what_the_registry_says(day: SimDay) -> None:
 # ── 원장 quality 전이 ─────────────────────────────────────────────────────────────────────
 def test_ledger_quality_goes_estimated_ok_then_krx(day: SimDay, watch: Watch) -> None:
     s = watch.shots
-    assert s["intraday"]["snap"] == ("kis.prelim", Quality.ESTIMATED)
+    # 장중: D7 행은 잠정(kis.prelim)뿐 — 전 종목 스냅으로는 그날을 고르지 않고 전 거래일을 쓴다
+    # (2026-10-27 실시간 점검 — docs/realtime_audit.md)
+    assert s["intraday"]["prelim"] == [("kis.prelim", Quality.ESTIMATED)]
+    assert s["intraday"]["snap_day"] is not None and s["intraday"]["snap_day"] < D7  # type: ignore[operator]
     assert s["intraday"]["inv"] and {q for _, q in s["intraday"]["inv"]} == {Quality.ESTIMATED}  # type: ignore[union-attr]
     assert s["close"]["snap"] == ("kis", Quality.OK)
     assert {src for src, _ in s["close"]["inv"]} == {"kis"}  # type: ignore[union-attr]
