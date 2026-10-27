@@ -4,8 +4,11 @@
 어댑터 `kbj.data.public.fsc_kofia_stats`(15094809 — 공개, 공공누리 1유형).
 
 - 데이터 키 `DATAGO:15094809/<credit|capital|fund|cma>@<전 거래일>` 마다 그날까지 최근
-  `LOOKBACK_DAYS` 를 받아 있는 날은 다 넣는다(한 키의 실패가 다른 키를 멈추지 않는다). 그날 행이
-  없으면 공표 전(`not_ready`) — 포털은 실제로 2영업일쯤 늦다(실측 2026-10-20, #48).
+  `LOOKBACK_DAYS` 를 받아 있는 날은 다 넣는다(한 키의 실패가 다른 키를 멈추지 않는다). 포털은
+  실제로 2영업일쯤 늦다(실측 2026-10-20, #48) — 그날 행이 없어도 받은 최신 날이
+  `LAG_OK_TRADING_DAYS` 거래일 안이면 공표 지연으로 키를 `skipped`(날마다 '공표 전' 실패·알림이
+  쌓이던 것 — 늦은 날은 다음 실행의 창이 채운다, docs/ops_error_catalog.md). 더 늦거나 창 안에 행이
+  하나도 없으면 공표 전(`not_ready` → 재시도·실패)으로 드러낸다.
 - 열 → 항목 이름(`ITEMS` — 0016 `item` 은 소문자 식별자). 응답 열 이름·단위는 [실측 필요 #48]. 값이
   빈 칸은 None + invalid(0 금지). 단위는 '원'으로 적는다 [실측 필요 #48].
 - 구분 열이 있는 오퍼레이션(cma — 운용 대상·투자자 구분)은 항목 이름에 구분의 짧은 해시를 붙인다
@@ -22,13 +25,14 @@ from collections.abc import Mapping
 from datetime import date, datetime, time, timedelta
 from typing import Final, Literal
 
+from kbj.core.calendar import TradingCalendar
 from kbj.core.p5_rows import MarketStatRow
 from kbj.core.quality import Quality
 from kbj.core.time import KST
 from kbj.data.datago import DatagoTransport
 from kbj.data.public.fsc_kofia_stats.client import DATASET, KofiaRow, KofiaStatsClient
 from kbj.data.spec import DataKey
-from kbj.services.collectors.macro import NotConfigured, NotReady, client, run_keys
+from kbj.services.collectors.macro import Lagging, NotConfigured, NotReady, client, run_keys
 from kbj.services.scheduler.handlers import JobContext, JobResult
 from kbj.store.repos.public import PublicRepos, pg_public_repos
 
@@ -36,6 +40,9 @@ __all__ = ["ITEMS", "STATS", "rows_of", "run"]
 
 UNIT: Final = "원"  # [실측 필요 #48]
 LOOKBACK_DAYS: Final = 10  # 공표가 늦은 날까지 함께 받는 창(달력일)
+# 받은 최신 날이 그날보다 이 거래일 수 안으로 늦으면 공표 지연(실패 아님).
+# 실측 2영업일(#48) + 1 [추정]
+LAG_OK_TRADING_DAYS: Final = 3
 Stat = Literal["credit_balance", "market_capital", "fund_nav", "cma"]
 STATS: Final[Mapping[str, Stat]] = {
     "credit": "credit_balance",
@@ -109,7 +116,7 @@ def _client(ctx: JobContext) -> KofiaStatsClient:
         t = DatagoTransport.for_datasets(ctx.settings.datago_key, ctx.resource("redis"), [DATASET])
         return KofiaStatsClient(t)
 
-    return client(ctx, "kofia", make)
+    return client(ctx, "kofia", make, need="datago_key")
 
 
 def _one(ctx: JobContext, repos: PublicRepos, key: DataKey) -> int:
@@ -131,8 +138,23 @@ def _one(ctx: JobContext, repos: PublicRepos, key: DataKey) -> int:
         if rows:
             n += repos.market_stats.upsert(rows, loaded_by=ctx.job, received_at=ctx.now)
     if day not in days:
+        if days and _behind(ctx, days[-1], day) <= LAG_OK_TRADING_DAYS:
+            raise Lagging(
+                f"{day} 행 없음 — 포털 공표 지연(받은 최신 {days[-1]}, "
+                f"{LAG_OK_TRADING_DAYS}거래일 안이라 다음 실행이 채운다, #48)"
+            )
         last = days[-1].isoformat() if days else "없음"
         raise NotReady(f"{day} 행 없음(포털 공표 지연 — 받은 최신 {last}, #48)")
+    return n
+
+
+def _behind(ctx: JobContext, last: date, day: date) -> int:
+    """`last` 뒤 `day` 까지의 거래일 수(받은 최신 날이 그날보다 몇 거래일 늦은가)."""
+    cal: TradingCalendar = ctx.resources.get("kr") or TradingCalendar.default()
+    n, d = 0, last + timedelta(days=1)
+    while d <= day:
+        n += cal.is_trading_day(d)
+        d += timedelta(days=1)
     return n
 
 

@@ -109,6 +109,7 @@ def _fred_restricted(ctx: JobContext, cfg: MacroConfig, repos: Repos, key: DataK
         lambda: FredRestrictedClient.from_settings(
             _settings(ctx), ctx.resource("redis"), restricted=ids
         ),
+        need="fred_key",
     )
     day = _day(key)
     rows: list[MacroSeriesRow] = []
@@ -155,6 +156,7 @@ def _ecos(ctx: JobContext, cfg: MacroConfig, repos: Repos, key: DataKey) -> int:
         ctx,
         "ecos_restricted",
         lambda: EcosRestrictedClient.from_settings(_settings(ctx), ctx.resource("redis")),
+        need="ecos_key",
     )
     rows = ecos_rows(ecos.search, series, ctx.now.astimezone(KST).date(), ctx.now)
     n = write_series(repos.macro_prv, series, rows, job=ctx.job, now=ctx.now)

@@ -23,6 +23,7 @@
 #   bash scripts/local/kbj.sh cis30 probe|fetch|run [옵션]   # cis 30분봉: KIS 분봉 확인·신호 종목 분봉 받기(이어받기)·30분봉 백테스트
 #   bash scripts/local/kbj.sh job <작업> [--as-of 값]   # 작업 하나를 지금 한 번(예: job market.close_collect)
 #   bash scripts/local/kbj.sh budget [--day YYYY-MM-DD]   # 오늘 DART·KRX 등 호출 예산을 어느 작업이 얼마나 썼는지
+#   bash scripts/local/kbj.sh errors [--since 7d] [--json]   # 최근 작업 실패·시간 초과·건너뜀을 작업마다(마지막 시각·사유 — 값·키 없음). docs/ops_error_catalog.md
 #   bash scripts/local/kbj.sh audit [--show 경로]   # 화면 API 전체 점검(상태·기준 시각·빈 칸) — 로그인 없이, 값은 --show 로 하나씩
 #   bash scripts/local/kbj.sh open         # 브라우저로 열기
 #
@@ -36,7 +37,7 @@ source "$here/../vm/lib.sh"
 URL="http://127.0.0.1:8000"
 AWAKE_PID_FILE="${KBJ_AWAKE_PID_FILE:-$HOME/.kbj-awake.pid}"
 
-usage() { sed -n '2,27p' "$0"; }
+usage() { sed -n '2,28p' "$0"; }
 
 # 도커 설정 점검(메모리 5GB 미만이면 서비스가 죽을 수 있다 — 알려만 준다)
 check_docker_resources() {
@@ -369,7 +370,7 @@ cmd_fill_trade() {
   return "$rc"
 }
 
-# 매크로·미국·신용·테마·진단 같은 나머지 빈 칸을 순서대로 한 번씩 돌린다(한 작업이 실패해도 다음으로). 키가 없는 작업은 실패로 나온다
+# 매크로·미국·신용·테마·진단 같은 나머지 빈 칸을 순서대로 한 번씩 돌린다(한 작업이 실패해도 다음으로). 키가 없는 매크로·금투협 칸은 건너뜀, 그 밖은 실패로 나온다
 cmd_fill_all() {
   local k absent_keys="" job
   require_scheduler
@@ -456,6 +457,12 @@ main() {
     budget)
       require_scheduler
       kbj_compose exec -T scheduler python -m kbj.services.ops budget "$@"
+      ;;
+    errors)
+      # ops check 와 같은 api 컨테이너(DB·Redis 읽기)에서
+      kbj_docker_init
+      [[ -n "$(kbj_compose ps -q --status running api 2>/dev/null)" ]] || kbj_die "api 가 떠 있지 않다 — $(kbj_cmd start)"
+      kbj_compose exec -T api python -m kbj.services.ops errors "$@"
       ;;
     audit)
       kbj_docker_init

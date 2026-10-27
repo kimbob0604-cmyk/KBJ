@@ -86,6 +86,7 @@ GXI(ADR 0036)가 GX 수집 경로를 KBJ 로 옮겼다. 전환은 한 번, 주�
 docker compose --profile app exec api python -m kbj.services.ops check            # 표 — 종료 코드 0(OK·WARN) / 1(FAIL)
 docker compose --profile app exec api python -m kbj.services.ops check --json     # 같은 내용 JSON
 docker compose --profile app exec api python -m kbj.services.ops check --since 3d # 주말 뒤 월요일
+docker compose --profile app exec api python -m kbj.services.ops errors --since 7d # 작업별 실패·시간 초과·건너뜀(대기) — docs/ops_error_catalog.md
 ```
 
 - 언제: **장 시작 전(08:30 전후)** 과 **마감 브리핑 뒤(16:30 이후)**. 화면으로는 로그인 페이지 13 '운영'(같은 함수 —
