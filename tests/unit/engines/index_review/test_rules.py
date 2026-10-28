@@ -221,6 +221,48 @@ def test_krx_review_mcap_uses_average_and_falls_back() -> None:
     assert any("기준일 시총으로 대체" in n for n in res.notes)  # 나머지 2종목은 평균 없음
 
 
+def test_krx_excludes_foreign_and_caution() -> None:
+    """외국기업(코드 9…)·투자유의(caution) 종목은 시총이 커도 대상 밖 — 구성종목이면 편출."""
+    rules = CFG.krx_rules("kosdaq150").model_copy(update={
+        "size": CFG.krx_rules("kosdaq150").size.model_copy(update={"v": 3}),
+    })  # fmt: skip
+    stocks = [
+        st("000001", 5, member=True, market="KOSDAQ"),
+        st("000002", 4, member=True, market="KOSDAQ", flags=("caution",)),
+        st("000003", 3, member=True, market="KOSDAQ"),
+        st("950160", 50, market="KOSDAQ"),  # 외국기업 — 1위여도
+        st("000004", 2, market="KOSDAQ", adv_won=1e12),
+    ]
+    got = by_code(predict_krx(stocks, rules, ("KOSDAQ",), date(2026, 10, 30)))
+    assert "950160" not in got or got["950160"].outcome == "none"
+    assert got["000002"].outcome == "delete"
+    assert any("caution" in r for r in got["000002"].reasons)
+    assert got["000004"].outcome == "add"  # 빈자리를 다음 순위가 채운다
+
+
+def test_krx_filled_add_has_consistent_required_rise() -> None:
+    """정원 채움으로 편입 후보가 된 종목: 괴리율 ≥ 0·필요 상승률 ≤ 0(문턱 = 마지막 자리 시총).
+    산업군 A 는 큰 종목이 누적 85% 를 다 채워 신규 자리가 없다 — 산업군 문턱을 쓰면 +수백 % 였다."""
+    rules = CFG.krx_rules("kospi200").model_copy(update={
+        "size": CFG.krx_rules("kospi200").size.model_copy(update={"v": 4}),
+    })  # fmt: skip
+    stocks = [
+        st("100001", 100, member=True, sector="A"),
+        st("100002", 3, member=True, sector="A"),
+        st("100003", 2, sector="A"),
+        st("100004", 1.5, sector="A"),
+        st("200001", 1, member=True, sector="B"),
+    ]
+    got = by_code(predict_krx(stocks, rules, ("KOSPI",), date(2026, 10, 30)))
+    filled = [o for o in got.values() if o.outcome == "add"]
+    assert [o.code for o in filled] == ["100003"]
+    o = filled[0]
+    assert any("정원 채움" in r for r in o.reasons)
+    assert o.gap_mcap is not None and o.gap_mcap >= 0
+    assert o.required_rise is not None and o.required_rise <= 0
+    assert o.threshold_mcap == int(2 * JO)
+
+
 def test_liquidity_percentile_by_sector() -> None:
     stocks = [st(f"{i:06d}", 1, adv_won=float(100 - i)) for i in range(20)]
     liq = liquidity(stocks, 0.85)

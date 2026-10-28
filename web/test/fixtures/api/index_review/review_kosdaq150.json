@@ -90,10 +90,10 @@
             "ff_mcap": 286808250000,
             "fif": 0.286700000680743,
             "fif_how": "estimate",
-            "gap_mcap": -0.19595369719838782,
+            "gap_mcap": 0.17676198223083678,
             "gap_ff": null,
-            "condition_met": false,
-            "required_rise": 0.2438,
+            "condition_met": true,
+            "required_rise": -0.1502,
             "required_basis": "mcap",
             "passive_won": 18647854164,
             "adv_won": 3702733038,
@@ -101,7 +101,7 @@
             "rank": 27,
             "reasons": [
               "산업군 IT 안 5위/구성 4(한도 3)",
-              "정원 채움 — 다음 순위"
+              "정원 채움 — 다음 순위(문턱 = 마지막 자리 시총)"
             ],
             "quality": "estimated"
           },
@@ -114,10 +114,10 @@
             "ff_mcap": 134742495000,
             "fif": 0.1585000006616788,
             "fif_how": "estimate",
-            "gap_mcap": -0.33241463918849434,
+            "gap_mcap": 0.0,
             "gap_ff": null,
-            "condition_met": false,
-            "required_rise": 0.498,
+            "condition_met": true,
+            "required_rise": 0.0,
             "required_basis": "mcap",
             "passive_won": 8760760531,
             "adv_won": 6906419711,
@@ -125,7 +125,7 @@
             "rank": 30,
             "reasons": [
               "산업군 산업재 안 5위/구성 4(한도 3)",
-              "정원 채움 — 다음 순위"
+              "정원 채움 — 다음 순위(문턱 = 마지막 자리 시총)"
             ],
             "quality": "estimated"
           }

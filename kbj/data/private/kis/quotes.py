@@ -7,7 +7,8 @@
   `acml_tr_pbmn`(**원** [실측 필요 — 시간외 포함 여부]), 시가총액 `hts_avls`(**억원** → 원 [실측
   필요]), 상장주식수 `lstn_stcn`, 시가·고가·저가 `stck_oprc`·`stck_hgpr`·`stck_lwpr`.
 - 상태(관리·정지·정리매매 — metrics §3 스크리닝 기본 제외): `iscd_stat_cls_code`(51 관리종목·58
-  거래정지 [추정])·`mang_issu_cls_code`(관리 Y/N)·`temp_stop_yn`(정지 Y/N)·`sltr_yn`(정리매매 Y/N).
+  거래정지 [추정])·`mang_issu_cls_code`(관리 Y/N)·`temp_stop_yn`(정지 Y/N)·`sltr_yn`(정리매매 Y/N)·
+  `invt_caful_yn`(투자유의 Y/N → `caution` — 코스닥 투자주의환기종목 [실측 필요], 지수 편입 제외).
   **상태 칸이 하나도 없으면 `status_flags=None`(모름)** — 빈 튜플('상태 없음 확인')과 구분한다(R22).
 - 종가가 없으면 그 종목은 실패(`KisParseError`) — 0 으로 채우지 않는다.
 """
@@ -41,7 +42,9 @@ __all__ = [
 TURNOVER_UNIT_KRW: Final = 1  # acml_tr_pbmn 은 원 [실측 필요]
 MKTCAP_UNIT_KRW: Final = 100_000_000  # hts_avls 는 억원 [실측 필요]
 _MARKETS: Final[Mapping[str, str]] = {"KOSPI": "KOSPI", "KOSDAQ": "KOSDAQ", "KONEX": "KONEX"}
-_STATUS_KEYS: Final = ("iscd_stat_cls_code", "mang_issu_cls_code", "temp_stop_yn", "sltr_yn")
+_STATUS_KEYS: Final = (
+    "iscd_stat_cls_code", "mang_issu_cls_code", "temp_stop_yn", "sltr_yn", "invt_caful_yn",
+)  # fmt: skip
 
 
 def params_quote(code: str, venue: str = "KRX") -> dict[str, str]:
@@ -60,6 +63,8 @@ def status_flags(out: Mapping[str, Any]) -> tuple[str, ...] | None:
         flags.append("halted")
     if str(out.get("sltr_yn") or "").upper() == "Y":
         flags.append("liquidation")
+    if str(out.get("invt_caful_yn") or "").upper() == "Y":
+        flags.append("caution")
     return tuple(flags)
 
 

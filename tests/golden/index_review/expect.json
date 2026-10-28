@@ -269,11 +269,11 @@
      "code": "993177",
      "fif": 0.286700000680743,
      "gap_ff": null,
-     "gap_mcap": -0.19595369719838782,
+     "gap_mcap": 0.17676198223083678,
      "member": false,
      "outcome": "add",
      "passive_won": 18647854164,
-     "required_rise": 0.2438
+     "required_rise": -0.1502
     },
     {
      "code": "993066",
@@ -289,11 +289,11 @@
      "code": "993195",
      "fif": 0.1585000006616788,
      "gap_ff": null,
-     "gap_mcap": -0.33241463918849434,
+     "gap_mcap": 0.0,
      "member": false,
      "outcome": "add",
      "passive_won": 8760760531,
-     "required_rise": 0.498
+     "required_rise": 0.0
     },
     {
      "code": "993117",

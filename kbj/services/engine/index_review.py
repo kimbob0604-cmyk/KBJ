@@ -53,6 +53,7 @@ from pathlib import Path
 from typing import IO, Any, Final, Protocol, cast
 
 from kbj.config.index_reviews import IndexCfg, IndexReviewsConfig, ReviewCfg, load_index_reviews
+from kbj.config.settings import Settings
 from kbj.core.index_rows import (
     ConstituentRow,
     PassiveAumRow,
@@ -231,6 +232,7 @@ def gather(
     day: date,
     members: Sequence[ConstituentRow],
     adv_days: int,
+    official_sectors: Mapping[str, str] | None = None,
 ) -> Inputs:
     snaps, snap_day = repos.market.snapshot(day)
     if snap_day is None or not snaps:
@@ -277,7 +279,11 @@ def gather(
         u = universe.get(s.code)
         stocks.append(StockIn(
             code=s.code, name=s.name, market=s.market, kind=kind,
-            sector=cfg.sectors.sector_of(prof.induty_code if prof else None),
+            sector=cfg.sectors.sector_of(
+                prof.induty_code if prof else None,
+                _common_code(s.code) if is_pref else s.code,
+                official_sectors,
+            ),
             listed_on=u.listed_on if u else None, mktcap=s.mktcap, adv_won=adv.get(s.code),
             fif_raw=raw, fif_prev=member_fif.get(s.code), fif_source="DART" if raw else None,
             flags=s.status_flags, member=s.code in member_fif, mktcap_avg=avg_cap.get(s.code),
@@ -391,6 +397,7 @@ def compute(
     loaded_by: str,
     write_aum: bool = True,
     user_cutoff: int | None = None,
+    official_sectors: Mapping[str, str] | None = None,
 ) -> Computed:
     """한 지수·리뷰 예측(쓰지 않는다 — 추종 자금 표만 write_aum 이면 갱신)."""
     day = min(as_of, review.base)
@@ -404,7 +411,7 @@ def compute(
         cfg.msci_rules(idx.id).val("adv_days") if idx.family == "msci"
         else cfg.krx_rules(idx.id).val("adv_days")
     )  # fmt: skip
-    inp = gather(repos, cfg, idx, day, members, adv_days)
+    inp = gather(repos, cfg, idx, day, members, adv_days, official_sectors)
     if inp.snap_day is None:
         res = IndexResult("no_data", None, (), len(members), tuple(inp.notes), True)
         return Computed(idx, review, day, None, {"model": res}, (), None)
@@ -483,11 +490,12 @@ class PredictReport:
     by_index: dict[str, str] = field(default_factory=dict[str, str])
     failed: dict[str, str] = field(default_factory=dict[str, str])
     proxy_notes: dict[str, str] = field(default_factory=dict[str, str])  # 대리 ETF 를 못 쓴 사유
+    sector_note: str | None = None  # 산업군 출처(공식 KRICS 파일 종목 수·없으면 사유)
 
     def detail(self) -> dict[str, Any]:
         return {"runs": self.runs, "rows": self.rows, "by_index": self.by_index,
                 "failed": dict(list(self.failed.items())[:5]),
-                "proxy_notes": self.proxy_notes}  # fmt: skip
+                "proxy_notes": self.proxy_notes, "sectors": self.sector_note}  # fmt: skip
 
 
 def _user_cutoff(repos: IndexRepos, index_id: str, review_id: str) -> int | None:
@@ -534,7 +542,13 @@ def sync_from_proxy(
 
 
 def run_predict(
-    repos: IndexRepos, cfg: IndexReviewsConfig, as_of: date, *, now: datetime, loaded_by: str
+    repos: IndexRepos,
+    cfg: IndexReviewsConfig,
+    as_of: date,
+    *,
+    now: datetime,
+    loaded_by: str,
+    official_sectors: Mapping[str, str] | None = None,
 ) -> PredictReport:
     rep = PredictReport()
     for idx in cfg.enabled_indexes():
@@ -547,9 +561,8 @@ def run_predict(
             if why is not None:
                 rep.proxy_notes[idx.id] = why
             user = _user_cutoff(repos, idx.id, review.id) if idx.family == "msci" else None
-            c = compute(
-                repos, cfg, idx, review, as_of, now=now, loaded_by=loaded_by, user_cutoff=user
-            )
+            c = compute(repos, cfg, idx, review, as_of, now=now, loaded_by=loaded_by,
+                        user_cutoff=user, official_sectors=official_sectors)  # fmt: skip
             for run, rows in to_rows(c):
                 rep.rows += repos.index_review.put_run(run, rows, loaded_by=loaded_by, now=now)
                 rep.runs += 1
@@ -586,13 +599,57 @@ def calendar(ctx: JobContext) -> JobResult:
 def predict(ctx: JobContext) -> JobResult:
     """`index.predict` — 장 마감 뒤(as_of = 그날)."""
     as_of = date.fromisoformat(ctx.as_of[:10])
-    rep = run_predict(_repos(ctx), _cfg(ctx), as_of, now=ctx.now, loaded_by=ctx.job)
+    cfg = _cfg(ctx)
+    data_dir = (ctx.settings or Settings()).data_dir
+    official, why = (
+        read_sectors(data_dir / cfg.sectors.file, cfg.sectors.groups)
+        if cfg.sectors.file else ({}, "공식 산업군 파일 설정 없음")
+    )  # fmt: skip
+    rep = run_predict(
+        _repos(ctx), cfg, as_of, now=ctx.now, loaded_by=ctx.job, official_sectors=official
+    )
+    rep.sector_note = why
     if rep.status == "ok":
         return JobResult("ok", collected=ctx.keys, rows=rep.rows, detail=rep.detail())
     return JobResult("failed", rows=rep.rows, detail=rep.detail())
 
 
 # ── 수동 CLI ─────────────────────────────────────────────────────────────────────────────
+
+
+SECTOR_CODE_COLS: Final = ("code", "종목코드", "단축코드")
+SECTOR_NAME_COLS: Final = ("sector", "섹터", "산업군", "KRICS 섹터", "KRICS섹터")
+
+
+def read_sectors(path: Path, groups: Sequence[str] = ()) -> tuple[dict[str, str], str]:
+    """공식 KRICS 분류 CSV(KRX 인덱스 사이트에서 받은 것 — 머리줄에 코드·섹터 칸) → ({코드: 섹터},
+    설명). 파일이 없거나 형식이 틀리면 빈 표와 사유(근사 산업군으로 계산한다). groups 가 있으면 그
+    밖의 섹터 이름 줄은 버린다(이름이 바뀌었으면 사유에 센다)."""
+    if not path.is_file():
+        return {}, f"공식 산업군 파일 없음({path.name}) — KSIC 근사"
+    try:
+        with path.open(encoding="utf-8-sig", newline="") as f:
+            rows = list(csv.DictReader(f))
+    except (OSError, UnicodeDecodeError, csv.Error) as e:
+        return {}, f"공식 산업군 파일 읽기 실패: {type(e).__name__} — KSIC 근사"
+    head = rows[0].keys() if rows else ()
+    c_col = next((c for c in SECTOR_CODE_COLS if c in head), None)
+    s_col = next((c for c in SECTOR_NAME_COLS if c in head), None)
+    if c_col is None or s_col is None:
+        return {}, "공식 산업군 파일 머리줄에 코드·섹터 칸이 없다 — KSIC 근사"
+    out: dict[str, str] = {}
+    unknown = 0
+    for r in rows:
+        code = (r.get(c_col) or "").strip().removeprefix("A")
+        sec = (r.get(s_col) or "").replace(" ", "").strip()
+        if not _CODE.fullmatch(code) or not sec:
+            continue
+        if groups and sec not in groups:
+            unknown += 1
+            continue
+        out[code] = sec
+    why = f"공식 KRICS {len(out)}종목" + (f"(모르는 섹터 이름 {unknown}줄 버림)" if unknown else "")
+    return out, why
 
 
 def read_list(path: Path) -> list[tuple[str, str | None, float | None]]:

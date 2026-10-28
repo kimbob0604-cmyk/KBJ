@@ -87,6 +87,12 @@ def test_status_flags(kw: dict[str, str], flags: tuple[str, ...]) -> None:
     assert s.flagged is True
 
 
+def test_caution_flag_is_kept_but_not_a_screen_exclusion() -> None:
+    """투자유의(invt_caful_yn) → caution — 지수 편입 제외용. 스크리닝 기본 제외(flagged)는 아님."""
+    s = parse_quote(quote(invt_caful_yn="Y"), "990010", day=DAY)
+    assert s.status_flags == ("caution",) and s.flagged is False
+
+
 def test_status_unknown_when_no_status_columns() -> None:
     """R22 — 상태 칸이 없으면 '모름'(None), '상태 없음'(빈 튜플)과 다르다."""
     out = {"stck_prpr": "1000"}

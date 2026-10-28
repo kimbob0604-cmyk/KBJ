@@ -182,16 +182,49 @@ class FifEstimateCfg(_Model):
 
 
 class SectorCfg(_Model):
+    """산업군 — KRX KRICS 9개(2026-12 정기변경부터). 고르는 순서: 공식 분류(있으면) → 종목코드
+    지정(`overrides` — 보도로 확인된 재분류) → KSIC 업종코드 가장 긴 앞자리(`map` — 2~5자리 근사)
+    → `default`."""
+
     src: str
     checked: date
     verify: bool
     default: str = Field(min_length=1)
+    groups: tuple[str, ...] = ()  # 비면 이름을 검사하지 않는다
     map: Mapping[str, str] = Field(default_factory=dict[str, str])
+    overrides: Mapping[str, str] = Field(default_factory=dict[str, str])
+    # 공식 KRICS 분류 CSV(Settings.data_dir 아래 — KRX 원자료라 저장소에 넣지 않는다). 없으면 근사만
+    file: str | None = None
 
-    def sector_of(self, induty_code: str | None) -> str:
-        if not induty_code:
-            return self.default
-        return self.map.get(induty_code[:2], self.default)
+    @model_validator(mode="after")
+    def _check(self) -> SectorCfg:
+        if self.groups:
+            bad = sorted(
+                {*self.map.values(), *self.overrides.values()} - {*self.groups, self.default}
+            )
+            if bad:
+                raise ValueError(f"sectors: groups 에 없는 산업군 {bad}")
+        if any(not k.isdigit() or not 2 <= len(k) <= 5 for k in self.map):
+            raise ValueError("sectors.map 키는 KSIC 앞자리 숫자 2~5자리")
+        return self
+
+    def sector_of(
+        self,
+        induty_code: str | None,
+        code: str | None = None,
+        official: Mapping[str, str] | None = None,
+    ) -> str:
+        if code is not None:
+            if official and code in official:
+                return official[code]
+            if code in self.overrides:
+                return self.overrides[code]
+        if induty_code:
+            for n in range(min(len(induty_code), 5), 1, -1):
+                got = self.map.get(induty_code[:n])
+                if got is not None:
+                    return got
+        return self.default
 
 
 class LightRebalance(_Model):
@@ -278,6 +311,8 @@ class KrxRules(_Model):
     etf_index_patterns: tuple[str, ...] = ()
     exclude_flags: tuple[str, ...] = ()
     kinds: tuple[str, ...] = ("common",)
+    # 외국기업(종목코드 9 로 시작 — 950xxx·900xxx) 제외
+    exclude_foreign: bool = False
 
     @model_validator(mode="after")
     def _check(self) -> KrxRules:

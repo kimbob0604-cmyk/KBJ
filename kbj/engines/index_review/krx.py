@@ -6,8 +6,8 @@ KRX 방법론 원문을 직접 받지 못해 2차 자료(삼성증권 2026-03-27
 
 순서
 1. 구성종목이 없으면 `no_constituents`.
-2. 대상: 설정 시장(markets)·kinds·exclude_flags(관리·거래정지·정리매매) 밖. 대상 밖 구성종목은 편출
-   후보.
+2. 대상: 설정 시장(markets)·kinds·exclude_flags(관리·거래정지·정리매매·투자유의)·exclude_foreign
+   (종목코드 9 로 시작하는 외국기업) 밖. 대상 밖 구성종목은 편출 후보.
 3. 심사 시총 = 심사기간 일평균 시총(`mktcap_avg`), 없으면 기준일 시총으로 대체(사유 — 추정).
    순위 = 대상 종목 전체 심사 시총 내림차순(표시·신규 상장 특례·정원 채움 순서).
 4. 산업군마다 심사 시총 내림차순으로 산업군 안 순위 p, 산업군 구성종목 수 n:
@@ -18,7 +18,9 @@ KRX 방법론 원문을 직접 받지 못해 2차 자료(삼성증권 2026-03-27
 5. 유동성: 산업군 안 일평균 거래대금 순위 백분위 ≤ liquidity_pct. 거래대금을 모르면 판정 보류(None).
 6. 신규 상장 min_listing_days 미만은 편입하지 않는다(전체 순위 ≤ fast_entry_rank 면 특례).
 7. 정원 맞추기: 편입 뒤 수 > size 면 순위 낮은 편입 후보부터 경계, < size 면 다음 순위 비구성종목을
-   채운다.
+   채운다. 채운 종목의 문턱은 채운 것 가운데 가장 작은 심사 시총(마지막 자리) — 괴리율 ≥ 0·필요
+   상승률 ≤ 0 이라 판정('편입 후보')과 숫자가 어긋나지 않는다(산업군 문턱을 그대로 두면 정보기술처럼
+   큰 종목이 누적 비중을 다 채운 산업군에서 +수천 % 로 보였다).
 """
 
 from __future__ import annotations
@@ -39,6 +41,7 @@ NO_LIST: Final = "구성종목 목록 없음 — 예측하지 않는다"
 __all__ = ["liquidity", "predict_krx"]
 
 DEFAULT_SECTOR = "기타"
+FOREIGN_PREFIX: Final = "9"  # KRX 외국기업 종목코드(950xxx·900xxx)
 
 
 def _eligible(s: StockIn, rules: KrxRules, markets: Sequence[str]) -> str | None:
@@ -46,6 +49,8 @@ def _eligible(s: StockIn, rules: KrxRules, markets: Sequence[str]) -> str | None
         return f"시장 {s.market} — 대상 아님"
     if s.kind is not None and s.kind not in rules.kinds:
         return f"종류 {s.kind} — 대상 아님"
+    if rules.exclude_foreign and s.code.startswith(FOREIGN_PREFIX):
+        return "외국기업 — 대상 아님"
     bad = set(s.flags or ()) & set(rules.exclude_flags)
     if bad:
         return f"상태 {','.join(sorted(bad))} — 대상 아님"
@@ -208,7 +213,7 @@ def predict_krx(
             adv_won=None if s.adv_won is None else round(s.adv_won), adv_multiple=None,
             reasons=tuple(reasons), estimated=True,
         ))  # fmt: skip
-    out = _fit_size(out, size, blocked, notes)
+    out = _fit_size(out, size, blocked, notes, {s.code: _cap(s) for s in ok})
     out = with_passive(out, aum_won)
     out.sort(key=lambda o: (o.rank is None, o.rank or 0, o.code))
     # 대표 문턱(화면용) = 산업군 신규·유지 문턱 가운데 가장 낮은 값 — 산업군마다 다르다
@@ -224,7 +229,7 @@ def predict_krx(
 
 
 def _fit_size(
-    out: list[StockOut], size: int, blocked: set[str], notes: list[str]
+    out: list[StockOut], size: int, blocked: set[str], notes: list[str], caps: dict[str, int]
 ) -> list[StockOut]:
     stay = sum(1 for o in out if o.member and o.outcome != "delete")
     adds = sorted((o for o in out if o.outcome == "add"), key=lambda o: (o.rank or 0, o.code))
@@ -245,10 +250,16 @@ def _fit_size(
              and o.rank is not None),
             key=lambda o: (o.rank or 0, o.code),
         )  # fmt: skip
-        for o in pool[:need]:
+        filled = pool[:need]
+        last = min((caps[o.code] for o in filled), default=0)  # 마지막 자리 심사 시총
+        for o in filled:
+            thr = threshold(1.0, last)
+            rr, _ = required_rise(caps[o.code], None, thr, None)
             by_code[o.code] = dataclasses.replace(
-                o, outcome="add", reasons=(*o.reasons, "정원 채움 — 다음 순위")
-            )
+                o, outcome="add", condition_met=True, threshold_mcap=last,
+                gap_mcap=gap(caps[o.code], thr), required_rise=float(rr),
+                reasons=(*o.reasons, "정원 채움 — 다음 순위(문턱 = 마지막 자리 시총)"),
+            )  # fmt: skip
         if pool[:need]:
             notes.append(f"정원 {size} 부족 — 다음 순위 {len(pool[:need])}종목을 채웠다")
     return [by_code[o.code] for o in out]
