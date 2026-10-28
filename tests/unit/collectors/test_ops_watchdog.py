@@ -301,3 +301,35 @@ def test_jobs_waiting_on_close_collect_become_one_alert() -> None:
     )
     missed = {p.subject for p in wd._missed(REG, runs, KR, US, now)}  # pyright: ignore[reportPrivateUsage]
     assert "missed:board.daily:2026-10-06" in missed
+
+
+def test_problems_right_after_host_wake_are_held_not_sent() -> None:
+    """맥이 잠들었다 깬 뒤 10분은 끊김·누락을 보내지 않는다(실행기의 '맥 잠듦' 요약 한 통) — 창이
+    지나면 남은 문제를 다시 알린다(2026-10-28 점심 37분 잠듦에 워치독 경고 14통)."""
+
+    def dead(service: str, now: datetime) -> float | None:
+        return None
+
+    notes = Notes()
+    woke = (NOW - timedelta(minutes=40), NOW - timedelta(minutes=3))
+    result = wd.run(ctx(notes, seeded_runs(), hb=dead, extra={"host_wake": lambda: woke}))
+    assert notes.sent == [] and result.detail["held_after_wake"] > 0
+    late = (NOW - timedelta(minutes=50), NOW - timedelta(minutes=11))
+    wd.run(ctx(notes, seeded_runs(), hb=dead, extra={"host_wake": lambda: late}))
+    assert any(n["subject"].startswith("heartbeat:") for n in notes.sent)
+
+
+def test_host_wake_is_read_from_redis() -> None:
+    class R:
+        def __init__(self, raw: str | None) -> None:
+            self.raw = raw
+
+        def get(self, key: str) -> str | None:
+            assert key == "sched:host_wake"
+            return self.raw
+
+    a, b = NOW - timedelta(minutes=40), NOW - timedelta(minutes=3)
+    body = f'{{"slept_from": "{a.isoformat()}", "woke_at": "{b.isoformat()}"}}'
+    assert wd.redis_host_wake(R(body)) == (a, b)
+    assert wd.redis_host_wake(R(None)) is None and wd.redis_host_wake(R("{bad")) is None
+    assert wd.in_wake_quiet((a, b), NOW) and not wd.in_wake_quiet(None, NOW)

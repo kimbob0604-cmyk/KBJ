@@ -17,10 +17,16 @@
 
 문제마다 알림 하나(subject = 문제 id — notify.yaml `ops.watchdog` 쿨다운 30분이 같은 공백을 다시
 보내지 않는다). 알림을 넣지 못하면 작업 실패(삼키지 않는다).
+
+호스트(맥)가 잠들었다 깬 뒤 `WAKE_QUIET_S`(실행기와 같은 창) 동안은 위 문제를 알리지 않는다 — 잠든
+구간 때문에 생긴 끊김·누락이고, 실행기가 '맥 잠듦' 요약 한 통으로 알린다(2026-10-28 점심 37분
+잠듦에 워치독 경고 14통). 하트비트 끊김 기록(ops_gaps)은 그대로 남긴다. 창이 지나도 남은 문제는
+다시 알린다.
 """
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
@@ -34,15 +40,17 @@ from kbj.services.scheduler.claims import RunLog, RunRecord
 from kbj.services.scheduler.conditions import AsOfUnavailable, holds, resolve_as_of
 from kbj.services.scheduler.handlers import JobContext, JobResult
 from kbj.services.scheduler.registry import JobSpec, Registry
+from kbj.services.scheduler.runner import WAKE_QUIET_S
 from kbj.store.db import StoreError
 
-__all__ = ["GRACE_MIN", "Problem", "find_problems", "pg_running_runs", "run"]
+__all__ = ["GRACE_MIN", "Problem", "find_problems", "in_wake_quiet", "pg_running_runs", "run"]
 
 GRACE_MIN: Final = 10
 KIND: Final = "ops.watchdog"
 SOURCE: Final = "ops.watchdog"
 
 HeartbeatAge = Callable[[str, datetime], float | None]  # (서비스, 지금) → 지난 초 | 없음
+HostWake = Callable[[], tuple[datetime, datetime] | None]  # () → (잠든 때, 깬 때) | 없음
 
 
 @dataclass(frozen=True)
@@ -148,6 +156,25 @@ def find_problems(
     return out
 
 
+def in_wake_quiet(wake: tuple[datetime, datetime] | None, now: datetime) -> bool:
+    """호스트가 깬 뒤 묶는 창(`WAKE_QUIET_S`) 안인가."""
+    return wake is not None and wake[1] <= now < wake[1] + timedelta(seconds=WAKE_QUIET_S)
+
+
+def redis_host_wake(redis: Any) -> tuple[datetime, datetime] | None:
+    """`sched:host_wake`(실행기가 쓴 잠든 구간). 없거나 형식이 틀리면 None."""
+    from kbj.store.redis_keys import HOST_WAKE
+
+    raw = redis.get(HOST_WAKE)
+    if not raw:
+        return None
+    try:
+        d = json.loads(raw)
+        return datetime.fromisoformat(d["slept_from"]), datetime.fromisoformat(d["woke_at"])
+    except (ValueError, KeyError, TypeError):
+        return None
+
+
 def pg_running_runs(
     connect_fn: Callable[[], psycopg.Connection[Any]], since: date
 ) -> list[RunRecord]:
@@ -198,6 +225,17 @@ def run(ctx: JobContext) -> JobResult:
 
         hb = _redis_age
     problems = find_problems(registry, runs, running_fn(), hb, kr, us, ctx.now)
+    wake_fn: HostWake | None = ctx.resources.get("host_wake")
+    if wake_fn is None and "redis" in ctx.resources:
+        redis_w = ctx.resources["redis"]
+
+        def _wake() -> tuple[datetime, datetime] | None:
+            return redis_host_wake(redis_w)
+
+        wake_fn = _wake
+    held = 0
+    if problems and wake_fn is not None and in_wake_quiet(wake_fn(), ctx.now):
+        held, problems = len(problems), []  # 깬 직후 — 실행기의 '맥 잠듦' 요약 한 통으로
     failed: list[str] = []
     # P9 WRAP(ADR 0037 §3): 지금 끊긴 상시 서비스를 ops.health_events 'heartbeat_gap' 으로 남긴다 —
     # 1주 판정 ①(끊김 >10분)의 입력. 자원 ops_gaps(쓰기 — 운영은 PgOpsSource)가 없으면 남기지 않는다
@@ -218,6 +256,8 @@ def run(ctx: JobContext) -> JobResult:
         if not getattr(ticket, "ok", False):
             failed.append(f"{p.subject}: {getattr(ticket, 'reason', '알림 실패')}")
     detail: dict[str, Any] = {"problems": len(problems)}
+    if held:
+        detail["held_after_wake"] = held
     if failed:
         return JobResult("failed", detail={**detail, "reason": f"알림을 넣지 못했다: {failed[0]}"})
     if gap_error:

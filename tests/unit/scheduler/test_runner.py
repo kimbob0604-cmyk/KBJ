@@ -58,6 +58,7 @@ class Rig:
         submit: Any = inline_submit,
         registry: Registry | None = None,
         settings: Settings | None = None,
+        resources: dict[str, Any] | None = None,
     ) -> None:
         self.registry = registry or Registry.parse({"version": 1, "jobs": jobs})
         self.claims = MemoryClaimStore()
@@ -78,6 +79,7 @@ class Rig:
             submit=submit,
             notify=self.notes,
             settings=settings,
+            resources=resources,
         )
 
     def tick(self) -> list[RunEvent]:
@@ -1152,3 +1154,64 @@ def test_run_once_lines_carry_the_failure_reason() -> None:
     ]
     bare = RunEvent("timeout", "trade.map_load", "2026-10-22", at, 1)
     assert event_lines(bare) == ["timeout trade.map_load 2026-10-22 시도 1"]
+
+
+class FakeRedis:
+    def __init__(self) -> None:
+        self.kv: dict[str, str] = {}
+
+    def set(self, key: str, value: str, ex: int | None = None) -> None:
+        self.kv[key] = value
+
+
+def slot_job(**over: Any) -> dict[str, Any]:
+    j: dict[str, Any] = {
+        "name": "program.intraday",
+        "phase": "P5",
+        "enabled": True,
+        "owner": "tests.fake:slot",
+        "schedule": {"cron": "* 9-15 * * 1-5", "when": "trading_day"},
+        "retry": {"max": 0},
+        "deadline_min": 1,
+        "as_of": "minute",
+    }
+    j.update(over)
+    return j
+
+
+def test_failures_after_waking_become_one_sleep_summary() -> None:
+    """맥이 12:27~13:04 잠들었다 깨면 깬 뒤 10분의 실패는 하나씩 보내지 않고 '맥 잠듦' 한 통 —
+    잠든 구간은 Redis 에 남겨 워치독이 같은 구간 경고를 보내지 않게 한다(2026-10-28)."""
+    bad = lambda ctx: JobResult("failed", detail={"reason": "마감 아님 — HTTP 500"})  # noqa: E731
+    redis = FakeRedis()
+    rig = Rig(
+        [slot_job()], {"tests.fake:slot": bad}, kst(2026, 10, 6, 12, 25),
+        settings=Settings.model_construct(scheduler_catch_up_h=20), resources={"redis": redis},
+    )  # fmt: skip
+    rig.run_until(kst(2026, 10, 6, 12, 26))
+    sent_before = len(rig.notes.sent)
+    rig.now = kst(2026, 10, 6, 13, 4).astimezone(UTC)  # 깸
+    rig.run_until(kst(2026, 10, 6, 13, 13))
+    assert len(rig.notes.sent) == sent_before  # 창 안 — 하나씩 보내지 않는다
+    assert "sched:host_wake" in redis.kv and "woke_at" in redis.kv["sched:host_wake"]
+    rig.run_until(kst(2026, 10, 6, 13, 15))
+    summary = [n for n in rig.notes.sent if n["text"].startswith("[맥 잠듦]")]
+    assert len(summary) == 1
+    assert "12:26~13:04" in summary[0]["text"] and "program.intraday" in summary[0]["text"]
+    assert summary[0]["subject"] == "host_wake:20261006T1304"
+
+
+def test_slot_job_network_blips_alert_only_after_three_in_a_row() -> None:
+    """장중 슬롯 작업의 일시 실패(네트워크·부분 실패)는 연속 3회차부터 알린다 — 한 번 성공하면 센
+    수를 지운다(2026-10-28 13:58·14:00·14:18 회차마다 한 통씩)."""
+    plan = iter(["fail", "fail", "ok", "fail", "fail", "fail", "fail"])
+
+    def h(ctx: JobContext) -> JobResult:
+        if next(plan, "ok") == "ok":
+            return JobResult("ok", collected=ctx.keys)
+        return JobResult("failed", detail={"reason": "ConnectTimeout: handshake timed out"})
+
+    rig = Rig([slot_job()], {"tests.fake:slot": h}, kst(2026, 10, 6, 10, 0))
+    rig.run_until(kst(2026, 10, 6, 10, 6))
+    texts = [n["text"] for n in rig.notes.sent]
+    assert len(texts) == 1 and "(연속 3회 실패)" in texts[0]

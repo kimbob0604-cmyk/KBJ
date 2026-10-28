@@ -36,7 +36,9 @@
    공표 전으로 실패하던 macro.monthly·관세청 폴링, docs/ops_error_catalog.md). 처리기가 마감을 넘겨
    돌고 있으면 `timeout` 으로 기록한다(스레드는
    멈출 수 없으니 결과가 나중에 와도 버리고 로그만). 잠드는 호스트(설정 `scheduler_catch_up_h` > 0
-   — 로컬)는 잠든 시간을 하루 단위 작업의 마감·의존 시한에 세지 않는다(`_after_sleep`).
+   — 로컬)는 잠든 시간을 하루 단위 작업의 마감·의존 시한에 세지 않는다(`_after_sleep`). 깨면 잠든
+   구간을 Redis `sched:host_wake` 에 남기고(워치독이 그 구간 경고를 보내지 않는다), 깬 뒤
+   `WAKE_QUIET_S` 동안의 작업 실패는 하나씩 알리지 않고 모아 '맥 잠듦' 요약 한 통으로 보낸다.
 7. **격리**: 처리기는 `submit`(기본 데몬 스레드)으로 돌아 상태 루프를 막지 않는다. 처리기 예외·
    저장소 오류는 그 작업만 실패시킨다(절대 규칙 4). 실행기 안의 오류(기록 저장소·캘린더 등)도 그
    작업에서 멈춘다 — 발화 오류는 그 작업의 창을 남겨 다음 tick 에 다시 보고, 진행 오류는 그 실행만
@@ -47,6 +49,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 from collections.abc import Callable, Iterable, Mapping
@@ -77,8 +80,9 @@ from kbj.services.scheduler.conditions import (
 )
 from kbj.services.scheduler.handlers import Handler, HandlerMissing, JobContext, JobResult, resolve
 from kbj.services.scheduler.registry import JobSpec, Registry, hhmm_time
+from kbj.store.redis_keys import HOST_WAKE
 
-__all__ = ["JobRunner", "RunEvent", "Submit", "inline_submit", "thread_submit"]
+__all__ = ["WAKE_QUIET_S", "JobRunner", "RunEvent", "Submit", "inline_submit", "thread_submit"]
 
 SERVICE: Final = "scheduler"
 DEP_POLL_S: Final = 30  # 굳은 의존을 다시 보는 간격
@@ -89,6 +93,24 @@ DEP_POLL_S: Final = 30  # 굳은 의존을 다시 보는 간격
 SLEEP_GAP_S: Final = 120
 SLEEP_EXTEND_MIN_DEADLINE: Final = 60
 SLEEP_SETTLE_S: Final = 60
+# 깬 뒤 이 초 동안 생긴 작업 실패는 하나씩 알리지 않고 묶어 '맥 잠듦' 요약 한 통(2026-10-28 점심
+# 37분 잠듦 — 깬 직후 마감 넘김·네트워크 실패·워치독 경고가 20여 통). 지나면 다시 하나씩 알린다.
+# 워치독도 같은 창을 쓴다
+WAKE_QUIET_S: Final = 600
+# 요약은 묶인 실패가 있거나, 장 시간(거래일 정규장)에 이 초 넘게 잠들었을 때만 — 밤잠은 조용히
+WAKE_REPORT_MIN_S: Final = 300
+WAKE_TTL_S: Final = 86_400
+# 장중 슬롯 작업(마감 ≤ SLOT_MAX_DEADLINE 분 — 매분·5분·10분 회차)의 일시 실패(네트워크·부분
+# 실패)는 연속 이 회차만큼 실패해야 알린다 — 다음 회차가 같은 값을 다시 받는다(2026-10-28 13:58·
+# 14:00·14:18 SSL 핸드셰이크·연결 끊김·조합 1개 실패가 회차마다 한 통씩). 성공하면 센 수를 지운다.
+# 하루 몇 번 도는 작업(public.export 30분·filings.derive 25분 마감)은 셈에 넣지 않는다(바로 알린다)
+SLOT_ALERT_STREAK: Final = 3
+SLOT_MAX_DEADLINE: Final = 10
+_TRANSIENT: Final = re.compile(
+    r"Timeout|timed out|ConnectError|RemoteProtocolError|ProtocolError|SSL|ssl|EOF|"
+    r"Connection reset|peer closed|Name or service not known|nodename nor servname|"
+    r"Temporary failure in name resolution|PartialFailure"
+)
 REASON_MAX: Final = 300
 PLANNED: Final = "planned"
 # 실패가 아닌 기다림(detail 키 `wait`) — 공표 대기(not_ready)·굳은 의존이 끝나지 못해 막힘(blocked).
@@ -142,6 +164,15 @@ class RunEvent:
     at: datetime
     attempt: int = 0
     detail: Mapping[str, Any] = field(default_factory=dict[str, Any])
+
+
+@dataclass
+class _Wake:
+    """잠든 구간(첫 잠듦 ~ 마지막 깸 — 요약 전에 또 잠들면 잇는다)과 묶인 실패(작업, 사유)."""
+
+    slept_from: datetime
+    woke_at: datetime
+    failures: list[tuple[str, str]] = field(default_factory=list[tuple[str, str]])
 
 
 @dataclass
@@ -225,6 +256,8 @@ class JobRunner:
             None  # 호스트가 깬 뒤 하루 단위 작업을 띄우지 않는 때까지
         )
         self._behind: dict[str, datetime] = {}  # 발화 중 오류가 난 작업 → 다시 볼 창의 시작
+        self._wake: _Wake | None = None  # 아직 요약을 보내지 않은 잠듦 구간
+        self._slot_fails: dict[str, int] = {}  # 장중 슬롯 작업 → 연속 일시 실패 수
         self._pending: dict[tuple[str, str], _Pending] = {}
         self._abandoned: list[_Pending] = []
         self._caught: set[tuple[str, str]] = set()
@@ -295,6 +328,7 @@ class JobRunner:
             self._last = now
         self._advance(now, events)
         self._collect(now, events)  # 그 자리에서 끝난 시도(inline·빠른 처리기)를 바로 거둔다
+        self._flush_wake(now)
         return events
 
     def on_state(self, state: State, now: datetime) -> list[RunEvent]:
@@ -427,7 +461,72 @@ class JobRunner:
         log_event(
             log, logging.INFO, SERVICE, "host_slept", gap_s=round(gap.total_seconds()), moved=moved
         )
+        self._mark_wake(last, now)
         return True
+
+    def _mark_wake(self, slept_from: datetime, now: datetime) -> None:
+        """잠든 구간을 기억하고 Redis 에 남긴다(워치독용). 요약을 보내기 전에 또 잠들었다 깼으면
+        (밤새 DarkWake 로 몇 초씩 깬 경우 등) 앞 구간에 잇는다 — 요약은 진짜 깬 뒤 한 통."""
+        w = self._wake
+        if w is None:
+            w = self._wake = _Wake(slept_from, now)
+        else:
+            w.woke_at = now
+        redis = self._resources.get("redis")
+        if redis is None:
+            return
+        body = json.dumps(
+            {"slept_from": w.slept_from.isoformat(), "woke_at": w.woke_at.isoformat()}
+        )
+        try:
+            redis.set(HOST_WAKE, body, ex=WAKE_TTL_S)
+        except Exception as e:  # 표시용 — 실패해도 실행기는 이어 간다(health 로 남긴다)
+            self._emit(now, "host_wake_mark_failed", _reason(e))
+
+    def _quiet(self, now: datetime) -> _Wake | None:
+        """깬 뒤 묶는 창 안이면 그 구간."""
+        w = self._wake
+        if w is not None and now < w.woke_at + timedelta(seconds=WAKE_QUIET_S):
+            return w
+        return None
+
+    def _slept_in_session(self, w: _Wake) -> bool:
+        """잠든 구간이 거래일 주식 정규장과 겹치는가(장 시간 수집이 멈췄나)."""
+        d, end = w.slept_from.astimezone(KST).date(), w.woke_at.astimezone(KST).date()
+        while d <= end:
+            if self.kr.is_trading_day(d):
+                o, c = self.kr.equity_bounds(d)
+                if w.slept_from < c and o < w.woke_at:
+                    return True
+            d += timedelta(days=1)
+        return False
+
+    def _flush_wake(self, now: datetime) -> None:
+        """묶는 창이 끝났으면 '맥 잠듦' 요약 한 통(짧은 잠듦·실패 없음이면 보내지 않는다)."""
+        w = self._wake
+        if w is None or self._quiet(now) is not None:
+            return
+        self._wake = None
+        slept_s = (w.woke_at - w.slept_from).total_seconds()
+        if not w.failures and (slept_s < WAKE_REPORT_MIN_S or not self._slept_in_session(w)):
+            return
+        self._emit(now, "host_wake", f"잠듦 {round(slept_s)}초 · 묶인 실패 {len(w.failures)}")
+        if self._notify is None:
+            return
+        try:
+            ticket = self._notify(
+                wake_text(w),
+                kind="ops.job_failed",
+                source=SERVICE,
+                subject=f"host_wake:{w.woke_at.astimezone(KST):%Y%m%dT%H%M}",
+                as_of=w.woke_at.astimezone(KST).date(),
+            )
+        except Exception as e:
+            self._emit(now, "job_failed_notify_failed", f"host_wake: {_reason(e)}")
+            return
+        if getattr(ticket, "ok", True) is False:
+            why = str(getattr(ticket, "reason", "") or "알림을 넣지 못했다")
+            self._emit(now, "job_failed_notify_failed", f"host_wake: {_reason(why)}")
 
     def _startup_catch_up(self, now: datetime, events: list[RunEvent]) -> None:
         """켜진 직후 한 번 — 꺼져 있던 동안 놓친 켜진 작업을 작업마다 가장 최근 회차만(설정
@@ -878,6 +977,7 @@ class JobRunner:
             self._record_final(p.job, p.as_of, p.attempt, "ok", p.started_at, now, detail, p.source)
             events.append(RunEvent("ok", p.job.name, p.as_of, now, p.attempt, detail))
             del self._pending[(p.job.name, p.as_of)]
+            self._slot_fails.pop(p.job.name, None)
             return
         if result.status == "skipped":
             self._release(p, now, "처리기가 할 일이 없다고 했다")
@@ -1032,6 +1132,15 @@ class JobRunner:
     def _alert(self, job: JobSpec, as_of: str, reason: str, now: datetime) -> None:
         text = f"[작업 실패] {job.name} @ {as_of}\n{_reason(reason)}"
         self._emit(now, "job_failed", f"{job.name}@{as_of}: {_reason(reason)}")
+        wake = self._quiet(now)
+        if wake is not None:  # 깬 직후 — 하나씩 보내지 않고 '맥 잠듦' 요약에 묶는다
+            wake.failures.append((job.name, _reason(reason)))
+            return
+        if job.deadline_min <= SLOT_MAX_DEADLINE and _TRANSIENT.search(reason):
+            n = self._slot_fails[job.name] = self._slot_fails.get(job.name, 0) + 1
+            if n < SLOT_ALERT_STREAK:
+                return  # 다음 회차가 다시 받는다 — 연속으로 실패할 때만 알린다
+            text += f"\n(연속 {n}회 실패)"
         if self._notify is None:
             return
         day = now.astimezone(KST).date()
@@ -1073,6 +1182,37 @@ class JobRunner:
 
 
 _DIGITS: Final = re.compile(r"\d+")
+
+
+def _hm(ts: datetime, ref: datetime) -> str:
+    local = ts.astimezone(KST)
+    return (
+        f"{local:%H:%M}" if local.date() == ref.astimezone(KST).date() else f"{local:%m-%d %H:%M}"
+    )
+
+
+def wake_text(w: _Wake) -> str:
+    """'맥 잠듦' 요약 — 잠든 구간·묶인 실패(작업별 수·첫 사유)·워치독이 보내지 않은 것."""
+    mins = max(1, round((w.woke_at - w.slept_from).total_seconds() / 60))
+    lines = [
+        f"[맥 잠듦] {_hm(w.slept_from, w.woke_at)}~{_hm(w.woke_at, w.woke_at)}({mins}분)"
+        " 잠들었다 깸 — 그동안 수집이 멈췄다"
+    ]
+    if w.failures:
+        count: dict[str, int] = {}
+        for name, _ in w.failures:
+            count[name] = count.get(name, 0) + 1
+        top = ", ".join(f"{n} {c}" for n, c in sorted(count.items(), key=lambda x: (-x[1], x[0])))
+        quiet_min = WAKE_QUIET_S // 60
+        lines.append(f"깬 뒤 {quiet_min}분 동안 작업 실패 {len(w.failures)}건(묶음): {top}")
+        name, why = w.failures[0]
+        lines.append(f"첫 사유: {name} — {why[:120]}")
+    lines.append("워치독의 하트비트 끊김·실행 누락 경고도 이 구간 것은 보내지 않았다")
+    lines.append(
+        "장중 작업은 다음 회차부터, 하루 1회 작업은 따라잡기로 이어 돈다"
+        " · 잠들지 않게: kbj.sh awake on"
+    )
+    return "\n".join(lines)
 
 
 def _was_planned(rec: RunRecord) -> bool:
