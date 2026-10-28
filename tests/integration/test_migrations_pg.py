@@ -70,6 +70,7 @@ P2 = [
     "0027_trade_stock_flow.sql",
     "0028_sigungu_thousand_usd.sql",
     "0029_stock_minute.sql",
+    "0030_option_positions.sql",
 ]  # 이름은 P2 시험 그대로 — 0001~0023 전부(P3 0007~0009, P4 0010~0013, P5 0014~0017,
 #   P5 2차 IDX 0018, P6 0019, P7 0020, P8 0021, P9 GXI 0022 — 쓰기 주인 COMMENT 만,
 #   페이지 9 테마 0023 — ADR 0039)
@@ -90,6 +91,8 @@ YEARLY = {
     "prv_fin.valuation_daily",
     # P5(0017)
     "prv_flows.program_stock_daily",
+    # 옵션 행사가별 추정 포지션(0030 — ADR 0044)
+    "prv_gex.opt_pos_strike", "prv_gex.opt_pos_day",
 }  # fmt: skip
 # P3 장중 이력 — 청크 1일 + 보존(docs/p3_design.md §3.4, R21 [제안])
 P3_INTRADAY = {

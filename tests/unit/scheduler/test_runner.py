@@ -1045,7 +1045,7 @@ def test_real_registry_one_day_runs_only_enabled_jobs() -> None:
     assert {"macro.morning", "macro.evening", "market_stats.kofia", "market.fsc_daily"} <= set(ran)
     # P5 웨이브 3 이 켠 것은 돈다 — us.eod 는 10-05(월) 뉴욕장 → 10-06 KST
     assert {"brief.morning", "brief.closing", "flows.report", "us.eod"} <= set(ran)
-    assert ran.count("flows.market_minute") == 401  # 09:00~15:40 매분
+    assert ran.count("flows.market_minute") == 416  # 09:00~15:55 매분(ADR 0044 §2-1)
     assert rig.notes.sent == []
     done = rig.claims.done_keys()
     assert DataKey("DART", "corpCode", "2026-10-06") in done

@@ -1270,3 +1270,76 @@ test_index_review_repo.py·tests/unit/engines/index_review/test_service.py·test
 - **예외**: 분류 없음 → 404(theme.classes_sync), 편입 없음 → 404(theme.master_sync), 보드 종목 하루 없음 → 강도 404
   (board.daily) — 상세는 시세 칸 None 으로 200.
 - **시험**: `tests/unit/theme/test_strength.py`(손계산·보드 롤업 대조), `tests/unit/api/test_routes_themes.py`.
+
+## 34. 옵션 행사가별 투자자 추정 포지션·콜/풋 벽·합성 델타 (로그인 — 페이지 3, ADR 0044)
+
+> 용도: HTS '외국인 행사가별 옵션 포지션' 뷰(사용자는 맥이라 HTS 를 못 쓴다)를 KBJ 숫자로 뒷받침한다 — 어느 행사가에 외국인 콜·풋
+> 매도가 쌓였고 오늘 어디가 줄었나(청산), 선물과 합치면 델타가 어느 쪽인가. **행사가별 투자자 포지션은 거래소가 주지 않는다** —
+> 증권사(키움 영웅문 도움말 0797 https://download.kiwoom.com/hero4_help_new/0797.htm)도 투자자별 **합계** 매매금액·수량에서
+> 추정한다. 여기 값은 모두 그 방식을 따른 **추정치**(quality 최고 `estimated`)다. 문장(해석)은 만들지 않는다 — 숫자와 라벨 코드만.
+
+### 34.1 행사가 배분 (분 단위 — 키움 방식)
+
+| 항목 | 정의 |
+|---|---|
+| 원천 — 투자자 누적 | `prv_gex.investor_flow`(KIS FHPTJ04030000 — 그날 누적 한 줄/분, metrics §21) 정규장(`day`) 행. 묶음(sector) = 월물 콜 K2I·OC01 / 풋 K2I·OP01, 위클리(월) WKM·OC05/OP05, 위클리(목) WKI·OC04/OP04. 투자자 `frgn`(기본)·`prsn`·`orgn`. 누적 매수 수량 `B(t)`·매수 대금 `VB(t)`, 매도 `S(t)`·`VS(t)` — 수량 계약, 대금 **백만원**. quality invalid 행(검산 ② 실패 — 기관 세부 합)은 쓰지 않는다(누적이라 다음 행이 그만큼 이어받는다 — 분 누락과 같게 처리) |
+| 원천 — 행사가 시세 | `prv_gex.chain_snapshots`(gex.poller — 전광판 `board` 10초·단건 `fill`) 행사가·콜풋별 `last`. 분 t 의 시세 = 슬롯 t 직전 1분 [t − 60초, t) 안의 가장 늦은 행, 없으면 앞 분 값을 이어 쓴다 — 단 **5분**(`PRICE_STALE_MIN` [확인 필요]) 넘게 묵은 시세는 후보에서 뺀다. `last` NULL·0 이하는 후보 아님. 월물 전광판은 위쪽 100행사가만 와서 ATM 근처는 `fill` 이 채운다(probe 2026-10-28) |
+| 배분 시리즈 | 분 t 에 묶음의 시세가 있는 시리즈 중 **최종거래일 만기 시각(15:20 — `expiry_at` [확인 필요 — 위클리도 15:20])이 t 보다 뒤인 가장 가까운 만기** 하나(월물 = 근월물 — 키움 '최근월물'). 만기일 15:20 뒤 분은 다음 만기로 넘어간다(시세가 없으면 미배분). 최종거래일 = `kbj.engines.gex.series.last_trade_date_of`. **한계**: `OC01`·`OP01` 은 월물 **전 만기 합**이라 차월·분기물(12월물 OI 가 근월물보다 클 때가 있다) 거래도 근월물 행사가로 배분된다 |
+| 분 차분 | 같은 날 쓸 수 있는 행을 시각 순으로 놓고 앞 행 대비 `ΔB = B(t) − B(t₀)`, `ΔVB = VB(t) − VB(t₀)`(t₀ = 앞 행, 그날 첫 행은 0 — 장 시작 누적 0). 매도도 같다. **역행**(ΔB < 0 또는 ΔVB < 0 — 원천 정정)은 그 행을 버리고 기준(t₀)을 옮기지 않는다(다음 행이 그 구간까지 이어받는다), 수를 센다 |
+| 평균단가 | `p = ΔV × 10⁶ ÷ ΔQ ÷ 승수`(pt). 승수 `OPTION_MULTIPLIER` = 250,000원/pt(코스피200 옵션·위클리 — KRX 상품 명세 [확인 필요 — 위클리]). 매수·매도를 **따로** 평균내 따로 배분한다 |
+| 두 후보 | 분 t 시세 중 `|가격 − p|` 가 가장 작은 두 행사가(같은 콜/풋). 거리가 같으면 **ATM 쪽**(콜은 낮은 행사가·풋은 높은 행사가 — 같은 가격의 외가격 여러 개에서 거래가 많은 쪽)을 먼저 고른다 |
+| 배분 비율 | 가까운 쪽 **2 : 먼 쪽 1**(키움) — `ΔQ × 2/3`·`ΔQ × 1/3`(소수 계약 그대로 — 합이 원 수량과 같게, 표시만 반올림). 두 후보의 거리가 같으면(가격이 같거나 p 가 정확히 가운데) **1 : 1**. 후보가 하나뿐이면 전부 그 행사가(수를 센다 `single_qty`). 후보가 없으면(시세 없음·묵음) **미배분**(`unallocated_*` — 버리지 않고 센다) |
+| 체결 0·분 누락 | ΔQ = 0 이면 배분 없음. 분이 빠지면(맥 잠듦·수집 실패) 다음 행의 차분이 빠진 구간 체결을 다 담고, 그 분의 시세로 배분한다 — 빠진 분 수 `gap_minutes`(09:00~마지막 행, 슬롯 분 기준)를 그날 품질 사유에 적는다. 그날 첫 행이 09:17 이면 09:00~09:17 체결이 09:17 시세로 들어간다 |
+| 정밀도 | 대금이 백만원 반올림이라 분 차분 평균단가 오차 반폭 `u = 2 × 0.5 × 10⁶ ÷ (ΔQ × 승수) = 4 ÷ ΔQ` pt. `u > max(0.05pt, 0.10 × p)`(`IMPRECISE_ABS`·`IMPRECISE_REL` [확인 필요])인 분의 수량을 `imprecise_qty` 로 센다(배분은 그대로 한다). ΔQ > 0·ΔV = 0(반올림)이면 p = 0 — 가장 싼 두 행사가로 간다(그 분은 늘 imprecise) |
+| 검산(속성) | 그날 묶음·투자자마다 `Σ 배분 매수 + unallocated_buy = B(마지막 행)`(허용오차 1e-6 계약), 매도도 같다 |
+| 행사가 하루 변화 | `change(K, cp) = Σ_분 (배분 매수 − 배분 매도)`(계약, + 매수 우위). 저장 `prv_gex.opt_pos_strike`(그날·투자자·시리즈·행사가·콜풋 — 매수·매도·순·종가·전광판 OI·델타) |
+
+### 34.2 누적 추정 보유
+
+| 항목 | 정의 |
+|---|---|
+| 정의 | `H(s, K, cp, D) = Σ_{d ∈ [A(s), D]} change_d(s, K, cp)` — 시리즈 s 마다(월물·WKM·WKI 따로, 같은 행사가라도 만기가 다르면 다른 줄) |
+| 누적 시작일 | `A(s)` = 그 시리즈에 저장 행이 있는 첫 거래일(엔진 결과 — **실제 잔고가 아니라 A(s) 이후 변화분**). 응답·화면에 'YYYY-MM-DD 이후'로 표시. 실측 2026-10-28 기준 가장 이른 A = 2026-10-20(체인이 있는 첫날) |
+| 빠진 날 | `[A(s), D]` 의 거래일 중 그날 행(그 묶음)이 없는 날 수 `days_missing` — 0 이 아니면 사유에 적는다(그날 변화가 통째로 빠졌다) |
+| 만기 소멸 | 최종거래일 < D 인 시리즈는 보이지 않는다(만기 결제로 소멸). D 가 최종거래일이면 그날 마감 뒤 소멸 — 화면은 '살아 있는' 시리즈(최종거래일 > D)만 기본으로 보인다 |
+| 전일 보유 | `H_prev = H(s, K, cp, D−1)`(캘린더 직전 거래일까지 — 그날 행이 없으면 그 앞까지의 합) |
+
+### 34.3 확정 미결제약정 대비 검산
+
+| 항목 | 정의 |
+|---|---|
+| OI | 그날 D 의 `prv_gex.krx_opt_daily.acc_opnint_qty`(KRX 확정 — 다음 거래일 08:05 뒤, family `kospi200`·`kospi200_weekly_mon`·`kospi200_weekly_thu`, session `day`, 같은 만기·행사가·콜풋). 아직 없으면 그날 마지막 전광판 `chain_snapshots.oi`(`oi_source = board`, 잠정) |
+| 규칙 | 한 투자자 무리의 순포지션 절대값은 그 종목 OI 를 넘을 수 없다. `|H| > OI` → 그 행 **invalid**(사유 'OI 초과 — 추정 오차·누적 시작 뒤 일부만'), `|H| ≤ OI` → estimated. OI 가 0 인데 `|H| ≥ 1` → invalid. OI 를 못 찾으면 검산 불가(사유, estimated 유지) |
+| 비율 | `oi_ratio = |H| ÷ OI`(OI > 0 일 때) — 응답에 싣는다 |
+
+### 34.4 콜 벽·풋 벽과 '청산' 판정
+
+| 항목 | 정의 |
+|---|---|
+| 콜 벽 | 시리즈 s 의 콜 중 `H` 가 가장 작은(가장 큰 순매도, H < 0) 행사가. 풋 벽 = 풋 중 H 가 가장 작은(H < 0) 행사가. 음수가 없으면 없음(None). 같으면 ATM 쪽. invalid 행은 후보에서 뺀다 |
+| 전일 벽 | 같은 규칙을 `H_prev` 로 — 오늘 벽과 다르면 둘 다 싣는다 |
+| 판정 라벨 | 행사가마다 `H_prev`·`H` 로: 둘 다 `|·| < MIN_JUDGE`(300계약 [확인 필요]) → `small` · `|H_prev| < MIN_JUDGE` → `new`(신규) · 부호가 바뀌고 `|H| ≥ MIN_JUDGE` → `flipped`(반전) · 남은 비율 `rem = max(sign(H_prev) × H, 0) ÷ |H_prev|` 로 `1 − rem ≥ CLEAR_PCT`(80% [확인 필요]) → `cleared`(청산) · `≥ REDUCE_PCT`(30% [확인 필요]) → `reduced`(축소) · `rem − 1 ≥ ADD_PCT`(30% [확인 필요]) → `added`(확대) · 그 밖 `hold`(유지). 상수는 엔진(`kbj.engines.gex.option_positions`)에 두고 응답 `thresholds` 에 싣는다 |
+| 오늘 바뀐 행사가 상위 | 살아 있는 시리즈 전부에서 `|change|` 큰 순 `TOP_N`(10)개 — 시리즈·행사가·콜풋·change·H·H_prev·라벨(숫자·코드만 — 노션 정리가 쓰고 문장화는 나중에 LLM) |
+
+### 34.5 합성 델타 (선물 환산 계약)
+
+| 항목 | 정의 |
+|---|---|
+| 선물 부분 | `F_cum(D) = Σ_{d ∈ [A_F, D]} net_qty_d(K2I·F001, 투자자)` — 그날 정규장 마지막 행 순매수 수량(전 월물 합). `A_F` = 월물 시리즈의 A 와 같은 날부터(같은 기간끼리 더한다). 그날 마지막 행이 15:45 전이면 사유('선물 마감 전 마지막 슬롯') |
+| 옵션 부분 | `Σ_{살아 있는 s, K, cp} H(s, K, cp, D) × δ(s, K, cp, D)`. δ = 그날 마지막 `prv_gex.option_iv.delta`(자체 그릭스 — GEX 엔진), 없으면 마지막 `chain_snapshots.delta`(KIS), 둘 다 없으면 그 행은 빼고 `missing_delta` 로 센다. 콜 δ > 0·풋 δ < 0 |
+| 단위 | 코스피200 선물 승수 250,000 = 옵션 승수 250,000 이라 `H × δ` 가 곧 선물 환산 계약(`FUTURES_MULTIPLIER ÷ OPTION_MULTIPLIER = 1`) |
+| 합계 | `synthetic = F_cum + 옵션 부분` — 양수 롱(상방) 우위·음수 숏 우위. 시리즈별 옵션 부분도 싣는다. 품질 estimated(누적 시작 뒤 변화분이라 절대 수준이 아니다) |
+
+### 34.6 레벨 표·EWY 환산
+
+| 항목 | 정의 |
+|---|---|
+| 레벨 표 | 월물(근월) 콜 벽·풋 벽·전일 콜/풋 벽·현재 선물가(그날 마지막 `prv_gex.fut_board` 근월물 `price`, 잔존일 가장 짧은 종목) — 높은 값부터, 선물가 대비 거리 `(L − F) ÷ F × 100`(%) |
+| EWY 환산 | `L_EWY = L × EWY_close ÷ F`(같은 시각의 원/달러가 분자·분모에서 지워진다 — `EWY ÷ (F ÷ USDKRW) × L ÷ USDKRW`). **보류**: 레포·DB 에 EWY 원천이 없다(probe 2026-10-28 — `us_universe` 0행) [확인 필요 — 원천·시각 맞춤(EWY 는 06:00 KST 미국 종가, K200 은 15:45)]. 응답 `ewy = null`·사유 |
+
+### 34.7 품질·봉투·계산 위치
+
+- 모든 수치 quality ≤ `estimated`(추정치). 행사가 행 invalid 는 OI 초과(§34.3). 그날 묶음 사유: 빠진 분·역행·미배분·imprecise 비율·단일 후보.
+- 봉투: source `KBJ:option_positions(KIS 투자자별 합계+KIS 옵션 체인 — 키움 방식 추정)+KRX:opt_bydd_trd(OI 검산)`, as_of = 계산 시각(작업 `gex.option_positions` 16:05 — 파생 마감 수집 15:55 뒤), quality = 실린 행 중 invalid 를 뺀 가장 나쁜 것(invalid 수는 notes). 저장 행이 없으면 404 `no_data`.
+- 순수 엔진 `kbj.engines.gex.option_positions`(계약 ⑨ — I/O 없음). 작업 `kbj.services.engine.option_positions:daily` 는 행을 엔진에 넣고 결과를 쓴다. 리더 `kbj.services.api.readers.gex_option_positions` 는 저장 행 → 엔진(누적·검산·벽·합성) → 응답. LLM 은 쓰지 않는다.
+- **시험**: `tests/unit/engines/gex/test_option_positions.py`(합성 세계 `tests/fixtures/synthetic/opt_pos_world.py` — 손계산 배분 대조 허용오차, 2:1·1:1·단일 후보·후보 없음·묵은 시세·역행·분 누락·만기 넘김, 속성: 배분 합 = 원 수량(hypothesis), OI 초과 invalid, 라벨 경계, 벽, 합성 델타), `tests/unit/services/test_option_positions_job.py`(작업 — 메모리 저장소), `tests/unit/api/test_routes_gex_option_positions.py`, `web/test/pages/p3_optpos.test.ts`.
