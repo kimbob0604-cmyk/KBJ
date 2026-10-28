@@ -1831,6 +1831,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/gex/option-positions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Option Positions Route */
+        get: operations["option_positions_route_api_gex_option_positions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/telegram/webhook": {
         parameters: {
             query?: never;
@@ -4313,6 +4330,25 @@ export interface components {
              */
             generated_at: string;
             data: components["schemas"]["OpsStatus"];
+        };
+        /** Envelope[OptionPositions] */
+        Envelope_OptionPositions_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["OptionPositions"];
         };
         /** Envelope[OverhangRecent] */
         Envelope_OverhangRecent_: {
@@ -6845,6 +6881,229 @@ export interface components {
             services: components["schemas"]["OpsService"][];
             /** Items */
             items: components["schemas"]["OpsCheckItem"][];
+        };
+        /**
+         * OptPosDayStat
+         * @description 묶음(시장·업종) 오늘 요약 — 배분 품질.
+         */
+        OptPosDayStat: {
+            /** Market Code */
+            market_code: string;
+            /** Sector Code */
+            sector_code: string;
+            /** Minutes */
+            minutes: number;
+            /** Gap Minutes */
+            gap_minutes: number;
+            /** Unallocated */
+            unallocated: number;
+            /** Last Ts */
+            last_ts: string | null;
+            /** Reasons */
+            reasons: string[];
+        };
+        /** OptPosEwy */
+        OptPosEwy: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "unavailable" | "ok";
+            /** Reason */
+            reason: string;
+        };
+        /** OptPosLevel */
+        OptPosLevel: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "call_wall" | "put_wall" | "prev_call_wall" | "prev_put_wall" | "futures";
+            /** Level */
+            level: number;
+            /** Distance Pct */
+            distance_pct: number | null;
+            /** Ewy */
+            ewy?: number | null;
+        };
+        /** OptPosSeries */
+        OptPosSeries: {
+            /**
+             * Mrkt Cls
+             * @enum {string}
+             */
+            mrkt_cls: "" | "WKM" | "WKI";
+            /** Expiry */
+            expiry: string;
+            /** Label */
+            label: string;
+            /** Last Trade Date */
+            last_trade_date: string | null;
+            /**
+             * Accum From
+             * Format: date
+             */
+            accum_from: string;
+            /** Days Used */
+            days_used: number;
+            /** Days Missing */
+            days_missing: number;
+            /** Strikes */
+            strikes: components["schemas"]["OptPosStrike"][];
+            call_wall: components["schemas"]["OptPosWall"] | null;
+            put_wall: components["schemas"]["OptPosWall"] | null;
+            prev_call_wall: components["schemas"]["OptPosWall"] | null;
+            prev_put_wall: components["schemas"]["OptPosWall"] | null;
+            /** Delta Contracts */
+            delta_contracts: number;
+            /** Missing Delta */
+            missing_delta: number;
+            /** Invalid */
+            invalid: number;
+            quality: components["schemas"]["Quality"];
+            /** Reasons */
+            reasons: string[];
+        };
+        /** OptPosSeriesDelta */
+        OptPosSeriesDelta: {
+            /** Series */
+            series: string;
+            /** Delta */
+            delta: number;
+        };
+        /** OptPosStrike */
+        OptPosStrike: {
+            /** Strike */
+            strike: number;
+            /**
+             * Cp
+             * @enum {string}
+             */
+            cp: "C" | "P";
+            /** Holding */
+            holding: number;
+            /** Prev Holding */
+            prev_holding: number;
+            /** Change */
+            change: number;
+            /** Buy */
+            buy: number;
+            /** Sell */
+            sell: number;
+            /** Oi */
+            oi: number | null;
+            /** Oi Source */
+            oi_source: ("krx" | "board") | null;
+            /** Oi Ratio */
+            oi_ratio: number | null;
+            /** Delta */
+            delta: number | null;
+            /**
+             * Label
+             * @enum {string}
+             */
+            label: "small" | "new" | "flipped" | "cleared" | "reduced" | "added" | "hold";
+            quality: components["schemas"]["Quality"];
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
+        };
+        /** OptPosSynthetic */
+        OptPosSynthetic: {
+            /** Futures */
+            futures: number | null;
+            /** Futures From */
+            futures_from: string | null;
+            /** Options */
+            options: number;
+            /** Total */
+            total: number | null;
+            /** By Series */
+            by_series: components["schemas"]["OptPosSeriesDelta"][];
+            /** Missing Delta */
+            missing_delta: number;
+            quality: components["schemas"]["Quality"];
+        };
+        /** OptPosThresholds */
+        OptPosThresholds: {
+            /** Min Judge */
+            min_judge: number;
+            /** Clear Pct */
+            clear_pct: number;
+            /** Reduce Pct */
+            reduce_pct: number;
+            /** Add Pct */
+            add_pct: number;
+            /** Price Stale Min */
+            price_stale_min: number;
+            /** Near Share */
+            near_share: number;
+            /** Option Multiplier */
+            option_multiplier: number;
+        };
+        /** OptPosTop */
+        OptPosTop: {
+            /** Series */
+            series: string;
+            /** Strike */
+            strike: number;
+            /**
+             * Cp
+             * @enum {string}
+             */
+            cp: "C" | "P";
+            /** Change */
+            change: number;
+            /** Holding */
+            holding: number;
+            /** Prev Holding */
+            prev_holding: number;
+            /**
+             * Label
+             * @enum {string}
+             */
+            label: "small" | "new" | "flipped" | "cleared" | "reduced" | "added" | "hold";
+        };
+        /** OptPosWall */
+        OptPosWall: {
+            /** Strike */
+            strike: number;
+            /** Holding */
+            holding: number;
+            /** Label */
+            label?: ("small" | "new" | "flipped" | "cleared" | "reduced" | "added" | "hold") | null;
+        };
+        /** OptionPositions */
+        OptionPositions: {
+            /**
+             * Trade Date
+             * Format: date
+             */
+            trade_date: string;
+            /**
+             * Investor
+             * @enum {string}
+             */
+            investor: "frgn" | "prsn" | "orgn";
+            /** Series */
+            series: components["schemas"]["OptPosSeries"][];
+            synthetic: components["schemas"]["OptPosSynthetic"];
+            /** Top Changes */
+            top_changes: components["schemas"]["OptPosTop"][];
+            /** Levels */
+            levels: components["schemas"]["OptPosLevel"][];
+            /** Futures Price */
+            futures_price: number | null;
+            /** Futures Today */
+            futures_today: number | null;
+            /** Day Stats */
+            day_stats: components["schemas"]["OptPosDayStat"][];
+            ewy: components["schemas"]["OptPosEwy"];
+            thresholds: components["schemas"]["OptPosThresholds"];
+            /** Reasons */
+            reasons: string[];
         };
         /** Overhang */
         Overhang: {
@@ -16364,6 +16623,65 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_ScreenCis_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    option_positions_route_api_gex_option_positions_get: {
+        parameters: {
+            query?: {
+                investor?: "frgn" | "prsn" | "orgn";
+                date?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_OptionPositions_"];
                 };
             };
             /** @description 세션 없음·만료 */

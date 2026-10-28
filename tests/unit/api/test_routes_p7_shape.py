@@ -78,7 +78,10 @@ def test_openapi_lists_p7_routes_with_envelopes(world: World) -> None:
         ref = op["responses"]["200"]["content"]["application/json"]["schema"]["$ref"]
         assert ref.endswith(f"Envelope_{model}_"), (bare, ref)
         assert "404" in op["responses"] and "401" in op["responses"]
-    assert len([p for p in paths if p.startswith(("/api/gex/", "/api/diag/"))]) == len(P7_ROUTES)
+    # 옵션 행사가별 추정 포지션(ADR 0044)은 자기 시험이 본다(test_routes_gex_option_positions)
+    own = {"/api/gex/option-positions"}
+    p7 = [p for p in paths if p.startswith(("/api/gex/", "/api/diag/")) and p not in own]
+    assert len(p7) == len(P7_ROUTES)
     schemas = spec["components"]["schemas"]
     # 섀도 지표는 값 칸이 None 가능(§10 Q3), 투자자 대금은 원 단위 칸 이름
     assert "net_value_won" in schemas["GexInvestorRow"]["properties"]

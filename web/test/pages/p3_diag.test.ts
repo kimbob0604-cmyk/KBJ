@@ -149,7 +149,7 @@ describe('페이지 3 진입 — 하위 모듈 순서', () => {
     const { ctx, root } = pageCtx(3, 'login', source, { now: () => DIAG_NOW });
     await p3.mount(ctx);
     await flush();
-    expect(P3_SECTIONS).toEqual(['verdict', 'public', 'market', 'gex', 'events']);
+    expect(P3_SECTIONS).toEqual(['verdict', 'public', 'market', 'gex', 'optpos', 'events']);
     const titles = spans(root).map((x) => x[0]);
     expect(titles[0]).toBe(TITLES.verdict);
     expect(titles.at(-1)).toBe(TITLES.events);

@@ -41,6 +41,7 @@ from kbj.store.repos import (
     MacroPublicRepo,
     MarketRepo,
     MarketStatsRepo,
+    OptPosRepo,
     PersonalRepo,
     ProgramRepo,
     RulesRepo,
@@ -150,6 +151,9 @@ class ApiRepos(Protocol):
     def theme(self) -> ThemeRepo: ...
     @property
     def theme_pub(self) -> ThemePublicRepo: ...
+    # 옵션 행사가별 추정 포지션(0030 — ADR 0044)
+    @property
+    def opt_pos(self) -> OptPosRepo: ...
 
 
 class NoData(Exception):

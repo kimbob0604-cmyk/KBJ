@@ -56,6 +56,7 @@ from kbj.store.repos.macro_prv import MacroPrivateRepo, PgMacroPrivateRepo
 from kbj.store.repos.market import MarketRepo, PgMarketRepo
 from kbj.store.repos.market_stats import MarketStatsRepo, PgMarketStatsRepo
 from kbj.store.repos.memory import MemoryRepos, memory_repos
+from kbj.store.repos.opt_pos import OptPosRepo, PgOptPosRepo
 from kbj.store.repos.personal import PersonalRepo, PgPersonalRepo
 from kbj.store.repos.program import PgProgramRepo, ProgramRepo
 from kbj.store.repos.public import PublicRepos
@@ -84,6 +85,7 @@ __all__ = [
     "MarketRepo",
     "MarketStatsRepo",
     "MemoryRepos",
+    "OptPosRepo",
     "PersonalRepo",
     "ProgramRepo",
     "PublicRepos",
@@ -131,6 +133,8 @@ class Repos:
     # 페이지 9(0023 — 네이버 유래 로그인 theme·대테마 분류 공개 theme_pub, ADR 0039)
     theme: ThemeRepo
     theme_pub: ThemePublicRepo
+    # 옵션 행사가별 추정 포지션(0030 — ADR 0044)
+    opt_pos: OptPosRepo
 
     def public(self) -> PublicRepos:
         """같은 공개 저장소(filings·fin·macro·market_stats·diag)를 공개 작업 묶음으로."""
@@ -164,4 +168,5 @@ def pg_repos(conn_factory: ConnFactory) -> Repos:
         personal=PgPersonalRepo(conn_factory),
         theme=PgThemeRepo(conn_factory),
         theme_pub=PgThemePublicRepo(conn_factory),
+        opt_pos=PgOptPosRepo(conn_factory),
     )

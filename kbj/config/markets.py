@@ -150,6 +150,10 @@ class MinutePair(_Model):
     label: str = Field(min_length=1)
     enabled: bool
     index: str | None = None
+    # 주식 정규장 마감 뒤 몇 분까지 부르나(ADR 0044 §2-1). 현물 10(15:40 — 종가 단일가 결과),
+    # 선물·옵션 25(15:55 — 파생 종가 단일가 15:35~15:45 와 그 뒤 확정 누적).
+    # 등록부 `flows.market_minute` 의 `end` 는 가장 큰 값.
+    tail_min: int = Field(default=10, ge=0, le=60)
     note: str = ""
 
     @field_validator("id", "tab")

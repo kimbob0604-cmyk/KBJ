@@ -78,6 +78,7 @@ from kbj.store.repos.market import (
     snap_rank,
 )
 from kbj.store.repos.market_stats import MemoryMarketStatsRepo
+from kbj.store.repos.opt_pos import MemoryOptPosRepo
 from kbj.store.repos.personal import MemoryPersonalRepo
 from kbj.store.repos.program import MemoryProgramRepo
 from kbj.store.repos.public import MemoryPublicRepos
@@ -747,6 +748,8 @@ class MemoryRepos:
     # 페이지 9(0023 — ADR 0039)
     theme: MemoryThemeRepo = field(default_factory=MemoryThemeRepo)
     theme_pub: MemoryThemePublicRepo = field(default_factory=MemoryThemePublicRepo)
+    # 옵션 행사가별 추정 포지션(0030 — ADR 0044)
+    opt_pos: MemoryOptPosRepo = field(default_factory=MemoryOptPosRepo)
 
     def __post_init__(self) -> None:
         self.personal = MemoryPersonalRepo(

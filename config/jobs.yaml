@@ -671,20 +671,22 @@ jobs:
 
   # ── P5 F2 장중 투자자 수급·프로그램매매(docs/p5_flow_program_prompt.md §3.4, docs/p5_design.md §0.4·§3.4) ──
   # 1분 작업은 정규장 + 장 마감 단일가 15:40 까지(close+10). 빈 분은 채우지 않는다(보간 금지 — 행 없음).
+  # flows.market_minute 만 close+25(15:55): 선물·옵션 종가 단일가(15:35~15:45)를 받는다 — 15:41 뒤 분은
+  # markets.yaml 조합 tail_min 25 인 파생 조합만 부른다(현물은 15:40 에서 끝 — ADR 0044 §2-1).
   # 프로그램 TR 은 실측(#40·#41) 전이라 웨이브 3 에도 꺼진 채 남는다(D-P5-23). KIS 우선순위는 limits.yaml
   # kis.priorities(market_minute·program_intraday P2 · program_scan P3 · program_sweep P4).
   - name: flows.market_minute
     phase: P5
     enabled: true             # P5 웨이브 3(WRAP — D-P5-23): K2I 3조합만(GX 2026-09-28 실측) — 현물은 #39 전까지 꺼진 조합
     owner: "kbj.services.collectors.flows_minute:run"
-    schedule: {equity: {start: open, end: "close+10", every_min: 1}, when: trading_day}
+    schedule: {equity: {start: open, end: "close+25", every_min: 1}, when: trading_day}
     retry: {max: 1, backoff_s: [15]}         # 슬롯 안에서 한 번만 — 슬롯 + 45초 넘으면 estimated(§3.4)
     deadline_min: 1
     as_of: minute
     collects:
       - {source: KIS, dataset: market_investor_intraday, as_of: minute}
     writes: [prv_gex.investor_flow]
-    note: "ADR 0019 — prv_gex.investor_flow 의 유일한 쓰기 주인(D-P5-21). 조합은 config/markets.yaml flows.minute.pairs 의 켠 것만(실측 전 K2I F001·OC01·OP01 — 현물은 #39 뒤, 위클리 4조합은 P7 켬 — GX #13, 값은 markets.yaml). 대금 백만원(GX 단위 그대로). 같은 분 재실행 멱등(UNIQUE ts·시장·업종·투자자)"
+    note: "ADR 0019 — prv_gex.investor_flow 의 유일한 쓰기 주인(D-P5-21). 조합은 config/markets.yaml flows.minute.pairs 의 켠 것만(실측 전 K2I F001·OC01·OP01 — 현물은 #39 뒤, 위클리 4조합은 P7 켬 — GX #13, 값은 markets.yaml). 대금 백만원(GX 단위 그대로). 같은 분 재실행 멱등(UNIQUE ts·시장·업종·투자자). 15:41~15:55 는 tail_min 25 인 파생 조합만(종가 단일가 — ADR 0044 §2-1)"
 
   - name: program.intraday
     phase: P5
@@ -1005,6 +1007,18 @@ jobs:
       - {job: board.daily, hard: false, wait_min: 15}
     writes: [prv_diag.indicator, prv_diag.fear_greed, prv_diag.verdict]
     note: "시장 진단·국장 공포탐욕·종합 판정(metrics §D6~§D8). 그날 D 는 estimated, 직전 거래일 D−1 은 KRX 확정 원장으로 다시 계산해 ok 로 덮는다 — 확정용 두 번째 작업 없음(쓰기 주인 하나, D-P7-15). 발송하지 않는다 — brief.closing 이 무른 의존으로 기다린다(D-P7-16). 보드·마감 수집이 재료라 16:00 전으로 못 당긴다 — 보드 → 진단 → 마감 요약이 16:00 안에 도는 것은 실행기가 끝난 시도를 같은 회차에 거두어서(ADR 0030 §4-6)"
+
+  # 옵션 행사가별 투자자 추정 포지션(metrics §34, ADR 0044) — 파생 마감 수집(flows.market_minute 15:55) 뒤.
+  # 외부 호출 없음(prv_gex 원천 표 읽기만). 누적·OI 검산·벽은 API 가 읽을 때 — 다음 날 KRX OI 로 다시 돌릴 작업 없음.
+  - name: gex.option_positions
+    phase: P9
+    enabled: true               # 2026-10-28 사용자 요청(옵션 행사가별 투자자 포지션 엔진)
+    owner: "kbj.services.engine.option_positions:daily"
+    schedule: {cron: "5 16 * * 1-5", when: trading_day}
+    retry: {max: 1, backoff_s: [300]}
+    as_of: trade_date
+    writes: [prv_gex.opt_pos_strike, prv_gex.opt_pos_day]
+    note: "키움 방식 추정(투자자별 합계 → 분 평균단가 → 가까운 두 행사가 2:1) — investor_flow 옵션 6묶음 × frgn·prsn·orgn + 선물 F001, chain_snapshots 분 시세, option_iv·체인 델타. 그날 행 교체(멱등). 지난날은 run-once --as-of. 발송 없음"
 
   - name: krx.vkospi
     phase: P7

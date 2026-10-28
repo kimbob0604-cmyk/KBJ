@@ -137,6 +137,7 @@ P9_ENABLED: set[str] = {
     "kis.master_night",
     "gex.open_check_day",
     "gex.open_check_night",
+    "gex.option_positions",  # 옵션 행사가별 추정 포지션(ADR 0044 — 2026-10-28 사용자 요청)
 }
 # 단계별 켜진 작업(웨이브 3 묶음이 P3~P7 을 켰다). 새 단계가 작업을 켜면 이 표에 한 줄 더한다.
 ENABLED_BY_PHASE = {
@@ -917,10 +918,15 @@ def test_p5_schedules_follow_the_design() -> None:
     def sched(name: str) -> Any:
         return REG.by_name(name).schedule
 
-    for name in ("flows.market_minute", "program.intraday"):
-        e = sched(name).equity
-        assert (e.start, e.end, e.every_min) == ("open", "close+10", 1), name  # 15:40 까지
-        assert REG.by_name(name).as_of == "minute" and sched(name).fires_per_day() == 401
+    e = sched("program.intraday").equity
+    assert (e.start, e.end, e.every_min) == ("open", "close+10", 1)  # 15:40 까지
+    assert REG.by_name("program.intraday").as_of == "minute"
+    assert sched("program.intraday").fires_per_day() == 401
+    # 장중 투자자 1분은 15:55 까지 — 파생 종가 단일가(15:35~15:45, ADR 0044 §2-1)
+    e = sched("flows.market_minute").equity
+    assert (e.start, e.end, e.every_min) == ("open", "close+25", 1)
+    assert REG.by_name("flows.market_minute").as_of == "minute"
+    assert sched("flows.market_minute").fires_per_day() == 416
     scan = sched("program.stock_scan").equity
     assert (scan.start, scan.end, scan.every_min) == ("open+5", "close-5", 10)  # 5분 엇갈림
     assert sched("program.daily").equity.start == "close+20"
@@ -987,7 +993,8 @@ def test_p5_kis_daily_calls_fit_the_soft_cap() -> None:  # §3.4
     est = _kis_daily_estimate()
     # K2I 3조합 + 현물 2(KSP·KSQ) + 주식선물 1(999·S001 — KIS 공식 Postman 샘플 코드 표) +
     # 위클리 4조합(P7 WRAP 이 켬 — D-P7-6, GX 실측 #13)
-    assert est["flows.market_minute"] == 10 * 401
+    # 어림은 발화 × 켠 조합(상한) — 실제는 10 × 401 + 파생 8조합 × 15분(15:41~15:55, ADR 0044 §2-1)
+    assert est["flows.market_minute"] == 10 * 416
     assert est["program.intraday"] == 2 * 401
     assert est["program.daily"] == 4
     total = sum(est.values()) + KIS_P3_P4_DAILY

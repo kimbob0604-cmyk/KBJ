@@ -105,6 +105,8 @@ DOMAIN_JOBS: Final[Mapping[str, tuple[str, ...]]] = {
     "themes": ("theme.master_sync", "theme.classes_sync", "board.daily", "board.confirm"),
     # 페이지 11 스크리너 — 전 종목 일봉·스냅(마감 수집·KRX 일별)
     "screen": ("krx.daily", "market.backfill", "market.close_collect", "market.fsc_daily"),
+    # 페이지 3 옵션 행사가별 추정 포지션(ADR 0044) — 하루 배분 작업 + KRX 확정 OI(다음 날 08:05)
+    "gex_optpos": ("gex.option_positions", "gex.krx_derivatives"),
 }  # fmt: skip
 # 작업 기록 말고 표의 최신 시각으로도 버전을 정하는 영역(상시 서비스가 쓰는 표 — 상수 SQL)
 DOMAIN_TS: Final[Mapping[str, str]] = {

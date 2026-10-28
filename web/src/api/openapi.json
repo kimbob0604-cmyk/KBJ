@@ -9817,6 +9817,101 @@
         }
       }
     },
+    "/api/gex/option-positions": {
+      "get": {
+        "tags": [
+          "gex"
+        ],
+        "summary": "Option Positions Route",
+        "operationId": "option_positions_route_api_gex_option_positions_get",
+        "parameters": [
+          {
+            "name": "investor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "frgn",
+                "prsn",
+                "orgn"
+              ],
+              "type": "string",
+              "default": "frgn",
+              "title": "Investor"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_OptionPositions_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/telegram/webhook": {
       "post": {
         "tags": [
@@ -16883,6 +16978,49 @@
           "data"
         ],
         "title": "Envelope[OpsStatus]"
+      },
+      "Envelope_OptionPositions_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/OptionPositions"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[OptionPositions]"
       },
       "Envelope_OverhangRecent_": {
         "properties": {
@@ -24171,6 +24309,722 @@
           "items"
         ],
         "title": "OpsStatus"
+      },
+      "OptPosDayStat": {
+        "properties": {
+          "market_code": {
+            "type": "string",
+            "title": "Market Code"
+          },
+          "sector_code": {
+            "type": "string",
+            "title": "Sector Code"
+          },
+          "minutes": {
+            "type": "integer",
+            "title": "Minutes"
+          },
+          "gap_minutes": {
+            "type": "integer",
+            "title": "Gap Minutes"
+          },
+          "unallocated": {
+            "type": "number",
+            "title": "Unallocated"
+          },
+          "last_ts": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Ts"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "market_code",
+          "sector_code",
+          "minutes",
+          "gap_minutes",
+          "unallocated",
+          "last_ts",
+          "reasons"
+        ],
+        "title": "OptPosDayStat",
+        "description": "묶음(시장·업종) 오늘 요약 — 배분 품질."
+      },
+      "OptPosEwy": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "unavailable",
+              "ok"
+            ],
+            "title": "Status"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "reason"
+        ],
+        "title": "OptPosEwy"
+      },
+      "OptPosLevel": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "call_wall",
+              "put_wall",
+              "prev_call_wall",
+              "prev_put_wall",
+              "futures"
+            ],
+            "title": "Kind"
+          },
+          "level": {
+            "type": "number",
+            "title": "Level"
+          },
+          "distance_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance Pct"
+          },
+          "ewy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ewy"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind",
+          "level",
+          "distance_pct"
+        ],
+        "title": "OptPosLevel"
+      },
+      "OptPosSeries": {
+        "properties": {
+          "mrkt_cls": {
+            "type": "string",
+            "enum": [
+              "",
+              "WKM",
+              "WKI"
+            ],
+            "title": "Mrkt Cls"
+          },
+          "expiry": {
+            "type": "string",
+            "title": "Expiry"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "last_trade_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Trade Date"
+          },
+          "accum_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Accum From"
+          },
+          "days_used": {
+            "type": "integer",
+            "title": "Days Used"
+          },
+          "days_missing": {
+            "type": "integer",
+            "title": "Days Missing"
+          },
+          "strikes": {
+            "items": {
+              "$ref": "#/components/schemas/OptPosStrike"
+            },
+            "type": "array",
+            "title": "Strikes"
+          },
+          "call_wall": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OptPosWall"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "put_wall": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OptPosWall"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "prev_call_wall": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OptPosWall"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "prev_put_wall": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OptPosWall"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "delta_contracts": {
+            "type": "number",
+            "title": "Delta Contracts"
+          },
+          "missing_delta": {
+            "type": "integer",
+            "title": "Missing Delta"
+          },
+          "invalid": {
+            "type": "integer",
+            "title": "Invalid"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "mrkt_cls",
+          "expiry",
+          "label",
+          "last_trade_date",
+          "accum_from",
+          "days_used",
+          "days_missing",
+          "strikes",
+          "call_wall",
+          "put_wall",
+          "prev_call_wall",
+          "prev_put_wall",
+          "delta_contracts",
+          "missing_delta",
+          "invalid",
+          "quality",
+          "reasons"
+        ],
+        "title": "OptPosSeries"
+      },
+      "OptPosSeriesDelta": {
+        "properties": {
+          "series": {
+            "type": "string",
+            "title": "Series"
+          },
+          "delta": {
+            "type": "number",
+            "title": "Delta"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "series",
+          "delta"
+        ],
+        "title": "OptPosSeriesDelta"
+      },
+      "OptPosStrike": {
+        "properties": {
+          "strike": {
+            "type": "number",
+            "title": "Strike"
+          },
+          "cp": {
+            "type": "string",
+            "enum": [
+              "C",
+              "P"
+            ],
+            "title": "Cp"
+          },
+          "holding": {
+            "type": "number",
+            "title": "Holding"
+          },
+          "prev_holding": {
+            "type": "number",
+            "title": "Prev Holding"
+          },
+          "change": {
+            "type": "number",
+            "title": "Change"
+          },
+          "buy": {
+            "type": "number",
+            "title": "Buy"
+          },
+          "sell": {
+            "type": "number",
+            "title": "Sell"
+          },
+          "oi": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oi"
+          },
+          "oi_source": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "krx",
+                  "board"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oi Source"
+          },
+          "oi_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oi Ratio"
+          },
+          "delta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta"
+          },
+          "label": {
+            "type": "string",
+            "enum": [
+              "small",
+              "new",
+              "flipped",
+              "cleared",
+              "reduced",
+              "added",
+              "hold"
+            ],
+            "title": "Label"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "strike",
+          "cp",
+          "holding",
+          "prev_holding",
+          "change",
+          "buy",
+          "sell",
+          "oi",
+          "oi_source",
+          "oi_ratio",
+          "delta",
+          "label",
+          "quality"
+        ],
+        "title": "OptPosStrike"
+      },
+      "OptPosSynthetic": {
+        "properties": {
+          "futures": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Futures"
+          },
+          "futures_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Futures From"
+          },
+          "options": {
+            "type": "number",
+            "title": "Options"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          },
+          "by_series": {
+            "items": {
+              "$ref": "#/components/schemas/OptPosSeriesDelta"
+            },
+            "type": "array",
+            "title": "By Series"
+          },
+          "missing_delta": {
+            "type": "integer",
+            "title": "Missing Delta"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "futures",
+          "futures_from",
+          "options",
+          "total",
+          "by_series",
+          "missing_delta",
+          "quality"
+        ],
+        "title": "OptPosSynthetic"
+      },
+      "OptPosThresholds": {
+        "properties": {
+          "min_judge": {
+            "type": "integer",
+            "title": "Min Judge"
+          },
+          "clear_pct": {
+            "type": "number",
+            "title": "Clear Pct"
+          },
+          "reduce_pct": {
+            "type": "number",
+            "title": "Reduce Pct"
+          },
+          "add_pct": {
+            "type": "number",
+            "title": "Add Pct"
+          },
+          "price_stale_min": {
+            "type": "integer",
+            "title": "Price Stale Min"
+          },
+          "near_share": {
+            "type": "number",
+            "title": "Near Share"
+          },
+          "option_multiplier": {
+            "type": "integer",
+            "title": "Option Multiplier"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "min_judge",
+          "clear_pct",
+          "reduce_pct",
+          "add_pct",
+          "price_stale_min",
+          "near_share",
+          "option_multiplier"
+        ],
+        "title": "OptPosThresholds"
+      },
+      "OptPosTop": {
+        "properties": {
+          "series": {
+            "type": "string",
+            "title": "Series"
+          },
+          "strike": {
+            "type": "number",
+            "title": "Strike"
+          },
+          "cp": {
+            "type": "string",
+            "enum": [
+              "C",
+              "P"
+            ],
+            "title": "Cp"
+          },
+          "change": {
+            "type": "number",
+            "title": "Change"
+          },
+          "holding": {
+            "type": "number",
+            "title": "Holding"
+          },
+          "prev_holding": {
+            "type": "number",
+            "title": "Prev Holding"
+          },
+          "label": {
+            "type": "string",
+            "enum": [
+              "small",
+              "new",
+              "flipped",
+              "cleared",
+              "reduced",
+              "added",
+              "hold"
+            ],
+            "title": "Label"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "series",
+          "strike",
+          "cp",
+          "change",
+          "holding",
+          "prev_holding",
+          "label"
+        ],
+        "title": "OptPosTop"
+      },
+      "OptPosWall": {
+        "properties": {
+          "strike": {
+            "type": "number",
+            "title": "Strike"
+          },
+          "holding": {
+            "type": "number",
+            "title": "Holding"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "small",
+                  "new",
+                  "flipped",
+                  "cleared",
+                  "reduced",
+                  "added",
+                  "hold"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "strike",
+          "holding"
+        ],
+        "title": "OptPosWall"
+      },
+      "OptionPositions": {
+        "properties": {
+          "trade_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Trade Date"
+          },
+          "investor": {
+            "type": "string",
+            "enum": [
+              "frgn",
+              "prsn",
+              "orgn"
+            ],
+            "title": "Investor"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/OptPosSeries"
+            },
+            "type": "array",
+            "title": "Series"
+          },
+          "synthetic": {
+            "$ref": "#/components/schemas/OptPosSynthetic"
+          },
+          "top_changes": {
+            "items": {
+              "$ref": "#/components/schemas/OptPosTop"
+            },
+            "type": "array",
+            "title": "Top Changes"
+          },
+          "levels": {
+            "items": {
+              "$ref": "#/components/schemas/OptPosLevel"
+            },
+            "type": "array",
+            "title": "Levels"
+          },
+          "futures_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Futures Price"
+          },
+          "futures_today": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Futures Today"
+          },
+          "day_stats": {
+            "items": {
+              "$ref": "#/components/schemas/OptPosDayStat"
+            },
+            "type": "array",
+            "title": "Day Stats"
+          },
+          "ewy": {
+            "$ref": "#/components/schemas/OptPosEwy"
+          },
+          "thresholds": {
+            "$ref": "#/components/schemas/OptPosThresholds"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "trade_date",
+          "investor",
+          "series",
+          "synthetic",
+          "top_changes",
+          "levels",
+          "futures_price",
+          "futures_today",
+          "day_stats",
+          "ewy",
+          "thresholds",
+          "reasons"
+        ],
+        "title": "OptionPositions"
       },
       "Overhang": {
         "properties": {

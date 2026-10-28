@@ -41,6 +41,7 @@ def test_domains_cover_routes() -> None:
         "rules", "backtest",  # P8 묶음 FND — 규칙·일지·포트폴리오(쓰기 모듈이 직접 씀)는 영역 없음
         "themes",  # 페이지 9(ADR 0039) — 테마 두 작업 + 보드
         "screen",  # 페이지 11 스크리너 — 일봉·스냅 수집 작업
+        "gex_optpos",  # 페이지 3 옵션 행사가별 추정 포지션(ADR 0044)
     }  # fmt: skip
 
 
@@ -54,7 +55,7 @@ def test_p4_domain_jobs_exist_in_registry() -> None:
     names = {j["name"] for j in doc["jobs"]}
     for domain in (
         "stock", "filings", "macro", "program", "flows_minute", "board_us", "index_review",
-        "trade", "market", "themes", "screen",
+        "trade", "market", "themes", "screen", "gex_optpos",
     ):  # fmt: skip
         assert set(DOMAIN_JOBS[domain]) <= names, domain
 
@@ -76,6 +77,7 @@ READS: dict[str, set[str]] = {
                         "prv_market.turnover_rank_intraday", "prv_board.label"},
     "flows_minute": {"prv_gex.investor_flow", "prv_market.index_intraday"},
     "gex": {"prv_gex.investor_flow"},
+    "gex_optpos": {"prv_gex.opt_pos_strike", "prv_gex.opt_pos_day", "prv_gex.krx_opt_daily"},
     "screen": {"prv_market.daily_bar", "prv_market.stock_snapshot", "prv_market.universe"},
     "stock": {"prv_market.daily_bar", "prv_market.stock_snapshot", "prv_market.universe"},
     "etf": {"prv_etf.etf_daily", "prv_etf.meta", "prv_etf.quote_intraday",

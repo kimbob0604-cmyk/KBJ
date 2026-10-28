@@ -125,7 +125,7 @@ def test_data_keys_done_once_and_kis_limits(day: SimDay) -> None:
 # ── F2 §5 ────────────────────────────────────────────────────────────────────────────────
 def test_regular_session_minutes_have_no_gap(day: SimDay) -> None:
     runs = _runs(day, "flows.market_minute")
-    assert len(runs) == 401 and {r.status for r in runs} == {"ok"}  # 09:00~15:40 매분
+    assert len(runs) == 416 and {r.status for r in runs} == {"ok"}  # 09:00~15:55 매분(ADR 0044)
     rows = day.repos.flows.investor_minutes(TODAY, list(PAIRS))
     for pair in PAIRS:
         ts = {
