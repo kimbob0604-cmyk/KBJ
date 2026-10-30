@@ -28,6 +28,8 @@
   행이 없어도 기다리지 않는다(`no_trade_codes` — 행은 만들지 않는다). 오늘 스냅이 없는 종목(ETF)은
   당일 행이 비어 남은 것이 허용 수 이하일 때만 현재가를 한 번 보고 같은 규칙을 쓴다
   (`_settle_unknown` — 거래 없는 채권 ETF 셋이 마감 수집 전체와 보드를 막았다, 2026-10-19·20).
+  그 현재가가 응답 형식으로 실패하면(종가 없음 — 정리매매가 끝난 종목) 기다리지 않고 종목 고유
+  실패로 넘긴다(2026-10-30).
 - 네트워크 오류(이름풀이·접속 — `httpx.TransportError`)는 일시 실패다. `NET_DOWN_AFTER` 번
   이어지면 남은 종목은 부르지 않고 일시 실패로 둔다(받은 것은 쓴다 — 재시도가 이어 받는다). 맥이
   잠든 중 몇 초씩 깬 때 네트워크 없이 ETF 437종목을 다 넘겨 '종목 고유 실패'로 끝났다(2026-10-22).
@@ -387,7 +389,9 @@ def _settle_unknown(c: _Ctx, venue: str, codes: Sequence[str], tally: _Tally) ->
     """당일 행이 비었는데 오늘 스냅이 없는 종목(대개 ETF — 거래 없는 채권 ETF 는 KIS 가 당일 행을
     빈 칸으로 준다, 실측 2026-10-20). 남은 것이 허용 수 이하면 현재가(FHKST01010100)를 한 번씩 보고
     거래량 0·거래정지면 '거래 없음'으로 넘긴다(행은 만들지 않는다). 많으면 공표 지연으로 보고
-    부르지 않는다 — 재시도가 다시 본다."""
+    부르지 않는다 — 재시도가 다시 본다. 현재가가 응답 형식·거절로 실패하면(종가 없음 — 정리매매가
+    끝난 종목) 종목 고유 실패로 넘긴다 — 우선주 하나가 6번 재시도 내내 마감 수집과 하류 6개를 막았다
+    (2026-10-30)."""
     if not codes:
         return
     if tally.offline():
@@ -401,9 +405,12 @@ def _settle_unknown(c: _Ctx, venue: str, codes: Sequence[str], tally: _Tally) ->
         try:
             body = _get(c, "stock_quote", params_quote(code, venue), f"FHKST01010100 {code}")
             s = parse_quote(body, code, day=c.day, venue=venue)
-        except Exception as e:  # 확인 못 함 — 기다린다
-            why = f"FHKST01010900 {code}: {c.day} 행 없음·현재가 확인 실패({reason(e)})"
-            tally.fail(code, NotReady(why))
+        except Exception as e:
+            if _transient(e):  # 확인 못 함 — 기다린다
+                why = f"FHKST01010900 {code}: {c.day} 행 없음·현재가 확인 실패({reason(e)})"
+                tally.fail(code, NotReady(why))
+            else:  # 응답 형식·거절은 기다려도 같다 — 종목 고유 실패(허용 수 안에서 넘긴다)
+                tally.fail(code, e)
             continue
         if s.status_flags is not None and "halted" in s.status_flags:
             tally.no_trade[code] = f"{c.day} 행 없음 — 거래정지(KIS 현재가 확인)"
