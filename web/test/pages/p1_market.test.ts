@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { SLOT_PERIOD_MS, SLOT_TICK_MS } from '../../src/app/refresh';
 import page, { CREDIT_TITLE, PENDING_TILES } from '../../src/pages/p1_market';
 import { MINUTE_REFRESH_MS } from '../../src/pages/p1/flows_minute';
+import { GLOBAL_REFRESH_MS } from '../../src/pages/p1/global_proxy';
 import { macPublicHarness, macroFixture } from '../fixtures/api/macro/harness';
 import { json } from '../helpers';
 import {
@@ -52,6 +53,7 @@ describe('페이지 1 시장 — 로그인', () => {
       'flows/investors',
       'flows/market-minute?market=k200_fut',
       'market/credit',
+      'market/global-proxy',
       'market/sectors?period=1',
       'market/summary',
       'program/daily?days=60&market=K',
@@ -181,7 +183,7 @@ describe('페이지 1 시장 — 로그인', () => {
   it('벽시계 슬롯에 맞춰 새로 고침을 건다(마운트 시각 기준 630초가 아니다 — 2026-10-27)', async () => {
     const clock = { t: Date.parse('2026-10-27T01:01:00Z') }; // 10:01 KST — 10:00 슬롯 직후
     const { hz, every } = await mountLogin({}, clock);
-    expect(every.map((e) => e.ms)).toEqual([SLOT_TICK_MS, MINUTE_REFRESH_MS]); // 슬롯 맞춤 + F2 60초
+    expect(every.map((e) => e.ms)).toEqual([SLOT_TICK_MS, MINUTE_REFRESH_MS, GLOBAL_REFRESH_MS]); // 슬롯 맞춤 + F2 60초 + 글로벌 5분
     const before = hz.calls.length;
     every[0]?.fn(); // 같은 구간 — 다시 읽지 않는다
     await flush();
@@ -222,7 +224,7 @@ describe('페이지 1 시장 — 공개', () => {
       'mini-symbol-overview',
       'mini-symbol-overview',
     ]);
-    expect(root.querySelectorAll('.panel.locked')).toHaveLength(4 + 3); // + F2 투자자 수급·프로그램 2
+    expect(root.querySelectorAll('.panel.locked')).toHaveLength(4 + 3 + 1); // + F2 투자자 수급·프로그램 2 + 글로벌 프록시
     expect(text(panelByTitle(root, '시장 거래대금'))).toContain('LOGIN');
     // 공개 파일이 없으면(수집 전) 패널 안 안내 — '준비 중' 상자는 없다
     const credit = panelByTitle(root, CREDIT_TITLE);
@@ -293,7 +295,11 @@ describe('페이지 1 신용잔고 · 예탁금 · 펀드 자금 — 로그인',
 
   it('예탁금이 ECOS 월별로 대신 채워지면 전월 대비·개월 추이', async () => {
     const fx = macroFixture<CreditFx>('market_credit');
-    Object.assign(fx.data.lines[1] ?? {}, { freq: 'M', source: 'ECOS:901Y056', note: '월별(ECOS 901Y056) — 금투협 일별 값 없음' });
+    Object.assign(fx.data.lines[1] ?? {}, {
+      freq: 'M',
+      source: 'ECOS:901Y056',
+      note: '월별(ECOS 901Y056) — 금투협 일별 값 없음',
+    });
     const { root } = await mountLogin({ market_credit: fx });
     const t = tileOf(root, 'investor_deposit');
     expect(text(t)).toContain('전월 대비');
@@ -331,7 +337,9 @@ describe('페이지 1 신용잔고 · 예탁금 — 공개(credit.json)', () => 
   });
 
   it('모르는 단위는 값을 지어내지 않고 —', async () => {
-    const credit = macroFixture<{ data: { chips: { key: string; detail: Record<string, unknown> }[] } }>('public/credit');
+    const credit = macroFixture<{ data: { chips: { key: string; detail: Record<string, unknown> }[] } }>(
+      'public/credit',
+    );
     for (const c of credit.data.chips) c.detail.unit = '좌';
     const { root } = await mountPublic({ credit: () => json(credit) });
     const cb = tileOf(root, 'credit_balance');

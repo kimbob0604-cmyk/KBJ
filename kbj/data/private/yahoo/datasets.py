@@ -48,4 +48,21 @@ DATASETS: Final[tuple[DatasetSpec, ...]] = (
             "한도·429 형태 [확인 필요 #46]"
         ),
     ),
+    DatasetSpec(
+        id=f"{SOURCE}:global_quotes",
+        source=SOURCE,
+        dataset="global_quotes",
+        tier=Tier.PRIVATE,
+        limiter=LIMITER,
+        budget=None,
+        published="해외 장중 실시간(지연 시세) — 5분마다",
+        as_of_kind="minute",
+        store="prv_market.global_quote",
+        notes=(
+            "글로벌 프록시(2026-11-02 — stock-dashboard 화면을 옮김): "
+            "해외 상장 SKHY·SMSN.IL·HY9H.F, 선물 NQ=F·ES=F, ^TNX·CL=F·KRW=X·EURUSD=X, "
+            "미국 ETF DRAM·EWY·SOXX. v8 chart range=1d 의 "
+            "meta.regularMarketPrice·chartPreviousClose. 작업 global.proxy"
+        ),
+    ),
 )

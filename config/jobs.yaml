@@ -669,6 +669,21 @@ jobs:
     writes: [prv_market.index_intraday, prv_market.sector_intraday]
     note: "D-P3-14 신규 — 장중 지수 3·업종 목록 3(코스피 1·코스닥 소속 3·1)·코스닥 업종 한 건씩 최대 4. 페이지 1 지수 타일·업종 히트맵·장중 시장 거래대금(지수 기준, estimated)"
 
+  # 글로벌 프록시(2026-11-02 — stock-dashboard 화면을 옮김): 한국 장 밖에서 한국 주식을 가늠하는 해외 가격.
+  - name: global.proxy
+    phase: P9
+    enabled: true
+    owner: "kbj.services.collectors.global_proxy:run"
+    schedule: {cron: "*/5 * * * *", when: always}
+    retry: {max: 1, backoff_s: [60]}
+    deadline_min: 4
+    as_of: minute
+    collects:
+      - {source: HYPERLIQUID, dataset: perp_ctx, as_of: minute}
+      - {source: YAHOO, dataset: global_quotes, as_of: minute}
+    writes: [prv_market.global_quote]
+    note: "Hyperliquid 무기한 선물(삼성전자·SK하이닉스·ADR·현대차·코스피200) + 야후 해외 상장·선물·매크로·미국 ETF 약 15종. 페이지 1 '글로벌 프록시'(/api/market/global-proxy)가 읽는다"
+
   # ── P5 F2 장중 투자자 수급·프로그램매매(docs/p5_flow_program_prompt.md §3.4, docs/p5_design.md §0.4·§3.4) ──
   # 1분 작업은 정규장 + 장 마감 단일가 15:40 까지(close+10). 빈 분은 채우지 않는다(보간 금지 — 행 없음).
   # 프로그램 TR 은 실측(#40·#41) 전이라 웨이브 3 에도 꺼진 채 남는다(D-P5-23). KIS 우선순위는 limits.yaml

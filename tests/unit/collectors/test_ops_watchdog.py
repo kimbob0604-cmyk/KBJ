@@ -102,6 +102,10 @@ def seeded_runs() -> MemoryRunLog:
         ("gex.open_check_day", "2026-10-06"),  # 08:49 개장 확인
     ):
         runs.record(RunRecord(f"{job}:{as_of}:1", job, as_of, 1, "ok"))
+    # 2026-11-02 글로벌 프록시(5분, when always) — 마지막 발화 10:20
+    runs.record(
+        RunRecord("global.proxy:2026-10-06T10:20:1", "global.proxy", "2026-10-06T10:20", 1, "ok")
+    )
     # P9 WRAP: 워치독 자신은 5분마다(마감 10분) — 10:30 기준 끝났어야 할 마지막 발화는 10:20
     runs.record(
         RunRecord("ops.watchdog:2026-10-06T10:20:1", "ops.watchdog", "2026-10-06T10:20", 1, "ok")
@@ -190,6 +194,7 @@ def test_holiday_has_no_missed_trading_day_runs() -> None:
     # P9 WRAP: ops.watchdog 자신도 when: always(5분마다) — 휴장일에도 돈다
     for job, hhmm in (
         ("ops.watchdog", "11:50"),
+        ("global.proxy", "11:50"),  # 2026-11-02 — when: always 5분
         ("filings.dart_feed", "11:50"),
         ("earnings.alerts", "11:50"),
         ("fin.quarterly", "11:30"),

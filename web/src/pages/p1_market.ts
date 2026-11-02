@@ -8,6 +8,7 @@
 // - 금액은 원 단위 → 화면에서만 억·조. 값이 없으면 '—'(0 으로 그리지 않는다). 검산 불가는 사유와 함께.
 // - P5 묶음 F2(이 파일은 F2 만 고친다 — 패널 고리): 장중 투자자 수급(1분 선·카드 7 — ./p1/flows_minute.ts)·
 //   프로그램매매(일별 60거래일·상위 20 — ./p1/program.ts). 로그인 전용(KIS — 공개판은 자물쇠), 60초 갱신.
+// - 글로벌 프록시(2026-11-02 — ./p1/global_proxy.ts): 24시간 선물·해외 상장 괴리율·지수선물·미국 ETF. 로그인 전용, 5분 갱신.
 import type { components } from '../api/types.gen';
 import { onSlot, SLOT_TICK_MS } from '../app/refresh';
 import type { AppContext, Cleanup, PageContext, PageModule } from '../app/types';
@@ -20,11 +21,12 @@ import { seg } from '../ui/seg';
 import { barChart, heatColor, level, sparkline } from '../ui/svg';
 import { table } from '../ui/table';
 import { MINUTE_REFRESH_MS, MINUTE_TITLE, mountMinute } from './p1/flows_minute';
+import { GLOBAL_DEF, GLOBAL_LOCK, GLOBAL_REFRESH_MS, GLOBAL_TITLE, mountGlobal } from './p1/global_proxy';
 import { DAILY_TITLE, mountProgram, TOP_TITLE } from './p1/program';
 
 // 공개 빌드에서는 P5 로그인 모듈을 번들에서 뺀다(p8_stock LOGIN_VALUE 와 같은 방식 — 공개 등급은 이 줄에 오기 전에
 // 자물쇠로 돌아가므로 실행 동작은 같고, 공개 JS gzip 예산 scripts/check-bundle.mjs 72 KB(ADR 0025) 를 지킨다. WRAP)
-const LOGIN_F2 = import.meta.env.MODE === 'public' ? null : { mountMinute, mountProgram };
+const LOGIN_F2 = import.meta.env.MODE === 'public' ? null : { mountMinute, mountProgram, mountGlobal };
 const NOOP = (): Promise<void> => Promise.resolve();
 
 type S = components['schemas'];
@@ -66,8 +68,7 @@ const TV_INDEX = [
 
 /** 불러오기 실패 표시: 404(아직 없음)는 서버 안내 문구(없으면 패널의 예정 작업)를 보이고, 그 밖 오류는 이 패널에만(응답 본문 없이). */
 export function failed(p: Panel, err: unknown, hint: string): void {
-  if (err instanceof DataError && err.status === 404)
-    p.showMessage(err.serverMessage ?? `아직 없음 — ${hint}`);
+  if (err instanceof DataError && err.status === 404) p.showMessage(err.serverMessage ?? `아직 없음 — ${hint}`);
   else p.showError(err);
 }
 
@@ -169,12 +170,22 @@ export function creditTile(ln: CreditLine): HTMLElement {
       { class: signClass(ln.change), attrs: ln.prev_date ? { title: `${shortDate(ln.prev_date)} 대비` } : undefined },
       ln.change === null ? DASH : `${per} 대비 ${joEok(ln.change, true)}`,
     ),
-    n ? sparkline(ln.spark.map((p) => p.value), { label: `${ln.label} ${n}${ln.freq === 'M' ? '개월' : '영업일'} 추이` }) : null,
+    n
+      ? sparkline(
+          ln.spark.map((p) => p.value),
+          { label: `${ln.label} ${n}${ln.freq === 'M' ? '개월' : '영업일'} 추이` },
+        )
+      : null,
   );
 }
 
 /** 줄들을 그리고 원천 줄을 채운다(줄마다의 사유는 '이름: 사유'로 notes 줄에) */
-function drawCreditLines(p: Panel, env: Envelope<unknown>, lines: readonly CreditLine[], extra: readonly string[] = []): void {
+function drawCreditLines(
+  p: Panel,
+  env: Envelope<unknown>,
+  lines: readonly CreditLine[],
+  extra: readonly string[] = [],
+): void {
   p.body.append(h('div', { class: 'idx' }, lines.map(creditTile)));
   const got = lines.filter((l) => l.value !== null && l.quality !== null);
   const q: Quality = got.length ? worstQuality(got.map((l) => l.quality ?? 'invalid')) : env.quality;
@@ -417,6 +428,14 @@ async function mount(ctx: PageContext): Promise<void> {
     src: tier === 'public' ? 'TradingView 제공' : '',
   });
   const pTurn = panel(tier, { title: '시장 거래대금', tier: 'login', span: 4, lock: 'krx_daily' });
+  const pGlobal = panel(tier, {
+    title: GLOBAL_TITLE,
+    tier: 'login',
+    span: 12,
+    lock: GLOBAL_LOCK,
+    src: 'Hyperliquid·Yahoo',
+    def: GLOBAL_DEF,
+  });
   const pHeat = panel(tier, { title: '업종 히트맵', tier: 'login', span: 8, lock: 'krx' });
   const pBreadth = panel(tier, { title: '시장폭', tier: 'login', span: 4, lock: 'quote_based' });
   const pInv = panel(tier, { title: '시장 투자자 수급', tier: 'login', span: 6, lock: 'investor' });
@@ -426,7 +445,18 @@ async function mount(ctx: PageContext): Promise<void> {
   const pMin = panel(tier, { title: MINUTE_TITLE, tier: 'login', span: 12, lock: 'kis' });
   const pPgmDaily = panel(tier, { title: DAILY_TITLE, tier: 'login', span: 6, lock: 'kis' });
   const pPgmTop = panel(tier, { title: TOP_TITLE, tier: 'login', span: 6, lock: 'kis' });
-  root.append(pIdx.el, pTurn.el, pHeat.el, pBreadth.el, pInv.el, pCredit.el, pMin.el, pPgmDaily.el, pPgmTop.el);
+  root.append(
+    pIdx.el,
+    pTurn.el,
+    pGlobal.el,
+    pHeat.el,
+    pBreadth.el,
+    pInv.el,
+    pCredit.el,
+    pMin.el,
+    pPgmDaily.el,
+    pPgmTop.el,
+  );
 
   pTurn.setDef(
     '코스피+코스닥 주식(ETF·ETN·리츠 제외) 거래대금. 막대 = 일별, 점선 = 20일 평균. 장중 값은 지수 누적 기준(잠정).',
@@ -516,8 +546,17 @@ async function mount(ctx: PageContext): Promise<void> {
 
   const loadMinute = LOGIN_F2 ? LOGIN_F2.mountMinute(ctx, pMin) : NOOP;
   const loadProgram = LOGIN_F2 ? LOGIN_F2.mountProgram(ctx, pPgmDaily, pPgmTop) : NOOP;
+  const loadGlobal = LOGIN_F2 ? LOGIN_F2.mountGlobal(ctx, pGlobal) : NOOP;
 
-  await Promise.all([loadSummary(), loadSectors(), loadInvestors(), loadCredit(), loadMinute(), loadProgram()]);
+  await Promise.all([
+    loadSummary(),
+    loadSectors(),
+    loadInvestors(),
+    loadCredit(),
+    loadMinute(),
+    loadProgram(),
+    loadGlobal(),
+  ]);
   // 첫 불러오기 중에 앱이 내려갔으면(격자가 문서에서 빠짐) 주기 작업을 걸지 않는다
   if (root.isConnected) {
     slotEvery(ctx, () => {
@@ -531,6 +570,7 @@ async function mount(ctx: PageContext): Promise<void> {
       void loadMinute();
       void loadProgram();
     });
+    ctx.every(GLOBAL_REFRESH_MS, () => void loadGlobal());
   }
 }
 

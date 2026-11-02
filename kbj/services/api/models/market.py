@@ -18,8 +18,10 @@ __all__ = [
     "CreditPanel",
     "CreditPoint",
     "DayValue",
+    "GlobalProxy",
     "IndexTile",
     "MarketSummary",
+    "ProxyQuote",
     "Ribbon",
     "SectorCell",
     "SectorHeat",
@@ -140,3 +142,34 @@ class CreditLine(ApiModel):
 
 class CreditPanel(ApiModel):
     lines: list[CreditLine]
+
+
+class ProxyQuote(ApiModel):
+    """글로벌 프록시 한 줄(값이 없으면 None + error — 지어내지 않는다)."""
+
+    symbol: str
+    name: str
+    price: float | None = None
+    unit: str = ""
+    change_pct: float | None = None
+    vs_close_pct: float | None = None
+    vs_label: str | None = None
+    premium_pct: float | None = None
+    fair: float | None = None
+    ratio: float | None = None
+    funding_8h_pct: float | None = None
+    vol_24h: float | None = None
+    error: str | None = None
+
+
+class GlobalProxy(ApiModel):
+    """페이지 1 글로벌 프록시 — 24시간 선물·해외 상장 괴리율·지수선물·매크로·미국 ETF."""
+
+    ts: AwareDatetime | None
+    base_date: date | None = Field(description="견준 국내 종가의 날짜")
+    usdkrw: float | None
+    perps: list[ProxyQuote]
+    listings: list[ProxyQuote]
+    futures: list[ProxyQuote]
+    macro: list[ProxyQuote]
+    us_etfs: list[ProxyQuote]

@@ -143,6 +143,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/market/global-proxy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Global Proxy Route
+         * @description 페이지 1 글로벌 프록시 — 24시간 선물·해외 상장 괴리율·지수선물·매크로·미국 ETF(5분 수집).
+         */
+        get: operations["global_proxy_route_api_market_global_proxy_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/board/newhigh": {
         parameters: {
             query?: never;
@@ -4168,6 +4188,25 @@ export interface components {
             generated_at: string;
             data: components["schemas"]["GexProfile"];
         };
+        /** Envelope[GlobalProxy] */
+        Envelope_GlobalProxy_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["GlobalProxy"];
+        };
         /** Envelope[IndexReview] */
         Envelope_IndexReview_: {
             /** Source */
@@ -6081,6 +6120,31 @@ export interface components {
             /** Net */
             net: number;
         };
+        /**
+         * GlobalProxy
+         * @description 페이지 1 글로벌 프록시 — 24시간 선물·해외 상장 괴리율·지수선물·매크로·미국 ETF.
+         */
+        GlobalProxy: {
+            /** Ts */
+            ts: string | null;
+            /**
+             * Base Date
+             * @description 견준 국내 종가의 날짜
+             */
+            base_date: string | null;
+            /** Usdkrw */
+            usdkrw: number | null;
+            /** Perps */
+            perps: components["schemas"]["ProxyQuote"][];
+            /** Listings */
+            listings: components["schemas"]["ProxyQuote"][];
+            /** Futures */
+            futures: components["schemas"]["ProxyQuote"][];
+            /** Macro */
+            macro: components["schemas"]["ProxyQuote"][];
+            /** Us Etfs */
+            us_etfs: components["schemas"]["ProxyQuote"][];
+        };
         /** Health */
         Health: {
             /** Ok */
@@ -7415,6 +7479,41 @@ export interface components {
             /** Sell Value */
             sell_value: number | null;
             quality: components["schemas"]["Quality"];
+        };
+        /**
+         * ProxyQuote
+         * @description 글로벌 프록시 한 줄(값이 없으면 None + error — 지어내지 않는다).
+         */
+        ProxyQuote: {
+            /** Symbol */
+            symbol: string;
+            /** Name */
+            name: string;
+            /** Price */
+            price?: number | null;
+            /**
+             * Unit
+             * @default
+             */
+            unit: string;
+            /** Change Pct */
+            change_pct?: number | null;
+            /** Vs Close Pct */
+            vs_close_pct?: number | null;
+            /** Vs Label */
+            vs_label?: string | null;
+            /** Premium Pct */
+            premium_pct?: number | null;
+            /** Fair */
+            fair?: number | null;
+            /** Ratio */
+            ratio?: number | null;
+            /** Funding 8H Pct */
+            funding_8h_pct?: number | null;
+            /** Vol 24H */
+            vol_24h?: number | null;
+            /** Error */
+            error?: string | null;
         };
         /**
          * Quality
@@ -10040,6 +10139,62 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_CreditPanel_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    global_proxy_route_api_market_global_proxy_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_GlobalProxy_"];
                 };
             };
             /** @description 세션 없음·만료 */

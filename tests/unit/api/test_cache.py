@@ -41,6 +41,7 @@ def test_domains_cover_routes() -> None:
         "rules", "backtest",  # P8 묶음 FND — 규칙·일지·포트폴리오(쓰기 모듈이 직접 씀)는 영역 없음
         "themes",  # 페이지 9(ADR 0039) — 테마 두 작업 + 보드
         "screen",  # 페이지 11 스크리너 — 일봉·스냅 수집 작업
+        "global",  # 페이지 1 글로벌 프록시(2026-11-02) — 5분 수집을 시장 캐시와 나눴다
     }  # fmt: skip
 
 
@@ -54,7 +55,7 @@ def test_p4_domain_jobs_exist_in_registry() -> None:
     names = {j["name"] for j in doc["jobs"]}
     for domain in (
         "stock", "filings", "macro", "program", "flows_minute", "board_us", "index_review",
-        "trade", "market", "themes", "screen",
+        "trade", "market", "themes", "screen", "global",
     ):  # fmt: skip
         assert set(DOMAIN_JOBS[domain]) <= names, domain
 

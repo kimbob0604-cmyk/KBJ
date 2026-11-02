@@ -30,6 +30,7 @@ from psycopg.types.json import Jsonb
 from kbj.core.quality import Quality
 from kbj.core.rows import (
     Bar,
+    GlobalQuote,
     IndexBar,
     IndexQuote,
     RankRow,
@@ -114,6 +115,14 @@ class MarketRepo(Protocol):
 
     def universe(self, asof: date) -> list[UniverseRow]:
         """원천마다 asof 이하 가장 최근 유니버스를 합쳐 종목마다 한 행(원천 순위). 코드 순."""
+        ...
+
+    def put_global_quotes(
+        self, rows: Sequence[GlobalQuote], *, loaded_by: str, received_at: datetime
+    ) -> int: ...
+
+    def global_quotes(self, since: datetime) -> dict[str, GlobalQuote]:
+        """심볼마다 since 이후 가장 최근 한 줄(글로벌 프록시)."""
         ...
 
     def put_index_quotes(
@@ -524,6 +533,50 @@ class PgMarketRepo:
         )
 
     # 장중 이력
+    def put_global_quotes(
+        self, rows: Sequence[GlobalQuote], *, loaded_by: str, received_at: datetime
+    ) -> int:
+        require_loaded_by(loaded_by)
+        require_aware("received_at", received_at)
+        if not rows:
+            return 0
+        params = [
+            (q.symbol, q.ts, q.price, q.prev, q.funding_1h, q.vol_24h, q.currency, q.source,
+             q.quality.value, received_at, loaded_by)
+            for q in rows
+        ]  # fmt: skip
+        with self._connect() as conn, conn.cursor() as cur:
+            cur.executemany(
+                b"INSERT INTO prv_market.global_quote (symbol, ts, price, prev, funding_1h, "
+                b"vol_24h, currency, source, quality, received_at, loaded_by) "
+                b"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+                b"ON CONFLICT (symbol, ts) DO UPDATE SET price = EXCLUDED.price, "
+                b"prev = EXCLUDED.prev, funding_1h = EXCLUDED.funding_1h, "
+                b"vol_24h = EXCLUDED.vol_24h, currency = EXCLUDED.currency, "
+                b"source = EXCLUDED.source, quality = EXCLUDED.quality, "
+                b"received_at = EXCLUDED.received_at, loaded_by = EXCLUDED.loaded_by",
+                params,
+            )
+        return len(params)
+
+    def global_quotes(self, since: datetime) -> dict[str, GlobalQuote]:
+        require_aware("since", since)
+        with self._connect() as conn:
+            rows = conn.execute(
+                b"SELECT DISTINCT ON (symbol) symbol, ts, price, prev, funding_1h, vol_24h, "
+                b"currency, source, quality FROM prv_market.global_quote WHERE ts >= %s "
+                b"ORDER BY symbol, ts DESC",
+                (since,),
+            ).fetchall()
+        return {
+            r[0]: GlobalQuote(
+                symbol=r[0], ts=r[1], price=float(r[2]), prev=to_float(r[3]),
+                funding_1h=to_float(r[4]), vol_24h=to_float(r[5]), currency=r[6], source=r[7],
+                quality=Quality(r[8]),
+            )
+            for r in rows
+        }  # fmt: skip
+
     def put_index_quotes(
         self, rows: Sequence[IndexQuote], *, loaded_by: str, received_at: datetime | None = None
     ) -> int:

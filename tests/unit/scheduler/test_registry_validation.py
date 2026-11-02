@@ -137,6 +137,7 @@ P9_ENABLED: set[str] = {
     "kis.master_night",
     "gex.open_check_day",
     "gex.open_check_night",
+    "global.proxy",  # 2026-11-02 글로벌 프록시(stock-dashboard 이식)
 }
 # 단계별 켜진 작업(웨이브 3 묶음이 P3~P7 을 켰다). 새 단계가 작업을 켜면 이 표에 한 줄 더한다.
 ENABLED_BY_PHASE = {

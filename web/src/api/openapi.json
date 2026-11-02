@@ -471,6 +471,68 @@
         }
       }
     },
+    "/api/market/global-proxy": {
+      "get": {
+        "tags": [
+          "market"
+        ],
+        "summary": "Global Proxy Route",
+        "description": "페이지 1 글로벌 프록시 — 24시간 선물·해외 상장 괴리율·지수선물·매크로·미국 ETF(5분 수집).",
+        "operationId": "global_proxy_route_api_market_global_proxy_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_GlobalProxy_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/board/newhigh": {
       "get": {
         "tags": [
@@ -16675,6 +16737,49 @@
         ],
         "title": "Envelope[GexProfile]"
       },
+      "Envelope_GlobalProxy_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/GlobalProxy"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[GlobalProxy]"
+      },
       "Envelope_IndexReview_": {
         "properties": {
           "source": {
@@ -21710,6 +21815,95 @@
         "title": "GexStrikeNet",
         "description": "행사가 하나(범위의 만기 합산) — 콜·풋·순 GEX(원/1%)."
       },
+      "GlobalProxy": {
+        "properties": {
+          "ts": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ts"
+          },
+          "base_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Date",
+            "description": "견준 국내 종가의 날짜"
+          },
+          "usdkrw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usdkrw"
+          },
+          "perps": {
+            "items": {
+              "$ref": "#/components/schemas/ProxyQuote"
+            },
+            "type": "array",
+            "title": "Perps"
+          },
+          "listings": {
+            "items": {
+              "$ref": "#/components/schemas/ProxyQuote"
+            },
+            "type": "array",
+            "title": "Listings"
+          },
+          "futures": {
+            "items": {
+              "$ref": "#/components/schemas/ProxyQuote"
+            },
+            "type": "array",
+            "title": "Futures"
+          },
+          "macro": {
+            "items": {
+              "$ref": "#/components/schemas/ProxyQuote"
+            },
+            "type": "array",
+            "title": "Macro"
+          },
+          "us_etfs": {
+            "items": {
+              "$ref": "#/components/schemas/ProxyQuote"
+            },
+            "type": "array",
+            "title": "Us Etfs"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "ts",
+          "base_date",
+          "usdkrw",
+          "perps",
+          "listings",
+          "futures",
+          "macro",
+          "us_etfs"
+        ],
+        "title": "GlobalProxy",
+        "description": "페이지 1 글로벌 프록시 — 24시간 선물·해외 상장 괴리율·지수선물·매크로·미국 ETF."
+      },
       "Health": {
         "properties": {
           "ok": {
@@ -26259,6 +26453,141 @@
           "quality"
         ],
         "title": "ProgramTopRow"
+      },
+      "ProxyQuote": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit",
+            "default": ""
+          },
+          "change_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Pct"
+          },
+          "vs_close_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vs Close Pct"
+          },
+          "vs_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vs Label"
+          },
+          "premium_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Premium Pct"
+          },
+          "fair": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fair"
+          },
+          "ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ratio"
+          },
+          "funding_8h_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Funding 8H Pct"
+          },
+          "vol_24h": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vol 24H"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "symbol",
+          "name"
+        ],
+        "title": "ProxyQuote",
+        "description": "글로벌 프록시 한 줄(값이 없으면 None + error — 지어내지 않는다)."
       },
       "Quality": {
         "type": "string",

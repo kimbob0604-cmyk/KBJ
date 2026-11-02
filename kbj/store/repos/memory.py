@@ -24,6 +24,7 @@ from kbj.core.rows import (
     EtfMeta,
     EtfQuote,
     Fund,
+    GlobalQuote,
     HoldingRow,
     IndexBar,
     IndexQuote,
@@ -114,6 +115,7 @@ class MemoryMarketRepo:
         self.snap_notes: dict[tuple[str, date, str, str], str] = {}
         self.universe_rows: dict[tuple[str, date, str], Stored[UniverseRow]] = {}
         self.index_rows: dict[tuple[str, datetime, str], Stored[IndexQuote]] = {}
+        self.global_rows: dict[tuple[str, datetime], Stored[GlobalQuote]] = {}
         self.sector_rows: dict[tuple[str, str, datetime, str], Stored[SectorQuote]] = {}
         self.rank_rows_: dict[tuple[str, datetime, int, str], Stored[RankRow]] = {}
         self.reconcile_rows: dict[tuple[date, str, str], ReconcileRow] = {}
@@ -250,6 +252,23 @@ class MemoryMarketRepo:
             s.row for (_, d, src), s in sorted(self.universe_rows.items()) if latest.get(src) == d
         ]
         return best_universe(rows)
+
+    def put_global_quotes(
+        self, rows: Sequence[GlobalQuote], *, loaded_by: str, received_at: datetime
+    ) -> int:
+        require_loaded_by(loaded_by)
+        require_aware("received_at", received_at)
+        for q in rows:
+            self.global_rows[(q.symbol, q.ts)] = Stored(q, received_at, loaded_by)
+        return len(rows)
+
+    def global_quotes(self, since: datetime) -> dict[str, GlobalQuote]:
+        require_aware("since", since)
+        out: dict[str, GlobalQuote] = {}
+        for (sym, ts), st in sorted(self.global_rows.items(), key=lambda kv: kv[0][1]):
+            if ts >= since:
+                out[sym] = st.row
+        return out
 
     def put_index_quotes(
         self, rows: Sequence[IndexQuote], *, loaded_by: str, received_at: datetime | None = None

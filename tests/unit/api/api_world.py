@@ -30,6 +30,7 @@ from kbj.core.rows import (
     Change,
     EtfQuote,
     Fund,
+    GlobalQuote,
     HoldingRow,
     IndexQuote,
     IntradayInvestor,
@@ -234,6 +235,29 @@ def _fill_holdings(repos: MemoryRepos, run: date, now: datetime) -> None:
                3.9, -1.25, None),
     ]  # fmt: skip
     repos.etf.put_changes(run, rows, engine_version="test", now=now)
+
+
+def fill_global_quotes(repos: MemoryRepos, now: datetime) -> None:
+    """글로벌 프록시(`/api/market/global-proxy`)용 합성 시세 — 시험·웹 픽스처가 부를 때만 넣는다.
+    국내 종가(삼성전자·하이닉스)는 합성 세계에 없어 종가 대비·괴리율은 비고,
+    펀딩률·전일 대비는 찬다."""
+
+    def q(sym: str, price: float, prev: float | None, src: str = "yahoo") -> GlobalQuote:
+        return GlobalQuote(
+            symbol=sym, ts=now - timedelta(minutes=3), price=price, prev=prev,
+            funding_1h=0.0000125 if src == "hyperliquid" else None,
+            vol_24h=1_000_000.0 if src == "hyperliquid" else None, currency="USD", source=src,
+            quality=Quality.ESTIMATED,
+        )  # fmt: skip
+
+    rows = [
+        q("KRW=X", 1400.0, 1395.0), q("EURUSD=X", 1.08, 1.07),
+        q("xyz:SMSN", 52.0, 51.0, "hyperliquid"), q("xyz:KR200", 401.0, 400.0, "hyperliquid"),
+        q("SKHY", 30.0, 29.5), q("SMSN.IL", 1300.0, 1290.0), q("NQ=F", 21000.0, 20900.0),
+        q("ES=F", 6000.0, 6010.0), q("^TNX", 4.1, 4.15), q("CL=F", 70.0, 69.0),
+        q("EWY", 60.0, 59.0), q("SOXX", 230.0, 228.0),
+    ]  # fmt: skip
+    repos.market.put_global_quotes(rows, loaded_by="global.proxy", received_at=now)
 
 
 def fill_stock_holdings(repos: MemoryRepos, last: date, now: datetime) -> None:
