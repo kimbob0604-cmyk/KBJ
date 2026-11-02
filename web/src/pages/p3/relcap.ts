@@ -110,6 +110,7 @@ export async function mountRelcap(ctx: PageContext): Promise<void> {
   const controls = h('div', { class: 'filters' });
   const pairBox = h('div', { class: 'filters' });
   let data: RelCap | null = null;
+  let first = true;
   const chartBox = h('div');
   const drawChart = (): void => {
     if (data) replace(chartBox, pairChart(data.pairs[q.pair]));
@@ -124,6 +125,12 @@ export async function mountRelcap(ctx: PageContext): Promise<void> {
     }
     p.setSource(env);
     data = env.data;
+    // 처음에는 값이 있는 첫 쌍을 고른다(사유만 있는 쌍이 기본 차트를 차지하지 않게)
+    if (first) {
+      const k = data.pairs.findIndex((x) => x.series.length > 0);
+      q.pair = k < 0 ? 0 : k;
+      first = false;
+    }
     q.pair = Math.min(q.pair, Math.max(0, data.pairs.length - 1));
     replace(
       pairBox,

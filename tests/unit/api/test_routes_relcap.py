@@ -21,7 +21,7 @@ def test_relcap_pairs_and_annual(world: World, authed: TestClient) -> None:
     sp = next(r for r in d["annual"] if r["symbol"] == "^GSPC")
     assert sp["returns"][0] == {"year": 2026, "pct": 10.0}
     assert d["years"][0] == 2026
-    assert any("SK하이닉스 / 삼성전자" in n for n in body["notes"])
+    assert any(n.startswith("값 없는 쌍 6개") for n in body["notes"])
 
 
 def test_query_and_empty(world: World, authed: TestClient) -> None:

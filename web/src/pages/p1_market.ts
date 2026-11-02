@@ -18,8 +18,10 @@ import { DASH, eok, joEok, num, pct, shortDate, signClass, times } from '../ui/f
 import { type Panel, panel } from '../ui/panel';
 import { checkLine, qValue, roundTol, visibleRows } from '../ui/quality';
 import { seg } from '../ui/seg';
+import { statGrid } from '../ui/stat';
 import { barChart, heatColor, level, sparkline } from '../ui/svg';
 import { table } from '../ui/table';
+import { investorCards } from './p1/cards';
 import { MINUTE_REFRESH_MS, MINUTE_TITLE, mountMinute } from './p1/flows_minute';
 import { GLOBAL_DEF, GLOBAL_LOCK, GLOBAL_REFRESH_MS, GLOBAL_TITLE, mountGlobal } from './p1/global_proxy';
 import { DAILY_TITLE, mountProgram, TOP_TITLE } from './p1/program';
@@ -355,9 +357,9 @@ export function drawSectors(p: Panel, env: Envelope<S['SectorHeat']>): number {
 
 // ── 시장 투자자 수급 ───────────────────────────────────────
 
-const INVESTORS = ['foreign', 'institution', 'other_corp', 'individual'] as const;
+export const INVESTORS = ['foreign', 'institution', 'other_corp', 'individual'] as const;
 
-function sumRecent(recent: readonly S['DayTotals'][], key: string, n: number): number | null {
+export function sumRecent(recent: readonly S['DayTotals'][], key: string, n: number): number | null {
   const days = recent.filter((d) => d.quality !== 'invalid').slice(-n);
   if (days.length === 0) return null;
   let s = 0;
@@ -379,6 +381,8 @@ const MARKET_LABEL: Readonly<Record<string, string>> = {
 
 export function drawInvestors(p: Panel, env: Envelope<S['InvestorTotals']>): null {
   const d = env.data;
+  // 공개판은 이 패널이 자물쇠라 카드가 필요 없다 — 공개 번들 예산(ADR 0025)에서 빼려고 빌드 모드로 가른다
+  if (import.meta.env.MODE !== 'public') p.body.append(statGrid(investorCards(d)));
   const markets = Object.keys(d.by_market).sort();
   const nRecent = Math.min(5, d.recent.length);
   const cols = [

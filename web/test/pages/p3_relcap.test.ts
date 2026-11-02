@@ -16,6 +16,7 @@ describe('상대 시총 — 로그인', () => {
     expect(text(avgo)).toContain('50.0%');
     expect(text(cards[1])).toContain('현재 시총 없음');
     expect(p.querySelectorAll('figure')).toHaveLength(1);
+    expect(p.querySelector('figure svg')).not.toBeNull(); // 처음엔 값 있는 첫 쌍(브로드컴 / 엔비디아)
     expect(p.querySelectorAll('tbody tr')).toHaveLength(4);
     expect(text(p.querySelector('tbody tr'))).toContain('+10.0%');
     expect(text(p)).not.toMatch(/NaN|undefined|null/);

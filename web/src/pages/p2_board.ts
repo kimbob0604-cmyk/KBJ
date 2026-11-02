@@ -13,9 +13,11 @@ import { clear, h } from '../ui/dom';
 import { DASH, eokNum, joEok, num, pct, signClass, times, WON_PER_EOK } from '../ui/fmt';
 import { type Panel, panel } from '../ui/panel';
 import { seg, select } from '../ui/seg';
+import { statGrid } from '../ui/stat';
 import { heatColor, level } from '../ui/svg';
 import { type Column, table } from '../ui/table';
 import { failed, fill, filters, nameCell, REFRESH_MS } from './p1_market';
+import { newhighCards } from './p2/cards';
 import { mountUs, US_TITLE } from './p2/us';
 
 // 공개 빌드에서는 P5 로그인 모듈을 번들에서 뺀다(p8_stock LOGIN_VALUE 와 같은 방식 — 공개 등급은 이 줄에 오기 전에
@@ -54,7 +56,7 @@ export interface BasisView {
   gap?: Record<string, number | null> | null;
 }
 
-const DEFAULT_LABELS: Record<string, string> = {
+export const DEFAULT_LABELS: Record<string, string> = {
   hist: '역사적',
   w52: '52주',
   d120: '120일',
@@ -588,6 +590,7 @@ async function mountLogin(ctx: PageContext, { pNh, pNear, pSec, pHeat, pEv, pRan
         const near = rowsOf<BoardRow>(d.proximity).sort((a, b) => (a.near_gap ?? Infinity) - (b.near_gap ?? Infinity));
         for (const r of [...achieved, ...near]) if (r.name) names.set(r.code, r.name);
         count.textContent = countsText(d, q.basis);
+        if (import.meta.env.MODE !== 'public') pNh.body.append(statGrid(newhighCards(d, q.basis, achieved)));
         pNh.body.append(
           table({
             caption: `${q.basis === 'high' ? '고가' : '종가'} 기준 · 거래대금 순`,

@@ -74,7 +74,9 @@ def relcap(ctx: ReadContext, *, period: Period) -> Envelope[RelCap]:
         " — 자사주 소각·증자 구간은 어긋난다",
         "연도별 수익률 = 연말 종가 대비(가격 지수 — 배당 제외), 올해는 YTD",
     ]
-    notes += [f"{p.name} — {p.error}" for p in pairs if p.error]
+    bad = [p.name for p in pairs if p.error]
+    if bad:
+        notes.append(f"값 없는 쌍 {len(bad)}개(카드에 사유) — {', '.join(bad)}")
     data = RelCap(period=period, pairs=pairs, years=years[:12], annual=annual)
     return envelope(
         data,

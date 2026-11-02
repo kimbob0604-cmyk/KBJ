@@ -13,9 +13,11 @@ import { eok, eokNum, joEok, num, pct, shortDate, signClass } from '../ui/fmt';
 import { type Panel, panel } from '../ui/panel';
 import { checkLine, qValue, visibleRows } from '../ui/quality';
 import { type Option, seg, select } from '../ui/seg';
+import { statGrid } from '../ui/stat';
 import { centerLevel } from '../ui/svg';
 import { type Column, table } from '../ui/table';
 import { fill, filters, nameCell, slotEvery } from './p1_market';
+import { flowCards, stockFlowCards } from './p10/cards';
 import { mountP5, type P5Panels, TITLES as P5_TITLES } from './p10/index';
 import { INDEX_LOCK, INDEX_TITLE, type IndexReviewWidget, mountIndexReview } from './p10/index_review';
 
@@ -177,7 +179,12 @@ export function stockColumns(): Column<StockRow>[] {
     { key: 'name', label: '종목', align: 'l', cls: () => 'nm', cell: (r) => nameCell(r.name, r.code) },
     { key: 'n', label: 'ETF 수', cell: (r) => num(r.n_etfs) },
     stockEok('inflow', '순유입 몫(억)', (r) => r.inflow),
-    { key: 'shares', label: '추정 주식 수', cell: (r) => num(r.inflow_shares, 0, true), cls: (r) => signClass(r.inflow_shares) },
+    {
+      key: 'shares',
+      label: '추정 주식 수',
+      cell: (r) => num(r.inflow_shares, 0, true),
+      cls: (r) => signClass(r.inflow_shares),
+    },
     { key: 'pct', label: '거래대금 대비', cell: (r) => pct(r.inflow_pct), cls: (r) => signClass(r.inflow_pct) },
     { key: 'eturn', label: 'ETF 거래대금 몫(억)', cell: (r) => eokNum(r.etf_turnover) },
     { key: 'evol', label: 'ETF 거래량 몫(주)', cell: (r) => num(r.etf_volume) },
@@ -444,6 +451,7 @@ async function mountLogin(ctx: PageContext, { pFlow, pType, pStock, pPrem, pHold
         const { rows, invalid } = visibleRows(d.rows);
         count.textContent = `${num(d.n_total)}개 · ${shortDate(d.start)} ~ ${shortDate(d.end)}`;
         pFlow.body.append(
+          statGrid(flowCards(rows, d)),
           table({
             columns: flowColumns(),
             rows,
@@ -476,7 +484,9 @@ async function mountLogin(ctx: PageContext, { pFlow, pType, pStock, pPrem, pHold
         const cov = d.coverage_pct === null ? '' : ` · 순유입 ${pct(d.coverage_pct, 0, false)} 덮음`;
         stockCount.textContent = `${num(d.n_total)}종목 · ETF ${num(d.n_etfs_known)}개${cov} · ${shortDate(d.start)} ~ ${shortDate(d.end)}`;
         pStock.body.append(
-          table({ columns: stockColumns(), rows: d.rows, rowKey: (r) => r.code, pageSize: 30, empty: '해당 종목 없음' }).el,
+          statGrid(stockFlowCards(d)),
+          table({ columns: stockColumns(), rows: d.rows, rowKey: (r) => r.code, pageSize: 30, empty: '해당 종목 없음' })
+            .el,
         );
         return 0;
       },
