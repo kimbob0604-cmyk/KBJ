@@ -219,3 +219,31 @@ def test_failed_minutes_stay_empty_exactly() -> None:
     assert minutes == 391 - len(fails)
     got = {r.ts.strftime("%Y-%m-%dT%H:%M") for r in rows}
     assert not (got & fails)
+
+
+def test_after_spot_close_tail_only_derivative_pairs_are_called() -> None:
+    """ADR 0044 §2-1 — 15:41~15:55 는 tail_min 25 인 파생 조합(K2I 3·주식선물·위클리 4)만,
+    현물은 15:40 까지."""
+    repos, _s, clock, kis = setup(kst(2026, 11, 17, 15, 40, 5))
+    run(repos, kis, at(15, 40), clock())
+    assert kis.count("FHPTJ04030000") == 10  # 15:40 은 현물 포함 전부
+    clock.at = kst(2026, 11, 17, 15, 50, 5)
+    res = run(repos, kis, at(15, 50), clock())
+    assert res.status == "ok", res.detail
+    assert kis.count("FHPTJ04030000") == 10 + 8
+    sent = {(c[1]["FID_INPUT_ISCD"], c[1]["FID_INPUT_ISCD_2"]) for c in kis.calls[10:]}
+    assert ("KSP", "0001") not in sent and ("K2I", "F001") in sent
+    rows = repos.flows.investor_minutes(DAY, K2I)
+    assert kst(2026, 11, 17, 15, 50) in {r.ts for r in rows}
+
+
+def test_pairs_at_uses_each_pair_tail() -> None:
+    pairs = flows_minute.on_pairs(load_cfg().flows.minute.pairs)
+    close = kst(2026, 11, 17, 15, 30)
+    assert len(flows_minute.pairs_at(pairs, kst(2026, 11, 17, 15, 40), close)) == 10
+    tail = {p.id for p in flows_minute.pairs_at(pairs, kst(2026, 11, 17, 15, 55), close)}
+    assert tail == {
+        "k200_fut", "k200_call", "k200_put", "stock_fut",
+        "wkm_call", "wkm_put", "wki_call", "wki_put",
+    }  # fmt: skip
+    assert flows_minute.pairs_at(pairs, kst(2026, 11, 17, 15, 56), close) == []

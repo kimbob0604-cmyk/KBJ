@@ -105,6 +105,8 @@ DOMAIN_JOBS: Final[Mapping[str, tuple[str, ...]]] = {
     "themes": ("theme.master_sync", "theme.classes_sync", "board.daily", "board.confirm"),
     # 페이지 11 스크리너 — 전 종목 일봉·스냅(마감 수집·KRX 일별)
     "screen": ("krx.daily", "market.backfill", "market.close_collect", "market.fsc_daily"),
+    # 페이지 3 옵션 행사가별 추정 포지션(ADR 0044) — 하루 배분 작업 + KRX 확정 OI(다음 날 08:05)
+    "gex_optpos": ("gex.option_positions", "gex.krx_derivatives"),
     # 페이지 1 글로벌 프록시(2026-11-02) — 5분 수집이 P3 시장 캐시를 5분마다 비우지 않게 따로 둔다
     "global": ("global.proxy", "global.daily", "krx.daily", "market.close_collect"),
 }  # fmt: skip

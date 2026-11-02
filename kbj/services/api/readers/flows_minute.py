@@ -46,7 +46,7 @@ __all__ = [
 ]
 
 # 404 계약(작업·시각 — P5 라우트 공통, 화면이 사용자 문장으로 다듬는다)
-NO_DATA: Final = "아직 없음 — flows.market_minute 09:00~15:40 매분"
+NO_DATA: Final = "아직 없음 — flows.market_minute 09:00~15:40 매분(선물·옵션은 15:55 까지)"
 SOURCE: Final = "KIS"
 REFRESH_S: Final = 60
 LOCKED_VENUE: Final = "KRX"

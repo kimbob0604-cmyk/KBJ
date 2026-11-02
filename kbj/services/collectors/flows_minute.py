@@ -5,7 +5,9 @@
 부르지 않고 표를 읽는다), docs/metrics.md §21.
 
 한 실행 = 한 분(as_of `YYYY-MM-DDTHH:MM` KST — 등록부 `as_of: minute`, `equity {start: open, end:
-close+10, every_min: 1}`). 데이터 키 `KIS:market_investor_intraday@<분>` 하나.
+close+25, every_min: 1}`). 데이터 키 `KIS:market_investor_intraday@<분>` 하나. 주식 마감 뒤
+분은 조합의 `tail_min`(markets.yaml — 현물 10·선물옵션 25) 안의 조합만 부른다(ADR 0044 §2-1:
+파생 종가 단일가 15:35~15:45 체결분을 15:55 까지 받는다).
 1. 조합 = `config/markets.yaml flows.minute.pairs` 의 켠 것(세션 day). 코드 표는 KIS 공식 Postman
    샘플(코스피 KSP·0001, 코스닥 KSQ·1001, K2I F001·OC01·OP01, 주식선물 999·S001, 위클리 WKM·WKI —
    근거 URL 은 markets.yaml 주석).
@@ -35,7 +37,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Final, Protocol
 
 from kbj.config.markets import MinutePair
@@ -56,6 +58,7 @@ from kbj.services.collectors._p3 import (
     NotReady,
     Outcome,
     PartialFailure,
+    calendar,
     kis_client,
     markets,
     reason,
@@ -72,6 +75,7 @@ __all__ = [
     "kis_priority",
     "minute_ts",
     "on_pairs",
+    "pairs_at",
     "run",
 ]
 
@@ -125,6 +129,11 @@ def on_pairs(pairs: Sequence[MinutePair], session: str = "day") -> list[MinutePa
         for p in pairs
         if p.enabled and p.session == session and p.market is not None and p.sector is not None
     ]
+
+
+def pairs_at(pairs: Sequence[MinutePair], ts: datetime, close_at: datetime) -> list[MinutePair]:
+    """그 분에 부를 조합 — 주식 마감(close_at) + 조합 `tail_min` 분 이하인 것(ADR 0044 §2-1)."""
+    return [p for p in pairs if ts <= close_at + timedelta(minutes=p.tail_min)]
 
 
 def _repos(ctx: JobContext) -> MinuteRepos:
@@ -210,11 +219,16 @@ def run(ctx: JobContext) -> JobResult:
     if not ctx.keys:
         return JobResult("skipped", detail={"reason": "선점한 키가 없다"})
     ts = minute_ts(ctx.as_of)
-    pairs = on_pairs(markets(ctx).flows.minute.pairs)
+    on = on_pairs(markets(ctx).flows.minute.pairs)
+    pairs = pairs_at(on, ts, calendar(ctx).equity_bounds(ts.date())[1]) if on else on
     out = Outcome(ctx.job, tuple(ctx.keys))
     if not pairs:
         out.detail["pairs"] = 0
-        out.detail["reason"] = "켠 조합이 없다(config/markets.yaml flows.minute.pairs)"
+        out.detail["reason"] = (
+            "켠 조합이 없다(config/markets.yaml flows.minute.pairs)"
+            if not on
+            else "마감 뒤 이 분에 부를 조합이 없다(tail_min)"
+        )
         for key in ctx.keys:
             out.run(key, lambda: 0)
         return out.result()

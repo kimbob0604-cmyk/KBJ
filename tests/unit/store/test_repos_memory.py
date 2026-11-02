@@ -32,6 +32,7 @@ def as_repos(m: MemoryRepos) -> Repos:
         gex=m.gex, diag=m.diag, diag_pub=m.diag_pub,
         rules=m.rules, personal=m.personal,  # P8(0021)
         theme=m.theme, theme_pub=m.theme_pub,  # 페이지 9(0023)
+        opt_pos=m.opt_pos,  # 옵션 행사가별 추정 포지션(0030)
     )  # fmt: skip
 
 

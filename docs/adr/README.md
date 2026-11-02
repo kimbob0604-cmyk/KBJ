@@ -45,6 +45,7 @@
 | [0038](0038-legacy-removal.md) | legacy 비우기: ET·SD 삭제, 다리(브리지·notifier shim) 제거, 직접 호출 검사 목표 0 | 확정 |
 | [0039](0039-theme-master-intake.md) | 테마 마스터 받아 쓰기: stock-dashboard data/master 주 1회·네이버 직접 수집 안 함·대테마 분류 공개/편입·강도 로그인 | 확정 |
 | [0040](0040-vm-deploy-oracle-caddy.md) | 운영 VM 배포: 오라클 무료 ARM VM·Caddy+sslip.io TLS 오버레이·볼륨 밖 백업·스크립트 업데이트 | 제안 |
+| [0044](0044-option-strike-positions.md) | 옵션 행사가별 투자자 추정 포지션: 키움 방식 분 배분·저장 후 읽을 때 누적·파생 마감 수집 15:55 | 제안 |
 
 대체 관계: 0003(legacy 범위)·0007(legacy 브리지·기준선) → **0038**(legacy 비우기, P9). 보충: 0035 → 0011 §2-3, 0036 → 0029(D-P7-4 예외 종료),
 0037 → 0006(등록부), 0018 → 0031(마감 규칙 알림도 16:00), 0040 → 0008(TLS 프록시 — VM 오버레이).
