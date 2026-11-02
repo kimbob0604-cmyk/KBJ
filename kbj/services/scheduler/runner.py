@@ -93,6 +93,10 @@ DEP_POLL_S: Final = 30  # 굳은 의존을 다시 보는 간격
 SLEEP_GAP_S: Final = 120
 SLEEP_EXTEND_MIN_DEADLINE: Final = 60
 SLEEP_SETTLE_S: Final = 60
+# 빠진 날 메우기(작업 schedule.backfill_days) — 작업마다 이 간격으로 최근 회차를 훑는다. 같은 날을
+# 이만큼 시도했으면(이어지는 시도 번호) 더 부르지 않는다(영구 오류가 매번 다시 돌지 않게)
+BACKLOG_EVERY_S: Final = 15 * 60
+BACKLOG_MAX_ATTEMPTS: Final = 8
 # 깬 뒤 이 초 동안 생긴 작업 실패는 하나씩 알리지 않고 묶어 '맥 잠듦' 요약 한 통(2026-10-28 점심
 # 37분 잠듦 — 깬 직후 마감 넘김·네트워크 실패·워치독 경고가 20여 통). 지나면 다시 하나씩 알린다.
 # 워치독도 같은 창을 쓴다
@@ -261,6 +265,7 @@ class JobRunner:
         self._pending: dict[tuple[str, str], _Pending] = {}
         self._abandoned: list[_Pending] = []
         self._caught: set[tuple[str, str]] = set()
+        self._backlog_at: dict[str, datetime] = {}  # 작업 → 마지막으로 빠진 날을 훑은 시각
         self._resolved: dict[str, Handler | None] = {}
         self._error_at: dict[tuple[str, str], datetime] = {}
         # 같은 작업·같은 사유(숫자 뺀 문장)의 실패 알림은 KST 하루 한 번(매분 작업이 예산 소진으로
@@ -320,6 +325,8 @@ class JobRunner:
                         self._fire(job, fire_at, now, events)
                     if job.schedule.catch_up_until is not None:
                         self._catch_up(job, now, events)
+                    if job.schedule.backfill_days and job.enabled:
+                        self._backlog(job, now, events)
                 except Exception as e:  # 격리 — 이 작업만 멈추고 창은 남겨 다음 tick 에 다시 본다
                     self._behind.setdefault(job.name, since)
                     self._job_error(now, "job_fire_failed", job.name, e)
@@ -532,6 +539,8 @@ class JobRunner:
         """켜진 직후 한 번 — 꺼져 있던 동안 놓친 켜진 작업을 작업마다 가장 최근 회차만(설정
         `scheduler_catch_up_h` 시간 안, 기록 없을 때). cron 작업과 하루 한 번 도는 정규장 기준
         작업(마감 수집)만 — 장중 슬롯(every_min)은 지난 슬롯을 지금 값으로 채우게 되어 뺀다."""
+        # 켜진 직후·깬 직후 — 빠진 날 메우기를 바로(이 tick 의 작업 순회에서)
+        self._backlog_at.clear()
         hours = self._settings.scheduler_catch_up_h if self._settings is not None else 0
         if hours <= 0:
             return
@@ -546,6 +555,51 @@ class JobRunner:
                     self._catch_up_equity(job, now, events, window=window)
             except Exception as e:  # 격리 — 한 작업의 실패가 다른 작업의 따라잡기를 막지 않는다
                 self._job_error(now, "job_fire_failed", job.name, e)
+
+    def _backlog(self, job: JobSpec, now: datetime, events: list[RunEvent]) -> None:
+        """빠진 날 메우기 — 최근 `backfill_days` 일의 회차(오래된 것부터)마다 기록이 없거나
+        실패·시간 초과·기다림으로 끝난 as_of 를 다시 띄운다.
+
+        `BACKLOG_EVERY_S` 마다 한 번(켜진 직후·깬 직후는 바로). 같은 as_of 를
+        `BACKLOG_MAX_ATTEMPTS` 번 시도했으면 더 부르지 않는다. 진행 중인 회차는 건드리지 않는다.
+        굳은 의존이 있는 작업은 의존이 같은 as_of 에 ok 가 될 때까지 기다리고, 못 기다리면
+        '막힘'으로 남아 다음 훑기가 다시 띄운다."""
+        last = self._backlog_at.get(job.name)
+        if last is not None and now - last < timedelta(seconds=BACKLOG_EVERY_S):
+            return
+        self._backlog_at[job.name] = now
+        spec = job.schedule.cron_spec()
+        if spec is None:
+            return
+        local = now.astimezone(job.schedule.zone)
+        seen: set[str] = set()
+        for back in range(job.schedule.backfill_days, -1, -1):
+            d = local.date() - timedelta(days=back)
+            if not holds(
+                job.schedule.when, d, self.kr, self.us, month_days=job.schedule.month_days
+            ):
+                continue
+            for t in spec.times_on(d):
+                at = datetime.combine(d, t, local.tzinfo)
+                if at > local:
+                    continue
+                fire_at = _utc(at)
+                try:
+                    as_of = resolve_as_of(job.run_as_of(), fire_at, self.kr, self.us)
+                except AsOfUnavailable:
+                    continue
+                if as_of in seen or (job.name, as_of) in self._pending:
+                    continue
+                seen.add(as_of)
+                prev = self.runs.latest(job.name, as_of)
+                if prev is not None:
+                    if prev.status in ("ok", "skipped") and not _reopens(prev):
+                        continue
+                    if prev.attempt >= BACKLOG_MAX_ATTEMPTS:
+                        continue
+                if prev is None and fire_at > now - timedelta(minutes=job.deadline_min):
+                    continue  # 방금 지난 정시 회차 — 정규 발화가 맡는다
+                self._fire(job, fire_at, now, events, catch_up=True)
 
     def _catch_up_equity(
         self, job: JobSpec, now: datetime, events: list[RunEvent], *, window: timedelta

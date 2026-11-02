@@ -1215,3 +1215,88 @@ def test_slot_job_network_blips_alert_only_after_three_in_a_row() -> None:
     rig.run_until(kst(2026, 10, 6, 10, 6))
     texts = [n["text"] for n in rig.notes.sent]
     assert len(texts) == 1 and "(연속 3회 실패)" in texts[0]
+
+
+# ── 빠진 날 메우기(schedule.backfill_days — 2026-11-02 DNS 장애로 krx.daily 10/30 이 빠졌다) ──────
+
+
+def _backfill_rig(start: datetime, **sched: Any) -> tuple[Rig, list[str]]:
+    seen: list[str] = []
+
+    def h(ctx: JobContext) -> JobResult:
+        seen.append(ctx.as_of)
+        return JobResult("ok", collected=ctx.keys, rows=1)
+
+    job = krx_like(
+        enabled=True,
+        schedule={"cron": "5 8 * * 1-5", "when": "trading_day", "backfill_days": 10, **sched},
+    )
+    return Rig([job], {"tests.fake:krx": h}, start), seen
+
+
+def _as_ofs_since(first_fire: date, last_fire: date) -> list[str]:
+    out: list[str] = []
+    d = first_fire
+    while d <= last_fire:
+        if KR.is_trading_day(d):
+            out.append(KR.prev_trading_day(d).isoformat())
+        d += timedelta(days=1)
+    return out
+
+
+def test_backfill_retries_a_failed_day_once_it_can() -> None:
+    rig, seen = _backfill_rig(kst(2026, 11, 2, 13, 0))
+    for d in _as_ofs_since(date(2026, 10, 23), date(2026, 11, 2)):
+        rig.runs.record(RunRecord(f"krx.daily:{d}:1", "krx.daily", d, 1, "ok"))
+    # 오늘 아침 회차(as_of 10/30)는 네트워크 장애로 실패한 채 끝났다
+    rig.runs.record(RunRecord("krx.daily:2026-10-30:2", "krx.daily", "2026-10-30", 2, "failed"))
+    rig.run_until(kst(2026, 11, 2, 13, 40))
+    assert seen == ["2026-10-30"]  # 한 번만 — 받은 뒤에는 다시 부르지 않는다
+    assert rig.runs.latest("krx.daily", "2026-10-30").status == "ok"  # type: ignore[union-attr]
+
+
+def test_backfill_fills_every_missing_day_after_the_mac_was_off() -> None:
+    # 10/23 아침 뒤로 꺼져 있다가 11/02 14:00 에 켜졌다 — 기록이 없는 날을 오래된 것부터 모두
+    rig, seen = _backfill_rig(kst(2026, 11, 2, 14, 0))
+    rig.run_until(kst(2026, 11, 2, 14, 5))
+    want = _as_ofs_since(date(2026, 10, 23), date(2026, 11, 2))
+    assert seen == want and len(want) >= 6
+
+
+def test_backfill_gives_up_after_max_attempts_and_respects_interval() -> None:
+    calls: list[str] = []
+
+    def fails(ctx: JobContext) -> JobResult:
+        calls.append(ctx.as_of)
+        raise RuntimeError("Name or service not known")
+
+    job = krx_like(
+        enabled=True,
+        retry={"max": 0},
+        schedule={"cron": "5 8 * * 1-5", "when": "trading_day", "backfill_days": 3},
+    )
+    rig = Rig([job], {"tests.fake:krx": fails}, kst(2026, 11, 2, 13, 0))
+    rig.runs.record(RunRecord("krx.daily:2026-10-30:1", "krx.daily", "2026-10-30", 1, "failed"))
+    rig.runs.record(RunRecord("krx.daily:2026-10-29:8", "krx.daily", "2026-10-29", 8, "failed"))
+    rig.run_until(kst(2026, 11, 2, 13, 10))
+    assert calls == ["2026-10-30"]  # 10/29 는 이미 8번 — 더 부르지 않는다
+    rig.run_until(kst(2026, 11, 2, 13, 14))
+    assert calls == ["2026-10-30"]  # 15분 안에는 다시 훑지 않는다
+    rig.run_until(kst(2026, 11, 2, 13, 20))
+    assert calls == ["2026-10-30", "2026-10-30"]
+
+
+def test_backfill_needs_enabled_cron_job() -> None:
+    seen: list[str] = []
+
+    def h(ctx: JobContext) -> JobResult:
+        seen.append(ctx.as_of)
+        return JobResult("ok", collected=ctx.keys, rows=1)
+
+    off = krx_like(schedule={"cron": "5 8 * * 1-5", "when": "trading_day", "backfill_days": 10})
+    rig = Rig([off], {"tests.fake:krx": h}, kst(2026, 11, 2, 14, 0))  # 등록부 기본값은 꺼짐
+    rig.run_until(kst(2026, 11, 2, 14, 5))
+    assert seen == []
+    with pytest.raises(ValueError, match="backfill_days"):
+        bad = {"equity": {"start": "close+5"}, "when": "trading_day", "backfill_days": 3}
+        Registry.parse({"version": 1, "jobs": [krx_like(schedule=bad)]})
