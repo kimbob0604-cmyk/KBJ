@@ -30,6 +30,8 @@ from kbj.core.rows import (
     Change,
     EtfQuote,
     Fund,
+    GlobalCap,
+    GlobalClose,
     GlobalQuote,
     HoldingRow,
     IndexQuote,
@@ -258,6 +260,41 @@ def fill_global_quotes(repos: MemoryRepos, now: datetime) -> None:
         q("EWY", 60.0, 59.0), q("SOXX", 230.0, 228.0),
     ]  # fmt: skip
     repos.market.put_global_quotes(rows, loaded_by="global.proxy", received_at=now)
+
+
+def fill_relcap(repos: MemoryRepos, last: date, now: datetime) -> None:
+    """상대 시총(`/api/market/relcap`)용 합성 야후 종가·해외 시총.
+
+    시험·웹 픽스처가 부를 때만 넣는다.
+
+    일봉 40일(모든 종목·환율 같은 경로 — 비율은 시총 비율 그대로),
+    해외 시총은 AVGO·NVDA 만(1조·2조 달러
+    → 50%). 국내 시총은 합성 스냅에 없어 그 쌍은 '현재 시총 없음'. 지수 월봉 3개 연말."""
+    from kbj.engines.market.relcap import INDICES, daily_symbols
+
+    closes: list[GlobalClose] = []
+    for k in range(40):
+        d = last - timedelta(days=39 - k)
+        for sym in daily_symbols():
+            closes.append(
+                GlobalClose(symbol=sym, interval="1d", date=d, close=100.0 + k, currency=None,
+                            source="yahoo", quality=Quality.OK)
+            )  # fmt: skip
+    for sym, _ in INDICES:
+        for d, c in (
+            (date(2024, 12, 31), 90.0),
+            (date(2025, 12, 31), 100.0),
+            (date(2026, 8, 31), 110.0),
+        ):
+            closes.append(GlobalClose(symbol=sym, interval="1mo", date=d, close=c, currency=None,
+                                      source="yahoo", quality=Quality.OK))  # fmt: skip
+    repos.market.put_global_closes(closes, loaded_by="global.daily", received_at=now)
+    caps = [
+        GlobalCap(symbol=s, as_of=last, market_cap=v, currency="USD", source="yahoo",
+                  quality=Quality.OK)
+        for s, v in (("AVGO", 1e12), ("NVDA", 2e12))
+    ]  # fmt: skip
+    repos.market.put_global_caps(caps, loaded_by="global.daily", received_at=now)
 
 
 def fill_stock_holdings(repos: MemoryRepos, last: date, now: datetime) -> None:

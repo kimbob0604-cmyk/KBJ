@@ -1,0 +1,366 @@
+{
+  "source": "Yahoo·KIS",
+  "as_of": "2026-09-15T15:30:00+09:00",
+  "quality": "estimated",
+  "notes": [
+    "비율 = A 시총 합 ÷ B 시총 합(달러 환산) × 100. 과거 시총은 현재 주식 수 × 그날 종가 ÷ 현재 종가 — 자사주 소각·증자 구간은 어긋난다",
+    "연도별 수익률 = 연말 종가 대비(가격 지수 — 배당 제외), 올해는 YTD",
+    "SK하이닉스 / 삼성전자+우 — 000660.KS 현재 시총 없음",
+    "SK하이닉스 / 삼성전자 — 000660.KS 현재 시총 없음",
+    "SK하이닉스 / 마이크론 — 000660.KS 현재 시총 없음",
+    "삼성전기 / 무라타 — 009150.KS 현재 시총 없음",
+    "삼성전기 / 무라타+이비덴 — 009150.KS 현재 시총 없음",
+    "삼성전자 / TSMC — 005930.KS 현재 시총 없음"
+  ],
+  "generated_at": "2026-09-15T18:00:00+09:00",
+  "data": {
+    "period": "1Y",
+    "pairs": [
+      {
+        "name": "SK하이닉스 / 삼성전자+우",
+        "legs_a": [
+          "000660.KS"
+        ],
+        "legs_b": [
+          "005930.KS",
+          "005935.KS"
+        ],
+        "latest": null,
+        "date": null,
+        "high": null,
+        "low": null,
+        "pct_of_range": null,
+        "error": "000660.KS 현재 시총 없음",
+        "series": []
+      },
+      {
+        "name": "SK하이닉스 / 삼성전자",
+        "legs_a": [
+          "000660.KS"
+        ],
+        "legs_b": [
+          "005930.KS"
+        ],
+        "latest": null,
+        "date": null,
+        "high": null,
+        "low": null,
+        "pct_of_range": null,
+        "error": "000660.KS 현재 시총 없음",
+        "series": []
+      },
+      {
+        "name": "SK하이닉스 / 마이크론",
+        "legs_a": [
+          "000660.KS"
+        ],
+        "legs_b": [
+          "MU"
+        ],
+        "latest": null,
+        "date": null,
+        "high": null,
+        "low": null,
+        "pct_of_range": null,
+        "error": "000660.KS 현재 시총 없음",
+        "series": []
+      },
+      {
+        "name": "삼성전기 / 무라타",
+        "legs_a": [
+          "009150.KS"
+        ],
+        "legs_b": [
+          "6981.T"
+        ],
+        "latest": null,
+        "date": null,
+        "high": null,
+        "low": null,
+        "pct_of_range": null,
+        "error": "009150.KS 현재 시총 없음",
+        "series": []
+      },
+      {
+        "name": "삼성전기 / 무라타+이비덴",
+        "legs_a": [
+          "009150.KS"
+        ],
+        "legs_b": [
+          "6981.T",
+          "4062.T"
+        ],
+        "latest": null,
+        "date": null,
+        "high": null,
+        "low": null,
+        "pct_of_range": null,
+        "error": "009150.KS 현재 시총 없음",
+        "series": []
+      },
+      {
+        "name": "삼성전자 / TSMC",
+        "legs_a": [
+          "005930.KS"
+        ],
+        "legs_b": [
+          "TSM"
+        ],
+        "latest": null,
+        "date": null,
+        "high": null,
+        "low": null,
+        "pct_of_range": null,
+        "error": "005930.KS 현재 시총 없음",
+        "series": []
+      },
+      {
+        "name": "브로드컴 / 엔비디아",
+        "legs_a": [
+          "AVGO"
+        ],
+        "legs_b": [
+          "NVDA"
+        ],
+        "latest": 50.0,
+        "date": "2026-09-15",
+        "high": 50.0,
+        "low": 50.0,
+        "pct_of_range": null,
+        "error": null,
+        "series": [
+          {
+            "date": "2026-08-07",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-08",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-09",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-10",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-11",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-12",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-13",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-14",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-15",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-16",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-17",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-18",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-19",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-20",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-21",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-22",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-23",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-24",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-25",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-26",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-27",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-28",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-29",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-30",
+            "value": 50.0
+          },
+          {
+            "date": "2026-08-31",
+            "value": 50.0
+          },
+          {
+            "date": "2026-09-01",
+            "value": 50.0
+          },
+          {
+            "date": "2026-09-02",
+            "value": 50.0
+          },
+          {
+            "date": "2026-09-03",
+            "value": 50.0
+          },
+          {
+            "date": "2026-09-04",
+            "value": 50.0
+          },
+          {
+            "date": "2026-09-05",
+            "value": 50.0
+          },
+          {
+            "date": "2026-09-06",
+            "value": 50.0
+          },
+          {
+            "date": "2026-09-07",
+            "value": 50.0
+          },
+          {
+            "date": "2026-09-08",
+            "value": 50.0
+          },
+          {
+            "date": "2026-09-09",
+            "value": 50.0
+          },
+          {
+            "date": "2026-09-10",
+            "value": 50.0
+          },
+          {
+            "date": "2026-09-11",
+            "value": 50.0
+          },
+          {
+            "date": "2026-09-12",
+            "value": 50.0
+          },
+          {
+            "date": "2026-09-13",
+            "value": 50.0
+          },
+          {
+            "date": "2026-09-14",
+            "value": 50.0
+          },
+          {
+            "date": "2026-09-15",
+            "value": 50.0
+          }
+        ]
+      }
+    ],
+    "years": [
+      2026,
+      2025
+    ],
+    "annual": [
+      {
+        "symbol": "^GSPC",
+        "name": "S&P 500",
+        "asof": "2026-08-31",
+        "error": null,
+        "returns": [
+          {
+            "year": 2026,
+            "pct": 10.0
+          },
+          {
+            "year": 2025,
+            "pct": 11.11
+          }
+        ]
+      },
+      {
+        "symbol": "^IXIC",
+        "name": "NASDAQ",
+        "asof": "2026-08-31",
+        "error": null,
+        "returns": [
+          {
+            "year": 2026,
+            "pct": 10.0
+          },
+          {
+            "year": 2025,
+            "pct": 11.11
+          }
+        ]
+      },
+      {
+        "symbol": "^KS11",
+        "name": "KOSPI",
+        "asof": "2026-08-31",
+        "error": null,
+        "returns": [
+          {
+            "year": 2026,
+            "pct": 10.0
+          },
+          {
+            "year": 2025,
+            "pct": 11.11
+          }
+        ]
+      },
+      {
+        "symbol": "^KQ11",
+        "name": "KOSDAQ",
+        "asof": "2026-08-31",
+        "error": null,
+        "returns": [
+          {
+            "year": 2026,
+            "pct": 10.0
+          },
+          {
+            "year": 2025,
+            "pct": 11.11
+          }
+        ]
+      }
+    ]
+  }
+}

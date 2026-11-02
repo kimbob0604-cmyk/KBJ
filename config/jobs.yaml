@@ -684,6 +684,20 @@ jobs:
     writes: [prv_market.global_quote]
     note: "Hyperliquid 무기한 선물(삼성전자·SK하이닉스·ADR·현대차·코스피200) + 야후 해외 상장·선물·매크로·미국 ETF 약 15종. 페이지 1 '글로벌 프록시'(/api/market/global-proxy)가 읽는다"
 
+  - name: global.daily
+    phase: P9
+    enabled: true             # 2026-11-02 — stock-dashboard 상대 시총·연도별 수익률을 옮김
+    owner: "kbj.services.collectors.global_daily:run"
+    schedule: {cron: "25 7 * * *", when: always, backfill_days: 3}   # 미국 마감(05:00·06:00 KST) 뒤
+    retry: {max: 2, backoff_s: [300, 900]}
+    deadline_min: 10
+    as_of: run_date
+    collects:
+      - {source: YAHOO, dataset: global_daily, as_of: run_date}
+      - {source: YAHOO, dataset: quote_caps, as_of: run_date}
+    writes: [prv_market.global_daily, prv_market.global_cap]
+    note: "야후 일봉 2년(상대 시총 종목·환율 약 13종) + 지수 월봉 전 기간(4종) + 해외 종목 시총(quote — 쿠키·crumb). 페이지 3 '상대 시총·연도별 수익률'(/api/market/relcap)이 읽는다"
+
   # ── P5 F2 장중 투자자 수급·프로그램매매(docs/p5_flow_program_prompt.md §3.4, docs/p5_design.md §0.4·§3.4) ──
   # 1분 작업은 정규장 + 장 마감 단일가 15:40 까지(close+10). 빈 분은 채우지 않는다(보간 금지 — 행 없음).
   # 프로그램 TR 은 실측(#40·#41) 전이라 웨이브 3 에도 꺼진 채 남는다(D-P5-23). KIS 우선순위는 limits.yaml

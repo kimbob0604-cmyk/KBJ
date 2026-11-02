@@ -24,6 +24,8 @@ from kbj.core.rows import (
     EtfMeta,
     EtfQuote,
     Fund,
+    GlobalCap,
+    GlobalClose,
     GlobalQuote,
     HoldingRow,
     IndexBar,
@@ -116,6 +118,8 @@ class MemoryMarketRepo:
         self.universe_rows: dict[tuple[str, date, str], Stored[UniverseRow]] = {}
         self.index_rows: dict[tuple[str, datetime, str], Stored[IndexQuote]] = {}
         self.global_rows: dict[tuple[str, datetime], Stored[GlobalQuote]] = {}
+        self.global_closes_rows: dict[tuple[str, str, date], Stored[GlobalClose]] = {}
+        self.global_cap_rows: dict[tuple[str, date], Stored[GlobalCap]] = {}
         self.sector_rows: dict[tuple[str, str, datetime, str], Stored[SectorQuote]] = {}
         self.rank_rows_: dict[tuple[str, datetime, int, str], Stored[RankRow]] = {}
         self.reconcile_rows: dict[tuple[date, str, str], ReconcileRow] = {}
@@ -267,6 +271,43 @@ class MemoryMarketRepo:
         out: dict[str, GlobalQuote] = {}
         for (sym, ts), st in sorted(self.global_rows.items(), key=lambda kv: kv[0][1]):
             if ts >= since:
+                out[sym] = st.row
+        return out
+
+    def put_global_closes(
+        self, rows: Sequence[GlobalClose], *, loaded_by: str, received_at: datetime
+    ) -> int:
+        require_loaded_by(loaded_by)
+        require_aware("received_at", received_at)
+        for r in rows:
+            self.global_closes_rows[(r.symbol, r.interval, r.date)] = Stored(
+                r, received_at, loaded_by
+            )
+        return len(rows)
+
+    def global_closes(
+        self, symbols: Collection[str], interval: str, since: date
+    ) -> dict[str, list[tuple[date, float]]]:
+        want = set(symbols)
+        out: dict[str, list[tuple[date, float]]] = {}
+        for (sym, iv, d), st in sorted(self.global_closes_rows.items()):
+            if sym in want and iv == interval and d >= since:
+                out.setdefault(sym, []).append((d, st.row.close))
+        return out
+
+    def put_global_caps(
+        self, rows: Sequence[GlobalCap], *, loaded_by: str, received_at: datetime
+    ) -> int:
+        require_loaded_by(loaded_by)
+        require_aware("received_at", received_at)
+        for r in rows:
+            self.global_cap_rows[(r.symbol, r.as_of)] = Stored(r, received_at, loaded_by)
+        return len(rows)
+
+    def global_caps(self, since: date) -> dict[str, GlobalCap]:
+        out: dict[str, GlobalCap] = {}
+        for (sym, d), st in sorted(self.global_cap_rows.items()):
+            if d >= since:
                 out[sym] = st.row
         return out
 

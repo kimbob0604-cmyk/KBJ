@@ -106,6 +106,9 @@ def seeded_runs() -> MemoryRunLog:
     runs.record(
         RunRecord("global.proxy:2026-10-06T10:20:1", "global.proxy", "2026-10-06T10:20", 1, "ok")
     )
+    runs.record(
+        RunRecord("global.daily:2026-10-06:1", "global.daily", "2026-10-06", 1, "ok")
+    )  # 07:25
     # P9 WRAP: 워치독 자신은 5분마다(마감 10분) — 10:30 기준 끝났어야 할 마지막 발화는 10:20
     runs.record(
         RunRecord("ops.watchdog:2026-10-06T10:20:1", "ops.watchdog", "2026-10-06T10:20", 1, "ok")
@@ -207,6 +210,7 @@ def test_holiday_has_no_missed_trading_day_runs() -> None:
         ("macro.monthly", "2026-10-05"),
         ("macro.monthly_prv", "2026-09"),
         ("index.calendar", "2026-10-05"),  # 2026-10-20 켬 — when: always 06:41
+        ("global.daily", "2026-10-05"),  # 2026-11-02 — when: always 07:25
     ):
         runs.record(RunRecord(f"{job}:{as_of}:1", job, as_of, 1, "ok"))
     notes = Notes()

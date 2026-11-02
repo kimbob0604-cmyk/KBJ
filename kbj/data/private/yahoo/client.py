@@ -40,6 +40,11 @@ LIMITS_SOURCE: Final = "yahoo"
 ROW_SOURCE: Final = "yahoo"  # 행 source(daily_bar·prv_macro.series — 소문자, ET 와 같다)
 _BASE: Final = "https://query1.finance.yahoo.com"
 _CHART: Final = "/v8/finance/chart/{sym}"
+_QUOTE: Final = "/v7/finance/quote"
+_CRUMB: Final = "/v1/test/getcrumb"
+_COOKIE_URL: Final = (
+    "https://fc.yahoo.com/"  # 404 지만 동의 쿠키(A3)를 준다 — quote 는 쿠키 + crumb 가 있어야 한다
+)
 TR_ID: Final = "yahoo:chart"  # 리미터 기록용 이름
 MAX_BYTES: Final = 8 * 1024 * 1024
 TOTAL_S: Final = 30.0
@@ -145,6 +150,25 @@ def to_bars(payload: Any, symbol: str) -> list[Bar]:
     return out
 
 
+def parse_quote_caps(payload: Any) -> dict[str, tuple[float, str | None]]:
+    """v7 quote → {심볼: (marketCap, currency)}. 모양이 다르면 ValueError."""
+    try:
+        result = payload["quoteResponse"]["result"]
+    except (KeyError, TypeError):
+        raise ValueError("quoteResponse.result 가 없다") from None
+    if not isinstance(result, list):
+        raise ValueError("quoteResponse.result 가 목록이 아니다")
+    out: dict[str, tuple[float, str | None]] = {}
+    for q in result:
+        if not isinstance(q, dict):
+            continue
+        sym, cap = q.get("symbol"), _num(q.get("marketCap"))
+        if isinstance(sym, str) and cap is not None and cap > 0:
+            cur = q.get("currency")
+            out[sym] = (cap, cur if isinstance(cur, str) else None)
+    return out
+
+
 # ── 클라이언트 ────────────────────────────────────────────────────────────────────────────
 
 
@@ -180,6 +204,7 @@ class YahooClient:
         self._http = make_client(
             base_url, transport=transport, headers={"User-Agent": "Mozilla/5.0 (kbj)"}
         )
+        self._crumb_val: str | None = None
 
     def __repr__(self) -> str:
         return "YahooClient()"
@@ -202,8 +227,14 @@ class YahooClient:
     def close(self) -> None:
         self._http.close()
 
-    def chart_payload(self, symbol: str, range_: str = "2y", interval: str = "1d") -> Any:
-        """원 응답(JSON). 200 이 아니면 예외(사유 포함)."""
+    def chart_payload(
+        self, symbol: str, range_: str = "2y", interval: str = "1d", *, span_all: bool = False
+    ) -> Any:
+        """원 응답(JSON). 200 이 아니면 예외(사유 포함).
+
+        `span_all`: range 대신 period1=0·period2=끝 — range=max 월봉은 야후가 석 달씩 묶어 '12월' 봉
+        종가가 2월 말 값이 된다(stock-dashboard 2026-10-30 확인).
+        연도별 수익률은 이것으로 부른다."""
         if not symbol or any(c.isspace() for c in symbol):
             raise ValueError(f"심볼이 비었거나 공백이 있다: {symbol!r}")
         if range_ not in RANGES or interval not in INTERVALS:
@@ -213,7 +244,12 @@ class YahooClient:
         try:
             status, body = get_capped(
                 self._http, _CHART.format(sym=symbol.upper()),
-                params={"range": range_, "interval": interval}, max_bytes=MAX_BYTES,
+                params=(
+                    {"period1": 0, "period2": 9_999_999_999, "interval": interval}
+                    if span_all
+                    else {"range": range_, "interval": interval}
+                ),
+                max_bytes=MAX_BYTES,
                 total_s=TOTAL_S, clock=self._clock, source=SOURCE, dataset=dataset,
             )  # fmt: skip
         except httpx.HTTPError as e:
@@ -233,6 +269,50 @@ class YahooClient:
         if err:
             raise YahooNotFound(dataset, status, _reason(body))
         return payload
+
+    def _crumb(self) -> str:
+        """quote 용 crumb(이 클라이언트 동안 한 번). 쿠키는 httpx 클라이언트가 들고 있다."""
+        if self._crumb_val:
+            return self._crumb_val
+        try:
+            self._http.get(_COOKIE_URL)
+            r = self._http.get(_CRUMB)
+        except httpx.HTTPError as e:
+            raise YahooError("quote", None, f"전송 실패: {type(e).__name__}") from None
+        if r.status_code == 429:
+            self._limiter.on_rate_limited()
+            raise YahooThrottled("quote", 429, "429 한도 초과 — 감속(crumb)")
+        crumb = r.text.strip()
+        if r.status_code != 200 or not crumb or len(crumb) > 64 or any(c.isspace() for c in crumb):
+            raise YahooError("quote", r.status_code, f"crumb 못 받음(HTTP {r.status_code})")
+        self._crumb_val = crumb
+        return crumb
+
+    def quote_caps(self, symbols: Sequence[str]) -> dict[str, tuple[float, str | None]]:
+        """{심볼: (시가총액 — 현지 통화, 통화)}. 시총이 없거나 0 이하인 심볼은 빠진다."""
+        if not symbols:
+            return {}
+        crumb = self._crumb()
+        self._limiter.acquire(self._priority, TR_ID, self._acquire_timeout)
+        try:
+            status, body = get_capped(
+                self._http, _QUOTE,
+                params={"symbols": ",".join(symbols), "crumb": crumb,
+                        "fields": "marketCap,currency"},
+                max_bytes=MAX_BYTES, total_s=TOTAL_S, clock=self._clock, source=SOURCE,
+                dataset="quote",
+            )  # fmt: skip
+        except httpx.HTTPError as e:
+            raise YahooError("quote", None, f"전송 실패: {type(e).__name__}") from None
+        if status == 429:
+            self._limiter.on_rate_limited()
+            raise YahooThrottled("quote", status, "429 한도 초과 — 감속")
+        if status != 200:
+            raise YahooError("quote", status, f"HTTP {status} {_reason(body)}")
+        try:
+            return parse_quote_caps(json.loads(body))
+        except ValueError as e:
+            raise YahooError("quote", status, str(e)[:120]) from None
 
     def chart(self, symbol: str, range_: str = "2y", interval: str = "1d") -> list[Bar]:
         """일봉(오름차순). 결과가 비면 빈 목록 — 부르는 쪽이 '못 받음'으로 적는다."""

@@ -65,4 +65,36 @@ DATASETS: Final[tuple[DatasetSpec, ...]] = (
             "meta.regularMarketPrice·chartPreviousClose. 작업 global.proxy"
         ),
     ),
+    DatasetSpec(
+        id=f"{SOURCE}:global_daily",
+        source=SOURCE,
+        dataset="global_daily",
+        tier=Tier.PRIVATE,
+        limiter=LIMITER,
+        budget=None,
+        published="각 거래소 마감 뒤(미국 16:00 ET·도쿄 15:30 JST·서울 15:30 KST)",
+        as_of_kind="run_date",
+        store="prv_market.global_daily",
+        notes=(
+            "상대 시총·연도별 수익률(2026-11-02 — stock-dashboard 화면을 옮김): "
+            "종목(.KS·미국·일본)·"
+            "환율 KRW=X·JPY=X 일봉 2년, 지수 ^GSPC·^IXIC·^KS11·^KQ11 월봉 전 기간(period1=0 — "
+            "range=max 월봉은 석 달씩 묶인다). 진행 중인 봉은 쓰지 않는다. 작업 global.daily"
+        ),
+    ),
+    DatasetSpec(
+        id=f"{SOURCE}:quote_caps",
+        source=SOURCE,
+        dataset="quote_caps",
+        tier=Tier.PRIVATE,
+        limiter=LIMITER,
+        budget=None,
+        published="장중 실시간(지연) — 하루 한 번 받는다",
+        as_of_kind="run_date",
+        store="prv_market.global_cap",
+        notes=(
+            "해외 종목 현재 시가총액(현지 통화) — v7 quote(쿠키 fc.yahoo.com + crumb). MU·TSM·AVGO·"
+            "NVDA·6981.T·4062.T. 국내 시총은 스냅을 쓴다. 작업 global.daily"
+        ),
+    ),
 )

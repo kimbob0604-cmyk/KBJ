@@ -163,6 +163,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/market/relcap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Relcap Route
+         * @description 페이지 3 상대 시총(종목 간 시총 비율 추이)·주요 지수 연도별 수익률(global.daily 07:25).
+         */
+        get: operations["relcap_route_api_market_relcap_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/board/newhigh": {
         parameters: {
             query?: never;
@@ -2104,6 +2124,19 @@ export interface components {
             /** As Of */
             as_of: string | null;
             quality: components["schemas"]["Quality"];
+        };
+        /** AnnualIndexRow */
+        AnnualIndexRow: {
+            /** Symbol */
+            symbol: string;
+            /** Name */
+            name: string;
+            /** Asof */
+            asof: string | null;
+            /** Error */
+            error: string | null;
+            /** Returns */
+            returns: components["schemas"]["YearReturn"][];
         };
         /**
          * BacktestIn
@@ -4586,6 +4619,25 @@ export interface components {
              */
             generated_at: string;
             data: components["schemas"]["ProgramTop"];
+        };
+        /** Envelope[RelCap] */
+        Envelope_RelCap_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["RelCap"];
         };
         /** Envelope[ReportView] */
         Envelope_ReportView_: {
@@ -7584,6 +7636,43 @@ export interface components {
             /** Notes */
             notes: string[];
         };
+        /** RelCap */
+        RelCap: {
+            /**
+             * Period
+             * @enum {string}
+             */
+            period: "6M" | "1Y" | "2Y";
+            /** Pairs */
+            pairs: components["schemas"]["RelCapPair"][];
+            /** Years */
+            years: number[];
+            /** Annual */
+            annual: components["schemas"]["AnnualIndexRow"][];
+        };
+        /** RelCapPair */
+        RelCapPair: {
+            /** Name */
+            name: string;
+            /** Legs A */
+            legs_a: string[];
+            /** Legs B */
+            legs_b: string[];
+            /** Latest */
+            latest: number | null;
+            /** Date */
+            date: string | null;
+            /** High */
+            high: number | null;
+            /** Low */
+            low: number | null;
+            /** Pct Of Range */
+            pct_of_range: number | null;
+            /** Error */
+            error: string | null;
+            /** Series */
+            series: components["schemas"]["kbj__services__api__models__diag__SeriesPoint"][];
+        };
         /**
          * ReportBlocks
          * @description dart-report 화면 블록(엑셀과 같은 입력·같은 셈 — `kbj.reports.dart_excel.blocks`, 금액
@@ -9762,6 +9851,13 @@ export interface components {
             amount_missing: number;
             quality: components["schemas"]["Quality"];
         };
+        /** YearReturn */
+        YearReturn: {
+            /** Year */
+            year: number;
+            /** Pct */
+            pct: number;
+        };
         /** SeriesPoint */
         kbj__services__api__models__diag__SeriesPoint: {
             /**
@@ -10195,6 +10291,64 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_GlobalProxy_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    relcap_route_api_market_relcap_get: {
+        parameters: {
+            query?: {
+                period?: "6M" | "1Y" | "2Y";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_RelCap_"];
                 };
             };
             /** @description 세션 없음·만료 */

@@ -30,6 +30,8 @@ from psycopg.types.json import Jsonb
 from kbj.core.quality import Quality
 from kbj.core.rows import (
     Bar,
+    GlobalCap,
+    GlobalClose,
     GlobalQuote,
     IndexBar,
     IndexQuote,
@@ -123,6 +125,24 @@ class MarketRepo(Protocol):
 
     def global_quotes(self, since: datetime) -> dict[str, GlobalQuote]:
         """심볼마다 since 이후 가장 최근 한 줄(글로벌 프록시)."""
+        ...
+
+    def put_global_closes(
+        self, rows: Sequence[GlobalClose], *, loaded_by: str, received_at: datetime
+    ) -> int: ...
+
+    def global_closes(
+        self, symbols: Collection[str], interval: str, since: date
+    ) -> dict[str, list[tuple[date, float]]]:
+        """{심볼: [(날짜, 종가)] 오름차순} — since 이후(상대 시총·연도별 수익률)."""
+        ...
+
+    def put_global_caps(
+        self, rows: Sequence[GlobalCap], *, loaded_by: str, received_at: datetime
+    ) -> int: ...
+
+    def global_caps(self, since: date) -> dict[str, GlobalCap]:
+        """심볼마다 since 이후 가장 최근 시총."""
         ...
 
     def put_index_quotes(
@@ -574,6 +594,86 @@ class PgMarketRepo:
                 funding_1h=to_float(r[4]), vol_24h=to_float(r[5]), currency=r[6], source=r[7],
                 quality=Quality(r[8]),
             )
+            for r in rows
+        }  # fmt: skip
+
+    def put_global_closes(
+        self, rows: Sequence[GlobalClose], *, loaded_by: str, received_at: datetime
+    ) -> int:
+        require_loaded_by(loaded_by)
+        require_aware("received_at", received_at)
+        if not rows:
+            return 0
+        params = [
+            (r.symbol, r.interval, r.date, r.close, r.currency, r.source, r.quality.value,
+             received_at, loaded_by)
+            for r in rows
+        ]  # fmt: skip
+        with self._connect() as conn, conn.cursor() as cur:
+            cur.executemany(
+                b"INSERT INTO prv_market.global_daily (symbol, interval, trade_date, close, "
+                b"currency, source, quality, received_at, loaded_by) "
+                b"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) "
+                b"ON CONFLICT (symbol, interval, trade_date) DO UPDATE SET close = EXCLUDED.close, "
+                b"currency = EXCLUDED.currency, source = EXCLUDED.source, "
+                b"quality = EXCLUDED.quality, received_at = EXCLUDED.received_at, "
+                b"loaded_by = EXCLUDED.loaded_by",
+                params,
+            )
+        return len(params)
+
+    def global_closes(
+        self, symbols: Collection[str], interval: str, since: date
+    ) -> dict[str, list[tuple[date, float]]]:
+        syms = sorted(set(symbols))
+        if not syms:
+            return {}
+        with self._connect() as conn:
+            rows = conn.execute(
+                b"SELECT symbol, trade_date, close FROM prv_market.global_daily "
+                b"WHERE symbol = ANY(%s) AND interval = %s AND trade_date >= %s "
+                b"ORDER BY symbol, trade_date",
+                (syms, interval, since),
+            ).fetchall()
+        out: dict[str, list[tuple[date, float]]] = {}
+        for sym, d, c in rows:
+            out.setdefault(sym, []).append((d, float(c)))
+        return out
+
+    def put_global_caps(
+        self, rows: Sequence[GlobalCap], *, loaded_by: str, received_at: datetime
+    ) -> int:
+        require_loaded_by(loaded_by)
+        require_aware("received_at", received_at)
+        if not rows:
+            return 0
+        params = [
+            (r.symbol, r.as_of, r.market_cap, r.currency, r.source, r.quality.value, received_at,
+             loaded_by)
+            for r in rows
+        ]  # fmt: skip
+        with self._connect() as conn, conn.cursor() as cur:
+            cur.executemany(
+                b"INSERT INTO prv_market.global_cap (symbol, as_of, market_cap, currency, source, "
+                b"quality, received_at, loaded_by) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) "
+                b"ON CONFLICT (symbol, as_of) DO UPDATE SET market_cap = EXCLUDED.market_cap, "
+                b"currency = EXCLUDED.currency, source = EXCLUDED.source, "
+                b"quality = EXCLUDED.quality, received_at = EXCLUDED.received_at, "
+                b"loaded_by = EXCLUDED.loaded_by",
+                params,
+            )
+        return len(params)
+
+    def global_caps(self, since: date) -> dict[str, GlobalCap]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                b"SELECT DISTINCT ON (symbol) symbol, as_of, market_cap, currency, source, quality "
+                b"FROM prv_market.global_cap WHERE as_of >= %s ORDER BY symbol, as_of DESC",
+                (since,),
+            ).fetchall()
+        return {
+            r[0]: GlobalCap(symbol=r[0], as_of=r[1], market_cap=float(r[2]), currency=r[3],
+                            source=r[4], quality=Quality(r[5]))
             for r in rows
         }  # fmt: skip
 

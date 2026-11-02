@@ -47,6 +47,7 @@ from tests.unit.api.api_world import (
     World,
     build_world,
     fill_global_quotes,
+    fill_relcap,
     fill_stock_holdings,
 )
 from tests.unit.api.api_world_p4 import P4ApiWorld, expect, shared
@@ -81,6 +82,7 @@ FIXTURES: Final[tuple[tuple[str, str, bool], ...]] = (
     ("etf_stocks.json", "/api/etf/stocks?sort=in&period=5", False),
     ("diag_breadth-risk.json", "/api/diag/breadth-risk?period=3M&ma=25", False),
     ("market_global-proxy.json", "/api/market/global-proxy", False),
+    ("market_relcap.json", "/api/market/relcap?period=1Y", False),
 )
 AUTH: Final[dict[str, Any]] = {
     "auth_me.json": {"user": "kbj-user", "csrf_token": "csrf-token-synthetic"},
@@ -97,6 +99,7 @@ def render(world: World | None = None) -> dict[str, str]:
         w.repos, w.market.last_day, w.clock()
     )  # 종목별 ETF 수급 — 다른 응답은 구성종목을 안 읽는다
     fill_global_quotes(w.repos, w.clock())  # 글로벌 프록시 — 다른 응답은 이 표를 안 읽는다
+    fill_relcap(w.repos, w.market.last_day, w.clock())  # 상대 시총 — 이 응답만 읽는다
     c = w.client()
     w.login(c)
     after_close = w.clock()

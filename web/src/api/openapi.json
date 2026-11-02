@@ -533,6 +533,85 @@
         }
       }
     },
+    "/api/market/relcap": {
+      "get": {
+        "tags": [
+          "market"
+        ],
+        "summary": "Relcap Route",
+        "description": "페이지 3 상대 시총(종목 간 시총 비율 추이)·주요 지수 연도별 수익률(global.daily 07:25).",
+        "operationId": "relcap_route_api_market_relcap_get",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "6M",
+                "1Y",
+                "2Y"
+              ],
+              "type": "string",
+              "default": "1Y",
+              "title": "Period"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_RelCap_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/board/newhigh": {
       "get": {
         "tags": [
@@ -10846,6 +10925,58 @@
         "title": "AnalysisPrefill",
         "description": "prefill(§4.7) — P4 밸류에이션·시나리오 적정가·컨센서스 읽기. 칸마다 출처(value_sources)."
       },
+      "AnnualIndexRow": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "asof": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asof"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "returns": {
+            "items": {
+              "$ref": "#/components/schemas/YearReturn"
+            },
+            "type": "array",
+            "title": "Returns"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "symbol",
+          "name",
+          "asof",
+          "error",
+          "returns"
+        ],
+        "title": "AnnualIndexRow"
+      },
       "BacktestIn": {
         "properties": {
           "rule_id": {
@@ -17639,6 +17770,49 @@
           "data"
         ],
         "title": "Envelope[ProgramTop]"
+      },
+      "Envelope_RelCap_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/RelCap"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[RelCap]"
       },
       "Envelope_ReportView_": {
         "properties": {
@@ -26872,6 +27046,160 @@
         "title": "RatioView",
         "description": "최근 분기 비율(§4.5 — DART 만, 공개). 분모 ≤ 0 이면 null + `na_reasons[칸]`."
       },
+      "RelCap": {
+        "properties": {
+          "period": {
+            "type": "string",
+            "enum": [
+              "6M",
+              "1Y",
+              "2Y"
+            ],
+            "title": "Period"
+          },
+          "pairs": {
+            "items": {
+              "$ref": "#/components/schemas/RelCapPair"
+            },
+            "type": "array",
+            "title": "Pairs"
+          },
+          "years": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Years"
+          },
+          "annual": {
+            "items": {
+              "$ref": "#/components/schemas/AnnualIndexRow"
+            },
+            "type": "array",
+            "title": "Annual"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "period",
+          "pairs",
+          "years",
+          "annual"
+        ],
+        "title": "RelCap"
+      },
+      "RelCapPair": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "legs_a": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Legs A"
+          },
+          "legs_b": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Legs B"
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "High"
+          },
+          "low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Low"
+          },
+          "pct_of_range": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pct Of Range"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/kbj__services__api__models__diag__SeriesPoint"
+            },
+            "type": "array",
+            "title": "Series"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "legs_a",
+          "legs_b",
+          "latest",
+          "date",
+          "high",
+          "low",
+          "pct_of_range",
+          "error",
+          "series"
+        ],
+        "title": "RelCapPair"
+      },
       "ReportBlocks": {
         "properties": {
           "quarterly": {
@@ -34370,6 +34698,25 @@
         ],
         "title": "WindowView",
         "description": "보고 기준 순증감(사유 미구분 포함 — 장내 순매수가 아니다, §4.4). `amount` = Σ 증감 ×\n보고일 종가(로그인 — 추정), `amount_missing` = 종가를 몰라 금액에서 뺀 보고 수."
+      },
+      "YearReturn": {
+        "properties": {
+          "year": {
+            "type": "integer",
+            "title": "Year"
+          },
+          "pct": {
+            "type": "number",
+            "title": "Pct"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "year",
+          "pct"
+        ],
+        "title": "YearReturn"
       },
       "kbj__services__api__models__diag__SeriesPoint": {
         "properties": {
