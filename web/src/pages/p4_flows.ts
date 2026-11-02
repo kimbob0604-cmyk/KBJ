@@ -15,8 +15,10 @@ import { type Panel, panel } from '../ui/panel';
 import { checkLine, qValue, roundTol, visibleRows } from '../ui/quality';
 import { type Option, seg, select } from '../ui/seg';
 import { centerLevel, s, svgBox } from '../ui/svg';
+import { statGrid } from '../ui/stat';
 import { type Column, table } from '../ui/table';
 import { fill, filters, INVESTOR_LABEL, kv, nameCell, slotEvery } from './p1_market';
+import { screenCards } from './p4/cards';
 
 type S = components['schemas'];
 type Screen = S['ScreenResponse'];
@@ -46,8 +48,10 @@ export const MODE_DEF: Record<Mode, string> = {
   both: '기간 외국인 > 0 이고 기관 > 0 — 둘의 합 순',
   streak: '외국인·기관 연속 순매수 일수 중 큰 값(3일 이상), 같으면 순매수 합 순 — 0원·순매도·정지일에서 끊김',
   spike: '오늘 거래대금 ÷ 직전 19영업일 평균 ≥ 1.5배(기간 무관). 직전 거래일이 10일 미만이면 계산하지 않음',
-  foreign_cap: '기간 외국인 순매수 ÷ 시가총액(기간 끝 날) 내림차순 — 종목 크기에 비해 얼마나 샀나. 시총 1,000억·순매수 10억 이상만',
-  inst_cap: '기간 기관 순매수 ÷ 시가총액(기간 끝 날) 내림차순 — 종목 크기에 비해 얼마나 샀나. 시총 1,000억·순매수 10억 이상만',
+  foreign_cap:
+    '기간 외국인 순매수 ÷ 시가총액(기간 끝 날) 내림차순 — 종목 크기에 비해 얼마나 샀나. 시총 1,000억·순매수 10억 이상만',
+  inst_cap:
+    '기간 기관 순매수 ÷ 시가총액(기간 끝 날) 내림차순 — 종목 크기에 비해 얼마나 샀나. 시총 1,000억·순매수 10억 이상만',
 };
 
 /** 시총 대비 모드에서 그 투자자 순매수 ÷ 시총(%) */
@@ -512,6 +516,7 @@ async function mountLogin(ctx: PageContext, { pScr, pInv, pDet, pIntra }: FlowPa
         const { rows, invalid } = visibleRows(env.data.rows);
         for (const r of rows) if (r.name) names.set(r.code, r.name);
         count.textContent = excludedText(env.data);
+        pScr.body.append(statGrid(screenCards(rows, q.mode === 'spike' ? '오늘' : `${q.period}일`)));
         pScr.body.append(
           table({
             caption: `${MODES.find((m) => m.value === q.mode)?.label ?? q.mode} · ${q.mode === 'spike' ? '오늘' : `${q.period}일`} · 기준일 ${shortDate(env.data.date)}`,

@@ -24,6 +24,7 @@ import json
 import time
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any, Final
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import httpx
 from redis import Redis
@@ -70,7 +71,16 @@ class YahooNotFound(YahooError):
 # ── 파서(ET 원본 그대로) ──────────────────────────────────────────────────────────────────
 
 
-def parse_yahoo(payload: Any) -> list[dict[str, Any]]:
+def _zone(name: Any) -> ZoneInfo | None:
+    if not isinstance(name, str) or not name:
+        return None
+    try:
+        return ZoneInfo(name)
+    except (ZoneInfoNotFoundError, ValueError):
+        return None
+
+
+def parse_yahoo(payload: Any, *, local_dates: bool = False) -> list[dict[str, Any]]:
     """yahoo v8 차트 → 오름차순 일봉. 조정 종가가 아니라 원 종가를 쓴다.
 
     yahoo 는 `adjclose` 를 따로 준다. 신고가 판정은 분할이 반영된 시계열을
@@ -82,6 +92,15 @@ def parse_yahoo(payload: Any) -> list[dict[str, Any]]:
         return []
     ts = res.get("timestamp") or []
     q = ((res.get("indicators") or {}).get("quote") or [{}])[0]
+    # local_dates: 날짜를 거래소 현지 기준으로(시간대 이름 exchangeTimezoneName, 모르면 gmtoffset).
+    # 기본(UTC 날짜)은 서울·도쿄 봉(현지 0시 = 전날 UTC)을 하루, 월봉은 한 달 앞당기고
+    # 런던 기준 환율(KRW=X)도 서머타임 동안 전날로 단다
+    # (2026-11-02 실측 — KOSPI 연도별 수익률이 한 달씩 밀렸다).
+    # 기존 수집(매크로·미국 일봉)은 저장된 날짜와 어긋나지 않게 기본값 그대로 둔다
+    meta = res.get("meta") or {}
+    zone = _zone(meta.get("exchangeTimezoneName")) if local_dates else None
+    off = meta.get("gmtoffset") if local_dates else 0
+    off = int(off) if isinstance(off, int | float) else 0
     rows: list[dict[str, Any]] = []
     for i, t in enumerate(ts):
 
@@ -94,7 +113,11 @@ def parse_yahoo(payload: Any) -> list[dict[str, Any]]:
             continue
         rows.append(
             dict(
-                asof=_dt.datetime.fromtimestamp(t, tz=_dt.UTC).date().isoformat(),
+                asof=(
+                    _dt.datetime.fromtimestamp(t, tz=zone)
+                    if zone is not None
+                    else _dt.datetime.fromtimestamp(t + off, tz=_dt.UTC)
+                ).date().isoformat(),
                 open=g("open"), high=g("high"), low=g("low"), close=c, volume=g("volume"),
                 source="yahoo", ts=t,
             )
@@ -128,11 +151,11 @@ def _num(v: Any) -> float | None:
     return x if x == x and x not in (float("inf"), float("-inf")) else None
 
 
-def to_bars(payload: Any, symbol: str) -> list[Bar]:
+def to_bars(payload: Any, symbol: str, *, local_dates: bool = False) -> list[Bar]:
     """`parse_yahoo` 결과 → 일봉 행(`kbj.core.rows.Bar` — code = 심볼, venue '', source 'yahoo').
 
     정규장이 열린 동안의 마지막 봉은 진행 중인 봉이라 `estimated`(종가 아님 — [확인 필요 #46])."""
-    rows = parse_yahoo(payload)
+    rows = parse_yahoo(payload, local_dates=local_dates)
     live = _live_period(payload)
     out: list[Bar] = []
     for r in rows:

@@ -139,3 +139,23 @@ def test_quote_errors() -> None:
         c.quote_caps(["MU"])
     with pytest.raises(ValueError):
         parse_quote_caps({"x": 1})
+
+
+def test_local_dates_follow_exchange_timezone() -> None:
+    """서울 봉(현지 0시 = 전날 15:00 UTC)·뉴욕 서머타임 월봉(04:00 UTC)이 현지 날짜로 붙는다."""
+    from kbj.data.private.yahoo.client import parse_yahoo
+
+    def payload(tz: str, off: int, ts: int) -> Any:
+        q = {"close": [1.0], "open": [1], "high": [1], "low": [1], "volume": [1]}
+        meta = {"exchangeTimezoneName": tz, "gmtoffset": off}
+        return {
+            "chart": {"result": [{"meta": meta, "timestamp": [ts], "indicators": {"quote": [q]}}]}
+        }
+
+    seoul = payload("Asia/Seoul", 32400, 1793458800)  # 2026-10-31 15:00 UTC = 11-01 00:00 KST
+    assert parse_yahoo(seoul)[0]["asof"] == "2026-10-31"  # 기본(기존 수집) — UTC 날짜 그대로
+    assert parse_yahoo(seoul, local_dates=True)[0]["asof"] == "2026-11-01"
+    ny = payload("America/New_York", -18000, 1790827200)  # 2026-10-01 04:00 UTC(EDT 0시)
+    assert (
+        parse_yahoo(ny, local_dates=True)[0]["asof"] == "2026-10-01"
+    )  # 지금 오프셋(-5h)이 아니라 그날

@@ -56,7 +56,7 @@ def _closes(payload: Any, sym: str, interval: str) -> list[GlobalClose]:
         GlobalClose(symbol=sym, interval=interval, date=b.date, close=b.close,
                     currency=currency if isinstance(currency, str) else None, source=ROW_SOURCE,
                     quality=Quality.OK)
-        for b in to_bars(payload, sym)
+        for b in to_bars(payload, sym, local_dates=True)  # 거래소 현지 날짜(서울·도쿄·런던 환율)
         if b.close is not None and b.close > 0 and b.quality is Quality.OK
     ]  # fmt: skip
 

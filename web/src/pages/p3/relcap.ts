@@ -59,7 +59,7 @@ export function pairChart(p: Pair | undefined): HTMLElement {
     lineChart({
       label: p.name,
       x: p.series.map((s) => s.date),
-      series: [{ label: p.name, values: p.series.map((s) => s.value ?? null) }],
+      series: [{ label: '비율', values: p.series.map((s) => s.value ?? null) }], // 끝점 이름표가 짧게(긴 쌍 이름은 잘린다)
       format: (v) => `${num(v, 1)}%`,
       h: 220,
     }).el,

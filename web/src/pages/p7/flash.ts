@@ -12,7 +12,9 @@ import { h, replace } from '../../ui/dom';
 import { DASH, num, pct, signClass } from '../../ui/fmt';
 import { lineChart } from '../../ui/line';
 import { seg } from '../../ui/seg';
+import { statGrid } from '../../ui/stat';
 import { type Column, table } from '../../ui/table';
+import { flashCards } from './cards';
 import { failNote, TRADE_HINT, TRADE_SOURCE, type TabCtx, type TradeFlash, tradePanel } from './common';
 
 export const TITLE = '수출 속보';
@@ -172,6 +174,9 @@ export function flashCsv(env: Envelope<TradeFlash>, kindLabel: string): string |
   });
 }
 
+// 요약 카드는 로그인 본문만(공개 번들 예산 — ADR 0025)
+const LOGIN_CARDS = import.meta.env.MODE === 'public' ? null : flashCards;
+
 function draw(t: TabCtx, body: HTMLElement, env: Envelope<TradeFlash>, kindLabel: string): void {
   const segs = env.data.segments;
   const last = segs[0];
@@ -199,6 +204,7 @@ function draw(t: TabCtx, body: HTMLElement, env: Envelope<TradeFlash>, kindLabel
   const lines = yoyLines(segs);
   replace(
     body,
+    LOGIN_CARDS && t.tier !== 'public' ? statGrid(LOGIN_CARDS(rows, `${kindLabel} ${segLabel(last)}`)) : '',
     h(
       'p',
       { class: 'flash-head' },
