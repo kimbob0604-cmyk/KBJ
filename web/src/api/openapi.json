@@ -1543,6 +1543,116 @@
         }
       }
     },
+    "/api/etf/stocks": {
+      "get": {
+        "tags": [
+          "etf"
+        ],
+        "summary": "Stock Flows",
+        "description": "종목별 ETF 수급 — ETF 순유입·거래대금·투자자별 순매수를 구성종목 비중으로 종목에\n나눠 합친다.",
+        "operationId": "stock_flows_api_etf_stocks_get",
+        "parameters": [
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "in",
+                "out",
+                "value",
+                "pct",
+                "indiv",
+                "foreign",
+                "inst"
+              ],
+              "type": "string",
+              "default": "in",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                1,
+                5,
+                20
+              ],
+              "type": "integer",
+              "default": 5,
+              "title": "Period"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 300,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_EtfStockFlows_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/etf/types": {
       "get": {
         "tags": [
@@ -15981,6 +16091,49 @@
         ],
         "title": "Envelope[EtfPremium]"
       },
+      "Envelope_EtfStockFlows_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/EtfStockFlows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[EtfStockFlows]"
+      },
       "Envelope_EtfTypes_": {
         "properties": {
           "source": {
@@ -19745,6 +19898,103 @@
           "rows"
         ],
         "title": "EtfPremium"
+      },
+      "EtfStockFlows": {
+        "properties": {
+          "sort": {
+            "type": "string",
+            "enum": [
+              "in",
+              "out",
+              "value",
+              "pct",
+              "indiv",
+              "foreign",
+              "inst"
+            ],
+            "title": "Sort"
+          },
+          "period": {
+            "type": "integer",
+            "title": "Period"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "n_total": {
+            "type": "integer",
+            "title": "N Total"
+          },
+          "n_etfs_known": {
+            "type": "integer",
+            "title": "N Etfs Known"
+          },
+          "coverage_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage Pct"
+          },
+          "holdings_asof": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Holdings Asof"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/StockEtfFlowRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "sort",
+          "period",
+          "start",
+          "end",
+          "n_total",
+          "n_etfs_known",
+          "coverage_pct",
+          "holdings_asof",
+          "rows"
+        ],
+        "title": "EtfStockFlows"
       },
       "EtfType": {
         "type": "string",
@@ -28117,6 +28367,190 @@
         "title": "StatsCell",
         "description": "규칙 × 기간 한 칸(metrics §30.4). excluded = 정지·상폐·분할 의심으로 뺀 수."
       },
+      "StockEtfFlowRow": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "n_etfs": {
+            "type": "integer",
+            "title": "N Etfs"
+          },
+          "inflow": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inflow"
+          },
+          "inflow_shares": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inflow Shares"
+          },
+          "inflow_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inflow Pct"
+          },
+          "etf_turnover": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Etf Turnover"
+          },
+          "etf_volume": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Etf Volume"
+          },
+          "turnover_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover Pct"
+          },
+          "indiv": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Indiv"
+          },
+          "foreign": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Foreign"
+          },
+          "inst": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inst"
+          },
+          "stock_turnover": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stock Turnover"
+          },
+          "stock_volume": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stock Volume"
+          },
+          "close": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close"
+          },
+          "top_etfs": {
+            "items": {
+              "$ref": "#/components/schemas/StockFlowEtf"
+            },
+            "type": "array",
+            "title": "Top Etfs"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "n_etfs",
+          "inflow",
+          "inflow_shares",
+          "inflow_pct",
+          "etf_turnover",
+          "etf_volume",
+          "turnover_pct",
+          "indiv",
+          "foreign",
+          "inst",
+          "stock_turnover",
+          "stock_volume",
+          "close",
+          "top_etfs"
+        ],
+        "title": "StockEtfFlowRow",
+        "description": "종목 한 줄 — ETF 기간 값을 구성종목 비중으로 나눠 더한 것(원·주). 모르면 None."
+      },
       "StockFlowDetail": {
         "properties": {
           "code": {
@@ -28173,6 +28607,38 @@
           "checks"
         ],
         "title": "StockFlowDetail"
+      },
+      "StockFlowEtf": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "inflow": {
+            "type": "integer",
+            "title": "Inflow"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "inflow"
+        ],
+        "title": "StockFlowEtf",
+        "description": "종목 순유입 몫이 큰 ETF 한 줄."
       },
       "StockHeader": {
         "properties": {

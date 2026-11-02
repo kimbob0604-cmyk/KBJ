@@ -64,6 +64,9 @@ type Mode = Flows['mode'];
 type EtfType = S['EtfType'];
 type Period = '1' | '5' | '20';
 type ChangeKind = S['ChangeRow']['kind'];
+type StockFlows = S['EtfStockFlows'];
+type StockRow = S['StockEtfFlowRow'];
+type StockSort = StockFlows['sort'];
 
 export const MODES: readonly Option<Mode>[] = [
   { value: 'in', label: '순유입 상위' },
@@ -72,6 +75,16 @@ export const MODES: readonly Option<Mode>[] = [
   { value: 'indiv', label: '개인 순매수' },
   { value: 'foreign', label: '외국인 순매수' },
   { value: 'inst', label: '기관 순매수' },
+];
+
+export const STOCK_SORTS: readonly Option<StockSort>[] = [
+  { value: 'in', label: '순유입 몫 상위' },
+  { value: 'out', label: '순유출 몫 상위' },
+  { value: 'pct', label: '거래대금 대비' },
+  { value: 'value', label: 'ETF 거래대금 몫' },
+  { value: 'indiv', label: '개인' },
+  { value: 'foreign', label: '외국인' },
+  { value: 'inst', label: '기관' },
 ];
 
 /** 유형 7분류 화면 이름(metrics §8 — 응답 행의 etf_type_label 이 정본, 이 표는 필터 목록용) */
@@ -151,6 +164,34 @@ export function flowColumns(): Column<FlowRow>[] {
     eokCol('indiv', '개인(억)', (r) => r.indiv),
     eokCol('foreign', '외국인(억)', (r) => r.foreign),
     eokCol('inst', '기관(억)', (r) => r.inst),
+  ];
+}
+
+function stockEok(key: string, label: string, get: (r: StockRow) => number | null): Column<StockRow> {
+  return { key, label, cell: (r) => eokNum(get(r), 0, true), cls: (r) => signClass(get(r)) };
+}
+
+/** 종목별 ETF 수급 — ETF 기간 값 × 구성종목 비중의 종목별 합(금액은 억, 주식 수는 끝 종가로 나눈 추정) */
+export function stockColumns(): Column<StockRow>[] {
+  return [
+    { key: 'name', label: '종목', align: 'l', cls: () => 'nm', cell: (r) => nameCell(r.name, r.code) },
+    { key: 'n', label: 'ETF 수', cell: (r) => num(r.n_etfs) },
+    stockEok('inflow', '순유입 몫(억)', (r) => r.inflow),
+    { key: 'shares', label: '추정 주식 수', cell: (r) => num(r.inflow_shares, 0, true), cls: (r) => signClass(r.inflow_shares) },
+    { key: 'pct', label: '거래대금 대비', cell: (r) => pct(r.inflow_pct), cls: (r) => signClass(r.inflow_pct) },
+    { key: 'eturn', label: 'ETF 거래대금 몫(억)', cell: (r) => eokNum(r.etf_turnover) },
+    { key: 'evol', label: 'ETF 거래량 몫(주)', cell: (r) => num(r.etf_volume) },
+    { key: 'tpct', label: '종목 거래대금 대비', cell: (r) => pct(r.turnover_pct, 1, false) },
+    { key: 'sturn', label: '종목 거래대금(억)', cell: (r) => eokNum(r.stock_turnover) },
+    stockEok('indiv', '개인(억)', (r) => r.indiv),
+    stockEok('foreign', '외국인(억)', (r) => r.foreign),
+    stockEok('inst', '기관(억)', (r) => r.inst),
+    {
+      key: 'top',
+      label: '주요 ETF',
+      align: 'l',
+      cell: (r) => r.top_etfs.map((e) => `${e.name ?? e.code} ${eok(e.inflow, 0, true)}`).join(' · '),
+    },
   ];
 }
 
@@ -328,6 +369,12 @@ async function mount(ctx: PageContext): Promise<void> {
     span: 4,
     lock: 'etf',
   });
+  const pStock = panel(tier, {
+    title: '종목별 ETF 수급',
+    tier: 'login',
+    span: 12,
+    lock: 'etf_issuers',
+  });
   const pPrem = panel(tier, {
     title: '괴리율 경고',
     tier: 'login',
@@ -340,12 +387,12 @@ async function mount(ctx: PageContext): Promise<void> {
     span: 6,
     lock: 'etf_issuers',
   });
-  root.append(pFlow.el, pType.el, pPrem.el, pHold.el);
+  root.append(pFlow.el, pType.el, pStock.el, pPrem.el, pHold.el);
   // P5 패널(ETF 맵·보유 탐색·액티브 동시 편입 — docs/p5_design.md §6). 공개판은 자물쇠만
   const p5 = LOGIN_P5 ? LOGIN_P5(ctx) : lockedP5(ctx);
   const idx = LOGIN_INDEX ? LOGIN_INDEX(ctx) : lockedIndex(ctx);
   if (pFlow.locked || !LOGIN_ETF_P3) return; // 공개판: 자물쇠만, 요청 없음(공개 빌드는 아래 본문을 번들에서 뺀다)
-  await LOGIN_ETF_P3(ctx, { pFlow, pType, pPrem, pHold, p5, idx });
+  await LOGIN_ETF_P3(ctx, { pFlow, pType, pStock, pPrem, pHold, p5, idx });
 }
 
 // 로그인 본문 — 공개 빌드에서는 번들에서 뺀다(p8_stock LOGIN_VALUE 와 같은 방식, 공개 JS gzip 예산 72 KB(ADR 0025) — P5 WRAP).
@@ -353,6 +400,7 @@ async function mount(ctx: PageContext): Promise<void> {
 interface EtfPanels {
   pFlow: Panel;
   pType: Panel;
+  pStock: Panel;
   pPrem: Panel;
   pHold: Panel;
   p5: P5Panels;
@@ -360,11 +408,14 @@ interface EtfPanels {
 }
 const LOGIN_ETF_P3 = import.meta.env.MODE === 'public' ? null : mountLogin;
 
-async function mountLogin(ctx: PageContext, { pFlow, pType, pPrem, pHold, p5, idx }: EtfPanels): Promise<void> {
+async function mountLogin(ctx: PageContext, { pFlow, pType, pStock, pPrem, pHold, p5, idx }: EtfPanels): Promise<void> {
   const { root } = ctx;
 
   pFlow.setDef(
     '순유입(설정−환매) = Σ(상장좌수 변화 × 그날 NAV). 가격 변동으로 늘어난 순자산은 넣지 않는다(가격효과로 따로). 투자자별 순매수는 장내 매매(대부분 LP 상대)라 순유입과 다를 수 있어 따로 보인다.',
+  );
+  pStock.setDef(
+    'ETF 기간 순유입·거래대금·투자자별 장내 순매수에 구성종목 비중(운용사 PDF)을 곱해 종목마다 더했다. 순유입 몫 = 설정·환매로 생긴 바스켓 매매 추정, 거래대금 대비 = 순유입 몫 ÷ 그 종목 기간 거래대금. 주식 수는 기간 끝 종가로 나눈 추정. 구성종목을 모르는 ETF·선물·스왑은 빠진다.',
   );
   pPrem.setDef('괴리율 = (시장가 ÷ NAV − 1) × 100. 장중은 iNAV(추정) 기준이라 잠정.');
 
@@ -376,6 +427,8 @@ async function mountLogin(ctx: PageContext, { pFlow, pType, pPrem, pHold, p5, id
   };
   const hold = { kind: 'all' as 'all' | ChangeKind, issuer: 'all' };
   const count = h('span', { class: 'count', attrs: { 'aria-live': 'polite' } });
+  const stockQ = { sort: 'in' as StockSort };
+  const stockCount = h('span', { class: 'count', attrs: { 'aria-live': 'polite' } });
 
   const loadFlows = (): Promise<void> =>
     fill(
@@ -413,6 +466,21 @@ async function mountLogin(ctx: PageContext, { pFlow, pType, pPrem, pHold, p5, id
         return invalid;
       },
       'krx.daily 08:05',
+    );
+  const loadStocks = (): Promise<void> =>
+    fill(
+      pStock,
+      () => ctx.source.get<StockFlows>('etf/stocks', { sort: stockQ.sort, period: q.period }),
+      (env) => {
+        const d = env.data;
+        const cov = d.coverage_pct === null ? '' : ` · 순유입 ${pct(d.coverage_pct, 0, false)} 덮음`;
+        stockCount.textContent = `${num(d.n_total)}종목 · ETF ${num(d.n_etfs_known)}개${cov} · ${shortDate(d.start)} ~ ${shortDate(d.end)}`;
+        pStock.body.append(
+          table({ columns: stockColumns(), rows: d.rows, rowKey: (r) => r.code, pageSize: 30, empty: '해당 종목 없음' }).el,
+        );
+        return 0;
+      },
+      'etf.collect 08:00 · krx.daily 08:05',
     );
   const loadTypes = (): Promise<void> =>
     fill(
@@ -500,9 +568,23 @@ async function mountLogin(ctx: PageContext, { pFlow, pType, pPrem, pHold, p5, id
         q.period = v;
         void loadFlows();
         void loadTypes();
+        void loadStocks();
       },
     }).el,
     count,
+  );
+  filters(
+    pStock,
+    seg<StockSort>({
+      label: '종목 정렬',
+      options: STOCK_SORTS,
+      value: stockQ.sort,
+      onChange: (v) => {
+        stockQ.sort = v;
+        void loadStocks();
+      },
+    }).el,
+    stockCount,
   );
   filters(
     pPrem,
@@ -534,12 +616,13 @@ async function mountLogin(ctx: PageContext, { pFlow, pType, pPrem, pHold, p5, id
   );
   drawIssuerSelect();
 
-  await Promise.all([loadFlows(), loadTypes(), loadPremium(), loadChanges(), p5.ready, idx.load()]);
+  await Promise.all([loadFlows(), loadTypes(), loadStocks(), loadPremium(), loadChanges(), p5.ready, idx.load()]);
   // 첫 불러오기 중에 앱이 내려갔으면(격자가 문서에서 빠짐) 주기 작업을 걸지 않는다
   if (root.isConnected) {
     slotEvery(ctx, () => {
       void loadFlows();
       void loadTypes();
+      void loadStocks();
       void loadPremium();
       void loadChanges();
       void p5.refresh();

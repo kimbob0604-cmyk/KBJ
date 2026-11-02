@@ -28,9 +28,12 @@ __all__ = [
     "EtfMapCellView",
     "EtfMapGroup",
     "EtfPremium",
+    "EtfStockFlows",
     "EtfTypes",
     "NewListing",
     "PremiumRow",
+    "StockEtfFlowRow",
+    "StockFlowEtf",
     "TypeRollup",
 ]
 
@@ -73,6 +76,47 @@ class EtfFlows(ApiModel):
     n_total: int
     rows: list[EtfFlowRow]
     new_listings: list[NewListing]
+
+
+class StockFlowEtf(ApiModel):
+    """종목 순유입 몫이 큰 ETF 한 줄."""
+
+    code: str
+    name: str | None
+    inflow: int  # 이 ETF 순유입 × 종목 비중(원)
+
+
+class StockEtfFlowRow(ApiModel):
+    """종목 한 줄 — ETF 기간 값을 구성종목 비중으로 나눠 더한 것(원·주). 모르면 None."""
+
+    code: str
+    name: str | None
+    n_etfs: int  # 이 종목을 담은(구성종목을 아는) ETF 수
+    inflow: int | None  # Σ ETF 순유입 × 비중 — 설정·환매 경유 매수(+)/매도(−) 추정
+    inflow_shares: int | None  # inflow ÷ 기간 끝 종가(주)
+    inflow_pct: float | None  # inflow ÷ 종목 기간 거래대금 × 100
+    etf_turnover: int | None  # Σ ETF 거래대금 × 비중
+    etf_volume: int | None  # etf_turnover ÷ 기간 끝 종가(주)
+    turnover_pct: float | None  # etf_turnover ÷ 종목 기간 거래대금 × 100
+    indiv: int | None  # Σ ETF 장내 순매수(KIS) × 비중
+    foreign: int | None
+    inst: int | None
+    stock_turnover: int | None  # 종목 자체 기간 거래대금
+    stock_volume: int | None
+    close: float | None
+    top_etfs: list[StockFlowEtf]
+
+
+class EtfStockFlows(ApiModel):
+    sort: Literal["in", "out", "value", "pct", "indiv", "foreign", "inst"]
+    period: int
+    start: date | None
+    end: date | None
+    n_total: int
+    n_etfs_known: int  # 구성종목을 아는 ETF 수
+    coverage_pct: float | None  # 그 ETF 들의 |순유입| ÷ 전체 |순유입| × 100
+    holdings_asof: date | None  # 쓴 구성종목 스냅 가운데 가장 오래된 날
+    rows: list[StockEtfFlowRow]
 
 
 class TypeRollup(ApiModel):

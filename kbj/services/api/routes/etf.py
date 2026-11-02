@@ -20,9 +20,16 @@ from kbj.services.api.models.etf import (
     EtfHoldings,
     EtfMap,
     EtfPremium,
+    EtfStockFlows,
     EtfTypes,
 )
-from kbj.services.api.readers.etf import etf_flows, etf_holding_changes, etf_premium, etf_types
+from kbj.services.api.readers.etf import (
+    etf_flows,
+    etf_holding_changes,
+    etf_premium,
+    etf_stock_flows,
+    etf_types,
+)
 from kbj.services.api.readers.etf_p5 import active_consensus, etf_holders, etf_holdings, etf_map
 from kbj.services.api.routes._common import PeriodQ, data_router
 
@@ -45,6 +52,26 @@ def flows(
         domain="etf",
         ttl_s=TTL_DEFAULT_S,
         build=lambda: etf_flows(st.read, mode=mode, etf_type=etf_type, period=period, limit=limit),
+    )
+
+
+@router.get("/stocks", response_model=Envelope[EtfStockFlows])
+def stock_flows(
+    request: Request,
+    sort: Annotated[
+        Literal["in", "out", "value", "pct", "indiv", "foreign", "inst"], Query()
+    ] = "in",
+    period: PeriodQ = 5,
+    limit: Annotated[int, Query(ge=1, le=300)] = 100,
+) -> Response:
+    """종목별 ETF 수급 — ETF 순유입·거래대금·투자자별 순매수를 구성종목 비중으로 종목에
+    나눠 합친다."""
+    st = get_state(request)
+    return cached_json(
+        request,
+        domain="etf",
+        ttl_s=TTL_DEFAULT_S,
+        build=lambda: etf_stock_flows(st.read, sort=sort, period=period, limit=limit),
     )
 
 

@@ -26,6 +26,7 @@ from kbj.engines.etf.flows import (
 )
 from kbj.engines.etf.holdings import LABEL, sort_key
 from kbj.engines.etf.premium import alerts, premium_rows
+from kbj.engines.etf.stock_flows import EtfSide, aggregate, coverage
 from kbj.engines.flows.ledger import close_as_of, investor_values, source_label, sum_known
 from kbj.services.api.models.common import Envelope
 from kbj.services.api.models.etf import (
@@ -35,9 +36,12 @@ from kbj.services.api.models.etf import (
     EtfFlows,
     EtfHoldingChanges,
     EtfPremium,
+    EtfStockFlows,
     EtfTypes,
     NewListing,
     PremiumRow,
+    StockEtfFlowRow,
+    StockFlowEtf,
     TypeRollup,
 )
 from kbj.services.api.readers._common import (
@@ -49,9 +53,10 @@ from kbj.services.api.readers._common import (
     worst,
 )
 
-__all__ = ["etf_flows", "etf_holding_changes", "etf_premium", "etf_types"]
+__all__ = ["etf_flows", "etf_holding_changes", "etf_premium", "etf_stock_flows", "etf_types"]
 
 FlowMode = Literal["in", "out", "value", "indiv", "foreign", "inst"]
+StockSort = Literal["in", "out", "value", "pct", "indiv", "foreign", "inst"]
 NO_ETF: Final = "아직 없음 — krx.daily 08:05(ETF 일별)"
 
 
@@ -226,6 +231,140 @@ def etf_flows(
         source=source_label(f.source for f in used) or source_label(f.source for f in flows),
         as_of=close_as_of(end),
         quality=worst(f.quality for f in used) or Quality.INVALID,
+        notes=notes,
+        generated_at=ctx.now(),
+    )
+
+
+NO_HOLDINGS: Final = "구성종목을 아는 ETF 가 없다 — etf.collect 08:00(운용사 PDF)"
+
+
+def _stock_sort_key(sort: StockSort, r: StockEtfFlowRow) -> tuple[bool, float, str]:
+    val: float | None = {
+        "in": r.inflow,
+        "out": None if r.inflow is None else -r.inflow,
+        "value": r.etf_turnover,
+        "pct": r.inflow_pct,
+        "indiv": r.indiv,
+        "foreign": r.foreign,
+        "inst": r.inst,
+    }[sort]
+    return (val is None, -(val or 0), r.code)
+
+
+def _ratio(a: float | None, b: float | None) -> float | None:
+    return None if a is None or not b else a / b * 100
+
+
+def _shares(v: float | None, close: float | None) -> int | None:
+    return None if v is None or not close else round(v / close)
+
+
+def etf_stock_flows(
+    ctx: ReadContext, *, sort: StockSort, period: int, limit: int
+) -> Envelope[EtfStockFlows]:
+    """종목별 ETF 수급 — ETF 기간 순유입·거래대금·투자자별 순매수를 구성종목 비중으로 나눠
+    종목마다 더한다
+    (`kbj.engines.etf.stock_flows`). 종목 거래대금·종가는 원장 스냅(기간 각 거래일)."""
+    days, flows, meta, tds = _window(ctx, period, ctx.today())
+    win = tds[-period:]
+    if not win:
+        raise NoData(NO_ETF)
+    start, end = win[0], win[-1]
+    totals = period_totals(flows)
+    inv = _investor_sums(ctx, list(totals), start, end)
+    sides: dict[str, EtfSide] = {}
+    for code, rows in days.items():
+        p = totals.get(code)
+        m = meta.get(code)
+        i = inv.get(code, {})
+        sides[code] = EtfSide(
+            code=code,
+            name=(m.name if m is not None else None) or (rows[-1].name if rows else None),
+            inflow=p.net_inflow if p is not None and p.days else None,
+            turnover=sum_known(d.turnover for d in rows if d.date >= start),
+            indiv=i.get("indiv"),
+            foreign=i.get("foreign"),
+            inst=i.get("inst"),
+        )
+    held = ctx.repos.etf.latest_holdings(end)
+    if not any(c in sides for c in held):
+        raise NoData(NO_HOLDINGS)
+    # 종목 거래대금·거래량(기간 합)·끝 종가 — 원장 스냅(장중 잠정만 있는 날은 저장소가 건너뛴다)
+    s_turn: dict[str, int] = {}
+    s_vol: dict[str, int] = {}
+    close: dict[str, float] = {}
+    names: dict[str, str] = {}
+    stocks: set[str] = set()
+    for d in win:
+        snaps, sd = ctx.repos.market.snapshot(d)
+        if sd != d:
+            continue
+        for code, sn in snaps.items():
+            if code in sides:
+                continue
+            stocks.add(code)
+            if sn.turnover is not None:
+                s_turn[code] = s_turn.get(code, 0) + sn.turnover
+            if sn.volume is not None:
+                s_vol[code] = s_vol.get(code, 0) + sn.volume
+            if sn.close:
+                close[code] = sn.close
+            if sn.name:
+                names[code] = sn.name
+    hmap = {etf: {c: (h.name, h.wt) for c, h in rows.items()} for etf, (_, rows) in held.items()}
+    agg = aggregate(sides, hmap, stocks=stocks or None)
+    n_known, cov = coverage(sides, held)
+    rows_out: list[StockEtfFlowRow] = []
+    for code, a in agg.items():
+        c = close.get(code)
+        st = s_turn.get(code)
+        rows_out.append(
+            StockEtfFlowRow(
+                code=code,
+                name=names.get(code) or a.name,
+                n_etfs=a.n_etfs,
+                inflow=won(a.inflow),
+                inflow_shares=_shares(a.inflow, c),
+                inflow_pct=_ratio(a.inflow, st),
+                etf_turnover=won(a.turnover),
+                etf_volume=_shares(a.turnover, c),
+                turnover_pct=_ratio(a.turnover, st),
+                indiv=won(a.indiv),
+                foreign=won(a.foreign),
+                inst=won(a.inst),
+                stock_turnover=st,
+                stock_volume=s_vol.get(code),
+                close=c,
+                top_etfs=[StockFlowEtf(code=e, name=n, inflow=round(v)) for e, n, v in a.top()],
+            )
+        )
+    rows_out.sort(key=lambda r: _stock_sort_key(sort, r))
+    asofs = [d for etf, (d, _) in held.items() if etf in sides]
+    notes = [
+        "ETF 기간 값 × 구성종목 비중(운용사 PDF) — 순유입 몫은 설정·환매로 생긴 바스켓 매매 추정, "
+        "거래대금 몫은 ETF 장내 거래의 노출분",
+        "주식 수 = 금액 ÷ 기간 끝 종가(추정). 선물·스왑·현금·다른 ETF 행은 넣지 않는다",
+    ]
+    if cov is not None and cov < 80:
+        notes.append(f"구성종목을 아는 ETF 가 순유입의 {cov:.0f}% 만 덮는다 — 나머지는 빠졌다")
+    used = [f for f in flows if f.counted]
+    data = EtfStockFlows(
+        sort=sort,
+        period=period,
+        start=start,
+        end=end,
+        n_total=len(rows_out),
+        n_etfs_known=n_known,
+        coverage_pct=cov,
+        holdings_asof=min(asofs) if asofs else None,
+        rows=rows_out[:limit],
+    )
+    return envelope(
+        data,
+        source=source_label(f.source for f in used) or source_label(f.source for f in flows),
+        as_of=close_as_of(end),
+        quality=Quality.ESTIMATED,
         notes=notes,
         generated_at=ctx.now(),
     )

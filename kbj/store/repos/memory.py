@@ -698,6 +698,18 @@ class MemoryEtfRepo:
         rows = self.holding_rows[(fid, day)].values()
         return sorted((holder_row(fid, fund, day, h) for h in rows), key=holder_order)
 
+    def latest_holdings(self, asof: date) -> dict[str, tuple[date, dict[str, HoldingRow]]]:
+        latest: dict[str, date] = {}
+        for f, d in self.holding_rows:
+            if d <= asof and (f not in latest or d > latest[f]):
+                latest[f] = d
+        out: dict[str, tuple[date, dict[str, HoldingRow]]] = {}
+        for f, d in latest.items():
+            fund = self.fund_rows.get(f)
+            if fund is not None and fund.ticker:
+                out[fund.ticker] = (d, dict(self.holding_rows[(f, d)]))
+        return out
+
     def holders_of(self, code: str, asof: date) -> list[EtfHolder]:
         latest: dict[str, date] = {}
         for f, d in self.holding_rows:

@@ -30,6 +30,7 @@ from kbj.core.rows import (
     Change,
     EtfQuote,
     Fund,
+    HoldingRow,
     IndexQuote,
     IntradayInvestor,
     Investor,
@@ -233,6 +234,28 @@ def _fill_holdings(repos: MemoryRepos, run: date, now: datetime) -> None:
                3.9, -1.25, None),
     ]  # fmt: skip
     repos.etf.put_changes(run, rows, engine_version="test", now=now)
+
+
+def fill_stock_holdings(repos: MemoryRepos, last: date, now: datetime) -> None:
+    """종목별 ETF 수급(`/api/etf/stocks`)용 구성종목 스냅 — 시험·웹 픽스처가 부를 때만 넣는다.
+
+    E00001(F1): Q00001 30% · Q00002 20% · 비중 없는 행 · 다른 ETF 행. E00002(F2): 상장폐지라 빠진다.
+    E00003(F3): 하루 전 스냅만(asof 이하 마지막 스냅).
+    """
+    q = Quality.OK
+
+    def row(code: str, wt: float | None) -> HoldingRow:
+        return HoldingRow(code=code, name=f"합성{code[-2:]}", qty=100.0, wt=wt, val=None,
+                          source="ETF_ISSUERS:합성", quality=q)  # fmt: skip
+
+    e = repos.etf
+    e.put_holdings("kodex:F1", last, [row("Q00001", 30.0), row("Q00002", 20.0), row("Q00009", None),
+                                      row("E00003", 5.0)], loaded_by=LOADED_BY)  # fmt: skip
+    e.put_holdings("tiger:F2", last, [row("Q00001", 40.0)], loaded_by=LOADED_BY)
+    f3 = Fund("test:F3", "합성운용C", "F3", "E00003", "합성ETF03", None, True, "full", True, 0,
+              "ETF_ISSUERS:합성운용C")  # fmt: skip
+    e.upsert_funds([f3], loaded_by=LOADED_BY, now=now)
+    e.put_holdings("test:F3", last - timedelta(days=1), [row("Q00001", 10.0)], loaded_by=LOADED_BY)
 
 
 @dataclass

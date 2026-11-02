@@ -12,7 +12,13 @@ from pydantic import BaseModel
 
 from kbj.services.api.models.board import BoardEvents, BoardNewhigh, BoardRankings, BoardSectors
 from kbj.services.api.models.common import Envelope
-from kbj.services.api.models.etf import EtfFlows, EtfHoldingChanges, EtfPremium, EtfTypes
+from kbj.services.api.models.etf import (
+    EtfFlows,
+    EtfHoldingChanges,
+    EtfPremium,
+    EtfStockFlows,
+    EtfTypes,
+)
 from kbj.services.api.models.flows import (
     IntradayFlows,
     InvestorTotals,
@@ -20,7 +26,7 @@ from kbj.services.api.models.flows import (
     StockFlowDetail,
 )
 from kbj.services.api.models.market import MarketSummary, Ribbon, SectorHeat
-from tests.unit.api.api_world import World
+from tests.unit.api.api_world import World, fill_stock_holdings
 
 # (경로, 데이터 모델, 장중 시계가 필요한가)
 DATA_ROUTES: list[tuple[str, type[BaseModel], bool]] = [
@@ -40,6 +46,7 @@ DATA_ROUTES: list[tuple[str, type[BaseModel], bool]] = [
     ("/api/etf/premium", EtfPremium, False),
     ("/api/etf/premium?basis=inav", EtfPremium, True),
     ("/api/etf/holdings/changes", EtfHoldingChanges, False),
+    ("/api/etf/stocks?period=5", EtfStockFlows, False),
 ]
 
 
@@ -56,6 +63,8 @@ def test_envelope(
 ) -> None:
     if live:
         world.clock.set(world.slot.replace(minute=5))
+    if path.startswith("/api/etf/stocks"):  # 구성종목 스냅이 있어야 응답이 있다
+        fill_stock_holdings(world.repos, world.market.last_day, world.clock())
     r = authed.get(path)
     assert r.status_code == 200, r.text
     body: dict[str, Any] = r.json()

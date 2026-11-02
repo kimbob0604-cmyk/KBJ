@@ -330,6 +330,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/etf/stocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stock Flows
+         * @description 종목별 ETF 수급 — ETF 순유입·거래대금·투자자별 순매수를 구성종목 비중으로 종목에
+         *     나눠 합친다.
+         */
+        get: operations["stock_flows_api_etf_stocks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/etf/types": {
         parameters: {
             query?: never;
@@ -3915,6 +3936,25 @@ export interface components {
             generated_at: string;
             data: components["schemas"]["EtfPremium"];
         };
+        /** Envelope[EtfStockFlows] */
+        Envelope_EtfStockFlows_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["EtfStockFlows"];
+        };
         /** Envelope[EtfTypes] */
         Envelope_EtfTypes_: {
             /** Source */
@@ -5455,6 +5495,30 @@ export interface components {
             n_checked: number;
             /** Rows */
             rows: components["schemas"]["PremiumRow"][];
+        };
+        /** EtfStockFlows */
+        EtfStockFlows: {
+            /**
+             * Sort
+             * @enum {string}
+             */
+            sort: "in" | "out" | "value" | "pct" | "indiv" | "foreign" | "inst";
+            /** Period */
+            period: number;
+            /** Start */
+            start: string | null;
+            /** End */
+            end: string | null;
+            /** N Total */
+            n_total: number;
+            /** N Etfs Known */
+            n_etfs_known: number;
+            /** Coverage Pct */
+            coverage_pct: number | null;
+            /** Holdings Asof */
+            holdings_asof: string | null;
+            /** Rows */
+            rows: components["schemas"]["StockEtfFlowRow"][];
         };
         /**
          * EtfType
@@ -8018,6 +8082,44 @@ export interface components {
             /** Small */
             small: boolean;
         };
+        /**
+         * StockEtfFlowRow
+         * @description 종목 한 줄 — ETF 기간 값을 구성종목 비중으로 나눠 더한 것(원·주). 모르면 None.
+         */
+        StockEtfFlowRow: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string | null;
+            /** N Etfs */
+            n_etfs: number;
+            /** Inflow */
+            inflow: number | null;
+            /** Inflow Shares */
+            inflow_shares: number | null;
+            /** Inflow Pct */
+            inflow_pct: number | null;
+            /** Etf Turnover */
+            etf_turnover: number | null;
+            /** Etf Volume */
+            etf_volume: number | null;
+            /** Turnover Pct */
+            turnover_pct: number | null;
+            /** Indiv */
+            indiv: number | null;
+            /** Foreign */
+            foreign: number | null;
+            /** Inst */
+            inst: number | null;
+            /** Stock Turnover */
+            stock_turnover: number | null;
+            /** Stock Volume */
+            stock_volume: number | null;
+            /** Close */
+            close: number | null;
+            /** Top Etfs */
+            top_etfs: components["schemas"]["StockFlowEtf"][];
+        };
         /** StockFlowDetail */
         StockFlowDetail: {
             /** Code */
@@ -8034,6 +8136,18 @@ export interface components {
             checks: {
                 [key: string]: number;
             };
+        };
+        /**
+         * StockFlowEtf
+         * @description 종목 순유입 몫이 큰 ETF 한 줄.
+         */
+        StockFlowEtf: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string | null;
+            /** Inflow */
+            inflow: number;
         };
         /** StockHeader */
         StockHeader: {
@@ -10466,6 +10580,66 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_EtfFlows_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    stock_flows_api_etf_stocks_get: {
+        parameters: {
+            query?: {
+                sort?: "in" | "out" | "value" | "pct" | "indiv" | "foreign" | "inst";
+                period?: 1 | 5 | 20;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_EtfStockFlows_"];
                 };
             };
             /** @description 세션 없음·만료 */

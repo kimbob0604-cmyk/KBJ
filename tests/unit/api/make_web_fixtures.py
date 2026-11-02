@@ -42,7 +42,7 @@ from pathlib import Path
 from typing import Any, Final
 
 from kbj.services.api.readers.board import BOARD_DAILY_ETA
-from tests.unit.api.api_world import ROOT, World, build_world
+from tests.unit.api.api_world import ROOT, World, build_world, fill_stock_holdings
 from tests.unit.api.api_world_p4 import P4ApiWorld, expect, shared
 from tests.unit.api.web_fixtures_p5 import DOMAINS as P5_DOMAINS
 from tests.unit.api.web_fixtures_p6 import DOMAINS as P6_DOMAINS
@@ -72,6 +72,7 @@ FIXTURES: Final[tuple[tuple[str, str, bool], ...]] = (
     ("etf_types.json", "/api/etf/types?period=5", False),
     ("etf_premium.json", "/api/etf/premium?basis=inav", True),
     ("etf_holdings_changes.json", "/api/etf/holdings/changes", False),
+    ("etf_stocks.json", "/api/etf/stocks?sort=in&period=5", False),
 )
 AUTH: Final[dict[str, Any]] = {
     "auth_me.json": {"user": "kbj-user", "csrf_token": "csrf-token-synthetic"},
@@ -84,6 +85,9 @@ AUTH: Final[dict[str, Any]] = {
 def render(world: World | None = None) -> dict[str, str]:
     """파일 이름 → JSON 글자(결정적)."""
     w = world or build_world()
+    fill_stock_holdings(
+        w.repos, w.market.last_day, w.clock()
+    )  # 종목별 ETF 수급 — 다른 응답은 구성종목을 안 읽는다
     c = w.client()
     w.login(c)
     after_close = w.clock()
