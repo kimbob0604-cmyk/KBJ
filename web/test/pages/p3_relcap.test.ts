@@ -4,26 +4,26 @@ import { mountRelcap, RELCAP_TITLE, type RelCap, relcapCards } from '../../src/p
 import { apiHarness, buttonByText, click, fixture, flush, pageCtx, panelByTitle, publicHarness, text } from './support';
 
 describe('상대 시총 — 로그인', () => {
-  it('쌍 카드 7·차트·연도별 표, 기간·쌍 바꾸기', async () => {
+  it('쌍마다 작은 차트 카드 7·연도별 히트맵, 기간 바꾸기', async () => {
     const hz = apiHarness();
     const { ctx, root } = pageCtx(3, 'login', hz.source);
     await mountRelcap(ctx);
     await flush();
     const p = panelByTitle(root, RELCAP_TITLE);
-    const cards = p.querySelectorAll('.stat');
-    expect(cards).toHaveLength(7);
-    const avgo = [...cards].find((c) => text(c).includes('브로드컴 / 엔비디아'))!;
-    expect(text(avgo)).toContain('50.0%');
-    expect(text(cards[1])).toContain('현재 시총 없음');
-    expect(p.querySelectorAll('figure')).toHaveLength(1);
-    expect(p.querySelector('figure svg')).not.toBeNull(); // 처음엔 값 있는 첫 쌍(브로드컴 / 엔비디아)
-    expect(p.querySelectorAll('tbody tr')).toHaveLength(4);
-    expect(text(p.querySelector('tbody tr'))).toContain('+10.0%');
+    const minis = p.querySelectorAll('.mini');
+    expect(minis).toHaveLength(7);
+    const avgo = [...minis].find((c) => text(c).includes('브로드컴 / 엔비디아'))!;
+    expect(text(avgo)).toContain('50.00%');
+    expect(avgo.querySelector('svg')).not.toBeNull();
+    expect(text(minis[1])).toContain('현재 시총 없음');
+    const heads = [...p.querySelectorAll('.heat thead th')].map(text);
+    expect(heads).toEqual(['연도', 'S&P 500', 'NASDAQ', 'KOSPI', 'KOSDAQ']);
+    const first = p.querySelector('.heat tbody tr')!;
+    expect(text(first)).toContain('2026 YTD');
+    expect(text(first)).toContain('+10.0%');
+    expect((first.querySelector('td.hc') as HTMLElement).style.background).not.toBe('');
     expect(text(p)).not.toMatch(/NaN|undefined|null/);
     expect(hz.paths()).toEqual(['market/relcap?period=1Y']);
-    click(buttonByText(p, '브로드컴 / 엔비디아'));
-    expect(p.querySelector('figure svg')).not.toBeNull();
-    expect(hz.paths()).toHaveLength(1); // 쌍 바꾸기는 다시 부르지 않는다
     click(buttonByText(p, '2Y'));
     await flush();
     expect(hz.paths()[1]).toBe('market/relcap?period=2Y');

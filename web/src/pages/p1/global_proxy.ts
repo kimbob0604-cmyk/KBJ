@@ -1,16 +1,16 @@
 // 페이지 1 '글로벌 프록시' — 한국 장이 닫힌 동안 한국 주식을 비춰 보는 해외 가격(stock-dashboard 화면을 옮김, 2026-11-02).
 //
 // - 로그인(야후·Hyperliquid 시세 — 공개판은 자물쇠, 요청하지 않는다). API 'market/global-proxy'(작업 global.proxy 5분).
-// - 맨 위 요약 카드: 24시간 선물(국내 종가 대비 %·펀딩률) → 해외 상장 괴리율(ADR·GDR). 아래 표 하나: 지수선물·매크로·미국 ETF.
+// - 주식봇처럼 묶음마다 소제목·한 줄 설명·카드(큰 숫자 = 가격, 아래 줄 = 색 있는 % + 이름표): 24시간 선물 → 해외 상장
+//   괴리율 → 미국 지수선물 → 매크로 → 관련 미국 ETF.
 // - 값이 없으면 '—'와 사유(0 으로 그리지 않는다). 색은 부호(up·down), 뜻은 글자로도 적는다.
 import type { components } from '../../api/types.gen';
 import type { PageContext } from '../../app/types';
 import type { Envelope } from '../../data/source';
 import { h, replace } from '../../ui/dom';
-import { num, pct, signClass } from '../../ui/fmt';
+import { kstTime, num, pct, signClass } from '../../ui/fmt';
 import { failText, type Panel } from '../../ui/panel';
-import { type StatCard, type StatTone, statGrid } from '../../ui/stat';
-import { table } from '../../ui/table';
+import { type StatCard, type StatTone, statSection } from '../../ui/stat';
 
 type S = components['schemas'];
 export type GlobalProxy = S['GlobalProxy'];
@@ -35,77 +35,73 @@ export function price(q: Quote): string | null {
   return q.unit ? `${v} ${q.unit}` : v;
 }
 
-const hm = (iso: string | null | undefined): string | null => (iso ? iso.slice(11, 16) : null);
+const has = (v: number | null | undefined): v is number => v !== null && v !== undefined;
 
-export function proxyCards(d: GlobalProxy): StatCard[] {
-  const perps = d.perps.map(
-    (q): StatCard => ({
-      label: `${q.name} 24h`,
-      value: q.vs_close_pct === null || q.vs_close_pct === undefined ? price(q) : pct(q.vs_close_pct),
-      tone: tone(q.vs_close_pct),
-      zone: q.vs_close_pct === null || q.vs_close_pct === undefined ? null : '종가 대비',
-      sub: q.error
-        ? q.error
-        : [
-            price(q),
-            q.change_pct === null || q.change_pct === undefined ? null : `24h ${pct(q.change_pct)}`,
-            q.funding_8h_pct === null || q.funding_8h_pct === undefined ? null : `펀딩 ${pct(q.funding_8h_pct, 3)}/8h`,
-          ]
-            .filter(Boolean)
-            .join(' · '),
-      subTone: q.error ? 'dim' : null,
-      title: q.vs_label
-        ? `Hyperliquid 무기한 선물 vs ${q.vs_label}. 펀딩률 + = 매수 쏠림`
-        : 'Hyperliquid 무기한 선물(국내 종가가 없어 대비는 비움)',
-    }),
-  );
-  const listings = d.listings.map(
-    (q): StatCard => ({
-      label: `${q.name} 괴리`,
-      value: q.premium_pct === null || q.premium_pct === undefined ? null : pct(q.premium_pct),
-      tone: tone(q.premium_pct),
-      zone:
-        q.premium_pct === null || q.premium_pct === undefined ? null : q.premium_pct >= 0 ? '프리미엄' : '디스카운트',
-      sub: q.error
-        ? q.error
-        : `${price(q) ?? '—'}${q.fair ? ` vs 환산 ${q.unit}${num(q.fair, 2)}` : ''}${
-            q.change_pct === null || q.change_pct === undefined ? '' : ` · 전일 ${pct(q.change_pct)}`
-          }`,
-      subTone: q.error ? 'dim' : null,
-      title: `국내 종가 × ${num(q.ratio ?? null, 2)}주 ÷ 환율 대비 해외 가격`,
-    }),
-  );
-  return [...perps, ...listings];
+/** 공통 카드 — 큰 숫자는 가격, 아래 줄은 색 있는 % + 흐린 이름표(주식봇 글로벌 프록시) */
+function quoteCard(q: Quote, lines: StatCard['lines'], foot: string | null = null): StatCard {
+  if (q.error) return { label: q.name, value: null, sub: q.error, subTone: 'dim' };
+  return { label: q.name, value: price(q), lines: lines?.filter((l) => l.value !== null), foot };
 }
 
-type Row = Quote & { group: string };
+const chgLine = (q: Quote, label: string) => ({
+  value: has(q.change_pct) ? pct(q.change_pct) : null,
+  label,
+  tone: tone(q.change_pct),
+});
 
-export function proxyTable(d: GlobalProxy): HTMLElement {
-  const rows: Row[] = [
-    ...d.futures.map((q) => ({ ...q, group: '지수선물' })),
-    ...d.macro.map((q) => ({ ...q, group: '매크로' })),
-    ...d.us_etfs.map((q) => ({ ...q, group: '미국 ETF' })),
+export interface ProxySection {
+  title: string;
+  desc: string;
+  cards: StatCard[];
+}
+
+export function proxySections(d: GlobalProxy): ProxySection[] {
+  const perps = d.perps.map((q) =>
+    quoteCard(
+      q,
+      [
+        {
+          value: has(q.vs_close_pct) ? pct(q.vs_close_pct) : null,
+          label: `vs ${q.vs_label ?? '국내 종가'}`,
+          tone: tone(q.vs_close_pct),
+        },
+        chgLine(q, '24시간'),
+      ],
+      has(q.funding_8h_pct) ? `펀딩 ${pct(q.funding_8h_pct, 4)} / 8h` : null,
+    ),
+  );
+  const listings = d.listings.map((q) =>
+    quoteCard(
+      q,
+      [
+        chgLine(q, '전일 대비'),
+        { value: has(q.premium_pct) ? pct(q.premium_pct) : null, label: '국내 대비 괴리', tone: tone(q.premium_pct) },
+      ],
+      has(q.ratio)
+        ? `1증서 = 보통주 ${num(q.ratio, q.ratio < 1 ? 1 : 0)}주${has(q.fair) ? ` · 환산 ${q.unit}${num(q.fair, 2)}` : ''}`
+        : null,
+    ),
+  );
+  const simple = (rows: readonly Quote[]) => rows.map((q) => quoteCard(q, [chgLine(q, '전일 대비')]));
+  return [
+    {
+      title: '24시간 선물 · Hyperliquid',
+      desc: '무기한 선물(달러, 코스피200 은 지수). 국내 마지막 종가를 같은 순간 환율로 환산해 견준다. 펀딩률 + 는 매수 쏠림(8시간 기준).',
+      cards: perps,
+    },
+    {
+      title: '해외 상장 주식 · 괴리율',
+      desc: '국내 종가를 환율과 증서 비율로 환산한 값 대비. SK하이닉스 ADR 1주 = 보통주 1/10주, 삼성전자 GDR 1주 = 보통주 25주.',
+      cards: listings,
+    },
+    { title: '미국 지수선물', desc: '직전 세션 종가 대비.', cards: simple(d.futures) },
+    { title: '매크로', desc: '미국 10년물 금리·WTI·원/달러.', cards: simple(d.macro) },
+    { title: '관련 미국 ETF', desc: '메모리(DRAM)·한국(EWY)·반도체(SOXX).', cards: simple(d.us_etfs) },
   ];
-  return table<Row>({
-    caption: '지수선물·매크로·미국 ETF — 직전 세션 종가 대비',
-    rowKey: (r) => r.symbol,
-    rows,
-    columns: [
-      { key: 'group', label: '구분', align: 'l', cell: (r) => r.group },
-      { key: 'name', label: '이름', align: 'l', cell: (r) => r.name },
-      { key: 'price', label: '가격', cell: (r) => price(r) ?? r.error ?? null },
-      {
-        key: 'chg',
-        label: '등락',
-        cell: (r) => (r.change_pct === null || r.change_pct === undefined ? null : pct(r.change_pct)),
-        cls: (r) => signClass(r.change_pct),
-      },
-    ],
-  }).el;
 }
 
 export const GLOBAL_DEF =
-  '24시간 선물 = Hyperliquid 무기한 선물(달러). 큰 숫자 = 직전 국내 종가(달러 환산) 대비 %, 장 밖에서 내일 시초가 방향을 가늠한다. 펀딩률 + 는 매수 쏠림. 괴리 = 해외 상장(ADR 1주 = 보통주 1/10, 런던 GDR 1주 = 25주, 프랑크푸르트 1주)이 국내 종가 환산값보다 비싸면 프리미엄. 5분마다 받는다.';
+  '한국 장이 닫힌 동안 24시간 선물·해외 상장·미국 선물·관련 ETF 로 한국 주식을 가늠한다. 국내 종가 대비 % 가 내일 시초가 방향의 단서.';
 export const GLOBAL_LOCK = '해외 시세(야후·Hyperliquid) — 로그인 후 표시';
 
 /** 패널에 그린다. 다시 부르는 함수를 돌려준다(페이지가 주기마다 부른다) */
@@ -123,9 +119,9 @@ export function mountGlobal(ctx: PageContext, p: Panel): () => Promise<void> {
     const d = env.data;
     const head = h(
       'p',
-      { class: 'msg' },
-      `${hm(d.ts) ?? '—'} 기준 · 원/달러 ${num(d.usdkrw ?? null, 1)} · 견준 국내 종가 ${d.base_date ?? '—'}`,
+      { class: 'stat-desc' },
+      `${kstTime(d.ts)} 기준(5분마다) · 원/달러 ${num(d.usdkrw ?? null, 1)} · 견준 국내 종가 ${d.base_date ?? '—'}`,
     );
-    replace(p.body, head, statGrid(proxyCards(d)), proxyTable(d));
+    replace(p.body, head, ...proxySections(d).map((x) => statSection(x.title, x.desc, x.cards)));
   };
 }

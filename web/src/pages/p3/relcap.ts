@@ -1,24 +1,24 @@
 // 페이지 3 '상대 시총·연도별 수익률'(stock-dashboard 화면을 옮김, 2026-11-02).
 //
 // - 로그인(야후·KIS 시총 — 공개판은 자물쇠, 요청하지 않는다). API 'market/relcap'(period 6M·1Y·2Y).
-// - 맨 위 요약 카드(쌍마다 지금 비율·기간 고저·기간 안 위치 꼬리표) → 고른 쌍의 추이 차트 → 지수 연도별 수익률 표(부호 색).
+// - 주식봇처럼 쌍마다 작은 차트 카드(이름·기준일·지금 비율, 추이, 기간 최고·최저·위치 꼬리표)를 격자로 한눈에 →
+//   아래 주요 지수 연도별 수익률 히트맵(행 = 연도, 열 = 지수, 칸 색 = 부호·크기).
 // - 값이 없으면 '—'와 사유(0 으로 그리지 않는다).
 import type { components } from '../../api/types.gen';
 import type { PageContext } from '../../app/types';
 import type { Envelope } from '../../data/source';
 import { h, replace } from '../../ui/dom';
-import { num, pct, signClass } from '../../ui/fmt';
+import { num, pct } from '../../ui/fmt';
 import { lineChart } from '../../ui/line';
 import { failText, type Panel, panel } from '../../ui/panel';
 import { seg } from '../../ui/seg';
-import { type StatCard, type StatTone, statGrid } from '../../ui/stat';
-import { table } from '../../ui/table';
+import type { StatCard, StatTone } from '../../ui/stat';
+import { heatColor } from '../../ui/svg';
 
 type S = components['schemas'];
 export type RelCap = S['RelCap'];
 type Period = RelCap['period'];
 type Pair = S['RelCapPair'];
-type AnnualRow = S['AnnualIndexRow'];
 
 export const RELCAP_TITLE = '상대 시총·연도별 수익률';
 export const RELCAP_HINT = 'global.daily 07:25(야후 일봉·월봉·시총)';
@@ -33,6 +33,7 @@ function rangeZone(p: Pair): { zone: string | null; tone: StatTone } {
   return { zone: '기간 중간', tone: null };
 }
 
+/** 쌍마다 요약(시험·작은 차트 카드 머리가 같이 쓴다) */
 export function relcapCards(d: RelCap): StatCard[] {
   return d.pairs.map((p): StatCard => {
     const z = rangeZone(p);
@@ -49,44 +50,86 @@ export function relcapCards(d: RelCap): StatCard[] {
   });
 }
 
-export function pairChart(p: Pair | undefined): HTMLElement {
-  const fig = h('figure', null, h('figcaption', null, p ? `${p.name} — 시총 비율(%)` : '쌍 없음'));
-  if (!p || p.series.length === 0) {
-    fig.append(h('p', { class: 'msg' }, p?.error ?? '이력 없음'));
-    return fig;
+/** 쌍 하나의 작은 차트 카드 */
+export function pairMini(p: Pair, period: Period): HTMLElement {
+  const z = rangeZone(p);
+  const box = h(
+    'div',
+    {
+      class: 'mini',
+      data: { pair: p.name },
+      attrs: { title: `${p.legs_a.join('+')} 시총 ÷ ${p.legs_b.join('+')} 시총(달러 환산) × 100` },
+    },
+    h(
+      'div',
+      { class: 'hd' },
+      h('b', null, p.name),
+      p.date ? h('small', null, md(p.date)) : null,
+      h('span', { class: 'v' }, p.latest === null ? '—' : `${num(p.latest, 2)}%`),
+    ),
+  );
+  if (p.series.length === 0) {
+    box.append(h('p', { class: 'msg' }, p.error ?? '이력 없음'));
+    return box;
   }
-  fig.append(
+  box.append(
     lineChart({
       label: p.name,
       x: p.series.map((s) => s.date),
-      series: [{ label: '비율', values: p.series.map((s) => s.value ?? null) }], // 끝점 이름표가 짧게(긴 쌍 이름은 잘린다)
+      series: [{ label: '비율', values: p.series.map((s) => s.value ?? null) }],
       format: (v) => `${num(v, 1)}%`,
-      h: 220,
+      endLabels: false,
+      h: 130,
     }).el,
+    h(
+      'div',
+      { class: 'ft' },
+      `${period} 최고 ${num(p.high ?? null, 2)}% · 최저 ${num(p.low ?? null, 2)}%`,
+      z.zone ? h('span', { class: z.tone ? `tag ${z.tone}` : 'tag' }, z.zone) : null,
+    ),
   );
-  return fig;
+  return box;
 }
 
-export function annualTable(d: RelCap): HTMLElement {
-  const years = d.years.slice(0, 10);
-  const val = (r: AnnualRow, y: number): number | null => r.returns.find((x) => x.year === y)?.pct ?? null;
-  return table<AnnualRow>({
-    caption: `주요 지수 연도별 수익률(가격 지수 — 배당 제외, ${years[0] ?? ''} 은 연초 대비)`,
-    rowKey: (r) => r.symbol,
-    rows: d.annual,
-    columns: [
-      { key: 'name', label: '지수', align: 'l', cell: (r) => r.name },
-      ...years.map((y) => ({
-        key: String(y),
-        label: String(y),
-        cell: (r: AnnualRow) => {
-          const v = val(r, y);
-          return v === null ? (r.error ?? null) : pct(v, 1);
-        },
-        cls: (r: AnnualRow) => signClass(val(r, y)),
-      })),
-    ],
-  }).el;
+/** 연도별 수익률 히트맵 — 행 = 연도(최근 위), 열 = 지수. 칸 색 = 부호(상승 빨강·하락 파랑)·크기(±30% 에서 가득) */
+export function annualHeat(d: RelCap): HTMLElement {
+  const val = (sym: string, y: number): number | null =>
+    d.annual.find((r) => r.symbol === sym)?.returns.find((x) => x.year === y)?.pct ?? null;
+  const thisYear = d.years[0];
+  return h(
+    'div',
+    { class: 'tbl heat' },
+    h(
+      'table',
+      null,
+      h('caption', null, '연말 종가 기준(가격 지수 · 배당 제외), 올해는 작년 말 대비(YTD)'),
+      h(
+        'thead',
+        null,
+        h(
+          'tr',
+          null,
+          h('th', { class: 'l', attrs: { scope: 'col' } }, '연도'),
+          d.annual.map((r) => h('th', { attrs: { scope: 'col' } }, r.name)),
+        ),
+      ),
+      h(
+        'tbody',
+        null,
+        d.years.map((y) =>
+          h(
+            'tr',
+            null,
+            h('td', { class: 'l dim' }, y === thisYear ? `${y} YTD` : String(y)),
+            d.annual.map((r) => {
+              const v = val(r.symbol, y);
+              return h('td', { class: 'hc', css: { background: heatColor(v, 30) } }, v === null ? '—' : pct(v, 1));
+            }),
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 /** 틀만(공개 빌드는 이것만 쓴다 — 자물쇠, 요청 없음) */
@@ -97,7 +140,7 @@ export function relcapPanel(ctx: PageContext): Panel {
     lock: '해외 시세(야후)·KIS 시총 — 로그인 후 표시',
     span: 12,
     src: 'Yahoo·KIS',
-    def: '상대 시총 = A 시가총액 합 ÷ B 시가총액 합(달러 환산) × 100. 100 위면 A 가 더 크다. 과거 값은 현재 주식 수가 그대로였다고 보고 그날 종가로 거슬러 계산한다(자사주 소각·증자 구간은 어긋남). 꼬리표 = 기간 저점~고점 중 지금 위치. 아래 표는 주요 지수의 연말 종가 대비 수익률.',
+    def: '종목 간 시가총액 비율 추이 — 같은 업종 안에서 누가 더 비싸졌는지. 비율 = A 시총 ÷ B 시총(달러 환산) × 100. 과거 값은 현재 주식 수가 그대로였다고 보고 그날 종가로 거슬러 계산한다(자사주 소각·증자 구간은 어긋남). 꼬리표 = 기간 최저~최고 중 지금 위치.',
   });
   ctx.root.append(p.el);
   return p;
@@ -106,15 +149,8 @@ export function relcapPanel(ctx: PageContext): Panel {
 export async function mountRelcap(ctx: PageContext): Promise<void> {
   const p = relcapPanel(ctx);
   if (p.locked) return;
-  const q = { period: '1Y' as Period, pair: 0 };
+  const q = { period: '1Y' as Period };
   const controls = h('div', { class: 'filters' });
-  const pairBox = h('div', { class: 'filters' });
-  let data: RelCap | null = null;
-  let first = true;
-  const chartBox = h('div');
-  const drawChart = (): void => {
-    if (data) replace(chartBox, pairChart(data.pairs[q.pair]));
-  };
   const load = async (): Promise<void> => {
     let env: Envelope<RelCap>;
     try {
@@ -124,28 +160,22 @@ export async function mountRelcap(ctx: PageContext): Promise<void> {
       return;
     }
     p.setSource(env);
-    data = env.data;
-    // 처음에는 값이 있는 첫 쌍을 고른다(사유만 있는 쌍이 기본 차트를 차지하지 않게)
-    if (first) {
-      const k = data.pairs.findIndex((x) => x.series.length > 0);
-      q.pair = k < 0 ? 0 : k;
-      first = false;
-    }
-    q.pair = Math.min(q.pair, Math.max(0, data.pairs.length - 1));
+    const d = env.data;
     replace(
-      pairBox,
-      seg<string>({
-        label: '쌍',
-        options: data.pairs.map((x, i) => ({ value: String(i), label: x.name })),
-        value: String(q.pair),
-        onChange: (v) => {
-          q.pair = Number(v);
-          drawChart();
-        },
-      }).el,
+      p.body,
+      controls,
+      h(
+        'section',
+        { class: 'stat-sec' },
+        h('h4', null, '상대 시총'),
+        h(
+          'div',
+          { class: 'minis' },
+          d.pairs.map((x) => pairMini(x, d.period)),
+        ),
+      ),
+      h('section', { class: 'stat-sec' }, h('h4', null, '주요 지수 연도별 수익률'), annualHeat(d)),
     );
-    drawChart();
-    replace(p.body, controls, statGrid(relcapCards(data)), pairBox, chartBox, annualTable(data));
   };
   controls.append(
     seg<Period>({

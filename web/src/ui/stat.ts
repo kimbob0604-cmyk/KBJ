@@ -20,6 +20,27 @@ export interface StatCard {
   tone?: StatTone;
   /** 마우스를 올리면 보이는 설명 */
   title?: string;
+  /** 큰 숫자 아래 여러 줄(색 있는 값 + 흐린 이름표) — 예 '+0.36%  vs 나스닥 종가' */
+  lines?: readonly StatLine[];
+  /** 맨 아래 흐린 작은 글자(환산 근거·펀딩률 등) */
+  foot?: string | null;
+}
+
+export interface StatLine {
+  value: string | null;
+  label?: string;
+  tone?: StatTone;
+}
+
+/** 소제목 + 한 줄 설명 + 카드 격자(주식봇 그룹 — '24시간 선물 · Hyperliquid' 처럼) */
+export function statSection(title: string, desc: string | null, cards: readonly StatCard[]): HTMLElement {
+  return h(
+    'section',
+    { class: 'stat-sec', data: { section: title } },
+    h('h4', null, title),
+    desc ? h('p', { class: 'stat-desc' }, desc) : null,
+    statGrid(cards),
+  );
 }
 
 export function statGrid(cards: readonly StatCard[]): HTMLDivElement {
@@ -42,6 +63,15 @@ export function statGrid(cards: readonly StatCard[]): HTMLDivElement {
           c.zone ? h('span', { class: c.tone ? `zone ${c.tone}` : 'zone' }, c.zone) : null,
         ),
         c.sub ? h('span', { class: c.subTone ? `s ${c.subTone}` : 's' }, c.sub) : null,
+        ...(c.lines ?? []).map((l) =>
+          h(
+            'span',
+            { class: 'l' },
+            h('b', { class: l.tone ?? undefined }, l.value ?? DASH),
+            l.label ? h('span', null, ` ${l.label}`) : null,
+          ),
+        ),
+        c.foot ? h('span', { class: 'f' }, c.foot) : null,
       ),
     ),
   );

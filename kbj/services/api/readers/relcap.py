@@ -68,16 +68,11 @@ def relcap(ctx: ReadContext, *, period: Period) -> Envelope[RelCap]:
         )
         for r in rows
     ]  # fmt: skip
-    notes = [
-        "비율 = A 시총 합 ÷ B 시총 합(달러 환산) × 100. "
-        "과거 시총은 현재 주식 수 × 그날 종가 ÷ 현재 종가"
-        " — 자사주 소각·증자 구간은 어긋난다",
-        "연도별 수익률 = 연말 종가 대비(가격 지수 — 배당 제외), 올해는 YTD",
-    ]
+    notes: list[str] = []  # 정의는 패널 설명(def)에 — 여기에는 빠진 값만
     bad = [p.name for p in pairs if p.error]
     if bad:
         notes.append(f"값 없는 쌍 {len(bad)}개(카드에 사유) — {', '.join(bad)}")
-    data = RelCap(period=period, pairs=pairs, years=years[:12], annual=annual)
+    data = RelCap(period=period, pairs=pairs, years=years[:40], annual=annual)
     return envelope(
         data,
         source="Yahoo·KIS",

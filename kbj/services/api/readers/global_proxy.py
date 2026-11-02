@@ -52,10 +52,6 @@ def global_proxy(ctx: ReadContext) -> Envelope[GlobalProxy]:
         notes.append("국내 종가 없음 — 종가 대비·괴리율은 비운다")
     if "KOSPI200" not in index_close:
         notes.append("코스피200 종가 없음(krx.daily 08:05)")
-    notes.append(
-        "24시간 선물 = Hyperliquid 무기한 선물(달러) · 펀딩률 8시간 기준 · "
-        "해외 상장 괴리율 = 국내 종가 환산 대비(ADR 1주 = 보통주 1/10, GDR 1주 = 25주)"
-    )
     ts = max(q.ts for q in quotes.values())
     data = GlobalProxy(
         ts=ts,
