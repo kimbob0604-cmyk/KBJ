@@ -1401,6 +1401,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/diag/breadth-risk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Breadth Risk Route
+         * @description 시장 체력 — 시장별 ADR(20거래일 등락비율)·지수 이격도(25·50일).
+         */
+        get: operations["breadth_risk_route_api_diag_breadth_risk_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/rules": {
         parameters: {
             query?: never;
@@ -2481,6 +2501,28 @@ export interface components {
             source: string;
             /** Notes */
             notes: string[];
+        };
+        /** BreadthRisk */
+        BreadthRisk: {
+            /**
+             * Period
+             * @enum {string}
+             */
+            period: "3M" | "6M" | "1Y";
+            /** Ma */
+            ma: number;
+            /** Mas */
+            mas: number[];
+            /** Hot */
+            hot: number;
+            /** Cold */
+            cold: number;
+            /** Window */
+            window: number;
+            /** Adr */
+            adr: components["schemas"]["MarketAdr"][];
+            /** Disparity */
+            disparity: components["schemas"]["IndexDisparity"][];
         };
         /** CalendarRow */
         CalendarRow: {
@@ -3593,6 +3635,25 @@ export interface components {
              */
             generated_at: string;
             data: components["schemas"]["BoardSectors"];
+        };
+        /** Envelope[BreadthRisk] */
+        Envelope_BreadthRisk_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["BreadthRisk"];
         };
         /** Envelope[Consensus] */
         Envelope_Consensus_: {
@@ -6027,6 +6088,22 @@ export interface components {
             /** Commit */
             commit: string | null;
         };
+        /** IndexDisparity */
+        IndexDisparity: {
+            /**
+             * Market
+             * @enum {string}
+             */
+            market: "KOSPI" | "KOSDAQ";
+            /** Date */
+            date: string | null;
+            /** Close */
+            close: number | null;
+            /** Latest */
+            latest: number | null;
+            /** Series */
+            series: components["schemas"]["kbj__services__api__models__diag__SeriesPoint"][];
+        };
         /**
          * IndexReview
          * @description 페이지 10 '지수 정기변경' 패널 + 페이지 5 캘린더 줄(calendar — 다가오는 일정 전부).
@@ -6489,6 +6566,31 @@ export interface components {
             quality: components["schemas"]["Quality"];
             /** Link */
             link: string;
+        };
+        /**
+         * MarketAdr
+         * @description 시장 하나의 ADR(20거래일 상승 합 ÷ 하락 합 × 100).
+         */
+        MarketAdr: {
+            /**
+             * Market
+             * @enum {string}
+             */
+            market: "KOSPI" | "KOSDAQ";
+            /** Date */
+            date: string | null;
+            /** Latest */
+            latest: number | null;
+            /** Zone */
+            zone: ("과열" | "중립" | "바닥권") | null;
+            /** Up */
+            up: number | null;
+            /** Down */
+            down: number | null;
+            /** Flat */
+            flat: number | null;
+            /** Series */
+            series: components["schemas"]["kbj__services__api__models__diag__SeriesPoint"][];
         };
         /** MarketMinute */
         MarketMinute: {
@@ -7936,21 +8038,6 @@ export interface components {
             /** Rows */
             rows: components["schemas"]["SegmentView"][];
             quality: components["schemas"]["Quality"];
-        };
-        /**
-         * SeriesPoint
-         * @description 밴드 차트 한 점(주 1점 — 그 주 마지막 거래일). 화면 밴드가 = 배수_p × price ÷ value.
-         */
-        SeriesPoint: {
-            /**
-             * Date
-             * Format: date
-             */
-            date: string;
-            /** Price */
-            price: number | null;
-            /** Value */
-            value: number | null;
         };
         /** SignalList */
         SignalList: {
@@ -9457,7 +9544,7 @@ export interface components {
             /** Bands */
             bands: components["schemas"]["BandView"][];
             /** Series */
-            series: components["schemas"]["SeriesPoint"][];
+            series: components["schemas"]["kbj__services__api__models__stock__SeriesPoint"][];
             /** Mktcap Company */
             mktcap_company: number | null;
             /** Classes */
@@ -9575,6 +9662,31 @@ export interface components {
             /** Amount Missing */
             amount_missing: number;
             quality: components["schemas"]["Quality"];
+        };
+        /** SeriesPoint */
+        kbj__services__api__models__diag__SeriesPoint: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Value */
+            value: number | null;
+        };
+        /**
+         * SeriesPoint
+         * @description 밴드 차트 한 점(주 1점 — 그 주 마지막 거래일). 화면 밴드가 = 배수_p × price ÷ value.
+         */
+        kbj__services__api__models__stock__SeriesPoint: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Price */
+            price: number | null;
+            /** Value */
+            value: number | null;
         };
     };
     responses: never;
@@ -14370,6 +14482,65 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_DiagEvents_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    breadth_risk_route_api_diag_breadth_risk_get: {
+        parameters: {
+            query?: {
+                period?: "3M" | "6M" | "1Y";
+                ma?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_BreadthRisk_"];
                 };
             };
             /** @description 세션 없음·만료 */

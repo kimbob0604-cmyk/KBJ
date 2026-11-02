@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from kbj.services.api.models.board import BoardEvents, BoardNewhigh, BoardRankings, BoardSectors
 from kbj.services.api.models.common import Envelope
+from kbj.services.api.models.diag import BreadthRisk
 from kbj.services.api.models.etf import (
     EtfFlows,
     EtfHoldingChanges,
@@ -47,6 +48,7 @@ DATA_ROUTES: list[tuple[str, type[BaseModel], bool]] = [
     ("/api/etf/premium?basis=inav", EtfPremium, True),
     ("/api/etf/holdings/changes", EtfHoldingChanges, False),
     ("/api/etf/stocks?period=5", EtfStockFlows, False),
+    ("/api/diag/breadth-risk?period=3M&ma=25", BreadthRisk, False),
 ]
 
 

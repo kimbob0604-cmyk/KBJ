@@ -7111,6 +7111,97 @@
         }
       }
     },
+    "/api/diag/breadth-risk": {
+      "get": {
+        "tags": [
+          "diag"
+        ],
+        "summary": "Breadth Risk Route",
+        "description": "시장 체력 — 시장별 ADR(20거래일 등락비율)·지수 이격도(25·50일).",
+        "operationId": "breadth_risk_route_api_diag_breadth_risk_get",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "3M",
+                "6M",
+                "1Y"
+              ],
+              "type": "string",
+              "default": "6M",
+              "title": "Period"
+            }
+          },
+          {
+            "name": "ma",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 25,
+              "default": 50,
+              "title": "Ma"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_BreadthRisk_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/rules": {
       "get": {
         "tags": [
@@ -11926,6 +12017,69 @@
         ],
         "title": "Breadth"
       },
+      "BreadthRisk": {
+        "properties": {
+          "period": {
+            "type": "string",
+            "enum": [
+              "3M",
+              "6M",
+              "1Y"
+            ],
+            "title": "Period"
+          },
+          "ma": {
+            "type": "integer",
+            "title": "Ma"
+          },
+          "mas": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Mas"
+          },
+          "hot": {
+            "type": "number",
+            "title": "Hot"
+          },
+          "cold": {
+            "type": "number",
+            "title": "Cold"
+          },
+          "window": {
+            "type": "integer",
+            "title": "Window"
+          },
+          "adr": {
+            "items": {
+              "$ref": "#/components/schemas/MarketAdr"
+            },
+            "type": "array",
+            "title": "Adr"
+          },
+          "disparity": {
+            "items": {
+              "$ref": "#/components/schemas/IndexDisparity"
+            },
+            "type": "array",
+            "title": "Disparity"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "period",
+          "ma",
+          "mas",
+          "hot",
+          "cold",
+          "window",
+          "adr",
+          "disparity"
+        ],
+        "title": "BreadthRisk"
+      },
       "CalendarRow": {
         "properties": {
           "event_id": {
@@ -15316,6 +15470,49 @@
           "data"
         ],
         "title": "Envelope[BoardSectors]"
+      },
+      "Envelope_BreadthRisk_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/BreadthRisk"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[BreadthRisk]"
       },
       "Envelope_Consensus_": {
         "properties": {
@@ -21539,6 +21736,69 @@
         ],
         "title": "Health"
       },
+      "IndexDisparity": {
+        "properties": {
+          "market": {
+            "type": "string",
+            "enum": [
+              "KOSPI",
+              "KOSDAQ"
+            ],
+            "title": "Market"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "close": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close"
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/kbj__services__api__models__diag__SeriesPoint"
+            },
+            "type": "array",
+            "title": "Series"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "market",
+          "date",
+          "close",
+          "latest",
+          "series"
+        ],
+        "title": "IndexDisparity"
+      },
       "IndexReview": {
         "properties": {
           "indexes": {
@@ -23130,6 +23390,111 @@
           "link"
         ],
         "title": "MajorHolderView"
+      },
+      "MarketAdr": {
+        "properties": {
+          "market": {
+            "type": "string",
+            "enum": [
+              "KOSPI",
+              "KOSDAQ"
+            ],
+            "title": "Market"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest"
+          },
+          "zone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "과열",
+                  "중립",
+                  "바닥권"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zone"
+          },
+          "up": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Up"
+          },
+          "down": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Down"
+          },
+          "flat": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flat"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/kbj__services__api__models__diag__SeriesPoint"
+            },
+            "type": "array",
+            "title": "Series"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "market",
+          "date",
+          "latest",
+          "zone",
+          "up",
+          "down",
+          "flat",
+          "series"
+        ],
+        "title": "MarketAdr",
+        "description": "시장 하나의 ADR(20거래일 상승 합 ÷ 하락 합 × 100)."
       },
       "MarketMinute": {
         "properties": {
@@ -27898,46 +28263,6 @@
         ],
         "title": "Segments",
         "description": "부문 매출(사업보고서 원문 표 best-effort — 언제나 추정, D-P4-22)."
-      },
-      "SeriesPoint": {
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date",
-            "title": "Date"
-          },
-          "price": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Price"
-          },
-          "value": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Value"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "date",
-          "price",
-          "value"
-        ],
-        "title": "SeriesPoint",
-        "description": "밴드 차트 한 점(주 1점 — 그 주 마지막 거래일). 화면 밴드가 = 배수_p × price ÷ value."
       },
       "SignalList": {
         "properties": {
@@ -33281,7 +33606,7 @@
           },
           "series": {
             "items": {
-              "$ref": "#/components/schemas/SeriesPoint"
+              "$ref": "#/components/schemas/kbj__services__api__models__stock__SeriesPoint"
             },
             "type": "array",
             "title": "Series"
@@ -33716,6 +34041,73 @@
         ],
         "title": "WindowView",
         "description": "보고 기준 순증감(사유 미구분 포함 — 장내 순매수가 아니다, §4.4). `amount` = Σ 증감 ×\n보고일 종가(로그인 — 추정), `amount_missing` = 종가를 몰라 금액에서 뺀 보고 수."
+      },
+      "kbj__services__api__models__diag__SeriesPoint": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "value"
+        ],
+        "title": "SeriesPoint"
+      },
+      "kbj__services__api__models__stock__SeriesPoint": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "price",
+          "value"
+        ],
+        "title": "SeriesPoint",
+        "description": "밴드 차트 한 점(주 1점 — 그 주 마지막 거래일). 화면 밴드가 = 배수_p × price ÷ value."
       }
     }
   }

@@ -1070,3 +1070,62 @@ button.link:not(.btn):focus-visible {
   color: var(--accent);
   text-decoration: underline;
 }
+
+/* 요약 숫자 카드(ui/stat.ts — 주식봇식: 큰 숫자 + 구간 꼬리표 + 한 줄 해석) */
+.stats {
+  margin: 0 0 12px;
+}
+.stat .n small {
+  color: var(--dim);
+  font-size: 10px;
+}
+.stat .p {
+  font-size: 24px;
+  line-height: 1.15;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 8px;
+}
+.stat .p.up {
+  color: var(--up);
+}
+.stat .p.down {
+  color: var(--down);
+}
+.stat .p.warn {
+  color: var(--warn);
+}
+.stat .zone {
+  font-size: 11px;
+  font-family: var(--kr);
+  border: 1px solid currentColor;
+  padding: 0 5px;
+  letter-spacing: 0.02em;
+}
+.stat .s {
+  font-size: 11px;
+  color: var(--dim);
+  font-family: var(--kr);
+}
+.stat .s.up {
+  color: var(--up);
+}
+.stat .s.down {
+  color: var(--down);
+}
+.charts2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+.charts2 > figure {
+  margin: 0;
+  min-width: 0;
+}
+.charts2 figcaption {
+  font-size: 12px;
+  color: var(--dim);
+  margin: 0 0 4px;
+  font-family: var(--kr);
+}

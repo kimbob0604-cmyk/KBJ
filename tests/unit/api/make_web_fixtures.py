@@ -73,6 +73,7 @@ FIXTURES: Final[tuple[tuple[str, str, bool], ...]] = (
     ("etf_premium.json", "/api/etf/premium?basis=inav", True),
     ("etf_holdings_changes.json", "/api/etf/holdings/changes", False),
     ("etf_stocks.json", "/api/etf/stocks?sort=in&period=5", False),
+    ("diag_breadth-risk.json", "/api/diag/breadth-risk?period=3M&ma=25", False),
 )
 AUTH: Final[dict[str, Any]] = {
     "auth_me.json": {"user": "kbj-user", "csrf_token": "csrf-token-synthetic"},

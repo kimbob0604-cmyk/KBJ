@@ -18,6 +18,7 @@ from kbj.core.quality import Quality
 from kbj.services.api.models.common import ApiModel
 
 __all__ = [
+    "BreadthRisk",
     "DiagEvent",
     "DiagEvents",
     "DiagFearGreed",
@@ -28,6 +29,8 @@ __all__ = [
     "DiagSummary",
     "DiagVerdict",
     "EventKindT",
+    "IndexDisparity",
+    "MarketAdr",
     "VerdictLabelT",
 ]
 
@@ -133,3 +136,43 @@ class DiagEvents(ApiModel):
     end: date
     events: list[DiagEvent]
     generated_for: AwareDatetime | None = None
+
+
+# ── 시장 체력(ADR·이격도 — stock-dashboard 위험지표 화면을 옮김, 2026-11-02) ───────────────────
+
+
+class SeriesPoint(ApiModel):
+    date: date
+    value: float | None
+
+
+class MarketAdr(ApiModel):
+    """시장 하나의 ADR(20거래일 상승 합 ÷ 하락 합 × 100)."""
+
+    market: Literal["KOSPI", "KOSDAQ"]
+    date: date | None
+    latest: float | None
+    zone: Literal["과열", "중립", "바닥권"] | None
+    up: int | None  # 그날 상승·하락·보합 종목 수
+    down: int | None
+    flat: int | None
+    series: list[SeriesPoint]
+
+
+class IndexDisparity(ApiModel):
+    market: Literal["KOSPI", "KOSDAQ"]
+    date: date | None
+    close: float | None
+    latest: float | None  # 종가 ÷ ma 일 이동평균 × 100
+    series: list[SeriesPoint]
+
+
+class BreadthRisk(ApiModel):
+    period: Literal["3M", "6M", "1Y"]
+    ma: int
+    mas: list[int]
+    hot: float
+    cold: float
+    window: int
+    adr: list[MarketAdr]
+    disparity: list[IndexDisparity]
