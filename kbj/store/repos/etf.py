@@ -114,6 +114,12 @@ class EtfRepo(Protocol):
         """종목 → 담은 펀드들(펀드마다 asof 이하 마지막 스냅 — 비중 내림차순, 같으면 fund_id 순)."""
         ...
 
+    def latest_holdings(self, asof: date) -> dict[str, tuple[date, dict[str, HoldingRow]]]:
+        """상장 코드(fund.ticker)가 있는 펀드마다 asof 이하 마지막 스냅 —
+        {ETF 코드: (기준일, {종목: 행})}.
+        종목별 ETF 수급(`readers.etf.etf_stock_flows`)이 한 번에 읽는다."""
+        ...
+
 
 def map_inputs(
     repo: EtfRepo, asof: date, n: int
@@ -531,6 +537,33 @@ class PgEtfRepo:
         return sorted(
             (holder_row(fid, funds.get(fid), day, h) for h in rows.values()), key=holder_order
         )
+
+    def latest_holdings(self, asof: date) -> dict[str, tuple[date, dict[str, HoldingRow]]]:
+        funds = self.funds()
+        with self._connect() as conn:
+            rows = conn.execute(
+                b"SELECT h.fund_id, h.asof, h.code, h.name, h.qty, h.wt, h.val, h.source, "
+                b"h.quality FROM prv_etf.holding h JOIN (SELECT fund_id, max(asof) AS asof "
+                b"FROM prv_etf.holding WHERE asof <= %s GROUP BY fund_id) l "
+                b"ON l.fund_id = h.fund_id AND l.asof = h.asof",
+                (asof,),
+            ).fetchall()
+        out: dict[str, tuple[date, dict[str, HoldingRow]]] = {}
+        for r in rows:
+            f = funds.get(r[0])
+            if f is None or not f.ticker:
+                continue
+            _, held = out.setdefault(f.ticker, (r[1], {}))
+            held[r[2]] = HoldingRow(
+                code=r[2],
+                name=r[3],
+                qty=to_float(r[4]),
+                wt=to_float(r[5]),
+                val=to_float(r[6]),
+                source=r[7],
+                quality=Quality(r[8]),
+            )
+        return out
 
     def holders_of(self, code: str, asof: date) -> list[EtfHolder]:
         funds = self.funds()

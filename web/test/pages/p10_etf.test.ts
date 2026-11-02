@@ -41,6 +41,7 @@ describe('페이지 10 ETF — 로그인', () => {
       'etf/holdings/changes',
       'etf/map?group=type&period=1M',
       'etf/premium?basis=nav',
+      'etf/stocks?period=5&sort=in',
       'etf/types?period=5',
       'index-review', // P5 2차 IDX 지수 정기변경(test/pages/p10_index_review.test.ts 가 본다)
     ]);
@@ -62,6 +63,18 @@ describe('페이지 10 ETF — 로그인', () => {
     expect(ty.querySelectorAll('.lvl')).toHaveLength(7);
     expect(text(ty.querySelector('[data-check]'))).toBe('검산 ③ 순자산 변화 − (순유입 + 가격효과) 차이 0원');
     expect(text(ty)).toContain('검사 55행 · 실패 0 · 불가 0');
+
+    // 종목별 ETF 수급 — ETF 순유입 × 구성종목 비중(합성 구성종목: E00001 Q00001 30%·Q00002 20%, E00003 Q00001 10%)
+    const st = panelByTitle(root, '종목별 ETF 수급');
+    const srows = st.querySelectorAll('tbody tr');
+    expect(srows).toHaveLength(2);
+    expect(text(srows[0])).toContain('Q00001');
+    expect(text(srows[0])).toContain('+78'); // 7,810,860,350원 → +78억
+    expect(text(srows[0])).toContain('+18.29%'); // 종목 기간 거래대금 대비
+    expect(text(srows[0])).toContain('합성ETF01');
+    expect(text(st.querySelector('.count'))).toContain('2종목 · ETF 2개');
+    expect(st.querySelectorAll('[role="group"] button')).toHaveLength(7);
+    expect(text(st.querySelector(':scope > .def'))).toContain('구성종목 비중');
 
     const pr = panelByTitle(root, '괴리율 경고');
     expect(pr.querySelectorAll('tbody tr')).toHaveLength(2); // 합성ETF02 는 해외형(기준 2%) — 1.2% 는 경고가 아니다
@@ -229,7 +242,7 @@ describe('페이지 10 ETF — 공개', () => {
     const { ctx, root } = pageCtx(10, 'public', hz.source);
     await page.mount(ctx);
     expect(hz.calls).toHaveLength(0);
-    expect(root.querySelectorAll('.panel.locked')).toHaveLength(8); // P3 4 + P5 3(맵·보유 탐색·동시 편입) + P5 2차 IDX 1(지수 정기변경)
+    expect(root.querySelectorAll('.panel.locked')).toHaveLength(9); // P3 5(종목별 ETF 수급 포함) + P5 3(맵·보유 탐색·동시 편입) + P5 2차 IDX 1(지수 정기변경)
     expect(text(panelByTitle(root, '구성종목 변동'))).toContain('운용사 구성종목');
   });
 });

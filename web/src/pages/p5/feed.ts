@@ -11,10 +11,28 @@ import { panel } from '../../ui/panel';
 import { type Option, seg, select } from '../../ui/seg';
 import { type Column, table } from '../../ui/table';
 import { fill, filters } from '../p1_market';
-import { arr, col, dartLink, HINT, IMPORTANCE_LABEL, importanceCell, KIND_OPTIONS, kindLabel, MARKET_LABEL, type S, stockCol, tag } from '../p8/common';
+import { statGrid } from '../../ui/stat';
+import { feedCards } from './cards';
+import {
+  arr,
+  col,
+  dartLink,
+  HINT,
+  IMPORTANCE_LABEL,
+  importanceCell,
+  KIND_OPTIONS,
+  kindLabel,
+  MARKET_LABEL,
+  type S,
+  stockCol,
+  tag,
+} from '../p8/common';
 import { addDays, marketOfCls, type P5Ctx, today, type Widget } from './common';
 
 /** 공개 파일 한 줄(로그인 DisclosureView 와 같은 칸 + kw_level, 관심·로그인 점수 없음) */
+// 요약 카드는 로그인 본문만(공개 번들 예산 — ADR 0025)
+const LOGIN_CARDS = import.meta.env.MODE === 'public' ? null : feedCards;
+
 export interface FeedRow {
   rcept_no: string;
   rcept_dt: string;
@@ -46,7 +64,9 @@ export const levelOf = (r: FeedRow): string => r.importance ?? r.kw_level ?? 'lo
 /** 정렬 — 최신순(처음 본 시각 내림차순) 또는 중요도순(같으면 최신) */
 export function sortRows(rows: readonly FeedRow[], by: Sort): FeedRow[] {
   return [...rows].sort(
-    (a, b) => (by === 'importance' ? (RANK[levelOf(a)] ?? 9) - (RANK[levelOf(b)] ?? 9) : 0) || b.first_seen_at.localeCompare(a.first_seen_at),
+    (a, b) =>
+      (by === 'importance' ? (RANK[levelOf(a)] ?? 9) - (RANK[levelOf(b)] ?? 9) : 0) ||
+      b.first_seen_at.localeCompare(a.first_seen_at),
   );
 }
 
@@ -99,13 +119,18 @@ export function createFeed(c: P5Ctx): Widget {
         const env = await c.source.get<PubFeed>('filings_feed');
         const day = arr(env.data.dates)[Number(q.day)] ?? null;
         const rows = arr(env.data.rows).filter(
-          (r) => (!day || r.rcept_dt === day) && (!q.kind || r.kind === q.kind) && (!q.level || levelOf(r) === q.level) && (!q.market || marketOfCls(r.corp_cls) === q.market),
+          (r) =>
+            (!day || r.rcept_dt === day) &&
+            (!q.kind || r.kind === q.kind) &&
+            (!q.level || levelOf(r) === q.level) &&
+            (!q.market || marketOfCls(r.corp_cls) === q.market),
         );
         return { ...env, data: { day, rows } };
       },
       (env) => {
         const rows = sortRows(env.data.rows, q.sort);
         count.textContent = `${num(rows.length)}건`;
+        if (LOGIN_CARDS && login) p.body.append(statGrid(LOGIN_CARDS(rows, env.data.day)));
         p.body.append(
           table<FeedRow>({
             caption: `${env.data.day ? shortDate(env.data.day) : '최근'} 공시`,
@@ -123,10 +148,12 @@ export function createFeed(c: P5Ctx): Widget {
       login ? HINT.feed : HINT.public,
     );
 
-  const set = (k: 'day' | 'kind' | 'level' | 'market') => (v: string): void => {
-    q[k] = v;
-    void load();
-  };
+  const set =
+    (k: 'day' | 'kind' | 'level' | 'market') =>
+    (v: string): void => {
+      q[k] = v;
+      void load();
+    };
   const box = h('input', {
     attrs: { type: 'checkbox' },
     on: {
@@ -157,8 +184,18 @@ export function createFeed(c: P5Ctx): Widget {
       onChange: set('day'),
     }).el,
     select({ label: '종류', options: opts(KIND_OPTIONS, kindLabel), value: '', onChange: set('kind') }).el,
-    select({ label: '중요도', options: opts(['critical', 'high', 'medium', 'low'], (v) => IMPORTANCE_LABEL[v] ?? v), value: '', onChange: set('level') }).el,
-    select({ label: '시장', options: opts(['KOSPI', 'KOSDAQ', 'KONEX'], (v) => MARKET_LABEL[v] ?? v), value: '', onChange: set('market') }).el,
+    select({
+      label: '중요도',
+      options: opts(['critical', 'high', 'medium', 'low'], (v) => IMPORTANCE_LABEL[v] ?? v),
+      value: '',
+      onChange: set('level'),
+    }).el,
+    select({
+      label: '시장',
+      options: opts(['KOSPI', 'KOSDAQ', 'KONEX'], (v) => MARKET_LABEL[v] ?? v),
+      value: '',
+      onChange: set('market'),
+    }).el,
     select<Sort>({
       label: '정렬',
       options: [

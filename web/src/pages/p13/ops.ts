@@ -11,6 +11,7 @@ import { h } from '../../ui/dom';
 import { toggle } from '../../ui/form';
 import { kstClock, kstStamp, num } from '../../ui/fmt';
 import { errorText, type Panel } from '../../ui/panel';
+import { type StatCard, statGrid } from '../../ui/stat';
 import { type Column, table } from '../../ui/table';
 
 type S = components['schemas'];
@@ -93,8 +94,37 @@ export async function fillStatus(ctx: PageContext, p: Panel): Promise<void> {
       h('li', { class: levelCls(i.level) ?? '' }, `${LEVEL_LABEL[i.level]} · ${i.title} — ${i.value}`),
     ),
   );
+  const okSvc = d.services.filter((s) => s.level === 'OK').length;
+  const bad = d.items.filter((i) => i.level !== 'OK');
+  const cards: StatCard[] = [
+    {
+      label: '점검',
+      value: LEVEL_LABEL[d.level],
+      tone: d.level === 'OK' ? 'up' : d.level === 'WARN' ? 'warn' : 'down',
+      sub: `기록 ${kstStamp(d.since)} 부터`,
+    },
+    {
+      label: '상시 서비스',
+      value: `${num(okSvc)}/${num(d.services.length)}`,
+      tone: okSvc === d.services.length ? 'up' : 'down',
+      sub:
+        okSvc === d.services.length
+          ? '모두 살아 있음'
+          : d.services
+              .filter((s) => s.level !== 'OK')
+              .map((s) => s.name)
+              .join(' · '),
+    },
+    {
+      label: '손볼 항목',
+      value: `${num(bad.length)}개`,
+      tone: bad.length ? 'warn' : null,
+      sub: bad[0] ? `${bad[0].title} — ${bad[0].value}` : '없음',
+    },
+  ];
   p.clearBody();
   p.body.append(
+    statGrid(cards),
     summary,
     table({ columns, rows: d.services, rowKey: (s) => s.name, empty: '켜진 상시 서비스 없음' }).el,
     items,
@@ -128,7 +158,12 @@ export async function fillJobs(ctx: PageContext, p: Panel): Promise<void> {
   const d = env.data;
   const columns: Column<OpsJobRow>[] = [
     { key: 'start', label: '시작', align: 'l', cell: (r) => (r.started_at ? kstClock(r.started_at) : '시작 못 함') },
-    { key: 'job', label: '작업', align: 'l', cell: (r) => (r.as_of.length > 10 ? `${r.job} @ ${r.as_of.slice(11)}` : r.job) },
+    {
+      key: 'job',
+      label: '작업',
+      align: 'l',
+      cell: (r) => (r.as_of.length > 10 ? `${r.job} @ ${r.as_of.slice(11)}` : r.job),
+    },
     {
       key: 'status',
       label: '상태',
@@ -151,9 +186,37 @@ export async function fillJobs(ctx: PageContext, p: Panel): Promise<void> {
         draw();
       },
     });
+    const ok = d.rows.filter((r) => r.status === 'ok').length;
+    const running = d.rows.filter((r) => r.status === 'running' || r.status === 'queued').length;
+    const lastFail = sortJobs(d.rows).find((r) => r.status === 'failed' || r.status === 'timeout');
     p.clearBody();
     p.body.append(
-      h('p', { class: 'dim' }, `${d.date} · ${num(d.total, 0)}건 · 실패 ${num(d.failed, 0)} · 재시도 성공 ${num(d.retried_ok, 0)}`),
+      statGrid([
+        {
+          label: '오늘 작업',
+          asof: d.date.slice(5),
+          value: `${num(d.total, 0)}건`,
+          sub: `성공 ${num(ok, 0)} · 도는 중 ${num(running, 0)}`,
+        },
+        {
+          label: '실패',
+          value: `${num(d.failed, 0)}건`,
+          tone: d.failed ? 'down' : 'up',
+          zone: d.failed ? '확인 필요' : '정상',
+          sub: lastFail ? `${lastFail.job} — ${(lastFail.reason ?? '').slice(0, 40)}` : '없음',
+        },
+        {
+          label: '재시도 성공',
+          value: `${num(d.retried_ok, 0)}건`,
+          tone: d.retried_ok ? 'warn' : null,
+          sub: '처음엔 실패, 다시 해서 성공',
+        },
+      ]),
+      h(
+        'p',
+        { class: 'dim' },
+        `${d.date} · ${num(d.total, 0)}건 · 실패 ${num(d.failed, 0)} · 재시도 성공 ${num(d.retried_ok, 0)}`,
+      ),
       tg.el,
       table({ columns, rows, rowKey: (r) => `${r.job}|${r.as_of}`, empty }).el,
     );
@@ -180,7 +243,15 @@ export function groupNotify(rows: readonly OpsNotifyRow[]): NotifyGroup[] {
     const key = `${r.kind}|${r.status}|${r.reason ?? ''}`;
     const g = by.get(key);
     if (g === undefined) {
-      by.set(key, { kind: r.kind, status: r.status, reason: r.reason ?? null, n: 1, first: r.requested_at, last: r.requested_at, parts: r.parts ?? 0 });
+      by.set(key, {
+        kind: r.kind,
+        status: r.status,
+        reason: r.reason ?? null,
+        n: 1,
+        first: r.requested_at,
+        last: r.requested_at,
+        parts: r.parts ?? 0,
+      });
     } else {
       g.n += 1;
       g.parts += r.parts ?? 0;
@@ -189,7 +260,8 @@ export function groupNotify(rows: readonly OpsNotifyRow[]): NotifyGroup[] {
     }
   }
   return [...by.values()].sort(
-    (a, b) => (NOTIFY_ORDER[a.status] ?? 3) - (NOTIFY_ORDER[b.status] ?? 3) || b.n - a.n || a.kind.localeCompare(b.kind),
+    (a, b) =>
+      (NOTIFY_ORDER[a.status] ?? 3) - (NOTIFY_ORDER[b.status] ?? 3) || b.n - a.n || a.kind.localeCompare(b.kind),
   );
 }
 
@@ -213,19 +285,32 @@ export async function fillNotify(ctx: PageContext, p: Panel): Promise<void> {
       cls: (g) => badCls(g.status),
     },
     { key: 'n', label: '건수', cell: (g) => num(g.n, 0) },
-    { key: 'when', label: '시각', align: 'l', cell: (g) => (g.n > 1 ? `${kstClock(g.first)}~${kstClock(g.last)}` : kstClock(g.first)) },
+    {
+      key: 'when',
+      label: '시각',
+      align: 'l',
+      cell: (g) => (g.n > 1 ? `${kstClock(g.first)}~${kstClock(g.last)}` : kstClock(g.first)),
+    },
   ];
   const groups = groupNotify(d.rows);
   const held = d.rows.length - d.sent - d.failed;
   p.clearBody();
   p.body.append(
-    h('p', { class: 'dim' }, `${d.date} · 보냄 ${num(d.sent, 0)} · 실패 ${num(d.failed, 0)} · 안 보냄(억제·쿨다운·중복) ${num(held, 0)}`),
+    h(
+      'p',
+      { class: 'dim' },
+      `${d.date} · 보냄 ${num(d.sent, 0)} · 실패 ${num(d.failed, 0)} · 안 보냄(억제·쿨다운·중복) ${num(held, 0)}`,
+    ),
     table({
       columns,
       rows: groups,
       rowKey: (g) => `${g.kind}|${g.status}|${g.reason ?? ''}`,
       empty: '이날 발송 기록 없음',
     }).el,
-    h('p', { class: 'def' }, '같은 종류·상태·사유는 한 줄로 묶었다. 억제 = 발송 꺼짐(KBJ_NOTIFY_ENABLED), 쿨다운·중복 = 같은 알림을 이미 보냈거나 대기 중 — 실패가 아니다.'),
+    h(
+      'p',
+      { class: 'def' },
+      '같은 종류·상태·사유는 한 줄로 묶었다. 억제 = 발송 꺼짐(KBJ_NOTIFY_ENABLED), 쿨다운·중복 = 같은 알림을 이미 보냈거나 대기 중 — 실패가 아니다.',
+    ),
   );
 }

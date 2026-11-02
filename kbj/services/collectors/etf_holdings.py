@@ -69,6 +69,7 @@ __all__ = [
     "DOWN_AFTER",
     "EMPTY_LIMIT",
     "ENGINE_VERSION",
+    "WHOLE_EMPTY_MIN",
     "IssuerRun",
     "accept",
     "analyze_changes",
@@ -87,6 +88,14 @@ DETAIL_ERRORS_MAX: Final = 8
 DOWN_AFTER: Final = 5  # 펀드 PDF 오류가 이만큼 이어지면 그 운용사의 남은 펀드는 부르지 않는다
 DOWN_REASON: Final = "운용사 응답 없음 — 앞 펀드 오류가 이어져 부르지 않았다"
 EMPTY_UNIVERSE: Final = "목록이 0건 — 사이트 모양이 바뀌었을 수 있다(저장된 추적 펀드로 받는다)"
+# 추적 펀드가 이만큼 넘게 **전부** 빈 응답이면 펀드 사정이 아니라 운용사 장애·응답 모양 변경으로
+# 본다 — 통째 실패로 세고 빈 연속(EMPTY_LIMIT)은 올리지 않는다. 2026-10-29: RISE 45개가 모두 빈
+# 응답이었다. 펀드별로 세면 3일 뒤 45개가 통째로 추적에서 꺼지고, 사이트가 돌아와도 다시 켜지지
+# 않는다(_fund_rows 가 이전 track 을 이어받는다).
+WHOLE_EMPTY_MIN: Final = 2
+WHOLE_EMPTY_REASON: Final = (
+    "추적 펀드 전부 빈 응답 — 운용사 장애·응답 모양 변경으로 본다(빈 연속에 세지 않는다)"
+)
 FAIL_SHARE_MAX: Final = 0.5  # 통째로 실패한 운용사 비율이 이를 넘으면 작업 failed
 PARTIAL_SHARE: Final = (
     0.1  # 추적 펀드의 이 비율 넘게 못 받은 운용사는 '일부만 받음'(리포트 머리 줄)
@@ -121,8 +130,15 @@ class IssuerRun:
         return not self.failed and n > 0 and len(self.errors) > PARTIAL_SHARE * n
 
     @property
+    def whole_empty(self) -> bool:
+        """받은 펀드가 없고 `WHOLE_EMPTY_MIN` 개 이상이 빈 응답 — 운용사 쪽 문제로 본다."""
+        return not self.snaps and len(self.empty) >= WHOLE_EMPTY_MIN
+
+    @property
     def failed(self) -> bool:
-        """통째로 실패 — 목록도 PDF 도 하나도 못 받았다."""
+        """통째로 실패 — 목록도 PDF 도 하나도 못 받았다(전부 빈 응답 포함)."""
+        if self.whole_empty:
+            return True
         attempted = len(self.snaps) + len(self.empty) + len(self.errors)
         if self.universe_error is not None and not self.snaps and not self.empty:
             return True
@@ -215,7 +231,11 @@ def collect_issuer(
 
 
 def _streaks(res: IssuerRun, limit: int) -> tuple[list[Fund], int]:
-    """빈 응답 연속 수 갱신 — 받은 펀드 0, 빈 펀드 +1, 연속 limit 회면 추적 제외."""
+    """빈 응답 연속 수 갱신 — 받은 펀드 0, 빈 펀드 +1, 연속 limit 회면 추적 제외.
+
+    운용사가 통째로 비었으면(`whole_empty`) 아무것도 바꾸지 않는다 — 펀드 사정이 아니다."""
+    if res.whole_empty:
+        return [res.funds[fid] for fid in sorted(res.funds)], 0
     got = {fid for fid, _, _ in res.snaps}
     out: list[Fund] = []
     dropped = 0
@@ -309,6 +329,8 @@ def run(ctx: JobContext) -> JobResult:
         }  # fmt: skip
         if res.universe_error is not None:
             errors[f"{res.key}:universe"] = res.universe_error
+        if res.whole_empty:
+            errors[f"{res.key}:pdf"] = f"{WHOLE_EMPTY_REASON} {len(res.empty)}개"
         for fid, why in sorted(res.errors.items())[:2]:
             errors[fid] = why
         if res.failed:

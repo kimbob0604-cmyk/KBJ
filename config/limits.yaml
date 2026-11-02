@@ -124,6 +124,10 @@ yahoo:
   hold_s: 300
   step_rate: 0.2
 
+# Hyperliquid info(로그인 — 글로벌 프록시, 2026-11-02) — 키 없음, 5분에 1건.
+hyperliquid:
+  rate: 1.0
+
 # ForexFactory 비공식 피드(로그인 — 기본 꺼짐 config/macro.yaml ff.enabled, §10 Q3). 하루 1건.
 ff:
   rate: 0.2

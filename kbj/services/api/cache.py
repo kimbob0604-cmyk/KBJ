@@ -107,6 +107,8 @@ DOMAIN_JOBS: Final[Mapping[str, tuple[str, ...]]] = {
     "screen": ("krx.daily", "market.backfill", "market.close_collect", "market.fsc_daily"),
     # 페이지 3 옵션 행사가별 추정 포지션(ADR 0044) — 하루 배분 작업 + KRX 확정 OI(다음 날 08:05)
     "gex_optpos": ("gex.option_positions", "gex.krx_derivatives"),
+    # 페이지 1 글로벌 프록시(2026-11-02) — 5분 수집이 P3 시장 캐시를 5분마다 비우지 않게 따로 둔다
+    "global": ("global.proxy", "global.daily", "krx.daily", "market.close_collect"),
 }  # fmt: skip
 # 작업 기록 말고 표의 최신 시각으로도 버전을 정하는 영역(상시 서비스가 쓰는 표 — 상수 SQL)
 DOMAIN_TS: Final[Mapping[str, str]] = {

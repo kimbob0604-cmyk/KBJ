@@ -54,6 +54,9 @@ __all__ = [
     "EtfQuote",
     "EtfType",
     "Fund",
+    "GlobalCap",
+    "GlobalClose",
+    "GlobalQuote",
     "HoldingRow",
     "IndexBar",
     "IndexQuote",
@@ -453,6 +456,83 @@ class IndexQuote:
         _num("chg_pct", self.chg_pct)
         _int("turnover", self.turnover, nonneg=True)
         _int("volume", self.volume, nonneg=True)
+        _source(self.source)
+        _quality(self)
+
+
+@dataclass(frozen=True)
+class GlobalQuote:
+    """글로벌 프록시 시세 한 줄(`prv_market.global_quote` — Hyperliquid 무기한 선물·야후 해외 시세).
+
+    symbol 은 원천 이름 그대로(예 `xyz:SMSN`·`SMSN.IL`·`NQ=F`·`^TNX`). prev = 비교 기준(야후 직전
+    세션 종가·Hyperliquid 24시간 전 가격). funding_1h 는 Hyperliquid 1시간 펀딩률(소수).
+    """
+
+    symbol: str
+    ts: datetime
+    price: float
+    prev: float | None
+    funding_1h: float | None
+    vol_24h: float | None
+    currency: str | None
+    source: str
+    quality: Quality
+
+    def __post_init__(self) -> None:
+        if not self.symbol or any(c.isspace() for c in self.symbol) or len(self.symbol) > 32:
+            raise ValueError(f"symbol 형식이 틀렸다: {self.symbol!r}")
+        _aware("ts", self.ts)
+        _num("price", self.price)
+        if not self.price > 0:
+            raise ValueError("price 는 0 보다 커야 한다")
+        _num("prev", self.prev)
+        _num("funding_1h", self.funding_1h)
+        _num("vol_24h", self.vol_24h)
+        _source(self.source)
+        _quality(self)
+
+
+@dataclass(frozen=True)
+class GlobalClose:
+    """야후 종가 한 줄(`prv_market.global_daily` — 상대 시총·연도별 수익률). interval 1d·1mo."""
+
+    symbol: str
+    interval: str
+    date: date
+    close: float
+    currency: str | None
+    source: str
+    quality: Quality
+
+    def __post_init__(self) -> None:
+        if not self.symbol or any(c.isspace() for c in self.symbol) or len(self.symbol) > 32:
+            raise ValueError(f"symbol 형식이 틀렸다: {self.symbol!r}")
+        if self.interval not in ("1d", "1mo"):
+            raise ValueError(f"interval 은 1d·1mo: {self.interval!r}")
+        _num("close", self.close)
+        if not self.close > 0:
+            raise ValueError("close 는 0 보다 커야 한다")
+        _source(self.source)
+        _quality(self)
+
+
+@dataclass(frozen=True)
+class GlobalCap:
+    """해외 종목 현재 시가총액(`prv_market.global_cap` — 현지 통화, 야후 quote)."""
+
+    symbol: str
+    as_of: date
+    market_cap: float
+    currency: str | None
+    source: str
+    quality: Quality
+
+    def __post_init__(self) -> None:
+        if not self.symbol or any(c.isspace() for c in self.symbol) or len(self.symbol) > 32:
+            raise ValueError(f"symbol 형식이 틀렸다: {self.symbol!r}")
+        _num("market_cap", self.market_cap)
+        if not self.market_cap > 0:
+            raise ValueError("market_cap 은 0 보다 커야 한다")
         _source(self.source)
         _quality(self)
 

@@ -12,9 +12,11 @@ import { h } from '../../ui/dom';
 import { DASH, joEok, num, pct, signClass } from '../../ui/fmt';
 import type { Panel } from '../../ui/panel';
 import { seg } from '../../ui/seg';
+import { statGrid } from '../../ui/stat';
 import { type Column, table } from '../../ui/table';
 import { treemap } from '../../ui/treemap';
 import { failed } from '../p1_market';
+import { strengthCards } from './cards';
 import type { P9Ctx } from './catalog';
 
 type S = components['schemas'];
@@ -34,6 +36,9 @@ export const PERIODS: readonly { value: `${Period}`; label: string }[] = [
 ];
 const LABEL_KO: Readonly<Record<string, string>> = { hist: '역사적', w52: '52주', d120: '120일' };
 
+// 요약 카드는 로그인 본문만(공개 번들 예산 — ADR 0025)
+const LOGIN_CARDS = import.meta.env.MODE === 'public' ? null : strengthCards;
+
 export function periodValue(s: Stats, p: Period): number | null {
   return p === 1 ? s.chg_pct : p === 5 ? s.ret_5d : s.ret_20d;
 }
@@ -44,7 +49,12 @@ const ratio = (v: number | null | undefined): string => (typeof v === 'number' ?
 function strengthColumns(): Column<Row>[] {
   return [
     { key: 'rank', label: '순위', cell: (r) => String(r.rank) },
-    { key: 'name', label: '대테마', align: 'l', cell: (r) => h('span', {}, r.name, h('small', { class: 'dim' }, ` ${r.section}`)) },
+    {
+      key: 'name',
+      label: '대테마',
+      align: 'l',
+      cell: (r) => h('span', {}, r.name, h('small', { class: 'dim' }, ` ${r.section}`)),
+    },
     { key: 'd1', label: '당일', cell: (r) => pctCell(r.stats.chg_pct), cls: (r) => signClass(r.stats.chg_pct) },
     { key: 'd5', label: '5일', cell: (r) => pctCell(r.stats.ret_5d), cls: (r) => signClass(r.stats.ret_5d) },
     { key: 'd20', label: '20일', cell: (r) => pctCell(r.stats.ret_20d), cls: (r) => signClass(r.stats.ret_20d) },
@@ -137,8 +147,13 @@ export async function fillMembers(t: P9Ctx, p: Panel, id: string): Promise<void>
       { class: 'dim', data: { section: 'members-head' } },
       `${d.section}${d.valuechain ? ` · ${d.valuechain}` : ''} · 원본 테마 ${num(d.naver.length)}개 · 종목 ${num(d.members.length)} · ${asOfDay(d.trade_date)}`,
     ),
-    h('div', { class: 'theme-chips' }, ...d.naver.map((n) => h('span', { class: 'tag dim' }, `${n.name} ${num(n.n_members)}`))),
-    table<Member>({ columns: memberColumns(naver), rows: d.members, rowKey: (r) => r.code, empty: '편입 종목 없음' }).el,
+    h(
+      'div',
+      { class: 'theme-chips' },
+      ...d.naver.map((n) => h('span', { class: 'tag dim' }, `${n.name} ${num(n.n_members)}`)),
+    ),
+    table<Member>({ columns: memberColumns(naver), rows: d.members, rowKey: (r) => r.code, empty: '편입 종목 없음' })
+      .el,
   );
   p.setSource(env);
 }
@@ -152,7 +167,12 @@ function drawHeat(p: Panel, rows: readonly Row[], period: Period, day: string): 
   p.clearBody();
   p.body.append(h('p', { class: 'dim', data: { section: 'asof' } }, asOfDay(day)));
   // 크기 = 시세 있는 편입 종목 수 — 시총 합이면 여러 테마에 든 대형주 시총이 테마마다 겹쳐 더해졌다(2026-10-20)
-  const items = rows.map((r) => ({ id: r.id, label: r.name, size: r.stats.n_priced, color: periodValue(r.stats, period) }));
+  const items = rows.map((r) => ({
+    id: r.id,
+    label: r.name,
+    size: r.stats.n_priced,
+    color: periodValue(r.stats, period),
+  }));
   p.body.append(
     treemap({
       label: `대테마 강도 히트맵 — 크기 종목 수, 색 ${PERIODS.find((x) => x.value === String(period))?.label ?? ''} 등락`,
@@ -169,7 +189,11 @@ function drawHeat(p: Panel, rows: readonly Row[], period: Period, day: string): 
  * 강도 셋(순위·히트맵·밸류체인)을 기간 토글과 함께 채운다. 대테마를 고르면 편입 종목 패널을 그 테마로 다시 그린다.
  * 처음 편입 종목 패널은 1위 대테마.
  */
-export async function fillStrength(t: P9Ctx, p: StrengthPanels, pick: (fn: (id: string) => void) => void): Promise<void> {
+export async function fillStrength(
+  t: P9Ctx,
+  p: StrengthPanels,
+  pick: (fn: (id: string) => void) => void,
+): Promise<void> {
   let period: Period = 1;
   let selected: string | null = null;
   let tb: ReturnType<typeof table<Row>> | null = null;
@@ -210,12 +234,20 @@ export async function fillStrength(t: P9Ctx, p: StrengthPanels, pick: (fn: (id: 
       selected,
       empty: '대테마 없음',
     });
-    p.rank.body.append(toggle.el, h('p', { class: 'dim', data: { section: 'asof' } }, `${asOfDay(d.trade_date)} · 대테마 ${num(d.rows.length)}`), tb.el);
+    p.rank.body.append(
+      toggle.el,
+      h('p', { class: 'dim', data: { section: 'asof' } }, `${asOfDay(d.trade_date)} · 대테마 ${num(d.rows.length)}`),
+      LOGIN_CARDS ? statGrid(LOGIN_CARDS(d.rows, period)) : '',
+      tb.el,
+    );
     p.rank.setSource(env);
     drawHeat(p.heat, d.rows, period, d.trade_date);
     p.heat.setSource(env);
     p.chains.clearBody();
-    p.chains.body.append(h('p', { class: 'dim', data: { section: 'asof' } }, asOfDay(d.trade_date)), table<ChainRow>({ columns: chainColumns(), rows: d.chains, rowKey: (r) => r.key, empty: '밸류체인 없음' }).el);
+    p.chains.body.append(
+      h('p', { class: 'dim', data: { section: 'asof' } }, asOfDay(d.trade_date)),
+      table<ChainRow>({ columns: chainColumns(), rows: d.chains, rowKey: (r) => r.key, empty: '밸류체인 없음' }).el,
+    );
     p.chains.setSource(env);
     if (selected === null && d.rows[0]) choose(d.rows[0].id);
   };

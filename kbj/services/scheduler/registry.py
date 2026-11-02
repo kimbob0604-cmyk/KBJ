@@ -165,6 +165,11 @@ class ScheduleSpec(_Model):
     equity: EquitySpec | None = None
     manual: bool = False
     catch_up_until: str | None = None
+    # 최근 며칠의 회차를 다시 훑어 기록이 없거나 실패·대기로 끝난 날을 메운다(맥이 꺼졌거나
+    # 네트워크가 끊겨 아침 수집이 통째로 빠진 날 — 2026-11-02 DNS 장애로 krx.daily 10/30 이
+    # 빠졌다). 날짜를 지정해 다시 받아도 같은 값이 오는 일 단위 데이터 작업에만(알림·발송 작업에는
+    # 주지 않는다)
+    backfill_days: int = 0
     triggered_by: tuple[str, ...] = ()  # 이벤트로도 돈다(예: 공시 접수) — 연결은 그 작업의 단계에서
 
     _catch = field_validator("catch_up_until")(_hhmm)
@@ -192,6 +197,10 @@ class ScheduleSpec(_Model):
             raise ValueError("month_days 는 when: month_days 와 함께만")
         if self.catch_up_until is not None and self.cron is None:
             raise ValueError("catch_up_until 은 cron 작업에만")
+        if not 0 <= self.backfill_days <= 31:
+            raise ValueError("backfill_days 는 0~31")
+        if self.backfill_days and self.cron is None:
+            raise ValueError("backfill_days 는 cron 작업에만")
         return self
 
     @property

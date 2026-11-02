@@ -278,3 +278,19 @@ def test_fif_raw_subtracts_largest_holder_and_reads_pref_class() -> None:
     assert fif(repos, corp, day, cfg, pref=True) == pytest.approx(1 - (5 + 20) / 100)
     assert fif(repos, corp, date(2026, 8, 1), cfg) is None  # 접수 전(PIT)
     assert svc._common_code("005387") == "005380"  # pyright: ignore[reportPrivateUsage]
+
+
+def test_read_official_krics_sectors(tmp_path: Path) -> None:
+    """공식 KRICS 분류 CSV — 코드·섹터 칸 이름 여러 꼴, 'A' 접두 코드, 모르는 섹터 이름은 버린다."""
+    groups = ("정보기술", "소재")
+    p = tmp_path / "krics.csv"
+    p.write_text("종목코드,종목명,섹터\nA990001,합성전자,정보기술\n990002,합성소재,소 재\n"
+                 "990003,합성기타,모르는섹터\n", encoding="utf-8-sig")  # fmt: skip
+    got, why = svc.read_sectors(p, groups)
+    assert got == {"990001": "정보기술", "990002": "소재"}
+    assert "2종목" in why and "1줄 버림" in why
+    none = svc.read_sectors(tmp_path / "none.csv", groups)
+    assert none == ({}, "공식 산업군 파일 없음(none.csv) — KSIC 근사")
+    bad = tmp_path / "bad.csv"
+    bad.write_text("a,b\n1,2\n", encoding="utf-8")
+    assert svc.read_sectors(bad, groups)[0] == {}

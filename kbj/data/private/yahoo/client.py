@@ -24,6 +24,7 @@ import json
 import time
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any, Final
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import httpx
 from redis import Redis
@@ -40,6 +41,11 @@ LIMITS_SOURCE: Final = "yahoo"
 ROW_SOURCE: Final = "yahoo"  # 행 source(daily_bar·prv_macro.series — 소문자, ET 와 같다)
 _BASE: Final = "https://query1.finance.yahoo.com"
 _CHART: Final = "/v8/finance/chart/{sym}"
+_QUOTE: Final = "/v7/finance/quote"
+_CRUMB: Final = "/v1/test/getcrumb"
+_COOKIE_URL: Final = (
+    "https://fc.yahoo.com/"  # 404 지만 동의 쿠키(A3)를 준다 — quote 는 쿠키 + crumb 가 있어야 한다
+)
 TR_ID: Final = "yahoo:chart"  # 리미터 기록용 이름
 MAX_BYTES: Final = 8 * 1024 * 1024
 TOTAL_S: Final = 30.0
@@ -65,7 +71,16 @@ class YahooNotFound(YahooError):
 # ── 파서(ET 원본 그대로) ──────────────────────────────────────────────────────────────────
 
 
-def parse_yahoo(payload: Any) -> list[dict[str, Any]]:
+def _zone(name: Any) -> ZoneInfo | None:
+    if not isinstance(name, str) or not name:
+        return None
+    try:
+        return ZoneInfo(name)
+    except (ZoneInfoNotFoundError, ValueError):
+        return None
+
+
+def parse_yahoo(payload: Any, *, local_dates: bool = False) -> list[dict[str, Any]]:
     """yahoo v8 차트 → 오름차순 일봉. 조정 종가가 아니라 원 종가를 쓴다.
 
     yahoo 는 `adjclose` 를 따로 준다. 신고가 판정은 분할이 반영된 시계열을
@@ -77,6 +92,15 @@ def parse_yahoo(payload: Any) -> list[dict[str, Any]]:
         return []
     ts = res.get("timestamp") or []
     q = ((res.get("indicators") or {}).get("quote") or [{}])[0]
+    # local_dates: 날짜를 거래소 현지 기준으로(시간대 이름 exchangeTimezoneName, 모르면 gmtoffset).
+    # 기본(UTC 날짜)은 서울·도쿄 봉(현지 0시 = 전날 UTC)을 하루, 월봉은 한 달 앞당기고
+    # 런던 기준 환율(KRW=X)도 서머타임 동안 전날로 단다
+    # (2026-11-02 실측 — KOSPI 연도별 수익률이 한 달씩 밀렸다).
+    # 기존 수집(매크로·미국 일봉)은 저장된 날짜와 어긋나지 않게 기본값 그대로 둔다
+    meta = res.get("meta") or {}
+    zone = _zone(meta.get("exchangeTimezoneName")) if local_dates else None
+    off = meta.get("gmtoffset") if local_dates else 0
+    off = int(off) if isinstance(off, int | float) else 0
     rows: list[dict[str, Any]] = []
     for i, t in enumerate(ts):
 
@@ -89,7 +113,11 @@ def parse_yahoo(payload: Any) -> list[dict[str, Any]]:
             continue
         rows.append(
             dict(
-                asof=_dt.datetime.fromtimestamp(t, tz=_dt.UTC).date().isoformat(),
+                asof=(
+                    _dt.datetime.fromtimestamp(t, tz=zone)
+                    if zone is not None
+                    else _dt.datetime.fromtimestamp(t + off, tz=_dt.UTC)
+                ).date().isoformat(),
                 open=g("open"), high=g("high"), low=g("low"), close=c, volume=g("volume"),
                 source="yahoo", ts=t,
             )
@@ -123,11 +151,11 @@ def _num(v: Any) -> float | None:
     return x if x == x and x not in (float("inf"), float("-inf")) else None
 
 
-def to_bars(payload: Any, symbol: str) -> list[Bar]:
+def to_bars(payload: Any, symbol: str, *, local_dates: bool = False) -> list[Bar]:
     """`parse_yahoo` 결과 → 일봉 행(`kbj.core.rows.Bar` — code = 심볼, venue '', source 'yahoo').
 
     정규장이 열린 동안의 마지막 봉은 진행 중인 봉이라 `estimated`(종가 아님 — [확인 필요 #46])."""
-    rows = parse_yahoo(payload)
+    rows = parse_yahoo(payload, local_dates=local_dates)
     live = _live_period(payload)
     out: list[Bar] = []
     for r in rows:
@@ -142,6 +170,25 @@ def to_bars(payload: Any, symbol: str) -> list[Bar]:
                 quality=Quality.ESTIMATED if in_live else Quality.OK,
             )
         )  # fmt: skip
+    return out
+
+
+def parse_quote_caps(payload: Any) -> dict[str, tuple[float, str | None]]:
+    """v7 quote → {심볼: (marketCap, currency)}. 모양이 다르면 ValueError."""
+    try:
+        result = payload["quoteResponse"]["result"]
+    except (KeyError, TypeError):
+        raise ValueError("quoteResponse.result 가 없다") from None
+    if not isinstance(result, list):
+        raise ValueError("quoteResponse.result 가 목록이 아니다")
+    out: dict[str, tuple[float, str | None]] = {}
+    for q in result:
+        if not isinstance(q, dict):
+            continue
+        sym, cap = q.get("symbol"), _num(q.get("marketCap"))
+        if isinstance(sym, str) and cap is not None and cap > 0:
+            cur = q.get("currency")
+            out[sym] = (cap, cur if isinstance(cur, str) else None)
     return out
 
 
@@ -180,6 +227,7 @@ class YahooClient:
         self._http = make_client(
             base_url, transport=transport, headers={"User-Agent": "Mozilla/5.0 (kbj)"}
         )
+        self._crumb_val: str | None = None
 
     def __repr__(self) -> str:
         return "YahooClient()"
@@ -202,8 +250,14 @@ class YahooClient:
     def close(self) -> None:
         self._http.close()
 
-    def chart_payload(self, symbol: str, range_: str = "2y", interval: str = "1d") -> Any:
-        """원 응답(JSON). 200 이 아니면 예외(사유 포함)."""
+    def chart_payload(
+        self, symbol: str, range_: str = "2y", interval: str = "1d", *, span_all: bool = False
+    ) -> Any:
+        """원 응답(JSON). 200 이 아니면 예외(사유 포함).
+
+        `span_all`: range 대신 period1=0·period2=끝 — range=max 월봉은 야후가 석 달씩 묶어 '12월' 봉
+        종가가 2월 말 값이 된다(stock-dashboard 2026-10-30 확인).
+        연도별 수익률은 이것으로 부른다."""
         if not symbol or any(c.isspace() for c in symbol):
             raise ValueError(f"심볼이 비었거나 공백이 있다: {symbol!r}")
         if range_ not in RANGES or interval not in INTERVALS:
@@ -213,7 +267,12 @@ class YahooClient:
         try:
             status, body = get_capped(
                 self._http, _CHART.format(sym=symbol.upper()),
-                params={"range": range_, "interval": interval}, max_bytes=MAX_BYTES,
+                params=(
+                    {"period1": 0, "period2": 9_999_999_999, "interval": interval}
+                    if span_all
+                    else {"range": range_, "interval": interval}
+                ),
+                max_bytes=MAX_BYTES,
                 total_s=TOTAL_S, clock=self._clock, source=SOURCE, dataset=dataset,
             )  # fmt: skip
         except httpx.HTTPError as e:
@@ -233,6 +292,50 @@ class YahooClient:
         if err:
             raise YahooNotFound(dataset, status, _reason(body))
         return payload
+
+    def _crumb(self) -> str:
+        """quote 용 crumb(이 클라이언트 동안 한 번). 쿠키는 httpx 클라이언트가 들고 있다."""
+        if self._crumb_val:
+            return self._crumb_val
+        try:
+            self._http.get(_COOKIE_URL)
+            r = self._http.get(_CRUMB)
+        except httpx.HTTPError as e:
+            raise YahooError("quote", None, f"전송 실패: {type(e).__name__}") from None
+        if r.status_code == 429:
+            self._limiter.on_rate_limited()
+            raise YahooThrottled("quote", 429, "429 한도 초과 — 감속(crumb)")
+        crumb = r.text.strip()
+        if r.status_code != 200 or not crumb or len(crumb) > 64 or any(c.isspace() for c in crumb):
+            raise YahooError("quote", r.status_code, f"crumb 못 받음(HTTP {r.status_code})")
+        self._crumb_val = crumb
+        return crumb
+
+    def quote_caps(self, symbols: Sequence[str]) -> dict[str, tuple[float, str | None]]:
+        """{심볼: (시가총액 — 현지 통화, 통화)}. 시총이 없거나 0 이하인 심볼은 빠진다."""
+        if not symbols:
+            return {}
+        crumb = self._crumb()
+        self._limiter.acquire(self._priority, TR_ID, self._acquire_timeout)
+        try:
+            status, body = get_capped(
+                self._http, _QUOTE,
+                params={"symbols": ",".join(symbols), "crumb": crumb,
+                        "fields": "marketCap,currency"},
+                max_bytes=MAX_BYTES, total_s=TOTAL_S, clock=self._clock, source=SOURCE,
+                dataset="quote",
+            )  # fmt: skip
+        except httpx.HTTPError as e:
+            raise YahooError("quote", None, f"전송 실패: {type(e).__name__}") from None
+        if status == 429:
+            self._limiter.on_rate_limited()
+            raise YahooThrottled("quote", status, "429 한도 초과 — 감속")
+        if status != 200:
+            raise YahooError("quote", status, f"HTTP {status} {_reason(body)}")
+        try:
+            return parse_quote_caps(json.loads(body))
+        except ValueError as e:
+            raise YahooError("quote", status, str(e)[:120]) from None
 
     def chart(self, symbol: str, range_: str = "2y", interval: str = "1d") -> list[Bar]:
         """일봉(오름차순). 결과가 비면 빈 목록 — 부르는 쪽이 '못 받음'으로 적는다."""

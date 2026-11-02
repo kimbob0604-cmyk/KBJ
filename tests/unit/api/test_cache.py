@@ -42,6 +42,7 @@ def test_domains_cover_routes() -> None:
         "themes",  # 페이지 9(ADR 0039) — 테마 두 작업 + 보드
         "screen",  # 페이지 11 스크리너 — 일봉·스냅 수집 작업
         "gex_optpos",  # 페이지 3 옵션 행사가별 추정 포지션(ADR 0044)
+        "global",  # 페이지 1 글로벌 프록시(2026-11-02) — 5분 수집을 시장 캐시와 나눴다
     }  # fmt: skip
 
 
@@ -55,7 +56,7 @@ def test_p4_domain_jobs_exist_in_registry() -> None:
     names = {j["name"] for j in doc["jobs"]}
     for domain in (
         "stock", "filings", "macro", "program", "flows_minute", "board_us", "index_review",
-        "trade", "market", "themes", "screen", "gex_optpos",
+        "trade", "market", "themes", "screen", "gex_optpos", "global",
     ):  # fmt: skip
         assert set(DOMAIN_JOBS[domain]) <= names, domain
 

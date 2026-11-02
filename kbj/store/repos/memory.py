@@ -24,6 +24,9 @@ from kbj.core.rows import (
     EtfMeta,
     EtfQuote,
     Fund,
+    GlobalCap,
+    GlobalClose,
+    GlobalQuote,
     HoldingRow,
     IndexBar,
     IndexQuote,
@@ -115,6 +118,9 @@ class MemoryMarketRepo:
         self.snap_notes: dict[tuple[str, date, str, str], str] = {}
         self.universe_rows: dict[tuple[str, date, str], Stored[UniverseRow]] = {}
         self.index_rows: dict[tuple[str, datetime, str], Stored[IndexQuote]] = {}
+        self.global_rows: dict[tuple[str, datetime], Stored[GlobalQuote]] = {}
+        self.global_closes_rows: dict[tuple[str, str, date], Stored[GlobalClose]] = {}
+        self.global_cap_rows: dict[tuple[str, date], Stored[GlobalCap]] = {}
         self.sector_rows: dict[tuple[str, str, datetime, str], Stored[SectorQuote]] = {}
         self.rank_rows_: dict[tuple[str, datetime, int, str], Stored[RankRow]] = {}
         self.reconcile_rows: dict[tuple[date, str, str], ReconcileRow] = {}
@@ -251,6 +257,60 @@ class MemoryMarketRepo:
             s.row for (_, d, src), s in sorted(self.universe_rows.items()) if latest.get(src) == d
         ]
         return best_universe(rows)
+
+    def put_global_quotes(
+        self, rows: Sequence[GlobalQuote], *, loaded_by: str, received_at: datetime
+    ) -> int:
+        require_loaded_by(loaded_by)
+        require_aware("received_at", received_at)
+        for q in rows:
+            self.global_rows[(q.symbol, q.ts)] = Stored(q, received_at, loaded_by)
+        return len(rows)
+
+    def global_quotes(self, since: datetime) -> dict[str, GlobalQuote]:
+        require_aware("since", since)
+        out: dict[str, GlobalQuote] = {}
+        for (sym, ts), st in sorted(self.global_rows.items(), key=lambda kv: kv[0][1]):
+            if ts >= since:
+                out[sym] = st.row
+        return out
+
+    def put_global_closes(
+        self, rows: Sequence[GlobalClose], *, loaded_by: str, received_at: datetime
+    ) -> int:
+        require_loaded_by(loaded_by)
+        require_aware("received_at", received_at)
+        for r in rows:
+            self.global_closes_rows[(r.symbol, r.interval, r.date)] = Stored(
+                r, received_at, loaded_by
+            )
+        return len(rows)
+
+    def global_closes(
+        self, symbols: Collection[str], interval: str, since: date
+    ) -> dict[str, list[tuple[date, float]]]:
+        want = set(symbols)
+        out: dict[str, list[tuple[date, float]]] = {}
+        for (sym, iv, d), st in sorted(self.global_closes_rows.items()):
+            if sym in want and iv == interval and d >= since:
+                out.setdefault(sym, []).append((d, st.row.close))
+        return out
+
+    def put_global_caps(
+        self, rows: Sequence[GlobalCap], *, loaded_by: str, received_at: datetime
+    ) -> int:
+        require_loaded_by(loaded_by)
+        require_aware("received_at", received_at)
+        for r in rows:
+            self.global_cap_rows[(r.symbol, r.as_of)] = Stored(r, received_at, loaded_by)
+        return len(rows)
+
+    def global_caps(self, since: date) -> dict[str, GlobalCap]:
+        out: dict[str, GlobalCap] = {}
+        for (sym, d), st in sorted(self.global_cap_rows.items()):
+            if d >= since:
+                out[sym] = st.row
+        return out
 
     def put_index_quotes(
         self, rows: Sequence[IndexQuote], *, loaded_by: str, received_at: datetime | None = None
@@ -698,6 +758,18 @@ class MemoryEtfRepo:
         fund = self.fund_rows.get(fid)
         rows = self.holding_rows[(fid, day)].values()
         return sorted((holder_row(fid, fund, day, h) for h in rows), key=holder_order)
+
+    def latest_holdings(self, asof: date) -> dict[str, tuple[date, dict[str, HoldingRow]]]:
+        latest: dict[str, date] = {}
+        for f, d in self.holding_rows:
+            if d <= asof and (f not in latest or d > latest[f]):
+                latest[f] = d
+        out: dict[str, tuple[date, dict[str, HoldingRow]]] = {}
+        for f, d in latest.items():
+            fund = self.fund_rows.get(f)
+            if fund is not None and fund.ticker:
+                out[fund.ticker] = (d, dict(self.holding_rows[(f, d)]))
+        return out
 
     def holders_of(self, code: str, asof: date) -> list[EtfHolder]:
         latest: dict[str, date] = {}

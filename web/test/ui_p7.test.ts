@@ -93,7 +93,8 @@ describe('ladder — 가격 사다리', () => {
     const lay = ladderLayout(rungs, 180);
     expect(lay.rows.map((r) => r.names[0])).toEqual(['콜월', '+1σ', 'Flip', '풋월', '현재가', '−1σ']);
     const ys = lay.rows.map((r) => r.labelY);
-    for (let i = 1; i < ys.length; i += 1) expect((ys[i] ?? 0) - (ys[i - 1] ?? 0)).toBeGreaterThanOrEqual(LABEL_GAP - 1e-9);
+    for (let i = 1; i < ys.length; i += 1)
+      expect((ys[i] ?? 0) - (ys[i - 1] ?? 0)).toBeGreaterThanOrEqual(LABEL_GAP - 1e-9);
     for (const y of ys) {
       expect(y).toBeGreaterThanOrEqual(12 - 1e-9);
       expect(y).toBeLessThanOrEqual(168 + 1e-9);
@@ -164,8 +165,8 @@ describe('profile — 행사가별 GEX', () => {
 describe('페이지 3 자리표시(p3_diag.ts) — 패널 순서·등급 갈림', () => {
   const never: DataSource = { tier: 'public', get: () => Promise.reject(new Error('부르지 않는다')) };
 
-  it('순서 고정: 판정 띠 → 공공지표 → 시장 진단 → GEX → 옵션 행사가별 포지션(ADR 0044) → 이벤트', () => {
-    expect(P3_SECTIONS).toEqual(['verdict', 'public', 'market', 'gex', 'optpos', 'events']);
+  it('순서 고정: 판정 띠 → 공공지표 → 시장 진단 → 시장 체력 → 상대 시총 → GEX → 옵션 행사가별 포지션(ADR 0044) → 이벤트', () => {
+    expect(P3_SECTIONS).toEqual(['verdict', 'public', 'market', 'breadth', 'relcap', 'gex', 'optpos', 'events']);
   });
 
   // 웨이브 2(DIAG)가 본문을 채웠다 — 공개 패널은 열리고(공개 파일을 부른다), 로그인 패널만 자물쇠. 본문 시험은
@@ -181,6 +182,8 @@ describe('페이지 3 자리표시(p3_diag.ts) — 패널 순서·등급 갈림'
       '공공지표 추이',
       '시장 진단',
       '시장 진단 추이',
+      '시장 체력 — ADR·이격도',
+      '상대 시총·연도별 수익률',
       'GEX 브리핑',
       'GEX 프로필',
       'GEX 레벨',
@@ -188,8 +191,19 @@ describe('페이지 3 자리표시(p3_diag.ts) — 패널 순서·등급 갈림'
       '외국인 옵션 행사가별 추정 포지션',
       '이벤트 달력',
     ]);
-    for (const t of ['종합 판정', '국장 공포탐욕', '시장 진단', '시장 진단 추이', 'GEX 브리핑', 'GEX 프로필', 'GEX 레벨', '확장 지표',
-      '외국인 옵션 행사가별 추정 포지션']) {
+    for (const t of [
+      '종합 판정',
+      '국장 공포탐욕',
+      '시장 진단',
+      '시장 진단 추이',
+      '시장 체력 — ADR·이격도',
+      '상대 시총·연도별 수익률',
+      'GEX 브리핑',
+      'GEX 프로필',
+      'GEX 레벨',
+      '확장 지표',
+      '외국인 옵션 행사가별 추정 포지션',
+    ]) {
       expect(panelByTitle(root, t).classList.contains('locked'), t).toBe(true);
     }
     for (const t of ['공공지표 진단', '공공지표 추이', '이벤트 달력']) {

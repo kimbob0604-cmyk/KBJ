@@ -427,6 +427,54 @@ def test_etf_with_trades_but_no_row_yet_still_waits() -> None:
     assert lagging in res.detail["reason"]
 
 
+def _drop_today(body: dict[str, Any]) -> dict[str, Any]:
+    body["output"] = [r for r in body["output"] if r["stck_bsop_date"] != "20261007"]
+    return body
+
+
+def test_quote_without_a_close_is_named_not_waited_for() -> None:
+    """정리매매가 끝난 우선주 — 당일 행도 종가도 없다. 기다려도 같으니 종목 고유 실패로 넘긴다
+    (서울식품우 하나가 6번 재시도 내내 마감 수집과 하류 6개를 막았다, 2026-10-30)."""
+    gone = SYMBOLS[3]
+
+    def hook(tr: str, params: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
+        if params.get("FID_INPUT_ISCD") != gone:
+            return body
+        if tr == "FHKST01010900":
+            return _drop_today(body)
+        if tr == "FHKST01010100":
+            cast("dict[str, Any]", body["output"]).update(stck_prpr="0")
+        return body
+
+    repos, _server, kis = setup(hook)
+    res = run(repos, kis, keys("stock_investor_daily"))
+    assert res.status == "ok", res.detail
+    d = res.detail["stock_investor_daily"]
+    assert d["skipped_codes"] == 1 and "retry_codes" not in d
+    assert "종가" in d["skipped_sample"][gone]
+    assert kis.count("FHKST01010100") == 1
+    assert gone not in repos.flows.days([gone], DAY, DAY)  # 행은 만들지 않는다
+
+
+def test_quote_check_that_cannot_connect_still_waits() -> None:
+    lagging = SYMBOLS[3]
+
+    def hook(tr: str, params: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
+        if params.get("FID_INPUT_ISCD") != lagging:
+            return body
+        if tr == "FHKST01010900":
+            return _drop_today(body)
+        if tr == "FHKST01010100":
+            raise httpx.ConnectError("[Errno -2] Name or service not known")
+        return body
+
+    repos, _server, kis = setup(hook)
+    res = run(repos, kis, keys("stock_investor_daily"))
+    assert res.status == "failed"
+    assert res.detail["stock_investor_daily"]["retry_codes"] == 1
+    assert lagging in res.detail["reason"] and "현재가 확인 실패" in res.detail["reason"]
+
+
 def test_many_missing_rows_are_a_publish_delay_and_skip_the_quote_check() -> None:
     """오늘 스냅이 없는 종목이 허용 수보다 많이 비었다 — 공표 지연이다. 현재가를 부르지 않는다."""
 

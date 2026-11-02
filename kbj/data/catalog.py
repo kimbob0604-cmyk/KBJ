@@ -25,6 +25,7 @@ from kbj.data.private import ecos_restricted, forexfactory, fred_restricted
 from kbj.data.private.etf_issuers import datasets as etf_issuer_datasets
 from kbj.data.private.fsc_index_price import datasets as fsc_index_datasets
 from kbj.data.private.fsc_stock_price import datasets as fsc_stock_datasets
+from kbj.data.private.hyperliquid import datasets as hyperliquid_datasets
 from kbj.data.private.kis import datasets as kis_datasets
 from kbj.data.private.krx import datasets as krx_datasets
 from kbj.data.private.nasdaq import datasets as nasdaq_datasets
@@ -109,6 +110,7 @@ _ADAPTERS: Final[tuple[Sequence[DatasetSpec], ...]] = (
     nasdaq_datasets.DATASETS,  # P5(US) — 유니버스·일봉(Stooq 폴백 포함 논리 데이터셋)
     stock_dashboard_public_datasets.DATASETS,  # 페이지 9 — 대테마 분류(공개, ADR 0039)
     stock_dashboard_datasets.DATASETS,  # 페이지 9 — 테마 마스터 네이버 유래(로그인, ADR 0039)
+    hyperliquid_datasets.DATASETS,  # 페이지 1 — 글로벌 프록시 24시간 선물(로그인, 2026-11-02)
     # 어댑터가 아직 없는 출처
     PLANNED,
 )

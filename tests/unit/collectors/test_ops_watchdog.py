@@ -102,6 +102,13 @@ def seeded_runs() -> MemoryRunLog:
         ("gex.open_check_day", "2026-10-06"),  # 08:49 개장 확인
     ):
         runs.record(RunRecord(f"{job}:{as_of}:1", job, as_of, 1, "ok"))
+    # 2026-11-02 글로벌 프록시(5분, when always) — 마지막 발화 10:20
+    runs.record(
+        RunRecord("global.proxy:2026-10-06T10:20:1", "global.proxy", "2026-10-06T10:20", 1, "ok")
+    )
+    runs.record(
+        RunRecord("global.daily:2026-10-06:1", "global.daily", "2026-10-06", 1, "ok")
+    )  # 07:25
     # P9 WRAP: 워치독 자신은 5분마다(마감 10분) — 10:30 기준 끝났어야 할 마지막 발화는 10:20
     runs.record(
         RunRecord("ops.watchdog:2026-10-06T10:20:1", "ops.watchdog", "2026-10-06T10:20", 1, "ok")
@@ -190,6 +197,7 @@ def test_holiday_has_no_missed_trading_day_runs() -> None:
     # P9 WRAP: ops.watchdog 자신도 when: always(5분마다) — 휴장일에도 돈다
     for job, hhmm in (
         ("ops.watchdog", "11:50"),
+        ("global.proxy", "11:50"),  # 2026-11-02 — when: always 5분
         ("filings.dart_feed", "11:50"),
         ("earnings.alerts", "11:50"),
         ("fin.quarterly", "11:30"),
@@ -202,6 +210,7 @@ def test_holiday_has_no_missed_trading_day_runs() -> None:
         ("macro.monthly", "2026-10-05"),
         ("macro.monthly_prv", "2026-09"),
         ("index.calendar", "2026-10-05"),  # 2026-10-20 켬 — when: always 06:41
+        ("global.daily", "2026-10-05"),  # 2026-11-02 — when: always 07:25
     ):
         runs.record(RunRecord(f"{job}:{as_of}:1", job, as_of, 1, "ok"))
     notes = Notes()
@@ -301,3 +310,35 @@ def test_jobs_waiting_on_close_collect_become_one_alert() -> None:
     )
     missed = {p.subject for p in wd._missed(REG, runs, KR, US, now)}  # pyright: ignore[reportPrivateUsage]
     assert "missed:board.daily:2026-10-06" in missed
+
+
+def test_problems_right_after_host_wake_are_held_not_sent() -> None:
+    """맥이 잠들었다 깬 뒤 10분은 끊김·누락을 보내지 않는다(실행기의 '맥 잠듦' 요약 한 통) — 창이
+    지나면 남은 문제를 다시 알린다(2026-10-28 점심 37분 잠듦에 워치독 경고 14통)."""
+
+    def dead(service: str, now: datetime) -> float | None:
+        return None
+
+    notes = Notes()
+    woke = (NOW - timedelta(minutes=40), NOW - timedelta(minutes=3))
+    result = wd.run(ctx(notes, seeded_runs(), hb=dead, extra={"host_wake": lambda: woke}))
+    assert notes.sent == [] and result.detail["held_after_wake"] > 0
+    late = (NOW - timedelta(minutes=50), NOW - timedelta(minutes=11))
+    wd.run(ctx(notes, seeded_runs(), hb=dead, extra={"host_wake": lambda: late}))
+    assert any(n["subject"].startswith("heartbeat:") for n in notes.sent)
+
+
+def test_host_wake_is_read_from_redis() -> None:
+    class R:
+        def __init__(self, raw: str | None) -> None:
+            self.raw = raw
+
+        def get(self, key: str) -> str | None:
+            assert key == "sched:host_wake"
+            return self.raw
+
+    a, b = NOW - timedelta(minutes=40), NOW - timedelta(minutes=3)
+    body = f'{{"slept_from": "{a.isoformat()}", "woke_at": "{b.isoformat()}"}}'
+    assert wd.redis_host_wake(R(body)) == (a, b)
+    assert wd.redis_host_wake(R(None)) is None and wd.redis_host_wake(R("{bad")) is None
+    assert wd.in_wake_quiet((a, b), NOW) and not wd.in_wake_quiet(None, NOW)

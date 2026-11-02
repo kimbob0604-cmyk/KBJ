@@ -75,6 +75,9 @@ TG_UPDATE_PREFIX: Final = "tg:update:"
 
 # ── 스케줄러 ───────────────────────────────────────────────────────────────────────────────
 SCHED_RUN_PREFIX: Final = "sched:run:"
+# 잠드는 호스트(맥)가 잠들었다 깬 구간 — 실행기가 쓰고(JSON {"slept_from","woke_at"} — ISO UTC)
+# 워치독이 읽어 그 구간 때문에 생긴 하트비트 끊김·실행 누락 경고를 하나씩 보내지 않는다(2026-10-28)
+HOST_WAKE: Final = "sched:host_wake"
 
 # ── 웹 로그인·API 캐시(P3 — docs/p3_design.md §5.3·§5.4) ─────────────────────────────────────
 WEB_SESSION_PREFIX: Final = "web:session:"

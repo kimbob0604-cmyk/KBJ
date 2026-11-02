@@ -49,6 +49,8 @@ export const OPTPOS_DEF =
   '2 : 1 로 배분해 누적한 추정치(키움 방식). 보유 = 누적 시작일 이후 변화분(실제 잔고 아님), − 는 순매도. ' +
   '벽 = 가장 큰 순매도 행사가. 합성 델타 = 선물 누적 순매수 + Σ 보유 × 델타(선물 환산 계약). ' +
   '월물 투자자 합계(전 만기)는 근월물 행사가로만 배분한다.';
+// 공개판(자물쇠 틀만 — 값 없음)은 짧은 정의만 싣는다. 공개 JS 예산(ADR 0025) — 빌드 모드로 긴 정의를 뺀다.
+const OPTPOS_DEF_PUBLIC = '투자자별 옵션 매매를 행사가에 나눠 누적한 추정치(키움 방식, 거래소 값 아님) — 로그인 후 표시.';
 
 function finite(v: Num): v is number {
   return typeof v === 'number' && Number.isFinite(v);
@@ -181,7 +183,7 @@ export function optposPanels(ctx: PageContext): { pos: Panel } {
     src: OPTPOS_SOURCE,
     span: 12,
     title: OPTPOS_TITLE,
-    def: OPTPOS_DEF,
+    def: import.meta.env.MODE === 'public' ? OPTPOS_DEF_PUBLIC : OPTPOS_DEF,
   });
   ctx.root.append(pos.el);
   return { pos };

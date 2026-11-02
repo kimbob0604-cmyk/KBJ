@@ -28,9 +28,11 @@ P7_ROUTES: dict[str, tuple[str, str]] = {
     "/api/diag/summary?date=2026-10-13": ("DiagSummary", "diag.daily"),
     "/api/diag/history?key=credit_spread&days=250": ("DiagHistory", "diag.public"),
     "/api/diag/events?from=2026-10-01&to=2026-10-31": ("DiagEvents", "diag.public"),
+    "/api/diag/breadth-risk?period=6M&ma=50": ("BreadthRisk", "krx.daily"),  # 2026-11-02 시장 체력
 }  # fmt: skip
 # 리더 본문을 채운 묶음의 경로(웨이브 2 — 그 묶음 시험이 빈 저장소 404 를 본다)
-FILLED: frozenset[str] = frozenset()
+# 시장 체력은 합성 세계에 일봉이 있어 200 — 본문 시험은 test_routes_breadth_risk
+FILLED: frozenset[str] = frozenset({"/api/diag/breadth-risk?period=6M&ma=50"})
 
 
 @pytest.mark.parametrize("path", sorted(set(P7_ROUTES) - FILLED))

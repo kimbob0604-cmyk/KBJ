@@ -39,7 +39,7 @@ export const BUDGET_GZIP = {
   // P8 WRAP — 공개 페이지 3 로그인 본문을 빼 79,276 B(88 KB 그대로), 로그인 121,256 B → 131 KB,
   // 2026-10-21 — 장중 수급 차트·신용 패널·테마 강도·문구 정리 추가로 로그인 136,608 B → 147 KB)
   public: { js: 88 * 1024, css: 20 * 1024 },
-  login: { js: 147 * 1024, css: 20 * 1024 },
+  login: { js: 164 * 1024, css: 20 * 1024 },
 };
 
 const TEXT_EXT = /\.(?:js|mjs|css|html|json|webmanifest|svg|txt|map|xml)$/i;

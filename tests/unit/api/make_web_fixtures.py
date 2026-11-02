@@ -42,7 +42,14 @@ from pathlib import Path
 from typing import Any, Final
 
 from kbj.services.api.readers.board import BOARD_DAILY_ETA
-from tests.unit.api.api_world import ROOT, World, build_world
+from tests.unit.api.api_world import (
+    ROOT,
+    World,
+    build_world,
+    fill_global_quotes,
+    fill_relcap,
+    fill_stock_holdings,
+)
 from tests.unit.api.api_world_p4 import P4ApiWorld, expect, shared
 from tests.unit.api.web_fixtures_p5 import DOMAINS as P5_DOMAINS
 from tests.unit.api.web_fixtures_p6 import DOMAINS as P6_DOMAINS
@@ -72,6 +79,10 @@ FIXTURES: Final[tuple[tuple[str, str, bool], ...]] = (
     ("etf_types.json", "/api/etf/types?period=5", False),
     ("etf_premium.json", "/api/etf/premium?basis=inav", True),
     ("etf_holdings_changes.json", "/api/etf/holdings/changes", False),
+    ("etf_stocks.json", "/api/etf/stocks?sort=in&period=5", False),
+    ("diag_breadth-risk.json", "/api/diag/breadth-risk?period=3M&ma=25", False),
+    ("market_global-proxy.json", "/api/market/global-proxy", False),
+    ("market_relcap.json", "/api/market/relcap?period=1Y", False),
 )
 AUTH: Final[dict[str, Any]] = {
     "auth_me.json": {"user": "kbj-user", "csrf_token": "csrf-token-synthetic"},
@@ -84,6 +95,11 @@ AUTH: Final[dict[str, Any]] = {
 def render(world: World | None = None) -> dict[str, str]:
     """파일 이름 → JSON 글자(결정적)."""
     w = world or build_world()
+    fill_stock_holdings(
+        w.repos, w.market.last_day, w.clock()
+    )  # 종목별 ETF 수급 — 다른 응답은 구성종목을 안 읽는다
+    fill_global_quotes(w.repos, w.clock())  # 글로벌 프록시 — 다른 응답은 이 표를 안 읽는다
+    fill_relcap(w.repos, w.market.last_day, w.clock())  # 상대 시총 — 이 응답만 읽는다
     c = w.client()
     w.login(c)
     after_close = w.clock()

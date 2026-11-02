@@ -121,3 +121,21 @@ def test_gimi_2026_08_values() -> None:
 def test_param_model() -> None:
     p = Param(v=1.8, src="x", checked=date(2026, 10, 13), verify=True)
     assert p.v == 1.8
+
+
+def test_krics_sectors_prefix_override_and_official() -> None:
+    sec = CFG.sectors
+    assert len(sec.groups) == 9 and "모빌리티" in sec.groups
+    assert sec.sector_of("26110") == "정보기술"
+    assert sec.sector_of("20423") == "소비재"  # 화장품 — 20 보다 긴 앞자리가 이긴다
+    assert sec.sector_of("58211") == "미디어및콘텐츠" and sec.sector_of("58221") == "정보기술"
+    assert sec.sector_of("71511", "034730") == "정보기술"  # SK — 지주회사지만 보도된 재분류
+    assert sec.sector_of("26110", "999999", {"999999": "소재"}) == "소재"  # 공식 분류가 먼저
+    assert sec.sector_of(None) == sec.default == "기타"
+
+
+def test_krics_sector_names_must_be_known() -> None:
+    raw = yaml.safe_load((REPO_ROOT / "config" / "index_reviews.yaml").read_text(encoding="utf-8"))
+    raw["sectors"]["map"]["99"] = "커뮤니케이션"
+    with pytest.raises(ConfigFileError, match="groups 에 없는 산업군"):
+        parse_index_reviews(raw)

@@ -471,6 +471,147 @@
         }
       }
     },
+    "/api/market/global-proxy": {
+      "get": {
+        "tags": [
+          "market"
+        ],
+        "summary": "Global Proxy Route",
+        "description": "페이지 1 글로벌 프록시 — 24시간 선물·해외 상장 괴리율·지수선물·매크로·미국 ETF(5분 수집).",
+        "operationId": "global_proxy_route_api_market_global_proxy_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_GlobalProxy_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/market/relcap": {
+      "get": {
+        "tags": [
+          "market"
+        ],
+        "summary": "Relcap Route",
+        "description": "페이지 3 상대 시총(종목 간 시총 비율 추이)·주요 지수 연도별 수익률(global.daily 07:25).",
+        "operationId": "relcap_route_api_market_relcap_get",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "6M",
+                "1Y",
+                "2Y"
+              ],
+              "type": "string",
+              "default": "1Y",
+              "title": "Period"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_RelCap_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/board/newhigh": {
       "get": {
         "tags": [
@@ -1496,6 +1637,116 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Envelope_EtfFlows_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/etf/stocks": {
+      "get": {
+        "tags": [
+          "etf"
+        ],
+        "summary": "Stock Flows",
+        "description": "종목별 ETF 수급 — ETF 순유입·거래대금·투자자별 순매수를 구성종목 비중으로 종목에\n나눠 합친다.",
+        "operationId": "stock_flows_api_etf_stocks_get",
+        "parameters": [
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "in",
+                "out",
+                "value",
+                "pct",
+                "indiv",
+                "foreign",
+                "inst"
+              ],
+              "type": "string",
+              "default": "in",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                1,
+                5,
+                20
+              ],
+              "type": "integer",
+              "default": 5,
+              "title": "Period"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 300,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_EtfStockFlows_"
                 }
               }
             }
@@ -7001,6 +7252,97 @@
         }
       }
     },
+    "/api/diag/breadth-risk": {
+      "get": {
+        "tags": [
+          "diag"
+        ],
+        "summary": "Breadth Risk Route",
+        "description": "시장 체력 — 시장별 ADR(20거래일 등락비율)·지수 이격도(25·50일).",
+        "operationId": "breadth_risk_route_api_diag_breadth_risk_get",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "3M",
+                "6M",
+                "1Y"
+              ],
+              "type": "string",
+              "default": "6M",
+              "title": "Period"
+            }
+          },
+          {
+            "name": "ma",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 25,
+              "default": 50,
+              "title": "Ma"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_BreadthRisk_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/rules": {
       "get": {
         "tags": [
@@ -10678,6 +11020,58 @@
         "title": "AnalysisPrefill",
         "description": "prefill(§4.7) — P4 밸류에이션·시나리오 적정가·컨센서스 읽기. 칸마다 출처(value_sources)."
       },
+      "AnnualIndexRow": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "asof": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asof"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "returns": {
+            "items": {
+              "$ref": "#/components/schemas/YearReturn"
+            },
+            "type": "array",
+            "title": "Returns"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "symbol",
+          "name",
+          "asof",
+          "error",
+          "returns"
+        ],
+        "title": "AnnualIndexRow"
+      },
       "BacktestIn": {
         "properties": {
           "rule_id": {
@@ -11910,6 +12304,69 @@
           "notes"
         ],
         "title": "Breadth"
+      },
+      "BreadthRisk": {
+        "properties": {
+          "period": {
+            "type": "string",
+            "enum": [
+              "3M",
+              "6M",
+              "1Y"
+            ],
+            "title": "Period"
+          },
+          "ma": {
+            "type": "integer",
+            "title": "Ma"
+          },
+          "mas": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Mas"
+          },
+          "hot": {
+            "type": "number",
+            "title": "Hot"
+          },
+          "cold": {
+            "type": "number",
+            "title": "Cold"
+          },
+          "window": {
+            "type": "integer",
+            "title": "Window"
+          },
+          "adr": {
+            "items": {
+              "$ref": "#/components/schemas/MarketAdr"
+            },
+            "type": "array",
+            "title": "Adr"
+          },
+          "disparity": {
+            "items": {
+              "$ref": "#/components/schemas/IndexDisparity"
+            },
+            "type": "array",
+            "title": "Disparity"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "period",
+          "ma",
+          "mas",
+          "hot",
+          "cold",
+          "window",
+          "adr",
+          "disparity"
+        ],
+        "title": "BreadthRisk"
       },
       "CalendarRow": {
         "properties": {
@@ -15302,6 +15759,49 @@
         ],
         "title": "Envelope[BoardSectors]"
       },
+      "Envelope_BreadthRisk_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/BreadthRisk"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[BreadthRisk]"
+      },
       "Envelope_Consensus_": {
         "properties": {
           "source": {
@@ -16076,6 +16576,49 @@
         ],
         "title": "Envelope[EtfPremium]"
       },
+      "Envelope_EtfStockFlows_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/EtfStockFlows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[EtfStockFlows]"
+      },
       "Envelope_EtfTypes_": {
         "properties": {
           "source": {
@@ -16419,6 +16962,49 @@
           "data"
         ],
         "title": "Envelope[GexProfile]"
+      },
+      "Envelope_GlobalProxy_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/GlobalProxy"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[GlobalProxy]"
       },
       "Envelope_IndexReview_": {
         "properties": {
@@ -17322,6 +17908,49 @@
           "data"
         ],
         "title": "Envelope[ProgramTop]"
+      },
+      "Envelope_RelCap_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/RelCap"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[RelCap]"
       },
       "Envelope_ReportView_": {
         "properties": {
@@ -19884,6 +20513,103 @@
         ],
         "title": "EtfPremium"
       },
+      "EtfStockFlows": {
+        "properties": {
+          "sort": {
+            "type": "string",
+            "enum": [
+              "in",
+              "out",
+              "value",
+              "pct",
+              "indiv",
+              "foreign",
+              "inst"
+            ],
+            "title": "Sort"
+          },
+          "period": {
+            "type": "integer",
+            "title": "Period"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "n_total": {
+            "type": "integer",
+            "title": "N Total"
+          },
+          "n_etfs_known": {
+            "type": "integer",
+            "title": "N Etfs Known"
+          },
+          "coverage_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage Pct"
+          },
+          "holdings_asof": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Holdings Asof"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/StockEtfFlowRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "sort",
+          "period",
+          "start",
+          "end",
+          "n_total",
+          "n_etfs_known",
+          "coverage_pct",
+          "holdings_asof",
+          "rows"
+        ],
+        "title": "EtfStockFlows"
+      },
       "EtfType": {
         "type": "string",
         "enum": [
@@ -21401,6 +22127,95 @@
         "title": "GexStrikeNet",
         "description": "행사가 하나(범위의 만기 합산) — 콜·풋·순 GEX(원/1%)."
       },
+      "GlobalProxy": {
+        "properties": {
+          "ts": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ts"
+          },
+          "base_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Date",
+            "description": "견준 국내 종가의 날짜"
+          },
+          "usdkrw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usdkrw"
+          },
+          "perps": {
+            "items": {
+              "$ref": "#/components/schemas/ProxyQuote"
+            },
+            "type": "array",
+            "title": "Perps"
+          },
+          "listings": {
+            "items": {
+              "$ref": "#/components/schemas/ProxyQuote"
+            },
+            "type": "array",
+            "title": "Listings"
+          },
+          "futures": {
+            "items": {
+              "$ref": "#/components/schemas/ProxyQuote"
+            },
+            "type": "array",
+            "title": "Futures"
+          },
+          "macro": {
+            "items": {
+              "$ref": "#/components/schemas/ProxyQuote"
+            },
+            "type": "array",
+            "title": "Macro"
+          },
+          "us_etfs": {
+            "items": {
+              "$ref": "#/components/schemas/ProxyQuote"
+            },
+            "type": "array",
+            "title": "Us Etfs"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "ts",
+          "base_date",
+          "usdkrw",
+          "perps",
+          "listings",
+          "futures",
+          "macro",
+          "us_etfs"
+        ],
+        "title": "GlobalProxy",
+        "description": "페이지 1 글로벌 프록시 — 24시간 선물·해외 상장 괴리율·지수선물·매크로·미국 ETF."
+      },
       "Health": {
         "properties": {
           "ok": {
@@ -21426,6 +22241,69 @@
           "commit"
         ],
         "title": "Health"
+      },
+      "IndexDisparity": {
+        "properties": {
+          "market": {
+            "type": "string",
+            "enum": [
+              "KOSPI",
+              "KOSDAQ"
+            ],
+            "title": "Market"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "close": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close"
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/kbj__services__api__models__diag__SeriesPoint"
+            },
+            "type": "array",
+            "title": "Series"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "market",
+          "date",
+          "close",
+          "latest",
+          "series"
+        ],
+        "title": "IndexDisparity"
       },
       "IndexReview": {
         "properties": {
@@ -23018,6 +23896,111 @@
           "link"
         ],
         "title": "MajorHolderView"
+      },
+      "MarketAdr": {
+        "properties": {
+          "market": {
+            "type": "string",
+            "enum": [
+              "KOSPI",
+              "KOSDAQ"
+            ],
+            "title": "Market"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest"
+          },
+          "zone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "과열",
+                  "중립",
+                  "바닥권"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zone"
+          },
+          "up": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Up"
+          },
+          "down": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Down"
+          },
+          "flat": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flat"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/kbj__services__api__models__diag__SeriesPoint"
+            },
+            "type": "array",
+            "title": "Series"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "market",
+          "date",
+          "latest",
+          "zone",
+          "up",
+          "down",
+          "flat",
+          "series"
+        ],
+        "title": "MarketAdr",
+        "description": "시장 하나의 ADR(20거래일 상승 합 ÷ 하락 합 × 100)."
       },
       "MarketMinute": {
         "properties": {
@@ -26499,6 +27482,141 @@
         ],
         "title": "ProgramTopRow"
       },
+      "ProxyQuote": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit",
+            "default": ""
+          },
+          "change_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Pct"
+          },
+          "vs_close_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vs Close Pct"
+          },
+          "vs_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vs Label"
+          },
+          "premium_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Premium Pct"
+          },
+          "fair": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fair"
+          },
+          "ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ratio"
+          },
+          "funding_8h_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Funding 8H Pct"
+          },
+          "vol_24h": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vol 24H"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "symbol",
+          "name"
+        ],
+        "title": "ProxyQuote",
+        "description": "글로벌 프록시 한 줄(값이 없으면 None + error — 지어내지 않는다)."
+      },
       "Quality": {
         "type": "string",
         "enum": [
@@ -26781,6 +27899,160 @@
         ],
         "title": "RatioView",
         "description": "최근 분기 비율(§4.5 — DART 만, 공개). 분모 ≤ 0 이면 null + `na_reasons[칸]`."
+      },
+      "RelCap": {
+        "properties": {
+          "period": {
+            "type": "string",
+            "enum": [
+              "6M",
+              "1Y",
+              "2Y"
+            ],
+            "title": "Period"
+          },
+          "pairs": {
+            "items": {
+              "$ref": "#/components/schemas/RelCapPair"
+            },
+            "type": "array",
+            "title": "Pairs"
+          },
+          "years": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Years"
+          },
+          "annual": {
+            "items": {
+              "$ref": "#/components/schemas/AnnualIndexRow"
+            },
+            "type": "array",
+            "title": "Annual"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "period",
+          "pairs",
+          "years",
+          "annual"
+        ],
+        "title": "RelCap"
+      },
+      "RelCapPair": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "legs_a": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Legs A"
+          },
+          "legs_b": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Legs B"
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "High"
+          },
+          "low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Low"
+          },
+          "pct_of_range": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pct Of Range"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/kbj__services__api__models__diag__SeriesPoint"
+            },
+            "type": "array",
+            "title": "Series"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "legs_a",
+          "legs_b",
+          "latest",
+          "date",
+          "high",
+          "low",
+          "pct_of_range",
+          "error",
+          "series"
+        ],
+        "title": "RelCapPair"
       },
       "ReportBlocks": {
         "properties": {
@@ -28503,46 +29775,6 @@
         "title": "Segments",
         "description": "부문 매출(사업보고서 원문 표 best-effort — 언제나 추정, D-P4-22)."
       },
-      "SeriesPoint": {
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date",
-            "title": "Date"
-          },
-          "price": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Price"
-          },
-          "value": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Value"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "date",
-          "price",
-          "value"
-        ],
-        "title": "SeriesPoint",
-        "description": "밴드 차트 한 점(주 1점 — 그 주 마지막 거래일). 화면 밴드가 = 배수_p × price ÷ value."
-      },
       "SignalList": {
         "properties": {
           "signals": {
@@ -28971,6 +30203,190 @@
         "title": "StatsCell",
         "description": "규칙 × 기간 한 칸(metrics §30.4). excluded = 정지·상폐·분할 의심으로 뺀 수."
       },
+      "StockEtfFlowRow": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "n_etfs": {
+            "type": "integer",
+            "title": "N Etfs"
+          },
+          "inflow": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inflow"
+          },
+          "inflow_shares": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inflow Shares"
+          },
+          "inflow_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inflow Pct"
+          },
+          "etf_turnover": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Etf Turnover"
+          },
+          "etf_volume": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Etf Volume"
+          },
+          "turnover_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover Pct"
+          },
+          "indiv": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Indiv"
+          },
+          "foreign": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Foreign"
+          },
+          "inst": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inst"
+          },
+          "stock_turnover": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stock Turnover"
+          },
+          "stock_volume": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stock Volume"
+          },
+          "close": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close"
+          },
+          "top_etfs": {
+            "items": {
+              "$ref": "#/components/schemas/StockFlowEtf"
+            },
+            "type": "array",
+            "title": "Top Etfs"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "n_etfs",
+          "inflow",
+          "inflow_shares",
+          "inflow_pct",
+          "etf_turnover",
+          "etf_volume",
+          "turnover_pct",
+          "indiv",
+          "foreign",
+          "inst",
+          "stock_turnover",
+          "stock_volume",
+          "close",
+          "top_etfs"
+        ],
+        "title": "StockEtfFlowRow",
+        "description": "종목 한 줄 — ETF 기간 값을 구성종목 비중으로 나눠 더한 것(원·주). 모르면 None."
+      },
       "StockFlowDetail": {
         "properties": {
           "code": {
@@ -29027,6 +30443,38 @@
           "checks"
         ],
         "title": "StockFlowDetail"
+      },
+      "StockFlowEtf": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "inflow": {
+            "type": "integer",
+            "title": "Inflow"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "inflow"
+        ],
+        "title": "StockFlowEtf",
+        "description": "종목 순유입 몫이 큰 ETF 한 줄."
       },
       "StockHeader": {
         "properties": {
@@ -33669,7 +35117,7 @@
           },
           "series": {
             "items": {
-              "$ref": "#/components/schemas/SeriesPoint"
+              "$ref": "#/components/schemas/kbj__services__api__models__stock__SeriesPoint"
             },
             "type": "array",
             "title": "Series"
@@ -34104,6 +35552,92 @@
         ],
         "title": "WindowView",
         "description": "보고 기준 순증감(사유 미구분 포함 — 장내 순매수가 아니다, §4.4). `amount` = Σ 증감 ×\n보고일 종가(로그인 — 추정), `amount_missing` = 종가를 몰라 금액에서 뺀 보고 수."
+      },
+      "YearReturn": {
+        "properties": {
+          "year": {
+            "type": "integer",
+            "title": "Year"
+          },
+          "pct": {
+            "type": "number",
+            "title": "Pct"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "year",
+          "pct"
+        ],
+        "title": "YearReturn"
+      },
+      "kbj__services__api__models__diag__SeriesPoint": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "value"
+        ],
+        "title": "SeriesPoint"
+      },
+      "kbj__services__api__models__stock__SeriesPoint": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "price",
+          "value"
+        ],
+        "title": "SeriesPoint",
+        "description": "밴드 차트 한 점(주 1점 — 그 주 마지막 거래일). 화면 밴드가 = 배수_p × price ÷ value."
       }
     }
   }

@@ -5,7 +5,7 @@
 0797(https://download.kiwoom.com/hero4_help_new/0797.htm — 행사가별 투자자 포지션 산출 방식), metrics §34(정본 정의),
 `docs/probe_results.md` 2026-10-28 항목(맥 DB 실측), ADR 0019(`investor_flow` 쓰기 주인), ADR 0036(GX 수집 이식), DATA_TIERS(KIS·KRX = 로그인).
 구현: 엔진 `kbj/engines/gex/option_positions.py`, 작업 `gex.option_positions`(`kbj/services/engine/option_positions.py`),
-마이그레이션 `0030_option_positions.sql`(`prv_gex.opt_pos_strike`·`prv_gex.opt_pos_day`), 저장소 `kbj/store/repos/opt_pos.py`
+마이그레이션 `0032_option_positions.sql`(브랜치 시작 때 0030 — base 가 0030·0031 을 먼저 써서 옮김)(`prv_gex.opt_pos_strike`·`prv_gex.opt_pos_day`), 저장소 `kbj/store/repos/opt_pos.py`
 (`Repos.opt_pos`), 리더 `kbj/services/api/readers/gex_option_positions.py`, 라우트 `GET /api/gex/option-positions`,
 캐시 영역 `gex_optpos`, 화면 `web/src/pages/p3/optpos.ts`(페이지 3 — GEX 패널 아래).
 
@@ -48,3 +48,10 @@
 - [확인 필요] 위클리 승수(25만)·위클리 만기 시각(15:20)·묵은 시세 5분·정밀도 문턱·판정 임계 — 몇 주 운영 뒤 HTS 뷰와 맞춰 고친다.
 - [확인 필요] EWY 원천(미국 ETF 일봉 — 약관 확인 뒤 로그인 등급).
 - 월물 전광판이 위쪽 100행사가만 받는 것(probe)은 GEX 폴러 설정 문제일 수 있다 — 이 ADR 범위 밖, 단건 보강으로 배분은 된다.
+
+## 갱신 (2026-11-02 — base `claude/build` 따라잡기)
+- base 가 마이그레이션 0030(`global_quote`)·0031(`global_daily`)을 먼저 써서 이 결정의 마이그레이션을 **0032** 로 옮겼다
+  (맥 DB 에는 아직 적용 전 — 이름만 바뀐다).
+- 작업 `gex.option_positions` 에 `backfill_days: 10`(base 의 빠진 날 메우기) — 맥이 16:05 에 꺼져 있던 날을 깬 뒤 다시 돈다.
+  외부 호출이 없어 다시 돌아도 비용이 없고, 그날 행 교체라 멱등이다.
+- 공개 JS 예산(ADR 0025): 공개판 패널은 짧은 정의 문구만 싣는다(남은 것 68 B).

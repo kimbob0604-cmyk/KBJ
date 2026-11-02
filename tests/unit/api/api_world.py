@@ -30,6 +30,10 @@ from kbj.core.rows import (
     Change,
     EtfQuote,
     Fund,
+    GlobalCap,
+    GlobalClose,
+    GlobalQuote,
+    HoldingRow,
     IndexQuote,
     IntradayInvestor,
     Investor,
@@ -233,6 +237,86 @@ def _fill_holdings(repos: MemoryRepos, run: date, now: datetime) -> None:
                3.9, -1.25, None),
     ]  # fmt: skip
     repos.etf.put_changes(run, rows, engine_version="test", now=now)
+
+
+def fill_global_quotes(repos: MemoryRepos, now: datetime) -> None:
+    """글로벌 프록시(`/api/market/global-proxy`)용 합성 시세 — 시험·웹 픽스처가 부를 때만 넣는다.
+    국내 종가(삼성전자·하이닉스)는 합성 세계에 없어 종가 대비·괴리율은 비고,
+    펀딩률·전일 대비는 찬다."""
+
+    def q(sym: str, price: float, prev: float | None, src: str = "yahoo") -> GlobalQuote:
+        return GlobalQuote(
+            symbol=sym, ts=now - timedelta(minutes=3), price=price, prev=prev,
+            funding_1h=0.0000125 if src == "hyperliquid" else None,
+            vol_24h=1_000_000.0 if src == "hyperliquid" else None, currency="USD", source=src,
+            quality=Quality.ESTIMATED,
+        )  # fmt: skip
+
+    rows = [
+        q("KRW=X", 1400.0, 1395.0), q("EURUSD=X", 1.08, 1.07),
+        q("xyz:SMSN", 52.0, 51.0, "hyperliquid"), q("xyz:KR200", 401.0, 400.0, "hyperliquid"),
+        q("SKHY", 30.0, 29.5), q("SMSN.IL", 1300.0, 1290.0), q("NQ=F", 21000.0, 20900.0),
+        q("ES=F", 6000.0, 6010.0), q("^TNX", 4.1, 4.15), q("CL=F", 70.0, 69.0),
+        q("EWY", 60.0, 59.0), q("SOXX", 230.0, 228.0),
+    ]  # fmt: skip
+    repos.market.put_global_quotes(rows, loaded_by="global.proxy", received_at=now)
+
+
+def fill_relcap(repos: MemoryRepos, last: date, now: datetime) -> None:
+    """상대 시총(`/api/market/relcap`)용 합성 야후 종가·해외 시총.
+
+    시험·웹 픽스처가 부를 때만 넣는다.
+
+    일봉 40일(모든 종목·환율 같은 경로 — 비율은 시총 비율 그대로),
+    해외 시총은 AVGO·NVDA 만(1조·2조 달러
+    → 50%). 국내 시총은 합성 스냅에 없어 그 쌍은 '현재 시총 없음'. 지수 월봉 3개 연말."""
+    from kbj.engines.market.relcap import INDICES, daily_symbols
+
+    closes: list[GlobalClose] = []
+    for k in range(40):
+        d = last - timedelta(days=39 - k)
+        for sym in daily_symbols():
+            closes.append(
+                GlobalClose(symbol=sym, interval="1d", date=d, close=100.0 + k, currency=None,
+                            source="yahoo", quality=Quality.OK)
+            )  # fmt: skip
+    for sym, _ in INDICES:
+        for d, c in (
+            (date(2024, 12, 31), 90.0),
+            (date(2025, 12, 31), 100.0),
+            (date(2026, 8, 31), 110.0),
+        ):
+            closes.append(GlobalClose(symbol=sym, interval="1mo", date=d, close=c, currency=None,
+                                      source="yahoo", quality=Quality.OK))  # fmt: skip
+    repos.market.put_global_closes(closes, loaded_by="global.daily", received_at=now)
+    caps = [
+        GlobalCap(symbol=s, as_of=last, market_cap=v, currency="USD", source="yahoo",
+                  quality=Quality.OK)
+        for s, v in (("AVGO", 1e12), ("NVDA", 2e12))
+    ]  # fmt: skip
+    repos.market.put_global_caps(caps, loaded_by="global.daily", received_at=now)
+
+
+def fill_stock_holdings(repos: MemoryRepos, last: date, now: datetime) -> None:
+    """종목별 ETF 수급(`/api/etf/stocks`)용 구성종목 스냅 — 시험·웹 픽스처가 부를 때만 넣는다.
+
+    E00001(F1): Q00001 30% · Q00002 20% · 비중 없는 행 · 다른 ETF 행. E00002(F2): 상장폐지라 빠진다.
+    E00003(F3): 하루 전 스냅만(asof 이하 마지막 스냅).
+    """
+    q = Quality.OK
+
+    def row(code: str, wt: float | None) -> HoldingRow:
+        return HoldingRow(code=code, name=f"합성{code[-2:]}", qty=100.0, wt=wt, val=None,
+                          source="ETF_ISSUERS:합성", quality=q)  # fmt: skip
+
+    e = repos.etf
+    e.put_holdings("kodex:F1", last, [row("Q00001", 30.0), row("Q00002", 20.0), row("Q00009", None),
+                                      row("E00003", 5.0)], loaded_by=LOADED_BY)  # fmt: skip
+    e.put_holdings("tiger:F2", last, [row("Q00001", 40.0)], loaded_by=LOADED_BY)
+    f3 = Fund("test:F3", "합성운용C", "F3", "E00003", "합성ETF03", None, True, "full", True, 0,
+              "ETF_ISSUERS:합성운용C")  # fmt: skip
+    e.upsert_funds([f3], loaded_by=LOADED_BY, now=now)
+    e.put_holdings("test:F3", last - timedelta(days=1), [row("Q00001", 10.0)], loaded_by=LOADED_BY)
 
 
 @dataclass

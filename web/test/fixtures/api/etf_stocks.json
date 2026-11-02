@@ -1,0 +1,76 @@
+{
+  "source": "KRX",
+  "as_of": "2026-09-15T15:30:00+09:00",
+  "quality": "estimated",
+  "notes": [
+    "ETF 기간 값 × 구성종목 비중(운용사 PDF) — 순유입 몫은 설정·환매로 생긴 바스켓 매매 추정, 거래대금 몫은 ETF 장내 거래의 노출분",
+    "주식 수 = 금액 ÷ 기간 끝 종가(추정). 선물·스왑·현금·다른 ETF 행은 넣지 않는다",
+    "구성종목을 아는 ETF 가 순유입의 8% 만 덮는다 — 나머지는 빠졌다"
+  ],
+  "generated_at": "2026-09-15T18:00:00+09:00",
+  "data": {
+    "sort": "in",
+    "period": 5,
+    "start": "2026-09-09",
+    "end": "2026-09-15",
+    "n_total": 2,
+    "n_etfs_known": 2,
+    "coverage_pct": 7.922770605767197,
+    "holdings_asof": "2026-09-14",
+    "rows": [
+      {
+        "code": "Q00001",
+        "name": "합성01",
+        "n_etfs": 2,
+        "inflow": 7810860350,
+        "inflow_shares": 42595,
+        "inflow_pct": 18.286411535289727,
+        "etf_turnover": 14060601818,
+        "etf_volume": 76677,
+        "turnover_pct": 32.91800643580529,
+        "indiv": null,
+        "foreign": null,
+        "inst": null,
+        "stock_turnover": 42714013818,
+        "stock_volume": 229055,
+        "close": 183374.0,
+        "top_etfs": [
+          {
+            "code": "E00001",
+            "name": "합성ETF01",
+            "inflow": 6894963450
+          },
+          {
+            "code": "E00003",
+            "name": "합성ETF03",
+            "inflow": 915896900
+          }
+        ]
+      },
+      {
+        "code": "Q00002",
+        "name": "합성02",
+        "n_etfs": 1,
+        "inflow": 4596642300,
+        "inflow_shares": 24215,
+        "inflow_pct": 8.717111767190456,
+        "etf_turnover": 6209612690,
+        "etf_volume": 32713,
+        "turnover_pct": 11.775962608932526,
+        "indiv": null,
+        "foreign": null,
+        "inst": null,
+        "stock_turnover": 52731253456,
+        "stock_volume": 276049,
+        "close": 189823.0,
+        "top_etfs": [
+          {
+            "code": "E00001",
+            "name": "합성ETF01",
+            "inflow": 4596642300
+          }
+        ]
+      }
+    ]
+  }
+}

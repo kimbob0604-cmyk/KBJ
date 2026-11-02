@@ -7,13 +7,14 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Annotated, Final
+from typing import Annotated, Final, Literal
 
 from fastapi import Query, Request, Response
 
 from kbj.services.api.deps import TTL_DEFAULT_S, cached_json, get_state
 from kbj.services.api.models.common import Envelope
-from kbj.services.api.models.diag import DiagEvents, DiagHistory, DiagSummary
+from kbj.services.api.models.diag import BreadthRisk, DiagEvents, DiagHistory, DiagSummary
+from kbj.services.api.readers.breadth_risk import breadth_risk
 from kbj.services.api.readers.diag import diag_events, diag_history, diag_summary
 from kbj.services.api.routes._common import data_router
 
@@ -54,4 +55,18 @@ def events(
     return cached_json(
         request, domain=DOMAIN, ttl_s=TTL_DEFAULT_S,
         build=lambda: diag_events(st.read, start=start, end=end),
+    )  # fmt: skip
+
+
+@router.get("/breadth-risk", response_model=Envelope[BreadthRisk])
+def breadth_risk_route(
+    request: Request,
+    period: Annotated[Literal["3M", "6M", "1Y"], Query()] = "6M",
+    ma: Annotated[int, Query(ge=25, le=50)] = 50,
+) -> Response:
+    """시장 체력 — 시장별 ADR(20거래일 등락비율)·지수 이격도(25·50일)."""
+    st = get_state(request)
+    return cached_json(
+        request, domain=DOMAIN, ttl_s=TTL_DEFAULT_S,
+        build=lambda: breadth_risk(st.read, period=period, ma=ma),
     )  # fmt: skip

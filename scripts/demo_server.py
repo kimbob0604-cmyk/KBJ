@@ -313,6 +313,12 @@ def build_demo_world(at: str = "close", *, with_extras: bool = True) -> Any:
         _load_p6_macro(world)  # 페이지 6 — 합성 P5 매크로(데모 날짜로 옮김 — 진단 입력 다음)
         _load_p8(world)  # 페이지 11·12 — 합성 P8 세계(규칙·신호·성과·백테스트 + 일지·매매)
         _load_p9(world)  # 페이지 9 — 합성 테마 마스터 + 보드 종목 하루(ADR 0039)
+        # 2026-11-02 — 페이지 1 글로벌 프록시·페이지 3 상대 시총(웹 픽스처와 같은 합성 시세)
+        from tests.unit.api.api_world import fill_global_quotes, fill_relcap, fill_stock_holdings
+
+        fill_global_quotes(world.repos, world.clock())
+        fill_relcap(world.repos, world.market.last_day, world.clock())
+        fill_stock_holdings(world.repos, world.market.last_day, world.clock())
     return world
 
 

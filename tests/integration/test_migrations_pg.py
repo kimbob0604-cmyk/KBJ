@@ -70,7 +70,9 @@ P2 = [
     "0027_trade_stock_flow.sql",
     "0028_sigungu_thousand_usd.sql",
     "0029_stock_minute.sql",
-    "0030_option_positions.sql",
+    "0030_global_quote.sql",
+    "0031_global_daily.sql",
+    "0032_option_positions.sql",
 ]  # 이름은 P2 시험 그대로 — 0001~0023 전부(P3 0007~0009, P4 0010~0013, P5 0014~0017,
 #   P5 2차 IDX 0018, P6 0019, P7 0020, P8 0021, P9 GXI 0022 — 쓰기 주인 COMMENT 만,
 #   페이지 9 테마 0023 — ADR 0039)
@@ -91,7 +93,7 @@ YEARLY = {
     "prv_fin.valuation_daily",
     # P5(0017)
     "prv_flows.program_stock_daily",
-    # 옵션 행사가별 추정 포지션(0030 — ADR 0044)
+    # 옵션 행사가별 추정 포지션(0032 — ADR 0044)
     "prv_gex.opt_pos_strike", "prv_gex.opt_pos_day",
 }  # fmt: skip
 # P3 장중 이력 — 청크 1일 + 보존(docs/p3_design.md §3.4, R21 [제안])
@@ -110,7 +112,11 @@ P5_INTRADAY = {
 # P8(0021): 관심종목 장중 시세 슬롯 — 7일 청크·730일 보존(백테스트·일치 감시가 읽는다)
 P8_INTRADAY = {"prv_alerts.watch_quote_slot": "730 days"}
 # cis 30분봉 — 신호 종목 D~D+5 5분봉(0029_stock_minute.sql, chunk 30일)
-CIS_INTRADAY = {"prv_market.stock_bar_5m": "30 days"}
+CIS_INTRADAY = {
+    "prv_market.stock_bar_5m": "30 days",
+    # 글로벌 프록시 5분 시세(0030_global_quote.sql, chunk 30일 — base 가 기대 목록에 안 넣어 둔 것)
+    "prv_market.global_quote": "30 days",
+}
 P3_TABLES = {
     "prv_board.alltime", "prv_board.label", "prv_board.split_check", "prv_board.stock_day",
     "prv_board.artifact", "prv_market.index_intraday", "prv_market.sector_intraday",

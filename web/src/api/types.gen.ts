@@ -143,6 +143,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/market/global-proxy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Global Proxy Route
+         * @description 페이지 1 글로벌 프록시 — 24시간 선물·해외 상장 괴리율·지수선물·매크로·미국 ETF(5분 수집).
+         */
+        get: operations["global_proxy_route_api_market_global_proxy_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/market/relcap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Relcap Route
+         * @description 페이지 3 상대 시총(종목 간 시총 비율 추이)·주요 지수 연도별 수익률(global.daily 07:25).
+         */
+        get: operations["relcap_route_api_market_relcap_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/board/newhigh": {
         parameters: {
             query?: never;
@@ -322,6 +362,27 @@ export interface paths {
         };
         /** Flows */
         get: operations["flows_api_etf_flows_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/etf/stocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stock Flows
+         * @description 종목별 ETF 수급 — ETF 순유입·거래대금·투자자별 순매수를 구성종목 비중으로 종목에
+         *     나눠 합친다.
+         */
+        get: operations["stock_flows_api_etf_stocks_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1380,6 +1441,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/diag/breadth-risk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Breadth Risk Route
+         * @description 시장 체력 — 시장별 ADR(20거래일 등락비율)·지수 이격도(25·50일).
+         */
+        get: operations["breadth_risk_route_api_diag_breadth_risk_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/rules": {
         parameters: {
             query?: never;
@@ -2061,6 +2142,19 @@ export interface components {
             as_of: string | null;
             quality: components["schemas"]["Quality"];
         };
+        /** AnnualIndexRow */
+        AnnualIndexRow: {
+            /** Symbol */
+            symbol: string;
+            /** Name */
+            name: string;
+            /** Asof */
+            asof: string | null;
+            /** Error */
+            error: string | null;
+            /** Returns */
+            returns: components["schemas"]["YearReturn"][];
+        };
         /**
          * BacktestIn
          * @description 즉석 백테스트 요청(D-P8-17 — 저장 없음, 상한 config/rules.yaml adhoc). 규칙은 `rule_id`(+ 판)
@@ -2477,6 +2571,28 @@ export interface components {
             source: string;
             /** Notes */
             notes: string[];
+        };
+        /** BreadthRisk */
+        BreadthRisk: {
+            /**
+             * Period
+             * @enum {string}
+             */
+            period: "3M" | "6M" | "1Y";
+            /** Ma */
+            ma: number;
+            /** Mas */
+            mas: number[];
+            /** Hot */
+            hot: number;
+            /** Cold */
+            cold: number;
+            /** Window */
+            window: number;
+            /** Adr */
+            adr: components["schemas"]["MarketAdr"][];
+            /** Disparity */
+            disparity: components["schemas"]["IndexDisparity"][];
         };
         /** CalendarRow */
         CalendarRow: {
@@ -3590,6 +3706,25 @@ export interface components {
             generated_at: string;
             data: components["schemas"]["BoardSectors"];
         };
+        /** Envelope[BreadthRisk] */
+        Envelope_BreadthRisk_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["BreadthRisk"];
+        };
         /** Envelope[Consensus] */
         Envelope_Consensus_: {
             /** Source */
@@ -3932,6 +4067,25 @@ export interface components {
             generated_at: string;
             data: components["schemas"]["EtfPremium"];
         };
+        /** Envelope[EtfStockFlows] */
+        Envelope_EtfStockFlows_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["EtfStockFlows"];
+        };
         /** Envelope[EtfTypes] */
         Envelope_EtfTypes_: {
             /** Source */
@@ -4083,6 +4237,25 @@ export interface components {
              */
             generated_at: string;
             data: components["schemas"]["GexProfile"];
+        };
+        /** Envelope[GlobalProxy] */
+        Envelope_GlobalProxy_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["GlobalProxy"];
         };
         /** Envelope[IndexReview] */
         Envelope_IndexReview_: {
@@ -4482,6 +4655,25 @@ export interface components {
              */
             generated_at: string;
             data: components["schemas"]["ProgramTop"];
+        };
+        /** Envelope[RelCap] */
+        Envelope_RelCap_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["RelCap"];
         };
         /** Envelope[ReportView] */
         Envelope_ReportView_: {
@@ -5492,6 +5684,30 @@ export interface components {
             /** Rows */
             rows: components["schemas"]["PremiumRow"][];
         };
+        /** EtfStockFlows */
+        EtfStockFlows: {
+            /**
+             * Sort
+             * @enum {string}
+             */
+            sort: "in" | "out" | "value" | "pct" | "indiv" | "foreign" | "inst";
+            /** Period */
+            period: number;
+            /** Start */
+            start: string | null;
+            /** End */
+            end: string | null;
+            /** N Total */
+            n_total: number;
+            /** N Etfs Known */
+            n_etfs_known: number;
+            /** Coverage Pct */
+            coverage_pct: number | null;
+            /** Holdings Asof */
+            holdings_asof: string | null;
+            /** Rows */
+            rows: components["schemas"]["StockEtfFlowRow"][];
+        };
         /**
          * EtfType
          * @description ETF 유형(docs/metrics.md §8 정본 — 규칙은 `kbj.engines.etf.types.etf_type`).
@@ -5992,12 +6208,53 @@ export interface components {
             /** Net */
             net: number;
         };
+        /**
+         * GlobalProxy
+         * @description 페이지 1 글로벌 프록시 — 24시간 선물·해외 상장 괴리율·지수선물·매크로·미국 ETF.
+         */
+        GlobalProxy: {
+            /** Ts */
+            ts: string | null;
+            /**
+             * Base Date
+             * @description 견준 국내 종가의 날짜
+             */
+            base_date: string | null;
+            /** Usdkrw */
+            usdkrw: number | null;
+            /** Perps */
+            perps: components["schemas"]["ProxyQuote"][];
+            /** Listings */
+            listings: components["schemas"]["ProxyQuote"][];
+            /** Futures */
+            futures: components["schemas"]["ProxyQuote"][];
+            /** Macro */
+            macro: components["schemas"]["ProxyQuote"][];
+            /** Us Etfs */
+            us_etfs: components["schemas"]["ProxyQuote"][];
+        };
         /** Health */
         Health: {
             /** Ok */
             ok: boolean;
             /** Commit */
             commit: string | null;
+        };
+        /** IndexDisparity */
+        IndexDisparity: {
+            /**
+             * Market
+             * @enum {string}
+             */
+            market: "KOSPI" | "KOSDAQ";
+            /** Date */
+            date: string | null;
+            /** Close */
+            close: number | null;
+            /** Latest */
+            latest: number | null;
+            /** Series */
+            series: components["schemas"]["kbj__services__api__models__diag__SeriesPoint"][];
         };
         /**
          * IndexReview
@@ -6461,6 +6718,31 @@ export interface components {
             quality: components["schemas"]["Quality"];
             /** Link */
             link: string;
+        };
+        /**
+         * MarketAdr
+         * @description 시장 하나의 ADR(20거래일 상승 합 ÷ 하락 합 × 100).
+         */
+        MarketAdr: {
+            /**
+             * Market
+             * @enum {string}
+             */
+            market: "KOSPI" | "KOSDAQ";
+            /** Date */
+            date: string | null;
+            /** Latest */
+            latest: number | null;
+            /** Zone */
+            zone: ("과열" | "중립" | "바닥권") | null;
+            /** Up */
+            up: number | null;
+            /** Down */
+            down: number | null;
+            /** Flat */
+            flat: number | null;
+            /** Series */
+            series: components["schemas"]["kbj__services__api__models__diag__SeriesPoint"][];
         };
         /** MarketMinute */
         MarketMinute: {
@@ -7510,6 +7792,41 @@ export interface components {
             quality: components["schemas"]["Quality"];
         };
         /**
+         * ProxyQuote
+         * @description 글로벌 프록시 한 줄(값이 없으면 None + error — 지어내지 않는다).
+         */
+        ProxyQuote: {
+            /** Symbol */
+            symbol: string;
+            /** Name */
+            name: string;
+            /** Price */
+            price?: number | null;
+            /**
+             * Unit
+             * @default
+             */
+            unit: string;
+            /** Change Pct */
+            change_pct?: number | null;
+            /** Vs Close Pct */
+            vs_close_pct?: number | null;
+            /** Vs Label */
+            vs_label?: string | null;
+            /** Premium Pct */
+            premium_pct?: number | null;
+            /** Fair */
+            fair?: number | null;
+            /** Ratio */
+            ratio?: number | null;
+            /** Funding 8H Pct */
+            funding_8h_pct?: number | null;
+            /** Vol 24H */
+            vol_24h?: number | null;
+            /** Error */
+            error?: string | null;
+        };
+        /**
          * Quality
          * @description 값의 품질. 문자열 값이 그대로 DB `quality` 열과 API 응답에 들어간다.
          * @enum {string}
@@ -7577,6 +7894,43 @@ export interface components {
             quality: components["schemas"]["Quality"];
             /** Notes */
             notes: string[];
+        };
+        /** RelCap */
+        RelCap: {
+            /**
+             * Period
+             * @enum {string}
+             */
+            period: "6M" | "1Y" | "2Y";
+            /** Pairs */
+            pairs: components["schemas"]["RelCapPair"][];
+            /** Years */
+            years: number[];
+            /** Annual */
+            annual: components["schemas"]["AnnualIndexRow"][];
+        };
+        /** RelCapPair */
+        RelCapPair: {
+            /** Name */
+            name: string;
+            /** Legs A */
+            legs_a: string[];
+            /** Legs B */
+            legs_b: string[];
+            /** Latest */
+            latest: number | null;
+            /** Date */
+            date: string | null;
+            /** High */
+            high: number | null;
+            /** Low */
+            low: number | null;
+            /** Pct Of Range */
+            pct_of_range: number | null;
+            /** Error */
+            error: string | null;
+            /** Series */
+            series: components["schemas"]["kbj__services__api__models__diag__SeriesPoint"][];
         };
         /**
          * ReportBlocks
@@ -8132,21 +8486,6 @@ export interface components {
             rows: components["schemas"]["SegmentView"][];
             quality: components["schemas"]["Quality"];
         };
-        /**
-         * SeriesPoint
-         * @description 밴드 차트 한 점(주 1점 — 그 주 마지막 거래일). 화면 밴드가 = 배수_p × price ÷ value.
-         */
-        SeriesPoint: {
-            /**
-             * Date
-             * Format: date
-             */
-            date: string;
-            /** Price */
-            price: number | null;
-            /** Value */
-            value: number | null;
-        };
         /** SignalList */
         SignalList: {
             /** Signals */
@@ -8277,6 +8616,44 @@ export interface components {
             /** Small */
             small: boolean;
         };
+        /**
+         * StockEtfFlowRow
+         * @description 종목 한 줄 — ETF 기간 값을 구성종목 비중으로 나눠 더한 것(원·주). 모르면 None.
+         */
+        StockEtfFlowRow: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string | null;
+            /** N Etfs */
+            n_etfs: number;
+            /** Inflow */
+            inflow: number | null;
+            /** Inflow Shares */
+            inflow_shares: number | null;
+            /** Inflow Pct */
+            inflow_pct: number | null;
+            /** Etf Turnover */
+            etf_turnover: number | null;
+            /** Etf Volume */
+            etf_volume: number | null;
+            /** Turnover Pct */
+            turnover_pct: number | null;
+            /** Indiv */
+            indiv: number | null;
+            /** Foreign */
+            foreign: number | null;
+            /** Inst */
+            inst: number | null;
+            /** Stock Turnover */
+            stock_turnover: number | null;
+            /** Stock Volume */
+            stock_volume: number | null;
+            /** Close */
+            close: number | null;
+            /** Top Etfs */
+            top_etfs: components["schemas"]["StockFlowEtf"][];
+        };
         /** StockFlowDetail */
         StockFlowDetail: {
             /** Code */
@@ -8293,6 +8670,18 @@ export interface components {
             checks: {
                 [key: string]: number;
             };
+        };
+        /**
+         * StockFlowEtf
+         * @description 종목 순유입 몫이 큰 ETF 한 줄.
+         */
+        StockFlowEtf: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string | null;
+            /** Inflow */
+            inflow: number;
         };
         /** StockHeader */
         StockHeader: {
@@ -9602,7 +9991,7 @@ export interface components {
             /** Bands */
             bands: components["schemas"]["BandView"][];
             /** Series */
-            series: components["schemas"]["SeriesPoint"][];
+            series: components["schemas"]["kbj__services__api__models__stock__SeriesPoint"][];
             /** Mktcap Company */
             mktcap_company: number | null;
             /** Classes */
@@ -9720,6 +10109,38 @@ export interface components {
             /** Amount Missing */
             amount_missing: number;
             quality: components["schemas"]["Quality"];
+        };
+        /** YearReturn */
+        YearReturn: {
+            /** Year */
+            year: number;
+            /** Pct */
+            pct: number;
+        };
+        /** SeriesPoint */
+        kbj__services__api__models__diag__SeriesPoint: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Value */
+            value: number | null;
+        };
+        /**
+         * SeriesPoint
+         * @description 밴드 차트 한 점(주 1점 — 그 주 마지막 거래일). 화면 밴드가 = 배수_p × price ÷ value.
+         */
+        kbj__services__api__models__stock__SeriesPoint: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Price */
+            price: number | null;
+            /** Value */
+            value: number | null;
         };
     };
     responses: never;
@@ -10073,6 +10494,120 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_CreditPanel_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    global_proxy_route_api_market_global_proxy_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_GlobalProxy_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    relcap_route_api_market_relcap_get: {
+        parameters: {
+            query?: {
+                period?: "6M" | "1Y" | "2Y";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_RelCap_"];
                 };
             };
             /** @description 세션 없음·만료 */
@@ -10725,6 +11260,66 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_EtfFlows_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    stock_flows_api_etf_stocks_get: {
+        parameters: {
+            query?: {
+                sort?: "in" | "out" | "value" | "pct" | "indiv" | "foreign" | "inst";
+                period?: 1 | 5 | 20;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_EtfStockFlows_"];
                 };
             };
             /** @description 세션 없음·만료 */
@@ -14455,6 +15050,65 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_DiagEvents_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    breadth_risk_route_api_diag_breadth_risk_get: {
+        parameters: {
+            query?: {
+                period?: "3M" | "6M" | "1Y";
+                ma?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_BreadthRisk_"];
                 };
             };
             /** @description 세션 없음·만료 */

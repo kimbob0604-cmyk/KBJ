@@ -1,4 +1,4 @@
-"""옵션 행사가별 투자자 추정 포지션 저장소(`prv_gex.opt_pos_strike`·`opt_pos_day` — 0030, ADR 0044).
+"""옵션 행사가별 투자자 추정 포지션 저장소(`prv_gex.opt_pos_strike`·`opt_pos_day` — 0032, ADR 0044).
 
 쓰기 주인은 작업 `gex.option_positions` 하나(그날 행 교체 — 한 트랜잭션). 읽기는 둘:
 - 작업 입력(원천 표 읽기만 — 쓰기 주인이 아니다): `investor_flow` 분 행·`chain_snapshots` 분 시세·

@@ -213,6 +213,24 @@ def test_empty_streak_drops_fund_after_limit(repos: MemoryRepos) -> None:
     assert res.detail["issuers"]["sol"]["snapshots"] == 1  # 제외된 펀드는 더 받지 않는다
 
 
+def test_whole_issuer_empty_is_a_failure_not_a_streak(repos: MemoryRepos) -> None:
+    """운용사 추적 펀드가 전부 빈 응답이면 통째 실패 — 빈 연속을 올리지 않아 사이트가 돌아오면
+    그대로 다시 받는다(2026-10-29 RISE 45개 전부 빈 응답 → 3일 뒤 통째로 추적 제외될 뻔했다)."""
+    sol = [f.fund_id for f in funds_of("sol")]
+    w = FakeIssuers(latest=date(2026, 10, 6), empty_funds=set(sol))
+    for i, d in enumerate(["2026-10-07", "2026-10-08", "2026-10-09", "2026-10-12"]):
+        res = run(repos, w, d, kst(2026, 10, 7 + i, 8), keys=["sol"])
+        iss = res.detail["issuers"]["sol"]
+        assert iss["snapshots"] == 0 and iss["dropped"] == 0
+        assert res.status == "failed" and set(res.detail["failed_issuers"]) == {"sol"}
+        assert "sol:pdf" in res.detail["errors"]
+    tracked = {fid: f for fid, f in repos.etf.funds().items() if fid.startswith("sol:")}
+    assert tracked and all(f.track and f.empty_streak == 0 for f in tracked.values())
+    w.empty_funds.clear()
+    res = run(repos, w, "2026-10-13", kst(2026, 10, 13, 8), keys=["sol"])
+    assert res.detail["issuers"]["sol"]["snapshots"] == len(tracked)
+
+
 class _FutureAdapter:
     KEY = "kodex"
     NAME = "가짜"

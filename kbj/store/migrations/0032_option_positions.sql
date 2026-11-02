@@ -1,4 +1,4 @@
--- 0030_option_positions — 옵션 행사가별 투자자 추정 포지션(metrics §34, ADR 0044 — 로그인 prv_gex).
+-- 0032_option_positions — 옵션 행사가별 투자자 추정 포지션(metrics §34, ADR 0044 — 로그인 prv_gex).
 --
 -- - 거래소 값이 아니라 키움 방식 추정치다(투자자별 합계 매매 → 평균단가 → 가까운 두 행사가 2:1).
 --   원천은 prv_gex.investor_flow(1분)·chain_snapshots(시세)·option_iv(델타) — 이 표는 그 **하루 배분 결과**만

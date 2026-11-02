@@ -138,6 +138,8 @@ P9_ENABLED: set[str] = {
     "gex.open_check_day",
     "gex.open_check_night",
     "gex.option_positions",  # 옵션 행사가별 추정 포지션(ADR 0044 — 2026-10-28 사용자 요청)
+    "global.proxy",  # 2026-11-02 글로벌 프록시(stock-dashboard 이식)
+    "global.daily",  # 2026-11-02 상대 시총·연도별 수익률(stock-dashboard 이식)
 }
 # 단계별 켜진 작업(웨이브 3 묶음이 P3~P7 을 켰다). 새 단계가 작업을 켜면 이 표에 한 줄 더한다.
 ENABLED_BY_PHASE = {
