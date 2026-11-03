@@ -82,7 +82,9 @@ def _yahoo(ctx: JobContext, cfg: MacroConfig, repos: Repos, key: DataKey) -> int
     )
     day = _day(key)
     since = day - timedelta(days=LOOKBACK_DAYS["D"])
-    got, failed = y.charts([s.item or "" for s in series], YAHOO_RANGE)
+    # 거래소 현지 날짜(환율 KRW=X 등은 런던 0시 봉 — UTC 로 자르면 서머타임 동안
+    # 하루 앞 날짜가 된다. 이미 적힌 행은 마이그레이션 0032 가 고쳤다)
+    got, failed = y.charts([s.item or "" for s in series], YAHOO_RANGE, local_dates=True)
     rows: list[MacroSeriesRow] = []
     for s in series:
         for b in got.get(s.item or "", []):

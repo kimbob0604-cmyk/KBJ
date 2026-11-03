@@ -8,7 +8,7 @@ import type { components } from '../../api/types.gen';
 import type { PageContext } from '../../app/types';
 import type { Envelope } from '../../data/source';
 import { h, replace } from '../../ui/dom';
-import { kstTime, num, pct, signClass } from '../../ui/fmt';
+import { kstStamp, kstTime, num, pct, signClass } from '../../ui/fmt';
 import { failText, type Panel } from '../../ui/panel';
 import { type StatCard, type StatTone, statSection } from '../../ui/stat';
 
@@ -117,10 +117,13 @@ export function mountGlobal(ctx: PageContext, p: Panel): () => Promise<void> {
     }
     p.setSource(env);
     const d = env.data;
+    const ageH = d.ts ? (ctx.now().getTime() - new Date(d.ts).getTime()) / 3_600_000 : null;
+    const stale = ageH !== null && ageH > 3;
     const head = h(
       'p',
       { class: 'stat-desc' },
-      `${kstTime(d.ts)} 기준(5분마다) · 원/달러 ${num(d.usdkrw ?? null, 1)} · 견준 국내 종가 ${d.base_date ?? '—'}`,
+      `${stale ? kstStamp(d.ts) : kstTime(d.ts)} 기준(5분마다) · 원/달러 ${num(d.usdkrw ?? null, 1)} · 견준 국내 종가 ${d.base_date ?? '—'}`,
+      stale ? h('span', { class: 'tag warn' }, `${num(ageH, 0)}시간 지연 — 맥이 잠들었거나 수집이 멈춤`) : null,
     );
     replace(p.body, head, ...proxySections(d).map((x) => statSection(x.title, x.desc, x.cards)));
   };

@@ -337,19 +337,23 @@ class YahooClient:
         except ValueError as e:
             raise YahooError("quote", status, str(e)[:120]) from None
 
-    def chart(self, symbol: str, range_: str = "2y", interval: str = "1d") -> list[Bar]:
+    def chart(
+        self, symbol: str, range_: str = "2y", interval: str = "1d", *, local_dates: bool = False
+    ) -> list[Bar]:
         """일봉(오름차순). 결과가 비면 빈 목록 — 부르는 쪽이 '못 받음'으로 적는다."""
-        return to_bars(self.chart_payload(symbol, range_, interval), symbol)
+        return to_bars(
+            self.chart_payload(symbol, range_, interval), symbol, local_dates=local_dates
+        )
 
     def charts(
-        self, symbols: Sequence[str], range_: str = "2y"
+        self, symbols: Sequence[str], range_: str = "2y", *, local_dates: bool = False
     ) -> tuple[dict[str, list[Bar]], dict[str, str]]:
         """여러 심볼 — 한 심볼 실패가 다른 심볼을 멈추지 않는다(격리). (받은 것, {심볼: 사유})."""
         ok: dict[str, list[Bar]] = {}
         failed: dict[str, str] = {}
         for s in symbols:
             try:
-                ok[s] = self.chart(s, range_)
+                ok[s] = self.chart(s, range_, local_dates=local_dates)
             except YahooThrottled:
                 raise  # 한도 — 남은 심볼을 계속 부르지 않는다
             except YahooError as e:

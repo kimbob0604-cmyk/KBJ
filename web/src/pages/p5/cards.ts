@@ -29,7 +29,7 @@ export function feedCards(rows: readonly FeedRow[], day: string | null): StatCar
       label: '관심종목',
       asof,
       value: `${num(watch.length)}건`,
-      tone: watch.length ? 'up' : null,
+      tone: null,
       sub: watch[0] ? `${watch[0].corp_name} · ${watch[0].title.slice(0, 18)}` : null,
     },
     ...top.map(([k, n]): StatCard => ({ label: kindLabel(k), asof, value: `${num(n)}건`, sub: '많은 유형' })),

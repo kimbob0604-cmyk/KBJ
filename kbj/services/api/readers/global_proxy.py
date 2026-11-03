@@ -19,9 +19,12 @@ from kbj.services.api.readers._common import NoData, ReadContext, envelope
 
 __all__ = ["FRESH", "K200_CODES", "global_proxy"]
 
-FRESH: Final = timedelta(hours=3)  # 이보다 오래된 시세는 쓰지 않는다(수집이 멈췄다)
+FRESH: Final = timedelta(
+    hours=3
+)  # 이보다 오래되면 '지연'(stale)으로 보인다(맥이 잠들었거나 수집이 멈췄다)
+KEEP: Final = timedelta(days=4)  # 이보다 오래된 시세는 쓰지 않는다(주말·연휴를 넘는 정도)
 K200_CODES: Final = ("코스피200", "2001")
-NO_QUOTES: Final = "최근 3시간 시세 없음 — global.proxy 5분(Hyperliquid·야후)"
+NO_QUOTES: Final = "아직 없음 — global.proxy 5분(Hyperliquid·야후)"
 
 
 def _codes() -> set[str]:
@@ -36,9 +39,14 @@ def _rows(rows: list[ProxyRow]) -> list[ProxyQuote]:
 def global_proxy(ctx: ReadContext) -> Envelope[GlobalProxy]:
     now = ctx.now()
     mkt = ctx.repos.market
-    quotes = mkt.global_quotes(now - FRESH)
+    quotes = mkt.global_quotes(now - KEEP)
     if not quotes:
         raise NoData(NO_QUOTES)
+    ts = max(q.ts for q in quotes.values())
+    stale = now - ts > FRESH
+    # 같은 묶음만 — 마지막 시세보다 FRESH 넘게 오래된 심볼(그 원천만 실패한 동안)은
+    # '받은 값 없음'으로
+    quotes = {s: q for s, q in quotes.items() if ts - q.ts <= FRESH}
     snaps, snap_day = mkt.snapshot(ctx.today())
     domestic = {c: s.close for c in _codes() if (s := snaps.get(c)) is not None and s.close}
     index_close: dict[str, float] = {}
@@ -52,7 +60,12 @@ def global_proxy(ctx: ReadContext) -> Envelope[GlobalProxy]:
         notes.append("국내 종가 없음 — 종가 대비·괴리율은 비운다")
     if "KOSPI200" not in index_close:
         notes.append("코스피200 종가 없음(krx.daily 08:05)")
-    ts = max(q.ts for q in quotes.values())
+    if stale:
+        hours = int((now - ts).total_seconds() // 3600)
+        notes.insert(
+            0,
+            f"마지막 시세가 {hours}시간 전 — 맥이 잠들었거나 수집이 멈췄다(깨우면 5분 안에 갱신)",
+        )
     data = GlobalProxy(
         ts=ts,
         base_date=snap_day,
@@ -67,7 +80,7 @@ def global_proxy(ctx: ReadContext) -> Envelope[GlobalProxy]:
         data,
         source="Hyperliquid·Yahoo",
         as_of=ts,
-        quality=Quality.ESTIMATED,
+        quality=Quality.STALE if stale else Quality.ESTIMATED,
         notes=notes,
         generated_at=now,
     )

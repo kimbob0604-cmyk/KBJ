@@ -70,3 +70,16 @@ def test_no_recent_quotes_is_no_data(world: World, authed: TestClient) -> None:
 
 def test_public_is_locked(client: TestClient) -> None:
     assert client.get("/api/market/global-proxy").status_code in (401, 403)
+
+
+def test_old_quotes_show_as_stale_not_blank(world: World, authed: TestClient) -> None:
+    """맥이 잠들어 3시간 넘게 못 받았으면 빈 패널이 아니라 마지막 시세를 stale 로."""
+    from tests.unit.api.api_world import fill_global_quotes
+
+    fill_global_quotes(world.repos, world.clock() - timedelta(hours=10))
+    body = authed.get("/api/market/global-proxy").json()
+    assert body["quality"] == "stale"
+    assert body["notes"][0].startswith("마지막 시세가 10시간 전 — 맥이 잠들었거나 수집이")
+    assert body["data"]["usdkrw"] == 1400.0
+    world.clock.set(world.clock() + timedelta(days=5))
+    assert authed.get("/api/market/global-proxy").status_code == 404

@@ -78,3 +78,16 @@ describe('글로벌 프록시 — 공개', () => {
     expect(hz.paths().some((x) => x.includes('global'))).toBe(false);
   });
 });
+
+describe('글로벌 프록시 — 지연', () => {
+  it('마지막 시세가 3시간 넘게 지났으면 머리줄에 지연 꼬리표', async () => {
+    const env = fixture<{ data: GlobalProxy }>('market_global-proxy');
+    const hz = apiHarness({ 'market_global-proxy': env });
+    const at = new Date(new Date(env.data.ts!).getTime() + 10 * 3_600_000);
+    const { ctx, root } = pageCtx(1, 'login', hz.source, { now: () => at });
+    await page.mount(ctx);
+    await flush();
+    const p = panelByTitle(root, GLOBAL_TITLE);
+    expect(text(p.querySelector('.stat-desc'))).toContain('10시간 지연');
+  });
+});

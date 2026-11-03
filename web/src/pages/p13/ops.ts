@@ -100,13 +100,13 @@ export async function fillStatus(ctx: PageContext, p: Panel): Promise<void> {
     {
       label: '점검',
       value: LEVEL_LABEL[d.level],
-      tone: d.level === 'OK' ? 'up' : d.level === 'WARN' ? 'warn' : 'down',
+      tone: d.level === 'OK' ? null : 'warn', // 이 화면 팔레트에서 빨강 = 상승 — 정상은 색 없이, 문제만 주황
       sub: `기록 ${kstStamp(d.since)} 부터`,
     },
     {
       label: '상시 서비스',
       value: `${num(okSvc)}/${num(d.services.length)}`,
-      tone: okSvc === d.services.length ? 'up' : 'down',
+      tone: okSvc === d.services.length ? null : 'warn',
       sub:
         okSvc === d.services.length
           ? '모두 살아 있음'
@@ -201,7 +201,7 @@ export async function fillJobs(ctx: PageContext, p: Panel): Promise<void> {
         {
           label: '실패',
           value: `${num(d.failed, 0)}건`,
-          tone: d.failed ? 'down' : 'up',
+          tone: d.failed ? 'warn' : null,
           zone: d.failed ? '확인 필요' : '정상',
           sub: lastFail ? `${lastFail.job} — ${(lastFail.reason ?? '').slice(0, 40)}` : '없음',
         },
