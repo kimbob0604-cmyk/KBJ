@@ -92,3 +92,22 @@ describe('요약 카드 2차', () => {
     expect(t.some((x) => x.includes('재시도 성공') && x.includes('1건'))).toBe(true);
   });
 });
+
+describe('요약 카드 3차 — 규칙', () => {
+  it('켠 규칙·30일 신호·최근 신호(보관 규칙은 뺀다)', async () => {
+    const { ruleCards } = await import('../../src/pages/p11/rules');
+    const r = (id: string, enabled: boolean, n: number, last: string | null, archived = false) =>
+      ({ rule_id: id, name: id, enabled, archived, signals_30d: n, last_signal_at: last }) as Parameters<
+        typeof ruleCards
+      >[0][number];
+    const c = ruleCards([
+      r('A', true, 3, '2026-11-02T01:00:00Z'),
+      r('B', false, 5, '2026-11-03T02:00:00Z'),
+      r('C', true, 9, '2026-11-03T05:00:00Z', true),
+    ]);
+    expect(c[0]!.value).toBe('1/2');
+    expect(c[1]!.value).toBe('8건');
+    expect(c[1]!.sub).toContain('B 5건');
+    expect(c[2]!.sub).toBe('B');
+  });
+});

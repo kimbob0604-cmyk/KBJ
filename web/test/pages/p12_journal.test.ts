@@ -120,7 +120,8 @@ describe('페이지 12 ⑤ 포트폴리오', () => {
     await fillPortfolio(ctx, p);
     const t = text(p.body);
     expect(t).toContain('실현 손익 합');
-    expect(t).toContain('보유 종목3개');
+    expect(t).toContain('보유 3종목'); // 요약 카드(2026-11-03)
+    expect(p.body.querySelectorAll('.stat')).toHaveLength(4);
     expect(p.body.querySelectorAll('table')).toHaveLength(2);
     expect(p.body.querySelector('svg')).not.toBeNull();
     expect(t).toContain('합성전자 990001');

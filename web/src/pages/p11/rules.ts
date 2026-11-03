@@ -5,8 +5,9 @@
 // - 데이터 없음(404)은 '.msg'(서버 안내), 그 밖 실패만 '.msg.err'. 쓰기 실패는 표 아래 한 줄(목록은 그대로).
 import type { PageContext } from '../../app/types';
 import { h } from '../../ui/dom';
-import { kstStamp } from '../../ui/fmt';
+import { kstStamp, num } from '../../ui/fmt';
 import { errorText, type Panel } from '../../ui/panel';
+import { type StatCard, statGrid } from '../../ui/stat';
 import { type Column, table } from '../../ui/table';
 import { failPanel } from './perf';
 import {
@@ -28,6 +29,35 @@ type Action = 'enable' | 'disable' | 'archive';
 function stateText(r: RuleSummary): string {
   if (r.archived) return '보관';
   return r.enabled ? '켜짐' : '꺼짐';
+}
+
+/** 규칙 요약 카드(2026-11-03 가시성 — 주식봇식): 켠 규칙·30일 신호·가장 최근 신호 */
+export function ruleCards(rules: readonly RuleSummary[]): StatCard[] {
+  const live = rules.filter((r) => !r.archived);
+  const on = live.filter((r) => r.enabled);
+  const n30 = live.reduce((a, r) => a + r.signals_30d, 0);
+  const last = [...live]
+    .filter((r) => r.last_signal_at)
+    .sort((a, b) => (b.last_signal_at ?? '').localeCompare(a.last_signal_at ?? ''))[0];
+  const busiest = [...live].sort((a, b) => b.signals_30d - a.signals_30d)[0];
+  return [
+    {
+      label: '켠 규칙',
+      value: `${num(on.length)}/${num(live.length)}`,
+      sub: on.length < live.length ? `꺼짐 ${num(live.length - on.length)}` : '모두 켜짐',
+    },
+    {
+      label: '30일 신호',
+      value: `${num(n30)}건`,
+      sub: busiest && busiest.signals_30d > 0 ? `가장 많은 규칙 ${busiest.name} ${num(busiest.signals_30d)}건` : null,
+    },
+    {
+      label: '최근 신호',
+      value: last?.last_signal_at ? kstStamp(last.last_signal_at) : null,
+      sub: last ? last.name : '아직 없음',
+      subTone: last ? null : 'dim',
+    },
+  ];
 }
 
 export async function fillRules(ctx: PageContext, p: Panel): Promise<void> {
@@ -102,7 +132,11 @@ export async function fillRules(ctx: PageContext, p: Panel): Promise<void> {
       );
       status.className = 'msg';
       status.textContent = writer ? '' : NO_WRITER;
-      p.body.append(table({ columns, rows, rowKey: (r) => r.rule_id, empty: RULES_HINT }).el, status);
+      p.body.append(
+        statGrid(ruleCards(env.data.rules)),
+        table({ columns, rows, rowKey: (r) => r.rule_id, empty: RULES_HINT }).el,
+        status,
+      );
     } catch (err) {
       failPanel(p, err, RULES_HINT);
     }

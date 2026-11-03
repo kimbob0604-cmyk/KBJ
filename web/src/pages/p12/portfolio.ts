@@ -12,7 +12,7 @@ import { barsChart } from '../../ui/bars';
 import { h } from '../../ui/dom';
 import { choiceField, formRow, numberField, textField } from '../../ui/form';
 import { kstDate, num, pct, signClass } from '../../ui/fmt';
-import { kv } from '../../ui/kv';
+import { type StatCard, statGrid } from '../../ui/stat';
 import { errorText, type Panel } from '../../ui/panel';
 import { type Column, table } from '../../ui/table';
 import { nil, CODE_RE, DATE_RE, failPanel, journalWriter, kstToday, NO_WRITER, status, won } from './journal';
@@ -143,6 +143,51 @@ export function tradeForm(today: string): {
   };
 }
 
+const toneOf = (v: number | null | undefined): 'up' | 'down' | null =>
+  v === null || v === undefined || v === 0 ? null : v > 0 ? 'up' : 'down';
+
+/** 포트폴리오 요약 카드(2026-11-03 가시성 — 주식봇식): 평가 손익(%)·평가금액·실현 손익·보유·매매 */
+export function portfolioCards(d: Portfolio): StatCard[] {
+  const held = d.positions.filter((x) => x.qty > 0);
+  const mv = held.reduce<number | null>(
+    (a, x) => (x.market_value === null || a === null ? null : a + x.market_value),
+    0,
+  );
+  const cost = held.reduce<number | null>(
+    (a, x) => (x.avg_cost === null || a === null ? null : a + x.avg_cost * x.qty),
+    0,
+  );
+  const upct = d.unrealized_total !== null && cost ? (d.unrealized_total / cost) * 100 : null;
+  const best = [...held]
+    .filter((x) => x.unrealized_pct !== null)
+    .sort((a, b) => (b.unrealized_pct ?? 0) - (a.unrealized_pct ?? 0));
+  const worst = best.at(-1);
+  return [
+    {
+      label: '평가 손익 합',
+      value: won(d.unrealized_total),
+      tone: toneOf(d.unrealized_total),
+      sub: upct === null ? null : `원가 대비 ${pct(upct)}`,
+      subTone: toneOf(upct),
+    },
+    { label: '평가금액', value: held.length ? won(mv) : null, sub: `보유 ${num(held.length)}종목` },
+    {
+      label: '실현 손익 합',
+      value: won(d.realized_total),
+      tone: toneOf(d.realized_total),
+      sub: `매매 ${num(d.trades_n)}건`,
+    },
+    {
+      label: '수익률 1위',
+      value: best[0] ? (best[0].name ?? best[0].code) : null,
+      tone: toneOf(best[0]?.unrealized_pct),
+      sub: best[0]
+        ? `${pct(best[0].unrealized_pct)}${worst && worst !== best[0] ? ` · 꼴찌 ${worst.name ?? worst.code} ${pct(worst.unrealized_pct)}` : ''}`
+        : null,
+    },
+  ];
+}
+
 export async function fillPortfolio(ctx: PageContext, p: Panel): Promise<void> {
   const w = journalWriter(ctx.source);
   let env: Envelope<Portfolio>;
@@ -174,22 +219,8 @@ export async function fillPortfolio(ctx: PageContext, p: Panel): Promise<void> {
       },
     );
   });
-  const held = d.positions.filter((x) => x.qty > 0);
   p.body.append(
-    kv([
-      {
-        label: '실현 손익 합',
-        value: won(d.realized_total),
-        cls: signClass(d.realized_total),
-      },
-      {
-        label: '평가 손익 합',
-        value: won(d.unrealized_total),
-        cls: signClass(d.unrealized_total),
-      },
-      { label: '보유 종목', value: `${held.length}개` },
-      { label: '매매 기록', value: `${d.trades_n}건` },
-    ]),
+    statGrid(portfolioCards(d)),
     d.trades_n === 0
       ? h('p', { class: 'msg' }, PORTFOLIO_HINT)
       : table<PositionOut>({
