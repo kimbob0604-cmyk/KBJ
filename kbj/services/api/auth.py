@@ -46,6 +46,7 @@ __all__ = [
     "COOKIE_DEV",
     "COOKIE_SECURE",
     "CSRF_HEADER",
+    "LOCAL_USER",
     "Credentials",
     "LoginGuard",
     "LoginNotConfigured",
@@ -63,6 +64,7 @@ log = logging.getLogger(__name__)
 COOKIE_SECURE: Final = "__Host-kbj_session"  # Secure·Path=/·Domain 없음(브라우저가 강제)
 COOKIE_DEV: Final = "kbj_session"  # web_cookie_secure=false — 루프백 개발에서만(Settings 검증)
 CSRF_HEADER: Final = "X-KBJ-CSRF"
+LOCAL_USER: Final = "local"  # 로그인 없이 쓰는 로컬 세션의 이름(web_login=false)
 
 SALT_BYTES: Final = 16
 DK_BYTES: Final = 64
@@ -272,6 +274,15 @@ class SessionStore:
     @staticmethod
     def _key(sid: str) -> str:
         return web_session_key(web_digest(sid, 32))
+
+    def local(self, user: str = LOCAL_USER) -> SessionData:
+        """로그인 없이 쓰는 로컬 세션(`web_login=false`) — 쿠키·Redis 없이 프로세스 수명 동안 하나.
+
+        CSRF 토큰은 실행마다 새로 만든다 — 쓰기는 여전히 `/api/auth/me` 로 받은 토큰과
+        Origin 을 본다.
+        """
+        ts = self._now().isoformat()
+        return SessionData(user=user, csrf=secrets.token_urlsafe(32), created=ts, last_seen=ts)
 
     def create(self, user: str) -> tuple[str, SessionData]:
         sid = secrets.token_urlsafe(32)

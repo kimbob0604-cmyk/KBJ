@@ -6796,6 +6796,11 @@ export interface components {
             user: string;
             /** Csrf Token */
             csrf_token: string;
+            /**
+             * Login Required
+             * @default true
+             */
+            login_required: boolean;
         };
         /** MinuteCard */
         MinuteCard: {

@@ -25,6 +25,8 @@ class CsrfResponse(ApiModel):
 class MeResponse(ApiModel):
     user: str
     csrf_token: str
+    # false = 로그인 없이 쓰는 로컬(settings.web_login=false) — 화면은 로그아웃 단추를 그리지 않는다
+    login_required: bool = True
 
 
 class Health(ApiModel):

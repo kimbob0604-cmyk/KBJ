@@ -11,6 +11,8 @@ export const CSRF_HEADER = 'X-KBJ-CSRF';
 
 export interface Session {
   user: string;
+  /** false = 로그인 없이 쓰는 로컬(서버 KBJ_WEB_LOGIN=false — 맥 127.0.0.1). 로그아웃 단추를 그리지 않는다 */
+  loginRequired?: boolean;
 }
 
 export type LoginResult =
@@ -65,10 +67,12 @@ export function createAuth(opts: AuthOptions = {}): Auth {
       }
       if (!res.ok) throw new Error(`세션 확인 실패 (HTTP ${res.status})`);
       const body = await jsonOrNull(res);
-      const user = typeof body === 'object' && body !== null ? (body as Record<string, unknown>).user : null;
+      const rec = typeof body === 'object' && body !== null ? (body as Record<string, unknown>) : null;
+      const user = rec ? rec.user : null;
       csrf = csrfFrom(body);
       if (typeof user !== 'string' || !csrf) throw new Error('세션 응답 형식 오류');
-      return { user };
+      // 옛 서버(칸 없음)는 로그인 필요로 본다
+      return { user, loginRequired: rec?.login_required !== false };
     },
 
     async login(username, password) {

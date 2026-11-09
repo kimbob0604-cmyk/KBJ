@@ -112,6 +112,11 @@ def logout(request: Request, session: Annotated[SessionData, Depends(require_ses
 
 
 @router.get("/me", response_model=MeResponse, responses={401: {"model": ErrorBody}})
-def me(session: Annotated[SessionData, Depends(require_session)], response: Response) -> MeResponse:
+def me(
+    request: Request,
+    session: Annotated[SessionData, Depends(require_session)],
+    response: Response,
+) -> MeResponse:
     response.headers["Cache-Control"] = NO_STORE
-    return MeResponse(user=session.user, csrf_token=session.csrf)
+    login_required = get_state(request).settings.web_login
+    return MeResponse(user=session.user, csrf_token=session.csrf, login_required=login_required)

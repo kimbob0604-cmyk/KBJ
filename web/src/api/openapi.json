@@ -24125,6 +24125,11 @@
           "csrf_token": {
             "type": "string",
             "title": "Csrf Token"
+          },
+          "login_required": {
+            "type": "boolean",
+            "title": "Login Required",
+            "default": true
           }
         },
         "additionalProperties": false,

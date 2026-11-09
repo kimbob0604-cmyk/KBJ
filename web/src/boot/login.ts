@@ -36,6 +36,11 @@ export async function bootLogin(root: HTMLElement, o: BootLoginOptions = {}): Pr
       },
     });
     app?.destroy();
+    // 로그인 없이 쓰는 로컬(맥 127.0.0.1)은 로그아웃 단추·이름을 그리지 않는다
+    if (session.loginRequired === false) {
+      app = mountApp(root, { ...mountRest, tier: 'login', source });
+      return;
+    }
     app = mountApp(root, {
       ...mountRest,
       tier: 'login',

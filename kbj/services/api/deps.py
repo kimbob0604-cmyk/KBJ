@@ -81,6 +81,8 @@ class ApiState:
     versions: DataVersions | None  # None = 캐시하지 않는다(시험·버전 원천 없음)
     cookie_name: str
     webhook: WebhookHandler
+    # 로그인 없이 쓰는 로컬 세션(settings.web_login=false — 루프백에서만). None = 로그인 필요
+    local_session: SessionData | None = None
 
 
 def get_state(request: Request) -> ApiState:
@@ -91,9 +93,15 @@ def get_state(request: Request) -> ApiState:
 
 
 def require_session(request: Request) -> SessionData:
-    """세션 쿠키 → 세션. 없거나 만료면 401(본문에 사유 코드만)."""
+    """세션 쿠키 → 세션. 없거나 만료면 401(본문에 사유 코드만).
+
+    로그인 없이 쓰는 로컬(`local_session`)이면 쿠키가 없어도 그 세션 — 쓰기는 require_csrf 가
+    그대로 본다.
+    """
     st = get_state(request)
     s = st.sessions.get(request.cookies.get(st.cookie_name))
+    if s is None:
+        s = st.local_session
     if s is None:
         raise ApiError(401, "unauthorized", "로그인이 필요하다")
     return s

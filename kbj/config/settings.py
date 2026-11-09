@@ -113,6 +113,9 @@ class Settings(BaseSettings):
     web_user: str | None = None
     web_password_hash: SecretStr | None = None
     web_session_ttl_h: int = Field(default=12, gt=0, le=168)  # 고정 만료(활동해도 늘리지 않음)
+    # false = 로그인 화면 없이 쓴다(사용자 결정 2026-11-09 — 맥 로컬, 127.0.0.1 에서만 열린다).
+    # api_host 가 루프백이거나 api_container_bind 일 때만 허용. 쓰기의 CSRF·Origin 검사는 그대로
+    web_login: bool = True
     # __Host- 쿠키는 TLS 뒤에서만(VM 역방향 프록시). false 는 api_host 가 루프백일 때만(개발)
     web_cookie_secure: bool = True
     # 컨테이너 안 0.0.0.0 + 호스트 127.0.0.1 에만 게시하는 로컬 실행(docker-compose.local.yml).
@@ -163,6 +166,8 @@ class Settings(BaseSettings):
         loopback = self.api_host in _LOOPBACK or self.api_container_bind
         if not self.web_cookie_secure and not loopback:
             raise ValueError("KBJ_WEB_COOKIE_SECURE=false 는 KBJ_API_HOST 가 루프백일 때만(개발)")
+        if not self.web_login and not loopback:
+            raise ValueError("KBJ_WEB_LOGIN=false 는 KBJ_API_HOST 가 루프백일 때만(맥 로컬)")
         return self
 
     def secret_values(self) -> list[SecretStr]:

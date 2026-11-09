@@ -97,6 +97,16 @@ describe('로그인 빌드', () => {
     expect(boot.app()).toBeNull();
   });
 
+  it('로그인 없이 쓰는 로컬이면 로그인 화면·로그아웃 단추 없이 앱', async () => {
+    const root = appRoot();
+    const { fetch } = fakeFetch(() => json({ user: 'local', csrf_token: 't0k', login_required: false }));
+    const boot = await bootLogin(root, { fetch, now: fixedClock(), ribbon: null, loaders: new Map() });
+    expect(boot.app()).not.toBeNull();
+    expect(root.querySelector('form input[type="password"]')).toBeNull();
+    const buttons = [...root.querySelectorAll('button')].map((b) => b.textContent);
+    expect(buttons).not.toContain('로그아웃');
+  });
+
   it('세션이 있으면 앱, 데이터 요청이 401 이면 앱을 내리고 로그인 화면', async () => {
     const root = appRoot();
     const { fetch, calls } = fakeFetch((url) => {

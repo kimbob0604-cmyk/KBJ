@@ -11,9 +11,16 @@ describe('auth', () => {
     expect(await createAuth({ fetch: a.fetch }).me()).toBeNull();
     const b = fakeFetch(() => json({ user: 'me', csrf_token: 'tok' }));
     const auth = createAuth({ fetch: b.fetch });
-    expect(await auth.me()).toEqual({ user: 'me' });
+    expect(await auth.me()).toEqual({ user: 'me', loginRequired: true });
     expect(auth.hasCsrf()).toBe(true);
     expect(b.calls[0]?.init?.credentials).toBe('same-origin');
+  });
+
+  it('me: 로그인 없이 쓰는 로컬(login_required=false)은 그대로 알린다', async () => {
+    const { fetch } = fakeFetch(() => json({ user: 'local', csrf_token: 'tok', login_required: false }));
+    const auth = createAuth({ fetch });
+    expect(await auth.me()).toEqual({ user: 'local', loginRequired: false });
+    expect(auth.writeHeaders()).toEqual({ [CSRF_HEADER]: 'tok' });
   });
 
   it('me: 서버 오류는 던진다(삼키지 않는다)', async () => {

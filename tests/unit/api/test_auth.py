@@ -16,6 +16,7 @@ from kbj.services.api.auth import (
     COOKIE_SECURE,
     CSRF_HEADER,
     IP_MAX_FAILS,
+    LOCAL_USER,
     Credentials,
     LoginGuard,
     LoginNotConfigured,
@@ -26,7 +27,7 @@ from kbj.services.api.auth import (
     verify_password,
 )
 from kbj.store.redis_keys import WEB_LOGIN_LOCK, WEB_SESSION_PREFIX
-from tests.unit.api.api_world import BASE, PASSWORD, USER, World, build_world
+from tests.unit.api.api_world import BASE, PASSWORD, USER, World, build_world, make_settings
 
 LOGIN = "/api/auth/login"
 
@@ -150,7 +151,11 @@ def test_success_sets_cookie_and_session(world: World, client: TestClient) -> No
     assert 43000 < ttl <= 43200  # 12시간 고정 만료
     me = client.get("/api/auth/me")
     assert me.status_code == 200
-    assert me.json() == {"user": USER, "csrf_token": r.json()["csrf_token"]}
+    assert me.json() == {
+        "user": USER,
+        "csrf_token": r.json()["csrf_token"],
+        "login_required": True,
+    }
     assert me.headers["cache-control"] == "no-store"
 
 
@@ -192,6 +197,42 @@ def test_validation_error_does_not_echo_password(client: TestClient) -> None:
 
 def test_me_without_session_is_401(client: TestClient) -> None:
     assert client.get("/api/auth/me").status_code == 401
+
+
+def test_me_says_login_required(world: World, client: TestClient) -> None:
+    world.login(client)
+    assert client.get("/api/auth/me").json()["login_required"] is True
+
+
+def test_local_mode_needs_no_login_but_writes_keep_csrf_and_origin() -> None:
+    # 맥 로컬(KBJ_WEB_LOGIN=false) — 쿠키 없이 읽기, 쓰기는 /me 의 토큰 + 같은 출처만
+    w = build_world(intraday=False, web_login=False, web_cookie_secure=False, public_base_url=None)
+    c = TestClient(w.app(), base_url="http://testserver")
+    me = c.get("/api/auth/me")
+    assert me.status_code == 200
+    body = me.json()
+    assert body["user"] == LOCAL_USER
+    assert body["login_required"] is False
+    assert c.get("/api/market/summary").status_code != 401
+    own = "http://testserver"
+    assert c.post("/api/auth/logout", headers={"Origin": own}).status_code == 403
+    r = c.post(
+        "/api/auth/logout",
+        headers={CSRF_HEADER: body["csrf_token"], "Origin": "https://evil.example"},
+    )
+    assert r.status_code == 403
+    r = c.post("/api/auth/logout", headers={CSRF_HEADER: body["csrf_token"], "Origin": own})
+    assert r.status_code == 204
+    assert c.get("/api/auth/me").status_code == 200  # 로컬 세션은 그대로
+
+
+def test_no_login_only_on_loopback() -> None:
+    assert make_settings(web_login=False).web_login is False  # 기본 api_host 127.0.0.1
+    lan = "10.0.0.5"  # 루프백이 아닌 주소
+    with pytest.raises(ValueError, match="KBJ_WEB_LOGIN"):
+        make_settings(web_login=False, api_host=lan)
+    bound = make_settings(web_login=False, api_host=lan, api_container_bind=True)
+    assert bound.web_login is False
 
 
 def test_logout_needs_csrf_and_origin(world: World, client: TestClient) -> None:

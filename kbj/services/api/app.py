@@ -198,17 +198,19 @@ def create_app(
         fin=fin if fin is not None else load_fin(settings=settings),
         reports=reports if reports is not None else load_reports(settings=settings),
     )
+    sessions = SessionStore(redis, ttl_s=session_ttl(settings), now=now)
     state = ApiState(
         settings=settings,
         redis=redis,
         read=read,
-        sessions=SessionStore(redis, ttl_s=session_ttl(settings), now=now),
+        sessions=sessions,
         guard=LoginGuard(redis),
         credentials=_credentials(settings),
         cache=ResponseCache(now=now),
         versions=versions,
         cookie_name=COOKIE_SECURE if settings.web_cookie_secure else COOKIE_DEV,
         webhook=WebhookHandler(settings.telegram_webhook_secret, redis, now=now),
+        local_session=None if settings.web_login else sessions.local(),
     )
     app = FastAPI(
         title="KBJ API",
