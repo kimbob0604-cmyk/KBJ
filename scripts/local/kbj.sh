@@ -71,7 +71,7 @@ cmd_start() {
   else
     kbj_warn "아직 $URL 에 닿지 않는다(응답 ${code:-없음}) — $(kbj_cmd status) --logs api"
   fi
-  printf '\n%s브라우저 주소: %s%s  (로그인: %s 로 정한 아이디·비밀번호)\n' "$_c_b" "$URL" "$_c_0" "$(kbj_cmd password)"
+  printf '\n%s브라우저 주소: %s%s  (로그인 없이 열린다 — 이 맥에서만, ADR 0042)\n' "$_c_b" "$URL" "$_c_0"
   kbj_say "수집은 맥이 깨어 있을 때만 돈다 — 장 시간에는 '$(kbj_cmd awake) on' 을 켜 두거나 전원에 꽂아 둔다(안내서 ⑤)"
 }
 

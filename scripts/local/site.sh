@@ -5,6 +5,7 @@
 #   bash scripts/local/kbj.sh site init                     # 처음 한 번: 공개 저장소 kbj-site 만들기(gh 로그인 필요)
 #   bash scripts/local/kbj.sh site publish [live|full|auto]  # 만들어 올리기. auto = 시각에 따라(launchd 가 10분마다)
 #   bash scripts/local/kbj.sh site build [live|full]         # 만들기만 — ~/kbj-site/publish 를 브라우저로 미리 본다
+#   bash scripts/local/kbj.sh site push                      # 만든 것을 올리기만(build 로 확인한 뒤)
 #   bash scripts/local/kbj.sh site schedule on|off|status    # launchd: 10분마다 publish auto
 #
 # - 맥의 api 컨테이너가 페이지 1~10 의 API 응답을 정적 JSON 으로 만든다(kbj/services/api/site.py — 개인 기능 11·12·13·
@@ -168,6 +169,16 @@ cmd_publish() {
   command -v gh >/dev/null 2>&1 && pages_on || true
 }
 
+# 이미 만든 data/ 를 화면과 합쳐 올리기만(build 로 만든 것을 확인한 뒤·푸시 실패 뒤 다시)
+cmd_push() {
+  lock
+  [[ -d "$DATA" ]] || kbj_die "올릴 데이터가 없다 — $(kbj_cmd site) build full"
+  build_web
+  assemble
+  push manual
+  command -v gh >/dev/null 2>&1 && pages_on || true
+}
+
 cmd_build() {
   local set="${1:-full}"
   lock
@@ -221,6 +232,7 @@ case "${1:-}" in
   init) cmd_init ;;
   publish) shift; cmd_publish "$@" ;;
   build) shift; cmd_build "$@" ;;
+  push) cmd_push ;;
   schedule) shift; cmd_schedule "$@" ;;
-  *) sed -n '5,8p' "$0"; exit 2 ;;
+  *) sed -n '5,9p' "$0"; exit 2 ;;
 esac
