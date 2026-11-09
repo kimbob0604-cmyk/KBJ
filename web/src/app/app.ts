@@ -11,7 +11,7 @@ import { type PageLoader, pageDef, pageLoaders, PAGES } from './pages';
 import { createPager, type Pager } from './pager';
 import { createScheduler } from './refresh';
 import { type Route, route as appRoute } from './route';
-import { createTopBar } from './shell';
+import { createTopBar, type TopBarBadge } from './shell';
 import type { AppContext, Cleanup, PageContext, RibbonModule } from './types';
 
 /** 상단 띠 모듈(W2 의 src/app/ribbon.ts) — 없으면 빈 목록 */
@@ -24,6 +24,12 @@ export interface MountOptions {
   tradingview?: TradingViewMount;
   user?: string;
   onLogout?: () => void;
+  /** 붙일 페이지 번호(생략하면 13개 전부) — 공개 사이트는 1~10(개인 기능 빼고) */
+  pages?: readonly number[];
+  /** 바닥 줄 문구(생략하면 등급 문구 FOOT_TEXT) */
+  foot?: string;
+  /** 상단 바 배지(생략하면 등급 배지) */
+  badge?: TopBarBadge;
   /** 시험용: 페이지 모듈 목록(기본은 빌드 때 찾은 src/pages/p*_*.ts) */
   loaders?: ReadonlyMap<number, PageLoader>;
   /** 시험용: 상단 띠 모듈(null = 없음) */
@@ -72,6 +78,7 @@ export function mountApp(root: HTMLElement, o: MountOptions): AppHandle {
     every: ctx.every,
     ...(o.user ? { user: o.user } : {}),
     ...(o.onLogout ? { onLogout: o.onLogout } : {}),
+    ...(o.badge ? { badge: o.badge } : {}),
     // 주지 않으면(undefined) 브라우저 localStorage — null 로 바꾸면 스킨이 저장되지 않는다
     ...(o.storage !== undefined ? { storage: o.storage } : {}),
   });
@@ -79,7 +86,9 @@ export function mountApp(root: HTMLElement, o: MountOptions): AppHandle {
   const container = h('main', { class: 'pages', attrs: { id: 'pages' } });
   const grids = new Map<number, HTMLElement>();
   const sections = new Map<number, HTMLElement>();
-  for (const p of PAGES) {
+  const only = o.pages;
+  const pages = only ? PAGES.filter((p) => only.includes(p.n)) : PAGES;
+  for (const p of pages) {
     const titleId = `page-${p.n}-title`;
     const grid = h('div', { class: 'grid' });
     const sec = h(
@@ -125,7 +134,7 @@ export function mountApp(root: HTMLElement, o: MountOptions): AppHandle {
 
   const route = o.route ?? appRoute;
   const pager = createPager({
-    pages: PAGES,
+    pages,
     filled,
     container,
     sections,
@@ -147,7 +156,7 @@ export function mountApp(root: HTMLElement, o: MountOptions): AppHandle {
     root,
     h('div', { class: 'wrap' }, top),
     ribbonEl,
-    h('div', { class: 'wrap' }, nav, container, h('footer', { class: 'foot' }, FOOT_TEXT[o.tier])),
+    h('div', { class: 'wrap' }, nav, container, h('footer', { class: 'foot' }, o.foot ?? FOOT_TEXT[o.tier])),
   );
   root.classList.add('app');
   root.dataset.tier = o.tier;

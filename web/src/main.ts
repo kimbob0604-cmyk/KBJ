@@ -15,6 +15,10 @@ async function main(): Promise<void> {
   if (import.meta.env.VITE_KBJ_TIER === 'login') {
     const { bootLogin } = await import('./boot/login');
     await bootLogin(root);
+  } else if (import.meta.env.VITE_KBJ_TIER === 'site') {
+    // 공개 사이트(맥이 올린 정적 스냅샷) — 로그인·API·TradingView 없음
+    const { bootSite } = await import('./boot/site');
+    bootSite(root);
   } else {
     const { bootPublic } = await import('./boot/public');
     bootPublic(root);

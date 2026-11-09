@@ -25,6 +25,7 @@
 #   bash scripts/local/kbj.sh budget [--day YYYY-MM-DD]   # 오늘 DART·KRX 등 호출 예산을 어느 작업이 얼마나 썼는지
 #   bash scripts/local/kbj.sh errors [--since 7d] [--json]   # 최근 작업 실패·시간 초과·건너뜀을 작업마다(마지막 시각·사유 — 값·키 없음). docs/ops_error_catalog.md
 #   bash scripts/local/kbj.sh audit [--show 경로]   # 화면 API 전체 점검(상태·기준 시각·빈 칸) — 로그인 없이, 값은 --show 로 하나씩
+#   bash scripts/local/kbj.sh site init|publish|build|schedule   # 공개 사이트(kbj-site — 페이지 1~10, 로그인 없이 누구나) 만들어 GitHub Pages 에 올림
 #   bash scripts/local/kbj.sh open         # 브라우저로 열기
 #
 # 맥 기본 bash(3.2)에서 돈다. 키 값은 화면·로그에 내지 않는다(lib.sh 규칙 그대로). 데이터 볼륨은 어느 명령도 지우지 않는다.
@@ -37,7 +38,7 @@ source "$here/../vm/lib.sh"
 URL="http://127.0.0.1:8000"
 AWAKE_PID_FILE="${KBJ_AWAKE_PID_FILE:-$HOME/.kbj-awake.pid}"
 
-usage() { sed -n '2,28p' "$0"; }
+usage() { sed -n '2,29p' "$0"; }
 
 # 도커 설정 점검(메모리 5GB 미만이면 서비스가 죽을 수 있다 — 알려만 준다)
 check_docker_resources() {
@@ -472,6 +473,7 @@ main() {
     job) cmd_job "$@" ;;
     awake) cmd_awake "$@" ;;
     auto) cmd_auto "$@" ;;
+    site) exec bash "$here/site.sh" "$@" ;;
     open)
       if command -v open >/dev/null 2>&1; then open "$URL"; else kbj_say "브라우저에서 $URL 을 연다"; fi ;;
     -h|--help|help|"") usage ;;

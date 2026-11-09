@@ -8,6 +8,8 @@
   (W2 가 `npm run gen:types` 로 TS 타입을 만든다).
 - `hash-password`: `getpass` 로 두 번 입력 → **stdout 에 해시만**(로그·파일 없음). 사용자 이름은
   묻지 않는다(`KBJ_WEB_USER` 는 평문 설정).
+- `site [--set live|full] [--out DIR]`: 공개 사이트 JSON(페이지 1~10 — services/api/site.py).
+  기본은 표준 출력에 tar(호스트의 `kbj.sh site` 가 푼다), 결과 줄은 stderr.
 """
 
 from __future__ import annotations
@@ -152,6 +154,52 @@ def _audit(args: argparse.Namespace, out: IO[str]) -> int:  # pragma: no cover �
     return 1 if any(r.status >= 500 for r in rows) else 0
 
 
+def _site(args: argparse.Namespace, err: IO[str]) -> int:  # pragma: no cover — Postgres·Redis 필요
+    from dataclasses import replace
+
+    from kbj.config.files import config_path
+    from kbj.config.settings import Settings
+    from kbj.core.time import utcnow
+    from kbj.services.api.app import create_app
+    from kbj.services.api.cache import PgDataVersionSource
+    from kbj.services.api.site import build_site, load_site_config, write_dir, write_tar
+    from kbj.services.runtime.heartbeat import connect_redis
+    from kbj.store.db import connect
+    from kbj.store.repos import pg_repos
+
+    settings = Settings()
+    if settings.redis_url is None or settings.database_url is None:
+        print("KBJ_DATABASE_URL·KBJ_REDIS_URL 이 필요하다", file=sys.stderr)
+        return 2
+
+    def conn() -> Any:
+        return connect(settings, service=SERVICE)
+
+    # 데이터 버전을 넘겨야 원장(전 종목 60일)을 한 번만 만든다 — 없으면 종목마다 다시 만든다(14초씩)
+    app = create_app(
+        settings,
+        redis=connect_redis(settings.redis_url),
+        repos=pg_repos(conn),
+        data_versions=PgDataVersionSource(conn),
+        static_dir=False,
+    )
+    config = load_site_config(config_path("site.yaml", settings=settings))
+    if args.max_stocks is not None:
+        config = replace(config, max_stocks=args.max_stocks)
+    files, report = build_site(
+        app, args.set, config, utcnow, log=lambda m: print(m, file=err, flush=True)
+    )
+    if args.out:
+        write_dir(files, Path(args.out))
+    else:
+        write_tar(files, sys.stdout.buffer)  # 호스트(kbj.sh site)가 푼다 — 결과 줄은 stderr
+    print(report.line(), file=err)
+    print("  오래 걸린 경로: " + " · ".join(report.slowest()), file=err)
+    for name, status in sorted(report.failed.items())[:20]:
+        print(f"  실패 {status} {name}", file=err)
+    return 1 if any(s >= 500 for s in report.failed.values()) else 0
+
+
 def main(
     argv: Sequence[str] | None = None,
     *,
@@ -170,6 +218,10 @@ def main(
     au.add_argument("--code", default="005930", help="{code} 경로에 넣을 종목")
     au.add_argument("--show", help="이 경로 하나의 응답 전체를 찍는다(예 /api/market/summary)")
     au.add_argument("--json", action="store_true", help="표 대신 JSON 줄")
+    si = sub.add_parser("site", help="공개 사이트 JSON(페이지 1~10) — 표준 출력에 tar")
+    si.add_argument("--set", choices=("live", "full"), default="full", help="장중 묶음·전부")
+    si.add_argument("--out", help="tar 대신 이 폴더에 쓴다")
+    si.add_argument("--max-stocks", type=int, help="종목 상세 수 상한(config/site.yaml 대신)")
     args = ap.parse_args(argv)
     o = out or sys.stdout
     e = err or sys.stderr
@@ -179,6 +231,8 @@ def main(
         return _hash_password(o, e, ask)
     if args.cmd == "audit":
         return _audit(args, o)
+    if args.cmd == "site":
+        return _site(args, e)
     return _serve()
 
 

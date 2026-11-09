@@ -36,7 +36,8 @@ bash scripts/local/kbj.sh keys
 bash scripts/local/kbj.sh password
 ```
 
-대시보드 로그인 아이디와 비밀번호(12자 이상)를 정한다. 처음엔 이미지를 만드느라 **10~20분** 걸린다(맥이 깨어 있어야 한다).
+대시보드 로그인 아이디와 비밀번호(12자 이상)를 정한다 — **맥 로컬은 2026-11-09 부터 로그인 화면 없이 열린다**(ADR 0042,
+`KBJ_WEB_LOGIN=false` — 이 맥의 127.0.0.1 에서만 열려서). 이 단계는 건너뛰어도 된다. 처음엔 이미지를 만드느라 **10~20분** 걸린다(맥이 깨어 있어야 한다).
 
 ## ④ 시작
 
@@ -44,7 +45,7 @@ bash scripts/local/kbj.sh password
 bash scripts/local/kbj.sh start
 ```
 
-마지막에 `✔ http://127.0.0.1:8000 열림` 이 나오면 브라우저에서 그 주소를 열고 ③에서 정한 아이디·비밀번호로 로그인한다.
+마지막에 `✔ http://127.0.0.1:8000 열림` 이 나오면 브라우저에서 그 주소를 연다(로그인 화면 없이 바로 대시보드).
 (`bash scripts/local/kbj.sh open` 으로도 열린다.) 이후로는 Docker Desktop 만 켜져 있으면 `start` 한 줄이면 된다.
 
 ## ⑤ 텔레그램 알림 (선택)
@@ -75,6 +76,8 @@ bash scripts/local/kbj.sh start
 | 수출입 7번 '종목' 탭 채우기(공공데이터 키 필요 — 매핑표 다시 싣기·시군구 5년 백필·지수 재계산) | `bash scripts/local/kbj.sh fill-trade` |
 | 작업 하나 지금 돌리기 | `bash scripts/local/kbj.sh job market.close_collect` (`--as-of 2026-10-16` 로 날짜 지정) |
 | 문제가 있는 서비스 로그 | `bash scripts/local/kbj.sh status --logs api` |
+| **공개 사이트**(Beom's Dashboard 처럼 어디서나 로그인 없이 — 페이지 1~10, ADR 0042) 처음 한 번 | `bash scripts/local/kbj.sh site init` → `site publish full` → `site schedule on` |
+| 공개 사이트 지금 올리기 / 자동 올리기 상태 | `bash scripts/local/kbj.sh site publish` / `site schedule status` — 주소 https://kimbob0604-cmyk.github.io/kbj-site/ |
 
 - 데이터는 도커 볼륨에 남는다. `stop` 이나 `--down` 으로는 지워지지 않는다(어느 명령도 데이터를 지우지 않는다).
 - 매일 새벽 3시의 자동 백업은 맥이 깨어 있어야 돈다. 일주일에 한 번 `backup --now` 를 해 두는 것을 권한다.
@@ -104,7 +107,8 @@ bash scripts/local/kbj.sh start
 - **옵션 감마(GEX) 수집:** KBJ 쪽 수집기(`gex.poller`·`kis.master` 등)는 2026-10-20 부터 등록부에서 켜져 있다 — 같은 KIS
   앱키로 옛 GEXLAB 수집을 같이 돌리지 않는다(한도 초과). `start` 는 GEX 옵션 마스터(Redis `kis:master`)가 없으면 한 번
   받는다(장중·주말에 처음 띄워도 `gex-poller` 가 체인을 부를 수 있게). 페이지 3 GEX 패널은 30초마다 다시 읽는다.
-- **외부 공개 사이트(Pages)·공유 링크:** 로컬 모드에서는 쓰지 않는다.
+- **공개 사이트(kbj-site — GitHub Pages):** 맥이 10분마다 정적 화면을 올린다(`site schedule on`, ADR 0042). 수집은 여전히
+  맥에서만 돈다 — 맥이 꺼져 있으면 사이트는 마지막으로 올린 화면에 멈춘다. 개인 기능(11·12·13)·관심종목은 올리지 않는다.
 - **실주문은 없다:** `KBJ_LIVE_TRADING` 은 항상 false 다.
 
 ## ⑧ 문제가 생기면
@@ -114,5 +118,6 @@ bash scripts/local/kbj.sh start
 | `Docker Desktop 이 꺼져 있다` | 앱을 열고 고래 아이콘이 가만히 있을 때 다시 |
 | 빌드가 중간에 멈춤 | 메모리를 6GB 이상으로(①-2), 인터넷 연결 확인 후 `start` 를 다시(이어서 빌드한다) |
 | `127.0.0.1:8000` 이 안 열림 | `bash scripts/local/kbj.sh status` → 이상한 서비스 이름을 `status --logs <이름>` |
-| 로그인이 안 됨 | `bash scripts/local/kbj.sh password` 로 다시 정한 뒤 `start` |
+| 로그인 화면이 나온다 | 맥 로컬은 로그인 없이 열린다 — `update` 로 새 버전을 받는다(그래도 나오면 `status --logs api`) |
+| 공개 사이트가 멈춰 있다 | `bash scripts/local/kbj.sh site schedule status`(최근 로그) — 맥이 꺼져 있던 동안은 마지막으로 올린 화면 그대로다 |
 | 8000 포트 사용 중 | 다른 프로그램이 쓰는 중 — 그 프로그램을 끄거나 알려 주세요 |

@@ -1,12 +1,14 @@
 /// <reference types="vitest/config" />
 // KBJ 웹 빌드 설정 — docs/p3_design.md §6.
 //
-// 빌드 두 벌(D-P3-2): `--mode public` → dist-public(정적 Pages), `--mode login` → dist-login(VM API 와 같은 출처).
+// 빌드 세 벌(D-P3-2): `--mode public` → dist-public(정적 Pages), `--mode login` → dist-login(VM API 와 같은 출처),
+// `--mode site` → dist-site(공개 사이트 — 맥이 올린 정적 스냅샷, 로그인판 위젯 그대로).
 // 등급은 빌드 시점 상수 `import.meta.env.VITE_KBJ_TIER` 하나로 가른다. main.ts 의 분기가 상수로 접혀
 // 공개 번들에는 로그인 코드(`data/api.ts`·`data/auth.ts`)가 들어가지 않는다 — scripts/check-bundle.mjs 가 확인한다.
 import { defineConfig, type Plugin } from 'vite';
 
-type Tier = 'public' | 'login';
+// site = 공개 사이트(맥이 올린 정적 스냅샷 — 사용자 결정 2026-11-09, docs/adr/0042-site-snapshot.md)
+type Tier = 'public' | 'login' | 'site';
 
 // 로그인 CSP 는 API 서버 헤더가 정본이다(§5.4). 메타 태그는 같은 정책의 두 번째 겹(frame-ancestors 는 메타에서 무시돼 뺀다).
 const CSP_LOGIN = [
@@ -37,7 +39,7 @@ const CSP_PUBLIC = [
 
 function tierOf(mode: string): Tier {
   // 모르는 모드는 공개로 — 애매하면 덜 여는 쪽(DATA_TIERS 원칙의 반대 방향이 아니라, 로그인 코드를 넣지 않는 쪽)
-  return mode === 'login' ? 'login' : 'public';
+  return mode === 'login' || mode === 'site' ? mode : 'public';
 }
 
 function cspMeta(tier: Tier): Plugin {
@@ -48,7 +50,7 @@ function cspMeta(tier: Tier): Plugin {
       return [
         {
           tag: 'meta',
-          attrs: { 'http-equiv': 'Content-Security-Policy', content: tier === 'login' ? CSP_LOGIN : CSP_PUBLIC },
+          attrs: { 'http-equiv': 'Content-Security-Policy', content: tier === 'public' ? CSP_PUBLIC : CSP_LOGIN },
           injectTo: 'head-prepend',
         },
       ];
@@ -66,7 +68,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [cspMeta(tier)],
     build: {
-      outDir: tier === 'login' ? 'dist-login' : 'dist-public',
+      outDir: `dist-${tier}`,
       emptyOutDir: true,
       target: 'es2022',
       sourcemap: false,

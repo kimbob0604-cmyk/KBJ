@@ -15,6 +15,13 @@ export interface TopBarOptions {
   user?: string;
   onLogout?: () => void;
   storage?: Pick<Storage, 'getItem' | 'setItem'> | null;
+  /** 등급 배지 대신 보일 배지(공개 사이트 — '스냅샷') */
+  badge?: TopBarBadge;
+}
+
+export interface TopBarBadge {
+  text: string;
+  title: string;
 }
 
 export const TIER_BADGE: Record<Tier, string> = { public: '공개판', login: '로그인' };
@@ -52,8 +59,11 @@ export function createTopBar(o: TopBarOptions): HTMLElement {
     clock,
     h(
       'span',
-      { class: 'badge', attrs: { title: o.tier === 'public' ? '공개 등급 데이터만' : '로그인 등급 포함' } },
-      TIER_BADGE[o.tier],
+      {
+        class: 'badge',
+        attrs: { title: o.badge?.title ?? (o.tier === 'public' ? '공개 등급 데이터만' : '로그인 등급 포함') },
+      },
+      o.badge?.text ?? TIER_BADGE[o.tier],
       o.user ? ` · ${o.user}` : '',
     ),
     h('div', { class: 'spacer' }),

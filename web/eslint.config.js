@@ -42,7 +42,7 @@ const restrictedImports = (allow) => ({
 });
 
 export default tseslint.config(
-  { ignores: ['dist-public/**', 'dist-login/**', 'node_modules/**', 'coverage/**', 'src/api/types.gen.ts'] },
+  { ignores: ['dist-public/**', 'dist-login/**', 'dist-site/**', 'node_modules/**', 'coverage/**', 'src/api/types.gen.ts'] },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   {

@@ -1,0 +1,48 @@
+# 공개 사이트(kbj-site — GitHub Pages) 내보내기 설정. 코드 kbj/services/api/site.py, 명령 `bash scripts/local/kbj.sh site`.
+# 사용자 결정 2026-11-09: Beom's Dashboard 처럼 페이지 1~10 을 로그인 없이 누구나 보는 주소에 올린다(11·12·13 개인
+# 기능·관심종목은 올리지 않는다). 맥이 만들어 올린다 — 맥이 꺼져 있으면 마지막으로 올린 화면이 열린다.
+#
+# full(하루 몇 번): 인자 없는 GET 경로 전부 + variants + 화면에 나온 종목의 상세(max_stocks) + 테마 상세 + 검색 목록.
+# live(장중 10분): 아래 live 경로만(그리고 그 경로의 variants) — 나머지 파일은 지난 full 그대로 둔다.
+version: 1
+
+# 종목 상세를 만들 종목 수 상한 — 응답에 나온 종목 코드를 많이 나온 순으로(종목 하나에 파일 약 15개·약 7초 —
+# 200개면 full 한 번에 25분 안팎, 2026-11-09 맥 실측)
+max_stocks: 200
+# 화면에 안 나와도 늘 넣을 종목
+always: ["005930", "000660"]
+
+# 장중 10분마다 다시 만드는 경로(시세·수급·GEX — 장중에 바뀌는 것)
+live:
+  - market/summary
+  - market/ribbon
+  - market/sectors
+  - flows/intraday
+  - flows/market-minute
+  - program/top
+  - gex/briefing
+  - gex/flow
+  - gex/levels
+  - gex/profile
+  - filings/feed
+  - etf/active-consensus
+
+# 화면이 기본값 밖 인자로 부르는 것 — 화면을 돌아보며 채운다(없는 파일은 화면에 '공개 사이트에 없는 보기')
+variants:
+  # 5 공시 피드 — 화면은 오늘 공시를 1,000건까지 부른다(web/src/pages/p5/feed.ts). 날짜 인자는 화면이 빼고 찾는다
+  - {key: filings/feed, params: {limit: 1000}}
+
+# 인자 하나를 여러 값으로 펼쳐 부른다 — values(고정 목록) + source 응답의 list 목록 항목 field 칸에서 모은 값.
+# fixed 는 화면이 기본값 밖으로 고정해 부르는 인자(API 기본값과 같은 인자는 화면이 빼고 찾으니 적지 않는다)
+expand:
+  # 3 진단 — 지표 그래프(요약의 지표마다 + 공포탐욕). web/src/pages/p3/diag.ts
+  - {key: diag/history, param: key, source: diag/summary, list: indicators, field: key, values: [fear_greed]}
+  # 3 GEX 확장 지표. web/src/pages/p3/gex.ts EXT_METRICS
+  - {key: gex/metrics, param: name, values: [vex, cex, skew_25d]}
+  # 6 매크로 — 탭마다. web/src/pages/p6/common.ts
+  - {key: macro/series, param: tab, source: macro/tabs, list: tabs, field: id}
+  # 4 수급 스크리너 — 기준 8가지(화면 처음 값: 거래대금 20일 평균 300억 이상). web/src/pages/p4_flows.ts
+  - key: flows/screen
+    param: mode
+    values: [value, foreign, inst, both, streak, spike, foreign_cap, inst_cap]
+    fixed: {min_avg_turnover: 30000000000}

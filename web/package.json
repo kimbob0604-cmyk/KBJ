@@ -17,6 +17,7 @@
     "test:watch": "vitest",
     "build:public": "vite build --mode public",
     "build:login": "vite build --mode login",
+    "build:site": "vite build --mode site",
     "check:bundle": "node scripts/check-bundle.mjs",
     "gen:types": "openapi-typescript src/api/openapi.json -o src/api/types.gen.ts"
   },
