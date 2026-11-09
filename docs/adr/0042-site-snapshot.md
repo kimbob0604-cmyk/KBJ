@@ -25,7 +25,7 @@
 2. **내보내기는 맥의 api 컨테이너 안**에서 audit 와 같은 세션 우회로 GET 을 부른다(서버·쿠키를 건드리지 않음). 개인 경로
    (auth·webhook·rules·backtest·journal·portfolio·watchlist·ops·health)는 부르지 않고, 응답 안의 `is_watch` 는 false 로 지운다.
    404 `no_data` 본문은 파일로 남겨 화면이 같은 안내 문구를 보인다. 그 밖 실패는 결과 줄에 센다.
-3. **묶음**: `full`(인자 없는 경로 전부 + variants + 화면에 나온 종목 상세 `max_stocks` + 테마 상세 + 검색 목록 — 07:40·16:40·
+3. **묶음**: `full`(인자 없는 경로 전부 + variants + 화면에 나온 종목 상세 `max_stocks` + 테마 상세 + 검색 목록 — 07:10·16:40·
    20:40 뒤 한 번씩), `live`(장중 10분 — 시세·수급·GEX 경로만 덮어쓰기). launchd `com.kbj.site` 가 10분마다
    `kbj.sh site publish auto`.
 4. **배포 저장소는 따로**: 공개 저장소 `kimbob0604-cmyk/kbj-site` 의 `gh-pages` 에 커밋 하나로 강제 푸시(Beom's 와 같은 방식 —

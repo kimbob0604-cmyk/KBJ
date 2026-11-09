@@ -28,7 +28,7 @@ LOCK="$SITE_DIR/.lock"
 LABEL="com.kbj.site"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 # 장 마감 뒤·아침·저녁 — 이 시각을 지난 뒤 full 이 아직 없으면 full(HHMM)
-FULL_AT="0740 1640 2040"
+FULL_AT="0710 1640 2040"
 
 site_url() { local o="${SITE_REPO%%/*}" r="${SITE_REPO#*/}"; echo "https://$o.github.io/$r/"; }
 
@@ -147,9 +147,14 @@ cmd_init() {
 
 pages_on() {
   gh api "repos/$SITE_REPO/pages" >/dev/null 2>&1 && return 0
-  gh api -X POST "repos/$SITE_REPO/pages" -f "source[branch]=gh-pages" -f "source[path]=/" >/dev/null \
-    && kbj_ok "GitHub Pages 를 켰다 — 첫 배포는 몇 분 걸린다: $(site_url)" \
-    || kbj_warn "Pages 켜기 실패 — 저장소 Settings → Pages 에서 gh-pages 브랜치를 고른다"
+  local out
+  # gh-pages 첫 푸시 뒤 GitHub 가 스스로 켜기도 한다 — 그때 POST 는 409(이미 켜짐)라 성공으로 본다
+  if out="$(gh api -X POST "repos/$SITE_REPO/pages" -f "source[branch]=gh-pages" -f "source[path]=/" 2>&1)" \
+    || [[ "$out" == *"already enabled"* ]]; then
+    kbj_ok "GitHub Pages 켜짐 — 첫 배포는 몇 분 걸린다: $(site_url)"
+  else
+    kbj_warn "Pages 켜기 실패 — 저장소 Settings → Pages 에서 gh-pages 브랜치를 고른다"
+  fi
 }
 
 cmd_publish() {
@@ -213,7 +218,7 @@ cmd_schedule() {
 EOF
       launchctl unload "$PLIST" >/dev/null 2>&1 || true
       launchctl load "$PLIST" || kbj_die "launchd 등록 실패: $PLIST"
-      kbj_ok "켰다 — 10분마다(평일 장중 live, 07:40·16:40·20:40 뒤 full). 로그: ~/Library/Logs/$LABEL.log" ;;
+      kbj_ok "켰다 — 10분마다(평일 장중 live, 07:10·16:40·20:40 뒤 full). 로그: ~/Library/Logs/$LABEL.log" ;;
     off)
       launchctl unload "$PLIST" >/dev/null 2>&1 || true
       rm -f "$PLIST"
