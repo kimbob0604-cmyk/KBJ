@@ -160,8 +160,16 @@ def redis() -> fakeredis.FakeRedis:
 
 
 @pytest.fixture
-def config() -> NotifyConfig:
+def real_config() -> NotifyConfig:
+    """`config/notify.yaml` 그대로 — 운영자가 종류를 켜고 끈 상태(`enabled`) 포함."""
     return load_notify_config(settings=Settings(_env_file=None))  # pyright: ignore[reportCallIssue]
+
+
+@pytest.fixture
+def config(real_config: NotifyConfig) -> NotifyConfig:
+    """발송 시험용 — 모든 종류를 켠 상태. 운영자의 종류별 끄기가 시험 결과를 바꾸지 않게 한다."""
+    kinds = {k: p.model_copy(update={"enabled": True}) for k, p in real_config.kinds.items()}
+    return real_config.model_copy(update={"kinds": kinds})
 
 
 @pytest.fixture

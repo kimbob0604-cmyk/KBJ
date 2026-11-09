@@ -104,6 +104,9 @@ class KindPolicy(BaseModel):
     ttl_s: int | None = Field(default=None, gt=0)  # 문지기 수명을 바꿀 때만(기본은 위 표)
     parse_mode: ParseMode | None = "HTML"
     silent: bool = False
+    # False 면 이 종류는 텔레그램으로 보내지 않고 기록만 한다(`suppressed`) — 전체 스위치
+    # KBJ_NOTIFY_ENABLED 와 별개로 종류 하나만 끈다. 기록·health 는 그대로 남는다.
+    enabled: bool = True
     max_parts: int = Field(default=10, ge=1, le=50)
     # 이 시각(KST, as_of 날짜)이 지나면 보내지 않는다 — 늦은 마감 요약이 다음 날 아침에 가지 않게
     catch_up_until: time | None = None

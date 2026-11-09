@@ -7,6 +7,7 @@
 #   cooldown  쿨다운     {kind}:{subject 또는 본문 해시} — 마지막 발송부터 cooldown_s   cooldown_s
 #   subject   대상별 1회 {kind}:{subject 또는 본문 해시}                             30일
 #   body      그 밖      {kind}:{as_of}:{sha256(본문) 16자}                           24시간
+# enabled: false 를 적으면 그 종류만 텔레그램으로 보내지 않고 기록만 한다(status suppressed) — 전체 스위치는 KBJ_NOTIFY_ENABLED.
 # ttl_s 를 적으면 문지기 수명을 바꾼다. catch_up_until(KST, as_of 날짜)이 지나면 보내지 않는다(failed).
 version: 1
 
@@ -109,14 +110,17 @@ kinds:
     topic: ops
     dedup: cooldown
     cooldown_s: 1800
+    enabled: false   # 2026-11-09 사용자 결정 — 텔레그램 발송 끔(기록·health·페이지 13 은 그대로). 다시 받으려면 true
     note: "같은 공백 30분. 작업 ops.watchdog. 흡수 #18, GX health"
   ops.job_failed:
     topic: ops
     dedup: subject
+    enabled: false   # 2026-11-09 사용자 결정 — 텔레그램 발송 끔(기록·health·페이지 13 은 그대로). 다시 받으려면 true
     note: "작업·as_of 마다 1회(subject = '<작업>:<as_of>'). 실행기. 흡수 #37"
   ops.universe:
     topic: ops
     dedup: daily
+    enabled: false   # 2026-11-09 사용자 결정 — 텔레그램 발송 끔(기록·health·페이지 13 은 그대로). 다시 받으려면 true
     note: "작업 krx.daily. 흡수 #17"
 
   # ── 명령 응답 — 받은 대화·스레드로. subject = 'u<update_id>'(chat id 는 키에 넣지 않는다) ─────

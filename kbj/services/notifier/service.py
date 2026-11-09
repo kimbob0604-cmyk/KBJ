@@ -69,6 +69,7 @@ log = logging.getLogger(__name__)
 
 SERVICE: Final = "notifier"
 DISABLED_REASON: Final = "KBJ_NOTIFY_ENABLED=false"
+KIND_DISABLED_REASON: Final = "notify.yaml 이 이 종류를 껐다(enabled: false)"
 _PARSE_ERROR = "can't parse entities"
 
 
@@ -336,11 +337,10 @@ class NotifierService:
             self._fail(e.id, m, policy, why, len(chunks))
             return
         parts = len(chunks) if m.text is not None else max(1, len(m.attachments))
-        if not self.enabled:
-            # §5.5 — 정책·중복 판정까지 다 하고 텔레그램은 부르지 않는다
-            self.store.finish(
-                self._entry(m, policy, "suppressed", DISABLED_REASON, parts=parts), self._body(m)
-            )
+        if not self.enabled or not policy.enabled:
+            # §5.5 — 정책·중복 판정까지 다 하고 텔레그램은 부르지 않는다(전체 꺼짐 또는 종류별 꺼짐)
+            why = DISABLED_REASON if not self.enabled else KIND_DISABLED_REASON
+            self.store.finish(self._entry(m, policy, "suppressed", why, parts=parts), self._body(m))
             self.stats.suppressed += 1
             self._ack(e.id)
             return

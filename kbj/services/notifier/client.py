@@ -151,7 +151,7 @@ class NotifyClient:
                 )
             )
             return NotifyTicket(False, None, why)
-        if not self.enabled and not ticket.duplicate:
+        if (not self.enabled or not policy.enabled) and not ticket.duplicate:
             return NotifyTicket(True, ticket.id, SUPPRESSED, dedup_key=ticket.dedup_key)
         return ticket
 
