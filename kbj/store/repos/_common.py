@@ -1,4 +1,4 @@
-"""저장소 공용 도구 — 연결 공장 형, 숫자 변환, 시각 검사(docs/p3_design.md §1.1).
+"""저장소 공용 도구 — 연결 공장 형, 숫자 변환, 시각 검사, LIKE 접두 패턴(docs/p3_design.md §1.1).
 
 이 패키지는 `kbj.core`(행 자료형) 와 psycopg 만 쓴다(계약 ⑦ — 어댑터·서비스·엔진을 모른다).
 """
@@ -61,6 +61,12 @@ def require_loaded_by(loaded_by: str) -> None:
 def code_filter(codes: Collection[str] | None) -> list[str] | None:
     """`None` = 전 종목, 빈 모음 = 아무 종목도 아님(빈 결과)."""
     return None if codes is None else sorted(set(codes))
+
+
+def like_prefix(prefix: str) -> str:
+    """`prefix` 로 시작하는 값만 맞는 LIKE 패턴 — prefix 안의 역슬래시·%·_ 는 글자 그대로
+    (역슬래시로 이스케이프). SQL 은 `LIKE %s ESCAPE '\\'` 로 이스케이프 문자를 적어 쓴다."""
+    return prefix.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
 
 
 def window_start(dates_desc: list[date], n: int) -> date | None:

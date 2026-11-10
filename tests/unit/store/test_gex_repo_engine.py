@@ -43,6 +43,7 @@ from kbj.core.gex.records import (
     StrikeGexRecord,
 )
 from kbj.store.repos import gex as store
+from kbj.store.repos._common import like_prefix
 
 KST = ZoneInfo("Asia/Seoul")
 T = datetime(2026, 9, 28, 10, 0, 30, tzinfo=KST)
@@ -600,8 +601,9 @@ def test_daily_metric_inputs_are_read_with_parameters_only() -> None:
 
 
 def test_like_prefix_escapes_wildcards() -> None:
-    assert store._like_prefix("M:") == "M:%"  # pyright: ignore[reportPrivateUsage]
-    assert store._like_prefix("a_b%c\\") == "a\\_b\\%c\\\\%"  # pyright: ignore[reportPrivateUsage]
+    """키 접두 LIKE 는 저장소 공용 `like_prefix`(무역 HS 접두와 같은 함수)."""
+    assert like_prefix("M:") == "M:%"
+    assert like_prefix("a_b%c\\") == "a\\_b\\%c\\\\%"
 
 
 def test_flow_inputs_are_read_with_parameters_only() -> None:

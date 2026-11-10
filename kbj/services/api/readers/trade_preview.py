@@ -4,7 +4,8 @@ docs/p10_trade_stocks_plan.md).
 계산은 작업 `trade.preview` 와 같은 `kbj.services.engine.trade_preview.stock_preview`(DB 만 읽는다 —
 계약 ⑩). 로그인 전용(컨센서스 = KIS). 화면 문구는 규칙 문장이고 매매 권유가 아니다.
 
-- 매핑 없음 404 '매핑 없음', 수출 지수 없음 404(trade.stock_index 예정 시각).
+- 매핑 없음 404 '매핑 없음'(매핑표가 비었으면 매핑 작업 예정 시각 — `trade_map.stock_lines`), 수출
+  지수 없음 404(trade.stock_index 예정 시각).
 - 컨센서스가 없으면 판정 없이 추정만(메모). 회귀 점이 부족하면 추정도 없음(메모).
 """
 
@@ -14,12 +15,11 @@ from typing import Final
 
 from kbj.core.quality import Quality
 from kbj.core.time import to_kst
-from kbj.engines.trade.mapping import resolve
 from kbj.engines.trade.preview import PreviewCfg
 from kbj.services.api.models.common import Envelope
 from kbj.services.api.models.trade import TradePreview, TradePreviewQuarter
 from kbj.services.api.readers._common import NoData, ReadContext, envelope
-from kbj.services.api.readers.trade_map import NO_MAP, NO_STOCK_INDEX, NOT_MAPPED
+from kbj.services.api.readers.trade_map import NO_STOCK_INDEX, stock_lines
 from kbj.services.engine.trade_preview import DISCLAIMER, stock_preview
 
 __all__ = ["NOTE_METHOD", "NO_CONSENSUS", "SOURCE", "trade_stock_preview"]
@@ -33,12 +33,7 @@ NO_CONSENSUS: Final = "컨센서스 없음(수집 대상 아님·12월 결산 �
 
 
 def trade_stock_preview(ctx: ReadContext, *, code: str) -> Envelope[TradePreview]:
-    smap = ctx.repos.trade.stock_map()
-    if not smap:
-        raise NoData(NO_MAP)
-    lines = resolve(r for r in smap if r.code == code).lines.get(code)
-    if not lines:
-        raise NoData(NOT_MAPPED)
+    lines = stock_lines(ctx, code)
     exports = ctx.repos.trade.stock_export(code=code)
     cfg = PreviewCfg()
     today = to_kst(ctx.now()).date()
