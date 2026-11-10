@@ -73,6 +73,7 @@ HISTORY_DAYS: Final = 420  # 250거래일 창 + 20거래일 변화(달력일 여
 EVENTS_BACK_DAYS: Final = 7
 KOFIA_AT: Final = time(13, 30)
 MACRO_AT: Final = time(18, 0)
+EXPORT_AT: Final = time(9, 0)  # 관세청 10일 잠정치 공표 시각 [실측 필요 #55] — 폴링 창 시작(09:00)
 EARNINGS_SOURCE: Final = "DART:결산실적공시예고(pub_filings.earnings_schedule)"
 
 
@@ -163,11 +164,23 @@ def _publish_day(ym: str, seg: int) -> date:
     return date(y + 1, 1, EXPORT_DAYS[0]) if m == 12 else date(y, m + 1, EXPORT_DAYS[0])
 
 
+def _export_avail(ym: str, seg: int, first_seen_at: datetime) -> datetime:
+    """10일 잠정치 구간을 알 수 있게 된 시각 — 처음 본 시각, 단 공표 일정(공표일 EXPORT_AT)보다
+    `BACKFILL_GAP` 넘게 늦으면(백필·첫 수집의 지난 구간) 공표 일정(`_avail`, metrics §D0-PIT).
+
+    처음 본 시각을 그대로 쓰면 전년 같은 구간(YoY 분모)을 나중에 받았을 때 지난날 진단에서 빠지고,
+    한꺼번에 받은 지난 구간이 모두 받은 날 한 점으로 겹쳤다(2026-11-10 점검: 10-21 첫 수집이
+    2026-08~10 일곱 구간을 같은 날로 적었다)."""
+    sched = datetime.combine(_publish_day(ym, seg), EXPORT_AT, tzinfo=KST)
+    return _avail(first_seen_at, sched)
+
+
 def _export_obs(
     rows: Sequence[TenDayRow], cutoff: datetime
 ) -> tuple[list[Obs], dict[date, datetime]]:
-    """구간마다 발표 당시 YoY(%) 한 점(그 구간을 처음 본 날) + 공표일 → 처음 본 시각."""
-    seen_rows = [r for r in rows if r.first_seen_at <= cutoff]
+    """구간마다 발표 당시 YoY(%) 한 점(그 구간을 알 수 있게 된 날 — `_export_avail`) + 공표일 →
+    처음 본 시각."""
+    seen_rows = [r for r in rows if _export_avail(r.ym, r.seg, r.first_seen_at) <= cutoff]
     segs = sorted({(r.ym, r.seg) for r in seen_rows if r.kind == CHIP_KIND and r.col_no == 0})
     out: list[Obs] = []
     seen: dict[date, datetime] = {}
@@ -177,7 +190,7 @@ def _export_obs(
             continue
         seen[_publish_day(ym, seg)] = chip.first_seen_at
         if chip.yoy is not None:
-            day = chip.first_seen_at.astimezone(KST).date()
+            day = _export_avail(ym, seg, chip.first_seen_at).astimezone(KST).date()
             out.append(Obs(day, Decimal(str(chip.yoy)) * 100, chip.quality, chip.source))
     return out, seen
 

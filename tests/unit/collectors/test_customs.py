@@ -416,6 +416,41 @@ def test_backfill_stops_a_dataset_at_the_daily_ratio() -> None:
     assert "DATAGO:15101609 받은 창 0" in out and "멈춤" in out
 
 
+def test_backfill_ten_day_fills_prior_year_then_skips() -> None:
+    """10일 폴링은 이번 달·지난달만 본다 — 전년 같은 구간(수출 모멘텀 YoY 분모)은 백필로만 찬다
+    (2026-11-10 점검: 첫 수집이 2026-08~ 만 받아 진단 수출 모멘텀이 날마다 '입력 없음')."""
+    rig = Rig(kst(2026, 11, 20, 9, 0))
+    exp = TEN_DAY["exp_item"]
+    rep = _backfill(rig, "2024-11", "2026-10", datasets=(exp,))
+    assert rep.done[exp] == ["2024-11~2025-10", "2025-11~2026-10"] and not rep.failed
+    assert C.COUNTRIES not in rep.done  # 고르지 않은 월간은 부르지 않는다
+    calls = rig.fake.calls("getPrlstMmUtPrviExpAcrs")
+    assert len(calls) == 2 and rig.fake.calls("getNationtradeList") == []
+    rows = rig.repo.ten_day("exp_item")
+    assert {r.ym for r in rows if r.col_no == 0 and r.seg == 3} == {
+        f"{y}-{m:02d}" for y, m in [(2024, 11), (2024, 12), *((2025, i) for i in range(1, 13)),
+                                     *((2026, i) for i in range(1, 11))]
+    }  # fmt: skip
+    assert all(r.first_seen_at == kst(2026, 11, 20, 9, 0) for r in rows)  # 받은 시각 그대로
+    assert rig.repo.ten_day_columns("exp_item")  # 열 이름 이력도 남긴다
+    again = _backfill(rig, "2024-11", "2026-10", datasets=(exp,))
+    assert again.skipped[exp] == ["2024-11~2025-10", "2025-11~2026-10"] and not again.done
+    assert len(rig.fake.calls("getPrlstMmUtPrviExpAcrs")) == 2
+    assert any(line.startswith(f"DATAGO:{exp} 받은 창 0 · 이미 있음 2") for line in again.lines())
+
+
+def test_backfill_cli_accepts_ten_day_datasets() -> None:
+    rig = Rig(kst(2026, 11, 20, 9, 0))
+    buf = io.StringIO()
+    code = C.main(["backfill", "--from", "2025-09", "--to", "2025-10", "--datasets",
+                   *C.TEN_DAY_ORDER], out=buf, build=lambda: _cli_deps(rig))  # fmt: skip
+    out = buf.getvalue()
+    assert code == 0, out
+    for ds in C.TEN_DAY_ORDER:
+        assert f"DATAGO:{ds} 받은 창 1" in out
+    assert {r.kind for r in rig.repo.ten_day()} == set(TEN_DAY)
+
+
 def test_backfill_cli_with_injected_deps() -> None:
     rig = Rig(kst(2026, 11, 20, 9, 0))
     buf = io.StringIO()

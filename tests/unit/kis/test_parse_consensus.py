@@ -26,8 +26,10 @@ from kbj.data.private.kis.consensus import (
     OUT_PERIODS,
     OUT_PL,
     PL_ROWS,
+    RATIO_SCALE,
     TR_ESTIMATE,
     TR_OPINION,
+    KisShortTable,
     params_estimate,
     params_opinion,
     parse_estimate,
@@ -101,14 +103,17 @@ def test_estimate_full_converts_units_and_flags() -> None:
         assert r.op == int(op_row[col]) * AMOUNT_UNIT_KRW
         assert r.ni == int(ni_row[col]) * AMOUNT_UNIT_KRW
         assert r.ebitda == int(ind[IND_ROWS.index("ebitda")][col]) * AMOUNT_UNIT_KRW
-        assert r.eps == float(ind[IND_ROWS.index("eps")][col])  # 원/주 그대로
+        # 원/주 — KIS 는 금액 아닌 칸을 10배로 준다(2026-11-10 맥 실측)
+        assert r.eps == pytest.approx(float(ind[IND_ROWS.index("eps")][col]) / float(RATIO_SCALE))
         assert r.ni_owner is None  # 순이익 기준 미확인 — 지어내지 않는다
         assert r.quality is Quality.OK and r.source == "KIS" and r.snap_date == DAY
         assert r.extra["period"] == "annual" and r.extra["estdate"] == "2026-11-16"
         assert "is_estimate_inferred" not in r.extra
     # 증감율 칸은 extra(계산에 쓰지 않는다), 첫 열은 빈 값이라 없다
     assert "revenue_growth_pct" not in rows[0].extra
-    assert rows[1].extra["revenue_growth_pct"] == pytest.approx(float(pl[1]["data2"]))
+    assert rows[1].extra["revenue_growth_pct"] == pytest.approx(
+        float(pl[1]["data2"]) / float(RATIO_SCALE)
+    )
 
 
 def test_estimate_march_fiscal_and_thin() -> None:
@@ -188,7 +193,7 @@ def test_estimate_with_only_actual_markers_keeps_future_years_as_inferred_estima
 
 
 def test_estimate_decimal_eok_and_bad_values() -> None:
-    body = _body(["202612E"], revenue=["1,234.5"], eps=["1,050.5"])
+    body = _body(["202612E"], revenue=["1,234.5"], eps=["10,505.0"])
     (r,) = parse_estimate(body, "994010", snap_date=DAY)
     assert r.revenue == 123_450_000_000 and r.eps == 1050.5
     with pytest.raises(KisParseError):  # 금액이 원으로도 정수가 아니다 — 조용히 자르지 않는다
@@ -223,10 +228,19 @@ def test_estimate_shape_errors() -> None:
     body[OUT_HEAD]["sht_cd"] = "A994020"
     with pytest.raises(KisParseError, match="종목코드"):
         parse_estimate(body, "994010", snap_date=DAY)
-    short = _body(["202612E"], revenue=["100"])
-    short[OUT_PL] = short[OUT_PL][:3]
-    with pytest.raises(KisShapeError):
-        parse_estimate(short, "994010", snap_date=DAY)
+    # 표의 행이 기대보다 많으면 모르는 모양 — 앞 행만 조용히 쓰지 않는다
+    long_pl = _body(["202612E"], revenue=["100"])
+    long_pl[OUT_PL] = [*long_pl[OUT_PL], {c: "1" for c in COLUMNS}]
+    with pytest.raises(KisShapeError, match="최대"):
+        parse_estimate(long_pl, "994010", snap_date=DAY)
+    long_ind = _body(["202612E"], revenue=["100"])
+    long_ind[OUT_IND] = [*long_ind[OUT_IND], {c: "1" for c in COLUMNS}]
+    with pytest.raises(KisShapeError, match="최대"):
+        parse_estimate(long_ind, "994010", snap_date=DAY)
+    no_pl = _body(["202612E"], revenue=["100"])
+    del no_pl[OUT_PL]
+    with pytest.raises(KisShapeError):  # 손익 칸 자체가 없다 — 필드 이름이 바뀐 날
+        parse_estimate(no_pl, "994010", snap_date=DAY)
     dup = _body(["202612E", "2026.12E"], revenue=["100", "110"])
     with pytest.raises(KisShapeError, match="겹친다"):
         parse_estimate(dup, "994010", snap_date=DAY)
@@ -237,11 +251,53 @@ def test_estimate_shape_errors() -> None:
 def test_estimate_short_indicator_table_keeps_income_rows() -> None:
     """투자지표(output3)가 8행보다 적게 오는 종목(2026-10-26 맥: 304종목 중 25종목 3행 — 컨센서스
     작업 전체가 실패했다) — 어느 행인지 몰라 지표는 버리고 손익은 싣는다."""
-    body = _body(["202612E"], revenue=["100"], op=["10"], eps=["1500"])
+    body = _body(["202612E"], revenue=["100"], op=["10"], eps=["15000.0"])
     body[OUT_IND] = body[OUT_IND][:3]
     (r,) = parse_estimate(body, "994010", snap_date=DAY)
     assert r.revenue == 100 * AMOUNT_UNIT_KRW and r.op == 10 * AMOUNT_UNIT_KRW
     assert r.eps is None and r.ebitda is None and r.extra["ind_rows"] == 3
+    assert "pl_rows" not in r.extra
+
+
+def test_estimate_short_income_table_keeps_indicator_rows() -> None:
+    """손익(output2)이 6행보다 적게 오는 종목(2026-11-10 맥: 4행·1행 — 매일 '고유 실패'로 셌다) —
+    손익은 버리고 지표가 온전하면 EPS·EBITDA 는 싣는다."""
+    body = _body(["202612E"], revenue=["100"], ebitda=["30"], eps=["15000.0"], per=["123.0"])
+    body[OUT_PL] = body[OUT_PL][:4]
+    (r,) = parse_estimate(body, "994010", snap_date=DAY)
+    assert r.revenue is None and r.op is None and r.ni is None
+    assert r.ebitda == 30 * AMOUNT_UNIT_KRW and r.eps == 1500.0
+    assert r.extra["pl_rows"] == 4 and r.extra["per"] == pytest.approx(12.3)
+
+
+@pytest.mark.parametrize(("pl_n", "ind_n"), [(4, 1), (1, 2), (1, None)])
+def test_estimate_both_tables_short_is_short_table(pl_n: int, ind_n: int | None) -> None:
+    """두 표가 모두 모자라면 쓸 칸이 없다 — 커버 없음의 한 갈래(`KisShortTable` ⊂ `KisEmpty` —
+    작업 실패로 세지 않는다)."""
+    body = _body(["202612E"], revenue=["100"], eps=["15000.0"])
+    body[OUT_PL] = body[OUT_PL][:pl_n]
+    if ind_n is None:
+        del body[OUT_IND]
+    else:
+        body[OUT_IND] = body[OUT_IND][:ind_n]
+    with pytest.raises(KisShortTable, match=f"손익 {pl_n}행"):
+        parse_estimate(body, "994010", snap_date=DAY)
+    assert issubclass(KisShortTable, KisEmpty)
+
+
+def test_estimate_ratio_cells_are_divided_by_ten() -> None:
+    """금액 아닌 칸은 10배로 온다(2026-11-10 맥: EPS × 주식수 ÷ 순이익 중앙값 10.00) — 금액(억원)은
+    그대로."""
+    body = _body(
+        ["2026.12E"], revenue=["96706.0"], revenue_growth_pct=["176.0"], ni=["10123.0"],
+        ebitda=["25000.0"], eps=["66610.0"], per=["336.0"], roe_pct=["44.0"],
+    )  # fmt: skip
+    (r,) = parse_estimate(body, "994010", snap_date=DAY)
+    assert r.revenue == 96706 * AMOUNT_UNIT_KRW and r.ni == 10123 * AMOUNT_UNIT_KRW
+    assert r.ebitda == 25000 * AMOUNT_UNIT_KRW
+    assert r.eps == pytest.approx(6661.0)
+    assert r.extra["revenue_growth_pct"] == pytest.approx(17.6)
+    assert r.extra["per"] == pytest.approx(33.6) and r.extra["roe_pct"] == pytest.approx(4.4)
 
 
 @pytest.mark.parametrize(

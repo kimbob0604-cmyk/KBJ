@@ -164,6 +164,17 @@ def test_foreign_flow_spot_plus_futures_in_won() -> None:
     r2.flows.upsert_market_days(spot, loaded_by="t", received_at=NOW)
     miss = diag._foreign(r2, DAY, 2)  # pyright: ignore[reportPrivateUsage]
     assert miss.value is None and "K200 선물" in (miss.reason or "")
+    # 마지막 기록이 장중(수집이 끊긴 날 — 2026-11-09 맥 11:46)이면 마감 값으로 단정하지 않는다
+    r3 = memory_repos()
+    r3.flows.upsert_market_days(spot, loaded_by="t", received_at=NOW)
+    early = InvestorRecord(
+        ts=datetime.combine(days[0], time(11, 46), tzinfo=KST), trade_date=days[0], session="day",
+        market_code="K2I", sector_code="F001", investor="frgn", net_value=7,
+    )  # fmt: skip
+    r3.gex.seed_investor([early, fut[1]])
+    part = diag._foreign(r3, DAY, 2)  # pyright: ignore[reportPrivateUsage]
+    assert part.value == got.value and part.quality is Quality.ESTIMATED
+    assert part.reason is not None and f"{days[0]:%m-%d} 11:46" in part.reason
 
 
 def test_recompute_same_from_stored_history() -> None:

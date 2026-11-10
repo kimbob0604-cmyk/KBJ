@@ -150,3 +150,33 @@ def test_backfilled_rows_count_from_their_publication_schedule() -> None:
     by1 = {x.key: x for x in again.indicators}
     assert by1["credit_spread"].value == by0["credit_spread"].value is not None
     assert by1["rate_direction"].value == by0["rate_direction"].value
+
+
+def test_export_rows_received_late_count_from_their_publication_day() -> None:
+    """10일 잠정치도 §D0-PIT 백필 규칙 — 처음 본 시각이 공표일보다 3일 넘게 늦으면 공표 일정.
+    (2026-11-10 점검: 전년 같은 구간이 없어 수출 모멘텀이 날마다 '입력 없음'이었고, 첫 수집이 받은
+    지난 구간이 모두 받은 날 한 점으로 겹쳤다.)"""
+    r = _seeded()
+    t = MemoryTradeRepo()
+    live = datetime(2026, 12, 1, 9, 20, tzinfo=KST)
+    late = AT + timedelta(days=30)  # 전년 구간은 한 달 뒤 백필로 받았다
+    rows = [
+        _ten("2025-09", 3, 100, late),
+        _ten("2025-10", 3, 100, late),
+        _ten("2025-11", 3, 100, late),
+        _ten("2026-09", 3, 105, live),  # 첫 수집이 지난 구간까지 같이 받았다(공표 10-01)
+        _ten("2026-10", 3, 108, live),  # 공표 11-01
+        _ten("2026-11", 3, 112, live),  # 공표 12-01 — 제때 본 것
+    ]
+    t.upsert_ten_day(rows, loaded_by="t", received_at=live)
+    out = compute_public(r.public(), t, day=DAY, cutoff=AT, cfg=CFG, cal=CAL,
+                         mpc=load_calendar_events())  # fmt: skip
+    em = {x.key: x for x in out.indicators}["export_momentum"]
+    assert em.value == Decimal("12.0000")
+    assert em.inputs["n"] == 3 and em.inputs["obs_day"] == "2026-12-01"  # 세 구간이 세 날
+    # 제때 받은 행은 받은 시각 그대로 — 공표 전 cutoff 에는 보이지 않는다
+    before = datetime(2026, 11, 30, 8, 40, tzinfo=KST)
+    out2 = compute_public(r.public(), t, day=date(2026, 11, 30), cutoff=before, cfg=CFG, cal=CAL,
+                          mpc=load_calendar_events())  # fmt: skip
+    em2 = {x.key: x for x in out2.indicators}["export_momentum"]
+    assert em2.inputs["obs_day"] == "2026-11-01" and em2.value == Decimal("8.0000")

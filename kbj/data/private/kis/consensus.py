@@ -17,8 +17,17 @@ TR id·경로는 `kbj.data.private.kis.datasets.CONSENSUS_TRS` 한 곳에서 가
 - `output2`(배열 — 추정손익계산서, 행 순서 `PL_ROWS`)·`output3`(배열 — 투자지표, 행 순서
   `IND_ROWS`): 각 행의 `data1`~`data5` 가 `output4` 의 열과 같은 순서.
 - 금액(매출·영업이익·순이익·EBITDA)은 **억원**으로 읽어 원으로 바꾼다(`AMOUNT_UNIT_KRW`).
+  금액이 아닌 칸(EPS·증감율·PER·EV/EBITDA·ROE·부채비율·이자보상배율)은 **10배로 온다** —
+  `RATIO_SCALE` 로 나눈다(2026-11-10 맥 실측: 저장된 EPS × 상장주식수 ÷ 순이익 중앙값 10.00 —
+  89종목, PER × EPS ÷ 그날 종가 중앙값 100 — 98종목. 칸은 `'66610.0'` 꼴 소수 한 자리 문자열).
+  그 전 파서는 그대로 읽어 EPS 가 10배였다(선행 PER 이 1/10 — 마이그레이션 0033 이 바로잡는다).
   EPS 는 원/주. 결산년월이 연 단위라 행마다 `extra.period = "annual"`(분기 추정은 KIS 에
   없을 가능성이 높다 — D-P4-10).
+- 표(output2·output3)는 행 이름 칸이 없어 **순서로만** 맞춘다. 행이 모자라게 오는 종목이 있다
+  (2026-11-10 맥: 손익 4행·1행, 지표 3행·2행·1행 — 금융업·지주 등 구성이 다른 종목 [추정]). 모자란
+  표는 어느 행인지 모르니 그 표만 버리고(`extra.pl_rows`·`ind_rows` = 받은 행 수) 다른 표는
+  싣는다. 두 표가 모두 못 쓰면 `KisShortTable`(커버 없음의 한 갈래 — 작업 실패로 세지 않는다).
+  행이 **더 많이** 오면 모르는 모양이라 `KisShapeError`(조용히 앞 행만 쓰지 않는다).
 - 순이익은 `ni` 에만 넣는다 — 지배주주 기준인지 모른다 [확인 필요 #29]. `ni_owner` 는
   None(지어내지 않는다 — 선행 PER 은 EPS 경로로, 묶음 V).
 - 추정·실적 표지가 응답 어디에도 없으면 결산일이 스냅 날짜 뒤인 열을 추정으로 보고 그 행은
@@ -43,6 +52,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping, Sequence
 from datetime import date
+from decimal import Decimal
 from typing import Any, Final
 
 from kbj.core.fin_rows import ConsensusRow, OpinionRow
@@ -53,6 +63,7 @@ from kbj.data.private.kis.parse import (
     KisParseError,
     KisShapeError,
     TrSpec,
+    kis_decimal,
     kis_float,
     kis_int,
     pick,
@@ -72,9 +83,11 @@ __all__ = [
     "OUT_PERIODS",
     "OUT_PL",
     "PL_ROWS",
+    "RATIO_SCALE",
     "SOURCE",
     "TR_ESTIMATE",
     "TR_OPINION",
+    "KisShortTable",
     "params_estimate",
     "params_opinion",
     "parse_estimate",
@@ -113,7 +126,8 @@ IND_ROWS: Final[tuple[str, ...]] = (
     "debt_ratio_pct",
     "interest_coverage",
 )
-AMOUNT_UNIT_KRW: Final = 100_000_000  # 억원 → 원 [확인 필요 #29]
+AMOUNT_UNIT_KRW: Final = 100_000_000  # 억원 → 원(2026-11-10 맥: 매출 합계가 공시와 같은 자릿수)
+RATIO_SCALE: Final = Decimal(10)  # 금액 아닌 칸(EPS·비율)은 10배로 온다 — 머리말
 _AMOUNTS: Final = frozenset({"revenue", "op", "ni", "ebitda"})
 _HEAD_CODE: Final = ("sht_cd", "stck_shrn_iscd")
 _HEAD_DATE: Final = ("estdate",)
@@ -170,14 +184,32 @@ def _fiscal_end(ym: str) -> date:
     return date.fromordinal(nxt.toordinal() - 1)
 
 
-def _table(body: Mapping[str, Any], key: str, names: Sequence[str], what: str) -> dict[str, Any]:
-    """행 순서 표(names)대로 output 배열을 {이름: 행} 으로. 행이 모자라면 `KisShapeError`."""
+class KisShortTable(KisEmpty):
+    """손익·지표 표가 모두 모자라게 와서(행 순서로 못 맞춘다) 쓸 칸이 없다 — 커버 없음의 한 갈래."""
+
+
+def _table(
+    body: Mapping[str, Any], key: str, names: Sequence[str], what: str, *, optional: bool = False
+) -> tuple[dict[str, Any], int | None]:
+    """행 순서 표(names)대로 output 배열을 {이름: 행} 으로 + 모자란 행 수(모자라면 표는 빈 dict —
+    어느 행인지 모른다). 비면 ({}, None). 칸이 없으면 optional 일 때만 ({}, None) — 아니면
+    `KisShapeError`(`rows_of`). 행이 더 많으면 `KisShapeError`(모르는 모양)."""
+    if optional and key not in body:
+        return {}, None
     rows = rows_of(body, key, what=what)
     if not rows:
-        return {}
+        return {}, None
+    if len(rows) > len(names):
+        raise KisShapeError(f"{what}: {key} 행이 {len(rows)}개 — 최대 {len(names)}개를 기대")
     if len(rows) < len(names):
-        raise KisShapeError(f"{what}: {key} 행이 {len(rows)}개 — {len(names)}개를 기대")
-    return dict(zip(names, rows, strict=False))
+        return {}, len(rows)
+    return dict(zip(names, rows, strict=True)), None
+
+
+def _ratio(v: object) -> float | None:
+    """금액 아닌 칸 — 10배로 온 값을 나눈다(`RATIO_SCALE`)."""
+    d = kis_decimal(v)
+    return None if d is None else float(d / RATIO_SCALE)
 
 
 def _cell(row: Mapping[str, Any] | None, col: str) -> Any:
@@ -201,21 +233,14 @@ def parse_estimate(
     if got not in (code, f"A{code}"):  # 표준코드 앞 'A' 를 붙여 오기도 한다(2026-10-21~ 146/304)
         raise KisParseError(f"{what}: 응답 종목코드가 다르다({got})")
     periods = rows_of(body, OUT_PERIODS, what=what)
-    pl = _table(body, OUT_PL, PL_ROWS, what)
-    # 투자지표(output3)는 종목에 따라 행이 모자라게 온다(2026-10-26 맥 실측: 304종목 중 25종목이
-    # 3행 — 금융업 등 지표 구성이 다른 종목으로 보인다 [추정]). 행 이름 칸이 없어 순서로만 맞추므로
-    # 모자란 표는 어느 행인지 모른다 — 지표는 버리고(EPS·PER 등 None) 손익(output2)은 그대로 싣는다.
-    # 예전에는 형식 오류로 종목이 통째로 실패해 허용치를 넘기면 컨센서스 작업 전체가 실패했다.
-    ind_short: int | None = None
-    ind: dict[str, Any] = {}
-    if OUT_IND in body:
-        ind_rows = rows_of(body, OUT_IND, what=what)
-        if ind_rows and len(ind_rows) < len(IND_ROWS):
-            ind_short = len(ind_rows)
-        else:
-            ind = _table(body, OUT_IND, IND_ROWS, what)
-    if not periods or not pl:
+    pl, pl_short = _table(body, OUT_PL, PL_ROWS, what)
+    ind, ind_short = _table(body, OUT_IND, IND_ROWS, what, optional=True)
+    if not periods or (not pl and pl_short is None):
         raise KisEmpty(f"{what}: 결과가 비었다(커버 없음)")
+    if not pl and not ind:
+        raise KisShortTable(
+            f"{what}: 표가 모자라다(손익 {pl_short}행·지표 {ind_short or 0}행 — 순서로 못 맞춘다)"
+        )
     if len(periods) > len(COLUMNS):
         raise KisShapeError(f"{what}: 결산년월 열이 {len(periods)}개 — 최대 {len(COLUMNS)}")
     cols: list[tuple[str, str, bool | None]] = []
@@ -240,11 +265,11 @@ def parse_estimate(
         for name in IND_ROWS:
             vals[name] = _cell(ind.get(name), col)
         money = {k: kis_int(vals[k], AMOUNT_UNIT_KRW) for k in _AMOUNTS}
-        eps = kis_float(vals["eps"])
+        eps = _ratio(vals["eps"])
         for k, v in vals.items():
             if k in _AMOUNTS or k == "eps":
                 continue
-            f = kis_float(v)
+            f = _ratio(v)
             if f is not None:
                 extra[k] = f
         if all(v in (None, 0) for v in money.values()) and eps in (None, 0.0):
@@ -257,8 +282,10 @@ def parse_estimate(
             quality = Quality.ESTIMATED
             extra["is_estimate_inferred"] = True
         extra["period"] = "annual"
+        if pl_short is not None:
+            extra["pl_rows"] = pl_short  # 손익 표가 모자라 버렸다(머리말)
         if ind_short is not None:
-            extra["ind_rows"] = ind_short  # 지표 표가 모자라 버렸다(위)
+            extra["ind_rows"] = ind_short  # 지표 표가 모자라 버렸다(머리말)
         if est_day is not None:
             extra["estdate"] = est_day.isoformat()
         out.append(
