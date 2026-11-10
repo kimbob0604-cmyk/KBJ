@@ -85,6 +85,8 @@ FIXTURES: Final[tuple[tuple[str, str, bool], ...]] = (
     ("market_global-proxy.json", "/api/market/global-proxy", False),
     ("market_relcap.json", "/api/market/relcap?period=1Y", False),
     ("market_movers.json", "/api/market/movers", False),  # 급등·급락(metrics §6.8)
+    # 지수 일별 차트(metrics §6.10 — 첫 화면 3개월·1년 버튼)
+    ("market_index-chart.json", "/api/market/index-chart?code=0001&days=250", False),
     # 첫 화면 카드 묶음(metrics §32) — 마감 뒤·장중 슬롯. 합성 세계에 원천이 없는 카드는 no_data
     ("home.json", "/api/home", False),
     ("home_live.json", "/api/home", True),

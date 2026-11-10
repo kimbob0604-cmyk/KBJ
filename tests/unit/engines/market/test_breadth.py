@@ -89,3 +89,65 @@ def test_상한가_하한가() -> None:
     assert (b.limit_up, b.limit_down) == (2, 1)
     with pytest.raises(ValueError):
         market_breadth(ledger_of(rows, D), LAST, [], limit_move_pct=0)
+
+
+# ── 시장별 N일선 위 비율(§6.2 — 2026-11-10 첫 화면) ─────────────────────────────────────
+
+
+def _bar(code: str, d, close: float | None, q: Quality = Quality.OK):  # type: ignore[no-untyped-def]
+    from kbj.core.rows import Bar
+
+    return Bar(code, d, close, close, close, close, None, None, "krx", "KRX", q)
+
+
+def test_ma_breadth_fills_old_days_from_history_and_splits_markets() -> None:
+    from kbj.engines.market.breadth import ma_breadth
+
+    d = days(121)
+    led_days = d[-60:]  # 원장 창 60일 — 그 앞은 일봉 이력
+    last = d[-1]
+    rows = [lrow("K00001", x, close=100.0) for x in led_days[:-1]]
+    rows.append(lrow("K00001", last, close=150.0))  # 20·60·120 위
+    rows += [lrow("K00002", x, close=100.0) for x in led_days[:-1]]
+    rows.append(lrow("K00002", last, close=101.0))  # 20·60 위, 120 아래(옛 종가 200)
+    rows += [lrow("Q00001", x, close=100.0, market="KOSDAQ") for x in led_days[:-1]]
+    rows.append(lrow("Q00001", last, close=90.0, market="KOSDAQ"))  # 모두 아래
+    rows += [lrow("Q00002", x, close=100.0, market="KOSDAQ") for x in led_days[-30:]]  # 30봉
+    rows += [lrow("E00001", x, close=100.0, kind="etf") for x in led_days]  # 주식 아님
+    hist = {
+        "K00001": [_bar("K00001", x, 100.0) for x in d[:-60]],
+        "K00002": [_bar("K00002", x, 200.0) for x in d[:-60]],
+        # 원장 창 안 날짜의 일봉은 원장이 이긴다(이력 값 무시)
+        "Q00001": [_bar("Q00001", x, 100.0) for x in d[:-60]] + [_bar("Q00001", last, 1.0)],
+        "Q00002": [_bar("Q00002", x, 100.0, Quality.INVALID) for x in d[:-60]],
+    }
+    out = ma_breadth(ledger_of(rows, led_days), last, hist)
+    by = {m.market: {s.ma: (s.above, s.base) for s in m.shares} for m in out}
+    assert by["KOSPI"] == {20: (2, 2), 60: (2, 2), 120: (1, 2)}
+    # Q00002: 30봉 — 20일선만 분모(같음 → 위 아님), 60·120 은 분모 밖(invalid 이력은 없는 것)
+    assert by["KOSDAQ"] == {20: (0, 2), 60: (0, 1), 120: (0, 1)}
+    k = next(m for m in out if m.market == "KOSPI")
+    assert [s.pct for s in k.shares] == [100.0, 100.0, 50.0] and k.date == last
+    assert k.quality == Quality.OK and k.source and not k.notes
+
+
+def test_ma_breadth_twenty_matches_market_breadth_and_short_axis_note() -> None:
+    from kbj.engines.market.breadth import ma_breadth
+
+    m = generate(13)
+    led = build_ledger(**ledger_inputs(m))  # type: ignore[arg-type]
+    b = market_breadth(led, m.last_day, [])
+    out = ma_breadth(led, m.last_day, {})
+    assert sum(x.shares[0].above for x in out) == b.above_ma20_n
+    assert sum(x.shares[0].base for x in out) == b.ma20_base
+    assert all(x.shares[2].base == 0 and x.shares[2].pct is None for x in out)
+    assert all(any("120일선" in n for n in x.notes) for x in out)
+
+
+def test_updown_by_market_sums_to_combined() -> None:
+    m = generate(13)
+    led = build_ledger(**ledger_inputs(m))  # type: ignore[arg-type]
+    both = market_breadth(led, m.last_day, [])
+    parts = [market_breadth(led, m.last_day, [], markets=(x,)) for x in ("KOSPI", "KOSDAQ")]
+    for f in ("up", "flat", "down", "unknown", "total"):
+        assert sum(getattr(p, f) for p in parts) == getattr(both, f), f

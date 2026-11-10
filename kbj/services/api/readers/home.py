@@ -1,7 +1,9 @@
 """첫 화면 묶음 reader — `/api/home`(docs/metrics.md §32, ADR 0043).
 
 기존 읽기 함수를 불러 카드마다 필요한 몇 줄만 고른다 — 값을 다시 계산하지 않는다(두 벌 금지).
-새 값은 급등·급락(metrics §6.8)뿐이고 그것도 `/api/market/movers` 와 같은 함수(`market_movers`)다.
+새 값은 급등·급락(metrics §6.8 — `/api/market/movers` 와 같은 함수 `market_movers`), 시장별 상승·
+하락·N일선 위 비율(§6.2 — 시장폭 엔진 `market_breadth`·`ma_breadth`), 선물 전일 대비 등락률(§6.9 —
+`futures_prev_settle`)이다. 장중 프로그램 누적은 `/api/program/intraday` 와 같은 함수다.
 
 - **카드 격리**(절대 규칙 4): 카드마다 따로 부르고 따로 잡는다. `NoData` → 그 카드 `no_data`(서버
   안내 문구 그대로), 그 밖의 오류 → 그 카드 `error`(사유 코드 — 본문·내부 문구 없음) + 로그. 다른
@@ -33,7 +35,13 @@ from kbj.core.quality import Quality
 from kbj.core.time import KST
 from kbj.engines.filings.earnings import SignalSide, signal_side
 from kbj.engines.flows.ledger import close_as_of
-from kbj.engines.market.breadth import NEWHIGH_KINDS
+from kbj.engines.market.breadth import (
+    MA_HISTORY_DAYS,
+    NEWHIGH_KINDS,
+    MarketMaBreadth,
+    ma_breadth,
+    market_breadth,
+)
 from kbj.engines.market.movers import MIN_MKTCAP_WON
 from kbj.engines.market.ribbon import EXPORT_FLASH_NONE
 from kbj.services.api.models.common import FUTURE_AS_OF_NOTE, Envelope
@@ -61,19 +69,24 @@ from kbj.services.api.models.home import (
     HomeFutures,
     HomeGex,
     HomeIndex,
+    HomeIndexDay,
+    HomeIndexPoint,
     HomeIndices,
     HomeInvestorNet,
+    HomeMaBreadth,
+    HomeMaShare,
     HomeNewhigh,
     HomeNewhighRow,
     HomePrelimRow,
     HomeProgram,
+    HomeProgramNow,
     HomeSpike,
     HomeSpikeRow,
     HomeThemes,
     HomeUpDown,
 )
 from kbj.services.api.models.market import IndexTile, MarketMovers, MarketSummary
-from kbj.services.api.models.program import ProgramDaily, ProgramDayBar
+from kbj.services.api.models.program import ProgramDaily, ProgramDayBar, ProgramIntraday
 from kbj.services.api.readers._common import NoData, ReadContext, UnknownCode, envelope, worst
 from kbj.services.api.readers.board import EOK_NOTE, board_newhigh, row_label
 from kbj.services.api.readers.diag import diag_summary
@@ -81,7 +94,7 @@ from kbj.services.api.readers.etf import etf_flows, etf_types
 from kbj.services.api.readers.filings import filings_earnings, filings_feed
 from kbj.services.api.readers.flows import flows_intraday, flows_screen
 from kbj.services.api.readers.flows_minute import market_minute
-from kbj.services.api.readers.gex import gex_levels
+from kbj.services.api.readers.gex import futures_prev_settle, gex_levels
 from kbj.services.api.readers.gex_briefing import gex_briefing
 from kbj.services.api.readers.market import (
     NIGHT_CODE,
@@ -89,7 +102,7 @@ from kbj.services.api.readers.market import (
     market_movers,
     market_summary,
 )
-from kbj.services.api.readers.program import NO_DAILY, program_daily
+from kbj.services.api.readers.program import NO_DAILY, program_daily, program_intraday
 from kbj.services.api.readers.theme import theme_strength
 from kbj.store.db import StoreError
 
@@ -126,7 +139,10 @@ CARD_KEYS: Final[Mapping[str, tuple[str, ...]]] = {
     "newhigh": ("board/newhigh",),
     "gex": ("gex/levels", "gex/briefing"),
     "diag": ("diag/summary",),
-    "program": ("program/daily?market=K", "program/daily?market=Q"),
+    "program": (
+        "program/daily?market=K", "program/daily?market=Q", "program/intraday?market=K",
+        "program/intraday?market=Q",
+    ),
     "etf": ("etf/types?period=5", "etf/flows?mode=in&period=5"),
     "themes": ("themes/strength?period=1",),
     "export": ("market/ribbon",),  # 수출 속보 칩과 같은 함수(상세는 trade/flash — 페이지 7)
@@ -158,14 +174,16 @@ SPOT: Final[tuple[tuple[str, str, tuple[str, ...]], ...]] = (
     ("kosdaq", "1001", ("1001", "KOSDAQ")),
 )
 FUT_TAB: Final = "k200_fut"
-FUT_NO_CHG_NOTE: Final = (
-    "선물 전일 대비 등락률 칸은 없다 — 전일 정산가를 아직 API 에 싣지 않는다(야간 타일은 "
-    "주간 마지막 값 대비)"
+FUT_NO_SETTLE_NOTE: Final = (
+    "선물 전일 대비 등락률 없음 — 직전 거래일 KRX 정산가가 아직 없다(gex.krx_derivatives)"
 )
-BREADTH_NOTE: Final = (
-    "20일선 위 비율만 — 60·120일선 위 비율과 시장별(코스피·코스닥) 값은 아직 없다(두 시장 합산)"
+FUT_CHG_NOTE: Final = (
+    "선물 등락률 = 근월물 직전 거래일 KRX 정산가 대비(야간 타일은 주간 마지막 값 대비)"
 )
-UPDOWN_NOTE: Final = "상승·보합·하락은 코스피+코스닥 합산(마감 확정) — 시장별 값은 없다"
+UPDOWN_NOTE: Final = "상승·보합·하락(마감 확정) — 띠는 코스피+코스닥 합산, 지수 카드는 그 시장만"
+MA_NOTE: Final = "N일선 위 비율 = 종가가 최근 N영업일 평균보다 높은 종목 ÷ 평균을 낼 수 있는 종목"
+MA_MARKETS: Final[tuple[Literal["KOSPI", "KOSDAQ"], ...]] = ("KOSPI", "KOSDAQ")
+INDEX_SOURCE: Final = "KIS"  # 장중 지수 10분 값(market.intraday — flows/market-minute 겹침)
 NO_INDICES: Final = "아직 없음 — krx.daily 08:05 · market.intraday(장중 10분)"
 NO_LEDGER: Final = "아직 없음 — market.close_collect 15:35 · krx.daily 08:05(원장)"
 NO_FUTURES: Final = "아직 없음 — gex.engine(장중 사이클)·flows.market_minute(정규장 매분)"
@@ -370,6 +388,41 @@ def _newer(minute: HomeInvestorNet | None, daily: HomeInvestorNet | None) -> Hom
     return daily
 
 
+def _index_day(env: Envelope[MarketMinute]) -> HomeIndexDay | None:
+    """1분 투자자 응답의 지수 겹침(10분 슬롯 자리에만 값) → 값이 있는 점만. 없으면 None."""
+    d = env.data
+    idx = d.index
+    if idx is None or idx.as_of is None or idx.quality is None:
+        return None
+    pts = [
+        HomeIndexPoint(t=t, v=v) for t, v in zip(d.axis, idx.values, strict=False) if v is not None
+    ]
+    if not pts:
+        return None
+    return HomeIndexDay(
+        date=d.trade_date, points=pts, source=INDEX_SOURCE, as_of=idx.as_of, quality=idx.quality
+    )
+
+
+def _updown_by_market(ctx: ReadContext) -> dict[str, HomeUpDown]:
+    """시장별 상승·보합·하락(metrics §6.2) — market/summary 와 같은 원장·같은 함수(`market_breadth`
+    의 markets 인자). 신고가는 여기서 쓰지 않아 보드 라벨을 넘기지 않는다."""
+    ledger = ctx.ledger(ctx.today())
+    day = ledger.last_day
+    if day is None:
+        return {}
+    out: dict[str, HomeUpDown] = {}
+    for mk in MA_MARKETS:
+        b = market_breadth(
+            ledger, day, (), limit_move_pct=ctx.markets.market.limit_move_pct, markets=(mk,)
+        )
+        out[mk] = HomeUpDown(
+            date=b.date, up=b.up, flat=b.flat, down=b.down, unknown=b.unknown, total=b.total,
+            source=b.source or "KBJ", quality=b.quality,
+        )  # fmt: skip
+    return out
+
+
 # ── 카드 ───────────────────────────────────────────────────────────────────────────────────
 
 
@@ -381,7 +434,12 @@ def _indices(r: _Reads) -> tuple[HomeIndices, _Meta]:
     parts = _Parts(notes=m.notes)
     tiles = {t.code: t for t in d.indices}
     items: dict[str, HomeIndex | None] = {}
-    for tab, code, keys in SPOT:
+    by_market = (
+        parts.get("시장별 상승·하락", lambda: _updown_by_market(ctx), no_data_note=False)
+        if d.breadth is not None
+        else None
+    ) or {}
+    for (tab, code, keys), mk in zip(SPOT, MA_MARKETS, strict=True):
         t = tiles.get(code)
         if t is None:
             items[tab] = None
@@ -401,7 +459,12 @@ def _indices(r: _Reads) -> tuple[HomeIndices, _Meta]:
             m.value(inv.source, inv.as_of, inv.quality)
             if inv.basis == "daily" and d.investors is not None:
                 m.notes.extend(d.investors.notes)
-        items[tab] = HomeIndex(tile=t, investors=inv)
+        items[tab] = HomeIndex(
+            tile=t,
+            investors=inv,
+            today=_index_day(minute) if minute is not None else None,
+            updown=by_market.get(mk),
+        )
     b = d.breadth
     updown: HomeUpDown | None = None
     if b is not None:
@@ -436,8 +499,23 @@ def _futures(r: _Reads) -> tuple[HomeFutures, _Meta]:
         m.notes.extend(minute.notes)
     if night is not None:
         m.value(night.source, night.as_of, night.quality)
-    m.notes.append(FUT_NO_CHG_NOTE)
     g = lv.data if lv is not None else None
+    settle = None
+    if g is not None and g.price is not None:
+        settle = parts.get(
+            "선물 전일 정산가", lambda: futures_prev_settle(ctx, g.trade_date), no_data_note=False
+        )
+        if settle is None:
+            m.notes.append(FUT_NO_SETTLE_NOTE)
+        else:
+            m.value("KRX", close_as_of(settle.date), Quality.OK)
+            m.notes.append(FUT_CHG_NOTE)
+    m.notes.extend(n for n in parts.notes if n not in m.notes)
+    chg = (
+        (g.price / settle.price - 1) * 100
+        if g is not None and g.price is not None and settle is not None and settle.price > 0
+        else None
+    )
     data = HomeFutures(
         trade_date=g.trade_date if g else None,
         session=g.session if g else None,
@@ -446,6 +524,9 @@ def _futures(r: _Reads) -> tuple[HomeFutures, _Meta]:
         price=g.price if g else None,
         price_quality=g.price_quality if g else None,
         stale=g.stale if g else None,
+        prev_settle=settle.price if settle is not None else None,
+        prev_settle_date=settle.date if settle is not None else None,
+        chg_pct=chg,
         night=night,
         investors=inv,
     )
@@ -539,15 +620,49 @@ def _filings(r: _Reads) -> tuple[HomeFilings, _Meta]:
     return data, m
 
 
+def _ma_by_market(ctx: ReadContext) -> list[MarketMaBreadth]:
+    """시장별 20·60·120일선 위 비율(metrics §6.2) — 원장 + 121일 일봉 이력. 원장 데이터 버전 안에서
+    한 번만 계산한다(일봉 이력 읽기가 수 초 — 결과만 둔다)."""
+    ledger = ctx.ledger(ctx.today())
+    day = ledger.last_day
+    if day is None:
+        return []
+
+    def build() -> list[MarketMaBreadth]:
+        hist = ctx.repos.market.series(None, day, MA_HISTORY_DAYS)
+        return ma_breadth(ledger, day, hist, markets=MA_MARKETS)
+
+    return ctx.memo("home.ma_breadth", day, build)
+
+
 def _breadth(r: _Reads) -> tuple[HomeBreadth, _Meta]:
     b = r.summary().data.breadth
     if b is None:
         raise NoData(NO_LEDGER)
-    m = _Meta(notes=[BREADTH_NOTE, *_breadth_notes(b.notes)])
+    m = _Meta(notes=[*_breadth_notes(b.notes)])
     m.value(b.source, close_as_of(b.date), b.quality)
+    got = _Parts(notes=m.notes).get("시장별 N일선", lambda: _ma_by_market(r.ctx)) or []
+    rows: list[HomeMaBreadth] = []
+    for x in got:
+        if x.date != b.date or x.market not in MA_MARKETS:
+            continue
+        m.value(x.source, close_as_of(x.date), x.quality)
+        m.notes.extend(x.notes)
+        rows.append(
+            HomeMaBreadth(
+                market=cast(Literal["KOSPI", "KOSDAQ"], x.market),
+                date=x.date,
+                shares=[
+                    HomeMaShare(ma=s.ma, above=s.above, base=s.base, pct=s.pct) for s in x.shares
+                ],
+                source=x.source or "KBJ",
+                quality=x.quality,
+            )
+        )
+    m.notes.append(MA_NOTE)
     data = HomeBreadth(
         date=b.date, above_ma20_pct=b.above_ma20_pct, above_ma20_n=b.above_ma20_n,
-        ma20_base=b.ma20_base,
+        ma20_base=b.ma20_base, by_market=rows,
     )  # fmt: skip
     return data, m
 
@@ -741,22 +856,47 @@ def _last_bar(env: Envelope[ProgramDaily] | None) -> ProgramDayBar | None:
     return next((b for b in reversed(env.data.rows) if b.quality is not Quality.INVALID), None)
 
 
+def _program_now(
+    bar: ProgramDayBar | None, live: Envelope[ProgramIntraday] | None
+) -> HomeProgramNow | None:
+    """장중 마지막 분 누적이 마감 일별보다 새 날이면 그것, 아니면 마감 일별(metrics §22)."""
+    p = live.data.last if live is not None else None
+    if live is not None and p is not None and (bar is None or live.data.trade_date > bar.date):
+        return HomeProgramNow(
+            basis="intraday", date=live.data.trade_date, as_of=p.ts, net=p.net,
+            arbt_net=p.arbt_net, nabt_net=p.nabt_net, quality=p.quality,
+        )  # fmt: skip
+    if bar is None:
+        return None
+    return HomeProgramNow(
+        basis="daily", date=bar.date, as_of=close_as_of(bar.date), net=bar.net,
+        arbt_net=bar.arbt_net, nabt_net=bar.nabt_net, quality=bar.quality,
+    )  # fmt: skip
+
+
 def _program(r: _Reads) -> tuple[HomeProgram, _Meta]:
     ctx = r.ctx
     parts = _Parts()
     k = parts.get("코스피 프로그램", lambda: program_daily(ctx, market="K", days=PROGRAM_DAYS))
     q = parts.get("코스닥 프로그램", lambda: program_daily(ctx, market="Q", days=PROGRAM_DAYS))
+    kl = parts.get("코스피 장중 프로그램", lambda: program_intraday(ctx, market="K"))
+    ql = parts.get("코스닥 장중 프로그램", lambda: program_intraday(ctx, market="Q"))
     kb, qb = _last_bar(k), _last_bar(q)
-    if kb is None and qb is None:
+    kn, qn = _program_now(kb, kl), _program_now(qb, ql)
+    if kn is None and qn is None:
         parts.nothing(NO_DAILY)
     m = _Meta(notes=list(parts.notes))
     for env, bar in ((k, kb), (q, qb)):
         if env is not None and bar is not None:
             m.value(env.source, close_as_of(bar.date), bar.quality)
             m.notes.extend(env.notes)
-    last = max(b.date for b in (kb, qb) if b is not None)
-    m.notes += _close_note(ctx, last, "장중 시장 프로그램 누적은 아직 API 에 없다")
-    return HomeProgram(kospi=kb, kosdaq=qb), m
+    for env, now in ((kl, kn), (ql, qn)):
+        if env is not None and now is not None and now.basis == "intraday":
+            m.value(env.source, now.as_of, now.quality)
+            m.notes.extend(env.notes)
+    last = max(n.date for n in (kn, qn) if n is not None)
+    m.notes += _close_note(ctx, last, "오늘 장중 프로그램 누적이 아직 없다")
+    return HomeProgram(kospi=kb, kosdaq=qb, kospi_now=kn, kosdaq_now=qn), m
 
 
 def _etf(r: _Reads) -> tuple[HomeEtf, _Meta]:

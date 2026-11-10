@@ -39,6 +39,7 @@ __all__ = [
     "apply_program_checks",
     "check4",
     "day_bars",
+    "minute_bars",
     "program_report",
     "rank_top",
     "scan_codes",
@@ -159,27 +160,35 @@ def day_bars(rows: Sequence[ProgramMarketRow]) -> list[DayBar]:
     by_day: dict[date, dict[tuple[str, str], ProgramMarketRow]] = {}
     for r in rows:
         by_day.setdefault(r.trade_date, {})[(r.kind, r.side)] = r
-    out: list[DayBar] = []
-    for d in sorted(by_day):
-        g = by_day[d]
-        q = _worst(r.quality for r in g.values())
-        if q == Quality.INVALID:
-            out.append(DayBar(d, None, None, None, None, None, None, q))
-            continue
-        idx = next((r.index_close for r in g.values() if r.index_close is not None), None)
-        out.append(
-            DayBar(
-                d,
-                _get(g, "whol", "smtn", "net_value"),
-                _get(g, "arbt", "smtn", "net_value"),
-                _get(g, "nabt", "smtn", "net_value"),
-                _get(g, "whol", "entm", "net_value"),
-                _get(g, "whol", "onsl", "net_value"),
-                idx,
-                q,
-            )
-        )
-    return out
+    return [_bar(d, by_day[d]) for d in sorted(by_day)]
+
+
+def _bar(d: date, g: Mapping[tuple[str, str], ProgramMarketRow]) -> DayBar:
+    """한 묶음(하루 또는 한 분) → 막대. invalid 묶음은 값 없이."""
+    q = _worst(r.quality for r in g.values())
+    if q == Quality.INVALID:
+        return DayBar(d, None, None, None, None, None, None, q)
+    idx = next((r.index_close for r in g.values() if r.index_close is not None), None)
+    return DayBar(
+        d,
+        _get(g, "whol", "smtn", "net_value"),
+        _get(g, "arbt", "smtn", "net_value"),
+        _get(g, "nabt", "smtn", "net_value"),
+        _get(g, "whol", "entm", "net_value"),
+        _get(g, "whol", "onsl", "net_value"),
+        idx,
+        q,
+    )
+
+
+def minute_bars(rows: Sequence[ProgramMarketRow]) -> list[tuple[datetime, DayBar]]:
+    """장중 행(한 시장·거래소·하루 — ts 있음) → 분 오름차순 (분, 막대). 값은 그 분까지 **그날 누적**
+    (metrics §22 — 일별 막대와 같은 칸). 일별 행(ts 없음)은 건너뛴다."""
+    by_ts: dict[datetime, dict[tuple[str, str], ProgramMarketRow]] = {}
+    for r in rows:
+        if r.ts is not None:
+            by_ts.setdefault(r.ts, {})[(r.kind, r.side)] = r
+    return [(ts, _bar(next(iter(g.values())).trade_date, g)) for ts, g in sorted(by_ts.items())]
 
 
 # ── 상위 표·범위 ──────────────────────────────────────────────────────────────────────

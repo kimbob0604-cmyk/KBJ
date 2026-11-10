@@ -37,6 +37,7 @@ live:
   - flows/intraday
   - flows/market-minute
   - program/top
+  - program/intraday  # 장중 시장 프로그램 누적(기본 코스피 — 첫 화면 카드는 home 묶음으로 본다)
   - gex/briefing
   - gex/flow
   - gex/levels
@@ -51,6 +52,7 @@ grid:
   - {key: flows/market-minute, params: {market: [kospi, kosdaq, k200_fut, k200_call, k200_put, stock_fut]}}  # p1/flows_minute.ts
   - {key: program/top, params: {market: [K, Q], side: [buy, sell], scope: [intraday, close]}}  # p1/program.ts
   - {key: program/daily, params: {market: [K, Q]}}                            # 일별 시장(상위와 같은 seg)
+  - {key: market/index-chart, params: {code: ['0001', '1001']}}               # 첫 화면 지수 카드 3개월·1년(p1/home_market.ts — days 기본 250, full 만)
   # ── 2 보드 ──
   - {key: board/newhigh, params: {basis: [close, high], kind: [null, hist, w52, d120], min_turnover_eok: [null, 50, 100, 300]}}
   - {key: board/us, params: {basis: [close, high]}}

@@ -63,6 +63,8 @@ from kbj.services.api.models.market import (
     Breadth,
     Chip,
     DayValue,
+    IndexChart,
+    IndexChartPoint,
     IndexTile,
     MarketMovers,
     MarketSummary,
@@ -75,6 +77,7 @@ from kbj.services.api.models.market import (
 from kbj.services.api.readers._common import (
     NoData,
     ReadContext,
+    UnknownCode,
     day_start,
     envelope,
     label,
@@ -85,9 +88,11 @@ from kbj.services.api.readers._common import (
 from kbj.services.api.readers.flows import market_totals
 
 __all__ = [
+    "INDEX_CHART_DAYS",
     "MOVERS_NO_DATA",
     "NIGHT_CODE",
     "export_flash",
+    "index_chart",
     "market_movers",
     "market_ribbon",
     "market_sectors",
@@ -440,6 +445,46 @@ def market_summary(ctx: ReadContext, *, day: date | None = None) -> Envelope[Mar
         as_of=max(as_ofs) if as_ofs else now,
         quality=worst(quals),
         notes=[*ctx.venue_notes(), *notes],
+        generated_at=ctx.now(),
+    )
+
+
+NO_INDEX_BARS: Final = "아직 없음 — krx.daily 08:05(지수 일봉)"
+INDEX_CHART_DAYS: Final = 250  # 기본 1년(화면 3개월 = 마지막 63일)
+
+
+def index_chart(ctx: ReadContext, *, code: str, days: int) -> Envelope[IndexChart]:
+    """지수 일봉 종가 최근 `days` 거래일(metrics §6.10). KRX 지수 일별(공백 뺀 이름 코드)을 먼저,
+    없으면 KIS 업종 코드 일봉 — `breadth_risk` 와 같은 순서. 설정에 없는 코드는 UnknownCode."""
+    names = ctx.markets.market.intraday_indices
+    if code not in names:
+        raise UnknownCode()
+    name = names.get(code)
+    krx = "".join((name or "").split())
+    end = ctx.today()
+    got = ctx.repos.market.index_series([c for c in (krx, code) if c], end, days)
+    bars = next((got[c] for c in (krx, code) if c and got.get(c)), [])
+    kept = [b for b in bars if b.close is not None and b.quality.usable]
+    if not kept:
+        raise NoData(NO_INDEX_BARS)
+    notes: list[str] = []
+    if len(kept) < len(bars):
+        notes.append(f"값이 없거나 invalid 인 {len(bars) - len(kept)}일은 뺐다")
+    if len(kept) < days:
+        notes.append(f"{days}거래일 중 {len(kept)}일만 있다")
+    return envelope(
+        IndexChart(
+            code=code,
+            name=name,
+            days=days,
+            points=[
+                IndexChartPoint(date=b.date, close=c) for b in kept if (c := b.close) is not None
+            ],
+        ),
+        source=label(b.source for b in kept),
+        as_of=close_as_of(kept[-1].date),
+        quality=worst(b.quality for b in kept),
+        notes=notes,
         generated_at=ctx.now(),
     )
 

@@ -14,7 +14,7 @@ F2 §0-2·§0-3·§1.4·§3.5, metrics §22).
 
 from __future__ import annotations
 
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from typing import Final, Literal
 
 from kbj.core.quality import Quality
@@ -23,21 +23,40 @@ from kbj.engines.flows.program import (
     MARKET_NAME,
     apply_program_checks,
     day_bars,
+    minute_bars,
     rank_top,
     scope_label,
     sweep_universe,
 )
 from kbj.services.api.models.common import Envelope
-from kbj.services.api.models.program import ProgramDaily, ProgramDayBar, ProgramTop, ProgramTopRow
+from kbj.services.api.models.program import (
+    ProgramDaily,
+    ProgramDayBar,
+    ProgramIntraday,
+    ProgramMinutePoint,
+    ProgramTop,
+    ProgramTopRow,
+)
 from kbj.services.api.readers._common import NoData, ReadContext, envelope, worst
 
-__all__ = ["CLOSE_LOOKBACK", "NO_DAILY", "NO_TOP", "SOURCE", "program_daily", "program_top"]
+__all__ = [
+    "CLOSE_LOOKBACK",
+    "NO_DAILY",
+    "NO_INTRADAY",
+    "NO_TOP",
+    "SOURCE",
+    "program_daily",
+    "program_intraday",
+    "program_top",
+]
 
 NO_DAILY: Final = "아직 없음 — program.daily 15:50(확인 전 #40)"
 NO_TOP: Final = (
     "아직 없음 — program.stock_scan 09:05~15:25 · program.stock_sweep 18:10(확인 전 #41)"
 )
+NO_INTRADAY: Final = "아직 없음 — program.intraday(정규장 매분 — 09:00~15:40)"
 SOURCE: Final = "KIS"
+INTRADAY_TAIL: Final = timedelta(minutes=10)  # 정규장 마감 뒤 단일가 수집 끝(jobs.yaml close+10)
 CLOSE_LOOKBACK: Final = 5  # 마감 표를 찾을 거래일 수
 _CLOSE_AT: Final = time(15, 30)
 Market = Literal["K", "Q"]
@@ -93,6 +112,55 @@ def program_daily(ctx: ReadContext, *, market: str, days: int) -> Envelope[Progr
         source=SOURCE,
         as_of=datetime.combine(last, _CLOSE_AT, tzinfo=KST),
         quality=worst(b.quality for b in bars if b.quality != Quality.INVALID),
+        notes=notes,
+        generated_at=now,
+    )
+
+
+def _minute_day(ctx: ReadContext, mkt: Market, venue: Venue, today: date) -> date | None:
+    """장중 행이 있는 가장 최근 날 — 오늘부터 거슬러 `CLOSE_LOOKBACK` 거래일."""
+    d = today if ctx.cal.is_trading_day(today) else ctx.cal.prev_trading_day(today)
+    for _ in range(CLOSE_LOOKBACK):
+        if ctx.repos.program.market_minutes(d, mkt, venue):
+            return d
+        d = ctx.cal.prev_trading_day(d)
+    return None
+
+
+def program_intraday(ctx: ReadContext, *, market: str) -> Envelope[ProgramIntraday]:
+    """장중 시장 프로그램 누적(metrics §22) — 분마다 그날 누적, 검산 ④ 를 분 묶음마다 다시 본다."""
+    mkt, venue = _market(market), _venue(ctx)
+    now = ctx.now_kst()
+    day = _minute_day(ctx, mkt, venue, now.date())
+    if day is None:
+        raise NoData(NO_INTRADAY)
+    checked, _fails = apply_program_checks(ctx.repos.program.market_minutes(day, mkt, venue))
+    bars = minute_bars(checked)
+    live = day == now.date() and now < ctx.cal.equity_bounds(day)[1] + INTRADAY_TAIL
+    points = [
+        ProgramMinutePoint(
+            ts=ts,
+            net=b.net,
+            arbt_net=b.arbt_net,
+            nabt_net=b.nabt_net,
+            quality=worst([b.quality, Quality.ESTIMATED if live else None]) or b.quality,
+        )
+        for ts, b in bars
+    ]
+    valid = [p for p in points if p.quality != Quality.INVALID]
+    notes = list(ctx.venue_notes())
+    if len(valid) < len(points):
+        notes.append(f"검산 ④ 실패 {len(points) - len(valid)}분 제외(전체 = 차익 + 비차익)")
+    if day < now.date():
+        notes.append(f"{day.month}/{day.day} 장중 누적(마지막 분 = 그날 누적)")
+    last = valid[-1] if valid else None
+    return envelope(
+        ProgramIntraday(
+            market=mkt, venue=venue, trade_date=day, live=live, points=points, last=last
+        ),
+        source=SOURCE,
+        as_of=last.ts if last is not None else points[-1].ts,
+        quality=worst(p.quality for p in valid),
         notes=notes,
         generated_at=now,
     )

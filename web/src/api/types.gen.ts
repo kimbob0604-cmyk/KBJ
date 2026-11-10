@@ -126,6 +126,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/market/index-chart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Index Chart Route
+         * @description 지수 일봉 종가 최근 N 거래일(기본 250 ≈ 1년) — 첫 화면 지수 카드 3개월·1년 버튼.
+         */
+        get: operations["index_chart_route_api_market_index_chart_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/market/ribbon": {
         parameters: {
             query?: never;
@@ -982,6 +1002,26 @@ export interface paths {
         };
         /** Daily */
         get: operations["daily_api_program_daily_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/program/intraday": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Intraday
+         * @description 장중 시장 프로그램 누적(매분 그날 누적 — metrics §22). 장 뒤엔 마지막 분 = 마감 누적.
+         */
+        get: operations["intraday_api_program_intraday_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4299,6 +4339,25 @@ export interface components {
             generated_at: string;
             data: components["schemas"]["Home"];
         };
+        /** Envelope[IndexChart] */
+        Envelope_IndexChart_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["IndexChart"];
+        };
         /** Envelope[IndexReview] */
         Envelope_IndexReview_: {
             /** Source */
@@ -4678,6 +4737,25 @@ export interface components {
              */
             generated_at: string;
             data: components["schemas"]["ProgramDaily"];
+        };
+        /** Envelope[ProgramIntraday] */
+        Envelope_ProgramIntraday_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["ProgramIntraday"];
         };
         /** Envelope[ProgramTop] */
         Envelope_ProgramTop_: {
@@ -6302,7 +6380,7 @@ export interface components {
         };
         /**
          * HomeBreadth
-         * @description 시장 폭 — 20일선 위 비율(코스피+코스닥 합산, 마감 확정). 60·120일선·시장별은 없다(notes).
+         * @description 시장 폭 — 20일선 위 비율(코스피+코스닥 합산)과 시장별 20·60·120일선 위 비율(마감 확정).
          */
         HomeBreadth: {
             /**
@@ -6316,6 +6394,8 @@ export interface components {
             above_ma20_n: number;
             /** Ma20 Base */
             ma20_base: number;
+            /** By Market */
+            by_market: components["schemas"]["HomeMaBreadth"][];
         };
         /** HomeCard[HomeBreadth] */
         HomeCard_HomeBreadth_: {
@@ -6827,8 +6907,9 @@ export interface components {
         };
         /**
          * HomeFutures
-         * @description 코스피200 선물(근월물). 전일 대비 등락률 칸은 없다(전일 정산가를 API 에 싣지 않는다 —
-         *     notes). 야간이면 `night`(주간 마지막 값 대비 등락).
+         * @description 코스피200 선물(근월물). 전일 대비 등락률 = 현재가 ÷ 귀속 거래일 근월물의 직전 거래일 KRX
+         *     정산가 − 1(metrics §6.9 — 정산가가 없으면 None + notes). 야간이면 `night`(주간 마지막 값
+         *     대비).
          */
         HomeFutures: {
             /** Trade Date */
@@ -6844,6 +6925,12 @@ export interface components {
             price_quality: components["schemas"]["Quality"] | null;
             /** Stale */
             stale: boolean | null;
+            /** Prev Settle */
+            prev_settle: number | null;
+            /** Prev Settle Date */
+            prev_settle_date: string | null;
+            /** Chg Pct */
+            chg_pct: number | null;
             night: components["schemas"]["IndexTile"] | null;
             investors: components["schemas"]["HomeInvestorNet"] | null;
         };
@@ -6890,6 +6977,37 @@ export interface components {
         HomeIndex: {
             tile: components["schemas"]["IndexTile"];
             investors: components["schemas"]["HomeInvestorNet"] | null;
+            today: components["schemas"]["HomeIndexDay"] | null;
+            updown: components["schemas"]["HomeUpDown"] | null;
+        };
+        /**
+         * HomeIndexDay
+         * @description 그날 장중 지수 10분 점(flows/market-minute 의 지수 겹침 — 값이 있는 슬롯만). 장 전·휴장이면
+         *     직전 거래일.
+         */
+        HomeIndexDay: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Points */
+            points: components["schemas"]["HomeIndexPoint"][];
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+        };
+        /** HomeIndexPoint */
+        HomeIndexPoint: {
+            /** T */
+            t: string;
+            /** V */
+            v: number;
         };
         /** HomeIndices */
         HomeIndices: {
@@ -6931,6 +7049,38 @@ export interface components {
              */
             as_of: string;
             quality: components["schemas"]["Quality"];
+        };
+        /**
+         * HomeMaBreadth
+         * @description 한 시장의 N일선 위 비율(metrics §6.2 — 마감 확정).
+         */
+        HomeMaBreadth: {
+            /**
+             * Market
+             * @enum {string}
+             */
+            market: "KOSPI" | "KOSDAQ";
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Shares */
+            shares: components["schemas"]["HomeMaShare"][];
+            /** Source */
+            source: string;
+            quality: components["schemas"]["Quality"] | null;
+        };
+        /** HomeMaShare */
+        HomeMaShare: {
+            /** Ma */
+            ma: number;
+            /** Above */
+            above: number;
+            /** Base */
+            base: number;
+            /** Pct */
+            pct: number | null;
         };
         /**
          * HomeNewhigh
@@ -7011,11 +7161,44 @@ export interface components {
         };
         /**
          * HomeProgram
-         * @description 프로그램 순매수 — 시장마다 마지막 날(마감 일별, 검산 ④ 통과). 장중 누적은 없다(notes).
+         * @description 프로그램 순매수 — 시장마다 마감 일별 마지막 날(검산 ④ 통과)과 '지금' 값(장중 누적 또는
+         *     마감).
          */
         HomeProgram: {
             kospi: components["schemas"]["ProgramDayBar"] | null;
             kosdaq: components["schemas"]["ProgramDayBar"] | null;
+            kospi_now: components["schemas"]["HomeProgramNow"] | null;
+            kosdaq_now: components["schemas"]["HomeProgramNow"] | null;
+        };
+        /**
+         * HomeProgramNow
+         * @description 프로그램 순매수 '지금' 값(원, metrics §22) — `intraday` = 장중 마지막 분 그날 누적
+         *     (program/intraday — 장중 잠정), `daily` = 마감 일별(program/daily). 장중 누적이 마감 일별보다
+         *     새 날일 때만 장중.
+         */
+        HomeProgramNow: {
+            /**
+             * Basis
+             * @enum {string}
+             */
+            basis: "intraday" | "daily";
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            /** Net */
+            net: number | null;
+            /** Arbt Net */
+            arbt_net: number | null;
+            /** Nabt Net */
+            nabt_net: number | null;
+            quality: components["schemas"]["Quality"];
         };
         /**
          * HomeSpike
@@ -7068,7 +7251,8 @@ export interface components {
         };
         /**
          * HomeUpDown
-         * @description 상승·보합·하락 — **코스피+코스닥 합산**(market/summary breadth, 마감 확정). 시장별은 없다.
+         * @description 상승·보합·하락(마감 확정 — metrics §6.2). 지수 카드 `breadth` 는 코스피+코스닥 합산
+         *     (market/summary), 지수마다 `updown` 은 그 시장만(같은 원장·같은 함수).
          */
         HomeUpDown: {
             /**
@@ -7089,6 +7273,30 @@ export interface components {
             /** Source */
             source: string;
             quality: components["schemas"]["Quality"] | null;
+        };
+        /**
+         * IndexChart
+         * @description `/api/market/index-chart?code=&days=` — 지수 일봉 종가(metrics §6.10 — 첫 화면 3개월·1년).
+         */
+        IndexChart: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string | null;
+            /** Days */
+            days: number;
+            /** Points */
+            points: components["schemas"]["IndexChartPoint"][];
+        };
+        /** IndexChartPoint */
+        IndexChartPoint: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Close */
+            close: number;
         };
         /** IndexDisparity */
         IndexDisparity: {
@@ -8420,6 +8628,50 @@ export interface components {
             onsl_net: number | null;
             /** Index Close */
             index_close: number | null;
+            quality: components["schemas"]["Quality"];
+        };
+        /**
+         * ProgramIntraday
+         * @description `/api/program/intraday?market=` — 장중 시장 프로그램 누적(program.intraday 매분).
+         */
+        ProgramIntraday: {
+            /**
+             * Market
+             * @enum {string}
+             */
+            market: "K" | "Q";
+            /**
+             * Venue
+             * @enum {string}
+             */
+            venue: "KRX" | "NXT" | "TOTAL";
+            /**
+             * Trade Date
+             * Format: date
+             */
+            trade_date: string;
+            /** Live */
+            live: boolean;
+            /** Points */
+            points: components["schemas"]["ProgramMinutePoint"][];
+            last: components["schemas"]["ProgramMinutePoint"] | null;
+        };
+        /**
+         * ProgramMinutePoint
+         * @description 장중 한 분 — 그 분까지 **그날 누적**(원, metrics §22). 검산 ④ 실패 분은 값 없이 invalid.
+         */
+        ProgramMinutePoint: {
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
+            /** Net */
+            net: number | null;
+            /** Arbt Net */
+            arbt_net: number | null;
+            /** Nabt Net */
+            nabt_net: number | null;
             quality: components["schemas"]["Quality"];
         };
         /** ProgramTop */
@@ -11120,6 +11372,65 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_MarketMovers_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    index_chart_route_api_market_index_chart_get: {
+        parameters: {
+            query?: {
+                code?: string;
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_IndexChart_"];
                 };
             };
             /** @description 세션 없음·만료 */
@@ -14205,6 +14516,64 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_ProgramDaily_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    intraday_api_program_intraday_get: {
+        parameters: {
+            query?: {
+                market?: "K" | "Q";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_ProgramIntraday_"];
                 };
             };
             /** @description 세션 없음·만료 */

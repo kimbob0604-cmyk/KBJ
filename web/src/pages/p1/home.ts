@@ -11,7 +11,7 @@ import { kstStamp, kstTime, num } from '../../ui/fmt';
 import { QUALITY_LABEL } from '../../ui/quality';
 import { failed, fill } from '../p1_market';
 import type { HomePanel } from './home_defs';
-import { drawMarket, type MarketPanels } from './home_market';
+import { drawMarket, type MarketPanels, newMarketState } from './home_market';
 import { drawSignals, drawWatch, newState, type SignalPanels, WATCH_HINT } from './home_signals';
 import type { Home } from './home_ui';
 
@@ -52,6 +52,7 @@ export function marketStampText(env: Envelope<Home>): string {
 
 export function mountHome(ctx: PageContext, t: HomeTargets): { loadHome: () => Promise<void>; loadWatch: () => Promise<void> } {
   const st = newState();
+  const mst = newMarketState((key, params) => ctx.source.get(key, params));
   const { kospi, kosdaq, futures, band } = t.market;
   const all: HomePanel[] = [kospi, kosdaq, futures, band, ...Object.values<HomePanel>(t.signals)];
   let seq = 0;
@@ -63,7 +64,7 @@ export function mountHome(ctx: PageContext, t: HomeTargets): { loadHome: () => P
       if (my !== seq) return;
       t.stamp.textContent = stampText(env);
       t.marketStamp.textContent = marketStampText(env);
-      drawMarket(t.market, env);
+      drawMarket(t.market, env, mst);
       drawSignals(t.signals, env, st);
     } catch (err) {
       if (my !== seq) return;

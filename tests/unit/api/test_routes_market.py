@@ -268,3 +268,53 @@ def test_movers_on_a_holiday_does_not_say_intraday(world: World, authed: TestCli
     notes = authed.get("/api/market/movers").json()["notes"]
     assert f"{last.month}/{last.day} 마감 기준" in notes
     assert not any("장중" in n for n in notes)
+
+
+# ── 지수 일별 차트(metrics §6.10 — 첫 화면 3개월·1년) ────────────────────────────────────
+
+
+def test_index_chart_closes_and_short_history_note(world: World, authed: TestClient) -> None:
+    body = authed.get("/api/market/index-chart?code=0001&days=250").json()
+    d = body["data"]
+    assert d["code"] == "0001" and d["name"] == "코스피" and d["days"] == 250
+    want = [
+        (b.date.isoformat(), b.close) for b in world.market.index_bars if b.code == "0001"
+    ]  # 합성 세계는 KIS 코드(0001) 일봉뿐 — KRX 이름 코드가 없으면 그것을 쓴다
+    assert [(p["date"], p["close"]) for p in d["points"]] == want
+    assert body["source"] == "KRX" and body["quality"] == "ok"
+    assert body["as_of"].startswith(want[-1][0]) and body["as_of"].endswith("15:30:00+09:00")
+    assert any(f"250거래일 중 {len(want)}일만" in n for n in body["notes"])
+    # 기본값(코드 0001·250일)은 인자 없이 부른 것과 같다
+    assert authed.get("/api/market/index-chart").json()["data"] == d
+    short = authed.get("/api/market/index-chart?code=1001&days=20").json()["data"]
+    assert len(short["points"]) == 20 and short["name"] == "코스닥"
+
+
+def test_index_chart_prefers_krx_name_code(world: World, authed: TestClient) -> None:
+    from kbj.core.quality import Quality
+    from kbj.core.rows import IndexBar
+
+    days = world.market.trading_days[-3:]
+    bars = [IndexBar("코스피", d, "코스피", 1.0, 1.0, 1.0, 100.0 + i, None, None, "krx",
+                     Quality.OK) for i, d in enumerate(days)]  # fmt: skip
+    world.repos.market.upsert_index_bars(bars, loaded_by="test")
+    pts = authed.get("/api/market/index-chart?code=0001&days=20").json()["data"]["points"]
+    assert [p["close"] for p in pts] == [100.0, 101.0, 102.0]
+
+
+def test_index_chart_unknown_code_and_422(world: World, authed: TestClient) -> None:
+    r = authed.get("/api/market/index-chart?code=9999")
+    assert r.status_code == 404 and r.json()["code"] == "unknown_code"
+    for q in ("days=19", "days=501", "code=abc", "code=00011"):
+        assert authed.get(f"/api/market/index-chart?{q}").status_code == 422, q
+
+
+def test_index_chart_no_data(world: World) -> None:
+    from kbj.store.repos import memory_repos
+
+    world.repos = memory_repos()
+    c = world.client()
+    world.login(c)
+    r = c.get("/api/market/index-chart")
+    assert r.status_code == 404 and r.json()["code"] == "no_data"
+    assert "krx.daily" in r.json()["message"]

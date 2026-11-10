@@ -23,7 +23,7 @@
         "quality": "estimated",
         "notes": [
           "NXT 미포함(KRX 구분만 — D-P3-9)",
-          "상승·보합·하락은 코스피+코스닥 합산(마감 확정) — 시장별 값은 없다"
+          "상승·보합·하락(마감 확정) — 띠는 코스피+코스닥 합산, 지수 카드는 그 시장만"
         ],
         "message": null,
         "error": null,
@@ -71,6 +71,17 @@
               "source": "KIS",
               "as_of": "2026-09-15T15:30:00+09:00",
               "quality": "ok"
+            },
+            "today": null,
+            "updown": {
+              "date": "2026-09-15",
+              "up": 7,
+              "flat": 1,
+              "down": 11,
+              "unknown": 0,
+              "total": 19,
+              "source": "KIS",
+              "quality": "ok"
             }
           },
           "kosdaq": {
@@ -115,6 +126,17 @@
               "other_corp": 8000000,
               "source": "KIS",
               "as_of": "2026-09-15T15:30:00+09:00",
+              "quality": "ok"
+            },
+            "today": null,
+            "updown": {
+              "date": "2026-09-15",
+              "up": 4,
+              "flat": 0,
+              "down": 12,
+              "unknown": 0,
+              "total": 16,
+              "source": "KIS",
               "quality": "ok"
             }
           },
@@ -171,7 +193,9 @@
         "as_of": "2026-09-15T15:30:00+09:00",
         "quality": "estimated",
         "notes": [
-          "20일선 위 비율만 — 60·120일선 위 비율과 시장별(코스피·코스닥) 값은 아직 없다(두 시장 합산)"
+          "60일선 — 영업일이 30일뿐이다(일봉 이력 부족)",
+          "120일선 — 영업일이 30일뿐이다(일봉 이력 부족)",
+          "N일선 위 비율 = 종가가 최근 N영업일 평균보다 높은 종목 ÷ 평균을 낼 수 있는 종목"
         ],
         "message": null,
         "error": null,
@@ -179,7 +203,61 @@
           "date": "2026-09-15",
           "above_ma20_pct": 47.05882352941176,
           "above_ma20_n": 16,
-          "ma20_base": 34
+          "ma20_base": 34,
+          "by_market": [
+            {
+              "market": "KOSPI",
+              "date": "2026-09-15",
+              "shares": [
+                {
+                  "ma": 20,
+                  "above": 10,
+                  "base": 18,
+                  "pct": 55.55555555555556
+                },
+                {
+                  "ma": 60,
+                  "above": 0,
+                  "base": 0,
+                  "pct": null
+                },
+                {
+                  "ma": 120,
+                  "above": 0,
+                  "base": 0,
+                  "pct": null
+                }
+              ],
+              "source": "KIS",
+              "quality": "ok"
+            },
+            {
+              "market": "KOSDAQ",
+              "date": "2026-09-15",
+              "shares": [
+                {
+                  "ma": 20,
+                  "above": 6,
+                  "base": 16,
+                  "pct": 37.5
+                },
+                {
+                  "ma": 60,
+                  "above": 0,
+                  "base": 0,
+                  "pct": null
+                },
+                {
+                  "ma": 120,
+                  "above": 0,
+                  "base": 0,
+                  "pct": null
+                }
+              ],
+              "source": "KIS",
+              "quality": "ok"
+            }
+          ]
         }
       },
       "spike": {
@@ -710,7 +788,9 @@
         "page": 1,
         "keys": [
           "program/daily?market=K",
-          "program/daily?market=Q"
+          "program/daily?market=Q",
+          "program/intraday?market=K",
+          "program/intraday?market=Q"
         ],
         "source": null,
         "as_of": null,

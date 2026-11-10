@@ -19,6 +19,8 @@ __all__ = [
     "CreditPoint",
     "DayValue",
     "GlobalProxy",
+    "IndexChart",
+    "IndexChartPoint",
     "IndexTile",
     "MarketMovers",
     "MarketSummary",
@@ -112,6 +114,20 @@ class MarketMovers(ApiModel):
     n_status_unknown: int  # 관리·정지 상태를 몰라 빼지 못한 종목(n_eligible 안)
     up: list[MoverRow]  # 급등 — 등락률 > 0 내림차순
     down: list[MoverRow]  # 급락 — 등락률 < 0 오름차순
+
+
+class IndexChartPoint(ApiModel):
+    date: date
+    close: float
+
+
+class IndexChart(ApiModel):
+    """`/api/market/index-chart?code=&days=` — 지수 일봉 종가(metrics §6.10 — 첫 화면 3개월·1년)."""
+
+    code: str  # KIS 업종 코드(0001·1001·2001)
+    name: str | None
+    days: int  # 요청한 거래일 수
+    points: list[IndexChartPoint]  # 날짜 오름차순(invalid·값 없음 뺌)
 
 
 class SectorCell(ApiModel):

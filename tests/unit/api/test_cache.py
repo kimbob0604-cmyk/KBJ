@@ -204,3 +204,27 @@ def test_ledger_cache_builds_once_per_version(world: World) -> None:
             got = [f.result() for f in [ex.submit(cache.get, world.repos, end) for _ in range(4)]]
     assert len(calls) == 1
     assert all(g is got[0] for g in got)
+
+
+def test_ledger_cache_memo_follows_the_version_token() -> None:
+    """작은 계산 결과(예: 120일선 시장폭)는 원장과 같은 데이터 버전 안에서 한 번 — 버전이 바뀌면
+    다시, 토큰이 없으면(캐시 꺼짐) 매번."""
+    from datetime import date
+
+    from kbj.services.api.readers import _common
+
+    tok = {"v": "v1"}
+    cache = _common.LedgerCache(lambda: tok["v"])
+    calls: list[int] = []
+
+    def build() -> int:
+        calls.append(1)
+        return len(calls)
+
+    d = date(2026, 11, 10)
+    assert cache.memo("x", d, build) == 1 and cache.memo("x", d, build) == 1
+    assert cache.memo("x", date(2026, 11, 11), build) == 2  # 날이 다르면 따로
+    tok["v"] = "v2"
+    assert cache.memo("x", d, build) == 3
+    off = _common.LedgerCache(lambda: None)
+    assert off.memo("x", d, build) == 4 and off.memo("x", d, build) == 5

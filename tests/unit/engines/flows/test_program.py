@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import date
+from dataclasses import replace
+from datetime import date, datetime, timedelta
 
 import pytest
 
@@ -14,6 +15,7 @@ from kbj.engines.flows.program import (
     apply_program_checks,
     check4,
     day_bars,
+    minute_bars,
     program_report,
     rank_top,
     scan_codes,
@@ -147,3 +149,24 @@ def test_world_program_ledger_has_zero_check4_differences() -> None:
     assert rep["failed"] == 0 and rep["na"] == 0 and rep["groups"] == 391 * 2
     top = [r.code for r in rank_top([r for r in w.program_stocks if r.scope == "sweep"], "buy", 5)]
     assert top == w.expect_program_top(5)
+
+
+def test_minute_bars_group_by_minute_cumulative_and_skip_daily_rows() -> None:
+    from kbj.core.time import KST
+
+    t0 = datetime(2026, 11, 17, 9, 1, tzinfo=KST)
+    t1 = t0 + timedelta(minutes=1)
+    rows = [replace(r, ts=t1) for r in group(nudge=0)]
+    rows += [replace(r, ts=t0) for r in group(nudge=0)]
+    rows += group()  # 일별 행(ts 없음) — 건너뛴다
+    bars = minute_bars(rows)
+    assert [ts for ts, _ in bars] == [t0, t1]  # 분 오름차순
+    b = bars[0][1]
+    assert b.date == DAY and (b.net, b.arbt_net, b.nabt_net) == (10 - 4 - 20 + 30, 6, 10)
+    assert (b.entm_net, b.onsl_net) == (10 - 20, -4 + 30)
+    # 검산 ④ 실패 분은 값 없이 invalid(다른 분은 그대로)
+    nudge = 2 * CHECK4_TOL["net_value"]
+    bad, _ = apply_program_checks([*[replace(r, ts=t0) for r in group(nudge=nudge)], *rows[:9]])
+    got = dict(minute_bars(bad))
+    assert got[t0].quality == Quality.INVALID and got[t0].net is None
+    assert got[t1].quality == Quality.OK and got[t1].net == 16

@@ -16,7 +16,14 @@ from pydantic import AwareDatetime, Field
 from kbj.core.quality import Quality
 from kbj.services.api.models.common import ApiModel
 
-__all__ = ["ProgramDaily", "ProgramDayBar", "ProgramTop", "ProgramTopRow"]
+__all__ = [
+    "ProgramDaily",
+    "ProgramDayBar",
+    "ProgramIntraday",
+    "ProgramMinutePoint",
+    "ProgramTop",
+    "ProgramTopRow",
+]
 
 
 class ProgramDayBar(ApiModel):
@@ -37,6 +44,27 @@ class ProgramDaily(ApiModel):
     venue: Literal["KRX", "NXT", "TOTAL"]
     days: int
     rows: list[ProgramDayBar]
+
+
+class ProgramMinutePoint(ApiModel):
+    """장중 한 분 — 그 분까지 **그날 누적**(원, metrics §22). 검산 ④ 실패 분은 값 없이 invalid."""
+
+    ts: AwareDatetime
+    net: int | None  # 전체 합계 순매수
+    arbt_net: int | None
+    nabt_net: int | None
+    quality: Quality
+
+
+class ProgramIntraday(ApiModel):
+    """`/api/program/intraday?market=` — 장중 시장 프로그램 누적(program.intraday 매분)."""
+
+    market: Literal["K", "Q"]
+    venue: Literal["KRX", "NXT", "TOTAL"]
+    trade_date: date
+    live: bool  # 오늘 장(정규장 + 단일가 수집 끝) 중인가 — 아니면 마지막 분 = 그날 누적 마감 값
+    points: list[ProgramMinutePoint]  # 분 오름차순
+    last: ProgramMinutePoint | None  # 마지막 유효(검산 통과) 분
 
 
 class ProgramTopRow(ApiModel):
