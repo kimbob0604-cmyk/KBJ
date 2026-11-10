@@ -5,8 +5,10 @@
 // - 거래정지: 상태 배지 + 시세 칸 stale('정지 — 마지막 거래 YYYY-MM-DD').
 // - 공개: 이름·코드·시장·결산월은 DART(corp_index·fin/<코드>.json), 시세 자리는 TradingView 위젯, 신고가는 자물쇠.
 // - 관심종목 별 토글(P8 묶음 JNL — docs/p8_design.md §6): 로그인 머리에서 데이터 소스에 쓰기 채널(`put`·`del` —
-//   로그인 CSRF)이 있을 때만 단추를 그린다(없으면 '관심' 배지만 — 요청 없음). 목록은 main 하나.
-import { DataError, type Envelope } from '../../data/source';
+//   로그인 CSRF, 공개 사이트는 이 브라우저 localStorage)이 있을 때만 단추를 그린다(없으면 '관심' 배지만 — 요청 없음).
+//   목록은 main 하나.
+// - 공개 사이트에 상세가 없는 종목(NO_DETAIL)은 가벼운 머리(이름·시장·안내·별)만 — 탭은 지운다.
+import { DataError, type Envelope, NO_DETAIL } from '../../data/source';
 import { append, h } from '../../ui/dom';
 import { DASH, joEok, kstDate, pct, signClass } from '../../ui/fmt';
 import { kv, type KvItem } from '../../ui/kv';
@@ -166,7 +168,40 @@ export function drawHeader(p: Panel, env: Envelope<Header>, t: Pick<TabCtx, 'ope
   p.setSource(env);
 }
 
-/** 로그인: 머리를 불러 그린다. 모르는 코드(404 — no_data 아님)면 false */
+/**
+ * 공개 사이트에 상세가 없는 종목(NO_DETAIL — data/snapshot.ts) — 전 종목 목록의 이름·시장·종류 + 안내 한 줄 + 관심 별.
+ * 머리를 흉내 낸 가짜 StockHeader 는 만들지 않는다(다른 보기인 척 그리지 않는다 — 시세 칸 없음).
+ */
+async function drawNoDetail(p: Panel, t: TabCtx): Promise<void> {
+  let row: S['StockSearchItem'] | null = null;
+  let srcErr = false;
+  try {
+    const env = await t.get<S['StockSearch']>('stock/search', { q: t.code, limit: 1 });
+    row = env.data.items.find((it) => it.code === t.code) ?? null;
+    if (row) p.setSource({ ...env, notes: [] });
+  } catch {
+    srcErr = true; // 목록을 못 읽으면 코드만 — 원천 줄에 사유
+  }
+  p.clearBody();
+  const w = watchWriter(t.source);
+  p.body.append(
+    h(
+      'p',
+      { class: 'p8-title' },
+      h('b', null, row?.name ?? t.code),
+      ' ',
+      h('small', null, t.code),
+      ' ',
+      row?.market ? tag(marketLabel(row.market)) : null,
+      row?.kind && KIND_TAG[row.kind] ? tag(KIND_TAG[row.kind] ?? row.kind, 'warn') : null,
+      w ? watchStar(t.code, row?.is_watch === true, w) : '',
+    ),
+    h('p', { class: 'msg', data: { section: 'no-detail' } }, NO_DETAIL),
+  );
+  if (srcErr) p.setSrcText('종목 목록을 읽지 못함');
+}
+
+/** 로그인: 머리를 불러 그린다. 모르는 코드(404 — no_data 아님)·공개 사이트에 상세 없는 종목이면 false(탭을 지운다) */
 export async function loadHeader(p: Panel, t: TabCtx): Promise<boolean> {
   try {
     const env = await t.get<Header>(`stock/${t.code}/header`);
@@ -174,6 +209,10 @@ export async function loadHeader(p: Panel, t: TabCtx): Promise<boolean> {
     drawHeader(p, env, t);
     return true;
   } catch (err) {
+    if (err instanceof DataError && err.serverMessage === NO_DETAIL) {
+      await drawNoDetail(p, t);
+      return false;
+    }
     if (err instanceof DataError && err.status === 404 && err.serverMessage === null) {
       p.showMessage(`모르는 종목 코드 ${t.code}`);
       return false;

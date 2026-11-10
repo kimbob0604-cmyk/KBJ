@@ -1,7 +1,8 @@
 // 페이지 8 종목 상세(docs/p4_design.md §5·§6.1~§6.3) — 진입 모듈. 탭 모듈(src/pages/p8/*.ts)은 탭이 처음 보일 때 그린다.
 //
 // - 진입: 해시 #/p/8/<코드>(app/route.ts 의 선택 종목 상태), 검색 상자(로그인 'stock/search', 공개 corp_index.json),
-//   관심종목 칩(로그인 'watchlist'). 코드가 없으면 관심종목 첫 종목(로그인) 또는 검색 안내(공개).
+//   관심종목 칩(로그인 'watchlist' — 공개 사이트는 이 브라우저 목록). 코드가 없으면 관심종목 첫 종목(로그인) 또는 검색
+//   안내(공개). 공개 사이트 검색은 상세 파일이 없는 종목에 '상세 없음' 꼬리표(고르면 가벼운 머리 — p8/header.ts).
 // - 머리(늘 보임) + 탭 5개: 개요·재무·리포트·컨센·밸류·공시·지분. 종목을 바꾸면 머리와 탭을 새로 그린다(고른 탭은 그대로).
 // - 패널은 섹션 라우트마다 하나 — 한 패널의 실패(404 no_data·500)가 다른 패널을 멈추지 않는다(절대 규칙 4).
 // - 같은 종목 안의 같은 요청은 한 번(탭끼리 나눠 쓴다 — TabCtx.get). 종목이 바뀌면 묶음을 버린다.
@@ -191,7 +192,15 @@ function searchFn(source: DataSource, corpIndex: () => Promise<Map<string, CorpR
         code: it.code,
         name: it.name ?? it.code,
         market: it.market,
-        note: it.kind && KIND_TAG[it.kind] ? (KIND_TAG[it.kind] ?? null) : it.is_watch ? '관심' : null,
+        // 공개 사이트 전 종목 목록만 detail 을 싣는다(상세 파일이 없는 종목) — 로그인 API 는 없어 꼬리표가 그대로다
+        note:
+          (it as { detail?: unknown }).detail === false
+            ? '상세 없음'
+            : it.kind && KIND_TAG[it.kind]
+              ? (KIND_TAG[it.kind] ?? null)
+              : it.is_watch
+                ? '관심'
+                : null,
       }));
     };
   }
@@ -254,7 +263,11 @@ async function mount(ctx: PageContext): Promise<() => void> {
           onChange: (v) => setCode(v),
         });
         chips.append(chipSeg.el);
-      } else chips.append(h('p', { class: 'dim' }, `관심종목 없음 — ${HINT.watchlist}`));
+      } else {
+        // 공개 사이트(이 브라우저에 두는 관심종목)는 소스의 안내(☆ 관심 추가·저장소 문제), 로그인은 가져오기 안내
+        const browser = (source as { watchStore?: unknown }).watchStore === 'browser';
+        chips.append(h('p', { class: 'dim' }, (browser ? env.notes[0] : undefined) ?? `관심종목 없음 — ${HINT.watchlist}`));
+      }
       pSel.setSource({ ...env, notes: [] });
       return items;
     } catch (err) {

@@ -211,6 +211,8 @@ def _site(args: argparse.Namespace, err: IO[str]) -> int:  # pragma: no cover �
     print("  오래 걸린 경로: " + " · ".join(report.slowest()), file=err)
     for name, status in sorted(report.failed.items())[:20]:
         print(f"  실패 {status} {name}", file=err)
+    for name, n in sorted(report.skipped.items()):
+        print(f"  형식 밖 경로 값 {n}개 — {name}", file=err)
     return 1 if any(s >= 500 for s in report.failed.values()) else 0
 
 

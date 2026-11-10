@@ -19,7 +19,7 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Iterable, Sequence
+from collections.abc import Collection, Iterable, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from functools import cached_property
@@ -66,6 +66,8 @@ from kbj.services.api.models.stock import (
     SeriesPoint,
     SourcedQuote,
     StockHeader,
+    StockIndex,
+    StockIndexItem,
     StockSearch,
     StockSearchItem,
     TargetView,
@@ -97,6 +99,7 @@ __all__ = [
     "stock_chart",
     "stock_consensus",
     "stock_header",
+    "stock_index",
     "stock_scenario",
     "stock_search",
     "stock_valuation",
@@ -367,61 +370,111 @@ def company_na(lk: Lookup, ref: StockRef) -> NaReason | None:
 # ── 검색 ──────────────────────────────────────────────────────────────────────────────
 
 
-def stock_search(ctx: ReadContext, q: str, *, limit: int) -> Envelope[StockSearch]:
-    """유니버스 ∪ DART 상장사 — 코드 앞부분·이름 부분 일치(같은 순위면 시총 큰 순)."""
-    lk = Lookup(ctx)
+# 검색(`stock_search`)과 전 종목 목록(`stock_index` — 공개 사이트)이 같은 규칙을 쓴다(두 벌
+# 금지): 대상 = 유니버스 ∪ DART 상장사, 이름 = DART 이름 위에 유니버스 이름, 같은 순위 안 순서 =
+# 시총 큰 순(시총 없으면 뒤) → 코드 순. 화면의 로컬 검색(web ui/search.ts matchItems)도 같은
+# 순위(코드 일치 > 코드 앞부분 > 이름 앞부분 > 이름 포함)에 목록 순서를 쓴다.
+
+
+def _search_names(lk: Lookup) -> dict[str, str | None]:
     if not lk.universe and not lk.corp_index:
         raise NoData(f"아직 없음 — {MARKET_ETA} · {CORP_CODE_ETA}")
-    needle = q.strip()
-    up = needle.upper()
-    low = needle.lower()
     names: dict[str, str | None] = {code: name for code, (_c, name) in lk.corp_index.items()}
     for code, u in lk.universe.items():
         names[code] = u.name or names.get(code)
-    snaps, _ = lk.snapshot
-    hits: list[tuple[int, int, str]] = []
-    for code, name in names.items():
-        n = (name or "").lower()
-        if code == up:
-            rank = 0
-        elif code.startswith(up):
-            rank = 1
-        elif n.startswith(low):
-            rank = 2
-        elif low in n:
-            rank = 3
-        else:
-            continue
-        s = snaps.get(code)
-        cap = s.mktcap if s is not None and s.mktcap is not None else -1
-        hits.append((rank, -cap, code))
-    hits.sort()
-    items: list[StockSearchItem] = []
-    for _rank, _cap, code in hits[:limit]:
-        u = lk.universe.get(code)
-        idx = lk.corp_index.get(code)
-        sc = lk.classes.get(code)
-        corp = idx[0] if idx is not None else (sc.corp_code if sc is not None else None)
-        items.append(
-            StockSearchItem(
-                code=code,
-                name=names.get(code),
-                market=u.market if u is not None else None,
-                kind=kind_of(u.kind) if u is not None else None,
-                corp_code=corp,
-                is_watch=code in lk.watch,
-            )
-        )
+    return names
+
+
+def _cap_order(lk: Lookup, code: str) -> tuple[int, str]:
+    s = lk.snap(code)
+    cap = s.mktcap if s is not None and s.mktcap is not None else -1
+    return (-cap, code)
+
+
+def _search_rank(code: str, name: str | None, up: str, low: str) -> int | None:
+    n = (name or "").lower()
+    if code == up:
+        return 0
+    if code.startswith(up):
+        return 1
+    if n.startswith(low):
+        return 2
+    if low in n:
+        return 3
+    return None
+
+
+def _search_item(lk: Lookup, code: str, name: str | None, *, is_watch: bool) -> StockSearchItem:
+    u = lk.universe.get(code)
+    idx = lk.corp_index.get(code)
+    sc = lk.classes.get(code)
+    corp = idx[0] if idx is not None else (sc.corp_code if sc is not None else None)
+    return StockSearchItem(
+        code=code,
+        name=name,
+        market=u.market if u is not None else None,
+        kind=kind_of(u.kind) if u is not None else None,
+        corp_code=corp,
+        is_watch=is_watch,
+    )
+
+
+def _search_envelope[T](ctx: ReadContext, lk: Lookup, data: T, notes: list[str]) -> Envelope[T]:
     days = [u.as_of for u in lk.universe.values()]
     as_of = close_as_of(max(days)) if days else ctx.now()
     srcs = {u.source for u in lk.universe.values()} | ({"DART"} if lk.corp_index else set())
     return envelope(
-        StockSearch(q=needle, n_total=len(hits), items=items),
+        data,
         source=label(srcs),
         as_of=as_of,
         quality=Quality.OK,
-        notes=[],
+        notes=notes,
         generated_at=ctx.now(),
+    )
+
+
+def stock_search(ctx: ReadContext, q: str, *, limit: int) -> Envelope[StockSearch]:
+    """유니버스 ∪ DART 상장사 — 코드 앞부분·이름 부분 일치(같은 순위면 시총 큰 순)."""
+    lk = Lookup(ctx)
+    names = _search_names(lk)
+    needle = q.strip()
+    up = needle.upper()
+    low = needle.lower()
+    hits: list[tuple[int, tuple[int, str]]] = []
+    for code, name in names.items():
+        rank = _search_rank(code, name, up, low)
+        if rank is not None:
+            hits.append((rank, _cap_order(lk, code)))
+    hits.sort()
+    items = [
+        _search_item(lk, code, names.get(code), is_watch=code in lk.watch)
+        for _rank, (_cap, code) in hits[:limit]
+    ]
+    return _search_envelope(ctx, lk, StockSearch(q=needle, n_total=len(hits), items=items), [])
+
+
+def stock_index(ctx: ReadContext, detail: Collection[str]) -> Envelope[StockIndex]:
+    """전 종목 목록(공개 사이트 `stock/search-index.json` — site.py 가 직접 부른다. 경로 없음).
+
+    검색과 같은 대상·이름·종류·고유번호, 줄 순서는 검색의 같은 순위 안 순서(시총 큰 순) —
+    화면이 이 순서 그대로 순위만 매기면 서버 검색과 같은 결과가 된다. `detail` = 상세 파일을
+    만든 코드. 관심종목은 읽지 않는다(`is_watch` 는 늘 false — 개인 데이터가 공개 파일에
+    실리지 않게)."""
+    lk = Lookup(ctx)
+    names = _search_names(lk)
+    order = sorted(names, key=lambda c: _cap_order(lk, c))
+    items = [
+        StockIndexItem(
+            **_search_item(lk, c, names[c], is_watch=False).model_dump(), detail=c in detail
+        )
+        for c in order
+    ]
+    n_detail = sum(1 for it in items if it.detail)
+    return _search_envelope(
+        ctx,
+        lk,
+        StockIndex(q="", n_total=len(items), complete=True, items=items),
+        [f"전 종목 {len(items)}개 — 상세는 {n_detail}종목만(화면에 자주 나온 순)"],
     )
 
 

@@ -20,14 +20,23 @@
 1. **공개 사이트 = 로그인판 위젯 + 정적 스냅샷**. 새 빌드 모드 `site`(`npm run build:site` → `dist-site`)는 로그인판과 같은
    위젯(등급 'login' — 자물쇠 없음)을 `data/snapshot.ts` 로 그린다. 키는 API 경로 그대로, 파일은
    `data/<경로>[@<키>-<값>.…].json`(site.py `site_file` 과 snapshot.ts `siteFile` 이 같은 규칙 — 시험이 같은 표로 묶는다).
-   쓰기 채널 없음. 페이지 **11·12·13(개인 기능)은 붙이지 않는다**. 엑셀 내려받기 없음. 검색은 상세가 있는 종목 목록
-   (`stock/search-index.json`)을 화면에서 거른다.
+   쓰기는 **관심종목만 이 브라우저(localStorage `kbj-watch`)에 — 서버·kbj-site 저장소에는 없음**(2026-11-10 보탬):
+   snapshot.ts 가 `watchlist` 읽기와 `put`·`del`(`watchlist/main/<코드>` 만)을 흉내 내고 종목 머리·검색의 `is_watch` 를
+   그 목록으로 덧씌운다. `post`·`patch` 는 없다 — 페이지 11·12 쓰기 패널은 켜지지 않는다(시험으로 막음). 방문자마다
+   자기 브라우저 목록이고 다른 기기·시크릿 창에는 없다. Beom's Dashboard 와 같은 출처라 키에 `kbj-` 접두를 붙인다.
+   페이지 **11·12·13(개인 기능)은 붙이지 않는다**. 엑셀 내려받기 없음. 검색은 전 종목 목록(`stock/search-index.json` —
+   유니버스 ∪ DART 상장사, 검색 reader 와 같은 규칙·시총 순, 줄마다 상세 파일이 있는가 `detail`)을 서버와 같은 순위로
+   화면에서 거른다. 상세가 없는 종목은 검색에 '상세 없음' 꼬리표, 고르면 요청 없이 가벼운 머리(이름·시장·안내·관심 별).
+   날짜 인자 파일이 없으면 날짜를 빼고 찾은 파일을 쓰되, 요청한 날짜(date, 없으면 to)가 그 파일을 만든 날(generated_at 의
+   KST 날짜)과 같을 때만이다('어제'를 오늘 파일로 그리지 않는다).
 2. **내보내기는 맥의 api 컨테이너 안**에서 audit 와 같은 세션 우회로 GET 을 부른다(서버·쿠키를 건드리지 않음). 개인 경로
    (auth·webhook·rules·backtest·journal·portfolio·watchlist·ops·health)는 부르지 않고, 응답 안의 `is_watch` 는 false 로 지운다.
    404 `no_data` 본문은 파일로 남겨 화면이 같은 안내 문구를 보인다. 그 밖 실패는 결과 줄에 센다.
-3. **묶음**: `full`(인자 없는 경로 전부 + variants + 화면에 나온 종목 상세 `max_stocks` + 테마 상세 + 검색 목록 — 07:10·16:40·
-   20:40 뒤 한 번씩), `live`(장중 10분 — 시세·수급·GEX 경로만 덮어쓰기). launchd `com.kbj.site` 가 10분마다
-   `kbj.sh site publish auto`.
+3. **묶음**: `full`(인자 없는 경로 전부 + grid + 화면에 나온 종목 상세 `max_stocks`(종목마다 stock_grid) + 테마 상세 + 전 종목
+   목록 — 07:10·16:40·20:40 뒤 한 번씩), `live`(장중 10분 — 시세·수급·GEX·공시 경로와 그 경로의 grid 만 덮어쓰기). launchd
+   `com.kbj.site` 가 10분마다 `kbj.sh site publish auto`. 화면 버튼 조합은 `config/site.yaml` 의 `grid`(인자마다 값 목록의
+   모든 조합 — null·API 기본값은 인자를 뺀다, '@today'·'@today-N' 날짜 토큰, 다른 응답 목록에서 모은 값·경로 인자)로
+   펼치고 펼침 하나 200조합 상한을 둔다(형식은 그 파일 머리 주석).
 4. **배포 저장소는 따로**: 공개 저장소 `kimbob0604-cmyk/kbj-site` 의 `gh-pages` 에 커밋 하나로 강제 푸시(Beom's 와 같은 방식 —
    날마다 바뀌는 JSON 으로 히스토리가 불어나지 않게, 바뀐 게 없으면 올리지 않음). **KBJ 코드 저장소에는 여전히 원자료를 넣지
    않는다**(CLAUDE.md §2 그대로 — 데이터는 kbj-site 에만).
@@ -41,6 +50,7 @@
   보는 주소에 오른다(DATA_TIERS §1 '로그인' 행). 원천이 문제를 제기하면 `kbj.sh site schedule off` 뒤 kbj-site 저장소를
   지우거나 비공개로 돌리고, 그 원천의 경로를 `SKIP` 에 더한다.
 - 수집은 여전히 맥에서만 돈다 — 맥이 꺼지면 화면은 마지막으로 올린 시각에 멈춘다(배지·원천 줄의 기준 시각이 그것을 보인다).
-- GitHub Pages 한도(사이트 1GB·시간당 빌드 약 10회): 10분 간격, 종목 상세 `max_stocks` 로 크기를 묶는다.
+- GitHub Pages 한도(사이트 1GB·시간당 빌드 약 10회): 10분 간격, 종목 상세 `max_stocks`·grid 상한으로 크기를 묶는다
+  (2026-11-10 어림: full 약 6,000개·70 MB — grid 약 +650개, stock_grid 200종목 × 8개).
 - full 내보내기는 DB 부하가 크다(종목마다 경로 약 15개) — 장중에는 돌리지 않는다.
 - 공개 빌드(`build:public` — Pages 워크플로·공개 번들 검사)는 그대로 둔다(지우지 않음).

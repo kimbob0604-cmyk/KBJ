@@ -55,17 +55,22 @@ export function normalizeQuery(q: string): string {
 }
 
 /**
- * 로컬 목록에서 찾기(공개판 corp_index.json). 순위: 코드 일치 > 코드 앞부분 > 이름 앞부분 > 이름 포함.
- * 영문 대소문자 무시. 같은 순위는 원래 순서.
+ * 로컬 목록에서 찾기(공개판 corp_index.json·공개 사이트 전 종목 목록 — data/snapshot.ts). 순위: 코드 일치 > 코드 앞부분 >
+ * 이름 앞부분 > 이름 포함(서버 readers/stock.py stock_search 와 같은 규칙). 영문 대소문자 무시. 같은 순위는 원래 순서 —
+ * 목록이 시총 순이면 서버의 '같은 순위면 시총 큰 순'과 같다.
  */
-export function matchItems(all: readonly SearchItem[], q: string, limit = 20): SearchItem[] {
+export function matchItems<T extends { readonly code: string; readonly name: string | null }>(
+  all: readonly T[],
+  q: string,
+  limit = 20,
+): T[] {
   const query = normalizeQuery(q);
   if (!query) return [];
   const upper = query.toUpperCase();
   const lower = query.toLowerCase();
-  const scored: { item: SearchItem; rank: number; i: number }[] = [];
+  const scored: { item: T; rank: number; i: number }[] = [];
   all.forEach((item, i) => {
-    const name = item.name.toLowerCase();
+    const name = (item.name ?? '').toLowerCase();
     let rank = -1;
     if (item.code === upper) rank = 0;
     else if (item.code.startsWith(upper)) rank = 1;
