@@ -61,12 +61,12 @@ def test_every_data_route_has_a_fixture() -> None:
 
 
 def test_fixtures_are_fresh() -> None:
-    """합성 세계로 다시 만든 글자와 같다.
+    """합성 세계로 다시 만든 글자와 같다(실수는 허용오차 — `_assert_fresh`).
 
     다르면 `uv run python -m tests.unit.api.make_web_fixtures` 로 다시 만든다.
     """
     for name, text in render().items():
-        assert (OUT / name).read_text(encoding="utf-8") == text, name
+        _assert_fresh(name, text)
 
 
 # ── P4(묶음 A — docs/p4_design.md §1.8): 합성 20종목 세계의 하위 폴더 픽스처 ──────────────────
@@ -147,6 +147,25 @@ def _same(a: Any, b: Any, where: str) -> None:
         assert type(a) is type(b) and a == b, (where, a, b)
 
 
+def _assert_fresh(rel: str, text: str) -> None:
+    """디스크 픽스처 = 다시 만든 글자. 글자 모양(들여쓰기·한글·끝 줄바꿈)·키 순서·정수·글자는
+    정확히, 실수만 `_same` 허용오차(CLAUDE §4 — 맥 libm 의 log 가 glibc 와 끝자리 1 ULP 달라
+    바이트 비교가 거짓 실패했다: trade_explore/series_85.json 의 ln_price·ln_volume, 2026-11-10)."""
+    disk = (OUT / rel).read_text(encoding="utf-8")
+    if disk == text:
+        return
+    body = json.loads(disk)
+    # 모양은 생성기와 같은 방식(들여쓰기 2 또는 한 줄)으로 다시 써서 비교한다
+    compact = "\n" not in text.rstrip("\n")
+    shaped = (
+        json.dumps(body, ensure_ascii=False, separators=(",", ":"))
+        if compact
+        else json.dumps(body, ensure_ascii=False, indent=2)
+    )
+    assert shaped + "\n" == disk, f"{rel}: 글자 모양이 다르다"
+    _same(body, json.loads(text), f"{rel} 이 낡았다")
+
+
 def test_p4_fixtures_are_fresh() -> None:
     """합성 세계로 다시 만든 응답과 같다(실수는 허용오차 — `_same`).
 
@@ -163,7 +182,8 @@ def test_p4_fixtures_are_fresh() -> None:
 
 @pytest.mark.parametrize("domain", P5_DOMAINS)
 def test_p5_fixtures_are_fresh(domain: str) -> None:
-    """`web/test/fixtures/api/<도메인>/**` 가 그 도메인 모듈의 출력과 같다(파일 집합·바이트). 다르면
+    """`web/test/fixtures/api/<도메인>/**` 가 그 도메인 모듈의 출력과 같다(파일 집합·글자 모양은
+    정확히, 실수는 허용오차 — `_assert_fresh`). 다르면
     `uv run python -m tests.unit.api.make_web_fixtures --only <도메인>` 로 다시 만든다."""
     from tests.unit.api.make_web_fixtures import p5_files_on_disk, render_p5
 
@@ -171,8 +191,7 @@ def test_p5_fixtures_are_fresh(domain: str) -> None:
     assert set(want) == p5_files_on_disk(domain), f"{domain}: 픽스처 파일 목록이 낡았다"
     for rel, text in want.items():
         assert rel.startswith(f"{domain}/")
-        assert (OUT / rel).read_text(encoding="utf-8") == text, f"{rel} 이 낡았다"
-        json.loads(text)
+        _assert_fresh(rel, text)
 
 
 def test_p5_domains_and_modules() -> None:
@@ -213,8 +232,7 @@ def test_p6_fixtures_are_fresh(domain: str) -> None:
     assert set(want) == p6_files_on_disk(domain), f"{domain}: 픽스처 파일 목록이 낡았다"
     for rel, text in want.items():
         assert rel.startswith(f"trade_{domain}/")
-        assert (OUT / rel).read_text(encoding="utf-8") == text, f"{rel} 이 낡았다"
-        json.loads(text)
+        _assert_fresh(rel, text)
 
 
 def test_p6_domains_and_modules(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -249,8 +267,7 @@ def test_p7_fixtures_are_fresh(domain: str) -> None:
     assert set(want) == p7_files_on_disk(domain), f"{domain}: 픽스처 파일 목록이 낡았다"
     for rel, text in want.items():
         assert rel.startswith(f"{domain}/")
-        assert (OUT / rel).read_text(encoding="utf-8") == text, f"{rel} 이 낡았다"
-        json.loads(text)
+        _assert_fresh(rel, text)
 
 
 def test_p7_domains_and_modules(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -286,8 +303,7 @@ def test_p8_fixtures_are_fresh(domain: str) -> None:
     assert set(want) == p8_files_on_disk(domain), f"{domain}: 픽스처 파일 목록이 낡았다"
     for rel, text in want.items():
         assert rel.startswith(f"{domain}/")
-        assert (OUT / rel).read_text(encoding="utf-8") == text, f"{rel} 이 낡았다"
-        json.loads(text)
+        _assert_fresh(rel, text)
 
 
 def test_p8_domains_and_modules(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -120,4 +120,6 @@ bash scripts/local/kbj.sh start
 | `127.0.0.1:8000` 이 안 열림 | `bash scripts/local/kbj.sh status` → 이상한 서비스 이름을 `status --logs <이름>` |
 | 로그인 화면이 나온다 | 맥 로컬은 로그인 없이 열린다 — `update` 로 새 버전을 받는다(그래도 나오면 `status --logs api`) |
 | 공개 사이트가 멈춰 있다 | `bash scripts/local/kbj.sh site schedule status`(최근 로그) — 맥이 꺼져 있던 동안은 마지막으로 올린 화면 그대로다 |
+| 공개 사이트를 급히 내려야 한다(원천이 문제를 삼는 등 — ADR 0042 §3) | ① `bash scripts/local/kbj.sh site schedule off`(자동 올리기 멈춤) ② `gh repo edit kimbob0604-cmyk/kbj-site --visibility private --accept-visibility-change-consequences`(비공개 — 무료 계정은 비공개 저장소의 Pages 가 꺼진다) 또는 GitHub 저장소 Settings → Pages 에서 끄기. 데이터는 맥(~/kbj-site)에 남는다 |
+| 공개 사이트에 올리기가 멈췄다('공개 검사 실패') | 올리기 전 검사가 개인 경로·관심종목 표시·계좌/키 같은 칸을 찾아 멈춘 것 — 로그(`site schedule status`)의 파일 위치를 Claude 에게 보여 준다. 고칠 때까지 공개 사이트는 마지막 화면 그대로다 |
 | 8000 포트 사용 중 | 다른 프로그램이 쓰는 중 — 그 프로그램을 끄거나 알려 주세요 |

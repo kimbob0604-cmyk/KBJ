@@ -90,6 +90,11 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       include: ['test/**/*.test.ts'],
       setupFiles: ['test/setup.ts'],
+      // Node 25+ 는 전역 localStorage·sessionStorage 를 스스로 둔다(--localstorage-file 이 없으면 메서드 없는 빈 객체).
+      // vitest 4 의 jsdom 환경은 전역에 이미 있는 이름을 jsdom 것으로 바꾸지 않아 jsdom 의 Storage 가 가려진다 —
+      // 시험 작업자에서 Node 쪽 Web Storage 를 끈다(Node 22 는 원래 꺼져 있어 효과 없음). vitest 5 로 올리면 지운다
+      // (상류 수정 vitest-dev/vitest#10293).
+      execArgv: ['--no-experimental-webstorage'],
       // tokens.test.ts 가 tokens.css?raw 를 읽는다 — vitest 는 기본으로 CSS 를 빈 문자열로 바꾼다
       css: { include: [/\/src\/design\/.*\.css/] },
       restoreMocks: true,
