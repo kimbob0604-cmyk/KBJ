@@ -41,6 +41,8 @@ __all__ = [
     "SeriesPoint",
     "SourcedQuote",
     "StockHeader",
+    "StockIndex",
+    "StockIndexItem",
     "StockSearch",
     "StockSearchItem",
     "TargetView",
@@ -69,6 +71,23 @@ class StockSearch(ApiModel):
     q: str
     n_total: int  # 맞은 수(잘리기 전)
     items: list[StockSearchItem]
+
+
+class StockIndexItem(StockSearchItem):
+    """전 종목 목록 한 줄(공개 사이트 검색 — site.py) — 검색 줄 + 상세 파일이 있는가."""
+
+    detail: bool
+
+
+class StockIndex(ApiModel):
+    """전 종목 목록(공개 사이트 `stock/search-index.json`) — 검색과 같은 모양 +
+    `complete`(목록에 없으면 모르는 코드)·줄마다 `detail`. 경로로 내보내지 않는다(내보내기가
+    reader 를 직접 부른다)."""
+
+    q: str
+    n_total: int
+    complete: bool
+    items: list[StockIndexItem]
 
 
 # ── 머리 ──────────────────────────────────────────────────────────────────────────────

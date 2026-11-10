@@ -1,18 +1,34 @@
 # 공개 사이트(kbj-site — GitHub Pages) 내보내기 설정. 코드 kbj/services/api/site.py, 명령 `bash scripts/local/kbj.sh site`.
 # 사용자 결정 2026-11-09: Beom's Dashboard 처럼 페이지 1~10 을 로그인 없이 누구나 보는 주소에 올린다(11·12·13 개인
-# 기능·관심종목은 올리지 않는다). 맥이 만들어 올린다 — 맥이 꺼져 있으면 마지막으로 올린 화면이 열린다.
+# 기능·관심종목은 올리지 않는다 — 관심종목은 방문자 브라우저(localStorage)에만). 맥이 만들어 올린다 — 맥이 꺼져 있으면
+# 마지막으로 올린 화면이 열린다.
 #
-# full(하루 몇 번): 인자 없는 GET 경로 전부 + variants + 화면에 나온 종목의 상세(max_stocks) + 테마 상세 + 검색 목록.
-# live(장중 10분): 아래 live 경로만(그리고 그 경로의 variants) — 나머지 파일은 지난 full 그대로 둔다.
+# full(하루 몇 번): 인자 없는 GET 경로 전부 + grid + 화면에 나온 종목의 상세(max_stocks, 종목마다 stock_grid) + 테마
+#   상세 + 전 종목 목록(stock/search-index.json — 검색·'상세 없음' 표시).
+# live(장중 10분): 아래 live 경로 + 그 경로의 grid 만 — 나머지 파일은 지난 full 그대로 둔다.
+#
+# 펼침(grid·stock_grid) 형식 — {key: <API 경로>, params: {<인자>: [<값>, …]}}: 인자마다 값 목록의 모든 조합을 부른다.
+#   - null 은 그 인자를 빼고 부른다(화면의 '전체'). API 기본값과 같은 값도 빼고 부른다 — 화면이 빼고 찾는 파일과 이름이
+#     같아져 같은 파일을 두 번 만들지 않는다(기본값 표는 _defaults.json).
+#   - '@today'·'@today-N': 내보내는 시각의 KST 날짜(달력일 −N, YYYY-MM-DD). 화면이 오늘·어제를 날짜로 부르는 보기용.
+#   - {source: <인자 없는 경로>, list: <data 안 목록 칸(점으로 이음)>, field: <항목 칸>, limit: N}: 이번 묶음에서 이미
+#     받은 그 응답의 목록에서 값을 모은다(목록 앞에서부터 N 개 — 화면 표 순서). 값 목록에 고정 값과 섞어 둘 수 있다.
+#   - 키의 {이름} 자리는 경로 인자다('trade/items/{hs}/series' — params 의 hs 값으로 채운다. 한 마디 [A-Za-z0-9_-]).
+#   - stock_grid 는 상세를 만드는 종목마다 {code} 를 그 종목 코드로 채운다(params 에 code 를 두지 않는다).
+#   - 상한: 펼침 하나의 조합은 200개까지(모으는 값은 limit 개로 센다 — 넘으면 설정을 읽을 때 오류). 모으는 값의 limit 은
+#     1~100(기본 100). 오타·개인 경로·모르는 인자는 부르지 않고 결과 줄의 '실패'에 남는다.
+# 어림(2026-11-10 맥 실측 크기로): full 은 지금 파일 약 3,700개·27 MB 에서 grid 약 +650개·+25 MB, stock_grid 종목마다 8개
+#   (200종목 +1,600개·+18 MB), 전 종목 목록 약 5,700줄·0.7 MB(gzip 약 90 KB) — 합 약 6,000개·70 MB(Pages 한도 1 GB).
+#   요청이 약 2,250개 늘어 full 이 19분 → 30분 남짓(07:10 full 이 08:00 ETF 수집 전에 끝난다). live 는 13개 → 약 70개.
 version: 1
 
-# 종목 상세를 만들 종목 수 상한 — 응답에 나온 종목 코드를 많이 나온 순으로(종목 하나에 파일 약 15개·약 7초 —
-# 200개면 full 한 번에 25분 안팎, 2026-11-09 맥 실측)
+# 종목 상세를 만들 종목 수 상한 — 응답에 나온 종목 코드를 많이 나온 순으로(펼침 응답은 펼침 하나에 한 번만 센다).
+# 종목 하나에 파일 약 15개 + stock_grid 8개 — 200개면 full 한 번에 30분 남짓(2026-11-09 맥 실측 19분 + 펼침 어림)
 max_stocks: 200
 # 화면에 안 나와도 늘 넣을 종목
 always: ["005930", "000660"]
 
-# 장중 10분마다 다시 만드는 경로(시세·수급·GEX — 장중에 바뀌는 것)
+# 장중 10분마다 다시 만드는 경로(시세·수급·GEX — 장중에 바뀌는 것). 이 경로의 grid 도 live 때 다시 만든다
 live:
   - market/summary
   - market/ribbon
@@ -27,22 +43,72 @@ live:
   - filings/feed
   - etf/active-consensus
 
-# 화면이 기본값 밖 인자로 부르는 것 — 화면을 돌아보며 채운다(없는 파일은 화면에 '공개 사이트에 없는 보기')
-variants:
-  # 5 공시 피드 — 화면은 오늘 공시를 1,000건까지 부른다(web/src/pages/p5/feed.ts). 날짜 인자는 화면이 빼고 찾는다
-  - {key: filings/feed, params: {limit: 1000}}
-
-# 인자 하나를 여러 값으로 펼쳐 부른다 — values(고정 목록) + source 응답의 list 목록 항목 field 칸에서 모은 값.
-# fixed 는 화면이 기본값 밖으로 고정해 부르는 인자(API 기본값과 같은 인자는 화면이 빼고 찾으니 적지 않는다)
-expand:
-  # 3 진단 — 지표 그래프(요약의 지표마다 + 공포탐욕). web/src/pages/p3/diag.ts
-  - {key: diag/history, param: key, source: diag/summary, list: indicators, field: key, values: [fear_greed]}
-  # 3 GEX 확장 지표. web/src/pages/p3/gex.ts EXT_METRICS
-  - {key: gex/metrics, param: name, values: [vex, cex, skew_25d]}
-  # 6 매크로 — 탭마다. web/src/pages/p6/common.ts
-  - {key: macro/series, param: tab, source: macro/tabs, list: tabs, field: id}
-  # 4 수급 스크리너 — 기준 8가지(화면 처음 값: 거래대금 20일 평균 300억 이상). web/src/pages/p4_flows.ts
+# 화면 버튼 조합(web/src/pages 의 seg·select 값 — 기본값과 같은 값은 빼고 부른다). 없는 파일은 화면에 '공개 사이트에 없는 보기'
+grid:
+  # ── 1 시장 ── live
+  - {key: market/sectors, params: {period: [1, 5, 20]}}                       # 히트맵 기간(p1_market.ts)
+  - {key: flows/market-minute, params: {market: [kospi, kosdaq, k200_fut, k200_call, k200_put, stock_fut]}}  # p1/flows_minute.ts
+  - {key: program/top, params: {market: [K, Q], side: [buy, sell], scope: [intraday, close]}}  # p1/program.ts
+  - {key: program/daily, params: {market: [K, Q]}}                            # 일별 시장(상위와 같은 seg)
+  # ── 2 보드 ──
+  - {key: board/newhigh, params: {basis: [close, high], kind: [null, hist, w52, d120], min_turnover_eok: [null, 50, 100, 300]}}
+  - {key: board/us, params: {basis: [close, high]}}
+  # ── 3 진단·GEX ──
+  - {key: diag/history, params: {key: [{source: diag/summary, list: indicators, field: key, limit: 40}, fear_greed]}}  # p3/diag.ts
+  - {key: diag/breadth-risk, params: {period: [3M, 6M, 1Y], ma: [25, 50]}}
+  - {key: market/relcap, params: {period: [6M, 1Y, 2Y]}}
+  - {key: gex/metrics, params: {name: [vex, cex, skew_25d]}}                  # p3/gex.ts EXT_METRICS(버튼 아님 — 셋 다 부른다)
+  - {key: gex/briefing, params: {scope: [all, nearest, 0dte]}}                # GEX 범위 seg — live
+  - {key: gex/levels, params: {scope: [all, nearest, 0dte]}}
+  - {key: gex/profile, params: {scope: [all, nearest, 0dte]}}
+  # ── 4 수급 스크리너 — 거래대금 20일 평균 300억 이상 고정, 종류·관리 포함은 기본값만(전부면 1,152개) ──
   - key: flows/screen
-    param: mode
-    values: [value, foreign, inst, both, streak, spike, foreign_cap, inst_cap]
-    fixed: {min_avg_turnover: 30000000000}
+    params:
+      mode: [value, foreign, inst, both, streak, spike, foreign_cap, inst_cap]
+      market: [all, KOSPI, KOSDAQ]
+      period: [1, 5, 20]
+      min_avg_turnover: [30000000000]
+  # ── 5 공시 — 오늘·어제(화면 날짜 seg), 종류는 하나씩(중요도·시장 등은 기본값만 — 전부면 1,440개) ── live
+  - key: filings/feed
+    params:
+      date: ['@today', '@today-1']
+      kind: [null, pre_announce, prelim, overhang, overhang_exercise, price_adjust, buyback, insider, major_holder,
+             periodic, earnings, inquiry, capital, owner, clinical, contract, supply, other]
+      limit: [1000]
+  - {key: filings/earnings, params: {from: ['@today-6', '@today'], to: ['@today']}}  # 잠정실적 이번 주·오늘(p5/prelim.ts)
+  - {key: filings/overhang, params: {days: [7, 30, 90], instrument: [null, cb, bw, eb, paid_in, bonus]}}
+  - {key: filings/insiders, params: {days: [7, 30, 90], min_ratio_pct: [null, 0.1, 0.5, 1]}}
+  - {key: filings/schedule, params: {days: [14, 30, 60]}}
+  - {key: index-review, params: {index: [{source: index-review, list: indexes, field: id, limit: 10}]}}  # 5·10 지수 리뷰
+  # ── 6 매크로 — 탭마다(p6/common.ts) ──
+  - {key: macro/series, params: {tab: [{source: macro/tabs, list: tabs, field: id, limit: 20}]}}
+  # ── 7 수출입 탐색 — HS2 품목의 추이·국가(수출), 수출 상위 20개국의 품목·추이 ──
+  - {key: trade/flash, params: {kind: [exp_item, exp_country, imp_item, imp_country]}}
+  - {key: 'trade/items/{hs}/series', params: {hs: [{source: trade/items, list: rows, field: hs, limit: 100}]}}
+  - {key: 'trade/items/{hs}/countries', params: {hs: [{source: trade/items, list: rows, field: hs, limit: 100}]}}
+  - {key: 'trade/countries/{cc}/items', params: {cc: [{source: trade/countries, list: rows, field: country, limit: 20}]}}
+  - {key: 'trade/countries/{cc}/trend', params: {cc: [{source: trade/countries, list: rows, field: country, limit: 20}]}}
+  # ── 9 테마 ──
+  - {key: themes/strength, params: {period: [1, 5, 20]}}
+  # ── 10 ETF ──
+  - key: etf/flows
+    params:
+      mode: [in, out, value, indiv, foreign, inst]
+      type: [null, kr_index, kr_theme, overseas, leveraged_inverse, bond_cash, commodity, other]
+      period: [1, 5, 20]
+  - {key: etf/types, params: {period: [1, 5, 20]}}
+  - {key: etf/stocks, params: {sort: [in, out, pct, value, indiv, foreign, inst], period: [1, 5, 20]}}
+  - {key: etf/premium, params: {basis: [nav, inav]}}
+  - key: etf/holdings/changes
+    params:
+      kind: [null, NEW, DROP, IN10, OUT10, ADD, CUT]
+      issuer: [null, {source: etf/holdings/changes, list: rows, field: issuer, limit: 20}]
+  - {key: etf/map, params: {period: [1D, 1W, 1M, 3M], group: [type, theme], lev: [null, true]}}
+  - {key: etf/active-consensus, params: {days: [1, 5, 20]}}                   # live
+
+# 종목마다(상세를 만드는 종목) — 페이지 8 탭의 버튼(기본값 파일은 이미 있다)
+stock_grid:
+  - {key: 'stock/{code}/valuation', params: {metric: [pbr, psr, ev_ebitda]}}  # 밴드 지표(p8/valuation.ts)
+  - {key: 'stock/{code}/financials', params: {basis: [a], n: [4]}}            # 연간(p8/financials.ts)
+  - {key: 'stock/{code}/insiders', params: {days: [30, 180]}}                 # 보고 목록 기간(p8/insiders.ts)
+  - {key: 'stock/{code}/disclosures', params: {days: [90, 365]}}              # 공시 기간(p8/filings.ts — 종류는 전체만)

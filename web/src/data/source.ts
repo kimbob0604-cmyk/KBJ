@@ -70,6 +70,12 @@ export class LockedError extends Error {
   }
 }
 
+/**
+ * 공개 사이트(data/snapshot.ts)에 상세 파일이 없는 종목 — 'stock/<코드>/…' 를 요청 없이 이 문구(serverMessage)의 404 로
+ * 돌려준다. 로그인 API 는 이 문구를 내지 않는다 — 페이지는 이 문구일 때만 가벼운 머리를 그린다(p8/header.ts).
+ */
+export const NO_DETAIL = '공개 사이트에는 상세가 없는 종목 — 상세는 화면에 자주 나온 종목만';
+
 /** 응답 오류. 응답 본문은 싣지 않는다(§6.7 — 오류 문구에 본문 금지). */
 export class DataError extends Error {
   override readonly name = 'DataError';

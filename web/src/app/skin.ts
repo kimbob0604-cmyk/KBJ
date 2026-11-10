@@ -45,7 +45,8 @@ export function applySkin(skin: SkinId, doc: Document = document): void {
   }
 }
 
-function safeStorage(): Storage | null {
+/** 브라우저 localStorage — 없거나 막혀 있으면 null(공개 사이트 관심종목도 이 저장소 — boot/site.ts) */
+export function safeStorage(): Storage | null {
   try {
     return typeof localStorage === 'undefined' ? null : localStorage;
   } catch {

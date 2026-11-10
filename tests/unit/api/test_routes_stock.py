@@ -33,7 +33,7 @@ from kbj.services.api.models.stock import (
     StockHeader,
     Valuation,
 )
-from kbj.services.api.readers.stock import sma
+from kbj.services.api.readers.stock import sma, stock_index
 from kbj.store.repos import MemoryRepos
 from tests.unit.api.api_world_p4 import P4ApiWorld, build_p4_api_world, expect, shared
 
@@ -557,6 +557,47 @@ def test_annual_and_yoy_do_not_mix_bases(mutated: P4ApiWorld) -> None:
     # 2025(OFS) 의 YoY 는 OFS 2024 와 — CFS 2024 와 섞지 않는다
     ofs_2024 = sum(ofs[(2024, k)].op or 0 for k in (1, 2, 3, 4))
     assert y2025["op_yoy"] == pytest.approx((y2025["op"] - ofs_2024) / abs(ofs_2024) * 100)
+
+
+def test_stock_index_same_rules_as_search(pw: P4ApiWorld, c: TestClient) -> None:
+    """전 종목 목록(공개 사이트 `stock/search-index.json` — site.py)은 검색과 같은 대상·이름·
+    순서다: 화면 검색(web ui/search.ts matchItems — 순위 → 목록 순서)으로 거르면 서버 검색과
+    같다. 관심종목은 읽지 않는다(늘 false)."""
+    env = stock_index(pw.app().state.kbj.read, {"994010"})
+    items = env.data.items
+    assert env.data.complete and env.data.q == "" and env.data.n_total == len(items)
+    assert [i.code for i in items if i.detail] == ["994010"]
+    assert not any(i.is_watch for i in items)  # 994010 은 관심종목이지만 공개 목록엔 싣지 않는다
+    assert env.source and env.quality == "ok"
+    assert env.notes == [f"전 종목 {len(items)}개 — 상세는 1종목만(화면에 자주 나온 순)"]
+
+    def local(q: str) -> list[str]:
+        """화면 matchItems 와 같은 규칙(참조 구현) — 코드 일치 > 코드 앞부분 > 이름 앞부분 >
+        이름 포함, 같으면 목록 순."""
+        up, low = q.strip().upper(), q.strip().lower()
+        ranked: list[tuple[int, int, str]] = []
+        for n, it in enumerate(items):
+            name = (it.name or "").lower()
+            if it.code == up:
+                ranked.append((0, n, it.code))
+            elif it.code.startswith(up):
+                ranked.append((1, n, it.code))
+            elif name.startswith(low):
+                ranked.append((2, n, it.code))
+            elif low in name:
+                ranked.append((3, n, it.code))
+        return [code for _r, _n, code in sorted(ranked)]
+
+    for q in ("모의", "99K", "9940", "994010", "전자", "모의전자"):
+        server = c.get("/api/stock/search", params={"q": q, "limit": 20}).json()["data"]
+        mine = local(q)
+        assert mine[:20] == [i["code"] for i in server["items"]], q
+        assert len(mine) == server["n_total"], q
+    by = {i.code: i for i in items}
+    for it in c.get("/api/stock/search", params={"q": "모의"}).json()["data"]["items"]:
+        row = by[it["code"]]
+        got = (row.name, row.market, row.kind, row.corp_code)
+        assert got == (it["name"], it["market"], it["kind"], it["corp_code"])
 
 
 def test_search(c: TestClient) -> None:
