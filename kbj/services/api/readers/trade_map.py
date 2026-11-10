@@ -14,7 +14,8 @@
   한 줄 알린다(지수는 이전 판 가중치).
 - 종목: 매핑 줄(품목명 = `hs_dim`, 없으면 None)·근거·월/분기 지수·매출 YoY·시차 상관·상태.
   매핑표에 없는 종목은 404 `no_data` '매핑 없음'(화면은 오류가 아니라 안내 한 줄 — §6).
-  매핑은 있는데 지수가 아직 없으면 404 `no_data`(trade.stock_index 예정 시각).
+  매핑은 있는데 지수가 아직 없으면 404 `no_data`(trade.stock_index 예정 시각). 종목 경로(종목·흐름·
+  프리뷰)는 그 종목 매핑 줄만 읽는다(`stock_lines`) — 랭킹·산업 묶음만 매핑표 전체.
 - 금액은 미화 달러(환율 미조정 — `fx_note`), 시세 칸 없음(로그인 종가 줄은
   `/api/stock/{code}/chart`).
 - 흐름(`trade_stock_flows`): 그 종목 매핑 줄만으로 원천 색인을 만들어(`trade.stock_index` 와 같은
@@ -69,6 +70,7 @@ __all__ = [
     "NO_TRADE",
     "SOURCE",
     "month_days",
+    "stock_lines",
     "trade_stock",
     "trade_stock_flows",
     "trade_stocks",
@@ -215,13 +217,19 @@ def _evidence(lines: Sequence[StockMapRow]) -> list[TradeMapEvidence]:
     return out
 
 
+def stock_lines(ctx: ReadContext, code: str) -> tuple[StockMapRow, ...]:
+    """그 종목의 매핑 줄(공개·local 이 둘 다면 local — `resolve` 는 종목 단위라 그 종목 줄만 읽어도
+    같다). 매핑표 전체(3천여 줄)를 읽어 고르면 경로마다 0.1~0.2초였다(2026-11-10 실측). 줄이 없으면
+    존재 질의 하나로 '매핑표가 비었다'(NO_MAP)와 '이 종목은 매핑 없음'(NOT_MAPPED)을 가른다."""
+    repo = ctx.repos.trade
+    lines = resolve(repo.stock_map(code=code)).lines.get(code)
+    if lines:
+        return lines
+    raise NoData(NOT_MAPPED if repo.has_stock_map() else NO_MAP)
+
+
 def trade_stock(ctx: ReadContext, *, code: str) -> Envelope[TradeStock]:
-    smap = ctx.repos.trade.stock_map()
-    if not smap:
-        raise NoData(NO_MAP)
-    lines = resolve(r for r in smap if r.code == code).lines.get(code)
-    if not lines:
-        raise NoData(NOT_MAPPED)
+    lines = stock_lines(ctx, code)
     ex = ctx.repos.trade.stock_export(code=code)
     if not ex:
         raise NoData(NO_STOCK_INDEX)
@@ -307,12 +315,7 @@ def _flow(v: FlowView, names: dict[str, str], region_names: dict[str, str], keep
 
 
 def trade_stock_flows(ctx: ReadContext, *, code: str) -> Envelope[TradeStockFlows]:
-    smap = ctx.repos.trade.stock_map()
-    if not smap:
-        raise NoData(NO_MAP)
-    lines = resolve(r for r in smap if r.code == code).lines.get(code)
-    if not lines:
-        raise NoData(NOT_MAPPED)
+    lines = stock_lines(ctx, code)
     repo = ctx.repos.trade
     last = repo.last_ym("pub_trade.item_monthly")
     if last is None:

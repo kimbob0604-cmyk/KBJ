@@ -48,7 +48,7 @@ from kbj.core.gex.records import (
     SessionLogRecord,
     StrikeGexRecord,
 )
-from kbj.store.repos._common import ConnFactory
+from kbj.store.repos._common import ConnFactory, like_prefix
 
 __all__ = [
     "ENGINE_TABLES",
@@ -350,10 +350,6 @@ def metric_row(r: MetricRecord) -> Row:
     )  # fmt: skip
 
 
-def _like_prefix(prefix: str) -> str:
-    return prefix.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
-
-
 def _record[M](model: type[M], cols: Sequence[str], row: Row) -> M:
     return model.model_validate(dict(zip(cols, row, strict=True)))  # type: ignore[attr-defined, no-any-return]
 
@@ -552,7 +548,7 @@ class PgGexRepo:
         ).format(
             cols=sql.SQL(", ").join(map(sql.Identifier, METRICS.columns)), t=METRICS.ident, w=where
         )
-        params = (trade_date, session, metric, scope, _like_prefix(key_prefix)) * 2
+        params = (trade_date, session, metric, scope, like_prefix(key_prefix)) * 2
         return [_record(MetricRecord, METRICS.columns, r) for r in self._query(q, params)]
 
     def metric_history(

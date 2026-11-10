@@ -279,10 +279,25 @@ ON CONFLICT (market, code, as_of, source) DO UPDATE SET
     flags = EXCLUDED.flags, quality = EXCLUDED.quality, received_at = EXCLUDED.received_at,
     loaded_by = EXCLUDED.loaded_by
 """
+# 원천마다 asof 이하 가장 최근 날짜의 행 — 둘 다 universe_source_idx(source, as_of DESC)로
+# 찾는다. 원천은 재귀 CTE 가 색인을 한 칸씩 건너뛰며 나열하고(원천 수만큼 탐색), 날짜는 원천마다
+# 색인을 asof 부터 거꾸로 읽어 첫 항목에서 멈춘다. 예전 `max(as_of) … GROUP BY source` 는 표
+# 전체(약 288만 행 — 날마다 약 4,300행씩 는다)를 훑어 한 번에 0.1~0.3초였다(2026-11-10 실측 —
+# 이 꼴은 서버 3ms, 같은 행). market 은 색인에 없어 거르기로 본다 — 이 표는 KR 만 담아(MARKET,
+# 미국은 us_universe) 첫 항목이 맞는다. 다른 시장 행이 섞이면 그 원천 색인을 그만큼 더 읽는다.
+# 스키마는 그대로
 _UNIVERSE = """
-WITH latest AS (
-    SELECT source, max(as_of) AS as_of FROM prv_market.universe
-    WHERE market = %s AND as_of <= %s GROUP BY source
+WITH RECURSIVE src(source) AS (
+    (SELECT source FROM prv_market.universe ORDER BY source LIMIT 1)
+    UNION ALL
+    SELECT (SELECT u.source FROM prv_market.universe u
+            WHERE u.source > s.source ORDER BY u.source LIMIT 1)
+    FROM src s WHERE s.source IS NOT NULL
+), latest AS (
+    SELECT s.source,
+           (SELECT max(u.as_of) FROM prv_market.universe u
+             WHERE u.source = s.source AND u.market = %s AND u.as_of <= %s) AS as_of
+    FROM src s WHERE s.source IS NOT NULL
 )
 SELECT u.code, u.as_of, u.name, u.kind, u.listed_on, u.source, u.quality, u.flags
 FROM prv_market.universe u JOIN latest l ON u.source = l.source AND u.as_of = l.as_of

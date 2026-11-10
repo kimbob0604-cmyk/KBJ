@@ -1,5 +1,7 @@
 """`kbj.store.repos.trade` 메모리판 — 키·처음 값 유지·None 이 값을 지우지 않음·매핑 통째 교체·거르기
-(docs/p6_design.md §1.1·§3.3). Pg 판은 같은 `Table` 명세를 쓰고 통합 시험이 표를 확인한다."""
+(docs/p6_design.md §1.1·§3.3). Pg 판은 같은 `Table` 명세를 쓰고 통합 시험이 표를 확인한다 —
+접두·종목 읽기가 메모리판과 같은지와 접두가 색인을 타는지는
+tests/integration/test_repos_trade_pg.py."""
 
 from __future__ import annotations
 
@@ -12,7 +14,14 @@ import pytest
 from kbj.core import trade_rows as tr
 from kbj.core.quality import Quality
 from kbj.store.repos import Repos, memory_repos
-from kbj.store.repos.trade import MemoryTradeRepo, PgTradeRepo
+from kbj.store.repos._common import like_prefix
+from kbj.store.repos.trade import (
+    T_ITEM,
+    MemoryTradeRepo,
+    PgTradeRepo,
+    _conds,  # pyright: ignore[reportPrivateUsage]
+    _pg_where,  # pyright: ignore[reportPrivateUsage]
+)
 
 T0 = datetime(2026, 10, 11, 0, 20, tzinfo=UTC)
 T1 = T0 + timedelta(days=1)
@@ -86,6 +95,27 @@ def test_item_filters_prefix_len_range_and_last_ym() -> None:
     assert repo.last_ym("pub_trade.surge") is None
     with pytest.raises(ValueError):
         repo.last_ym("pub_trade.stock_map")  # ym 칸이 없다
+    # 접두는 글자 그대로(startswith) — Pg 의 LIKE 도 와일드카드를 이스케이프해 같은 뜻
+    assert repo.item_monthly(prefix="8%") == [] and repo.item_monthly(prefix="_") == []
+
+
+def test_like_prefix_escapes_wildcards_and_backslash() -> None:
+    assert like_prefix("8542") == "8542%"
+    assert like_prefix("") == "%"  # 빈 접두 = 전부(left(hs, 0) = '' 와 같다)
+    assert like_prefix("8_4%") == "8\\_4\\%%"
+    assert like_prefix("a\\b") == "a\\\\b%"  # 역슬래시를 먼저 — 뒤 이스케이프를 겹치지 않게
+    assert like_prefix("\\%") == "\\\\\\%%"
+
+
+def test_pg_prefix_is_like_with_escape() -> None:
+    """Pg 접두 조건은 `"hs" LIKE %s ESCAPE '\\'` — (hs text_pattern_ops, ym) 색인을 탄다. 예전
+    `left(hs, n) = p` 는 식이라 색인을 못 써 item_monthly 를 매번 순차로 훑었다(2026-11-10 실측)."""
+    conds = _conds(prefix=("hs", "prefix", "85_4%"), y=("ym", "ge", "2026-01"))
+    where, params = _pg_where(T_ITEM, conds)
+    text = where.as_string(None)
+    assert text == 'TRUE AND "hs" LIKE %s ESCAPE \'\\\' AND "ym" >= %s'
+    assert "left(" not in text
+    assert params == ["85\\_4\\%%", "2026-01"]
 
 
 def test_duplicate_keys_and_bad_meta_are_rejected() -> None:
@@ -120,6 +150,27 @@ def test_replace_stock_map_swaps_one_origin_only() -> None:
                                received_at=T1)  # fmt: skip
     with pytest.raises(ValueError):
         repo.stock_map(origin="watchlist")
+
+
+def test_stock_map_one_code_and_existence() -> None:
+    """종목 경로는 그 종목 줄만 읽고(`stock_map(code=…)`), 매핑표가 비었는지는 존재 질의로 본다
+    (NO_MAP 과 NOT_MAPPED 를 가른다 — origin 무관)."""
+    repo = MemoryTradeRepo()
+    assert repo.has_stock_map() is False and repo.stock_map(code="000010") == []
+    repo.replace_stock_map(
+        [smap("000010", "8703"), smap("000010", "8542"), smap("000020", "8703")],
+        origin="public", loaded_by="m", received_at=T0,
+    )  # fmt: skip
+    repo.replace_stock_map([smap("000030", "85", "local")], origin="local", loaded_by="m",
+                           received_at=T0)  # fmt: skip
+    assert repo.has_stock_map() is True
+    got = repo.stock_map(code="000010")
+    assert [(r.code, r.hs) for r in got] == [("000010", "8542"), ("000010", "8703")]  # 키 순
+    assert repo.stock_map(code="000040") == []
+    repo.replace_stock_map([], origin="public", loaded_by="m", received_at=T1)
+    assert repo.has_stock_map() is True  # local 줄이 남았다
+    repo.replace_stock_map([], origin="local", loaded_by="m", received_at=T1)
+    assert repo.has_stock_map() is False
 
 
 def test_derived_tables_round_trip() -> None:

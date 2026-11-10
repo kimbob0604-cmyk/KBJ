@@ -6,7 +6,8 @@
   `upsert_sigungu_monthly`·`upsert_hs_dim`, `trade.derive` → `upsert_surge`·
   `upsert_item_group_monthly`, `trade.map_load` → `replace_stock_map`, `trade.stock_index` →
   `upsert_stock_export`.
-- 읽기: 기간(`ym_from`·`ym_to` 포함)·HS 접두·국가·시도·지역·종목. 결과는 기본 키 오름차순.
+- 읽기: 기간(`ym_from`·`ym_to` 포함)·HS 접두·국가·시도·지역·종목. 결과는 기본 키 오름차순. HS 접두는
+  Pg 에서 `LIKE` 접두 패턴(`like_prefix` — 와일드카드 이스케이프, (hs text_pattern_ops) 색인).
 - 10일 잠정치는 `first_usd`·`first_seen_at` 을 덮지 않는다(발표 당시 값 — metrics §25). 값이 None 인
   새 행은 있는 값을 지우지 않는다(월간·10일 — 절대 규칙 2).
 - 매핑표는 판(map_version) 단위로 **통째로 바꾼다**(`replace_stock_map` — 한 트랜잭션: 지우고 넣기.
@@ -39,7 +40,7 @@ from kbj.core.trade_rows import (
     TenDayColumn,
     TenDayRow,
 )
-from kbj.store.repos._common import ConnFactory, require_aware, require_loaded_by
+from kbj.store.repos._common import ConnFactory, like_prefix, require_aware, require_loaded_by
 from kbj.store.repos._table import MemoryTable, Table, key_of, upsert
 
 __all__ = ["MemoryTradeRepo", "PgTradeRepo", "TradeRepo"]
@@ -133,8 +134,12 @@ def _pg_where(table: Table[Any], conds: Sequence[_Cond]) -> tuple[sql.Composable
             parts.append(sql.SQL("{} <= %s").format(col))
             params.append(c.value)
         elif c.op == "prefix":
-            parts.append(sql.SQL("left({}, %s) = %s").format(col))
-            params.extend([len(str(c.value)), c.value])
+            # LIKE '접두%' 는 (hs text_pattern_ops, ym) 색인을 탄다. left(hs, n) = p 는 식이라
+            # 색인을 못 써 item_monthly(약 43만 행)를 부를 때마다 순차로 훑었다(2026-11-10 실측 —
+            # 종목 흐름 한 번에 21번, 0.6초). 계획을 매개변수 값으로 세울 때(지금처럼 연결마다
+            # 일회성 문장)만 접두가 색인 범위로 바뀐다 — 연결을 다시 쓰면 준비문 일반 계획을 끈다
+            parts.append(sql.SQL("{} LIKE %s ESCAPE '\\'").format(col))
+            params.append(like_prefix(str(c.value)))
         else:
             parts.append(sql.SQL("{} = ANY(%s)").format(col))
             params.append(sorted(set(c.value)))  # type: ignore[call-overload]  # pyright: ignore[reportArgumentType, reportUnknownArgumentType]
@@ -294,6 +299,11 @@ class TradeRepo(Protocol):
 
     def stock_map(self, code: str | None = None, origin: str | None = None) -> list[StockMapRow]:
         """origin 을 주지 않으면 public·local 모두(공개 내보내기는 이 저장소를 쓰지 않는다)."""
+        ...
+
+    def has_stock_map(self) -> bool:
+        """매핑표에 줄이 하나라도 있나(origin 무관). 종목 하나만 읽는 경로(`stock_map(code=…)`)가
+        '매핑표가 비었다'와 '이 종목은 매핑 없음'을 표 전체를 읽지 않고 가른다."""
         ...
 
     def stock_export(
@@ -604,6 +614,12 @@ class PgTradeRepo(_Base):
             r = conn.execute(sql.SQL("SELECT max(ym) FROM {}").format(t.ident())).fetchone()
         return None if r is None else r[0]
 
+    def has_stock_map(self) -> bool:
+        q = sql.SQL("SELECT EXISTS (SELECT 1 FROM {})").format(T_STOCK_MAP.ident())
+        with self._connect() as conn:
+            r = conn.execute(q).fetchone()
+        return r is not None and bool(r[0])
+
     def chapter_monthly(self, ym_from: str, ym_to: str) -> list[ChapterMonth]:
         q = sql.SQL(
             "SELECT ym, left(hs, 2), coalesce(sum(exp_usd), 0), coalesce(sum(imp_usd), 0) "
@@ -690,3 +706,6 @@ class MemoryTradeRepo(_Base):
         t = _ym_table(table)
         yms = [r.ym for r in self.tables[t.name].all()]
         return max(yms) if yms else None
+
+    def has_stock_map(self) -> bool:
+        return bool(self.tables[T_STOCK_MAP.name].rows)
