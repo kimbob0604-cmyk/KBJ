@@ -30,6 +30,7 @@ always: ["005930", "000660"]
 
 # 장중 10분마다 다시 만드는 경로(시세·수급·GEX — 장중에 바뀌는 것). 이 경로의 grid 도 live 때 다시 만든다
 live:
+  - home            # 첫 화면 요약 카드 묶음(ADR 0043)
   - market/summary
   - market/ribbon
   - market/sectors
