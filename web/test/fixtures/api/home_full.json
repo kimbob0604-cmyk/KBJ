@@ -1,0 +1,1310 @@
+{
+  "source": "KRX+KIS+KBJ:gex.engine(KIS 옵션 체인·웹소켓)+DART+KBJ:diag.public+KBJ:diag.daily+stock-dashboard:data/master+naver(stock-dashboard 수집)+DATAGO:15157908",
+  "as_of": "2026-12-10T04:30:00Z",
+  "quality": "estimated",
+  "notes": [],
+  "generated_at": "2026-12-11T12:00:00+09:00",
+  "data": {
+    "date": "2026-12-11",
+    "cards": {
+      "indices": {
+        "status": "ok",
+        "page": 1,
+        "keys": [
+          "market/summary",
+          "flows/market-minute?market=kospi",
+          "flows/market-minute?market=kosdaq",
+          "flows/investors"
+        ],
+        "source": "KRX+KIS",
+        "as_of": "2026-11-17T15:30:00+09:00",
+        "quality": "estimated",
+        "notes": [
+          "NXT 미포함(KRX 구분만 — D-P3-9)",
+          "상승·보합·하락은 코스피+코스닥 합산(마감 확정) — 시장별 값은 없다"
+        ],
+        "message": null,
+        "error": null,
+        "data": {
+          "kospi": {
+            "tile": {
+              "code": "0001",
+              "name": "코스피",
+              "value": 20050.7574,
+              "chg_pct": -0.5084012246462044,
+              "spark": [
+                17025.2351,
+                16980.3758,
+                16965.8392,
+                16826.3915,
+                16751.6334,
+                16744.6977,
+                16870.9727,
+                16821.0634,
+                17064.0921,
+                17210.2517,
+                17181.7562,
+                17211.0112,
+                17297.1596,
+                17301.6289,
+                16970.6765,
+                16946.9552,
+                16884.3098,
+                20335.1352,
+                20153.2166,
+                20050.7574
+              ],
+              "live": false,
+              "source": "KRX",
+              "as_of": "2026-09-15T15:30:00+09:00",
+              "quality": "ok"
+            },
+            "investors": {
+              "basis": "minute",
+              "date": "2026-11-17",
+              "individual": -7320000000,
+              "foreign": -166000000,
+              "institution": 20940000000,
+              "other_corp": -3866000000,
+              "source": "KIS",
+              "as_of": "2026-11-17T15:30:00+09:00",
+              "quality": "estimated"
+            }
+          },
+          "kosdaq": {
+            "tile": {
+              "code": "1001",
+              "name": "코스닥",
+              "value": 13087.6207,
+              "chg_pct": -0.5440628445992912,
+              "spark": [
+                13744.3445,
+                13741.348,
+                13644.7122,
+                13637.9264,
+                13464.5863,
+                13517.5898,
+                13360.3165,
+                13363.6181,
+                13458.7606,
+                13420.399,
+                13447.5868,
+                13307.2041,
+                13349.449,
+                13327.2818,
+                13461.837,
+                13300.3803,
+                13104.7096,
+                13139.5582,
+                13159.2151,
+                13087.6207
+              ],
+              "live": false,
+              "source": "KRX",
+              "as_of": "2026-09-15T15:30:00+09:00",
+              "quality": "ok"
+            },
+            "investors": {
+              "basis": "daily",
+              "date": "2026-09-15",
+              "individual": 644000000,
+              "foreign": -540000000,
+              "institution": -112000000,
+              "other_corp": 8000000,
+              "source": "KIS",
+              "as_of": "2026-09-15T15:30:00+09:00",
+              "quality": "ok"
+            }
+          },
+          "breadth": {
+            "date": "2026-09-15",
+            "up": 11,
+            "flat": 1,
+            "down": 23,
+            "unknown": 0,
+            "total": 35,
+            "source": "KIS",
+            "quality": "estimated"
+          }
+        }
+      },
+      "futures": {
+        "status": "ok",
+        "page": 1,
+        "keys": [
+          "gex/levels",
+          "flows/market-minute?market=k200_fut",
+          "market/summary"
+        ],
+        "source": "KBJ:gex.engine(KIS 옵션 체인·웹소켓)+KIS",
+        "as_of": "2026-12-10T04:30:00Z",
+        "quality": "estimated",
+        "notes": [
+          "현재가: 선물 전광판 근월물 A01612(엔진 F_ref 없음 — estimated)",
+          "엔진 지연 — 마지막 사이클 13:30 KST(30분 전)",
+          "거래소 구분 없는 값(KRX 표시)",
+          "늦게 받은 분이 섞여 있다(추정)",
+          "선물 전일 대비 등락률 칸은 없다 — 전일 정산가를 아직 API 에 싣지 않는다(야간 타일은 주간 마지막 값 대비)"
+        ],
+        "message": null,
+        "error": null,
+        "data": {
+          "trade_date": "2026-12-10",
+          "session": "day",
+          "session_open": true,
+          "cycle_at": "2026-12-10T04:30:00Z",
+          "price": 351.46,
+          "price_quality": "estimated",
+          "stale": true,
+          "night": null,
+          "investors": {
+            "basis": "minute",
+            "date": "2026-11-17",
+            "individual": 8826000000,
+            "foreign": 5188000000,
+            "institution": -12056000000,
+            "other_corp": -4168000000,
+            "source": "KIS",
+            "as_of": "2026-11-17T15:30:00+09:00",
+            "quality": "estimated"
+          }
+        }
+      },
+      "filings": {
+        "status": "ok",
+        "page": 5,
+        "keys": [
+          "filings/feed",
+          "filings/earnings"
+        ],
+        "source": "DART",
+        "as_of": "2026-11-16T19:56:00+09:00",
+        "quality": "estimated",
+        "notes": [
+          "접수 시각은 우리가 처음 본 시각(DART 응답은 날짜만 — first_seen_at)",
+          "분류 = 전년동기 대비(YoY — 공개 규칙)",
+          "정정으로 대체된 원 공시 1건은 세지 않는다(같은 회사·기간·범위는 마지막 접수만)",
+          "오늘은 휴장 — 11/16 공시",
+          "서프·쇼크 = 전년동기 대비 방향(컨센서스 대비 아님 — 분기 컨센서스 없음)"
+        ],
+        "message": null,
+        "error": null,
+        "data": {
+          "date": "2026-11-16",
+          "n_total": 18,
+          "by_kind": {
+            "earnings": 1,
+            "insider": 1,
+            "other": 179,
+            "overhang_exercise": 1,
+            "owner": 53,
+            "periodic": 6,
+            "pre_announce": 1,
+            "prelim": 5,
+            "price_adjust": 1
+          },
+          "top": [
+            {
+              "rcept_no": "20261116800125",
+              "first_seen_at": "2026-11-16T14:10:00+09:00",
+              "corp_name": "모의모빌리티",
+              "stock_code": "994130",
+              "title": "신주인수권행사",
+              "kind": "overhang_exercise",
+              "kw_score": 8,
+              "kw_matched": [
+                "신주인수권"
+              ],
+              "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261116800125"
+            },
+            {
+              "rcept_no": "20261116800163",
+              "first_seen_at": "2026-11-16T16:05:00+09:00",
+              "corp_name": "모의소프트",
+              "stock_code": "994150",
+              "title": "영업(잠정)실적(공정공시)",
+              "kind": "prelim",
+              "kw_score": 6,
+              "kw_matched": [
+                "실적"
+              ],
+              "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261116800163"
+            },
+            {
+              "rcept_no": "20261116800149",
+              "first_seen_at": "2026-11-16T15:35:00+09:00",
+              "corp_name": "모의에너지",
+              "stock_code": "994140",
+              "title": "연결재무제표기준영업(잠정)실적(공정공시)",
+              "kind": "prelim",
+              "kw_score": 6,
+              "kw_matched": [
+                "실적"
+              ],
+              "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261116800149"
+            },
+            {
+              "rcept_no": "20261116800143",
+              "first_seen_at": "2026-11-16T15:20:00+09:00",
+              "corp_name": "모의금융지주",
+              "stock_code": "994100",
+              "title": "연결재무제표기준영업(잠정)실적(공정공시)(자회사의 주요경영사항)",
+              "kind": "prelim",
+              "kw_score": 6,
+              "kw_matched": [
+                "실적"
+              ],
+              "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261116800143"
+            },
+            {
+              "rcept_no": "20261116800135",
+              "first_seen_at": "2026-11-16T14:45:00+09:00",
+              "corp_name": "모의로보틱스",
+              "stock_code": "99K170",
+              "title": "영업(잠정)실적(공정공시)",
+              "kind": "prelim",
+              "kw_score": 6,
+              "kw_matched": [
+                "실적"
+              ],
+              "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261116800135"
+            },
+            {
+              "rcept_no": "20261116800112",
+              "first_seen_at": "2026-11-16T13:30:00+09:00",
+              "corp_name": "모의전자",
+              "stock_code": "994010",
+              "title": "실적등에대한전망(공정공시)",
+              "kind": "earnings",
+              "kw_score": 6,
+              "kw_matched": [
+                "실적"
+              ],
+              "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261116800112"
+            },
+            {
+              "rcept_no": "20261116800039",
+              "first_seen_at": "2026-11-16T09:12:00+09:00",
+              "corp_name": "모의전자",
+              "stock_code": "994010",
+              "title": "결산실적공시예고",
+              "kind": "pre_announce",
+              "kw_score": 6,
+              "kw_matched": [
+                "실적"
+              ],
+              "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261116800039"
+            },
+            {
+              "rcept_no": "20261116000027",
+              "first_seen_at": "2026-11-16T17:23:00+09:00",
+              "corp_name": "모의모빌리티",
+              "stock_code": "994130",
+              "title": "분기보고서 (2026.09)",
+              "kind": "periodic",
+              "kw_score": 2,
+              "kw_matched": [
+                "분기보고서"
+              ],
+              "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261116000027"
+            }
+          ],
+          "n_prelim": 4,
+          "n_surprise": 2,
+          "n_shock": 0,
+          "prelims": [
+            {
+              "rcept_no": "20261116800163",
+              "corp_name": "모의소프트",
+              "stock_code": "994150",
+              "label": "2026 3Q",
+              "scope": "standalone",
+              "signal": "YOY_BIG_UP",
+              "side": "surprise",
+              "priority": 1,
+              "revenue_cur": 13165000000,
+              "op_cur": 2219000000,
+              "rev_yoy": 7.856791741766345,
+              "op_yoy": 81.58756137479541,
+              "is_correction": false,
+              "quality": "estimated",
+              "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261116800163"
+            },
+            {
+              "rcept_no": "20261116800167",
+              "corp_name": "모의에너지",
+              "stock_code": "994140",
+              "label": "2026 3Q",
+              "scope": "consolidated",
+              "signal": "YOY_BIG_UP",
+              "side": "surprise",
+              "priority": 1,
+              "revenue_cur": 2228700000000,
+              "op_cur": 201600000000,
+              "rev_yoy": 3.118493499282839,
+              "op_yoy": 52.49621785173979,
+              "is_correction": true,
+              "quality": "ok",
+              "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261116800167"
+            }
+          ]
+        }
+      },
+      "breadth": {
+        "status": "ok",
+        "page": 1,
+        "keys": [
+          "market/summary"
+        ],
+        "source": "KIS",
+        "as_of": "2026-09-15T15:30:00+09:00",
+        "quality": "estimated",
+        "notes": [
+          "20일선 위 비율만 — 60·120일선 위 비율과 시장별(코스피·코스닥) 값은 아직 없다(두 시장 합산)"
+        ],
+        "message": null,
+        "error": null,
+        "data": {
+          "date": "2026-09-15",
+          "above_ma20_pct": 47.05882352941176,
+          "above_ma20_n": 16,
+          "ma20_base": 34
+        }
+      },
+      "spike": {
+        "status": "ok",
+        "page": 4,
+        "keys": [
+          "flows/screen?mode=spike&period=1"
+        ],
+        "source": "KIS",
+        "as_of": "2026-09-15T15:30:00+09:00",
+        "quality": "ok",
+        "notes": [
+          "NXT 미포함(KRX 구분만 — D-P3-9)",
+          "상태(관리·정지·정리매매)를 모르는 종목 1개는 빼지 못했다",
+          "9/15 마감 기준 — 장중 급증은 아직 없다(확정 원장)"
+        ],
+        "message": null,
+        "error": null,
+        "data": {
+          "date": "2026-09-15",
+          "min_turnover": 30000000000,
+          "spike_min": 1.5,
+          "n_hits": 3,
+          "rows": [
+            {
+              "code": "Q00000",
+              "name": "합성00",
+              "market": "KOSPI",
+              "spike_mult": 2.999999999976679,
+              "turnover": 40622942184,
+              "chg_pct": -1.7349523065634642,
+              "mktcap": 996384000000,
+              "quality": "ok"
+            },
+            {
+              "code": "Q00036",
+              "name": "합성36",
+              "market": "KOSPI",
+              "spike_mult": 2.9808529273331734,
+              "turnover": 30072077453,
+              "chg_pct": -1.1401314253310701,
+              "mktcap": 28748084000000,
+              "quality": "ok"
+            },
+            {
+              "code": "Q00038",
+              "name": "합성38",
+              "market": "KOSPI",
+              "spike_mult": 2.7637443516326092,
+              "turnover": 31155840148,
+              "chg_pct": -0.2870739304709269,
+              "mktcap": 28963487000000,
+              "quality": "ok"
+            }
+          ]
+        }
+      },
+      "movers": {
+        "status": "ok",
+        "page": 4,
+        "keys": [
+          "market/movers"
+        ],
+        "source": "KIS",
+        "as_of": "2026-09-15T15:30:00+09:00",
+        "quality": "ok",
+        "notes": [
+          "NXT 미포함(KRX 구분만 — D-P3-9)",
+          "시총 3,000억 이상 보통주 — 1일 등락률",
+          "9/15 마감 기준 — 장중 전 종목 시세는 받지 않는다(15:35 마감 수집 뒤 오늘로 넘어간다)",
+          "관리·정지 상태를 모르는 1종목은 빼지 못했다"
+        ],
+        "message": null,
+        "error": null,
+        "data": {
+          "date": "2026-09-15",
+          "min_mktcap": 300000000000,
+          "n_eligible": 26,
+          "n_no_mktcap": 0,
+          "n_no_chg": 0,
+          "n_status_unknown": 1,
+          "up": [
+            {
+              "rank": 1,
+              "code": "Q00012",
+              "name": "합성12",
+              "market": "KOSPI",
+              "close": 23704.0,
+              "chg_pct": 2.8506964030025506,
+              "mktcap": 4669688000000,
+              "source": "KIS",
+              "quality": "ok"
+            },
+            {
+              "rank": 2,
+              "code": "Q00020",
+              "name": "합성20",
+              "market": "KOSPI",
+              "close": 53624.0,
+              "chg_pct": 2.2851257009880666,
+              "mktcap": 1876840000000,
+              "source": "KIS",
+              "quality": "ok"
+            },
+            {
+              "rank": 3,
+              "code": "Q00022",
+              "name": "합성22",
+              "market": "KOSPI",
+              "close": 43953.0,
+              "chg_pct": 2.064369310793235,
+              "mktcap": 2065791000000,
+              "source": "KIS",
+              "quality": "ok"
+            },
+            {
+              "rank": 4,
+              "code": "Q00005",
+              "name": "합성05",
+              "market": "KOSDAQ",
+              "close": 78548.0,
+              "chg_pct": 1.7751172613957422,
+              "mktcap": 11703652000000,
+              "source": "KIS",
+              "quality": "ok"
+            },
+            {
+              "rank": 5,
+              "code": "Q00035",
+              "name": "합성35",
+              "market": "KOSDAQ",
+              "close": 48711.0,
+              "chg_pct": 1.591307249520324,
+              "mktcap": 3507192000000,
+              "source": "KIS",
+              "quality": "ok"
+            },
+            {
+              "rank": 6,
+              "code": "Q00010",
+              "name": "합성10",
+              "market": "KOSPI",
+              "close": 11652.0,
+              "chg_pct": 1.4894172981447573,
+              "mktcap": 1549716000000,
+              "source": "KIS",
+              "quality": "ok"
+            },
+            {
+              "rank": 7,
+              "code": "Q00019",
+              "name": "합성19",
+              "market": "KOSDAQ",
+              "close": 127634.0,
+              "chg_pct": 1.2703022224338056,
+              "mktcap": 24122826000000,
+              "source": "KIS",
+              "quality": "ok"
+            },
+            {
+              "rank": 8,
+              "code": "Q00024",
+              "name": "합성24",
+              "market": "KOSPI",
+              "close": 194893.0,
+              "chg_pct": 1.0504648280939666,
+              "mktcap": 6431469000000,
+              "source": "KIS",
+              "quality": "ok"
+            },
+            {
+              "rank": 9,
+              "code": "Q00032",
+              "name": "합성32",
+              "market": "KOSPI",
+              "close": 161663.0,
+              "chg_pct": 0.4779544296244831,
+              "mktcap": 808315000000,
+              "source": "KIS",
+              "quality": "ok"
+            }
+          ],
+          "down": [
+            {
+              "rank": 1,
+              "code": "Q00001",
+              "name": "합성01",
+              "market": "KOSDAQ",
+              "close": 183374.0,
+              "chg_pct": -2.7183312289785544,
+              "mktcap": 14486546000000,
+              "source": "KIS",
+              "quality": "ok"
+            },
+            {
+              "rank": 2,
+              "code": "Q00034",
+              "name": "합성34",
+              "market": "KOSPI",
+              "close": 62520.0,
+              "chg_pct": -2.4953212726138485,
+              "mktcap": 5689320000000,
+              "source": "KIS",
+              "quality": "ok"
+            },
+            {
+              "rank": 3,
+              "code": "Q00018",
+              "name": "합성18",
+              "market": "KOSPI",
+              "close": 133555.0,
+              "chg_pct": -2.491822907540442,
+              "mktcap": 7078415000000,
+              "source": "KIS",
+              "quality": "ok"
+            },
+            {
+              "rank": 4,
+              "code": "Q00014",
+              "name": "합성14",
+              "market": "KOSPI",
+              "close": 130031.0,
+              "chg_pct": -2.4743118577964407,
+              "mktcap": 4030961000000,
+              "source": "KIS",
+              "quality": "ok"
+            },
+            {
+              "rank": 5,
+              "code": "Q00029",
+              "name": "합성29",
+              "market": "KOSDAQ",
+              "close": 55659.0,
+              "chg_pct": -1.9362909193417654,
+              "mktcap": 8794122000000,
+              "source": "KIS",
+              "quality": "ok"
+            },
+            {
+              "rank": 6,
+              "code": "Q00025",
+              "name": "합성25",
+              "market": "KOSDAQ",
+              "close": 98768.0,
+              "chg_pct": -1.929282799296994,
+              "mktcap": 8395280000000,
+              "source": "KIS",
+              "quality": "ok"
+            },
+            {
+              "rank": 7,
+              "code": "Q00000",
+              "name": "합성00",
+              "market": "KOSPI",
+              "close": 41516.0,
+              "chg_pct": -1.7349523065634642,
+              "mktcap": 996384000000,
+              "source": "KIS",
+              "quality": "ok"
+            },
+            {
+              "rank": 8,
+              "code": "Q00028",
+              "name": "합성28",
+              "market": "KOSPI",
+              "close": 108506.0,
+              "chg_pct": -1.622905635743821,
+              "mktcap": 10525082000000,
+              "source": "KIS",
+              "quality": "ok"
+            },
+            {
+              "rank": 9,
+              "code": "Q00004",
+              "name": "합성04",
+              "market": "KOSPI",
+              "close": 76869.0,
+              "chg_pct": -1.5837451668245683,
+              "mktcap": 14220765000000,
+              "source": "KIS",
+              "quality": "ok"
+            },
+            {
+              "rank": 10,
+              "code": "Q00036",
+              "name": "합성36",
+              "market": "KOSPI",
+              "close": 148186.0,
+              "chg_pct": -1.1401314253310701,
+              "mktcap": 28748084000000,
+              "source": "KIS",
+              "quality": "ok"
+            }
+          ]
+        }
+      },
+      "foreign_inst": {
+        "status": "ok",
+        "page": 4,
+        "keys": [
+          "flows/intraday",
+          "flows/screen?mode=foreign&period=1&min_avg_turnover=0",
+          "flows/screen?mode=inst&period=1&min_avg_turnover=0"
+        ],
+        "source": "KIS",
+        "as_of": "2026-09-15T15:30:00+09:00",
+        "quality": "ok",
+        "notes": [
+          "NXT 미포함(KRX 구분만 — D-P3-9)",
+          "검산 ①(4구분 합 0) 불가 6행: 투자자별 행 없음 6",
+          "검산 ②(7구분 합 = 기관) 불가 6행: 기관 합계·7구분 미제공 6",
+          "상태(관리·정지·정리매매)를 모르는 종목 1개는 빼지 못했다",
+          "9/15 마감 기준 — 오늘 장중 가집계가 아직 없다"
+        ],
+        "message": null,
+        "error": null,
+        "data": {
+          "basis": "close",
+          "date": "2026-09-15",
+          "foreign": [
+            {
+              "code": "Q00000",
+              "name": "합성00",
+              "market": "KOSPI",
+              "value": 294000000,
+              "chg_pct": -1.7349523065634642,
+              "mktcap": 996384000000
+            },
+            {
+              "code": "Q00031",
+              "name": "합성31",
+              "market": "KOSDAQ",
+              "value": 292000000,
+              "chg_pct": -0.5218342058180392,
+              "mktcap": 7806370000000
+            },
+            {
+              "code": "Q00037",
+              "name": "합성37",
+              "market": "KOSDAQ",
+              "value": 284000000,
+              "chg_pct": -1.2896292315959124,
+              "mktcap": 264528000000
+            },
+            {
+              "code": "Q00032",
+              "name": "합성32",
+              "market": "KOSPI",
+              "value": 281000000,
+              "chg_pct": 0.4779544296244831,
+              "mktcap": 808315000000
+            },
+            {
+              "code": "Q00020",
+              "name": "합성20",
+              "market": "KOSPI",
+              "value": 262000000,
+              "chg_pct": 2.2851257009880666,
+              "mktcap": 1876840000000
+            }
+          ],
+          "inst": [
+            {
+              "code": "Q00010",
+              "name": "합성10",
+              "market": "KOSPI",
+              "value": 342000000,
+              "chg_pct": 1.4894172981447573,
+              "mktcap": 1549716000000
+            },
+            {
+              "code": "Q00027",
+              "name": "합성27",
+              "market": "KOSDAQ",
+              "value": 178000000,
+              "chg_pct": -2.404207362885047,
+              "mktcap": 285780000000
+            },
+            {
+              "code": "Q00014",
+              "name": "합성14",
+              "market": "KOSPI",
+              "value": 119000000,
+              "chg_pct": -2.4743118577964407,
+              "mktcap": 4030961000000
+            },
+            {
+              "code": "Q00039",
+              "name": "합성39",
+              "market": "KOSDAQ",
+              "value": 119000000,
+              "chg_pct": -0.2090119649490907,
+              "mktcap": 2150874000000
+            },
+            {
+              "code": "Q00036",
+              "name": "합성36",
+              "market": "KOSPI",
+              "value": 66000000,
+              "chg_pct": -1.1401314253310701,
+              "mktcap": 28748084000000
+            }
+          ]
+        }
+      },
+      "newhigh": {
+        "status": "ok",
+        "page": 2,
+        "keys": [
+          "board/newhigh"
+        ],
+        "source": "KIS",
+        "as_of": "2026-09-15T15:30:00+09:00",
+        "quality": "estimated",
+        "notes": [
+          "KIS 마감값(잠정) — 다음 영업일 08:40 KRX 확정"
+        ],
+        "message": null,
+        "error": null,
+        "data": {
+          "date": "2026-09-15",
+          "counts": {
+            "hist": 12,
+            "w52": 22,
+            "d120": 27
+          },
+          "labels": {
+            "hist": "역사적",
+            "w52": "52주",
+            "d120": "120일"
+          },
+          "rows": [
+            {
+              "code": "901500",
+              "name": "합성종목150",
+              "market": "KOSDAQ",
+              "label": "w52",
+              "chg_pct": 3.7,
+              "mktcap": 35861140000000
+            },
+            {
+              "code": "900150",
+              "name": "합성종목015",
+              "market": "KOSDAQ",
+              "label": "hist",
+              "chg_pct": 1.84,
+              "mktcap": 35517730000000
+            },
+            {
+              "code": "900400",
+              "name": "합성종목040",
+              "market": "KOSPI",
+              "label": "w52",
+              "chg_pct": 1.03,
+              "mktcap": 10118160000000
+            },
+            {
+              "code": "901530",
+              "name": "합성종목153",
+              "market": "KOSDAQ",
+              "label": "w52",
+              "chg_pct": 1.15,
+              "mktcap": 1214780000000
+            },
+            {
+              "code": "902640",
+              "name": "합성종목264",
+              "market": "KOSDAQ",
+              "label": "w52",
+              "chg_pct": 1.29,
+              "mktcap": 1213240000000
+            },
+            {
+              "code": "902190",
+              "name": "합성종목219",
+              "market": "KOSDAQ",
+              "label": "hist",
+              "chg_pct": 1.17,
+              "mktcap": 1208160000000
+            },
+            {
+              "code": "900570",
+              "name": "합성종목057",
+              "market": "KOSDAQ",
+              "label": "hist",
+              "chg_pct": 0.56,
+              "mktcap": 1169120000000
+            },
+            {
+              "code": "902620",
+              "name": "합성종목262",
+              "market": "KOSPI",
+              "label": "w52",
+              "chg_pct": 0.28,
+              "mktcap": 1108330000000
+            }
+          ]
+        }
+      },
+      "gex": {
+        "status": "ok",
+        "page": 3,
+        "keys": [
+          "gex/levels",
+          "gex/briefing"
+        ],
+        "source": "KBJ:gex.engine(KIS 옵션 체인·웹소켓)",
+        "as_of": "2026-12-10T04:30:00Z",
+        "quality": "estimated",
+        "notes": [
+          "현재가: 선물 전광판 근월물 A01612(엔진 F_ref 없음 — estimated)",
+          "엔진 지연 — 마지막 사이클 13:30 KST(30분 전)"
+        ],
+        "message": null,
+        "error": null,
+        "data": {
+          "trade_date": "2026-12-10",
+          "session": "day",
+          "session_open": true,
+          "cycle_at": "2026-12-10T04:30:00Z",
+          "stale": true,
+          "price": 351.46,
+          "regime": "long",
+          "regime_label": "Long γ · 안정 구간",
+          "headline": "롱감마 구간에서 출발합니다. 오늘 첫 시험대는 위로 357.5, 아래로 350.5입니다.",
+          "flip": 350.5,
+          "flip_distance": 0.2731,
+          "expected_move": 4.2
+        }
+      },
+      "diag": {
+        "status": "ok",
+        "page": 3,
+        "keys": [
+          "diag/summary"
+        ],
+        "source": "KBJ:diag.public+KBJ:diag.daily",
+        "as_of": "2026-12-10T08:40:00+09:00",
+        "quality": "estimated",
+        "notes": [
+          "공공지표 2026-12-10 · 시장 진단 2026-12-09 기준",
+          "값 없음: export_momentum, cyclical_defensive"
+        ],
+        "message": null,
+        "error": null,
+        "data": {
+          "trade_date": "2026-12-10",
+          "verdict": {
+            "label": "neutral",
+            "score": 0,
+            "parts": {
+              "fear_greed": 0,
+              "credit_spread": 1,
+              "breadth_ma20": -1,
+              "kr_vs_global": -1,
+              "foreign_flow": 1
+            },
+            "top": [
+              "+신용스프레드",
+              "−시장폭",
+              "−한국 대 글로벌"
+            ],
+            "event_flags": [
+              "expiry"
+            ],
+            "quality": "estimated",
+            "reasons": [
+              "성분 없음: gex"
+            ]
+          },
+          "fear_greed": {
+            "score": 54.7,
+            "band": "neutral",
+            "components": {
+              "vol": null,
+              "breadth": 22.86,
+              "credit_balance": 23.69,
+              "foreign": 85.71,
+              "credit_spread": 86.35
+            },
+            "substitutes": [],
+            "quality": "estimated",
+            "reasons": [
+              "빠진 성분: vol"
+            ]
+          },
+          "caution": true
+        }
+      },
+      "program": {
+        "status": "ok",
+        "page": 1,
+        "keys": [
+          "program/daily?market=K",
+          "program/daily?market=Q"
+        ],
+        "source": "KIS",
+        "as_of": "2026-11-17T15:30:00+09:00",
+        "quality": "estimated",
+        "notes": [
+          "NXT 미포함(KRX 구분만 — D-P3-9)",
+          "11/17 마감 기준 — 장중 시장 프로그램 누적은 아직 API 에 없다"
+        ],
+        "message": null,
+        "error": null,
+        "data": {
+          "kospi": {
+            "date": "2026-11-17",
+            "net": -367512760375,
+            "arbt_net": -216283700623,
+            "nabt_net": -151229059752,
+            "entm_net": -2174817459670,
+            "onsl_net": 1807304699295,
+            "index_close": 2496.98,
+            "quality": "estimated"
+          },
+          "kosdaq": {
+            "date": "2026-11-17",
+            "net": -711537738797,
+            "arbt_net": -1395741006819,
+            "nabt_net": 684203268022,
+            "entm_net": 73805178963,
+            "onsl_net": -785342917760,
+            "index_close": 871.4,
+            "quality": "estimated"
+          }
+        }
+      },
+      "etf": {
+        "status": "ok",
+        "page": 10,
+        "keys": [
+          "etf/types?period=5",
+          "etf/flows?mode=in&period=5"
+        ],
+        "source": "KRX",
+        "as_of": "2026-09-15T15:30:00+09:00",
+        "quality": "ok",
+        "notes": [
+          "투자자별 순매수(장내 — KIS)는 순유입과 합치지 않는다(LP 상대)"
+        ],
+        "message": null,
+        "error": null,
+        "data": {
+          "period": 5,
+          "start": "2026-09-09",
+          "end": "2026-09-15",
+          "types": [
+            {
+              "etf_type": "kr_index",
+              "label": "국내 대표지수",
+              "net_inflow": 95185167500,
+              "price_effect": 142885831500,
+              "n_etfs": 2,
+              "n_new": 0,
+              "n_invalid": 0
+            },
+            {
+              "etf_type": "overseas",
+              "label": "해외주식",
+              "net_inflow": 50117775000,
+              "price_effect": -41467845000,
+              "n_etfs": 1,
+              "n_new": 0,
+              "n_invalid": 0
+            },
+            {
+              "etf_type": "kr_theme",
+              "label": "국내 테마",
+              "net_inflow": 39459633000,
+              "price_effect": 6828889500,
+              "n_etfs": 2,
+              "n_new": 0,
+              "n_invalid": 0
+            },
+            {
+              "etf_type": "leveraged_inverse",
+              "label": "레버리지·인버스",
+              "net_inflow": -2293390000,
+              "price_effect": 6408479000,
+              "n_etfs": 2,
+              "n_new": 0,
+              "n_invalid": 0
+            },
+            {
+              "etf_type": "other",
+              "label": "기타",
+              "net_inflow": -10590152000,
+              "price_effect": 60488646500,
+              "n_etfs": 1,
+              "n_new": 0,
+              "n_invalid": 0
+            },
+            {
+              "etf_type": "commodity",
+              "label": "원자재",
+              "net_inflow": -38878217000,
+              "price_effect": 100468609500,
+              "n_etfs": 1,
+              "n_new": 0,
+              "n_invalid": 0
+            },
+            {
+              "etf_type": "bond_cash",
+              "label": "채권·현금",
+              "net_inflow": -150851418500,
+              "price_effect": -144876532900,
+              "n_etfs": 2,
+              "n_new": 0,
+              "n_invalid": 0
+            }
+          ],
+          "top": [
+            {
+              "code": "E00007",
+              "name": "합성ETF07",
+              "etf_type_label": "국내 대표지수",
+              "net_inflow": 68307262000,
+              "ret_pct": 2.3873069244509715,
+              "quality": "ok"
+            },
+            {
+              "code": "E00009",
+              "name": "합성ETF09",
+              "etf_type_label": "해외주식",
+              "net_inflow": 50117775000,
+              "ret_pct": -1.2499141542476444,
+              "quality": "ok"
+            },
+            {
+              "code": "E00000",
+              "name": "합성ETF00",
+              "etf_type_label": "국내 대표지수",
+              "net_inflow": 26877905500,
+              "ret_pct": 4.497064968659825,
+              "quality": "ok"
+            }
+          ]
+        }
+      },
+      "themes": {
+        "status": "ok",
+        "page": 9,
+        "keys": [
+          "themes/strength?period=1"
+        ],
+        "source": "KIS+stock-dashboard:data/master+naver(stock-dashboard 수집)",
+        "as_of": "2026-09-15T15:30:00+09:00",
+        "quality": "estimated",
+        "notes": [
+          "편입 = 대테마에 걸린 네이버 테마(stock-dashboard 수집)의 종목 합집합",
+          "등락은 편입 종목 동일가중 평균(대형주 하나가 테마를 덮지 않게) · 20일 = 21거래일 전 종가 대비(보드)",
+          "시세 2026-09-15 마감(보드)"
+        ],
+        "message": null,
+        "error": null,
+        "data": {
+          "trade_date": "2026-09-15",
+          "period": 1,
+          "rows": [
+            {
+              "rank": 1,
+              "id": "syn_2_4",
+              "name": "에너지 합성 테마 4",
+              "section": "에너지",
+              "valuechain": "CHAIN_D",
+              "stats": {
+                "n_members": 58,
+                "n_priced": 40,
+                "chg_pct": 0.79,
+                "ret_5d": 1.0,
+                "ret_20d": 0.98,
+                "weighted": false,
+                "up": 27,
+                "flat": 0,
+                "down": 13,
+                "unknown": 18,
+                "up_ratio": 0.675,
+                "n_newhigh": 8,
+                "n_near": 10,
+                "turnover_mult": 1.32,
+                "mktcap": 169460890000000,
+                "leader": {
+                  "code": "900980",
+                  "name": "합성종목098",
+                  "chg_pct": 0.78
+                }
+              }
+            },
+            {
+              "rank": 2,
+              "id": "syn_6_2",
+              "name": "금융 합성 테마 2",
+              "section": "금융",
+              "valuechain": null,
+              "stats": {
+                "n_members": 75,
+                "n_priced": 49,
+                "chg_pct": 0.68,
+                "ret_5d": 0.51,
+                "ret_20d": 1.95,
+                "weighted": false,
+                "up": 32,
+                "flat": 0,
+                "down": 17,
+                "unknown": 26,
+                "up_ratio": 0.6531,
+                "n_newhigh": 5,
+                "n_near": 15,
+                "turnover_mult": 1.11,
+                "mktcap": 167853460000000,
+                "leader": {
+                  "code": "901310",
+                  "name": "합성종목131",
+                  "chg_pct": 2.3
+                }
+              }
+            },
+            {
+              "rank": 3,
+              "id": "syn_1_7",
+              "name": "기술 합성 테마 7",
+              "section": "기술",
+              "valuechain": null,
+              "stats": {
+                "n_members": 91,
+                "n_priced": 61,
+                "chg_pct": 0.53,
+                "ret_5d": 1.15,
+                "ret_20d": 2.15,
+                "weighted": false,
+                "up": 35,
+                "flat": 0,
+                "down": 26,
+                "unknown": 30,
+                "up_ratio": 0.5738,
+                "n_newhigh": 9,
+                "n_near": 13,
+                "turnover_mult": 1.09,
+                "mktcap": 197987490000000,
+                "leader": {
+                  "code": "902040",
+                  "name": "합성종목204",
+                  "chg_pct": 1.38
+                }
+              }
+            },
+            {
+              "rank": 4,
+              "id": "syn_4_2",
+              "name": "산업 합성 테마 2",
+              "section": "산업",
+              "valuechain": null,
+              "stats": {
+                "n_members": 60,
+                "n_priced": 41,
+                "chg_pct": 0.39,
+                "ret_5d": 1.07,
+                "ret_20d": -2.18,
+                "weighted": false,
+                "up": 21,
+                "flat": 0,
+                "down": 20,
+                "unknown": 19,
+                "up_ratio": 0.5122,
+                "n_newhigh": 3,
+                "n_near": 7,
+                "turnover_mult": 0.75,
+                "mktcap": 156186840000000,
+                "leader": {
+                  "code": "901720",
+                  "name": "합성종목172",
+                  "chg_pct": 5.75
+                }
+              }
+            },
+            {
+              "rank": 5,
+              "id": "syn_5_4",
+              "name": "의료 합성 테마 4",
+              "section": "의료",
+              "valuechain": null,
+              "stats": {
+                "n_members": 105,
+                "n_priced": 70,
+                "chg_pct": 0.37,
+                "ret_5d": 1.09,
+                "ret_20d": 3.08,
+                "weighted": false,
+                "up": 38,
+                "flat": 0,
+                "down": 32,
+                "unknown": 35,
+                "up_ratio": 0.5429,
+                "n_newhigh": 9,
+                "n_near": 16,
+                "turnover_mult": 0.87,
+                "mktcap": 107572100000000,
+                "leader": {
+                  "code": "901310",
+                  "name": "합성종목131",
+                  "chg_pct": 2.3
+                }
+              }
+            }
+          ]
+        }
+      },
+      "export": {
+        "status": "ok",
+        "page": 7,
+        "keys": [
+          "market/ribbon"
+        ],
+        "source": "DATAGO:15157908",
+        "as_of": "2026-12-01T00:00:00+09:00",
+        "quality": "estimated",
+        "notes": [
+          "관세청 10일 잠정치 — 발표 당시 값(전년 같은 구간 대비)"
+        ],
+        "message": null,
+        "error": null,
+        "data": {
+          "ym": "2026-12",
+          "seg": 1,
+          "span_text": "01~10",
+          "span_label": "1~10일",
+          "usd": 22622970000,
+          "yoy": 0.0548512169622426,
+          "yoy_reason": null,
+          "first_seen_at": "2026-12-01T00:00:00+09:00"
+        }
+      }
+    },
+    "n_ok": 14,
+    "n_no_data": 0,
+    "n_error": 0
+  }
+}

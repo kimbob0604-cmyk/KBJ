@@ -45,6 +45,15 @@ def test_domains_cover_routes() -> None:
     }  # fmt: skip
 
 
+def test_home_domains_are_known_domains() -> None:
+    """첫 화면 묶음(`/api/home`)은 영역 여럿의 버전을 잇는다 — 모두 아는 영역이어야 한다(모르면
+    DataVersions 가 ValueError). 카드 경로의 영역을 덮는지는 test_routes_home 이 본다."""
+    from kbj.services.api.readers.home import HOME_DOMAINS
+
+    assert set(HOME_DOMAINS) <= set(DOMAIN_JOBS)
+    assert len(set(HOME_DOMAINS)) == len(HOME_DOMAINS)
+
+
 def test_p4_domain_jobs_exist_in_registry() -> None:
     """영역 작업 이름이 등록부에 있다(오타면 버전이 영영 안 바뀐다)."""
     import yaml

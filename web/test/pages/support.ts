@@ -10,6 +10,8 @@ import publicCalendar from './fixtures/public_calendar.json';
 import publicEvents from './fixtures/public_events.json';
 // 페이지 1 '신용잔고 · 예탁금 · 펀드 자금'(market/credit) — MAC 합성 세계 픽스처(tests/unit/api/web_fixtures_p5/macro.py)
 import marketCredit from '../fixtures/api/macro/market_credit.json';
+// 페이지 1 '관심종목' 카드(watchlist) — P4 합성 20종목 세계(tests/unit/api/make_web_fixtures_p4)
+import watchMain from '../fixtures/api/watchlist/main.json';
 
 const API = import.meta.glob<unknown>('../fixtures/api/*.json', { eager: true, import: 'default' });
 const IDX = import.meta.glob<unknown>('../fixtures/api/index_review/*.json', { eager: true, import: 'default' });
@@ -74,6 +76,7 @@ export function apiHarness(overrides: Record<string, Override> = {}): Harness {
     if (o !== undefined) return json(o);
     if (name.startsWith('index-review')) return json(indexReviewDefault(url));
     if (name === 'market_credit') return json(structuredClone(marketCredit));
+    if (name === 'watchlist') return json(structuredClone(watchMain));
     return json(fixture(name));
   });
   return {

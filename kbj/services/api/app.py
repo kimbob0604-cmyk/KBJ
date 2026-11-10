@@ -66,6 +66,7 @@ from kbj.services.api.routes import (
     flows,
     gex,
     health,
+    home,
     index_review,
     journal,
     macro,
@@ -256,6 +257,7 @@ def create_app(
         ops,  # P9 묶음 OPS(docs/p9_design.md §6.2 — 페이지 13 최소판)
         themes,  # 페이지 9 테마·밸류체인(ADR 0039)
         screen,  # 페이지 11 스크리너(cis 순추세 — config/screen.yaml)
+        home,  # 첫 화면 카드 묶음(docs/metrics.md §32, ADR 0043)
         webhook,
     )  # fmt: skip
     for r in routers:

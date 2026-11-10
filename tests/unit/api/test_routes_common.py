@@ -26,7 +26,14 @@ from kbj.services.api.models.flows import (
     ScreenResponse,
     StockFlowDetail,
 )
-from kbj.services.api.models.market import GlobalProxy, MarketSummary, Ribbon, SectorHeat
+from kbj.services.api.models.home import Home
+from kbj.services.api.models.market import (
+    GlobalProxy,
+    MarketMovers,
+    MarketSummary,
+    Ribbon,
+    SectorHeat,
+)
 from kbj.services.api.models.relcap import RelCap
 from tests.unit.api.api_world import World, fill_global_quotes, fill_relcap, fill_stock_holdings
 
@@ -52,6 +59,8 @@ DATA_ROUTES: list[tuple[str, type[BaseModel], bool]] = [
     ("/api/diag/breadth-risk?period=3M&ma=25", BreadthRisk, False),
     ("/api/market/global-proxy", GlobalProxy, False),
     ("/api/market/relcap?period=1Y", RelCap, False),
+    ("/api/market/movers", MarketMovers, False),  # 급등·급락(metrics §6.8)
+    ("/api/home", Home, False),  # 첫 화면 카드 묶음(metrics §32)
 ]
 
 
@@ -106,6 +115,7 @@ def test_envelope(
         "/api/etf/flows?type=crypto",
         "/api/etf/premium?basis=x",
         "/api/etf/holdings/changes?kind=MOVE",
+        "/api/market/movers?min_mktcap=-1",
     ],
 )
 def test_bad_query_is_422(authed: TestClient, path: str) -> None:

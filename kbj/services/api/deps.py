@@ -9,7 +9,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Final
 from urllib.parse import urlsplit
@@ -148,23 +148,33 @@ def live_ttl(st: ApiState) -> int:
 def cached_json(
     request: Request,
     *,
-    domain: str,
+    domain: str | Sequence[str],
     ttl_s: int,
     build: Callable[[], BaseModel],
+    cacheable: Callable[[BaseModel], bool] | None = None,
 ) -> Response:
-    """봉투 응답 — 데이터 버전 캐시 + ETag(If-None-Match 이면 304)."""
+    """봉투 응답 — 데이터 버전 캐시 + ETag(If-None-Match 이면 304).
+
+    `domain` 이 여럿이면(여러 영역을 읽는 묶음 — `/api/home`) 영역 버전을 이어 붙인 것이 키다 —
+    한 영역 작업이 새 값을 쓰면 묶음도 바로 낡는다(영역 하나만 주면 다른 영역의 새 값이 TTL 동안
+    옛 본문에 묶였다 — docs/realtime_audit.md R4). `cacheable` 이 False 를 돌려주면 그 본문은
+    캐시에 두지 않는다(묶음 안 한 카드가 오류 — 다음 요청이 다시 만든다)."""
     st = get_state(request)
     key: str | None = None
     if st.versions is not None:
-        version = st.versions.get(domain)
+        domains = (domain,) if isinstance(domain, str) else tuple(domain)
+        if not domains:
+            raise ValueError("영역이 하나는 있어야 한다")
+        version = "|".join(st.versions.get(d) for d in domains)
         key = cache_key(request.url.path, request.query_params.multi_items(), version)
     hit = st.cache.get(key) if key is not None else None
     if hit is not None:
         body, etag = hit.body, hit.etag
     else:
-        body = build().model_dump_json().encode("utf-8")
+        model = build()
+        body = model.model_dump_json().encode("utf-8")
         etag = etag_of(body)
-        if key is not None:
+        if key is not None and (cacheable is None or cacheable(model)):
             st.cache.put(key, body, ttl_s)
     headers = {"Cache-Control": PRIVATE, "ETag": etag}
     if request.headers.get("if-none-match") == etag:

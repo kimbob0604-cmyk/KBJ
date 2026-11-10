@@ -52,12 +52,14 @@ describe('페이지 1 시장 — 로그인', () => {
     expect(hz.paths().sort()).toEqual([
       'flows/investors',
       'flows/market-minute?market=k200_fut',
+      'home', // 첫 화면 요약 카드 묶음 — 한 번(p1_home.test.ts)
       'market/credit',
       'market/global-proxy',
       'market/sectors?period=1',
       'market/summary',
       'program/daily?days=60&market=K',
       'program/top?market=K&scope=intraday&side=buy',
+      'watchlist', // 관심종목 카드(개인 데이터는 묶음 밖)
     ]);
 
     const idx = panelByTitle(root, '지수');
@@ -191,12 +193,12 @@ describe('페이지 1 시장 — 로그인', () => {
     clock.t += 90_000; // 10:02:30 — 슬롯 + 2분 30초
     every[0]?.fn();
     await flush();
-    expect(hz.calls.length).toBe(before + 4); // 요약·업종·투자자·신용
+    expect(hz.calls.length).toBe(before + 6); // 첫 화면 묶음·관심종목·요약·업종·투자자·신용
     clock.t += SLOT_PERIOD_MS; // 10:07:30 — 늦게 끝난 슬롯을 한 번 더
     every[0]?.fn();
     every[0]?.fn();
     await flush();
-    expect(hz.calls.length).toBe(before + 8);
+    expect(hz.calls.length).toBe(before + 12);
   });
 });
 
@@ -224,7 +226,12 @@ describe('페이지 1 시장 — 공개', () => {
       'mini-symbol-overview',
       'mini-symbol-overview',
     ]);
-    expect(root.querySelectorAll('.panel.locked')).toHaveLength(4 + 3 + 1); // + F2 투자자 수급·프로그램 2 + 글로벌 프록시
+    // 히트맵·거래대금·시장폭·투자자 4 + F2 투자자 수급·프로그램 3 + 글로벌 프록시 1 + '오늘의 신호' 카드 13(요청 없음)
+    expect(root.querySelectorAll('.panel.locked')).toHaveLength(4 + 3 + 1 + 13);
+    expect(root.querySelectorAll('.hsignals .panel.locked')).toHaveLength(13);
+    // 지수 카드(로그인 묶음)는 만들지 않는다 — 지수 자리는 시장 구역 맨 위 TradingView 패널
+    expect(root.querySelector('.hmarket')).toBeNull();
+    expect(root.querySelector('[data-section="시장"] + section.panel')).toBe(panelByTitle(root, '지수'));
     expect(text(panelByTitle(root, '시장 거래대금'))).toContain('LOGIN');
     // 공개 파일이 없으면(수집 전) 패널 안 안내 — '준비 중' 상자는 없다
     const credit = panelByTitle(root, CREDIT_TITLE);

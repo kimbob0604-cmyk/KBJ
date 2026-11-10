@@ -30,7 +30,16 @@ from kbj.services.api.models.board import (
 from kbj.services.api.models.common import Envelope
 from kbj.services.api.readers._common import NoData, ReadContext, envelope, label, worst
 
-__all__ = ["board_events", "board_newhigh", "board_rankings", "board_sectors", "hist_notes"]
+__all__ = [
+    "BOARD_DAILY_ETA",
+    "EOK_NOTE",
+    "board_events",
+    "board_newhigh",
+    "board_rankings",
+    "board_sectors",
+    "hist_notes",
+    "row_label",
+]
 
 EOK_NOTE: Final = "보드 금액(turnover·mktcap·*_eok)은 억원(ET 산출 그대로)"
 # 보드가 아직 없을 때 안내(ADR 0018 — 16:00 발화, 마감 수집이 끝나야 돈다)
@@ -88,7 +97,8 @@ def _wrap[T](ctx: ReadContext, art: BoardArtifact, data: T, notes: list[str]) ->
     )
 
 
-def _row_label(row: Mapping[str, Any], basis: Basis) -> str | None:
+def row_label(row: Mapping[str, Any], basis: Basis) -> str | None:
+    """신고가 행의 라벨(hist·w52·d120) — 기준(종가·고가)별 칸이 있으면 그것, 없으면 행 라벨."""
     b = row.get(f"{basis}_basis")
     if isinstance(b, Mapping):
         v = b.get("label")  # pyright: ignore[reportUnknownMemberType]
@@ -131,7 +141,7 @@ def board_newhigh(
     n_before = len(achieved)
     rows: list[Mapping[str, Any]] = []
     for r in achieved:
-        lab = _row_label(r, basis)  # pyright: ignore[reportUnknownArgumentType]
+        lab = row_label(r, basis)  # pyright: ignore[reportUnknownArgumentType]
         if lab is None or (kind is not None and lab != kind):
             continue
         tv = r.get("turnover")  # pyright: ignore[reportUnknownMemberType]

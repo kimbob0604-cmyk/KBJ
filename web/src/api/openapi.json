@@ -348,6 +348,82 @@
         }
       }
     },
+    "/api/market/movers": {
+      "get": {
+        "tags": [
+          "market"
+        ],
+        "summary": "Movers",
+        "description": "급등·급락 — 시총 하한(원, 기본 3,000억) 이상 보통주의 마지막 마감 등락률 상위·하위 10.",
+        "operationId": "movers_api_market_movers_get",
+        "parameters": [
+          {
+            "name": "min_mktcap",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000000000000000,
+              "minimum": 0,
+              "default": 300000000000,
+              "title": "Min Mktcap"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_MarketMovers_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/market/ribbon": {
       "get": {
         "tags": [
@@ -10159,6 +10235,68 @@
         }
       }
     },
+    "/api/home": {
+      "get": {
+        "tags": [
+          "home"
+        ],
+        "summary": "Home Route",
+        "description": "첫 화면 카드 14장 — 카드마다 상태(ok·no_data·error)·원천·기준 시각·품질·메모·페이지 번호.",
+        "operationId": "home_route_api_home_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_Home_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/telegram/webhook": {
       "post": {
         "tags": [
@@ -16911,6 +17049,49 @@
         ],
         "title": "Envelope[GlobalProxy]"
       },
+      "Envelope_Home_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Home"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[Home]"
+      },
       "Envelope_IndexReview_": {
         "properties": {
           "source": {
@@ -17297,6 +17478,49 @@
           "data"
         ],
         "title": "Envelope[MarketMinute]"
+      },
+      "Envelope_MarketMovers_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/MarketMovers"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[MarketMovers]"
       },
       "Envelope_MarketSummary_": {
         "properties": {
@@ -22104,6 +22328,2996 @@
         ],
         "title": "Health"
       },
+      "Home": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "cards": {
+            "$ref": "#/components/schemas/HomeCards"
+          },
+          "n_ok": {
+            "type": "integer",
+            "title": "N Ok"
+          },
+          "n_no_data": {
+            "type": "integer",
+            "title": "N No Data"
+          },
+          "n_error": {
+            "type": "integer",
+            "title": "N Error"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "cards",
+          "n_ok",
+          "n_no_data",
+          "n_error"
+        ],
+        "title": "Home",
+        "description": "`/api/home` — 첫 화면 카드 묶음(카드 순서 = 위 칸 순서)."
+      },
+      "HomeBreadth": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "above_ma20_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Above Ma20 Pct"
+          },
+          "above_ma20_n": {
+            "type": "integer",
+            "title": "Above Ma20 N"
+          },
+          "ma20_base": {
+            "type": "integer",
+            "title": "Ma20 Base"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "above_ma20_pct",
+          "above_ma20_n",
+          "ma20_base"
+        ],
+        "title": "HomeBreadth",
+        "description": "시장 폭 — 20일선 위 비율(코스피+코스닥 합산, 마감 확정). 60·120일선·시장별은 없다(notes)."
+      },
+      "HomeCard_HomeBreadth_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "no_data",
+              "error"
+            ],
+            "title": "Status"
+          },
+          "page": {
+            "type": "integer",
+            "maximum": 13.0,
+            "minimum": 1.0,
+            "title": "Page"
+          },
+          "keys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keys"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeBreadth"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "page",
+          "keys"
+        ],
+        "title": "HomeCard[HomeBreadth]"
+      },
+      "HomeCard_HomeDiag_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "no_data",
+              "error"
+            ],
+            "title": "Status"
+          },
+          "page": {
+            "type": "integer",
+            "maximum": 13.0,
+            "minimum": 1.0,
+            "title": "Page"
+          },
+          "keys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keys"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeDiag"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "page",
+          "keys"
+        ],
+        "title": "HomeCard[HomeDiag]"
+      },
+      "HomeCard_HomeEtf_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "no_data",
+              "error"
+            ],
+            "title": "Status"
+          },
+          "page": {
+            "type": "integer",
+            "maximum": 13.0,
+            "minimum": 1.0,
+            "title": "Page"
+          },
+          "keys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keys"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeEtf"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "page",
+          "keys"
+        ],
+        "title": "HomeCard[HomeEtf]"
+      },
+      "HomeCard_HomeExport_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "no_data",
+              "error"
+            ],
+            "title": "Status"
+          },
+          "page": {
+            "type": "integer",
+            "maximum": 13.0,
+            "minimum": 1.0,
+            "title": "Page"
+          },
+          "keys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keys"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeExport"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "page",
+          "keys"
+        ],
+        "title": "HomeCard[HomeExport]"
+      },
+      "HomeCard_HomeFilings_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "no_data",
+              "error"
+            ],
+            "title": "Status"
+          },
+          "page": {
+            "type": "integer",
+            "maximum": 13.0,
+            "minimum": 1.0,
+            "title": "Page"
+          },
+          "keys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keys"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeFilings"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "page",
+          "keys"
+        ],
+        "title": "HomeCard[HomeFilings]"
+      },
+      "HomeCard_HomeForeignInst_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "no_data",
+              "error"
+            ],
+            "title": "Status"
+          },
+          "page": {
+            "type": "integer",
+            "maximum": 13.0,
+            "minimum": 1.0,
+            "title": "Page"
+          },
+          "keys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keys"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeForeignInst"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "page",
+          "keys"
+        ],
+        "title": "HomeCard[HomeForeignInst]"
+      },
+      "HomeCard_HomeFutures_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "no_data",
+              "error"
+            ],
+            "title": "Status"
+          },
+          "page": {
+            "type": "integer",
+            "maximum": 13.0,
+            "minimum": 1.0,
+            "title": "Page"
+          },
+          "keys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keys"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeFutures"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "page",
+          "keys"
+        ],
+        "title": "HomeCard[HomeFutures]"
+      },
+      "HomeCard_HomeGex_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "no_data",
+              "error"
+            ],
+            "title": "Status"
+          },
+          "page": {
+            "type": "integer",
+            "maximum": 13.0,
+            "minimum": 1.0,
+            "title": "Page"
+          },
+          "keys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keys"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeGex"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "page",
+          "keys"
+        ],
+        "title": "HomeCard[HomeGex]"
+      },
+      "HomeCard_HomeIndices_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "no_data",
+              "error"
+            ],
+            "title": "Status"
+          },
+          "page": {
+            "type": "integer",
+            "maximum": 13.0,
+            "minimum": 1.0,
+            "title": "Page"
+          },
+          "keys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keys"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeIndices"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "page",
+          "keys"
+        ],
+        "title": "HomeCard[HomeIndices]"
+      },
+      "HomeCard_HomeNewhigh_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "no_data",
+              "error"
+            ],
+            "title": "Status"
+          },
+          "page": {
+            "type": "integer",
+            "maximum": 13.0,
+            "minimum": 1.0,
+            "title": "Page"
+          },
+          "keys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keys"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeNewhigh"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "page",
+          "keys"
+        ],
+        "title": "HomeCard[HomeNewhigh]"
+      },
+      "HomeCard_HomeProgram_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "no_data",
+              "error"
+            ],
+            "title": "Status"
+          },
+          "page": {
+            "type": "integer",
+            "maximum": 13.0,
+            "minimum": 1.0,
+            "title": "Page"
+          },
+          "keys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keys"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeProgram"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "page",
+          "keys"
+        ],
+        "title": "HomeCard[HomeProgram]"
+      },
+      "HomeCard_HomeSpike_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "no_data",
+              "error"
+            ],
+            "title": "Status"
+          },
+          "page": {
+            "type": "integer",
+            "maximum": 13.0,
+            "minimum": 1.0,
+            "title": "Page"
+          },
+          "keys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keys"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeSpike"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "page",
+          "keys"
+        ],
+        "title": "HomeCard[HomeSpike]"
+      },
+      "HomeCard_HomeThemes_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "no_data",
+              "error"
+            ],
+            "title": "Status"
+          },
+          "page": {
+            "type": "integer",
+            "maximum": 13.0,
+            "minimum": 1.0,
+            "title": "Page"
+          },
+          "keys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keys"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeThemes"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "page",
+          "keys"
+        ],
+        "title": "HomeCard[HomeThemes]"
+      },
+      "HomeCard_MarketMovers_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "no_data",
+              "error"
+            ],
+            "title": "Status"
+          },
+          "page": {
+            "type": "integer",
+            "maximum": 13.0,
+            "minimum": 1.0,
+            "title": "Page"
+          },
+          "keys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keys"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MarketMovers"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "page",
+          "keys"
+        ],
+        "title": "HomeCard[MarketMovers]"
+      },
+      "HomeCards": {
+        "properties": {
+          "indices": {
+            "$ref": "#/components/schemas/HomeCard_HomeIndices_"
+          },
+          "futures": {
+            "$ref": "#/components/schemas/HomeCard_HomeFutures_"
+          },
+          "filings": {
+            "$ref": "#/components/schemas/HomeCard_HomeFilings_"
+          },
+          "breadth": {
+            "$ref": "#/components/schemas/HomeCard_HomeBreadth_"
+          },
+          "spike": {
+            "$ref": "#/components/schemas/HomeCard_HomeSpike_"
+          },
+          "movers": {
+            "$ref": "#/components/schemas/HomeCard_MarketMovers_"
+          },
+          "foreign_inst": {
+            "$ref": "#/components/schemas/HomeCard_HomeForeignInst_"
+          },
+          "newhigh": {
+            "$ref": "#/components/schemas/HomeCard_HomeNewhigh_"
+          },
+          "gex": {
+            "$ref": "#/components/schemas/HomeCard_HomeGex_"
+          },
+          "diag": {
+            "$ref": "#/components/schemas/HomeCard_HomeDiag_"
+          },
+          "program": {
+            "$ref": "#/components/schemas/HomeCard_HomeProgram_"
+          },
+          "etf": {
+            "$ref": "#/components/schemas/HomeCard_HomeEtf_"
+          },
+          "themes": {
+            "$ref": "#/components/schemas/HomeCard_HomeThemes_"
+          },
+          "export": {
+            "$ref": "#/components/schemas/HomeCard_HomeExport_"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "indices",
+          "futures",
+          "filings",
+          "breadth",
+          "spike",
+          "movers",
+          "foreign_inst",
+          "newhigh",
+          "gex",
+          "diag",
+          "program",
+          "etf",
+          "themes",
+          "export"
+        ],
+        "title": "HomeCards"
+      },
+      "HomeDiag": {
+        "properties": {
+          "trade_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Trade Date"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DiagVerdict"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fear_greed": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DiagFearGreed"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "caution": {
+            "type": "boolean",
+            "title": "Caution"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "trade_date",
+          "verdict",
+          "fear_greed",
+          "caution"
+        ],
+        "title": "HomeDiag"
+      },
+      "HomeEtf": {
+        "properties": {
+          "period": {
+            "type": "integer",
+            "title": "Period"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "types": {
+            "items": {
+              "$ref": "#/components/schemas/TypeRollup"
+            },
+            "type": "array",
+            "title": "Types"
+          },
+          "top": {
+            "items": {
+              "$ref": "#/components/schemas/HomeEtfRow"
+            },
+            "type": "array",
+            "title": "Top"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "period",
+          "start",
+          "end",
+          "types",
+          "top"
+        ],
+        "title": "HomeEtf",
+        "description": "ETF 순유입(기간 5일 — 페이지 10 기본). 유형은 순유입 큰 순 전부, 종목은 상위 3."
+      },
+      "HomeEtfRow": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "etf_type_label": {
+            "type": "string",
+            "title": "Etf Type Label"
+          },
+          "net_inflow": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Inflow"
+          },
+          "ret_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ret Pct"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "etf_type_label",
+          "net_inflow",
+          "ret_pct",
+          "quality"
+        ],
+        "title": "HomeEtfRow"
+      },
+      "HomeExport": {
+        "properties": {
+          "ym": {
+            "type": "string",
+            "title": "Ym"
+          },
+          "seg": {
+            "type": "integer",
+            "title": "Seg"
+          },
+          "span_text": {
+            "type": "string",
+            "title": "Span Text"
+          },
+          "span_label": {
+            "type": "string",
+            "title": "Span Label"
+          },
+          "usd": {
+            "type": "integer",
+            "title": "Usd"
+          },
+          "yoy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yoy"
+          },
+          "yoy_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yoy Reason"
+          },
+          "first_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "First Seen At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "ym",
+          "seg",
+          "span_text",
+          "span_label",
+          "usd",
+          "yoy",
+          "yoy_reason",
+          "first_seen_at"
+        ],
+        "title": "HomeExport",
+        "description": "수출 속보(관세청 10일 잠정 — 상단 띠 칩과 같은 함수, metrics §25)."
+      },
+      "HomeFilingRow": {
+        "properties": {
+          "rcept_no": {
+            "type": "string",
+            "title": "Rcept No"
+          },
+          "first_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "First Seen At"
+          },
+          "corp_name": {
+            "type": "string",
+            "title": "Corp Name"
+          },
+          "stock_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stock Code"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "kw_score": {
+            "type": "integer",
+            "title": "Kw Score"
+          },
+          "kw_matched": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Kw Matched"
+          },
+          "link": {
+            "type": "string",
+            "title": "Link"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rcept_no",
+          "first_seen_at",
+          "corp_name",
+          "stock_code",
+          "title",
+          "kind",
+          "kw_score",
+          "kw_matched",
+          "link"
+        ],
+        "title": "HomeFilingRow",
+        "description": "공시 한 건 — 키워드 점수(kw_score, 공개 규칙)로 고른 것. 관심종목 가산 중요도는 싣지\n않는다."
+      },
+      "HomeFilings": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "n_total": {
+            "type": "integer",
+            "title": "N Total"
+          },
+          "by_kind": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Kind"
+          },
+          "top": {
+            "items": {
+              "$ref": "#/components/schemas/HomeFilingRow"
+            },
+            "type": "array",
+            "title": "Top"
+          },
+          "n_prelim": {
+            "type": "integer",
+            "title": "N Prelim"
+          },
+          "n_surprise": {
+            "type": "integer",
+            "title": "N Surprise"
+          },
+          "n_shock": {
+            "type": "integer",
+            "title": "N Shock"
+          },
+          "prelims": {
+            "items": {
+              "$ref": "#/components/schemas/HomePrelimRow"
+            },
+            "type": "array",
+            "title": "Prelims"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "n_total",
+          "by_kind",
+          "top",
+          "n_prelim",
+          "n_surprise",
+          "n_shock",
+          "prelims"
+        ],
+        "title": "HomeFilings"
+      },
+      "HomeFlowRow": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "market": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market"
+          },
+          "value": {
+            "type": "integer",
+            "title": "Value"
+          },
+          "chg_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chg Pct"
+          },
+          "mktcap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mktcap"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "market",
+          "value",
+          "chg_pct",
+          "mktcap"
+        ],
+        "title": "HomeFlowRow"
+      },
+      "HomeForeignInst": {
+        "properties": {
+          "basis": {
+            "type": "string",
+            "enum": [
+              "intraday",
+              "close"
+            ],
+            "title": "Basis"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "foreign": {
+            "items": {
+              "$ref": "#/components/schemas/HomeFlowRow"
+            },
+            "type": "array",
+            "title": "Foreign"
+          },
+          "inst": {
+            "items": {
+              "$ref": "#/components/schemas/HomeFlowRow"
+            },
+            "type": "array",
+            "title": "Inst"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "basis",
+          "date",
+          "foreign",
+          "inst"
+        ],
+        "title": "HomeForeignInst",
+        "description": "외국인·기관 순매수 상위 5씩. basis `intraday` = 오늘 장중 가집계(flows/intraday, 잠정),\n`close` = 마감 원장 1일(flows/screen mode=foreign·inst period=1)."
+      },
+      "HomeFutures": {
+        "properties": {
+          "trade_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trade Date"
+          },
+          "session": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "day",
+                  "night"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session"
+          },
+          "session_open": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Open"
+          },
+          "cycle_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cycle At"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "price_quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "stale": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stale"
+          },
+          "night": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IndexTile"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "investors": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeInvestorNet"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "trade_date",
+          "session",
+          "session_open",
+          "cycle_at",
+          "price",
+          "price_quality",
+          "stale",
+          "night",
+          "investors"
+        ],
+        "title": "HomeFutures",
+        "description": "코스피200 선물(근월물). 전일 대비 등락률 칸은 없다(전일 정산가를 API 에 싣지 않는다 —\nnotes). 야간이면 `night`(주간 마지막 값 대비 등락)."
+      },
+      "HomeGex": {
+        "properties": {
+          "trade_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Trade Date"
+          },
+          "session": {
+            "type": "string",
+            "enum": [
+              "day",
+              "night"
+            ],
+            "title": "Session"
+          },
+          "session_open": {
+            "type": "boolean",
+            "title": "Session Open"
+          },
+          "cycle_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Cycle At"
+          },
+          "stale": {
+            "type": "boolean",
+            "title": "Stale"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "regime": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "long",
+                  "short"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regime"
+          },
+          "regime_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regime Label"
+          },
+          "headline": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Headline"
+          },
+          "flip": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flip"
+          },
+          "flip_distance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flip Distance"
+          },
+          "expected_move": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Move"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "trade_date",
+          "session",
+          "session_open",
+          "cycle_at",
+          "stale",
+          "price",
+          "regime",
+          "regime_label",
+          "headline",
+          "flip",
+          "flip_distance",
+          "expected_move"
+        ],
+        "title": "HomeGex",
+        "description": "GEX 요약 — 국면(gex/briefing)·Flip·Flip 거리·기대변동폭(gex/levels). 섀도 값은 None."
+      },
+      "HomeIndex": {
+        "properties": {
+          "tile": {
+            "$ref": "#/components/schemas/IndexTile"
+          },
+          "investors": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeInvestorNet"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tile",
+          "investors"
+        ],
+        "title": "HomeIndex"
+      },
+      "HomeIndices": {
+        "properties": {
+          "kospi": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeIndex"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "kosdaq": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeIndex"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "breadth": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeUpDown"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kospi",
+          "kosdaq",
+          "breadth"
+        ],
+        "title": "HomeIndices"
+      },
+      "HomeInvestorNet": {
+        "properties": {
+          "basis": {
+            "type": "string",
+            "enum": [
+              "minute",
+              "daily"
+            ],
+            "title": "Basis"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "individual": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Individual"
+          },
+          "foreign": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Foreign"
+          },
+          "institution": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution"
+          },
+          "other_corp": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Other Corp"
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "basis",
+          "date",
+          "individual",
+          "foreign",
+          "institution",
+          "other_corp",
+          "source",
+          "as_of",
+          "quality"
+        ],
+        "title": "HomeInvestorNet",
+        "description": "시장 하나의 투자자 순매수(원). 값이 없는 구분은 None — 0 으로 바꾸지 않는다.\n\nbasis: `minute` = 장중 1분 누적(KIS 잠정 — `flows/market-minute`, 개인 prsn·외국인 frgn·기관\norgn·기타법인 etc_corp), `daily` = 마감 일별(`flows/investors` by_market)."
+      },
+      "HomeNewhigh": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts"
+          },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Labels"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/HomeNewhighRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "counts",
+          "labels",
+          "rows"
+        ],
+        "title": "HomeNewhigh",
+        "description": "신고가 보드(종가 기준) — 라벨별 수와 52주 이상 종목 시총 큰 순 8."
+      },
+      "HomeNewhighRow": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "market": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "chg_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chg Pct"
+          },
+          "mktcap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mktcap"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "market",
+          "label",
+          "chg_pct",
+          "mktcap"
+        ],
+        "title": "HomeNewhighRow"
+      },
+      "HomePrelimRow": {
+        "properties": {
+          "rcept_no": {
+            "type": "string",
+            "title": "Rcept No"
+          },
+          "corp_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corp Name"
+          },
+          "stock_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stock Code"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "consolidated",
+              "standalone",
+              "subsidiary"
+            ],
+            "title": "Scope"
+          },
+          "signal": {
+            "type": "string",
+            "title": "Signal"
+          },
+          "side": {
+            "type": "string",
+            "enum": [
+              "surprise",
+              "shock"
+            ],
+            "title": "Side"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority"
+          },
+          "revenue_cur": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revenue Cur"
+          },
+          "op_cur": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Op Cur"
+          },
+          "rev_yoy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rev Yoy"
+          },
+          "op_yoy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Op Yoy"
+          },
+          "is_correction": {
+            "type": "boolean",
+            "title": "Is Correction"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "link": {
+            "type": "string",
+            "title": "Link"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rcept_no",
+          "corp_name",
+          "stock_code",
+          "label",
+          "scope",
+          "signal",
+          "side",
+          "priority",
+          "revenue_cur",
+          "op_cur",
+          "rev_yoy",
+          "op_yoy",
+          "is_correction",
+          "quality",
+          "link"
+        ],
+        "title": "HomePrelimRow",
+        "description": "잠정실적 한 건(서프·쇼크 갈래 — metrics §14). 금액은 원, 비율은 %(전년동기 대비)."
+      },
+      "HomeProgram": {
+        "properties": {
+          "kospi": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProgramDayBar"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "kosdaq": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProgramDayBar"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kospi",
+          "kosdaq"
+        ],
+        "title": "HomeProgram",
+        "description": "프로그램 순매수 — 시장마다 마지막 날(마감 일별, 검산 ④ 통과). 장중 누적은 없다(notes)."
+      },
+      "HomeSpike": {
+        "properties": {
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "min_turnover": {
+            "type": "integer",
+            "title": "Min Turnover"
+          },
+          "spike_min": {
+            "type": "number",
+            "title": "Spike Min"
+          },
+          "n_hits": {
+            "type": "integer",
+            "title": "N Hits"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/HomeSpikeRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "min_turnover",
+          "spike_min",
+          "n_hits",
+          "rows"
+        ],
+        "title": "HomeSpike",
+        "description": "거래대금 급증(flows/screen mode=spike period=1) — 확정 원장(장중엔 직전 거래일)."
+      },
+      "HomeSpikeRow": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "market": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market"
+          },
+          "spike_mult": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spike Mult"
+          },
+          "turnover": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover"
+          },
+          "chg_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chg Pct"
+          },
+          "mktcap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mktcap"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "market",
+          "spike_mult",
+          "turnover",
+          "chg_pct",
+          "mktcap",
+          "quality"
+        ],
+        "title": "HomeSpikeRow"
+      },
+      "HomeThemes": {
+        "properties": {
+          "trade_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Trade Date"
+          },
+          "period": {
+            "type": "integer",
+            "enum": [
+              1,
+              5,
+              20
+            ],
+            "title": "Period"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ThemeStrengthRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "trade_date",
+          "period",
+          "rows"
+        ],
+        "title": "HomeThemes"
+      },
+      "HomeUpDown": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "up": {
+            "type": "integer",
+            "title": "Up"
+          },
+          "flat": {
+            "type": "integer",
+            "title": "Flat"
+          },
+          "down": {
+            "type": "integer",
+            "title": "Down"
+          },
+          "unknown": {
+            "type": "integer",
+            "title": "Unknown"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "up",
+          "flat",
+          "down",
+          "unknown",
+          "total",
+          "source",
+          "quality"
+        ],
+        "title": "HomeUpDown",
+        "description": "상승·보합·하락 — **코스피+코스닥 합산**(market/summary breadth, 마감 확정). 시장별은 없다."
+      },
       "IndexDisparity": {
         "properties": {
           "market": {
@@ -23962,6 +27176,63 @@
         ],
         "title": "MarketMinute"
       },
+      "MarketMovers": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "min_mktcap": {
+            "type": "integer",
+            "title": "Min Mktcap"
+          },
+          "n_eligible": {
+            "type": "integer",
+            "title": "N Eligible"
+          },
+          "n_no_mktcap": {
+            "type": "integer",
+            "title": "N No Mktcap"
+          },
+          "n_no_chg": {
+            "type": "integer",
+            "title": "N No Chg"
+          },
+          "n_status_unknown": {
+            "type": "integer",
+            "title": "N Status Unknown"
+          },
+          "up": {
+            "items": {
+              "$ref": "#/components/schemas/MoverRow"
+            },
+            "type": "array",
+            "title": "Up"
+          },
+          "down": {
+            "items": {
+              "$ref": "#/components/schemas/MoverRow"
+            },
+            "type": "array",
+            "title": "Down"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "min_mktcap",
+          "n_eligible",
+          "n_no_mktcap",
+          "n_no_chg",
+          "n_status_unknown",
+          "up",
+          "down"
+        ],
+        "title": "MarketMovers",
+        "description": "`/api/market/movers` — 시총 하한 이상 보통주의 1일 등락률 상위·하위(각 10)."
+      },
       "MarketSummary": {
         "properties": {
           "date": {
@@ -24347,6 +27618,83 @@
           "ret_pct"
         ],
         "title": "MonthlyOut"
+      },
+      "MoverRow": {
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Rank"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "market": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market"
+          },
+          "close": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close"
+          },
+          "chg_pct": {
+            "type": "number",
+            "title": "Chg Pct"
+          },
+          "mktcap": {
+            "type": "integer",
+            "title": "Mktcap"
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Source"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rank",
+          "code",
+          "name",
+          "market",
+          "close",
+          "chg_pct",
+          "mktcap",
+          "source",
+          "quality"
+        ],
+        "title": "MoverRow",
+        "description": "급등·급락 한 줄(docs/metrics.md §6.8) — 그날 마감 스냅 값."
       },
       "MultipleCell": {
         "properties": {

@@ -196,6 +196,23 @@
 | 쏠림 | §6.4 손계산 1건 |
 | 대조 | 같음·불일치·한쪽만 — 불일치면 KIS 행 invalid, 원장이 krx 를 고른다 |
 
+### 6.8 급등·급락 (첫 화면 — 시총 하한, 2026-11-10)
+
+> 정본은 이 절이다. 구현 `kbj/engines/market/movers.py`(순수 계산) → reader `market_movers` → `GET /api/market/movers?min_mktcap=`.
+> 첫 화면 묶음 `/api/home`(§32)의 '급등·급락' 카드가 같은 함수를 부른다(두 벌 금지). 등급 **로그인**(시세 기반).
+
+| 항목 | 정의 |
+|---|---|
+| 기준일 | 원장(§0 — 원천 우선순위 krx > kis) **마지막 날** = 마지막 마감 스냅의 날(`repos.market.snapshot` — 장중 잠정 `kis.prelim` 만 있는 날은 고르지 않는다). 장중 전 종목 시세·KIS 등락률 순위를 받지 않아 **장중에는 직전 거래일 마감 값**이다(notes 에 기준일 — 휴장일이면 기준일만). 15:35 마감 수집 뒤 그날로 넘어간다 |
+| 대상 | 코스피·코스닥 **보통주**(`common` — 원장이 정한 종류: 스냅·유니버스, 비면 이름·코드 `board.kinds.of`). 우선주·스팩·리츠·ETF·ETN·코넥스는 밖 [확인 필요 — 우선주를 넣을지] |
+| 상태 | 관리종목·거래정지·정리매매(`EXCLUDE_FLAGS`)는 뺀다(스크리너 기본과 같다). 상태를 모르는 종목은 뺄 수 없어 남기고 수를 `n_status_unknown` 으로 낸다(notes) |
+| 시총 하한 | 그날 시가총액(원 — 스냅) ≥ `min_mktcap`(기본 3,000억 = 300,000,000,000원 — Beom's Dashboard 첫 화면과 같은 하한 [확인 필요]). **경계 포함**. 시총을 모르면 빼고 센다(`n_no_mktcap` — 0 으로 보지 않는다) |
+| 등락률 | 그날 스냅 등락률(%, 전일 종가 대비 — 원천 값 그대로). 모르거나 invalid 행이면 빼고 센다(`n_no_chg`) |
+| 순위 | 급등 = 등락률 > 0 을 내림차순, 급락 = 등락률 < 0 을 오름차순, 각 10(`MOVERS_N`). 같으면 시총 큰 순 → 코드. **보합(0)은 어느 쪽에도 없다** — 한쪽이 10개보다 적으면 있는 만큼 |
+| 출력 | 행마다 순위·코드·이름·시장·종가(원)·등락률(%)·시총(원)·원천·품질. `n_eligible` = 하한·종류·상태를 통과하고 등락률을 아는 종목 수(순위 모집단) |
+| source·as_of·quality | 원천 = 모집단 행의 스냅·종가 원천(KRX·KIS), as_of = 그날 15:30 KST, quality = 모집단 행 중 가장 나쁜 것(모집단이 비면 invalid — 지어내지 않는다) |
+| 시험 | 엔진 `tests/unit/engines/market/test_movers.py`(하한 경계 포함·시총/등락률 모름은 빠지고 셈·우선주·ETF·코넥스·관리종목 제외·상태 모름은 남고 셈·같은 등락률은 시총 큰 순·보합 제외·한쪽 부족), 경로 `tests/unit/api/test_routes_market.py`(봉투·하한 인자·422·장중 기준일 notes·휴장일엔 '장중' 사유 없음) |
+
 ## 7. 신고가 정의 (P3 — board 엔진, 신고가 3축 — ADR 0017)
 
 > **정본은 엔진 문서화 문자열**이다: `kbj/engines/board/newhigh.py` 머리말. 이 절은 요약이고 둘이 다르면 엔진 쪽이 맞다(정의를 바꾸면 이 절·ADR·골든 재캡처를 함께). 숫자는 `config/board.yaml` 한 곳.
@@ -432,6 +449,7 @@ TTM 이 없는 까닭에 따라: 신규상장으로 상장 뒤 정기보고서�
 | 잠정 YoY·QoQ | (당기 − 전년동기) ÷ \|전년동기\| × 100, (당기 − 직전분기) ÷ \|직전분기\| × 100 | 잠정실적 | % | 공개. 0 분모 → None. 본문 '전년동기대비%' 와 0.1%p 넘게 다르면 notes | 단위 4종(억원·백만원·천원·원) |
 | 기간 추정 | 본문 기간 표기 → 그것(ok). 없으면 결산월로 rcept_dt 직전에 끝난 회계 분기(공시일 − 분기말 ≤ 100일 — `period_inferred`, estimated), 결산월도 없으면 달력 분기(estimated) | 잠정실적·기업개황 | — | [확인 필요 #30 — 폼 실측] | 비12월 결산 |
 | YoY 분류 | 영업이익 기준(없으면 매출): 흑자전환(전년동기 < 0 < 당기) → TURNAROUND(1), 적자전환 → SHOCK(1), 적자 축소 ≥ 50% → TURNAROUND_PARTIAL(2), YoY ≥ +20% → YOY_BIG_UP(1), ≥ +10% → YOY_UP(2), ≤ −20% → YOY_BIG_DOWN(1), ≤ −10% → YOY_DOWN(2), 그 밖 YOY_INLINE(5). 분모 = \|전년동기\|, 전년동기 0 이면 비율 없음(전환 판정만). **전년동기 값이 하나도 없으면(2열 폼 등) NO_DATA(5) — '비교 불가'**(SD `_process_yoy_only` 그대로) | 잠정실적 | 등급(작을수록 중요) | 공개 규칙. 경계는 `config/fin.yaml earnings.thresholds`(SD THRESHOLDS:166). ⚠ **[결정 필요 — 사용자]** 위 순서 그대로면 적자 축소 20~49%(예 −100 → −51)는 YoY = +49% 라 YOY_BIG_UP(1), 50% 이상 축소는 TURNAROUND_PARTIAL(2) — 더 크게 개선됐는데 우선순위가 낮아지는 역전이다(SD `classify_signal` 의 같은 모양을 승격·시험이 고정). 관심종목 알림 대상이 달라지므로 규칙을 바꿀 때는 새 ADR + 분류 시험을 함께 | SD 분류 표(경계 포함) |
+| 서프·쇼크 갈래(첫 화면 — 2026-11-10) | 분류 이름을 두 갈래로: **서프** = TURNAROUND·TURNAROUND_PARTIAL·YOY_BIG_UP·YOY_UP(컨센 대비면 BEAT_BIG·BEAT·TURNAROUND_FULL), **쇼크** = SHOCK·YOY_BIG_DOWN·YOY_DOWN(MISS_BIG·MISS·SHOCK_FULL). 그 밖(YOY_INLINE·NO_DATA·INLINE·REVENUE_*)은 어느 쪽도 아니다. 화면 색 규칙(web `p8/common.ts` SIGNAL_UP·SIGNAL_DOWN)과 같은 갈래 | 분류 이름 | 갈래 | 공개 규칙(`earnings.signal_side`). **컨센서스 대비가 아니라 분류 방향**이다 — 분기 컨센서스가 없으면 전년동기 대비(YoY) 분류뿐이라 화면에 '전년동기 대비'를 적는다 [확인 필요 — Beom 기준(컨센 대비)과 다름] | `tests/unit/engines/filings/test_earnings_signal.py`(갈래 표·모르는 이름 None) |
 | 서프라이즈(%) | (실적 − 분기 컨센서스) ÷ \|컨센서스\| × 100, SD 분류 12종 + sanity 3관문 | 잠정실적·분기 컨센서스 | % | 로그인. **분기 컨센서스가 없으면 계산하지 않는다**(KIS 는 연간 추정뿐일 가능성 — §10 잃는 것) | 컨센 없음 → 계산 안 함 |
 | 관심종목 알림 | 관심종목(우선주를 넣었으면 보통주 회사도) && 범위가 자회사 아님 && 우선순위 ≤ 2(`earnings.alert_max_priority`) && 접수일 ≥ 실행일의 1거래일 앞(`ALERT_FRESH_TRADING_DAYS` [제안] — 금요일 19:59 뒤 접수분을 월요일 07:00 다시 훑기로 처음 보면 아직 알리고, 더 늦게 본 옛 공시는 기록만)이면 `alert.earnings`(사건 시점 — 5분 폴링, 미처리 행은 최근 30일 `PRELIM_LOOKBACK_DAYS` [제안] 안에서 찾는다), subject `<corp_code>:<회계기간>:<연결/별도>`(30일 1회 — 정정공시 재발송 없음. 처리기도 같은 subject 기록이 있으면 넣지 않는다). 같은 분기의 연결 잠정과 별도 잠정이 둘 다 우선순위 ≤ 2 면 subject 가 달라 2통이다(정의 그대로). 본문은 템플릿(숫자는 모두 행에서 — LLM 없음, 절대 규칙 3). 일반 공시는 push 하지 않는다 | 분류·관심종목 | — | 로그인 | 정정 1건 주입 → 1통(하루 시뮬레이션 `test_one_day_p4`) |
 | 알림 후 성과 | 3·5·7**거래일** 뒤 종가 ÷ 알림 시각 직전 마감 종가 − 1 | 원장(krx > kis) | % | 로그인. 정지로 종가 없음 → 그 칸 None(지어내지 않는다) | 거래정지 사례 |
@@ -1276,3 +1294,38 @@ test_index_review_repo.py·tests/unit/engines/index_review/test_service.py·test
 - **예외**: 분류 없음 → 404(theme.classes_sync), 편입 없음 → 404(theme.master_sync), 보드 종목 하루 없음 → 강도 404
   (board.daily) — 상세는 시세 칸 None 으로 200.
 - **시험**: `tests/unit/theme/test_strength.py`(손계산·보드 롤업 대조), `tests/unit/api/test_routes_themes.py`.
+
+## 32. 첫 화면 묶음 `/api/home` (로그인 경로 — 공개 사이트도 내보낸다, 2026-11-10, ADR 0043)
+
+> **새로 계산하는 값은 §6.8 급등·급락뿐이다.** 나머지는 기존 읽기 함수의 값을 **고르고 자르기만** 한다(두 벌 금지 — 같은
+> 함수를 부른다, 구현 `kbj/services/api/readers/home.py`). 카드마다 봉투 칸(source·as_of·quality·notes)과 상태(`ok`·
+> `no_data` — 서버 안내 문구 `message`·`error` — 사유 코드)를 따로 싣고, 한 카드의 실패가 다른 카드를 멈추지 않는다(오류는 카드
+> notes·로그). **개인 데이터(관심종목·규칙 신호·관심종목 가산 중요도 importance·login_score·잠정실적 alerted)는 싣지 않는다** —
+> 공개 사이트가 인자 없는 GET 을 모두 올린다(ADR 0042).
+
+| 카드(키 — 페이지) | 고르는 함수(같은 값을 주는 경로) | 고르기 |
+|---|---|---|
+| 지수 `indices`(1) | market/summary indices(0001·1001), flows/market-minute(kospi·kosdaq), flows/investors | 지수 타일 그대로(값·등락·live·20일 spark). 시장별 투자자 순매수: 1분 누적(KIS 장중 — 잠정이면 estimated)이 마감 일별보다 **새 날**이면 1분, 같거나 오래면 마감 일별(by_market `0001`·`KOSPI` / `1001`·`KOSDAQ`). 상승·보합·하락은 **코스피+코스닥 합산**(market/summary breadth — 시장별 값은 없다, notes) |
+| 코스피200 선물 `futures`(1) | gex/levels(가격·세션), flows/market-minute(k200_fut), market/summary(K200N 야간) | 가격 = GEX 현재가(엔진 F_ref, 없으면 전광판 근월물 — estimated). **전일 대비 등락률 칸 없음**(전일 정산가를 API 에 싣지 않는다 — notes). 야간이면 야간 타일(주간 마지막 값 대비). 세 값이 다 없으면 no_data |
+| 오늘의 공시 `filings`(5) | filings/feed(상장사 소식 — 피드 기본), filings/earnings | 날 = 오늘이 거래일이면 오늘, 아니면 직전 거래일. 건수 = 피드 n_total, 종류별 = 피드 by_kind(거르기 전). **상위 8** = 키워드 점수(kw_score) > 0 이고 정정 아닌 공시를 점수 → 처음 본 시각 → 접수번호 내림차순. 잠정실적: 그날 건수(**정정은 원 공시를 대체** — 같은 회사·기간·연결/별도는 마지막 접수번호만, 뺀 수는 notes), §14 갈래별 수(자회사 범위 제외 — 알림 규칙과 같다), **서프·쇼크 상위 4** = 우선순위 오름차순 → \|영업이익 YoY\|(없으면 매출) 큰 순 → 접수번호 늦은 순 |
+| 시장 폭 `breadth`(1) | market/summary breadth | 20일선 위 비율(§6.2 — 두 시장 합산, 마감 확정). **60·120일선·시장별은 없다**(notes) |
+| 거래대금 급증 `spike`(4) | flows/screen mode=spike period=1 | 그날 거래대금 ≥ 300억(`screen.min_avg_turnover_krw`)·배수 ≥ 1.5(`screen.spike_min`) 보통주를 배수 큰 순 10(§1·§3). `n_hits` = 통과 종목 수. 확정 원장이라 장중엔 직전 거래일(notes) |
+| 급등·급락 `movers`(4) | market/movers | §6.8 그대로(하한 3,000억) |
+| 외국인+기관 `foreign_inst`(4) | flows/intraday(장중 가집계), flows/screen mode=foreign·inst period=1 min_avg_turnover=0(마감) | 마감 원장 날이 오늘이면 마감, 아니면 오늘 장중 가집계가 있으면 그것(잠정), 없으면 마감(직전 거래일). 외국인·기관 **따로** 순매수 > 0 상위 5 |
+| 신고가 `newhigh`(2) | board/newhigh(종가 기준) | 라벨별 수(counts_close — 겹치지 않음), 52주 이상(hist·w52 — §6.2 신고가 수와 같은 정의) 종목을 시총 큰 순 8(보드 억원 → 원) |
+| GEX `gex`(3) | gex/levels, gex/briefing | Flip(pt)·Flip 거리(§G3.5 — levels `flip_distance`)·기대변동폭 ±1σ(§G3.8 달력 — levels `expected_move_calendar`), 국면(briefing regime·regime_label·headline). 섀도 값은 None |
+| 진단 `diag`(3) | diag/summary | 판정(label·score·top)·공포탐욕(score·band)·이벤트 주의 |
+| 프로그램 `program`(1) | program/daily market=K·Q | 시장마다 마지막 날(검산 ④ 실패면 그 앞날) 순매수·차익·비차익. **장중 누적은 없다**(장중 시장 프로그램 reader 없음 — 그날이 오늘보다 앞이면 notes) |
+| ETF 순유입 `etf`(10) | etf/types period=5, etf/flows mode=in period=5 | 유형별 순유입 큰 순 전부(7개 이하), 종목 순유입 상위 3. 5일 = 페이지 10 기본 기간 |
+| 테마 강도 `themes`(9) | themes/strength period=1 | 상위 5(§31 — 페이지 9 기본 기간 1일) |
+| 수출 속보 `export`(7) | market/ribbon 수출 속보 칩과 같은 함수(§25) | 최신 구간의 발표 당시 YoY(비율 — 0.123 = +12.3%), 잠정 |
+
+- **카드 봉투**: source = 고른 값들의 원천 합, as_of = 그 값들 중 가장 늦은 기준 시각(응답 시각보다 뒤면 응답 시각 — 봉투와 같은
+  규칙), quality = 그 값들 중 가장 나쁜 것. 카드 안 보조 값(예: 지수 카드의 장중 투자자)이 없거나 실패하면 그 칸만 None 과 notes(실패는
+  로그도). 카드 값이 하나도 없으면 no_data(보조 값 실패가 있었으면 error).
+- **묶음 봉투**: source·as_of·quality = 값이 있는 카드들의 합·가장 늦은 시각·가장 나쁜 품질(하나도 없으면 invalid), notes = 아직 없음·
+  오류 카드 이름. `n_ok`·`n_no_data`·`n_error`.
+- **캐시**: 묶음이 읽는 영역(market·flows·flows_minute·board·gex·diag·filings·etf·themes·program) 버전을 **이어 붙인 키**
+  (`deps.cached_json` 의 영역 여럿) — 한 영역 작업이 새 값을 쓰면 묶음도 바로 낡는다. TTL 장중 30초·그 밖 300초. 오류 카드가 있는
+  본문은 캐시에 두지 않는다.
+- **시험**: `tests/unit/api/test_routes_home.py`(카드 격리·개인 데이터 없음·NoData 안내·봉투 칸·영역 덮기·캐시 키·카드 고르기).

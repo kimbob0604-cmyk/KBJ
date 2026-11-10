@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 from kbj.services.api.models.auth import CsrfResponse, MeResponse
 from kbj.services.api.models.common import Envelope, ErrorBody, NoDataBody
-from tests.unit.api.make_web_fixtures import AUTH, FIXTURES, OUT, render
+from tests.unit.api.make_web_fixtures import AUTH, FIXTURES, HOME_FULL, OUT, render
 from tests.unit.api.test_routes_common import DATA_ROUTES
 from tests.unit.api.web_fixtures_p5 import DOMAINS as P5_DOMAINS
 from tests.unit.api.web_fixtures_p6 import DOMAINS as P6_DOMAINS
@@ -48,6 +48,18 @@ def test_fixture_is_valid_envelope(name: str, path: str, live: bool) -> None:
     assert body["source"] and body["as_of"] and body["quality"]
     if live and "summary" in name:
         assert body["quality"] == "estimated"
+
+
+def test_home_full_fixture_has_every_card() -> None:
+    """첫 화면 묶음 — 모든 카드에 값(합성 세계 여럿을 이어 붙인 것, home_fixture.py)."""
+    from kbj.services.api.models.home import Home, HomeCards
+
+    body = _load(HOME_FULL)
+    env = Envelope[Home].model_validate(body)
+    assert env.data.n_ok == len(HomeCards.model_fields) and env.data.n_error == 0
+    text = (OUT / HOME_FULL).read_text(encoding="utf-8")
+    assert "NaN" not in text and "Infinity" not in text
+    assert '"is_watch"' not in text and '"login_score"' not in text
 
 
 @pytest.mark.parametrize("name", sorted(AUTH))
