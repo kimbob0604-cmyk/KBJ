@@ -15,6 +15,7 @@ import { FEAR_BANDS, koReason, VERDICTS } from '../p3/diag';
 import { ratio, usd } from '../p7/common';
 import { dartLink, KIND_LABEL, SCOPE_LABEL, SIGNAL_LABEL } from '../p8/common';
 import type { HomePanel, SignalKey } from './home_defs';
+import { programBasis } from './home_market';
 import {
   bigLine,
   emptyLine,
@@ -134,13 +135,35 @@ export function drawWatch(p: HomePanel, env: Envelope<Watchlist>): number {
 
 // ── 시장 폭 ─────────────────────────────────────────────────
 
+/** 한 시장의 N일선 위 비율 칸(20·60·120) — 분모 0 이면 '—'(값 없음, 0% 가 아니다) */
+function maGrid(x: S['HomeMaBreadth']): HTMLElement {
+  return h(
+    'div',
+    { data: { market: x.market } },
+    h('p', { class: 'hsub' }, `${marketKo(x.market) ?? x.market} · 이동평균선 위 종목 비율`),
+    h(
+      'dl',
+      { class: 'hkv' },
+      x.shares.map((s) =>
+        h(
+          'div',
+          { data: { ma: String(s.ma) }, attrs: { title: `${num(s.above)} / ${num(s.base)}종목` } },
+          h('dt', null, `${s.ma}일선`),
+          h('dd', null, s.pct === null ? DASH : pct(s.pct, 1, false)),
+        ),
+      ),
+    ),
+  );
+}
+
 export function drawBreadth(p: HomePanel, env: Envelope<Home>): void {
   renderCard(p, env.data.cards.breadth, env, (d) => {
-    p.setMeta(`${shortDate(d.date)} 마감 · 코스피+코스닥 · 이동평균 위 종목 비율`);
+    p.setMeta(`${shortDate(d.date)} 마감 · 이동평균 위 종목 비율`);
     const v = d.above_ma20_pct;
     put(p.body,
-      bigLine(v === null ? DASH : pct(v, 1, false), h('small', null, ` 20일선 위 ${num(d.above_ma20_n)} / ${num(d.ma20_base)}종목`)),
+      bigLine(v === null ? DASH : pct(v, 1, false), h('small', null, ` 코스피+코스닥 20일선 위 ${num(d.above_ma20_n)} / ${num(d.ma20_base)}종목`)),
       h('div', { class: 'levels' }, level('20일선 위', v ?? 0, v === null ? DASH : pct(v, 1, false))),
+      ...d.by_market.map(maGrid),
     );
     return 0;
   });
@@ -455,11 +478,11 @@ export function drawThemes(p: HomePanel, env: Envelope<Home>): void {
 export function drawProgram(p: HomePanel, env: Envelope<Home>): void {
   renderCard(p, env.data.cards.program, env, (d) => {
     const bars = [
-      ['코스피', d.kospi],
-      ['코스닥', d.kosdaq],
+      ['코스피', d.kospi_now],
+      ['코스닥', d.kosdaq_now],
     ] as const;
-    const first = d.kospi ?? d.kosdaq;
-    p.setMeta(joinSub(first ? `${shortDate(first.date)} 마감` : null, '일별 순매수 · 장중 누적 없음'));
+    const first = d.kospi_now ?? d.kosdaq_now;
+    p.setMeta(joinSub(first ? programBasis(first) : null, '시장 순매수'));
     let invalid = 0;
     const rows = bars.flatMap(([name, b]) => {
       if (!b) return [];
@@ -467,12 +490,13 @@ export function drawProgram(p: HomePanel, env: Envelope<Home>): void {
         invalid += 1;
         return [];
       }
+      const late = first && b.date !== first.date ? programBasis(b) : null;
       return [
         {
           name: h('span', { class: 'nm-t' }, name),
-          sub: h('span', null, '차익 ', signedWon(b.arbt_net), ' · 비차익 ', signedWon(b.nabt_net)),
-          right: signedWon(b.net, b.quality),
-          data: { market: name },
+          sub: h('span', null, '차익 ', signedWon(b.arbt_net), ' · 비차익 ', signedWon(b.nabt_net), late ? ` · ${late}` : ''),
+          right: signedWon(b.net, b.quality, b.as_of),
+          data: { market: name, basis: b.basis },
         },
       ];
     });

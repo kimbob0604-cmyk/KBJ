@@ -77,6 +77,7 @@ FILES: Final[tuple[tuple[str, str, datetime], ...]] = (
     ("minute_holiday.json", "/api/flows/market-minute?market=k200_fut", HOLIDAY),
     ("daily_K.json", "/api/program/daily?market=K&days=60", CLOCK),
     ("daily_Q.json", "/api/program/daily?market=Q&days=60", CLOCK),
+    ("intraday_K.json", "/api/program/intraday?market=K", INTRADAY),
     ("top_K_buy_intraday.json", "/api/program/top?market=K&side=buy&scope=intraday", INTRADAY),
     ("top_K_sell_intraday.json", "/api/program/top?market=K&side=sell&scope=intraday", INTRADAY),
     ("top_K_buy_close.json", "/api/program/top?market=K&side=buy&scope=close", SWEPT),

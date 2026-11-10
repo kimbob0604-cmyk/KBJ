@@ -106,14 +106,24 @@ describe('첫 화면 카드 — 모든 카드 값(home_full)', () => {
     expect(text(root.querySelector('[data-section="시장"] .hstamp'))).toContain('지수 기준');
   });
 
-  it('지수 카드: 큰 값·등락률 알약·마감 기준·20일 추이·투자자 칸(개인·외국인·기관·프로그램)', async () => {
+  it('지수 카드: 큰 값·등락률 알약·마감 기준·당일 차트·시장별 상승·하락·투자자 칸(개인·외국인·기관·프로그램)', async () => {
     const { root } = await mountLogin();
     const k = card(root, 'kospi');
     expect(text(k.querySelector('h3 > span'))).toBe('코스피');
     expect(text(k.querySelector('.hbig .hv'))).toBe('20,050.76');
     expect(k.querySelector('.hbig .pill.down')).not.toBeNull();
     expect(text(k.querySelector('.hmeta'))).toBe('09/15 마감');
-    expect(k.querySelector('svg[role="img"]')?.getAttribute('aria-label')).toBe('코스피 20거래일 추이');
+    // 당일 = 묶음의 장중 10분 점(기본 기간)
+    expect(k.querySelector('.hchart svg[role="img"]')?.getAttribute('aria-label')).toBe('코스피 당일 10분 추이');
+    expect(text(k.querySelector('.hchart + .seg + .hsub'))).toMatch(/^당일 10분 · 11\/17 09:00~/);
+    expect(k.querySelector('.seg [aria-pressed="true"]')?.textContent).toBe('당일');
+    // 당일 점이 없는 코스닥은 20거래일 추이로 대신하고 그렇게 적는다
+    const q = card(root, 'kosdaq');
+    expect(q.querySelector('.hchart svg')?.getAttribute('aria-label')).toBe('코스닥 20거래일 추이');
+    expect(text(q.querySelector('.hchart + .seg + .hsub'))).toContain('당일 10분 값 없음');
+    // 그 시장 상승·보합·하락(마감)
+    expect(text(k.querySelector('[data-updown]'))).toBe('상승 7 · 보합 1 · 하락 11 · 09/15 마감');
+    expect(k.querySelector('[data-updown] .up')).not.toBeNull();
     const inv = [...k.querySelectorAll('.hinv dt')].map((x) => x.textContent);
     expect(inv).toEqual(['개인', '외국인', '기관', '프로그램']);
     expect(text(k.querySelector('.hinv-cap'))).toContain('장중 누적');
@@ -124,14 +134,25 @@ describe('첫 화면 카드 — 모든 카드 값(home_full)', () => {
     expect(text(card(root, 'band').querySelector('.notes'))).toContain('상승·보합·하락');
   });
 
-  it('선물 카드: 값·세션, 등락률 칸이 없으면 — (지어내지 않는다)', async () => {
+  it('선물 카드: 값·세션·전일 정산가 대비 등락률, 정산가가 없으면 — (지어내지 않는다)', async () => {
     const { root } = await mountLogin();
     const f = card(root, 'futures');
     expect(text(f.querySelector('.hbig .hv'))).toBe('351.46잠정'); // 엔진 F_ref 없음 — 잠정 배지
-    expect(text(f.querySelector('.hbig .pill'))).toBe('—');
+    const pill = f.querySelector<HTMLElement>('.hbig .pill');
+    expect(text(pill)).toBe('+0.70%잠정');
+    expect(pill?.classList.contains('up')).toBe(true);
+    expect(pill?.title).toBe('전일(12/09) 정산가 349.00pt 대비');
     expect(text(f.querySelector('.hmeta'))).toContain('주간');
     expect(text(f.querySelector('.hmeta'))).toContain('갱신 지연');
-    expect(text(f.querySelector('.notes'))).toContain('전일 대비 등락률 칸은 없다');
+    expect(text(f.querySelector('.notes'))).toContain('KRX 정산가 대비');
+
+    const fx = fixture<HomeFx>('home_full');
+    const fut = (fx.data.cards as unknown as Record<string, CardFx>).futures;
+    Object.assign(fut?.data ?? {}, { chg_pct: null, prev_settle: null, prev_settle_date: null });
+    const { root: r2 } = await mountLogin({ home: fx });
+    const p2 = card(r2, 'futures').querySelector<HTMLElement>('.hbig .pill');
+    expect(text(p2)).toBe('—');
+    expect(p2?.title).toContain('정산가가 아직 없다');
   });
 
   it('상승·보합·하락 띠: 종목 수 그대로, 색 막대 + 글자', async () => {
@@ -194,7 +215,81 @@ describe('첫 화면 카드 — 모든 카드 값(home_full)', () => {
     expect(card(root, 'themes').querySelectorAll('.hlist li').length).toBeGreaterThan(0);
     const pg = card(root, 'program');
     expect([...pg.querySelectorAll('.hlist li')].map((li) => li.getAttribute('data-market'))).toEqual(['코스피', '코스닥']);
-    expect(text(pg.querySelector('.hmeta'))).toContain('장중 누적 없음');
+    expect(text(pg.querySelector('.hmeta'))).toBe('11/17 마감 · 시장 순매수');
+    expect([...pg.querySelectorAll('.hlist li')].map((li) => li.getAttribute('data-basis'))).toEqual(['daily', 'daily']);
+  });
+
+  it('시장 폭: 합산 20일선 + 시장별 20·60·120일선 칸(분모 0 은 —)', async () => {
+    const { root } = await mountLogin();
+    const b = card(root, 'breadth');
+    expect(text(b.querySelector('.hbig small'))).toContain('코스피+코스닥 20일선 위');
+    const k = b.querySelector('[data-market="KOSPI"]');
+    expect([...(k?.querySelectorAll('dt') ?? [])].map((x) => x.textContent)).toEqual(['20일선', '60일선', '120일선']);
+    expect([...(k?.querySelectorAll('dd') ?? [])].map((x) => x.textContent)).toEqual(['55.6%', '—', '—']);
+    expect(k?.querySelector('[data-ma="20"]')?.getAttribute('title')).toBe('10 / 18종목');
+    expect(text(b.querySelector('[data-market="KOSDAQ"] .hsub'))).toContain('코스닥');
+  });
+
+  it('지수 차트 3개월·1년: 처음 누를 때 index-chart 한 번(250일) — 3개월은 마지막 63일, 고른 기간은 갱신 뒤에도 남는다', async () => {
+    const chart = fixture<Envelope<{ points: { date: string; close: number }[] }>>('market_index-chart');
+    const hz = apiHarness({ ...F2, home: fixture('home_full'), 'market_index-chart': chart });
+    let t = new Date('2026-11-10T01:00:00Z');
+    const { ctx, root, every } = pageCtx(1, 'login', hz.source, { now: () => t });
+    await page.mount(ctx);
+    await flush();
+    const k = card(root, 'kospi');
+    expect(hz.paths().filter((x) => x.startsWith('market/index-chart'))).toEqual([]);
+    click(buttonByText(k, '3개월'));
+    await flush();
+    expect(hz.paths().filter((x) => x.startsWith('market/index-chart'))).toEqual(['market/index-chart?code=0001&days=250']);
+    const n = Math.min(63, chart.data.points.length);
+    expect(k.querySelector('.hchart svg')?.getAttribute('aria-label')).toBe(`코스피 ${String(n)}거래일 추이`);
+    expect(text(k.querySelector('.hchart + .seg + .hsub'))).toMatch(new RegExp(`^3개월 · ${String(n)}거래일 · `));
+    click(buttonByText(k, '1년'));
+    await flush();
+    const all = chart.data.points.length;
+    expect(k.querySelector('.hchart svg')?.getAttribute('aria-label')).toBe(`코스피 ${String(all)}거래일 추이`);
+    expect(hz.paths().filter((x) => x.startsWith('market/index-chart'))).toHaveLength(1); // 지수마다 한 번
+    // 갱신(묶음 다시 그림) 뒤에도 고른 기간 그대로 — 차트는 다시 부르지 않는다
+    const before = k.querySelector('.hchart svg');
+    t = new Date(t.getTime() + 10 * 60_000); // 슬롯 경계를 넘긴다
+    for (const e of every) e.fn();
+    await flush();
+    const k2 = card(root, 'kospi');
+    expect(k2.querySelector('.hchart svg')).not.toBe(before); // 다시 그렸다
+    expect(k2.querySelector('.seg [aria-pressed="true"]')?.textContent).toBe('1년');
+    expect(k2.querySelector('.hchart svg')?.getAttribute('aria-label')).toBe(`코스피 ${String(all)}거래일 추이`);
+    expect(hz.paths().filter((x) => x.startsWith('market/index-chart'))).toHaveLength(1);
+  });
+
+  it('지수 차트 요청이 실패하면 차트 자리에만 문구 — 카드 값은 그대로', async () => {
+    const { root } = await mountLogin({ 'market_index-chart': () => json({ code: 'internal', message: '서버 오류' }, 500) });
+    const k = card(root, 'kospi');
+    click(buttonByText(k, '1년'));
+    await flush();
+    expect(text(k.querySelector('.hchart + .seg + .hsub'))).toContain('차트를 불러오지 못함');
+    expect(text(k.querySelector('.hbig .hv'))).toBe('20,050.76');
+    expect(k.querySelector('.hinv')).not.toBeNull();
+  });
+
+  it('프로그램: 장중 누적이 새 날이면 장중 누적(잠정 배지) — 지수 카드 프로그램 칸도 같은 값', async () => {
+    const fx = fixture<HomeFx>('home_full');
+    const pg = (fx.data.cards as unknown as Record<string, CardFx>).program;
+    const data = (pg?.data ?? {}) as Record<string, unknown>;
+    data.kospi_now = {
+      basis: 'intraday', date: '2026-11-18', as_of: '2026-11-18T13:05:00+09:00', net: 120_000_000_000,
+      arbt_net: 20_000_000_000, nabt_net: 100_000_000_000, quality: 'estimated',
+    };
+    const { root } = await mountLogin({ home: fx });
+    const c = card(root, 'program');
+    expect(text(c.querySelector('.hmeta'))).toBe('장중 누적 13:05 · 시장 순매수');
+    const li = c.querySelector('.hlist li[data-market="코스피"]');
+    expect(li?.getAttribute('data-basis')).toBe('intraday');
+    expect(li?.querySelector('.v .q-badge')).not.toBeNull();
+    expect(text(c.querySelector('.hlist li[data-market="코스닥"] small'))).toContain('11/17 마감');
+    const cell = card(root, 'kospi').querySelector('.hinv [data-investor="프로그램"]');
+    expect(cell?.getAttribute('title')).toBe('프로그램 순매수 장중 누적 13:05');
+    expect(text(cell?.querySelector('dd'))).toContain('+1,200억');
   });
 
   it('색은 등락에만 — 이름·순위에는 .up/.down 이 없다', async () => {

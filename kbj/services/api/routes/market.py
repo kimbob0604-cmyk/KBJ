@@ -1,5 +1,6 @@
 """`/api/market/*` — 요약·업종 히트맵·상단 띠(docs/p3_design.md §5.3)·신용잔고 패널(`credit`)·
-글로벌 프록시(`global-proxy`)·상대 시총(`relcap`)·급등·급락(`movers` — metrics §6.8)."""
+글로벌 프록시(`global-proxy`)·상대 시총(`relcap`)·급등·급락(`movers` — metrics §6.8)·지수 일별 차트
+(`index-chart` — metrics §6.10)."""
 
 from __future__ import annotations
 
@@ -14,6 +15,7 @@ from kbj.services.api.models.common import Envelope
 from kbj.services.api.models.market import (
     CreditPanel,
     GlobalProxy,
+    IndexChart,
     MarketMovers,
     MarketSummary,
     Ribbon,
@@ -22,6 +24,8 @@ from kbj.services.api.models.market import (
 from kbj.services.api.models.relcap import RelCap
 from kbj.services.api.readers.global_proxy import global_proxy
 from kbj.services.api.readers.market import (
+    INDEX_CHART_DAYS,
+    index_chart,
     market_movers,
     market_ribbon,
     market_sectors,
@@ -69,6 +73,22 @@ def movers(
         domain="market",
         ttl_s=TTL_DEFAULT_S,
         build=lambda: market_movers(st.read, min_mktcap=min_mktcap),
+    )
+
+
+@router.get("/index-chart", response_model=Envelope[IndexChart])
+def index_chart_route(
+    request: Request,
+    code: Annotated[str, Query(pattern=r"^[0-9]{4}$")] = "0001",
+    days: Annotated[int, Query(ge=20, le=500)] = INDEX_CHART_DAYS,
+) -> Response:
+    """지수 일봉 종가 최근 N 거래일(기본 250 ≈ 1년) — 첫 화면 지수 카드 3개월·1년 버튼."""
+    st = get_state(request)
+    return cached_json(
+        request,
+        domain="market",
+        ttl_s=TTL_DEFAULT_S,
+        build=lambda: index_chart(st.read, code=code, days=days),
     )
 
 

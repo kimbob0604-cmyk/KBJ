@@ -23,16 +23,22 @@ from kbj.engines.trade.flash import FlashChip
 from kbj.services.api import site
 from kbj.services.api.cache import DOMAIN_JOBS
 from kbj.services.api.models.common import FUTURE_AS_OF_NOTE, Envelope
-from kbj.services.api.models.flows import MarketMinute, MinuteCard
+from kbj.services.api.models.flows import MarketMinute, MinuteCard, MinuteIndex
 from kbj.services.api.models.gex import GexBriefing, GexLevel, GexLevels
 from kbj.services.api.models.home import Home, HomeCards
-from kbj.services.api.models.program import ProgramDaily, ProgramDayBar
+from kbj.services.api.models.program import (
+    ProgramDaily,
+    ProgramDayBar,
+    ProgramIntraday,
+    ProgramMinutePoint,
+)
 from kbj.services.api.readers import home as home_reader
 from kbj.services.api.readers._common import NoData, envelope
 from kbj.services.api.readers.home import (
     CARD_KEYS,
     CARD_PAGES,
-    FUT_NO_CHG_NOTE,
+    FUT_CHG_NOTE,
+    FUT_NO_SETTLE_NOTE,
     HOME_DOMAINS,
 )
 from kbj.store.db import StoreError
@@ -417,8 +423,9 @@ def test_futures_and_gex_cards_pick_levels_and_minute(
     monkeypatch.setattr(home_reader, "gex_briefing", brief_boom)
     cards = _home(authed)["data"]["cards"]
     fut = cards["futures"]
-    assert fut["status"] == "ok" and FUT_NO_CHG_NOTE in fut["notes"]
+    assert fut["status"] == "ok" and FUT_NO_SETTLE_NOTE in fut["notes"]  # 정산가 없음 — 비운다
     f = fut["data"]
+    assert (f["chg_pct"], f["prev_settle"], f["prev_settle_date"]) == (None, None, None)
     assert (f["price"], f["session"], f["session_open"]) == (401.25, "day", True)
     inv = f["investors"]
     assert inv["basis"] == "minute" and inv["date"] == day.isoformat()
@@ -480,7 +487,11 @@ def test_program_card_last_valid_day_and_no_intraday_note(
     assert d["kospi"]["date"] == prev.isoformat() and d["kospi"]["net"] == 10**10
     assert d["kosdaq"] is None
     assert any("코스닥 프로그램: 아직 없음" in n for n in card["notes"])
-    assert any("장중 시장 프로그램 누적은 아직 API 에 없다" in n for n in card["notes"])
+    assert any("오늘 장중 프로그램 누적이 아직 없다" in n for n in card["notes"])
+    assert any("코스피 장중 프로그램: 아직 없음" in n for n in card["notes"])
+    now = d["kospi_now"]  # 장중 누적이 없으면 마감 일별
+    assert now["basis"] == "daily" and now["date"] == prev.isoformat() and now["net"] == 10**10
+    assert d["kosdaq_now"] is None
 
 
 def test_export_card(world: World, authed: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -503,3 +514,166 @@ def test_export_card(world: World, authed: TestClient, monkeypatch: pytest.Monke
 def test_home_requires_session(client: TestClient) -> None:
     r = client.get("/api/home")
     assert r.status_code == 401 and r.json()["code"] == "unauthorized"
+
+
+# ── 빈 곳 채우기(2026-11-10 — 선물 등락률·시장별 상승·하락·N일선·당일 10분 점·장중 프로그램) ──────
+
+
+def _near_code(day: date, cal: Any) -> tuple[str, str]:
+    """(그날 근월물 결제월, 이미 만기가 지난 바로 앞 결제월) — 캘린더 둘째 목요일 규칙."""
+    from kbj.engines.gex.daily import monthly_last_trade
+
+    y, mth = day.year, day.month
+    codes: list[str] = []
+    for _ in range(14):
+        codes.append(f"{y:04d}{mth:02d}")
+        y, mth = (y + 1, 1) if mth == 12 else (y, mth + 1)
+    y, mth = day.year, day.month - 1
+    if mth == 0:
+        y, mth = y - 1, 12
+    lasts = {c: monthly_last_trade(c, {}, cal) for c in codes}
+    near = next(c for c in codes if (lasts[c] or day) >= day)
+    return near, f"{y:04d}{mth:02d}"
+
+
+def test_futures_change_from_prev_settle_of_the_near_month(
+    world: World, authed: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from decimal import Decimal
+
+    world.clock.set(world.slot.replace(minute=5))
+    day, at = world.next_day, world.slot
+    prev = world.cal.prev_trading_day(day)
+    near, expired = _near_code(day, world.cal)
+    monkeypatch.setattr(home_reader, "gex_levels", lambda *_a, **_k: _env(_levels(day, at), at=at))
+    rows = [(near, "395.00"), (expired, "100.00"), ("209912", "999.00")]  # 근월물만 골라야 한다
+    world.repos.gex.krx_futures.extend(
+        {"family": "kospi200", "session": "day", "expiry": c, "setl_prc": Decimal(p),
+         "trade_date": prev}
+        for c, p in rows
+    )  # fmt: skip
+    fut = _home(authed)["data"]["cards"]["futures"]
+    f = fut["data"]
+    assert (f["prev_settle"], f["prev_settle_date"]) == (395.0, prev.isoformat())
+    assert f["chg_pct"] == pytest.approx((401.25 / 395.0 - 1) * 100)
+    assert FUT_CHG_NOTE in fut["notes"] and FUT_NO_SETTLE_NOTE not in fut["notes"]
+    assert "KRX" in fut["source"]
+
+
+def test_updown_by_market_adds_up_to_the_combined_band(authed: TestClient) -> None:
+    idx = _home(authed)["data"]["cards"]["indices"]["data"]
+    k, q, both = idx["kospi"]["updown"], idx["kosdaq"]["updown"], idx["breadth"]
+    assert k is not None and q is not None
+    for f in ("up", "flat", "down", "unknown", "total"):
+        assert k[f] + q[f] == both[f], f
+    assert k["date"] == q["date"] == both["date"]
+    assert k["up"] != q["up"] or k["down"] != q["down"]  # 시장마다 따로 센 값
+
+
+def test_breadth_by_market_ma_windows(world: World, authed: TestClient) -> None:
+    card = _home(authed)["data"]["cards"]["breadth"]
+    d = card["data"]
+    assert [x["market"] for x in d["by_market"]] == ["KOSPI", "KOSDAQ"]
+    for x in d["by_market"]:
+        assert [s["ma"] for s in x["shares"]] == [20, 60, 120] and x["date"] == d["date"]
+    s20 = [x["shares"][0] for x in d["by_market"]]
+    # 같은 원장·같은 규칙 — 시장별 20일선 합 = 합산 20일선
+    assert sum(s["above"] for s in s20) == d["above_ma20_n"]
+    assert sum(s["base"] for s in s20) == d["ma20_base"]
+    # 합성 세계는 30거래일 — 60·120일선은 분모 0(값 없음)과 메모
+    n_days = len(world.market.trading_days)
+    assert n_days < 60
+    for x in d["by_market"]:
+        assert x["shares"][2] == {"ma": 120, "above": 0, "base": 0, "pct": None}
+    assert any("120일선" in n and "일봉 이력 부족" in n for n in card["notes"])
+
+
+def test_breadth_by_market_failure_only_empties_that_part(
+    authed: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def boom(*_a: Any, **_k: Any) -> Any:
+        raise StoreError("저장소 장애", cause="08006")
+
+    monkeypatch.setattr(home_reader, "ma_breadth", boom)
+    card = _home(authed)["data"]["cards"]["breadth"]
+    assert card["status"] == "ok" and card["data"]["by_market"] == []
+    assert card["data"]["above_ma20_pct"] is not None
+    assert any("시장별 N일선 오류" in n for n in card["notes"])
+
+
+def test_index_card_today_points_from_the_minute_overlay(
+    world: World, authed: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    world.clock.set(world.slot.replace(minute=5))
+    day, at = world.next_day, world.slot
+    axis = [f"09:{m:02d}" for m in range(0, 21)]
+    values: list[float | None] = [None] * len(axis)
+    values[0], values[10], values[20] = 2600.0, 2610.5, 2605.25
+
+    def minute(_ctx: Any, *, market: str, venue: str) -> Any:
+        mm = _minute(day, at, market).model_copy(update={"axis": axis})
+        if market == "kospi":
+            mm = mm.model_copy(update={"index": MinuteIndex(
+                code="0001", label="코스피", values=values, last=2605.25, chg_pct=0.2, as_of=at,
+                quality=Quality.ESTIMATED)})  # fmt: skip
+        return _env(mm, at=at)
+
+    monkeypatch.setattr(home_reader, "market_minute", minute)
+    idx = _home(authed)["data"]["cards"]["indices"]["data"]
+    t = idx["kospi"]["today"]
+    assert t["date"] == day.isoformat() and t["quality"] == "estimated" and t["source"] == "KIS"
+    assert t["points"] == [
+        {"t": "09:00", "v": 2600.0}, {"t": "09:10", "v": 2610.5}, {"t": "09:20", "v": 2605.25}
+    ]  # fmt: skip
+    assert idx["kosdaq"]["today"] is None  # 겹칠 지수가 없으면 비운다
+
+
+def _intraday(day: date, ts: datetime, net: int, *, live: bool) -> ProgramIntraday:
+    p = ProgramMinutePoint(ts=ts, net=net, arbt_net=net // 4, nabt_net=net - net // 4,
+                           quality=Quality.ESTIMATED if live else Quality.OK)  # fmt: skip
+    return ProgramIntraday(market="K", venue="KRX", trade_date=day, live=live, points=[p], last=p)
+
+
+def test_program_card_now_prefers_newer_intraday_then_close(
+    world: World, authed: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    last = world.market.last_day
+    day, at = world.next_day, world.slot
+    close_at = datetime.combine(last, datetime.min.time(), tzinfo=KST) + timedelta(hours=15)
+
+    def daily(_ctx: Any, *, market: str, days: int) -> Any:
+        bar = ProgramDayBar(
+            date=last, net=-(10**10), arbt_net=0, nabt_net=-(10**10), entm_net=None,
+            onsl_net=None, index_close=None, quality=Quality.OK,
+        )  # fmt: skip
+        return _env(ProgramDaily(market="K", venue="KRX", days=1, rows=[bar]), at=close_at)
+
+    state = {"day": day, "live": True}
+
+    def intraday(_ctx: Any, *, market: str) -> Any:
+        if market == "Q":
+            raise NoData("아직 없음 — program.intraday")
+        d = state["day"]
+        assert isinstance(d, date)
+        return _env(_intraday(d, at, 5 * 10**9, live=bool(state["live"])), at=at,
+                    quality=Quality.ESTIMATED)  # fmt: skip
+
+    monkeypatch.setattr(home_reader, "program_daily", daily)
+    monkeypatch.setattr(home_reader, "program_intraday", intraday)
+    world.clock.set(at.replace(minute=5))
+    card = _home(authed)["data"]["cards"]["program"]
+    k = card["data"]["kospi_now"]
+    assert k["basis"] == "intraday" and k["date"] == day.isoformat() and k["net"] == 5 * 10**9
+    assert k["quality"] == "estimated" and card["quality"] == "estimated"
+    assert card["data"]["kosdaq_now"]["basis"] == "daily"  # 코스닥 장중 없음 → 마감 일별
+    assert not any("오늘 장중 프로그램 누적이 아직 없다" in n for n in card["notes"])
+    # 마감 일별이 같은 날이 되면 확정(마감 일별)을 쓴다
+    state.update(day=last, live=False)
+    world.clock.advance(seconds=1)
+    k2 = _home(authed)["data"]["cards"]["program"]["data"]["kospi_now"]
+    assert k2["basis"] == "daily" and k2["net"] == -(10**10)
+
+
+def test_new_route_keys_are_in_card_keys() -> None:
+    assert "program/intraday?market=K" in CARD_KEYS["program"]
+    assert "program/intraday?market=Q" in CARD_KEYS["program"]

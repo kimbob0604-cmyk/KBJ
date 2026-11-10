@@ -11,8 +11,8 @@ from fastapi import Query, Request, Response
 
 from kbj.services.api.deps import TTL_DEFAULT_S, cached_json, get_state, live_ttl
 from kbj.services.api.models.common import Envelope
-from kbj.services.api.models.program import ProgramDaily, ProgramTop
-from kbj.services.api.readers.program import program_daily, program_top
+from kbj.services.api.models.program import ProgramDaily, ProgramIntraday, ProgramTop
+from kbj.services.api.readers.program import program_daily, program_intraday, program_top
 from kbj.services.api.routes._common import data_router
 
 router = data_router("program")
@@ -31,6 +31,18 @@ def daily(
         domain="program",
         ttl_s=TTL_DEFAULT_S,
         build=lambda: program_daily(st.read, market=market, days=days),
+    )
+
+
+@router.get("/intraday", response_model=Envelope[ProgramIntraday])
+def intraday(request: Request, market: Annotated[MarketT, Query()] = "K") -> Response:
+    """장중 시장 프로그램 누적(매분 그날 누적 — metrics §22). 장 뒤엔 마지막 분 = 마감 누적."""
+    st = get_state(request)
+    return cached_json(
+        request,
+        domain="program",
+        ttl_s=live_ttl(st),
+        build=lambda: program_intraday(st.read, market=market),
     )
 
 

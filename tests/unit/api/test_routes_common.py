@@ -29,6 +29,7 @@ from kbj.services.api.models.flows import (
 from kbj.services.api.models.home import Home
 from kbj.services.api.models.market import (
     GlobalProxy,
+    IndexChart,
     MarketMovers,
     MarketSummary,
     Ribbon,
@@ -61,6 +62,7 @@ DATA_ROUTES: list[tuple[str, type[BaseModel], bool]] = [
     ("/api/market/relcap?period=1Y", RelCap, False),
     ("/api/market/movers", MarketMovers, False),  # 급등·급락(metrics §6.8)
     ("/api/home", Home, False),  # 첫 화면 카드 묶음(metrics §32)
+    ("/api/market/index-chart?code=0001&days=250", IndexChart, False),  # 지수 일별(§6.10)
 ]
 
 

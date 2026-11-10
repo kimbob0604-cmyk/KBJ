@@ -424,6 +424,93 @@
         }
       }
     },
+    "/api/market/index-chart": {
+      "get": {
+        "tags": [
+          "market"
+        ],
+        "summary": "Index Chart Route",
+        "description": "지수 일봉 종가 최근 N 거래일(기본 250 ≈ 1년) — 첫 화면 지수 카드 3개월·1년 버튼.",
+        "operationId": "index_chart_route_api_market_index_chart_get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{4}$",
+              "default": "0001",
+              "title": "Code"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 20,
+              "default": 250,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_IndexChart_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/market/ribbon": {
       "get": {
         "tags": [
@@ -4941,6 +5028,84 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Envelope_ProgramDaily_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "세션 없음·만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "아직 없음(작업·예정 시각)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoDataBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "쿼리 검증 실패(입력값은 싣지 않는다)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "저장소·Redis 장애",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/program/intraday": {
+      "get": {
+        "tags": [
+          "program"
+        ],
+        "summary": "Intraday",
+        "description": "장중 시장 프로그램 누적(매분 그날 누적 — metrics §22). 장 뒤엔 마지막 분 = 마감 누적.",
+        "operationId": "intraday_api_program_intraday_get",
+        "parameters": [
+          {
+            "name": "market",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "K",
+                "Q"
+              ],
+              "type": "string",
+              "default": "K",
+              "title": "Market"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ProgramIntraday_"
                 }
               }
             }
@@ -17092,6 +17257,49 @@
         ],
         "title": "Envelope[Home]"
       },
+      "Envelope_IndexChart_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/IndexChart"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[IndexChart]"
+      },
       "Envelope_IndexReview_": {
         "properties": {
           "source": {
@@ -17951,6 +18159,49 @@
           "data"
         ],
         "title": "Envelope[ProgramDaily]"
+      },
+      "Envelope_ProgramIntraday_": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ProgramIntraday"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "as_of",
+          "quality",
+          "generated_at",
+          "data"
+        ],
+        "title": "Envelope[ProgramIntraday]"
       },
       "Envelope_ProgramTop_": {
         "properties": {
@@ -22388,6 +22639,13 @@
           "ma20_base": {
             "type": "integer",
             "title": "Ma20 Base"
+          },
+          "by_market": {
+            "items": {
+              "$ref": "#/components/schemas/HomeMaBreadth"
+            },
+            "type": "array",
+            "title": "By Market"
           }
         },
         "additionalProperties": false,
@@ -22396,10 +22654,11 @@
           "date",
           "above_ma20_pct",
           "above_ma20_n",
-          "ma20_base"
+          "ma20_base",
+          "by_market"
         ],
         "title": "HomeBreadth",
-        "description": "시장 폭 — 20일선 위 비율(코스피+코스닥 합산, 마감 확정). 60·120일선·시장별은 없다(notes)."
+        "description": "시장 폭 — 20일선 위 비율(코스피+코스닥 합산)과 시장별 20·60·120일선 위 비율(마감 확정)."
       },
       "HomeCard_HomeBreadth_": {
         "properties": {
@@ -24490,6 +24749,40 @@
             ],
             "title": "Stale"
           },
+          "prev_settle": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prev Settle"
+          },
+          "prev_settle_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prev Settle Date"
+          },
+          "chg_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chg Pct"
+          },
           "night": {
             "anyOf": [
               {
@@ -24521,11 +24814,14 @@
           "price",
           "price_quality",
           "stale",
+          "prev_settle",
+          "prev_settle_date",
+          "chg_pct",
           "night",
           "investors"
         ],
         "title": "HomeFutures",
-        "description": "코스피200 선물(근월물). 전일 대비 등락률 칸은 없다(전일 정산가를 API 에 싣지 않는다 —\nnotes). 야간이면 `night`(주간 마지막 값 대비 등락)."
+        "description": "코스피200 선물(근월물). 전일 대비 등락률 = 현재가 ÷ 귀속 거래일 근월물의 직전 거래일 KRX\n정산가 − 1(metrics §6.9 — 정산가가 없으면 None + notes). 야간이면 `night`(주간 마지막 값\n대비)."
       },
       "HomeGex": {
         "properties": {
@@ -24670,15 +24966,95 @@
                 "type": "null"
               }
             ]
+          },
+          "today": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeIndexDay"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "updown": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeUpDown"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
           "tile",
-          "investors"
+          "investors",
+          "today",
+          "updown"
         ],
         "title": "HomeIndex"
+      },
+      "HomeIndexDay": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/HomeIndexPoint"
+            },
+            "type": "array",
+            "title": "Points"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "points",
+          "source",
+          "as_of",
+          "quality"
+        ],
+        "title": "HomeIndexDay",
+        "description": "그날 장중 지수 10분 점(flows/market-minute 의 지수 겹침 — 값이 있는 슬롯만). 장 전·휴장이면\n직전 거래일."
+      },
+      "HomeIndexPoint": {
+        "properties": {
+          "t": {
+            "type": "string",
+            "title": "T"
+          },
+          "v": {
+            "type": "number",
+            "title": "V"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "t",
+          "v"
+        ],
+        "title": "HomeIndexPoint"
       },
       "HomeIndices": {
         "properties": {
@@ -24810,6 +25186,91 @@
         ],
         "title": "HomeInvestorNet",
         "description": "시장 하나의 투자자 순매수(원). 값이 없는 구분은 None — 0 으로 바꾸지 않는다.\n\nbasis: `minute` = 장중 1분 누적(KIS 잠정 — `flows/market-minute`, 개인 prsn·외국인 frgn·기관\norgn·기타법인 etc_corp), `daily` = 마감 일별(`flows/investors` by_market)."
+      },
+      "HomeMaBreadth": {
+        "properties": {
+          "market": {
+            "type": "string",
+            "enum": [
+              "KOSPI",
+              "KOSDAQ"
+            ],
+            "title": "Market"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "shares": {
+            "items": {
+              "$ref": "#/components/schemas/HomeMaShare"
+            },
+            "type": "array",
+            "title": "Shares"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "market",
+          "date",
+          "shares",
+          "source",
+          "quality"
+        ],
+        "title": "HomeMaBreadth",
+        "description": "한 시장의 N일선 위 비율(metrics §6.2 — 마감 확정)."
+      },
+      "HomeMaShare": {
+        "properties": {
+          "ma": {
+            "type": "integer",
+            "title": "Ma"
+          },
+          "above": {
+            "type": "integer",
+            "title": "Above"
+          },
+          "base": {
+            "type": "integer",
+            "title": "Base"
+          },
+          "pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pct"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "ma",
+          "above",
+          "base",
+          "pct"
+        ],
+        "title": "HomeMaShare"
       },
       "HomeNewhigh": {
         "properties": {
@@ -25081,16 +25542,109 @@
                 "type": "null"
               }
             ]
+          },
+          "kospi_now": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeProgramNow"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "kosdaq_now": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeProgramNow"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
           "kospi",
-          "kosdaq"
+          "kosdaq",
+          "kospi_now",
+          "kosdaq_now"
         ],
         "title": "HomeProgram",
-        "description": "프로그램 순매수 — 시장마다 마지막 날(마감 일별, 검산 ④ 통과). 장중 누적은 없다(notes)."
+        "description": "프로그램 순매수 — 시장마다 마감 일별 마지막 날(검산 ④ 통과)과 '지금' 값(장중 누적 또는\n마감)."
+      },
+      "HomeProgramNow": {
+        "properties": {
+          "basis": {
+            "type": "string",
+            "enum": [
+              "intraday",
+              "daily"
+            ],
+            "title": "Basis"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "net": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net"
+          },
+          "arbt_net": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Arbt Net"
+          },
+          "nabt_net": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nabt Net"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "basis",
+          "date",
+          "as_of",
+          "net",
+          "arbt_net",
+          "nabt_net",
+          "quality"
+        ],
+        "title": "HomeProgramNow",
+        "description": "프로그램 순매수 '지금' 값(원, metrics §22) — `intraday` = 장중 마지막 분 그날 누적\n(program/intraday — 장중 잠정), `daily` = 마감 일별(program/daily). 장중 누적이 마감 일별보다\n새 날일 때만 장중."
       },
       "HomeSpike": {
         "properties": {
@@ -25316,7 +25870,67 @@
           "quality"
         ],
         "title": "HomeUpDown",
-        "description": "상승·보합·하락 — **코스피+코스닥 합산**(market/summary breadth, 마감 확정). 시장별은 없다."
+        "description": "상승·보합·하락(마감 확정 — metrics §6.2). 지수 카드 `breadth` 는 코스피+코스닥 합산\n(market/summary), 지수마다 `updown` 은 그 시장만(같은 원장·같은 함수)."
+      },
+      "IndexChart": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "days": {
+            "type": "integer",
+            "title": "Days"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/IndexChartPoint"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "days",
+          "points"
+        ],
+        "title": "IndexChart",
+        "description": "`/api/market/index-chart?code=&days=` — 지수 일봉 종가(metrics §6.10 — 첫 화면 3개월·1년)."
+      },
+      "IndexChartPoint": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "close": {
+            "type": "number",
+            "title": "Close"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "close"
+        ],
+        "title": "IndexChartPoint"
       },
       "IndexDisparity": {
         "properties": {
@@ -29812,6 +30426,121 @@
         ],
         "title": "ProgramDayBar",
         "description": "하루 막대 — 막대 = 전체(whol) 합계(smtn) 순매수, 막대 위 상세 = 차익·비차익 × 위탁·자기."
+      },
+      "ProgramIntraday": {
+        "properties": {
+          "market": {
+            "type": "string",
+            "enum": [
+              "K",
+              "Q"
+            ],
+            "title": "Market"
+          },
+          "venue": {
+            "type": "string",
+            "enum": [
+              "KRX",
+              "NXT",
+              "TOTAL"
+            ],
+            "title": "Venue"
+          },
+          "trade_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Trade Date"
+          },
+          "live": {
+            "type": "boolean",
+            "title": "Live"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/ProgramMinutePoint"
+            },
+            "type": "array",
+            "title": "Points"
+          },
+          "last": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProgramMinutePoint"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "market",
+          "venue",
+          "trade_date",
+          "live",
+          "points",
+          "last"
+        ],
+        "title": "ProgramIntraday",
+        "description": "`/api/program/intraday?market=` — 장중 시장 프로그램 누적(program.intraday 매분)."
+      },
+      "ProgramMinutePoint": {
+        "properties": {
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ts"
+          },
+          "net": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net"
+          },
+          "arbt_net": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Arbt Net"
+          },
+          "nabt_net": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nabt Net"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "ts",
+          "net",
+          "arbt_net",
+          "nabt_net",
+          "quality"
+        ],
+        "title": "ProgramMinutePoint",
+        "description": "장중 한 분 — 그 분까지 **그날 누적**(원, metrics §22). 검산 ④ 실패 분은 값 없이 invalid."
       },
       "ProgramTop": {
         "properties": {

@@ -199,3 +199,70 @@ def test_program_empty_store_404_names_jobs() -> None:
     assert r.status_code == 404 and "program.daily" in r.json()["message"]
     r = c.get("/api/program/top?market=K&scope=close")
     assert r.status_code == 404 and "program.stock_sweep" in r.json()["message"]
+
+
+# ── 장중 시장 프로그램 누적(metrics §22 — 첫 화면 2026-11-10) ───────────────────────────
+
+
+def _whol_smtn(api: ProgramApiWorld, market: str) -> dict[datetime, int | None]:
+    assert api.world is not None
+    return {
+        r.ts: r.net_value
+        for r in api.world.program_intraday
+        if r.market == market and (r.kind, r.side) == ("whol", "smtn") and r.ts is not None
+    }
+
+
+def test_program_intraday_cumulative_minutes_live() -> None:
+    api = program_api_world(at=INTRADAY)
+    body = get(api, "/api/program/intraday?market=K")
+    d = body["data"]
+    assert d["trade_date"] == TODAY.isoformat() and d["live"] is True and d["market"] == "K"
+    ts = [datetime.fromisoformat(p["ts"]) for p in d["points"]]
+    assert ts == sorted(ts) and ts[-1] <= INTRADAY
+    raw = _whol_smtn(api, "K")
+    assert all(p["net"] == raw[datetime.fromisoformat(p["ts"])] for p in d["points"])
+    assert d["last"] == d["points"][-1]
+    assert all(p["quality"] == "estimated" for p in d["points"])  # 장중 잠정
+    assert body["quality"] == "estimated" and body["source"] == "KIS"
+    assert d["last"]["net"] == d["last"]["arbt_net"] + d["last"]["nabt_net"]
+
+
+def test_program_intraday_after_close_and_next_morning() -> None:
+    api = program_api_world()  # 마감 뒤(CLOCK)
+    d = get(api, "/api/program/intraday?market=Q")["data"]
+    raw = _whol_smtn(api, "Q")
+    last_ts = max(raw)
+    assert d["live"] is False and datetime.fromisoformat(d["last"]["ts"]) == last_ts
+    assert d["last"]["net"] == raw[last_ts]
+    # 다음 날 개장 전 — 그날 행이 아직 없으면 직전 거래일(마지막 분 = 그날 누적)
+    after = datetime.combine(TODAY + timedelta(days=1), time(8, 0), tzinfo=KST)
+    body = get(program_api_world(at=after), "/api/program/intraday?market=K")
+    assert body["data"]["trade_date"] == TODAY.isoformat() and body["data"]["live"] is False
+    assert any("장중 누적(마지막 분 = 그날 누적)" in n for n in body["notes"])
+
+
+def test_program_intraday_check4_failure_minute_is_left_out_of_last() -> None:
+    api = program_api_world(at=INTRADAY)
+    assert api.world is not None
+    raw = _whol_smtn(api, "K")
+    last_ts = max(t for t in raw if t <= INTRADAY)
+    bad = [
+        replace(r, net_value=(r.net_value or 0) + 2 * CHECK4_TOL["net_value"])
+        for r in api.world.program_intraday
+        if r.ts == last_ts and r.market == "K" and (r.kind, r.side) == ("whol", "smtn")
+    ]
+    api.repos.program.put_market_minutes(bad, loaded_by="test", received_at=SWEPT)
+    body = get(api, "/api/program/intraday?market=K")
+    d = body["data"]
+    assert d["points"][-1]["quality"] == "invalid" and d["points"][-1]["net"] is None
+    assert datetime.fromisoformat(d["last"]["ts"]) < last_ts
+    assert any("검산 ④ 실패 1분" in n for n in body["notes"])
+
+
+def test_program_intraday_empty_store_404_and_422() -> None:
+    api = program_api_world(empty=True, at=INTRADAY)
+    c = api.authed()
+    r = c.get("/api/program/intraday?market=K")
+    assert r.status_code == 404 and "program.intraday" in r.json()["message"]
+    assert c.get("/api/program/intraday?market=X").status_code == 422

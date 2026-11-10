@@ -4,7 +4,8 @@
   문구 `message` — '아직 없음 — <작업> <시각>'), `error`(오류 코드 `error` — 본문·내부 문구 없음).
   한 카드가 실패해도 다른 카드는 그대로다(절대 규칙 4 — 격리).
 - 값은 기존 읽기 함수의 결과를 고르고 자른 것이다(계산 두 벌 금지). 새로 계산한 값은 급등·급락
-  (`MarketMovers` — metrics §6.8)뿐이고 그것도 `/api/market/movers` 와 같은 함수다.
+  (`MarketMovers` — metrics §6.8 — `/api/market/movers` 와 같은 함수), 시장별 상승·하락·N일선
+  위 비율(§6.2 — 시장폭과 같은 엔진 함수), 선물 전일 대비 등락률(§6.9)이다.
 - **개인 데이터 없음**: 관심종목·규칙 신호·관심종목 가산이 든 공시 중요도(importance·login_score)·
   잠정실적 알림 여부(alerted)는 싣지 않는다 — 공개 사이트가 인자 없는 GET 을 모두 올린다(ADR 0042).
 - `page` = '더 보기'가 갈 페이지 번호, `keys` = 같은 값을 주는 기존 경로('/api/' 뒤 — 쿼리 포함).
@@ -43,12 +44,17 @@ __all__ = [
     "HomeFutures",
     "HomeGex",
     "HomeIndex",
+    "HomeIndexDay",
+    "HomeIndexPoint",
     "HomeIndices",
     "HomeInvestorNet",
+    "HomeMaBreadth",
+    "HomeMaShare",
     "HomeNewhigh",
     "HomeNewhighRow",
     "HomePrelimRow",
     "HomeProgram",
+    "HomeProgramNow",
     "HomeSpike",
     "HomeSpikeRow",
     "HomeThemes",
@@ -110,13 +116,25 @@ class HomeInvestorNet(ApiModel):
     quality: Quality
 
 
-class HomeIndex(ApiModel):
-    tile: IndexTile  # market/summary 지수 타일 그대로(값·등락·live·20일 spark·원천)
-    investors: HomeInvestorNet | None  # 그 시장 투자자 순매수 — 없으면 None(사유는 카드 notes)
+class HomeIndexPoint(ApiModel):
+    t: str  # 'HH:MM' KST(10분 슬롯 시작)
+    v: float
+
+
+class HomeIndexDay(ApiModel):
+    """그날 장중 지수 10분 점(flows/market-minute 의 지수 겹침 — 값이 있는 슬롯만). 장 전·휴장이면
+    직전 거래일."""
+
+    date: date
+    points: list[HomeIndexPoint]
+    source: str
+    as_of: AwareDatetime
+    quality: Quality
 
 
 class HomeUpDown(ApiModel):
-    """상승·보합·하락 — **코스피+코스닥 합산**(market/summary breadth, 마감 확정). 시장별은 없다."""
+    """상승·보합·하락(마감 확정 — metrics §6.2). 지수 카드 `breadth` 는 코스피+코스닥 합산
+    (market/summary), 지수마다 `updown` 은 그 시장만(같은 원장·같은 함수)."""
 
     date: date
     up: int
@@ -128,6 +146,13 @@ class HomeUpDown(ApiModel):
     quality: Quality | None
 
 
+class HomeIndex(ApiModel):
+    tile: IndexTile  # market/summary 지수 타일 그대로(값·등락·live·20일 spark·원천)
+    investors: HomeInvestorNet | None  # 그 시장 투자자 순매수 — 없으면 None(사유는 카드 notes)
+    today: HomeIndexDay | None  # 당일 10분 점(차트 '당일') — 없으면 None
+    updown: HomeUpDown | None  # 그 시장 상승·보합·하락 — 없으면 None
+
+
 class HomeIndices(ApiModel):
     kospi: HomeIndex | None
     kosdaq: HomeIndex | None
@@ -135,8 +160,9 @@ class HomeIndices(ApiModel):
 
 
 class HomeFutures(ApiModel):
-    """코스피200 선물(근월물). 전일 대비 등락률 칸은 없다(전일 정산가를 API 에 싣지 않는다 —
-    notes). 야간이면 `night`(주간 마지막 값 대비 등락)."""
+    """코스피200 선물(근월물). 전일 대비 등락률 = 현재가 ÷ 귀속 거래일 근월물의 직전 거래일 KRX
+    정산가 − 1(metrics §6.9 — 정산가가 없으면 None + notes). 야간이면 `night`(주간 마지막 값
+    대비)."""
 
     trade_date: date | None  # GEX 사이클의 귀속 거래일
     session: Literal["day", "night"] | None
@@ -145,6 +171,9 @@ class HomeFutures(ApiModel):
     price: float | None  # pt — 엔진 F_ref, 없으면 전광판 근월물(estimated)
     price_quality: Quality | None
     stale: bool | None  # 장 중인데 사이클이 늦다
+    prev_settle: float | None  # pt — 직전 거래일 KRX 정산가(근월물)
+    prev_settle_date: date | None
+    chg_pct: float | None  # % — (price − prev_settle) ÷ prev_settle × 100
     night: IndexTile | None  # market/summary K200N 타일(있을 때만)
     investors: HomeInvestorNet | None  # 투자자 순매수(1분 누적 — flows/market-minute k200_fut)
 
@@ -286,11 +315,28 @@ class HomeDiag(ApiModel):
     caution: bool  # 이벤트 주의(오늘·다음 거래일)
 
 
+class HomeProgramNow(ApiModel):
+    """프로그램 순매수 '지금' 값(원, metrics §22) — `intraday` = 장중 마지막 분 그날 누적
+    (program/intraday — 장중 잠정), `daily` = 마감 일별(program/daily). 장중 누적이 마감 일별보다
+    새 날일 때만 장중."""
+
+    basis: Literal["intraday", "daily"]
+    date: date
+    as_of: AwareDatetime
+    net: int | None
+    arbt_net: int | None
+    nabt_net: int | None
+    quality: Quality
+
+
 class HomeProgram(ApiModel):
-    """프로그램 순매수 — 시장마다 마지막 날(마감 일별, 검산 ④ 통과). 장중 누적은 없다(notes)."""
+    """프로그램 순매수 — 시장마다 마감 일별 마지막 날(검산 ④ 통과)과 '지금' 값(장중 누적 또는
+    마감)."""
 
     kospi: ProgramDayBar | None
     kosdaq: ProgramDayBar | None
+    kospi_now: HomeProgramNow | None
+    kosdaq_now: HomeProgramNow | None
 
 
 class HomeEtfRow(ApiModel):
@@ -331,13 +377,31 @@ class HomeThemes(ApiModel):
     rows: list[ThemeStrengthRow]  # 강도 상위 5(themes/strength 그대로)
 
 
+class HomeMaShare(ApiModel):
+    ma: int  # N(영업일 — 20·60·120)
+    above: int
+    base: int  # N일 평균을 낼 수 있는 종목(분모)
+    pct: float | None
+
+
+class HomeMaBreadth(ApiModel):
+    """한 시장의 N일선 위 비율(metrics §6.2 — 마감 확정)."""
+
+    market: Literal["KOSPI", "KOSDAQ"]
+    date: date
+    shares: list[HomeMaShare]  # 20·60·120 순
+    source: str
+    quality: Quality | None
+
+
 class HomeBreadth(ApiModel):
-    """시장 폭 — 20일선 위 비율(코스피+코스닥 합산, 마감 확정). 60·120일선·시장별은 없다(notes)."""
+    """시장 폭 — 20일선 위 비율(코스피+코스닥 합산)과 시장별 20·60·120일선 위 비율(마감 확정)."""
 
     date: date
     above_ma20_pct: float | None
     above_ma20_n: int
     ma20_base: int  # 20일선을 계산할 수 있는 종목 수(분모)
+    by_market: list[HomeMaBreadth]  # 코스피·코스닥(못 내면 비고 notes)
 
 
 # ── 묶음 ───────────────────────────────────────────────────────────────────────────────────

@@ -14,6 +14,8 @@
   선물 전광판 근월물(F·board, 잔존일 가장 짧은 값 있는 행)을 `estimated` 로 [확인 필요]
 - **범위(scope)별 행사가 막대**: 그 범위 순GEX(`net_gex`) 행 payload 의 `expiries`(시리즈 라벨)에 든
   시리즈만. 라벨이 없으면 막대를 다 싣고 notes 에 적는다
+- **전일 정산가**(metrics §6.9 — 첫 화면 선물 등락률): 귀속 거래일 근월물(엔진 `near_settle` 규칙)의
+  직전 거래일 KRX 일별 정산가(`krx_futures_settles`). 없으면 None — 지어내지 않는다
 - 투자자별(§6.2)은 `prv_gex.investor_flow`(쓰기 주인 `flows.market_minute` — ADR 0019) 그 세션 최신
   행. 야간은 수집하지 않는다(D-P7-6 — `night_investor_collected = false`)
 """
@@ -21,12 +23,14 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
-from datetime import datetime, timedelta
+from dataclasses import dataclass
+from datetime import date, datetime, timedelta
 from typing import Any, Final, cast
 
 from kbj.core.calendar import State, state_at
 from kbj.core.gex.records import FuturesRecord, LevelRecord, MetricRecord
 from kbj.core.quality import Quality
+from kbj.engines.gex.daily import monthly_last_trade, near_settle
 from kbj.services.api.models.common import Envelope
 from kbj.services.api.models.gex import (
     GexFlagT,
@@ -49,6 +53,8 @@ __all__ = [
     "NO_GEX_FLOW",
     "SOURCE",
     "STALE_AFTER",
+    "PrevSettle",
+    "futures_prev_settle",
     "gex_flow",
     "gex_levels",
     "gex_metrics",
@@ -132,6 +138,31 @@ def _price(
         return None, None, ["현재가 없음 — 엔진 F_ref·선물 전광판 행이 없다"]
     note = f"현재가: 선물 전광판 근월물 {fut.code}(엔진 F_ref 없음 — estimated)"
     return float(fut.price), Quality.ESTIMATED, [note]
+
+
+@dataclass(frozen=True)
+class PrevSettle:
+    """귀속 거래일 근월물의 직전 거래일 KRX 정산가(pt)."""
+
+    date: date
+    price: float
+
+
+def futures_prev_settle(ctx: ReadContext, trade_date: date) -> PrevSettle | None:
+    """`trade_date` 근월물(최종거래일이 그날 이후인 가장 이른 결제월 — `near_settle`)의 직전 거래일
+    정산가(metrics §6.9). 정산가가 없거나 0 이하이면 None."""
+    prev = ctx.cal.prev_trading_day(trade_date)
+    repo = ctx.repos.gex
+    rows = repo.krx_futures_settles(prev, prev)
+    if not rows:
+        return None
+    kis = {e: d for c, e, d, _src in repo.expiry_dates(prev) if c == ""}
+    last_trade = {
+        c: last for _d, c, _p in rows if (last := monthly_last_trade(c, kis, ctx.cal)) is not None
+    }
+    # 그날(trade_date) 근월물을 고르되 값은 전날 정산가 — 열쇠의 날을 trade_date 로 둔다
+    price = near_settle(trade_date, {(trade_date, c): p for _d, c, p in rows if p > 0}, last_trade)
+    return PrevSettle(prev, float(price)) if price is not None else None
 
 
 def _stale(ctx: ReadContext, cycle_at: datetime, session_open: bool) -> tuple[bool, str | None]:

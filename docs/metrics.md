@@ -139,6 +139,8 @@
 |---|---|
 | 상승·보합·하락·미지 | 그날 등락률 > 0 · = 0 · < 0 · 값 없음(종목 수). 값이 없는 종목은 **미지(unknown)** 로 센다 — 보합으로 넣지 않는다(ET `board/engine/aggregate.py:breadth` 그대로) |
 | 20일선 위 비율(%) | 종가 > 최근 20영업일 종가 단순평균(SMA20)인 종목 ÷ SMA20 을 계산할 수 있는 종목 × 100. 20봉 미만 종목은 분모에서 뺀다 |
+| N일선 위 비율 — 시장별(%, 2026-11-10 첫 화면) | N = 20·60·120(`MA_WINDOWS`), 시장 = 코스피·코스닥 **따로**. 종가 > 그날까지 최근 N영업일(오늘 포함) 종가 단순평균인 종목 ÷ 그 평균을 낼 수 있는 종목 × 100. 영업일 축 = 원장 영업일(60일 창 — `LEDGER_WINDOW`) ∪ 일봉 표 영업일(`repos.market.series` 121일 — 원장 창이 120일선보다 짧다). 그날 종가는 원장(krx > kis, 쓸 수 있는 행 — invalid 는 분모 밖), 지난 날 종가는 원장 창 안이면 원장, 창 밖이면 일봉(invalid·값 없음 뺌). 창 안 N날 중 하루라도 종가가 없으면 그 종목은 분모 밖(20일선 위 비율과 같은 규칙 — 상장 N일 미만·거래정지 날 포함). 대상 종류는 시장폭과 같다(`STOCK_KINDS`). 20일선 시장별 위 수의 합 = 두 시장 합산 20일선 위 수(같은 원장·같은 규칙). quality = 그날 쓴 원장 행 중 가장 나쁜 것, as_of = 그날 15:30 KST(마감 확정 — 장중 값 없음) |
+| 시장별 상승·보합·하락 (2026-11-10 첫 화면) | 위 상승·보합·하락·미지를 코스피·코스닥 **따로** 센다(`market_breadth(markets=…)` — 같은 함수). 두 시장 값의 합 = 합산 값 |
 | 신고가 수·비율 | 그날 보드 **종가 기준** 52주 이상 라벨(hist·w52) 종목 수, ÷ 보드 유니버스 × 100(§7) |
 | 상한가·하한가 | 등락률 ≥ 29.5 / ≤ −29.5 (가격제한폭 ±30% 와 호가 단위 — [추정], `market.limit_move_pct`) |
 | 신저가 | KR 보드 엔진에 없어 P3 에 없다 |
@@ -212,6 +214,28 @@
 | 출력 | 행마다 순위·코드·이름·시장·종가(원)·등락률(%)·시총(원)·원천·품질. `n_eligible` = 하한·종류·상태를 통과하고 등락률을 아는 종목 수(순위 모집단) |
 | source·as_of·quality | 원천 = 모집단 행의 스냅·종가 원천(KRX·KIS), as_of = 그날 15:30 KST, quality = 모집단 행 중 가장 나쁜 것(모집단이 비면 invalid — 지어내지 않는다) |
 | 시험 | 엔진 `tests/unit/engines/market/test_movers.py`(하한 경계 포함·시총/등락률 모름은 빠지고 셈·우선주·ETF·코넥스·관리종목 제외·상태 모름은 남고 셈·같은 등락률은 시총 큰 순·보합 제외·한쪽 부족), 경로 `tests/unit/api/test_routes_market.py`(봉투·하한 인자·422·장중 기준일 notes·휴장일엔 '장중' 사유 없음) |
+
+### 6.9 코스피200 선물 전일 대비 등락률 (첫 화면 — 2026-11-10)
+
+> 구현 `kbj/services/api/readers/gex.py` `futures_prev_settle` → 첫 화면 선물 카드(§32). 등급 **로그인**(KRX 파생 일별 — 시세).
+
+| 항목 | 정의 |
+|---|---|
+| 기준 월물 | GEX 사이클 귀속 거래일 T 의 **근월물** = 최종거래일이 T 이후(T 포함)인 결제월 중 가장 이른 것(`engines/gex/daily.py` `near_settle`·`monthly_last_trade` — KIS 시리즈 만기, 없으면 캘린더 둘째 목요일). 현재가(엔진 F_ref·전광판 근월물)와 같은 월물이라고 본다 [확인 필요 — 만기일 당일 전광판 근월물이 다음 월물로 바뀌는 시각] |
+| 전일 정산가 | T 의 직전 거래일 KRX 선물 일별 정산가(`prv_gex.krx_fut_daily` 주간·`kospi200` 갈래 `setl_prc` — gex.krx_derivatives). 0 이하는 없는 것 |
+| 등락률(%) | (현재가 − 전일 정산가) ÷ 전일 정산가 × 100. 정산가가 없으면(수집 전·휴장 뒤 첫날 아침 등) None + notes — 지어내지 않는다. 야간 사이클(귀속 거래일 = 다음 거래일)은 그날 주간 정산가 대비가 되며, 그 정산가가 아직 없으면 None |
+| source·as_of·quality | 원천 `KIS`(현재가)+`KRX`(정산가), as_of = 사이클 시각, quality = 현재가 품질과 정산가(ok) 중 나쁜 것 |
+
+### 6.10 지수 일별 차트 (첫 화면 기간 버튼 — 2026-11-10)
+
+> 구현 `kbj/services/api/readers/market.py` `index_chart` → `GET /api/market/index-chart?code=&days=`. 새로 계산하는 값이 없다(일봉 종가 그대로).
+
+| 항목 | 정의 |
+|---|---|
+| 지수 | `market.intraday_indices` 의 코드(0001 코스피·1001 코스닥·2001 코스피200). 그 밖은 404 unknown_code |
+| 값 | 그날 이하 최근 `days` 거래일(기본 250 ≈ 1년, 20~500) 지수 일봉 종가. 일봉은 KRX 지수 일별(공백 뺀 이름 코드 — krx.daily 08:05)을 먼저, 없으면 KIS 업종 코드 일봉(시장폭 위험 `breadth_risk` 와 같은 순서). invalid·값 없음 행은 빼고 센다(notes) |
+| 화면 | 3개월 = 받은 것의 마지막 63거래일, 1년 = 전부(요청 하나 — 공개 사이트 파일도 지수마다 하나). '당일'은 이 경로가 아니라 첫 화면 묶음의 장중 10분 점(`flows/market-minute` 지수 겹침 — 같은 함수) |
+| source·as_of·quality | 원천 = 일봉 원천, as_of = 마지막 날 15:30 KST, quality = 쓴 행 중 가장 나쁜 것 |
 
 ## 7. 신고가 정의 (P3 — board 엔진, 신고가 3축 — ADR 0017)
 
@@ -549,6 +573,7 @@ ET monitor/kr 의 확정 식(`monitor/kr/README.md` '무엇을 되살렸나'): �
 
 | 항목 | 정의 |
 |---|---|
+| 장중 시장 누적(2026-11-10 — `GET /api/program/intraday?market=K\|Q`) | `prv_flows.program_market_intraday`(program.intraday 매분 — `FHPPG04600101` 의 가장 늦은 시각 행 = **그날 누적**, 원)을 분(ts)마다 일별 막대와 같은 칸으로: 순매수 = 전체(`whol`) 합계(`smtn`), 차익·비차익(합계)·위탁·자기(전체). 검산 ④ 는 분 묶음마다 다시 본다(실패 분은 값 없이 invalid — 세기만). 날 = 오늘 행이 있으면 오늘, 없으면 거슬러 5거래일 안 마지막으로 행이 있는 날. 장중(오늘 정규장 + 단일가 수집 끝 15:40 전)이면 quality 는 estimated 이상(KIS 잠정), 그 뒤는 행 품질 그대로. 마지막 분 = 그날 누적. 첫 화면 프로그램 칸은 장중 누적이 마감 일별(15:50)보다 **새 날**이면 장중 누적, 같거나 오래면 마감 일별(투자자 칸과 같은 규칙) |
 | 원천 | `FHPPG04600001`(일별)·`FHPPG04600101`(장중)·`HHPPG046600C1`(투자자별 당일)·`FHPPG04650101`(종목 장중)·`FHPPG04650201`(종목 일별) — 칸 이름은 공식 예제 기준, 단위·반영 시각 [실측 필요 #40·#41]. 저장은 **원** |
 | 일별 막대 | 순매수 = 전체(`whol`) 합계(`smtn`) 순매수 대금. 막대 위 상세 = 차익(`arbt`)·비차익(`nabt`) × 위탁(`entm`)·자기(`onsl`) |
 | 검산 ④ | 전체 = 차익 + 비차익, 위탁 + 자기 = 합계(대금·수량 각각, 허용 0 — 합성 원장) |
@@ -1297,7 +1322,8 @@ test_index_review_repo.py·tests/unit/engines/index_review/test_service.py·test
 
 ## 32. 첫 화면 묶음 `/api/home` (로그인 경로 — 공개 사이트도 내보낸다, 2026-11-10, ADR 0043)
 
-> **새로 계산하는 값은 §6.8 급등·급락뿐이다.** 나머지는 기존 읽기 함수의 값을 **고르고 자르기만** 한다(두 벌 금지 — 같은
+> **새로 계산하는 값은 §6.8 급등·급락, §6.2 시장별 N일선 위 비율, §6.9 선물 전일 대비 등락률뿐이다**(장중 프로그램 누적
+> §22·지수 일별 차트 §6.10 은 자기 경로가 있다). 나머지는 기존 읽기 함수의 값을 **고르고 자르기만** 한다(두 벌 금지 — 같은
 > 함수를 부른다, 구현 `kbj/services/api/readers/home.py`). 카드마다 봉투 칸(source·as_of·quality·notes)과 상태(`ok`·
 > `no_data` — 서버 안내 문구 `message`·`error` — 사유 코드)를 따로 싣고, 한 카드의 실패가 다른 카드를 멈추지 않는다(오류는 카드
 > notes·로그). **개인 데이터(관심종목·규칙 신호·관심종목 가산 중요도 importance·login_score·잠정실적 alerted)는 싣지 않는다** —
@@ -1305,17 +1331,17 @@ test_index_review_repo.py·tests/unit/engines/index_review/test_service.py·test
 
 | 카드(키 — 페이지) | 고르는 함수(같은 값을 주는 경로) | 고르기 |
 |---|---|---|
-| 지수 `indices`(1) | market/summary indices(0001·1001), flows/market-minute(kospi·kosdaq), flows/investors | 지수 타일 그대로(값·등락·live·20일 spark). 시장별 투자자 순매수: 1분 누적(KIS 장중 — 잠정이면 estimated)이 마감 일별보다 **새 날**이면 1분, 같거나 오래면 마감 일별(by_market `0001`·`KOSPI` / `1001`·`KOSDAQ`). 상승·보합·하락은 **코스피+코스닥 합산**(market/summary breadth — 시장별 값은 없다, notes) |
-| 코스피200 선물 `futures`(1) | gex/levels(가격·세션), flows/market-minute(k200_fut), market/summary(K200N 야간) | 가격 = GEX 현재가(엔진 F_ref, 없으면 전광판 근월물 — estimated). **전일 대비 등락률 칸 없음**(전일 정산가를 API 에 싣지 않는다 — notes). 야간이면 야간 타일(주간 마지막 값 대비). 세 값이 다 없으면 no_data |
+| 지수 `indices`(1) | market/summary indices(0001·1001), flows/market-minute(kospi·kosdaq), flows/investors, program/intraday·program/daily | 지수 타일 그대로(값·등락·live·20일 spark). 당일 10분 점 = flows/market-minute 의 지수 겹침(값이 있는 슬롯만 'HH:MM'·값 — 같은 응답). 시장별 투자자 순매수: 1분 누적(KIS 장중 — 잠정이면 estimated)이 마감 일별보다 **새 날**이면 1분, 같거나 오래면 마감 일별(by_market `0001`·`KOSPI` / `1001`·`KOSDAQ`). 상승·보합·하락: 두 시장 합산(market/summary breadth)과 **시장별**(§6.2 — 같은 원장·같은 함수). 프로그램 칸 = 프로그램 카드의 시장별 '지금' 값(§22) |
+| 코스피200 선물 `futures`(1) | gex/levels(가격·세션), flows/market-minute(k200_fut), market/summary(K200N 야간) | 가격 = GEX 현재가(엔진 F_ref, 없으면 전광판 근월물 — estimated). 전일 대비 등락률 = §6.9(전일 정산가가 없으면 None + notes). 야간이면 야간 타일(주간 마지막 값 대비). 세 값이 다 없으면 no_data |
 | 오늘의 공시 `filings`(5) | filings/feed(상장사 소식 — 피드 기본), filings/earnings | 날 = 오늘이 거래일이면 오늘, 아니면 직전 거래일. 건수 = 피드 n_total, 종류별 = 피드 by_kind(거르기 전). **상위 8** = 키워드 점수(kw_score) > 0 이고 정정 아닌 공시를 점수 → 처음 본 시각 → 접수번호 내림차순. 잠정실적: 그날 건수(**정정은 원 공시를 대체** — 같은 회사·기간·연결/별도는 마지막 접수번호만, 뺀 수는 notes), §14 갈래별 수(자회사 범위 제외 — 알림 규칙과 같다), **서프·쇼크 상위 4** = 우선순위 오름차순 → \|영업이익 YoY\|(없으면 매출) 큰 순 → 접수번호 늦은 순 |
-| 시장 폭 `breadth`(1) | market/summary breadth | 20일선 위 비율(§6.2 — 두 시장 합산, 마감 확정). **60·120일선·시장별은 없다**(notes) |
+| 시장 폭 `breadth`(1) | market/summary breadth + 시장별 N일선(§6.2) | 20일선 위 비율(§6.2 — 두 시장 합산, 마감 확정)과 코스피·코스닥 따로 20·60·120일선 위 비율(§6.2 — 원장 + 121일 일봉, 마감 확정 — 장중 값 없음) |
 | 거래대금 급증 `spike`(4) | flows/screen mode=spike period=1 | 그날 거래대금 ≥ 300억(`screen.min_avg_turnover_krw`)·배수 ≥ 1.5(`screen.spike_min`) 보통주를 배수 큰 순 10(§1·§3). `n_hits` = 통과 종목 수. 확정 원장이라 장중엔 직전 거래일(notes) |
 | 급등·급락 `movers`(4) | market/movers | §6.8 그대로(하한 3,000억) |
 | 외국인+기관 `foreign_inst`(4) | flows/intraday(장중 가집계), flows/screen mode=foreign·inst period=1 min_avg_turnover=0(마감) | 마감 원장 날이 오늘이면 마감, 아니면 오늘 장중 가집계가 있으면 그것(잠정), 없으면 마감(직전 거래일). 외국인·기관 **따로** 순매수 > 0 상위 5 |
 | 신고가 `newhigh`(2) | board/newhigh(종가 기준) | 라벨별 수(counts_close — 겹치지 않음), 52주 이상(hist·w52 — §6.2 신고가 수와 같은 정의) 종목을 시총 큰 순 8(보드 억원 → 원) |
 | GEX `gex`(3) | gex/levels, gex/briefing | Flip(pt)·Flip 거리(§G3.5 — levels `flip_distance`)·기대변동폭 ±1σ(§G3.8 달력 — levels `expected_move_calendar`), 국면(briefing regime·regime_label·headline). 섀도 값은 None |
 | 진단 `diag`(3) | diag/summary | 판정(label·score·top)·공포탐욕(score·band)·이벤트 주의 |
-| 프로그램 `program`(1) | program/daily market=K·Q | 시장마다 마지막 날(검산 ④ 실패면 그 앞날) 순매수·차익·비차익. **장중 누적은 없다**(장중 시장 프로그램 reader 없음 — 그날이 오늘보다 앞이면 notes) |
+| 프로그램 `program`(1) | program/daily market=K·Q, program/intraday market=K·Q | 시장마다 마감 일별 마지막 날(검산 ④ 실패면 그 앞날) 순매수·차익·비차익과 '지금' 값(§22 — 장중 누적이 마감 일별보다 새 날이면 장중 마지막 분 누적, 아니면 마감 일별). 둘 다 없으면 no_data |
 | ETF 순유입 `etf`(10) | etf/types period=5, etf/flows mode=in period=5 | 유형별 순유입 큰 순 전부(7개 이하), 종목 순유입 상위 3. 5일 = 페이지 10 기본 기간 |
 | 테마 강도 `themes`(9) | themes/strength period=1 | 상위 5(§31 — 페이지 9 기본 기간 1일) |
 | 수출 속보 `export`(7) | market/ribbon 수출 속보 칩과 같은 함수(§25) | 최신 구간의 발표 당시 YoY(비율 — 0.123 = +12.3%), 잠정 |

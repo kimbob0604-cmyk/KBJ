@@ -15,7 +15,7 @@ import threading
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
-from typing import Final, Protocol
+from typing import Final, Protocol, cast
 
 from kbj.config.fin import FinConfig, ReportsConfig
 from kbj.config.markets import CalendarEvents, MarketsConfig
@@ -180,6 +180,8 @@ class LedgerCache:
         self._max = max_entries
         self._items: dict[tuple[date, str], Ledger] = {}
         self._lock = threading.Lock()
+        self._memo: dict[tuple[str, date, str], object] = {}
+        self._memo_lock = threading.Lock()
 
     def get(self, repos: ApiRepos, end: date) -> Ledger:
         tok = self._token()
@@ -194,6 +196,20 @@ class LedgerCache:
                     self._items.pop(next(iter(self._items)))
                 self._items[key] = hit
             return hit
+
+    def memo[T](self, name: str, end: date, build: Callable[[], T]) -> T:
+        """원장과 같은 데이터 버전 안에서 한 번만 만드는 작은 계산 결과(예: 120일선 시장폭 — 긴 일봉
+        이력을 읽는다). 결과만 둔다(큰 입력은 두지 않는다). 토큰이 없으면 매번 만든다."""
+        tok = self._token()
+        if tok is None:
+            return build()
+        key = (name, end, tok)
+        with self._memo_lock:
+            if key not in self._memo:
+                if len(self._memo) >= self._max:
+                    self._memo.pop(next(iter(self._memo)))
+                self._memo[key] = build()
+            return cast(T, self._memo[key])
 
 
 @dataclass(frozen=True)
@@ -215,6 +231,12 @@ class ReadContext:
         if self.ledgers is None:
             return load_ledger(self.repos, end, LEDGER_WINDOW)
         return self.ledgers.get(self.repos, end)
+
+    def memo[T](self, name: str, end: date, build: Callable[[], T]) -> T:
+        """원장 데이터 버전 안에서 한 번만 만드는 계산(`LedgerCache.memo`). 캐시가 없으면 매번."""
+        if self.ledgers is None:
+            return build()
+        return self.ledgers.memo(name, end, build)
 
     def now_kst(self) -> datetime:
         n = self.now()
