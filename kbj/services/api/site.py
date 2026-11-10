@@ -47,6 +47,7 @@ __all__ = [
     "SiteRequest",
     "base_requests",
     "build_site",
+    "check_public",
     "codes_in",
     "expand_requests",
     "harvest",
@@ -481,6 +482,57 @@ def build_site(
     meta = {"set": which, "generated_at": now().isoformat(), "files": report.files}
     f.files["_meta.json"] = SiteFile("_meta.json", _dump(meta))
     return list(f.files.values()), report
+
+
+# 공개 파일 검사(올리기 전 — 걸리면 아무것도 쓰지 않는다). 개인 경로의 첫 마디, 칸 이름
+# (계좌·키·토큰 — 'session'·'session_open' 은 장 세션이라 걸지 않는다), 값(Bearer 머리·KIS 앱키
+# 낱말 — 환경 변수 이름만 든 안내 문구는 비밀이 아니라 걸지 않는다)
+PRIVATE_DIRS: Final = frozenset(
+    p.removeprefix("/api/").split("/")[0] for p in SKIP if p != "/api/stock/search"
+)
+SECRET_KEY_RE: Final = re.compile(
+    r"account|acct|cano|appkey|app_key|secret|token|passw|csrf|cookie", re.I
+)
+SECRET_VALUE_RE: Final = re.compile(r"\bBearer\s+\S|appsecret|appkey", re.I)
+_NAME_RE: Final = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_./@-]*\.json$")
+
+
+def _check_value(v: Any, where: str, out: list[str]) -> None:
+    if isinstance(v, dict):
+        for k, x in v.items():  # pyright: ignore[reportUnknownVariableType]
+            key = str(k)  # pyright: ignore[reportUnknownArgumentType]
+            if SECRET_KEY_RE.search(key):
+                out.append(f"{where}: 칸 이름 '{key}'")
+            if key in WATCH_KEYS and x is not False:
+                out.append(f"{where}: 관심종목 표시 '{key}'")
+            _check_value(x, where, out)
+    elif isinstance(v, list):
+        for x in v:  # pyright: ignore[reportUnknownVariableType]
+            _check_value(x, where, out)
+    elif isinstance(v, str) and SECRET_VALUE_RE.search(v):
+        out.append(f"{where}: 비밀 같은 값")
+
+
+def check_public(files: Iterable[SiteFile]) -> list[str]:
+    """공개 사이트에 올리면 안 되는 것 — 빈 목록이면 통과.
+
+    값은 문구에 싣지 않는다(위치·칸 이름만)."""
+    out: list[str] = []
+    for sf in files:
+        name = sf.name
+        if ".." in name or not _NAME_RE.match(name):
+            out.append(f"{name}: 파일 이름 형식")
+            continue
+        if name.split("/")[0].split("@")[0].removesuffix(".json") in PRIVATE_DIRS:
+            out.append(f"{name}: 개인 경로")
+            continue
+        try:
+            body = json.loads(sf.body)
+        except ValueError:
+            out.append(f"{name}: JSON 아님")
+            continue
+        _check_value(body, name, out)
+    return out
 
 
 def _sorted(files: Iterable[SiteFile]) -> Iterator[SiteFile]:

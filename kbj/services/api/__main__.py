@@ -162,7 +162,13 @@ def _site(args: argparse.Namespace, err: IO[str]) -> int:  # pragma: no cover �
     from kbj.core.time import utcnow
     from kbj.services.api.app import create_app
     from kbj.services.api.cache import PgDataVersionSource
-    from kbj.services.api.site import build_site, load_site_config, write_dir, write_tar
+    from kbj.services.api.site import (
+        build_site,
+        check_public,
+        load_site_config,
+        write_dir,
+        write_tar,
+    )
     from kbj.services.runtime.heartbeat import connect_redis
     from kbj.store.db import connect
     from kbj.store.repos import pg_repos
@@ -189,6 +195,14 @@ def _site(args: argparse.Namespace, err: IO[str]) -> int:  # pragma: no cover �
     files, report = build_site(
         app, args.set, config, utcnow, log=lambda m: print(m, file=err, flush=True)
     )
+    # 올리면 안 되는 것이 하나라도 있으면 아무것도 쓰지 않는다
+    # (표준 출력이 비고 종료 코드 3 → 호스트 kbj.sh site 는 올리지 않는다)
+    problems = check_public(files)
+    if problems:
+        print(f"site {args.set}: 공개 검사 실패 {len(problems)}건 — 쓰지 않는다", file=err)
+        for p in problems[:20]:
+            print(f"  {p}", file=err)
+        return 3
     if args.out:
         write_dir(files, Path(args.out))
     else:

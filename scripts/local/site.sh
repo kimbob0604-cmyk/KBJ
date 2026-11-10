@@ -62,7 +62,8 @@ export_set() {
     rm -f "$tarf"; kbj_die "site $set 내보내기 실패(위 줄)"
   fi
   mkdir -p "$dest"
-  tar -x -f "$tarf" -C "$dest" || { rm -f "$tarf"; kbj_die "tar 풀기 실패"; }
+  # -m: 파일 시각을 지금으로(tar 안의 시각은 0 — 같은 바이트를 내려고 고정했다)
+  tar -x -m -f "$tarf" -C "$dest" || { rm -f "$tarf"; kbj_die "tar 풀기 실패"; }
   rm -f "$tarf"
 }
 
@@ -89,7 +90,8 @@ make_set() {
 assemble() {
   [[ -d "$PUB/.git" ]] || kbj_die "작업 저장소가 없다 — $(kbj_cmd site) init"
   rsync -a --delete --exclude .git --exclude data "$KBJ_ROOT/web/dist-site/" "$PUB/"
-  rsync -a --delete "$DATA/" "$PUB/data/"
+  # --checksum: 내용으로 비교한다 — 크기·시각만 보면 크기가 같고 내용만 바뀐 파일을 건너뛴다(2026-11-10 실측)
+  rsync -a --checksum --delete "$DATA/" "$PUB/data/"
   touch "$PUB/.nojekyll"
 }
 
@@ -226,6 +228,10 @@ EOF
     status)
       if launchctl list 2>/dev/null | grep -q "$LABEL"; then kbj_say "자동 올리기: 켜짐"; else kbj_say "자동 올리기: 꺼짐"; fi
       kbj_say "주소: $(site_url)"
+      # 저장소 크기(GitHub 기준 KB) — 커밋 하나로 덮어써도 지운 파일은 GitHub 가 정리할 때까지 남는다. 1GB 가 Pages 한도
+      local kb
+      kb="$(gh api "repos/$SITE_REPO" --jq .size 2>/dev/null || true)"
+      [[ "$kb" =~ ^[0-9]+$ ]] && kbj_say "저장소 크기: $(( kb / 1024 )) MB (Pages 한도 1,024 MB)"
       [[ -f "$LAST_FULL" ]] && kbj_say "마지막 full: $(TZ=Asia/Seoul date -r "$(cat "$LAST_FULL")" '+%Y-%m-%d %H:%M')"
       [[ -f "$HOME/Library/Logs/$LABEL.log" ]] && { kbj_say "최근 로그:"; tail -5 "$HOME/Library/Logs/$LABEL.log" | sed 's/^/  /'; }
       return 0 ;;

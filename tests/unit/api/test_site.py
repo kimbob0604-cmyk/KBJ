@@ -18,6 +18,7 @@ from kbj.services.api.site import (
     SiteRequest,
     base_requests,
     build_site,
+    check_public,
     codes_in,
     expand_requests,
     harvest,
@@ -138,6 +139,37 @@ def test_full_site_has_pages_but_no_personal_data(world: World) -> None:
     assert defaults["stock/{code}/valuation"] == {"metric": "per"}
     assert not [k for k in defaults if f"/api/{k}".startswith(SKIP)]
     assert not [s for s in report.failed.values() if s >= 500]
+
+
+def _sf(name: str, body: object) -> SiteFile:
+    return SiteFile(name, json.dumps(body).encode())
+
+
+def test_check_public_blocks_personal_and_secret_like() -> None:
+    env = {"source": "KRX", "as_of": "2026-11-10T15:30:00+09:00", "quality": "ok", "data": {}}
+    ok = [
+        _sf("market/summary.json", {**env, "data": {"session": "regular", "session_open": True}}),
+        _sf("_meta.json", {"set": "full"}),
+        _sf("stock/search-index.json", {**env, "data": {"items": [{"is_watch": False}]}}),
+        _sf("board/us.json", {"code": "no_data", "message": "아직 없음 — KBJ_KRX_API_KEY 없음"}),
+    ]
+    assert check_public(ok) == []
+    bad = [
+        _sf("journal/trades.json", env),
+        _sf("watchlist.json", env),
+        _sf("market/ribbon.json", {**env, "data": {"items": [{"is_watch": True}]}}),
+        _sf("market/sectors.json", {**env, "data": {"app_key": "x"}}),
+        _sf("flows/intraday.json", {**env, "notes": ["Bearer abc.def"]}),
+        _sf("../x.json", env),
+    ]
+    got = check_public(bad)
+    assert len(got) == len(bad)
+    assert all("abc.def" not in g for g in got)  # 값은 문구에 싣지 않는다
+
+
+def test_full_site_passes_public_check(world: World) -> None:
+    files, _ = build_site(world.app(), "full", SiteConfig(max_stocks=2), world.clock)
+    assert check_public(files) == []
 
 
 def test_live_set_only_listed_keys(world: World) -> None:
