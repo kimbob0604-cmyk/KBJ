@@ -22,9 +22,10 @@
      `opinion_window_days` ~ 그날) → `prv_fin.invest_opinion`(증권사·날짜 키 — 다시 받아도 같은
      행).
    - 빈 응답(`KisEmpty`)은 '커버 없음' — 실패가 아니고 행을 만들지 않는다(0 을 사실로 쓰지
-     않는다). 일시 실패(5xx·한도·토큰·리미터 대기)는 그 키를 미완으로 두고 재시도가 남은 것을
-     받는다. 종목 고유 실패(형식·거절)는 사유를 세고 넘어가되 `PERMANENT_MAX_RATIO` 를 넘으면
-     키 실패.
+     않는다). 손익·지표 표가 모두 모자라 못 읽은 종목(`KisShortTable`)도 커버 없음이되 detail
+     `short_codes`·`short_sample` 에 따로 센다. 일시 실패(5xx·한도·토큰·리미터 대기)는 그 키를
+     미완으로 두고 재시도가 남은 것을 받는다. 종목 고유 실패(형식·거절)는 사유를 세고 넘어가되
+     `PERMANENT_MAX_RATIO` 를 넘으면 키 실패.
 3. 파생(유니버스 종목마다 — 순수 엔진 `kbj.engines.consensus`): 목표가 컨센서스(그날 — 증권사
    0 이면 행 없음)·리비전(FY1·FY2 × 매출·영업익·순익·EPS + 목표가 평균 × 7·30일 — 목표가
    기준선은 의견 이력으로 그 날짜의 컨센서스를 다시 계산). `prv_fin.target_consensus`·
@@ -60,6 +61,7 @@ from kbj.data.limits import load_limits
 from kbj.data.private.kis.consensus import (
     TR_ESTIMATE,
     TR_OPINION,
+    KisShortTable,
     params_estimate,
     params_opinion,
     parse_estimate,
@@ -224,11 +226,14 @@ class _Tally:
 
     total: int
     empty: list[str] = field(default_factory=list[str])
+    short: dict[str, str] = field(default_factory=dict[str, str])  # 표가 모자라 못 읽음(커버 없음)
     transient: dict[str, str] = field(default_factory=dict[str, str])
     permanent: dict[str, str] = field(default_factory=dict[str, str])
 
     def fail(self, code: str, e: BaseException) -> None:
-        if isinstance(e, KisEmpty):
+        if isinstance(e, KisShortTable):
+            self.short[code] = reason(e)
+        elif isinstance(e, KisEmpty):
             self.empty.append(code)
         elif _transient(e):
             self.transient[code] = reason(e)
@@ -240,6 +245,9 @@ class _Tally:
         if self.empty:
             d["empty_codes"] = len(self.empty)
             d["empty_sample"] = sorted(self.empty)[:SAMPLE_MAX]
+        if self.short:
+            d["short_codes"] = len(self.short)
+            d["short_sample"] = dict(sorted(self.short.items())[:SAMPLE_MAX])
         if self.permanent:
             d["skipped_codes"] = len(self.permanent)
             d["skipped_sample"] = dict(sorted(self.permanent.items())[:SAMPLE_MAX])

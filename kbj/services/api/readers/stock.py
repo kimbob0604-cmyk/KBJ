@@ -110,7 +110,12 @@ SMA_WINDOWS: Final[tuple[int, ...]] = (20, 60, 120)  # D-P4-21
 MARKET_ETA: Final = "krx.daily 08:05 · market.close_collect 15:35"
 CORP_CODE_ETA: Final = "filings.corp_code 03:05(DART 고유번호 표)"
 SHARE_CLASS_ETA: Final = "fin.valuation_band 08:50(우선주 → 보통주 매핑 share_class)"
-CONSENSUS_ETA: Final = "consensus.snapshot 16:00(실데이터 확인 전 꺼짐 — #29)"
+CONSENSUS_ETA: Final = "consensus.snapshot 16:00"
+# KIS 종목추정실적이 빈 종목(2026-11-10 맥: 시총 상위 305 중 178 — 삼성전자·SK하이닉스 포함,
+# 파라미터 표기를 바꿔도 빈 응답)도 투자의견·목표가는 온다 — 추정 표만 비우고 그것은 보여 준다
+NO_ESTIMATE_NOTE: Final = (
+    "KIS 추정실적 없음 — KIS 가 이 종목의 추정 손익을 주지 않는다(목표가·의견만)"
+)
 VALUATION_ETA: Final = "fin.valuation_band 08:50"
 FIN_ETA: Final = "fin.quarterly(30분 — 07:00~21:30)"
 # D-P4-10 — KIS 교체로 잃은 것(화면 '출처 없음 — KIS 교체로 잃음' 줄, metrics §10)
@@ -741,8 +746,9 @@ def _fy(r: ConsensusRow) -> FyEstimateView:
 
 
 def stock_consensus(ctx: ReadContext, code: str) -> Envelope[Consensus]:
-    """컨센서스(§4.7) — 우선주는 보통주 것. 수집 대상이 아니면 200 적용 불가, 대상인데 스냅이
-    없으면 404 no_data(KIS 빈 응답·수집 꺼짐 — 0 을 사실로 쓰지 않는다)."""
+    """컨센서스(§4.7) — 우선주는 보통주 것. 수집 대상이 아니면 200 적용 불가. 추정 스냅이 없어도
+    (KIS 추정실적 빈 종목 — 삼성전자 등) 투자의견·목표가가 있으면 200(추정 표·NTM 은 비운다 —
+    0 을 사실로 쓰지 않는다), 셋 다 없으면 404 no_data."""
     lk = Lookup(ctx)
     ref = lk.ref(code)
     common = ref.need_common()
@@ -771,19 +777,18 @@ def stock_consensus(ctx: ReadContext, code: str) -> Envelope[Consensus]:
             notes=[why, LOST_NOTE],
             generated_at=ctx.now(),
         )
-    if not snaps:
-        raise NoData(f"아직 없음 — {CONSENSUS_ETA}")
-    rows = latest_snapshot(snaps, t)
-    if not rows:
-        raise NoData(f"아직 없음 — {CONSENSUS_ETA}")
-    snap_date = rows[0].snap_date
-    n = ntm(snaps, t)
+    rows = latest_snapshot(snaps, t) if snaps else []
+    snap_date = rows[0].snap_date if rows else None
+    base = snap_date or t  # 의견 창·목표가의 기준 날(추정 스냅이 없으면 오늘)
+    n = ntm(snaps, t) if rows else None
     window = cfg.opinion_window_days
-    ops = ctx.repos.consensus.opinions(common, snap_date - timedelta(days=window), t)
+    ops = ctx.repos.consensus.opinions(common, base - timedelta(days=window), t)
     tgt = ctx.repos.consensus.target(common)
-    if tgt is None or tgt.as_of < snap_date:
+    if not rows and not ops and tgt is None:
+        raise NoData(f"아직 없음 — {CONSENSUS_ETA}")
+    if tgt is None or tgt.as_of < base:
         tgt = (
-            target_consensus(ops, snap_date, window_days=window, min_brokers_ok=cfg.min_brokers_ok)
+            target_consensus(ops, base, window_days=window, min_brokers_ok=cfg.min_brokers_ok)
             or tgt
         )
     close, _ = lk.close(common)
@@ -801,10 +806,10 @@ def stock_consensus(ctx: ReadContext, code: str) -> Envelope[Consensus]:
             upside_pct=_finite(up),
             quality=tgt.quality,
         )
-    dist = opinion_counts(ops, snap_date, window_days=window)
+    dist = opinion_counts(ops, base, window_days=window)
     revs = ctx.repos.consensus.revisions(common)
     recent = sorted(ops, key=lambda o: (o.opinion_date, o.broker), reverse=True)[:20]
-    stale = snap_date < ctx.cal.prev_trading_day(t)
+    stale = snap_date is not None and snap_date < ctx.cal.prev_trading_day(t)
     data = Consensus(
         code=common,
         label=CONSENSUS_LABEL,
@@ -864,18 +869,27 @@ def stock_consensus(ctx: ReadContext, code: str) -> Envelope[Consensus]:
         lost=list(LOST_BY_KIS),
     )
     notes = [LABEL_NOTE, LOST_NOTE]
+    if not rows:
+        notes.append(NO_ESTIMATE_NOTE)
     if not member:
         notes.append("지금은 수집 대상이 아니다 — 마지막 스냅까지")
-    if stale:
+    if stale and snap_date is not None:
         notes.append(f"스냅이 오래됐다 — 마지막 {snap_date.isoformat()}(consensus.snapshot 16:00)")
     if code != common:
         notes.append(f"우선주 — 보통주({common}) 컨센서스")
     qs: list[Quality | None] = [r.quality for r in rows]
     qs += [target.quality if target is not None else None, Quality.STALE if stale else None]
+    if snap_date is not None:
+        src, as_of_day = _parts(r.source for r in rows), snap_date
+    else:  # 추정 없이 의견·목표가만 — 그 출처·날짜가 기준(위에서 둘 다 없으면 404)
+        src = _parts([*(o.source for o in ops), *([tgt.source] if tgt is not None else [])])
+        as_of_day = max([o.opinion_date for o in ops] + ([tgt.as_of] if tgt is not None else []))
+        if target is None:
+            qs.append(Quality.ESTIMATED)  # 의견만 — 목표가 컨센서스도 없다
     return envelope(
         data,
-        source=_parts(r.source for r in rows),
-        as_of=close_as_of(snap_date),
+        source=src,
+        as_of=close_as_of(as_of_day),
         quality=worst(qs),
         notes=notes,
         generated_at=ctx.now(),

@@ -32,8 +32,13 @@
 **백필**(`python -m kbj.services.collectors.customs backfill --from YYYY-MM --to YYYY-MM`)
 - 등록부 작업이 아니다(스케줄러 backfill 은 거래일 단위). 12개월 창(15100475 기간 한도)으로
   데이터셋마다 부르고, 창 안의 달이 그 표에 이미 다 있으면 건너뛴다(선점 키 = 창의 달들 — 다음 날
-  다시 돌리면 이어서 받는다). 부르기 전에 그 창의 예상 호출 수를 더해 데이터셋 하루 한도
-  (`limits.yaml datago.daily_cap_per_dataset`) × `backfill.stop_at_ratio` 를 넘으면 그 데이터셋은
+  다시 돌리면 이어서 받는다). 기본은 월간 4종, `--datasets` 에 10일 잠정치 4종(15157908·941·901·
+  909)을 주면 그것도 받는다(창마다 1건 — 그 달 1~말일 구간 전체 열이 있으면 받은 달). 10일 폴링은
+  이번 달·지난달만 보므로(`tenday.lookback_months`) 전년 같은 구간(수출 모멘텀 YoY 의 분모 — 진단
+  §D3)은 이 백필로만 채운다(2026-11-10 점검: 첫 수집 2026-10-21 이 2026-08~ 만 받아 YoY 가 없었다).
+  백필한 칸의 '처음 본 시각'은 받은 시각이다 — 진단은 공표 일정으로 본다(§D0-PIT).
+- 부르기 전에 그 창의 예상 호출 수를 더해 데이터셋 하루 한도(`limits.yaml
+  datago.daily_cap_per_dataset`) × `backfill.stop_at_ratio` 를 넘으면 그 데이터셋은
   멈춘다(다른 데이터셋은 계속). 포털 게이트웨이가 한도 초과로 끊어도(`DatagoQuotaExceeded`) 같은
   멈춤(종료 0 — 내일 다시). 호출·형식 오류(`FetchError`·`CustomsFormatError`·리미터 대기 초과)는
   그 데이터셋만 **실패**로 멈추고(받은 창은 남는다 — 다른 데이터셋은 계속) 사유를 한 줄로 내며
@@ -110,8 +115,10 @@ from kbj.services.scheduler.handlers import JobContext, JobResult
 from kbj.store.repos.trade import PgTradeRepo, TradeRepo
 
 __all__ = [
+    "BACKFILL_ORDER",
     "MONTHLY_ORDER",
     "SOURCE",
+    "TEN_DAY_ORDER",
     "BackfillReport",
     "backfill",
     "chapters_of",
@@ -130,6 +137,8 @@ THOUSAND: Final = Decimal(1000)
 KIND_OF: Final[Mapping[str, TenDayKind]] = {v: k for k, v in TEN_DAY.items()}
 # 같은 실행에서 키를 처리하는 순서 — 15100475 는 같은 달 15101612 의 국가 목록을 쓴다
 MONTHLY_ORDER: Final[tuple[str, ...]] = (COUNTRIES, ITEMS, ITEM_COUNTRY, SIGUNGU)
+TEN_DAY_ORDER: Final[tuple[str, ...]] = tuple(TEN_DAY[k] for k in TEN_DAY)
+BACKFILL_ORDER: Final[tuple[str, ...]] = (*MONTHLY_ORDER, *TEN_DAY_ORDER)
 ALL_CHAPTERS: Final[tuple[str, ...]] = tuple(f"{i:02d}" for i in range(1, 98))
 WINDOW_MONTHS: Final = 12  # 15100475 기간 한도(ITEM_COUNTRY_MAX_MONTHS)와 같다
 
@@ -692,7 +701,7 @@ class BackfillReport:
 
     def lines(self) -> list[str]:
         out: list[str] = []
-        for ds in MONTHLY_ORDER:
+        for ds in BACKFILL_ORDER:
             if not any(ds in m for m in (self.done, self.skipped, self.stopped, self.failed)):
                 continue  # 고르지 않은 데이터셋(--datasets)은 줄을 내지 않는다
             d = len(self.done.get(ds, []))
@@ -718,9 +727,12 @@ def _windows(start: str, end: str) -> list[tuple[str, str]]:
 
 
 def _present(repo: TradeRepo, ds: str, start: str, end: str) -> set[str]:
-    """그 표에 이미 있는 달(`YYYYMM`)."""
+    """그 표에 이미 있는 달(`YYYYMM`). 10일 잠정치는 그 달 1~말일 구간(seg 3) 전체 열이 있는 달."""
     lo, hi = ym_dash(start), ym_dash(end)
     rows: Sequence[Any]
+    if ds in KIND_OF:
+        ten = repo.ten_day(KIND_OF[ds], lo, hi)
+        return {ym_flat(r.ym) for r in ten if r.seg == 3 and r.col_no == 0}
     if ds == COUNTRIES:
         rows = repo.country_monthly(ym_from=lo, ym_to=hi)
     elif ds == ITEMS:
@@ -760,6 +772,26 @@ def _sigungu_present(repo: TradeRepo, start: str, end: str) -> set[str]:
     return {r.hs6 for r in repo.sigungu_monthly(ym_from=ym_dash(start), ym_to=ym_dash(end))}
 
 
+def _write_ten_day(
+    repo: TradeRepo,
+    client: CustomsClient,
+    kind: TenDayKind,
+    lo: str,
+    hi: str,
+    at: datetime,
+    loaded_by: str,
+) -> int:
+    """10일 잠정치 한 창(`YYYYMM` 양 끝) — 폴링(`_tenday_one`)과 같은 쓰기(새·바뀐 칸만·열 이름
+    이력)."""
+    raw = client.ten_day(kind, lo, hi)
+    rows = ten_day_rows(raw, repo.ten_day(kind, ym_dash(lo), ym_dash(hi)), at)
+    cols = _column_rows(kind, raw, repo.ten_day_columns(kind), at)
+    n = repo.upsert_ten_day_columns(cols, loaded_by=loaded_by) if cols else 0
+    if rows:
+        n += repo.upsert_ten_day(rows, loaded_by=loaded_by, received_at=at)
+    return n
+
+
 def backfill(
     *,
     repo: TradeRepo,
@@ -776,7 +808,8 @@ def backfill(
     datasets: Sequence[str] = MONTHLY_ORDER,
     loaded_by: str = "trade.customs_backfill",
 ) -> BackfillReport:
-    """`from_ym`~`to_ym`(`YYYY-MM`) 월간 4종을 12개월 창으로 받는다(머리말 '백필').
+    """`from_ym`~`to_ym`(`YYYY-MM`) 월간 4종(+ 고르면 10일 잠정치 4종)을 12개월 창으로 받는다
+    (머리말 '백필').
 
     `used(데이터셋)` = 그날 이미 쓴 호출 수(Redis 예산 카운터), `cap` = 데이터셋 하루 한도.
     """
@@ -794,7 +827,7 @@ def backfill(
         lambda: HsChapters(version=1, chapters={c: c for c in chapters}),
     )
     rep = BackfillReport()
-    for ds in [x for x in MONTHLY_ORDER if x in datasets]:
+    for ds in [x for x in BACKFILL_ORDER if x in datasets]:
         for lo, hi in _windows(start, end):
             label = f"{ym_dash(lo)}~{ym_dash(hi)}"
             want = set(_months(lo, hi))
@@ -821,7 +854,7 @@ def backfill(
                 ITEMS: 1 if cfg.monthly.items_mode == "all" else len(chapters),
                 ITEM_COUNTRY: len(countries),
                 SIGUNGU: len(_sidos(lo, hi)) * len(todo),
-            }[ds]
+            }.get(ds, 1)  # 10일 잠정치 — 창마다 1건
             if used(ds) + est > limit:
                 rep.stopped[ds] = (
                     f"{label} 앞에서 멈춤 — 하루 한도 {cap} × {cfg.backfill.stop_at_ratio} "
@@ -830,7 +863,9 @@ def backfill(
                 break
             at = now()
             try:
-                if ds == COUNTRIES:
+                if ds in KIND_OF:
+                    n = _write_ten_day(repo, client, KIND_OF[ds], lo, hi, at, loaded_by)
+                elif ds == COUNTRIES:
                     crow = _country_rows(client.countries(lo, hi), want, at)
                     n = repo.upsert_country_monthly(crow, loaded_by=loaded_by, received_at=at)
                 elif ds == ITEMS:
@@ -871,7 +906,7 @@ def _production(settings: Any) -> dict[str, Any]:  # pragma: no cover — 운영
     if cap is None:
         raise RuntimeError("limits.yaml datago.daily_cap_per_dataset 가 없다")
     t = DatagoTransport.for_datasets(settings.datago_key, redis, DATASET_IDS)
-    budgets = {ds: DailyBudget(redis, "datago", cap, scope=ds) for ds in MONTHLY_ORDER}
+    budgets = {ds: DailyBudget(redis, "datago", cap, scope=ds) for ds in BACKFILL_ORDER}
     from kbj.core.time import utcnow
 
     return {
@@ -893,10 +928,12 @@ def main(
     o: IO[str] = out if out is not None else sys.stdout
     p = argparse.ArgumentParser(prog="python -m kbj.services.collectors.customs")
     sub = p.add_subparsers(dest="cmd", required=True)
-    b = sub.add_parser("backfill", help="월간 4종 백필(12개월 창, 하루 한도 90% 에서 멈춤)")
+    b = sub.add_parser(
+        "backfill", help="월간 4종(+ 고르면 10일 잠정치 4종) 백필(12개월 창, 한도 90% 에서 멈춤)"
+    )
     b.add_argument("--from", dest="from_ym", required=True, help="YYYY-MM")
     b.add_argument("--to", dest="to_ym", required=True, help="YYYY-MM")
-    b.add_argument("--datasets", nargs="+", choices=MONTHLY_ORDER, default=list(MONTHLY_ORDER))
+    b.add_argument("--datasets", nargs="+", choices=BACKFILL_ORDER, default=list(MONTHLY_ORDER))
     args = p.parse_args(argv)
     from kbj.config.settings import Settings
 

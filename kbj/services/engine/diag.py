@@ -160,6 +160,10 @@ FUT_FOREIGN: Final = "frgn"  # investor_flow 외국인(GX 표기)
 FUT_UNIT: Final = Decimal(1_000_000)  # investor_flow 대금 백만원 → 원
 LEDGER_N: Final = 25
 DAY_CLOSE: Final = time(16, 0)
+# K200 선물 외국인 마감 행으로 볼 마지막 기록 시각(KST) — 정규장 15:45 마감, 기록은 15:40 까지
+# (2026-11-10 맥: 17거래일 중 14일이 15:37~15:40). 그보다 이른 것은 장중 누적(수집이 끊긴 날 —
+# 11-09 11:46·11-05 15:16·10-26 15:26)이라 마감 값으로 단정하지 않는다(estimated + 사유) [확인 필요]
+FUT_CLOSE_MIN: Final = time(15, 30)
 HISTORY_DAYS: Final = 400
 
 
@@ -300,6 +304,7 @@ def _foreign(repos: Repos, day: date, n: int) -> TodayValue:
         return TodayValue(None, None, "", f"외국인 현물 {n}일 없음")
     spot = sum((per_day[d] for d in days), Decimal(0))
     fut = Decimal(0)
+    partial: list[str] = []
     for d in days:
         upto = datetime.combine(d, DAY_CLOSE, tzinfo=KST)
         recs = [
@@ -314,7 +319,12 @@ def _foreign(repos: Repos, day: date, n: int) -> TodayValue:
         last = max(recs, key=lambda r: r.ts)
         fut += Decimal(last.net_value or 0) * FUT_UNIT
         qs.append(Quality(last.quality))
-    return TodayValue(spot + fut, worst(qs), "KIS")
+        at = last.ts.astimezone(KST)
+        if at.time() < FUT_CLOSE_MIN:
+            partial.append(f"{d:%m-%d} {at:%H:%M}")
+            qs.append(Quality.ESTIMATED)
+    why = f"K200 선물 외국인 마감 전 값(장중 누적): {', '.join(partial)}" if partial else None
+    return TodayValue(spot + fut, worst(qs), "KIS", why)
 
 
 def _history(rows: Sequence[DiagIndicatorRow]) -> list[Obs]:

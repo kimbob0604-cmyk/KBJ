@@ -609,3 +609,35 @@ def test_search(c: TestClient) -> None:
     assert exact["code"] == "994010" and exact["is_watch"] is True
     limited = c.get("/api/stock/search?q=모의&limit=3").json()["data"]
     assert len(limited["items"]) == 3 and limited["n_total"] == 20
+
+
+@pytest.fixture(scope="module")
+def no_estimates() -> P4ApiWorld:
+    """KIS 추정실적이 빈 종목(2026-11-10 맥: 시총 상위 305 중 178 — 삼성전자 포함) — 994010 은 추정
+    스냅만 없고 의견·목표가는 있다, 994020 은 셋 다 없다."""
+
+    def change(repos: MemoryRepos) -> None:
+        repos.consensus.snapshot_t.remove(lambda r: r.code in ("994010", "994020"))
+        repos.consensus.opinion_t.remove(lambda r: r.code == "994020")
+        repos.consensus.target_t.remove(lambda r: r.code == "994020")
+
+    return build_p4_api_world(valuation=False, transform=change)
+
+
+def test_consensus_without_estimates_still_shows_opinions(no_estimates: P4ApiWorld) -> None:
+    """추정 스냅이 없어도 의견·목표가가 있으면 200 — 추정 표·NTM 은 비우고 그 사실을 적는다
+    (예전: 404 '아직 없음' 이라 삼성전자 컨센서스 패널이 통째로 비었다)."""
+    c = no_estimates.authed()
+    r = c.get("/api/stock/994010/consensus")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    Envelope[Consensus].model_validate(body)
+    data = body["data"]
+    assert data["applicable"] is True and data["snap_date"] is None
+    assert data["fy"] == [] and data["ntm"] is None
+    assert data["target"] is not None and data["target"]["n_brokers"] >= 1
+    assert data["opinions"]["n_brokers"] >= 1 and data["recent"]
+    assert any("KIS 추정실적 없음" in n for n in body["notes"]), body["notes"]
+    assert body["source"] == "KIS" and body["quality"] in {q.value for q in Quality}
+    none = c.get("/api/stock/994020/consensus")
+    assert none.status_code == 404 and none.json()["message"].startswith("아직 없음")

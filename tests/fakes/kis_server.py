@@ -57,6 +57,7 @@ import zipfile
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from decimal import Decimal
 from pathlib import Path
 from typing import Any, Final, Protocol
 from zoneinfo import ZoneInfo
@@ -80,6 +81,7 @@ from kbj.data.private.kis.consensus import (
     OUT_PL,
     PERIOD_FIELD,
     PL_ROWS,
+    RATIO_SCALE,
     TR_ESTIMATE,
     TR_OPINION,
 )
@@ -361,17 +363,25 @@ def _plain(x: float | None) -> str:
     return str(int(x)) if float(x).is_integer() else f"{x:.2f}"
 
 
+def _scaled(x: float | None) -> str:
+    """금액 아닌 칸(EPS·비율) — KIS 처럼 `RATIO_SCALE` 배(소수 한 자리 이상 문자열)."""
+    if x is None:
+        return ""
+    return f"{Decimal(str(x)) * RATIO_SCALE:f}"
+
+
 def _growth(cur: int | None, prev: int | None) -> str:
     if cur is None or prev is None or prev == 0:
         return ""
-    return f"{(cur - prev) / abs(prev) * 100:.2f}"
+    return f"{(cur - prev) / abs(prev) * 100 * float(RATIO_SCALE):.2f}"
 
 
 def estimate_body(code: str, rows: Sequence[ConsensusRow], estdate: date | None) -> dict[str, Any]:
     """`ConsensusRow`(한 스냅) → 종목추정실적 TR 출력(파서 상수 표 모양 — [확인 필요 #29]).
 
     행이 없으면 빈 출력(커버 없음 — 파서가 KisEmpty). 열은 결산년월 순 최대 5개, 추정 열은 'E'
-    표지. 금액은 억원(나누어떨어져야 한다 — 세계는 억원 단위로 맞춘 원), EPS 는 원."""
+    표지. 금액은 억원(나누어떨어져야 한다 — 세계는 억원 단위로 맞춘 원), EPS·증감율은 원·% 의
+    `RATIO_SCALE` 배(KIS 실측 모양)."""
     cols = sorted(rows, key=lambda r: r.fiscal_ym)[: len(COLUMNS)]
     if not cols:
         return {**OK_MSG, OUT_HEAD: {}, OUT_PL: [], OUT_IND: [], OUT_PERIODS: []}
@@ -395,7 +405,7 @@ def estimate_body(code: str, rows: Sequence[ConsensusRow], estdate: date | None)
             if name == "ebitda":
                 line[col] = _amount(r.ebitda)
             elif name == "eps":
-                line[col] = _plain(r.eps)
+                line[col] = _scaled(r.eps)
             else:
                 line[col] = ""  # 비율 칸은 싣지 않는다(계산에 쓰지 않는 칸 — extra)
         ind.append(line)
