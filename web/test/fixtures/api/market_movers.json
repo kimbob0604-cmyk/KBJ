@@ -1,0 +1,232 @@
+{
+  "source": "KIS",
+  "as_of": "2026-09-15T15:30:00+09:00",
+  "quality": "ok",
+  "notes": [
+    "NXT 미포함(KRX 구분만 — D-P3-9)",
+    "시총 3,000억 이상 보통주 — 1일 등락률",
+    "관리·정지 상태를 모르는 1종목은 빼지 못했다"
+  ],
+  "generated_at": "2026-09-15T18:00:00+09:00",
+  "data": {
+    "date": "2026-09-15",
+    "min_mktcap": 300000000000,
+    "n_eligible": 26,
+    "n_no_mktcap": 0,
+    "n_no_chg": 0,
+    "n_status_unknown": 1,
+    "up": [
+      {
+        "rank": 1,
+        "code": "Q00012",
+        "name": "합성12",
+        "market": "KOSPI",
+        "close": 23704.0,
+        "chg_pct": 2.8506964030025506,
+        "mktcap": 4669688000000,
+        "source": "KIS",
+        "quality": "ok"
+      },
+      {
+        "rank": 2,
+        "code": "Q00020",
+        "name": "합성20",
+        "market": "KOSPI",
+        "close": 53624.0,
+        "chg_pct": 2.2851257009880666,
+        "mktcap": 1876840000000,
+        "source": "KIS",
+        "quality": "ok"
+      },
+      {
+        "rank": 3,
+        "code": "Q00022",
+        "name": "합성22",
+        "market": "KOSPI",
+        "close": 43953.0,
+        "chg_pct": 2.064369310793235,
+        "mktcap": 2065791000000,
+        "source": "KIS",
+        "quality": "ok"
+      },
+      {
+        "rank": 4,
+        "code": "Q00005",
+        "name": "합성05",
+        "market": "KOSDAQ",
+        "close": 78548.0,
+        "chg_pct": 1.7751172613957422,
+        "mktcap": 11703652000000,
+        "source": "KIS",
+        "quality": "ok"
+      },
+      {
+        "rank": 5,
+        "code": "Q00035",
+        "name": "합성35",
+        "market": "KOSDAQ",
+        "close": 48711.0,
+        "chg_pct": 1.591307249520324,
+        "mktcap": 3507192000000,
+        "source": "KIS",
+        "quality": "ok"
+      },
+      {
+        "rank": 6,
+        "code": "Q00010",
+        "name": "합성10",
+        "market": "KOSPI",
+        "close": 11652.0,
+        "chg_pct": 1.4894172981447573,
+        "mktcap": 1549716000000,
+        "source": "KIS",
+        "quality": "ok"
+      },
+      {
+        "rank": 7,
+        "code": "Q00019",
+        "name": "합성19",
+        "market": "KOSDAQ",
+        "close": 127634.0,
+        "chg_pct": 1.2703022224338056,
+        "mktcap": 24122826000000,
+        "source": "KIS",
+        "quality": "ok"
+      },
+      {
+        "rank": 8,
+        "code": "Q00024",
+        "name": "합성24",
+        "market": "KOSPI",
+        "close": 194893.0,
+        "chg_pct": 1.0504648280939666,
+        "mktcap": 6431469000000,
+        "source": "KIS",
+        "quality": "ok"
+      },
+      {
+        "rank": 9,
+        "code": "Q00032",
+        "name": "합성32",
+        "market": "KOSPI",
+        "close": 161663.0,
+        "chg_pct": 0.4779544296244831,
+        "mktcap": 808315000000,
+        "source": "KIS",
+        "quality": "ok"
+      }
+    ],
+    "down": [
+      {
+        "rank": 1,
+        "code": "Q00001",
+        "name": "합성01",
+        "market": "KOSDAQ",
+        "close": 183374.0,
+        "chg_pct": -2.7183312289785544,
+        "mktcap": 14486546000000,
+        "source": "KIS",
+        "quality": "ok"
+      },
+      {
+        "rank": 2,
+        "code": "Q00034",
+        "name": "합성34",
+        "market": "KOSPI",
+        "close": 62520.0,
+        "chg_pct": -2.4953212726138485,
+        "mktcap": 5689320000000,
+        "source": "KIS",
+        "quality": "ok"
+      },
+      {
+        "rank": 3,
+        "code": "Q00018",
+        "name": "합성18",
+        "market": "KOSPI",
+        "close": 133555.0,
+        "chg_pct": -2.491822907540442,
+        "mktcap": 7078415000000,
+        "source": "KIS",
+        "quality": "ok"
+      },
+      {
+        "rank": 4,
+        "code": "Q00014",
+        "name": "합성14",
+        "market": "KOSPI",
+        "close": 130031.0,
+        "chg_pct": -2.4743118577964407,
+        "mktcap": 4030961000000,
+        "source": "KIS",
+        "quality": "ok"
+      },
+      {
+        "rank": 5,
+        "code": "Q00029",
+        "name": "합성29",
+        "market": "KOSDAQ",
+        "close": 55659.0,
+        "chg_pct": -1.9362909193417654,
+        "mktcap": 8794122000000,
+        "source": "KIS",
+        "quality": "ok"
+      },
+      {
+        "rank": 6,
+        "code": "Q00025",
+        "name": "합성25",
+        "market": "KOSDAQ",
+        "close": 98768.0,
+        "chg_pct": -1.929282799296994,
+        "mktcap": 8395280000000,
+        "source": "KIS",
+        "quality": "ok"
+      },
+      {
+        "rank": 7,
+        "code": "Q00000",
+        "name": "합성00",
+        "market": "KOSPI",
+        "close": 41516.0,
+        "chg_pct": -1.7349523065634642,
+        "mktcap": 996384000000,
+        "source": "KIS",
+        "quality": "ok"
+      },
+      {
+        "rank": 8,
+        "code": "Q00028",
+        "name": "합성28",
+        "market": "KOSPI",
+        "close": 108506.0,
+        "chg_pct": -1.622905635743821,
+        "mktcap": 10525082000000,
+        "source": "KIS",
+        "quality": "ok"
+      },
+      {
+        "rank": 9,
+        "code": "Q00004",
+        "name": "합성04",
+        "market": "KOSPI",
+        "close": 76869.0,
+        "chg_pct": -1.5837451668245683,
+        "mktcap": 14220765000000,
+        "source": "KIS",
+        "quality": "ok"
+      },
+      {
+        "rank": 10,
+        "code": "Q00036",
+        "name": "합성36",
+        "market": "KOSPI",
+        "close": 148186.0,
+        "chg_pct": -1.1401314253310701,
+        "mktcap": 28748084000000,
+        "source": "KIS",
+        "quality": "ok"
+      }
+    ]
+  }
+}

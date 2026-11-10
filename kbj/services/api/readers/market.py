@@ -12,6 +12,9 @@
 - GEX Flip 거리 칩(P7 OUT — metrics §G3.5): `prv_gex.levels` 범위 all 마지막 사이클(엔진이
   저장한 값 — DB 만, 계약 ⑩). visible 이 아니거나 행이 없으면 '준비 중(P7)' 그대로
   (`kbj.engines.market.ribbon`).
+- 급등·급락(metrics §6.8 — 2026-11-10 첫 화면): 원장 마지막 날(= 마지막 마감 스냅)의 시총 하한 이상
+  보통주 등락률 상위·하위(`kbj.engines.market.movers`). 장중 전 종목 시세는 받지 않아 장중에는 직전
+  거래일 값이다(notes).
 """
 
 from __future__ import annotations
@@ -37,6 +40,7 @@ from kbj.engines.macro.ribbon import (
     kr_vs_global_chip,
 )
 from kbj.engines.market.breadth import market_breadth
+from kbj.engines.market.movers import Mover, top_movers
 from kbj.engines.market.ribbon import Chip as EngineChip
 from kbj.engines.market.ribbon import (
     RibbonInputs,
@@ -60,7 +64,9 @@ from kbj.services.api.models.market import (
     Chip,
     DayValue,
     IndexTile,
+    MarketMovers,
     MarketSummary,
+    MoverRow,
     Ribbon,
     SectorCell,
     SectorHeat,
@@ -78,7 +84,15 @@ from kbj.services.api.readers._common import (
 )
 from kbj.services.api.readers.flows import market_totals
 
-__all__ = ["market_ribbon", "market_sectors", "market_summary"]
+__all__ = [
+    "MOVERS_NO_DATA",
+    "NIGHT_CODE",
+    "export_flash",
+    "market_movers",
+    "market_ribbon",
+    "market_sectors",
+    "market_summary",
+]
 
 SUMMARY_WINDOW: Final = 21  # 20일선·20일 평균 + 오늘
 P5_LOOKBACK_DAYS: Final = 21  # 띠 P5 칩 입력 창(달력일 — 공표 지연 몇 날을 덮는다)
@@ -430,6 +444,59 @@ def market_summary(ctx: ReadContext, *, day: date | None = None) -> Envelope[Mar
     )
 
 
+MOVERS_NO_DATA: Final = "아직 없음 — market.close_collect 15:35 · krx.daily 08:05(마감 스냅)"
+
+
+def market_movers(ctx: ReadContext, *, min_mktcap: int) -> Envelope[MarketMovers]:
+    """급등·급락(metrics §6.8) — 원장 마지막 날(마지막 마감 스냅)의 시총 하한 이상 보통주."""
+    today = ctx.today()
+    ledger = ctx.ledger(today)
+    day = ledger.last_day
+    if day is None:  # load_ledger 가 빈 원장이면 NoData 를 올린다 — 형 좁히기
+        raise NoData(MOVERS_NO_DATA)
+    m = top_movers(ledger.day(day), day, min_mktcap=min_mktcap)
+
+    def rows(side: Sequence[Mover]) -> list[MoverRow]:
+        return [
+            MoverRow(
+                rank=i, code=x.code, name=x.name, market=x.market, close=x.close,
+                chg_pct=x.chg_pct, mktcap=x.mktcap, source=x.source, quality=x.quality,
+            )
+            for i, x in enumerate(side, start=1)
+        ]  # fmt: skip
+
+    notes = [*ctx.venue_notes(), f"시총 {min_mktcap / 100_000_000:,.0f}억 이상 보통주 — 1일 등락률"]
+    if day < today:  # 거래일이면 장중 — 휴장일이면 직전 거래일이 마지막 마감이다
+        why = (
+            " — 장중 전 종목 시세는 받지 않는다(15:35 마감 수집 뒤 오늘로 넘어간다)"
+            if ctx.cal.is_trading_day(today)
+            else ""
+        )
+        notes.append(f"{day.month}/{day.day} 마감 기준{why}")
+    if m.n_status_unknown:
+        notes.append(f"관리·정지 상태를 모르는 {m.n_status_unknown}종목은 빼지 못했다")
+    if m.n_no_mktcap:
+        notes.append(f"시총을 몰라 뺀 종목 {m.n_no_mktcap}개")
+    data = MarketMovers(
+        date=day,
+        min_mktcap=m.min_mktcap,
+        n_eligible=m.n_eligible,
+        n_no_mktcap=m.n_no_mktcap,
+        n_no_chg=m.n_no_chg,
+        n_status_unknown=m.n_status_unknown,
+        up=rows(m.up),
+        down=rows(m.down),
+    )
+    return envelope(
+        data,
+        source=m.source or label([]),
+        as_of=close_as_of(day),
+        quality=m.quality,
+        notes=notes,
+        generated_at=ctx.now(),
+    )
+
+
 def _sector_name(code: str) -> str:
     return code if code.startswith("코스닥") else f"코스피 {code}"
 
@@ -512,8 +579,9 @@ def _p5_chips(ctx: ReadContext, now: datetime) -> dict[str, EngineChip]:
     return out
 
 
-def _export_flash(ctx: ReadContext, now: datetime) -> FlashChip | None:
-    """수출 속보 칩 입력(P6 FLASH — 관세청 10일 잠정치, 공개). 표가 비면 None(칩은 사유만)."""
+def export_flash(ctx: ReadContext, now: datetime) -> FlashChip | None:
+    """수출 속보 칩 입력(P6 FLASH — 관세청 10일 잠정치, 공개). 표가 비면 None(칩은 사유만).
+    상단 띠 칩과 첫 화면 '수출 속보' 카드가 같이 쓴다(두 벌 금지)."""
     since = prev_ym(f"{now.year:04d}-{now.month:02d}", FLASH_LOOKBACK_MONTHS)
     return flash_chip(ctx.repos.trade.ten_day(kind=CHIP_KIND, ym_from=since))
 
@@ -585,7 +653,7 @@ def market_ribbon(ctx: ReadContext) -> Envelope[Ribbon]:
             cyc_def=cyc,
             next_mpc=None if nxt is None else nxt.date,
             nxt_excluded=bool(ctx.venue_notes()),
-            export_flash=_export_flash(ctx, now),
+            export_flash=export_flash(ctx, now),
             gex_levels=ctx.repos.gex.levels_latest("all", upto=ctx.now()),
             gex_live=state_at(now, ctx.cal).state in (State.DAY, State.NIGHT),
         ),

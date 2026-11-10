@@ -20,7 +20,9 @@ __all__ = [
     "DayValue",
     "GlobalProxy",
     "IndexTile",
+    "MarketMovers",
     "MarketSummary",
+    "MoverRow",
     "ProxyQuote",
     "Ribbon",
     "SectorCell",
@@ -83,6 +85,33 @@ class MarketSummary(ApiModel):
     turnover: TurnoverPanel | None
     breadth: Breadth | None
     investors: InvestorTotals | None
+
+
+class MoverRow(ApiModel):
+    """급등·급락 한 줄(docs/metrics.md §6.8) — 그날 마감 스냅 값."""
+
+    rank: int = Field(ge=1)
+    code: str
+    name: str | None
+    market: str | None
+    close: float | None  # 종가(원)
+    chg_pct: float  # 전일 대비 %
+    mktcap: int  # 시가총액(원)
+    source: str = Field(min_length=1)
+    quality: Quality
+
+
+class MarketMovers(ApiModel):
+    """`/api/market/movers` — 시총 하한 이상 보통주의 1일 등락률 상위·하위(각 10)."""
+
+    date: date  # 마감 기준일(원장 마지막 날 — 장중에는 직전 거래일)
+    min_mktcap: int  # 시총 하한(원)
+    n_eligible: int  # 순위를 매긴 종목 수(하한·종류·상태 통과, 등락률 앎)
+    n_no_mktcap: int  # 시총을 몰라 뺀 종목
+    n_no_chg: int  # 등락률을 모르거나 invalid 라 뺀 종목
+    n_status_unknown: int  # 관리·정지 상태를 몰라 빼지 못한 종목(n_eligible 안)
+    up: list[MoverRow]  # 급등 — 등락률 > 0 내림차순
+    down: list[MoverRow]  # 급락 — 등락률 < 0 오름차순
 
 
 class SectorCell(ApiModel):

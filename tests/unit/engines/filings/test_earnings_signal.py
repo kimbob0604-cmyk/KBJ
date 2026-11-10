@@ -318,3 +318,28 @@ def test_perf_pct() -> None:
     assert eng.perf_pct(10_000.0, 11_000.0) == pytest.approx(10.0)
     assert eng.perf_pct(None, 1.0) is None and eng.perf_pct(1.0, None) is None
     assert eng.perf_pct(0.0, 1.0) is None
+
+
+# ── 서프·쇼크 갈래(첫 화면 '오늘의 공시' — metrics §14) ──────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    ("signal", "side"),
+    [
+        ("TURNAROUND", "surprise"), ("TURNAROUND_PARTIAL", "surprise"), ("YOY_BIG_UP", "surprise"),
+        ("YOY_UP", "surprise"), ("BEAT_BIG", "surprise"), ("BEAT", "surprise"),
+        ("TURNAROUND_FULL", "surprise"),
+        ("SHOCK", "shock"), ("YOY_BIG_DOWN", "shock"), ("YOY_DOWN", "shock"), ("MISS_BIG", "shock"),
+        ("MISS", "shock"), ("SHOCK_FULL", "shock"),
+        ("YOY_INLINE", None), (eng.NO_DATA, None), ("INLINE", None), ("REVENUE_BEAT", None),
+        ("REVENUE_MISS_OP_BEAT", None), ("모르는이름", None), (None, None),
+    ],
+)  # fmt: skip
+def test_signal_side(signal: str | None, side: str | None) -> None:
+    assert eng.signal_side(signal) == side
+
+
+def test_signal_side_covers_every_named_signal() -> None:
+    """이름표가 있는 분류는 모두 서프·쇼크·중립 중 한 갈래 — 두 갈래에 함께 들지 않는다."""
+    assert not (eng.SURPRISE_SIGNALS & eng.SHOCK_SIGNALS)
+    assert (eng.SURPRISE_SIGNALS | eng.SHOCK_SIGNALS) <= set(eng.SIGNAL_LABEL)

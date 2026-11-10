@@ -51,6 +51,7 @@ from tests.unit.api.api_world import (
     fill_stock_holdings,
 )
 from tests.unit.api.api_world_p4 import P4ApiWorld, expect, shared
+from tests.unit.api.home_fixture import render_home_full
 from tests.unit.api.web_fixtures_p5 import DOMAINS as P5_DOMAINS
 from tests.unit.api.web_fixtures_p6 import DOMAINS as P6_DOMAINS
 from tests.unit.api.web_fixtures_p6 import folder as p6_folder
@@ -83,7 +84,14 @@ FIXTURES: Final[tuple[tuple[str, str, bool], ...]] = (
     ("diag_breadth-risk.json", "/api/diag/breadth-risk?period=3M&ma=25", False),
     ("market_global-proxy.json", "/api/market/global-proxy", False),
     ("market_relcap.json", "/api/market/relcap?period=1Y", False),
+    ("market_movers.json", "/api/market/movers", False),  # 급등·급락(metrics §6.8)
+    # 첫 화면 카드 묶음(metrics §32) — 마감 뒤·장중 슬롯. 합성 세계에 원천이 없는 카드는 no_data
+    ("home.json", "/api/home", False),
+    ("home_live.json", "/api/home", True),
 )
+# 첫 화면 묶음 — 카드마다 다른 합성 세계를 이어 붙여 모든 카드에 값이 있는 것(기준일이 카드마다
+# 다르다 — home_fixture.py)
+HOME_FULL: Final = "home_full.json"
 AUTH: Final[dict[str, Any]] = {
     "auth_me.json": {"user": "kbj-user", "csrf_token": "csrf-token-synthetic"},
     "auth_login.json": {"csrf_token": "csrf-token-synthetic"},
@@ -113,6 +121,7 @@ def render(world: World | None = None) -> dict[str, str]:
         out[name] = json.dumps(r.json(), ensure_ascii=False, indent=2) + "\n"
     for name, body in AUTH.items():
         out[name] = json.dumps(body, ensure_ascii=False, indent=2) + "\n"
+    out[HOME_FULL] = render_home_full()  # 모든 카드에 값 — 합성 세계 여럿(home_fixture.py)
     return out
 
 
@@ -369,7 +378,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     p4 = render_p4()
     _write(p4, p4_files_on_disk())
     print(
-        f"{len(FIXTURES) + len(AUTH)}개 + P4 {len(p4)}개 + P5 {len(p5)}개 + P6 {len(p6)}개 + "
+        f"{len(FIXTURES) + len(AUTH) + 1}개 + P4 {len(p4)}개 + P5 {len(p5)}개 + P6 {len(p6)}개 + "
         f"P7 {len(p7)}개 + P8 {len(p8)}개 → "
         f"{OUT.relative_to(Path(ROOT))}"
     )

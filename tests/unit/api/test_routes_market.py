@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+import pytest
 from fastapi.testclient import TestClient
 
 from kbj.engines.flows.checks import apply_checks
@@ -199,3 +200,71 @@ def test_summary_adds_k200_night_futures_tile(world: World, authed: TestClient) 
     k = idx["K200N"]
     assert k["name"] == "K200 야간선물" and k["value"] == 400.0
     assert round(k["chg_pct"], 4) == round((400 / 392 - 1) * 100, 4)
+
+
+# ── 급등·급락(metrics §6.8 — 2026-11-10 첫 화면) ────────────────────────────────────────
+
+
+def test_movers_after_close(world: World, authed: TestClient) -> None:
+    from kbj.engines.market.movers import MIN_MKTCAP_WON, MOVERS_N
+
+    body = authed.get("/api/market/movers").json()
+    d = body["data"]
+    last = world.market.last_day
+    assert d["date"] == last.isoformat() and d["min_mktcap"] == MIN_MKTCAP_WON
+    assert body["as_of"].startswith(f"{last.isoformat()}T15:30")
+    up, down = d["up"], d["down"]
+    assert 0 < len(up) <= MOVERS_N and 0 < len(down) <= MOVERS_N
+    assert [x["rank"] for x in up] == list(range(1, len(up) + 1))
+    assert all(x["chg_pct"] > 0 for x in up) and all(x["chg_pct"] < 0 for x in down)
+    assert [x["chg_pct"] for x in up] == sorted((x["chg_pct"] for x in up), reverse=True)
+    assert [x["chg_pct"] for x in down] == sorted(x["chg_pct"] for x in down)
+    assert all(x["mktcap"] >= MIN_MKTCAP_WON and x["source"] for x in up + down)
+    # 합성 스냅과 대조 — 보통주·코스피/코스닥·하한 이상·관리/정지 아님만
+    snaps, _ = world.repos.market.snapshot(last)
+    for x in up + down:
+        s = snaps[x["code"]]
+        assert s.kind == "common" and s.market in ("KOSPI", "KOSDAQ")
+        assert not (s.status_flags or ()) and s.chg_pct == pytest.approx(x["chg_pct"])
+    assert any("상태를 모르는" in n for n in body["notes"])
+
+
+def test_movers_min_mktcap_and_422(authed: TestClient) -> None:
+    base = authed.get("/api/market/movers").json()["data"]["n_eligible"]
+    high = authed.get("/api/market/movers?min_mktcap=10000000000000").json()["data"]
+    assert high["n_eligible"] < base and high["min_mktcap"] == 10**13
+    assert all(x["mktcap"] >= 10**13 for x in high["up"] + high["down"])
+    for q in ("min_mktcap=-1", "min_mktcap=abc", f"min_mktcap={10**17}"):
+        r = authed.get(f"/api/market/movers?{q}")
+        assert r.status_code == 422 and r.json()["code"] == "invalid_request"
+
+
+def test_movers_intraday_says_last_close(world: World, authed: TestClient) -> None:
+    """장중엔 전 종목 시세가 없어 직전 거래일 마감 값 — 기준일을 notes 에 적는다."""
+    world.clock.set(world.slot.replace(minute=5))
+    body = authed.get("/api/market/movers").json()
+    last = world.market.last_day
+    assert body["data"]["date"] == last.isoformat()
+    assert any(f"{last.month}/{last.day} 마감 기준" in n for n in body["notes"])
+
+
+def test_movers_no_data(world: World) -> None:
+    from kbj.store.repos import memory_repos
+
+    world.repos = memory_repos()
+    c = world.client()
+    world.login(c)
+    r = c.get("/api/market/movers")
+    assert r.status_code == 404 and r.json()["message"].startswith("아직 없음")
+
+
+def test_movers_on_a_holiday_does_not_say_intraday(world: World, authed: TestClient) -> None:
+    """휴장일에는 직전 거래일이 마지막 마감 — '장중' 사유를 붙이지 않는다."""
+    last = world.market.last_day
+    day = last + timedelta(days=1)
+    while world.cal.is_trading_day(day):
+        day += timedelta(days=1)
+    world.clock.set(world.clock().replace(year=day.year, month=day.month, day=day.day, hour=11))
+    notes = authed.get("/api/market/movers").json()["notes"]
+    assert f"{last.month}/{last.day} 마감 기준" in notes
+    assert not any("장중" in n for n in notes)

@@ -33,10 +33,13 @@ from kbj.core.time import to_kst
 
 __all__ = [
     "NO_DATA",
+    "SHOCK_SIGNALS",
     "SIGNAL_LABEL",
+    "SURPRISE_SIGNALS",
     "EarningsSignal",
     "Figures",
     "Sanity",
+    "SignalSide",
     "alert_base_day",
     "alert_subject",
     "alert_text",
@@ -51,6 +54,7 @@ __all__ = [
     "period_label",
     "sanity",
     "scope_guard",
+    "signal_side",
 ]
 
 # 전년동기도 컨센서스도 없음(SD _process_yoy_only 의 NO_DATA — 우선순위 5)
@@ -81,6 +85,29 @@ SIGNAL_LABEL: Final[Mapping[str, str]] = {
     "REVENUE_MISS": "매출만 하회",
     "INLINE": "컨센서스 부합",
 }
+
+
+# 서프·쇼크 갈래(첫 화면 '오늘의 공시' — metrics §14). 컨센서스 대비가 아니라 분류 방향이다
+# — 분기 컨센서스가 없으면 전년동기 대비(YoY) 분류만 온다. 화면 색 규칙(web p8
+# SIGNAL_UP·SIGNAL_DOWN)과 같은 갈래. 그 밖(YOY_INLINE·NO_DATA·INLINE·REVENUE_*)은 어느 쪽도
+# 아니다
+SURPRISE_SIGNALS: Final[frozenset[str]] = frozenset({
+    "TURNAROUND", "TURNAROUND_PARTIAL", "YOY_BIG_UP", "YOY_UP", "BEAT_BIG", "BEAT",
+    "TURNAROUND_FULL",
+})  # fmt: skip
+SHOCK_SIGNALS: Final[frozenset[str]] = frozenset({
+    "SHOCK", "YOY_BIG_DOWN", "YOY_DOWN", "MISS_BIG", "MISS", "SHOCK_FULL",
+})  # fmt: skip
+SignalSide = Literal["surprise", "shock"]
+
+
+def signal_side(signal: str | None) -> SignalSide | None:
+    """분류 이름 → 서프(좋아짐)·쇼크(나빠짐) 갈래. 어느 쪽도 아니거나 모르면 None."""
+    if signal in SURPRISE_SIGNALS:
+        return "surprise"
+    if signal in SHOCK_SIGNALS:
+        return "shock"
+    return None
 
 
 @dataclass(frozen=True)

@@ -46,6 +46,7 @@
 | [0039](0039-theme-master-intake.md) | 테마 마스터 받아 쓰기: stock-dashboard data/master 주 1회·네이버 직접 수집 안 함·대테마 분류 공개/편입·강도 로그인 | 확정 |
 | [0040](0040-vm-deploy-oracle-caddy.md) | 운영 VM 배포: 오라클 무료 ARM VM·Caddy+sslip.io TLS 오버레이·볼륨 밖 백업·스크립트 업데이트 | 제안 |
 | [0042](0042-site-snapshot.md) | 공개 사이트 kbj-site: 맥이 페이지 1~10 을 정적 스냅샷으로 GitHub Pages 에(사용자 결정 — 로그인 등급 포함)·맥 로컬 로그인 없음 | 채택 |
+| [0043](0043-home-bundle.md) | 첫 화면 묶음 `/api/home`: 카드별 봉투·격리·개인 데이터 없음·여러 영역 버전 키, 새 값 급등·급락(`/api/market/movers`) | 채택 |
 
 대체 관계: 0003(legacy 범위)·0007(legacy 브리지·기준선) → **0038**(legacy 비우기, P9). 보충: 0035 → 0011 §2-3, 0036 → 0029(D-P7-4 예외 종료),
 0037 → 0006(등록부), 0018 → 0031(마감 규칙 알림도 16:00), 0040 → 0008(TLS 프록시 — VM 오버레이).

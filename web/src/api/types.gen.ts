@@ -106,6 +106,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/market/movers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Movers
+         * @description 급등·급락 — 시총 하한(원, 기본 3,000억) 이상 보통주의 마지막 마감 등락률 상위·하위 10.
+         */
+        get: operations["movers_api_market_movers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/market/ribbon": {
         parameters: {
             query?: never;
@@ -1904,6 +1924,26 @@ export interface paths {
         };
         /** Cis */
         get: operations["cis_api_screen_cis_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/home": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Home Route
+         * @description 첫 화면 카드 14장 — 카드마다 상태(ok·no_data·error)·원천·기준 시각·품질·메모·페이지 번호.
+         */
+        get: operations["home_route_api_home_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4240,6 +4280,25 @@ export interface components {
             generated_at: string;
             data: components["schemas"]["GlobalProxy"];
         };
+        /** Envelope[Home] */
+        Envelope_Home_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["Home"];
+        };
         /** Envelope[IndexReview] */
         Envelope_IndexReview_: {
             /** Source */
@@ -4410,6 +4469,25 @@ export interface components {
              */
             generated_at: string;
             data: components["schemas"]["MarketMinute"];
+        };
+        /** Envelope[MarketMovers] */
+        Envelope_MarketMovers_: {
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+            /** Notes */
+            notes?: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            data: components["schemas"]["MarketMovers"];
         };
         /** Envelope[MarketSummary] */
         Envelope_MarketSummary_: {
@@ -6204,6 +6282,814 @@ export interface components {
             /** Commit */
             commit: string | null;
         };
+        /**
+         * Home
+         * @description `/api/home` — 첫 화면 카드 묶음(카드 순서 = 위 칸 순서).
+         */
+        Home: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            cards: components["schemas"]["HomeCards"];
+            /** N Ok */
+            n_ok: number;
+            /** N No Data */
+            n_no_data: number;
+            /** N Error */
+            n_error: number;
+        };
+        /**
+         * HomeBreadth
+         * @description 시장 폭 — 20일선 위 비율(코스피+코스닥 합산, 마감 확정). 60·120일선·시장별은 없다(notes).
+         */
+        HomeBreadth: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Above Ma20 Pct */
+            above_ma20_pct: number | null;
+            /** Above Ma20 N */
+            above_ma20_n: number;
+            /** Ma20 Base */
+            ma20_base: number;
+        };
+        /** HomeCard[HomeBreadth] */
+        HomeCard_HomeBreadth_: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "no_data" | "error";
+            /** Page */
+            page: number;
+            /** Keys */
+            keys: string[];
+            /** Source */
+            source?: string | null;
+            /** As Of */
+            as_of?: string | null;
+            quality?: components["schemas"]["Quality"] | null;
+            /** Notes */
+            notes?: string[];
+            /** Message */
+            message?: string | null;
+            /** Error */
+            error?: string | null;
+            data?: components["schemas"]["HomeBreadth"] | null;
+        };
+        /** HomeCard[HomeDiag] */
+        HomeCard_HomeDiag_: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "no_data" | "error";
+            /** Page */
+            page: number;
+            /** Keys */
+            keys: string[];
+            /** Source */
+            source?: string | null;
+            /** As Of */
+            as_of?: string | null;
+            quality?: components["schemas"]["Quality"] | null;
+            /** Notes */
+            notes?: string[];
+            /** Message */
+            message?: string | null;
+            /** Error */
+            error?: string | null;
+            data?: components["schemas"]["HomeDiag"] | null;
+        };
+        /** HomeCard[HomeEtf] */
+        HomeCard_HomeEtf_: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "no_data" | "error";
+            /** Page */
+            page: number;
+            /** Keys */
+            keys: string[];
+            /** Source */
+            source?: string | null;
+            /** As Of */
+            as_of?: string | null;
+            quality?: components["schemas"]["Quality"] | null;
+            /** Notes */
+            notes?: string[];
+            /** Message */
+            message?: string | null;
+            /** Error */
+            error?: string | null;
+            data?: components["schemas"]["HomeEtf"] | null;
+        };
+        /** HomeCard[HomeExport] */
+        HomeCard_HomeExport_: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "no_data" | "error";
+            /** Page */
+            page: number;
+            /** Keys */
+            keys: string[];
+            /** Source */
+            source?: string | null;
+            /** As Of */
+            as_of?: string | null;
+            quality?: components["schemas"]["Quality"] | null;
+            /** Notes */
+            notes?: string[];
+            /** Message */
+            message?: string | null;
+            /** Error */
+            error?: string | null;
+            data?: components["schemas"]["HomeExport"] | null;
+        };
+        /** HomeCard[HomeFilings] */
+        HomeCard_HomeFilings_: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "no_data" | "error";
+            /** Page */
+            page: number;
+            /** Keys */
+            keys: string[];
+            /** Source */
+            source?: string | null;
+            /** As Of */
+            as_of?: string | null;
+            quality?: components["schemas"]["Quality"] | null;
+            /** Notes */
+            notes?: string[];
+            /** Message */
+            message?: string | null;
+            /** Error */
+            error?: string | null;
+            data?: components["schemas"]["HomeFilings"] | null;
+        };
+        /** HomeCard[HomeForeignInst] */
+        HomeCard_HomeForeignInst_: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "no_data" | "error";
+            /** Page */
+            page: number;
+            /** Keys */
+            keys: string[];
+            /** Source */
+            source?: string | null;
+            /** As Of */
+            as_of?: string | null;
+            quality?: components["schemas"]["Quality"] | null;
+            /** Notes */
+            notes?: string[];
+            /** Message */
+            message?: string | null;
+            /** Error */
+            error?: string | null;
+            data?: components["schemas"]["HomeForeignInst"] | null;
+        };
+        /** HomeCard[HomeFutures] */
+        HomeCard_HomeFutures_: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "no_data" | "error";
+            /** Page */
+            page: number;
+            /** Keys */
+            keys: string[];
+            /** Source */
+            source?: string | null;
+            /** As Of */
+            as_of?: string | null;
+            quality?: components["schemas"]["Quality"] | null;
+            /** Notes */
+            notes?: string[];
+            /** Message */
+            message?: string | null;
+            /** Error */
+            error?: string | null;
+            data?: components["schemas"]["HomeFutures"] | null;
+        };
+        /** HomeCard[HomeGex] */
+        HomeCard_HomeGex_: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "no_data" | "error";
+            /** Page */
+            page: number;
+            /** Keys */
+            keys: string[];
+            /** Source */
+            source?: string | null;
+            /** As Of */
+            as_of?: string | null;
+            quality?: components["schemas"]["Quality"] | null;
+            /** Notes */
+            notes?: string[];
+            /** Message */
+            message?: string | null;
+            /** Error */
+            error?: string | null;
+            data?: components["schemas"]["HomeGex"] | null;
+        };
+        /** HomeCard[HomeIndices] */
+        HomeCard_HomeIndices_: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "no_data" | "error";
+            /** Page */
+            page: number;
+            /** Keys */
+            keys: string[];
+            /** Source */
+            source?: string | null;
+            /** As Of */
+            as_of?: string | null;
+            quality?: components["schemas"]["Quality"] | null;
+            /** Notes */
+            notes?: string[];
+            /** Message */
+            message?: string | null;
+            /** Error */
+            error?: string | null;
+            data?: components["schemas"]["HomeIndices"] | null;
+        };
+        /** HomeCard[HomeNewhigh] */
+        HomeCard_HomeNewhigh_: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "no_data" | "error";
+            /** Page */
+            page: number;
+            /** Keys */
+            keys: string[];
+            /** Source */
+            source?: string | null;
+            /** As Of */
+            as_of?: string | null;
+            quality?: components["schemas"]["Quality"] | null;
+            /** Notes */
+            notes?: string[];
+            /** Message */
+            message?: string | null;
+            /** Error */
+            error?: string | null;
+            data?: components["schemas"]["HomeNewhigh"] | null;
+        };
+        /** HomeCard[HomeProgram] */
+        HomeCard_HomeProgram_: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "no_data" | "error";
+            /** Page */
+            page: number;
+            /** Keys */
+            keys: string[];
+            /** Source */
+            source?: string | null;
+            /** As Of */
+            as_of?: string | null;
+            quality?: components["schemas"]["Quality"] | null;
+            /** Notes */
+            notes?: string[];
+            /** Message */
+            message?: string | null;
+            /** Error */
+            error?: string | null;
+            data?: components["schemas"]["HomeProgram"] | null;
+        };
+        /** HomeCard[HomeSpike] */
+        HomeCard_HomeSpike_: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "no_data" | "error";
+            /** Page */
+            page: number;
+            /** Keys */
+            keys: string[];
+            /** Source */
+            source?: string | null;
+            /** As Of */
+            as_of?: string | null;
+            quality?: components["schemas"]["Quality"] | null;
+            /** Notes */
+            notes?: string[];
+            /** Message */
+            message?: string | null;
+            /** Error */
+            error?: string | null;
+            data?: components["schemas"]["HomeSpike"] | null;
+        };
+        /** HomeCard[HomeThemes] */
+        HomeCard_HomeThemes_: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "no_data" | "error";
+            /** Page */
+            page: number;
+            /** Keys */
+            keys: string[];
+            /** Source */
+            source?: string | null;
+            /** As Of */
+            as_of?: string | null;
+            quality?: components["schemas"]["Quality"] | null;
+            /** Notes */
+            notes?: string[];
+            /** Message */
+            message?: string | null;
+            /** Error */
+            error?: string | null;
+            data?: components["schemas"]["HomeThemes"] | null;
+        };
+        /** HomeCard[MarketMovers] */
+        HomeCard_MarketMovers_: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "no_data" | "error";
+            /** Page */
+            page: number;
+            /** Keys */
+            keys: string[];
+            /** Source */
+            source?: string | null;
+            /** As Of */
+            as_of?: string | null;
+            quality?: components["schemas"]["Quality"] | null;
+            /** Notes */
+            notes?: string[];
+            /** Message */
+            message?: string | null;
+            /** Error */
+            error?: string | null;
+            data?: components["schemas"]["MarketMovers"] | null;
+        };
+        /** HomeCards */
+        HomeCards: {
+            indices: components["schemas"]["HomeCard_HomeIndices_"];
+            futures: components["schemas"]["HomeCard_HomeFutures_"];
+            filings: components["schemas"]["HomeCard_HomeFilings_"];
+            breadth: components["schemas"]["HomeCard_HomeBreadth_"];
+            spike: components["schemas"]["HomeCard_HomeSpike_"];
+            movers: components["schemas"]["HomeCard_MarketMovers_"];
+            foreign_inst: components["schemas"]["HomeCard_HomeForeignInst_"];
+            newhigh: components["schemas"]["HomeCard_HomeNewhigh_"];
+            gex: components["schemas"]["HomeCard_HomeGex_"];
+            diag: components["schemas"]["HomeCard_HomeDiag_"];
+            program: components["schemas"]["HomeCard_HomeProgram_"];
+            etf: components["schemas"]["HomeCard_HomeEtf_"];
+            themes: components["schemas"]["HomeCard_HomeThemes_"];
+            export: components["schemas"]["HomeCard_HomeExport_"];
+        };
+        /** HomeDiag */
+        HomeDiag: {
+            /**
+             * Trade Date
+             * Format: date
+             */
+            trade_date: string;
+            verdict: components["schemas"]["DiagVerdict"] | null;
+            fear_greed: components["schemas"]["DiagFearGreed"] | null;
+            /** Caution */
+            caution: boolean;
+        };
+        /**
+         * HomeEtf
+         * @description ETF 순유입(기간 5일 — 페이지 10 기본). 유형은 순유입 큰 순 전부, 종목은 상위 3.
+         */
+        HomeEtf: {
+            /** Period */
+            period: number;
+            /** Start */
+            start: string | null;
+            /** End */
+            end: string | null;
+            /** Types */
+            types: components["schemas"]["TypeRollup"][];
+            /** Top */
+            top: components["schemas"]["HomeEtfRow"][];
+        };
+        /** HomeEtfRow */
+        HomeEtfRow: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string | null;
+            /** Etf Type Label */
+            etf_type_label: string;
+            /** Net Inflow */
+            net_inflow: number | null;
+            /** Ret Pct */
+            ret_pct: number | null;
+            quality: components["schemas"]["Quality"];
+        };
+        /**
+         * HomeExport
+         * @description 수출 속보(관세청 10일 잠정 — 상단 띠 칩과 같은 함수, metrics §25).
+         */
+        HomeExport: {
+            /** Ym */
+            ym: string;
+            /** Seg */
+            seg: number;
+            /** Span Text */
+            span_text: string;
+            /** Span Label */
+            span_label: string;
+            /** Usd */
+            usd: number;
+            /** Yoy */
+            yoy: number | null;
+            /** Yoy Reason */
+            yoy_reason: string | null;
+            /**
+             * First Seen At
+             * Format: date-time
+             */
+            first_seen_at: string;
+        };
+        /**
+         * HomeFilingRow
+         * @description 공시 한 건 — 키워드 점수(kw_score, 공개 규칙)로 고른 것. 관심종목 가산 중요도는 싣지
+         *     않는다.
+         */
+        HomeFilingRow: {
+            /** Rcept No */
+            rcept_no: string;
+            /**
+             * First Seen At
+             * Format: date-time
+             */
+            first_seen_at: string;
+            /** Corp Name */
+            corp_name: string;
+            /** Stock Code */
+            stock_code: string | null;
+            /** Title */
+            title: string;
+            /** Kind */
+            kind: string;
+            /** Kw Score */
+            kw_score: number;
+            /** Kw Matched */
+            kw_matched: string[];
+            /** Link */
+            link: string;
+        };
+        /** HomeFilings */
+        HomeFilings: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** N Total */
+            n_total: number;
+            /** By Kind */
+            by_kind: {
+                [key: string]: number;
+            };
+            /** Top */
+            top: components["schemas"]["HomeFilingRow"][];
+            /** N Prelim */
+            n_prelim: number;
+            /** N Surprise */
+            n_surprise: number;
+            /** N Shock */
+            n_shock: number;
+            /** Prelims */
+            prelims: components["schemas"]["HomePrelimRow"][];
+        };
+        /** HomeFlowRow */
+        HomeFlowRow: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string | null;
+            /** Market */
+            market: string | null;
+            /** Value */
+            value: number;
+            /** Chg Pct */
+            chg_pct: number | null;
+            /** Mktcap */
+            mktcap: number | null;
+        };
+        /**
+         * HomeForeignInst
+         * @description 외국인·기관 순매수 상위 5씩. basis `intraday` = 오늘 장중 가집계(flows/intraday, 잠정),
+         *     `close` = 마감 원장 1일(flows/screen mode=foreign·inst period=1).
+         */
+        HomeForeignInst: {
+            /**
+             * Basis
+             * @enum {string}
+             */
+            basis: "intraday" | "close";
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Foreign */
+            foreign: components["schemas"]["HomeFlowRow"][];
+            /** Inst */
+            inst: components["schemas"]["HomeFlowRow"][];
+        };
+        /**
+         * HomeFutures
+         * @description 코스피200 선물(근월물). 전일 대비 등락률 칸은 없다(전일 정산가를 API 에 싣지 않는다 —
+         *     notes). 야간이면 `night`(주간 마지막 값 대비 등락).
+         */
+        HomeFutures: {
+            /** Trade Date */
+            trade_date: string | null;
+            /** Session */
+            session: ("day" | "night") | null;
+            /** Session Open */
+            session_open: boolean | null;
+            /** Cycle At */
+            cycle_at: string | null;
+            /** Price */
+            price: number | null;
+            price_quality: components["schemas"]["Quality"] | null;
+            /** Stale */
+            stale: boolean | null;
+            night: components["schemas"]["IndexTile"] | null;
+            investors: components["schemas"]["HomeInvestorNet"] | null;
+        };
+        /**
+         * HomeGex
+         * @description GEX 요약 — 국면(gex/briefing)·Flip·Flip 거리·기대변동폭(gex/levels). 섀도 값은 None.
+         */
+        HomeGex: {
+            /**
+             * Trade Date
+             * Format: date
+             */
+            trade_date: string;
+            /**
+             * Session
+             * @enum {string}
+             */
+            session: "day" | "night";
+            /** Session Open */
+            session_open: boolean;
+            /**
+             * Cycle At
+             * Format: date-time
+             */
+            cycle_at: string;
+            /** Stale */
+            stale: boolean;
+            /** Price */
+            price: number | null;
+            /** Regime */
+            regime: ("long" | "short") | null;
+            /** Regime Label */
+            regime_label: string | null;
+            /** Headline */
+            headline: string | null;
+            /** Flip */
+            flip: number | null;
+            /** Flip Distance */
+            flip_distance: number | null;
+            /** Expected Move */
+            expected_move: number | null;
+        };
+        /** HomeIndex */
+        HomeIndex: {
+            tile: components["schemas"]["IndexTile"];
+            investors: components["schemas"]["HomeInvestorNet"] | null;
+        };
+        /** HomeIndices */
+        HomeIndices: {
+            kospi: components["schemas"]["HomeIndex"] | null;
+            kosdaq: components["schemas"]["HomeIndex"] | null;
+            breadth: components["schemas"]["HomeUpDown"] | null;
+        };
+        /**
+         * HomeInvestorNet
+         * @description 시장 하나의 투자자 순매수(원). 값이 없는 구분은 None — 0 으로 바꾸지 않는다.
+         *
+         *     basis: `minute` = 장중 1분 누적(KIS 잠정 — `flows/market-minute`, 개인 prsn·외국인 frgn·기관
+         *     orgn·기타법인 etc_corp), `daily` = 마감 일별(`flows/investors` by_market).
+         */
+        HomeInvestorNet: {
+            /**
+             * Basis
+             * @enum {string}
+             */
+            basis: "minute" | "daily";
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Individual */
+            individual: number | null;
+            /** Foreign */
+            foreign: number | null;
+            /** Institution */
+            institution: number | null;
+            /** Other Corp */
+            other_corp: number | null;
+            /** Source */
+            source: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            quality: components["schemas"]["Quality"];
+        };
+        /**
+         * HomeNewhigh
+         * @description 신고가 보드(종가 기준) — 라벨별 수와 52주 이상 종목 시총 큰 순 8.
+         */
+        HomeNewhigh: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Labels */
+            labels: {
+                [key: string]: string;
+            };
+            /** Rows */
+            rows: components["schemas"]["HomeNewhighRow"][];
+        };
+        /** HomeNewhighRow */
+        HomeNewhighRow: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string | null;
+            /** Market */
+            market: string | null;
+            /** Label */
+            label: string;
+            /** Chg Pct */
+            chg_pct: number | null;
+            /** Mktcap */
+            mktcap: number | null;
+        };
+        /**
+         * HomePrelimRow
+         * @description 잠정실적 한 건(서프·쇼크 갈래 — metrics §14). 금액은 원, 비율은 %(전년동기 대비).
+         */
+        HomePrelimRow: {
+            /** Rcept No */
+            rcept_no: string;
+            /** Corp Name */
+            corp_name: string | null;
+            /** Stock Code */
+            stock_code: string | null;
+            /** Label */
+            label: string;
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "consolidated" | "standalone" | "subsidiary";
+            /** Signal */
+            signal: string;
+            /**
+             * Side
+             * @enum {string}
+             */
+            side: "surprise" | "shock";
+            /** Priority */
+            priority: number | null;
+            /** Revenue Cur */
+            revenue_cur: number | null;
+            /** Op Cur */
+            op_cur: number | null;
+            /** Rev Yoy */
+            rev_yoy: number | null;
+            /** Op Yoy */
+            op_yoy: number | null;
+            /** Is Correction */
+            is_correction: boolean;
+            quality: components["schemas"]["Quality"];
+            /** Link */
+            link: string;
+        };
+        /**
+         * HomeProgram
+         * @description 프로그램 순매수 — 시장마다 마지막 날(마감 일별, 검산 ④ 통과). 장중 누적은 없다(notes).
+         */
+        HomeProgram: {
+            kospi: components["schemas"]["ProgramDayBar"] | null;
+            kosdaq: components["schemas"]["ProgramDayBar"] | null;
+        };
+        /**
+         * HomeSpike
+         * @description 거래대금 급증(flows/screen mode=spike period=1) — 확정 원장(장중엔 직전 거래일).
+         */
+        HomeSpike: {
+            /** Date */
+            date: string | null;
+            /** Min Turnover */
+            min_turnover: number;
+            /** Spike Min */
+            spike_min: number;
+            /** N Hits */
+            n_hits: number;
+            /** Rows */
+            rows: components["schemas"]["HomeSpikeRow"][];
+        };
+        /** HomeSpikeRow */
+        HomeSpikeRow: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string | null;
+            /** Market */
+            market: string | null;
+            /** Spike Mult */
+            spike_mult: number | null;
+            /** Turnover */
+            turnover: number | null;
+            /** Chg Pct */
+            chg_pct: number | null;
+            /** Mktcap */
+            mktcap: number | null;
+            quality: components["schemas"]["Quality"];
+        };
+        /** HomeThemes */
+        HomeThemes: {
+            /**
+             * Trade Date
+             * Format: date
+             */
+            trade_date: string;
+            /**
+             * Period
+             * @enum {integer}
+             */
+            period: 1 | 5 | 20;
+            /** Rows */
+            rows: components["schemas"]["ThemeStrengthRow"][];
+        };
+        /**
+         * HomeUpDown
+         * @description 상승·보합·하락 — **코스피+코스닥 합산**(market/summary breadth, 마감 확정). 시장별은 없다.
+         */
+        HomeUpDown: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Up */
+            up: number;
+            /** Flat */
+            flat: number;
+            /** Down */
+            down: number;
+            /** Unknown */
+            unknown: number;
+            /** Total */
+            total: number;
+            /** Source */
+            source: string;
+            quality: components["schemas"]["Quality"] | null;
+        };
         /** IndexDisparity */
         IndexDisparity: {
             /**
@@ -6740,6 +7626,31 @@ export interface components {
             status: "ok" | "not_confirmed" | "before_open" | "holiday";
             index?: components["schemas"]["MinuteIndex"] | null;
         };
+        /**
+         * MarketMovers
+         * @description `/api/market/movers` — 시총 하한 이상 보통주의 1일 등락률 상위·하위(각 10).
+         */
+        MarketMovers: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Min Mktcap */
+            min_mktcap: number;
+            /** N Eligible */
+            n_eligible: number;
+            /** N No Mktcap */
+            n_no_mktcap: number;
+            /** N No Chg */
+            n_no_chg: number;
+            /** N Status Unknown */
+            n_status_unknown: number;
+            /** Up */
+            up: components["schemas"]["MoverRow"][];
+            /** Down */
+            down: components["schemas"]["MoverRow"][];
+        };
         /** MarketSummary */
         MarketSummary: {
             /** Date */
@@ -6853,6 +7764,29 @@ export interface components {
             unrealized_change: number | null;
             /** Ret Pct */
             ret_pct: number | null;
+        };
+        /**
+         * MoverRow
+         * @description 급등·급락 한 줄(docs/metrics.md §6.8) — 그날 마감 스냅 값.
+         */
+        MoverRow: {
+            /** Rank */
+            rank: number;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string | null;
+            /** Market */
+            market: string | null;
+            /** Close */
+            close: number | null;
+            /** Chg Pct */
+            chg_pct: number;
+            /** Mktcap */
+            mktcap: number;
+            /** Source */
+            source: string;
+            quality: components["schemas"]["Quality"];
         };
         /** MultipleCell */
         MultipleCell: {
@@ -10128,6 +11062,64 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_SectorHeat_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    movers_api_market_movers_get: {
+        parameters: {
+            query?: {
+                min_mktcap?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_MarketMovers_"];
                 };
             };
             /** @description 세션 없음·만료 */
@@ -17023,6 +18015,62 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_ScreenCis_"];
+                };
+            };
+            /** @description 세션 없음·만료 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 아직 없음(작업·예정 시각) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoDataBody"];
+                };
+            };
+            /** @description 쿼리 검증 실패(입력값은 싣지 않는다) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description 저장소·Redis 장애 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    home_route_api_home_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_Home_"];
                 };
             };
             /** @description 세션 없음·만료 */
