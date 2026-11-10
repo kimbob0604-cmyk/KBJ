@@ -22,6 +22,7 @@ import {
   joinSub,
   marketKo,
   pill,
+  put,
   rankList,
   renderCard,
   signedWon,
@@ -95,10 +96,10 @@ export function drawFilings(p: HomePanel, env: Envelope<Home>): void {
     );
     const { rows: prelims, invalid } = visibleRows(d.prelims);
     if (prelims.length === 0 && d.top.length === 0) {
-      p.body.append(emptyLine('고른 공시 없음 — 키워드 점수가 있는 공시가 아직 없다'));
+      put(p.body, emptyLine('고른 공시 없음 — 키워드 점수가 있는 공시가 아직 없다'));
       return invalid;
     }
-    p.body.append(
+    put(p.body,
       h('ul', { class: 'hfil hcols2', attrs: { 'aria-label': '오늘의 공시' } }, prelims.map(prelimLine), d.top.map(filingLine)),
     );
     return invalid;
@@ -112,11 +113,11 @@ export function drawWatch(p: HomePanel, env: Envelope<Watchlist>): number {
   const items = env.data.items;
   p.setMeta(items.length ? `${num(env.data.n)}종목 · 기준 ${kstStamp(env.as_of)}` : '');
   if (items.length === 0) {
-    p.body.append(emptyLine(`관심종목이 비어 있다 — ${WATCH_HINT}`));
+    put(p.body, emptyLine(`관심종목이 비어 있다 — ${WATCH_HINT}`));
     return 0;
   }
   const { rows, invalid } = visibleRows(items.map((it) => ({ ...it, quality: it.quality ?? undefined })));
-  p.body.append(
+  put(p.body,
     rankList(
       rows.slice(0, WATCH_MAX).map((it) => ({
         name: stockName(it.name, it.code),
@@ -137,7 +138,7 @@ export function drawBreadth(p: HomePanel, env: Envelope<Home>): void {
   renderCard(p, env.data.cards.breadth, env, (d) => {
     p.setMeta(`${shortDate(d.date)} 마감 · 코스피+코스닥 · 이동평균 위 종목 비율`);
     const v = d.above_ma20_pct;
-    p.body.append(
+    put(p.body,
       bigLine(v === null ? DASH : pct(v, 1, false), h('small', null, ` 20일선 위 ${num(d.above_ma20_n)} / ${num(d.ma20_base)}종목`)),
       h('div', { class: 'levels' }, level('20일선 위', v ?? 0, v === null ? DASH : pct(v, 1, false))),
     );
@@ -159,10 +160,10 @@ export function drawSpike(p: HomePanel, env: Envelope<Home>): void {
     );
     const { rows, invalid } = visibleRows(d.rows);
     if (rows.length === 0) {
-      p.body.append(emptyLine('급증한 종목 없음'));
+      put(p.body, emptyLine('급증한 종목 없음'));
       return invalid;
     }
-    p.body.append(
+    put(p.body,
       rankList(
         rows.map((r, i) => ({
           rank: i + 1,
@@ -217,7 +218,7 @@ export function drawMovers(p: HomePanel, env: Envelope<Home>, st: HomeState): vo
     });
     tabs.el.classList.add('htabs');
     paint();
-    p.body.append(tabs.el, box);
+    put(p.body, tabs.el, box);
     return up.invalid + down.invalid;
   });
 }
@@ -260,7 +261,7 @@ export function drawForeignInst(p: HomePanel, env: Envelope<Home>, st: HomeState
     });
     tabs.el.classList.add('htabs');
     paint();
-    p.body.append(tabs.el, box);
+    put(p.body, tabs.el, box);
     return 0;
   });
 }
@@ -272,10 +273,10 @@ export function drawNewhigh(p: HomePanel, env: Envelope<Home>): void {
     const counts = Object.entries(d.counts).map(([k, n]) => `${d.labels[k] ?? k} ${num(n)}`);
     p.setMeta(joinSub(`${shortDate(d.date)} 종가`, ...counts, '시총 순'));
     if (d.rows.length === 0) {
-      p.body.append(emptyLine('이날 신고가 종목 없음'));
+      put(p.body, emptyLine('이날 신고가 종목 없음'));
       return 0;
     }
-    p.body.append(
+    put(p.body,
       rankList(
         d.rows.map((r, i) => ({
           rank: i + 1,
@@ -302,9 +303,9 @@ export function drawGex(p: HomePanel, env: Envelope<Home>): void {
         d.stale ? '갱신 지연' : null,
       ),
     );
-    const tone = d.regime === 'long' ? 'up' : d.regime === 'short' ? 'down' : 'dim';
-    p.body.append(
-      bigLine(h('span', { class: tone }, d.regime_label ?? '국면 없음')),
+    put(p.body,
+      // 국면은 등락이 아니라 색을 칠하지 않는다(색은 등락에만 — 뜻은 글자로)
+      bigLine(h('span', { class: d.regime ? undefined : 'dim' }, d.regime_label ?? '국면 없음')),
       h(
         'dl',
         { class: 'hkv' },
@@ -333,11 +334,11 @@ export function drawDiag(p: HomePanel, env: Envelope<Home>): void {
     p.setMeta(joinSub(`${shortDate(d.trade_date)} 기준`, d.caution ? '이벤트 주의' : null));
     const v = d.verdict;
     const fg = d.fear_greed;
-    const vTone = v?.label === 'risk_on' ? 'up' : v?.label === 'risk_off' ? 'down' : 'dim';
     const band = fg?.band ? FEAR_BANDS[FEAR_KEYS.indexOf(fg.band)]?.label : undefined;
-    p.body.append(
+    put(p.body,
       bigLine(
-        v ? (qValue(VERDICTS[v.label] ?? v.label, v.quality, null, vTone) ?? DASH) : DASH,
+        // 판정도 등락이 아니라 색 없이 글자로(색은 등락에만)
+        v ? (qValue(VERDICTS[v.label] ?? v.label, v.quality) ?? DASH) : DASH,
         v && v.score !== null ? h('small', null, ` 점수 ${num(v.score, 0, true)}`) : null,
         d.caution ? h('span', { class: 'tag warn' }, '이벤트 주의') : null,
       ),
@@ -367,10 +368,10 @@ export function drawEtf(p: HomePanel, env: Envelope<Home>): void {
     );
     const { rows: top, invalid } = visibleRows(d.top);
     if (d.types.length === 0) {
-      p.body.append(emptyLine('유형별 순유입 없음'));
+      put(p.body, emptyLine('유형별 순유입 없음'));
       return invalid;
     }
-    p.body.append(
+    put(p.body,
       rankList(
         d.types.map((t) => ({
           name: h('span', { class: 'nm-t' }, t.label),
@@ -403,7 +404,7 @@ export function drawEtf(p: HomePanel, env: Envelope<Home>): void {
 export function drawExport(p: HomePanel, env: Envelope<Home>): void {
   renderCard(p, env.data.cards.export, env, (d) => {
     p.setMeta(`${d.ym} ${d.span_label}(${d.span_text}) · 관세청 10일 잠정 · 발표 ${shortDate(d.first_seen_at)}`);
-    p.body.append(
+    put(p.body,
       bigLine(
         usd(d.usd),
         h(
@@ -424,10 +425,10 @@ export function drawThemes(p: HomePanel, env: Envelope<Home>): void {
   renderCard(p, env.data.cards.themes, env, (d) => {
     p.setMeta(`${shortDate(d.trade_date)} · ${num(d.period)}일 강도 상위 · 편입 종목 동일가중`);
     if (d.rows.length === 0) {
-      p.body.append(emptyLine('테마 강도 없음'));
+      put(p.body, emptyLine('테마 강도 없음'));
       return 0;
     }
-    p.body.append(
+    put(p.body,
       rankList(
         d.rows.map((r) => {
           const ld = r.stats.leader;
@@ -475,7 +476,7 @@ export function drawProgram(p: HomePanel, env: Envelope<Home>): void {
         },
       ];
     });
-    p.body.append(rows.length ? rankList(rows, '시장별 프로그램 순매수') : emptyLine('프로그램 순매수 없음'));
+    put(p.body, rows.length ? rankList(rows, '시장별 프로그램 순매수') : emptyLine('프로그램 순매수 없음'));
     return invalid;
   });
 }

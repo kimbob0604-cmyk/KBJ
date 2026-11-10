@@ -458,6 +458,21 @@ def _filings_day(ctx: ReadContext) -> date:
     return today if ctx.cal.is_trading_day(today) else ctx.cal.prev_trading_day(today)
 
 
+def _latest_prelims(rows: Sequence[PrelimView]) -> tuple[list[PrelimView], int]:
+    """정정공시는 원 공시를 대체 — 같은 (회사, 기간, 연결/별도) 는 가장 늦은 접수번호만.
+
+    §4.1 — 페이지 5·8 화면의 `latestPrelims` 와 같은 규칙(안 거르면 원 공시와 정정이 두 줄로
+    세어졌다). 돌려주는 것: (남은 행, 뺀 수).
+    """
+    last: dict[tuple[str, str, str], str] = {}
+    for p in rows:
+        k = (p.corp_code, p.period, p.scope)
+        if k not in last or p.rcept_no > last[k]:
+            last[k] = p.rcept_no
+    kept = [p for p in rows if last[(p.corp_code, p.period, p.scope)] == p.rcept_no]
+    return kept, len(rows) - len(kept)
+
+
 def _filings(r: _Reads) -> tuple[HomeFilings, _Meta]:
     ctx = r.ctx
     day = _filings_day(ctx)
@@ -478,9 +493,14 @@ def _filings(r: _Reads) -> tuple[HomeFilings, _Meta]:
         for v in scored[:TOP_FILINGS]
     ]  # fmt: skip
     earn = filings_earnings(ctx, start=day, end=day)
-    prelims = earn.data.rows
+    prelims, superseded = _latest_prelims(earn.data.rows)
     if prelims:
         m.env(earn)
+    if superseded:
+        m.notes.append(
+            f"정정으로 대체된 원 공시 {superseded}건은 세지 않는다"
+            "(같은 회사·기간·범위는 마지막 접수만)"
+        )
     sided: list[tuple[SignalSide, PrelimView]] = []
     for p in prelims:
         side = signal_side(p.signal) if p.scope != "subsidiary" else None

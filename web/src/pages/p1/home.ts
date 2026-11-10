@@ -23,7 +23,10 @@ export interface HomeTargets {
   market: MarketPanels;
   signals: SignalPanels;
   watch: HomePanel;
+  /** '오늘의 신호' 구역 머리 도장(묶음 기준) */
   stamp: HTMLElement;
+  /** '시장' 구역 머리 도장(지수 카드 기준) */
+  marketStamp: HTMLElement;
 }
 
 /** 도장 글자: '기준 09/15 15:30 · 잠정 · 카드 7/14 · 만든 시각 18:00' */
@@ -38,9 +41,19 @@ export function stampText(env: Envelope<Home>): string {
   return parts.join(' · ');
 }
 
+/** 시장 구역 도장: '지수 기준 11/10 15:30 · 잠정' — 지수 카드가 없으면 빈 글자 */
+export function marketStampText(env: Envelope<Home>): string {
+  const c = env.data.cards.indices;
+  if (c.status !== 'ok' || !c.as_of) return '';
+  const parts = [`지수 기준 ${kstStamp(c.as_of)}`];
+  if (c.quality && c.quality !== 'ok') parts.push(QUALITY_LABEL[c.quality]);
+  return parts.join(' · ');
+}
+
 export function mountHome(ctx: PageContext, t: HomeTargets): { loadHome: () => Promise<void>; loadWatch: () => Promise<void> } {
   const st = newState();
-  const all: HomePanel[] = [...Object.values(t.market), ...Object.values(t.signals)];
+  const { kospi, kosdaq, futures, band } = t.market;
+  const all: HomePanel[] = [kospi, kosdaq, futures, band, ...Object.values<HomePanel>(t.signals)];
   let seq = 0;
   const loadHome = async (): Promise<void> => {
     seq += 1;
@@ -49,11 +62,13 @@ export function mountHome(ctx: PageContext, t: HomeTargets): { loadHome: () => P
       const env = await ctx.source.get<Home>('home');
       if (my !== seq) return;
       t.stamp.textContent = stampText(env);
+      t.marketStamp.textContent = marketStampText(env);
       drawMarket(t.market, env);
       drawSignals(t.signals, env, st);
     } catch (err) {
       if (my !== seq) return;
       t.stamp.textContent = '';
+      t.marketStamp.textContent = '';
       for (const p of all) {
         p.setMeta('');
         failed(p, err, HOME_HINT);

@@ -1258,3 +1258,330 @@ button.link:not(.btn):focus-visible {
   color: var(--warn);
   border-color: var(--warn);
 }
+
+/* ── 첫 화면 요약 카드(페이지 1 — pages/p1/home_*.ts, ADR 0043) ──────────────────
+   배치·정보 구성만 Beom 첫 화면을 보고 다시 만들었다(그 CSS·JS 는 쓰지 않는다). 색은 토큰으로만, 색칠은 등락(.up·.down)에만.
+   격자: 시장 카드 3열(1100px 이하 1열), 신호 카드 3열 → 900px 이하 2열 → 560px 이하 1열. .wide 는 한 줄 전체. */
+.hsec {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin: 10px 0 -2px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 6px;
+}
+.hsec h3 {
+  margin: 0;
+  font-family: var(--kr);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--fg);
+}
+.hstamp {
+  margin: 0;
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 11px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.hgrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  min-width: 0;
+}
+.hgrid > .panel {
+  grid-column: auto; /* 패널 기본 .span-12 가 안쪽 격자에 12칸을 만들지 않게 */
+}
+.hgrid > .panel.wide {
+  grid-column: 1 / -1;
+}
+@media (max-width: 1100px) {
+  .hmarket {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 900px) {
+  .hsignals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .hsignals {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.hcard {
+  display: flex;
+  flex-direction: column;
+}
+.hcard .body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.hbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 8px;
+  padding: 6px 12px 0;
+  min-width: 0;
+}
+.hmeta {
+  margin: 0;
+  color: var(--dim);
+  font-family: var(--kr);
+  font-size: 11px;
+  line-height: 1.45;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.hmore {
+  flex: none;
+  margin-left: auto;
+  font: inherit;
+  font-family: var(--kr);
+  font-size: 11px;
+  color: var(--dim);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 9px;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.hmore:hover,
+.hmore:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.hbig {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 2px 0 8px;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.hbig .hv {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--fg);
+}
+.hbig .unit,
+.hbig small {
+  color: var(--dim);
+  font-size: 12px;
+}
+.pill {
+  display: inline-block;
+  min-width: 60px;
+  text-align: right;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 1px 8px;
+  white-space: nowrap;
+}
+.pill.dim {
+  border-style: dashed;
+}
+.sw,
+.mult {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.hlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+.hlist > li {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px;
+  font-size: 12px;
+}
+.hlist > li:hover {
+  background: var(--sel);
+}
+.hlist .rk {
+  color: var(--dim);
+  font-family: var(--mono);
+  text-align: right;
+}
+.hlist .rk-top {
+  color: var(--fg);
+  font-weight: 700;
+}
+.hlist .nm,
+.hfil .nm {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-family: var(--kr);
+}
+.hlist .nm > small,
+.hfil .nm > small {
+  color: var(--dim);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.nm-t {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.hlist .v {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+  text-align: right;
+}
+.hfil {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px 16px;
+}
+.hcols2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 760px) {
+  .hcols2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.hfil > li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px dotted var(--line);
+  font-size: 12px;
+  min-width: 0;
+}
+.hfil > li > .nm {
+  flex: 1 1 auto;
+}
+.hfil > li > .tag {
+  flex: none;
+  margin: 1px 0 0;
+}
+.hfil a {
+  overflow-wrap: anywhere;
+}
+.hfil > li > a {
+  flex: none;
+  white-space: nowrap;
+}
+.htabs {
+  display: flex;
+  margin: 0 0 8px;
+}
+.htabs button {
+  flex: 1 1 0;
+}
+.hinv-cap,
+.hsub,
+.hline {
+  margin: 8px 0 4px;
+  color: var(--dim);
+  font-family: var(--kr);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.hline {
+  color: var(--fg);
+  font-size: 12px;
+}
+.hline.dim {
+  color: var(--dim);
+}
+.hinv,
+.hkv {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+}
+@media (max-width: 560px) {
+  .hinv.n4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.hinv > div,
+.hkv > div {
+  border: 1px solid var(--line);
+  padding: 5px 8px;
+  min-width: 0;
+}
+.hinv dt,
+.hkv dt {
+  color: var(--dim);
+  font-family: var(--kr);
+  font-size: 11px;
+}
+.hinv dd,
+.hkv dd {
+  margin: 2px 0 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.hcard .hbig + svg {
+  height: 56px;
+  margin: 0 0 4px;
+}
+.hband {
+  display: flex;
+  height: 10px;
+  background: var(--line);
+  overflow: hidden;
+}
+.hband > span {
+  display: block;
+  height: 100%;
+}
+.hband .b-up {
+  background: var(--up);
+}
+.hband .b-flat {
+  background: var(--dim);
+}
+.hband .b-down {
+  background: var(--down);
+}
+.hband .b-unk {
+  background: var(--lock);
+}
+.hband-txt {
+  margin: 6px 0 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.hmore-n {
+  margin: 6px 0 0;
+  color: var(--dim);
+  font-family: var(--kr);
+  font-size: 11px;
+}

@@ -306,7 +306,18 @@ def test_filings_card_picks_by_keyword_score() -> None:
     )[:8]
     assert [r["rcept_no"] for r in f["top"]] == [r["rcept_no"] for r in want]
     earn = c.get(f"/api/filings/earnings?from={f['date']}&to={f['date']}").json()["data"]["rows"]
-    assert f["n_prelim"] == len(earn)
+    # 정정은 원 공시를 대체 — 같은 (회사, 기간, 범위) 는 마지막 접수만 센다
+    # (화면 latestPrelims 와 같은 규칙)
+    last: dict[tuple[str, str, str], str] = {}
+    for e in earn:
+        k = (e["corp_code"], e["period"], e["scope"])
+        last[k] = max(last.get(k, ""), e["rcept_no"])
+    assert len(last) < len(earn), "합성 세계에 정정 공시가 있어야 이 시험이 뜻이 있다"
+    assert f["n_prelim"] == len(last)
+    picked = {p["rcept_no"] for p in f["prelims"]}
+    assert picked <= set(last.values())
+    notes = _home(c)["data"]["cards"]["filings"]["notes"]
+    assert any(f"원 공시 {len(earn) - len(last)}건" in n for n in notes)
     assert f["n_surprise"] + f["n_shock"] >= len(f["prelims"]) > 0
     prio = [p["priority"] for p in f["prelims"]]
     assert prio == sorted(prio)

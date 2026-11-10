@@ -6,7 +6,7 @@
 import type { components } from '../../api/types.gen';
 import { isStockCode, openStock } from '../../app/route';
 import { DataError, type Envelope, type Quality } from '../../data/source';
-import { type Child, h } from '../../ui/dom';
+import { append, type Child, h } from '../../ui/dom';
 import { DASH, joEok, pct, signClass } from '../../ui/fmt';
 import { markQuality } from '../../ui/quality';
 import type { HomePanel } from './home_defs';
@@ -82,6 +82,11 @@ export function renderCard<T>(p: HomePanel, c: CardOf<T> | undefined, env: Envel
   }
 }
 
+/** 패널 본문 등에 자식들을 넣는다(null·false 는 건너뛴다 — ui/dom append) */
+export function put(parent: Node, ...children: Child[]): void {
+  append(parent, children);
+}
+
 /** 등락률 알약(오른쪽 정렬·부호 색). quality 가 있으면 배지 */
 export function pill(v: number | null | undefined, q?: Quality | null, digits = 2): HTMLSpanElement {
   const el = h('span', { class: `pill ${signClass(v)}` }, pct(v, digits));
@@ -129,7 +134,7 @@ export function rankList(rows: readonly RankRow[], label: string): HTMLOListElem
       h(
         'li',
         { data: r.data },
-        h('span', { class: r.rank !== null && r.rank !== undefined && r.rank <= 3 ? 'rk top' : 'rk' }, r.rank ?? ''),
+        h('span', { class: r.rank !== null && r.rank !== undefined && r.rank <= 3 ? 'rk rk-top' : 'rk' }, r.rank ?? ''),
         h('span', { class: 'nm' }, r.name, r.sub ? h('small', null, r.sub) : null),
         h('span', { class: 'v' }, r.right ?? null),
       ),

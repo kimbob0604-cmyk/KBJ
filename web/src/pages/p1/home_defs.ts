@@ -98,7 +98,13 @@ export function homePanel(
             {
               class: 'hmore',
               attrs: { type: 'button', 'aria-label': `${o.title} 자세히` },
-              on: { click: () => o.detail?.()?.el.scrollIntoView?.({ block: 'start' }) },
+              on: {
+                click: () => {
+                  const el = o.detail?.()?.el;
+                  // jsdom 에는 scrollIntoView 가 없다
+                  if (el && typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'start' });
+                },
+              },
             },
             '자세히 ›',
           )

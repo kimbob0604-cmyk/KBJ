@@ -183,6 +183,7 @@
         "notes": [
           "접수 시각은 우리가 처음 본 시각(DART 응답은 날짜만 — first_seen_at)",
           "분류 = 전년동기 대비(YoY — 공개 규칙)",
+          "정정으로 대체된 원 공시 1건은 세지 않는다(같은 회사·기간·범위는 마지막 접수만)",
           "오늘은 휴장 — 11/16 공시",
           "서프·쇼크 = 전년동기 대비 방향(컨센서스 대비 아님 — 분기 컨센서스 없음)"
         ],
@@ -308,8 +309,8 @@
               "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261116000027"
             }
           ],
-          "n_prelim": 5,
-          "n_surprise": 3,
+          "n_prelim": 4,
+          "n_surprise": 2,
           "n_shock": 0,
           "prelims": [
             {
@@ -345,23 +346,6 @@
               "is_correction": true,
               "quality": "ok",
               "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261116800167"
-            },
-            {
-              "rcept_no": "20261116800149",
-              "corp_name": "모의에너지",
-              "stock_code": "994140",
-              "label": "2026 3Q",
-              "scope": "consolidated",
-              "signal": "YOY_BIG_UP",
-              "side": "surprise",
-              "priority": 1,
-              "revenue_cur": 2228600000000,
-              "op_cur": 201600000000,
-              "rev_yoy": 3.1138666543284135,
-              "op_yoy": 52.49621785173979,
-              "is_correction": false,
-              "quality": "ok",
-              "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261116800149"
             }
           ]
         }

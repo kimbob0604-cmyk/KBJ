@@ -1,5 +1,8 @@
 // 페이지 1 시장(docs/p3_design.md §4.4·§6.5) — 지수 타일·시장 거래대금·업종 히트맵·시장폭·시장 투자자 수급.
 //
+// - 배치(첫 화면 요약 카드 — ADR 0043): '시장'(지수 카드 3장 코스피·코스닥·코스피200 선물 + 상승·보합·하락 띠 → 업종 지도
+//   전체 폭) → '오늘의 신호'(3열 카드 격자 — ./p1/home_defs.ts SIGNAL_CARDS) → '자세히'(아래 원래 패널 그대로).
+//   카드 값은 `home` 묶음 한 번(./p1/home.ts — 로그인 전용) + 관심종목(`watchlist`) + 업종 지도(`market/sectors`).
 // - 로그인: `market/summary`(지수·거래대금·시장폭 — 한 번에), `market/sectors`(기간 1·5·20), `flows/investors`.
 // - 공개: 지수 자리는 TradingView 위젯(DATA_TIERS §2 — 시세는 TradingView 로만), 신용잔고·예탁금은 공개 파일
 //   `credit`(공개 내보내기 credit.json — 마지막 값·직전 대비만), 나머지는 자물쇠(요청 없음).
@@ -15,6 +18,7 @@ import type { AppContext, Cleanup, PageContext, PageModule } from '../app/types'
 import { DataError, type Envelope, type Quality, worstQuality } from '../data/source';
 import { h } from '../ui/dom';
 import { DASH, eok, joEok, num, pct, shortDate, signClass, times } from '../ui/fmt';
+import type { LockText } from '../ui/lock';
 import { type Panel, panel } from '../ui/panel';
 import { checkLine, qValue, roundTol, visibleRows } from '../ui/quality';
 import { seg } from '../ui/seg';
@@ -24,11 +28,28 @@ import { table } from '../ui/table';
 import { investorCards } from './p1/cards';
 import { MINUTE_REFRESH_MS, MINUTE_TITLE, mountMinute } from './p1/flows_minute';
 import { GLOBAL_DEF, GLOBAL_LOCK, GLOBAL_REFRESH_MS, GLOBAL_TITLE, mountGlobal } from './p1/global_proxy';
+import type { mountHome } from './p1/home';
+import {
+  cardGrid,
+  type HomePanel,
+  homePanel,
+  MARKET_TITLES,
+  SECTION,
+  sectionHead,
+  SIGNAL_CARDS,
+  type SignalKey,
+} from './p1/home_defs';
+import type { MarketPanels } from './p1/home_market';
 import { DAILY_TITLE, mountProgram, TOP_TITLE } from './p1/program';
 
 // 공개 빌드에서는 P5 로그인 모듈을 번들에서 뺀다(p8_stock LOGIN_VALUE 와 같은 방식 — 공개 등급은 이 줄에 오기 전에
 // 자물쇠로 돌아가므로 실행 동작은 같고, 공개 JS gzip 예산 scripts/check-bundle.mjs 72 KB(ADR 0025) 를 지킨다. WRAP)
 const LOGIN_F2 = import.meta.env.MODE === 'public' ? null : { mountMinute, mountProgram, mountGlobal };
+// 첫 화면 요약 카드(`home` 묶음 — ./p1/home.ts)도 로그인 전용이라 공개 번들에서 뺀다(공개판은 카드 자리에 자물쇠만).
+// 정적 import 가 아니라 늦게 불러온다: 그리기 모듈이 페이지 3·7·8 공용 모듈까지 끌어와 이 모듈의 평가가 길어지면, 같은 때
+// 붙는 페이지 2·4·10 이 이 모듈(fill 등 공용 도우미)을 덜 평가된 채 받아 TDZ 오류가 났다(vitest 앱 통합 시험 — 순환 import).
+const LOGIN_HOME = import.meta.env.MODE === 'public' ? null : () => import('./p1/home');
+type HomeLoaders = ReturnType<typeof mountHome>;
 const NOOP = (): Promise<void> => Promise.resolve();
 
 type S = components['schemas'];
@@ -423,15 +444,37 @@ export function drawInvestors(p: Panel, env: Envelope<S['InvestorTotals']>): nul
 
 // ── 페이지 ─────────────────────────────────────────────────
 
+/** 시장 구역 카드(로그인) — 지수 카드 3장 + 상승·보합·하락 띠. 지수·띠의 '자세히 ›'는 같은 쪽 '지수'·'시장폭' 패널로 */
+function marketCards(ctx: PageContext, grid: HTMLElement, idx: Panel, breadth: Panel): MarketPanels {
+  const card = (key: keyof MarketPanels, lock: LockText, detail: Panel | null, wide = false): HomePanel =>
+    homePanel(ctx.tier, {
+      key,
+      title: MARKET_TITLES[key],
+      tier: 'login',
+      page: detail ? 1 : 3,
+      lock,
+      wide,
+      detail: detail ? () => detail : undefined,
+    });
+  const m: MarketPanels = {
+    kospi: card('kospi', 'krx', idx),
+    kosdaq: card('kosdaq', 'krx', idx),
+    futures: card('futures', 'options', null), // 선물 → 페이지 3(GEX)
+    band: card('band', 'quote_based', breadth, true),
+  };
+  grid.append(m.kospi.el, m.kosdaq.el, m.futures.el, m.band.el);
+  return m;
+}
+
 async function mount(ctx: PageContext): Promise<void> {
   const { tier, root } = ctx;
   const pIdx = panel(tier, {
     title: '지수',
     tier: 'public',
-    span: 8,
+    span: tier === 'public' ? 12 : 8,
     src: tier === 'public' ? 'TradingView 제공' : '',
   });
-  const pTurn = panel(tier, { title: '시장 거래대금', tier: 'login', span: 4, lock: 'krx_daily' });
+  const pTurn = panel(tier, { title: '시장 거래대금', tier: 'login', span: 6, lock: 'krx_daily' });
   const pGlobal = panel(tier, {
     title: GLOBAL_TITLE,
     tier: 'login',
@@ -440,27 +483,48 @@ async function mount(ctx: PageContext): Promise<void> {
     src: 'Hyperliquid·Yahoo',
     def: GLOBAL_DEF,
   });
-  const pHeat = panel(tier, { title: '업종 히트맵', tier: 'login', span: 8, lock: 'krx' });
+  const pHeat = panel(tier, { title: '업종 히트맵', tier: 'login', span: 12, lock: 'krx' });
   const pBreadth = panel(tier, { title: '시장폭', tier: 'login', span: 4, lock: 'quote_based' });
-  const pInv = panel(tier, { title: '시장 투자자 수급', tier: 'login', span: 6, lock: 'investor' });
+  const pInv = panel(tier, { title: '시장 투자자 수급', tier: 'login', span: 12, lock: 'investor' });
   // 금투협 종합통계(공개 등급) — 공개는 credit.json(마지막 값), 로그인은 market/credit(20일 추이)
   const pCredit = panel(tier, { title: CREDIT_TITLE, tier: 'public', span: 6 });
   // P5 F2 — 장중 투자자 수급·프로그램매매(KIS — 로그인 전용)
   const pMin = panel(tier, { title: MINUTE_TITLE, tier: 'login', span: 12, lock: 'kis' });
   const pPgmDaily = panel(tier, { title: DAILY_TITLE, tier: 'login', span: 6, lock: 'kis' });
   const pPgmTop = panel(tier, { title: TOP_TITLE, tier: 'login', span: 6, lock: 'kis' });
+
+  // ── 배치(Beom 첫 화면 순서): 시장(지수 카드 → 업종 지도) → 오늘의 신호(카드 격자) → 자세히(기존 패널 그대로) ──
+  const hMarket = sectionHead(SECTION.market);
+  const hSignals = sectionHead(SECTION.signals);
+  const hDetail = sectionHead(SECTION.detail);
+  const marketGrid = cardGrid('hmarket', '지수 카드');
+  const signalGrid = cardGrid('hsignals', '오늘의 신호 카드');
+  // 공개판 지수 자리는 TradingView(시세는 TradingView 로만 — DATA_TIERS §2): 지수 카드 대신 지수 패널을 시장 구역 맨 위에
+  const market = tier === 'public' ? null : marketCards(ctx, marketGrid, pIdx, pBreadth);
+  const detailOf: Partial<Record<SignalKey, () => Panel>> = { breadth: () => pBreadth, program: () => pPgmDaily };
+  const cards = {} as Record<SignalKey, HomePanel>;
+  for (const c of SIGNAL_CARDS) {
+    cards[c.key] = homePanel(tier, { ...c, tier: 'login', detail: detailOf[c.key] });
+    signalGrid.append(cards[c.key].el);
+  }
   root.append(
-    pIdx.el,
-    pTurn.el,
-    pGlobal.el,
+    hMarket.el,
+    ...(market ? [marketGrid] : [pIdx.el]),
     pHeat.el,
+    hSignals.el,
+    signalGrid,
+    hDetail.el,
+    ...(market ? [pIdx.el] : []),
     pBreadth.el,
-    pInv.el,
+    pTurn.el,
     pCredit.el,
+    pInv.el,
+    pGlobal.el,
     pMin.el,
     pPgmDaily.el,
     pPgmTop.el,
   );
+  hDetail.stamp.textContent = '원래 패널 — 표·차트·검산 줄';
 
   pTurn.setDef(
     '코스피+코스닥 주식(ETF·ETN·리츠 제외) 거래대금. 막대 = 일별, 점선 = 20일 평균. 장중 값은 지수 누적 기준(잠정).',
@@ -551,8 +615,23 @@ async function mount(ctx: PageContext): Promise<void> {
   const loadMinute = LOGIN_F2 ? LOGIN_F2.mountMinute(ctx, pMin) : NOOP;
   const loadProgram = LOGIN_F2 ? LOGIN_F2.mountProgram(ctx, pPgmDaily, pPgmTop) : NOOP;
   const loadGlobal = LOGIN_F2 ? LOGIN_F2.mountGlobal(ctx, pGlobal) : NOOP;
+  const { watchlist, ...signals } = cards;
+  let home: HomeLoaders = { loadHome: NOOP, loadWatch: NOOP };
+  const startHome = async (): Promise<void> => {
+    if (!LOGIN_HOME || !market) return;
+    try {
+      const mod = await LOGIN_HOME();
+      home = mod.mountHome(ctx, { market, signals, watch: watchlist, stamp: hSignals.stamp, marketStamp: hMarket.stamp });
+    } catch (err) {
+      // 모듈을 못 불러오면(배포 직후 옛 조각 등) 카드에만 오류 줄 — 업종 지도·자세히 패널은 계속(절대 규칙 4)
+      for (const p of [...Object.values<HomePanel>({ ...market }), ...Object.values<HomePanel>(cards)]) p.showError(err);
+      return;
+    }
+    await Promise.all([home.loadHome(), home.loadWatch()]);
+  };
 
   await Promise.all([
+    startHome(),
     loadSummary(),
     loadSectors(),
     loadInvestors(),
@@ -564,6 +643,8 @@ async function mount(ctx: PageContext): Promise<void> {
   // 첫 불러오기 중에 앱이 내려갔으면(격자가 문서에서 빠짐) 주기 작업을 걸지 않는다
   if (root.isConnected) {
     slotEvery(ctx, () => {
+      void home.loadHome();
+      void home.loadWatch();
       void loadSummary();
       void loadSectors();
       void loadInvestors();

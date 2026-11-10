@@ -13,7 +13,7 @@ import { DASH, kstTime, num, shortDate } from '../../ui/fmt';
 import { qValue } from '../../ui/quality';
 import { sparkline } from '../../ui/svg';
 import type { HomePanel } from './home_defs';
-import { bigLine, type Cards, type Home, joinSub, pill, renderCard, signedWon } from './home_ui';
+import { bigLine, type Cards, type Home, joinSub, pill, put, renderCard, signedWon } from './home_ui';
 
 type S = components['schemas'];
 type Tile = S['IndexTile'];
@@ -89,7 +89,7 @@ function drawIndex(p: HomePanel, env: Envelope<Home>, key: 'kospi' | 'kosdaq'): 
       return 1;
     }
     p.setMeta(tileBasis(t));
-    p.body.append(
+    put(p.body,
       bigLine(qValue(num(t.value, 2), t.quality, t.as_of) ?? DASH, pill(t.chg_pct)),
       t.spark.length ? sparkline(t.spark, { label: `${t.name ?? t.code} ${t.spark.length}거래일 추이` }) : null,
       investorGrid(x.investors, programOf(cards, key)),
@@ -114,7 +114,7 @@ function drawFutures(p: HomePanel, env: Envelope<Home>): void {
     );
     const price = d.price === null || !d.price_quality ? null : qValue(num(d.price, 2), d.price_quality, d.cycle_at);
     const n = d.night;
-    p.body.append(
+    put(p.body,
       bigLine(
         price ?? DASH,
         h('small', { class: 'unit' }, 'pt'),
@@ -150,7 +150,7 @@ function drawBand(p: HomePanel, env: Envelope<Home>): void {
     const all = b.up + b.flat + b.down + b.unknown;
     const w = (n: number): string => `${all > 0 ? (n / all) * 100 : 0}%`;
     const label = `상승 ${num(b.up)} 보합 ${num(b.flat)} 하락 ${num(b.down)}${b.unknown ? ` 미지 ${num(b.unknown)}` : ''}`;
-    p.body.append(
+    put(p.body,
       h(
         'div',
         { class: 'hband', attrs: { role: 'img', 'aria-label': label } },
