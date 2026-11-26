@@ -8,10 +8,16 @@
   page_info:{total_count, total_page, next_page, …}}`. page_size 는 20 을 넘겨도 20 이다 —
   `next_page` 가 None 이 될 때까지(최대 `MAX_PAGES` — 유한 루프).
 - 구성종목: `GET /api/products/etfs/{fund_cd}/holdings[?base_dt=YYYYMMDD]` → `{base_dt,
-  available_dates:[YYYYMMDD…], holding_count, total_count, items:[{rank, item_cd(ISIN), item_nm,
-  ratio, shares, unit_price, vamt}]}`. **상위 30줄만** 준다(total_count 가 전체 수). 공시가 없는 날
-  (주말·휴장·미래)을 주면 그 전날이 아니라 **최신 날**을 조용히 준다 — 그래서 `available_dates` 에서
-  요청일 이하 최신 날을 골라 다시 부른다(기준일 = 응답 `base_dt`).
+  holding_count, total_count, items:[{rank, item_cd(ISIN), item_nm, ratio, shares, unit_price,
+  vamt}]}`. **상위 30줄만** 준다(total_count 가 전체 수). 날짜 처리는 두 모양을 다 받는다:
+  - 2026-10 모양(실측 2026-10-20): `available_dates:[YYYYMMDD…]` 가 있고, 공시가 없는 날(주말·휴장·
+    미래)을 주면 **최신 날**을 조용히 준다 → 목록에서 요청일 이하 최신 날을 골라 다시 부른다.
+  - 2026-11 모양(실측 2026-11-26 — 10-28 부터 RISE 45개 펀드가 매일 빈 응답으로 끝났다):
+    `available_dates` 가 없어지고 `start_dt`·`latest_dt` 가 생겼다. `base_dt` 는 **요청한 날
+    그대로** 돌려주고, 공시가 없는 날은 `items` 가 빈다(최신으로 바꾸지 않는다). 과거 날짜도
+    준다(10-28 실측). → 요청일(최신 공시일 `latest_dt` 를 넘으면 그날로)부터 하루씩 거슬러
+    `items` 가 있는 날을 찾는다(최대 `LOOKBACK` 일, `start_dt` 아래로는 안 간다 — 유한 루프).
+  기준일 = 응답 `base_dt`.
 - 전체 구성종목: 같은 경로 `?download=xlsx&base_dt=…` → 엑셀(시트 하나, 머리 줄 `종목코드·종목명·
   수량(주)·보유비중(%)·평가금액(원)`). 종목코드가 ISIN 이 아니라 **6자리로 줄인 값**이라 채권
   (KR6…)·원화예금(KRD…)·설정현금(CASH…)도 주식 코드처럼 보인다 — 같은 날 JSON 상위 줄의 ISIN 이
@@ -27,7 +33,7 @@ from __future__ import annotations
 import io
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import replace
-from datetime import date
+from datetime import date, timedelta
 from typing import Any, ClassVar, Final, Literal
 
 from openpyxl import load_workbook
@@ -48,6 +54,7 @@ from kbj.data.private.etf_issuers.base import (
 )
 
 MAX_PAGES: Final = 30  # 목록 쪽 상한(20 × 30 = 600 펀드)
+LOOKBACK: Final = 10  # 2026-11 모양에서 공시일을 찾아 거슬러 가는 최대 일수(추석·설 연휴 + 주말)
 # 엑셀에서 주식 코드처럼 보이는 비주식 줄(실측 2026-10-20: 원화예금 010010·국고채권 03501G 등)
 _NOT_STOCK_NAMES: Final = (
     "원화예금", "설정현금", "현금", "예금", "미수", "미지급", "증거금", "국고채", "채권", "통안",
@@ -109,11 +116,17 @@ class Rise:
 
     def holdings(self, fund_key: str, day: date) -> tuple[dict[str, HoldingRow], date]:
         want = min(day, self.today())  # 사이트 최신 자료는 KST 오늘을 넘을 수 없다
-        first = self._json(fund_key, None)
-        real = pick_date(first.get("available_dates") or [], want)
-        if real is None:
-            return {}, want
-        d = first if ymd(first.get("base_dt")) == real else self._json(fund_key, real)
+        first = self._json(fund_key, want)
+        if "available_dates" in first:  # 2026-10 모양 — 공시일 목록에서 고른다
+            real = pick_date(first.get("available_dates") or [], want)
+            if real is None:
+                return {}, want
+            d = first if ymd(first.get("base_dt")) == real else self._json(fund_key, real)
+        else:  # 2026-11 모양 — 요청한 날 그대로, 공시 없는 날은 빈다
+            found = self._walk_back(fund_key, want, first)
+            if found is None:
+                return {}, want
+            d, real = found
         got = ymd(d.get("base_dt"))
         if got != real:
             raise IssuerError(
@@ -133,6 +146,24 @@ class Rise:
             del e
             return {c: replace(h, quality=Quality.ESTIMATED) for c, h in top.items()}, real
         return xlsx_holdings(self.KEY, lines, not_stock), real
+
+    def _walk_back(
+        self, fund_key: str, want: date, first: Mapping[str, Any]
+    ) -> tuple[Mapping[str, Any], date] | None:
+        """2026-11 모양: want(최신 공시일을 넘으면 그날)부터 하루씩 거슬러 구성종목이 있는 날."""
+        latest, start = ymd(first.get("latest_dt")), ymd(first.get("start_dt"))
+        t, d = want, first
+        if latest is not None and t > latest:
+            t = latest
+            d = self._json(fund_key, t)
+        for _ in range(LOOKBACK):
+            if ymd(d.get("base_dt")) == t and d.get("items"):
+                return d, t
+            t -= timedelta(days=1)
+            if start is not None and t < start:
+                return None
+            d = self._json(fund_key, t)
+        return None
 
 
 def pick_date(available: Iterable[object], want: date) -> date | None:

@@ -13,12 +13,18 @@ import httpx
 import pytest
 
 from kbj.core.quality import Quality
-from kbj.core.rows import EtfDay, EtfMeta, EtfType, HoldingRow, SplitEvent
+from kbj.core.rows import EtfDay, EtfMeta, EtfType, Fund, HoldingRow, SplitEvent
 from kbj.data.private.etf_issuers.base import FundRef, IssuerHttp, holding
 from kbj.data.private.etf_issuers.registry import build
 from kbj.data.spec import DataKey
 from kbj.services.collectors import etf_holdings
-from kbj.services.collectors.etf_holdings import DOWN_AFTER, EMPTY_LIMIT, ENGINE_VERSION, accept
+from kbj.services.collectors.etf_holdings import (
+    DOWN_AFTER,
+    EMPTY_LIMIT,
+    ENGINE_VERSION,
+    accept,
+    fill_plan,
+)
 from kbj.services.scheduler.handlers import JobResult
 from kbj.store.repos import MemoryRepos, memory_repos
 from tests.fakes.etf_issuer_server import ETF_IN_FUND, ISSUERS, FakeIssuers, funds_of
@@ -74,6 +80,8 @@ def test_first_run_snapshots_and_no_changes(repos: MemoryRepos) -> None:
         "dropped": 0,
         "skipped": 1,
         "down_skipped": 0,
+        "filled": 0,
+        "fill_errors": 0,
     }
     # 메타 분류(운용사·테마·유형)를 채웠다
     m = repos.etf.meta()[funds_of("kodex")[0].ticker]
@@ -323,3 +331,40 @@ def test_partially_fetched_issuer_is_reported(repos: MemoryRepos) -> None:
     res = etf_holdings.run(c)
     assert res.status == "ok" and "failed_issuers" not in res.detail
     assert res.detail["partial_issuers"] == {"kodex": "가짜 KODEX 4/8"}
+
+
+def test_missing_past_day_is_filled_for_history_issuers(repos: MemoryRepos) -> None:
+    """하루를 건너뛰고 돌면(장애·DNS 실패) 다음 실행이 빈 날을 채운다 — 과거 기준일을 주는 운용사만
+    (SOL 은 최신만 주므로 못 채운다). 채운 것은 오늘 판정(일부만 받음 등)에 섞이지 않는다."""
+    w = FakeIssuers(latest=date(2026, 10, 6))
+    run(repos, w, "2026-10-07", kst(2026, 10, 7, 8))  # 10-06 스냅
+    w.latest = date(2026, 10, 8)  # 10-07 실행은 없었다(장애)
+    res = run(repos, w, "2026-10-08", kst(2026, 10, 8, 8))
+    assert res.status == "ok" and "partial_issuers" not in res.detail
+    dates = repos.etf.holding_dates()
+    kodex = f"kodex:{funds_of('kodex')[0].key}"
+    sol = f"sol:{funds_of('sol')[0].key}"
+    assert date(2026, 10, 7) in dates[kodex] and date(2026, 10, 8) in dates[kodex]
+    assert date(2026, 10, 7) not in dates[sol]
+    assert res.detail["issuers"]["kodex"]["filled"] == 2  # 추적 펀드 2개 × 빈 날 1
+    assert res.detail["issuers"]["sol"]["filled"] == 0
+    h = repos.etf.holdings(kodex, date(2026, 10, 7))
+    assert {c: x.qty for c, x in h.items()} == {
+        c: q for c, q in w.expected(funds_of("kodex")[0], date(2026, 10, 7)).items()
+    }
+    # 다시 돌려도 채울 날이 없다(멱등 — 부르지 않는다)
+    again = run(repos, w, "2026-10-08", kst(2026, 10, 8, 9))
+    assert again.detail["issuers"]["kodex"]["filled"] == 0
+
+
+def test_fill_plan_only_after_first_snapshot_and_tracked() -> None:
+    d1, d2, d3 = date(2026, 10, 5), date(2026, 10, 6), date(2026, 10, 7)
+
+    def fund(k: str, track: bool = True) -> Fund:
+        return Fund(f"kodex:{k}", "kodex", k, None, k, None, True, "full", track, 0, "x")
+
+    funds = {f.fund_id: f for f in (fund("A"), fund("B"), fund("C", track=False), fund("N"))}
+    have = {"kodex:A": [d1, d3], "kodex:B": [d2], "kodex:C": [d1]}
+    plan = fill_plan(have, funds, [d3, d2, d1])
+    # B 는 첫 스냅(d2) 앞 d1 을 안 부른다, C 는 추적 아님, N 은 스냅이 없다
+    assert plan == {"kodex:A": [d2], "kodex:B": [d3]}

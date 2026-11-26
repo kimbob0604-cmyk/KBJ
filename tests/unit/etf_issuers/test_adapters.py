@@ -17,6 +17,7 @@ import pytest
 from kbj.core.quality import Quality
 from kbj.data.private.etf_issuers.base import FundRef, IssuerAdapter, IssuerHttp
 from kbj.data.private.etf_issuers.registry import ADAPTERS, KEYS, build
+from kbj.data.private.etf_issuers.rise import LOOKBACK
 from tests.fakes.etf_issuer_server import (
     ETF_IN_FUND,
     PREF_CODE,
@@ -171,23 +172,42 @@ def test_hanaro_future_clamp_uses_detail_page_date() -> None:
     assert all(p != f"/fund/{f.key}" for _, p, _ in new)
 
 
-def test_rise_picks_latest_published_day_on_or_before_request() -> None:
-    """kbam.co.kr 는 공시 없는 날을 달라면 최신 날을 조용히 준다 — 공시일 목록에서 고른다."""
-    w, ads, _ = setup(latest=FRI, today=MON)
+@pytest.mark.parametrize("dates_list", [False, True])
+def test_rise_picks_latest_published_day_on_or_before_request(dates_list: bool) -> None:
+    """2026-10 모양은 공시 없는 날에 최신 날을 조용히 준다(공시일 목록에서 고른다), 2026-11 모양은
+    그날을 빈 채로 준다(하루씩 거슬러 찾는다) — 어느 쪽이든 요청일 이하 최신 공시일."""
+    w, ads, _ = setup(latest=FRI, today=MON, rise_dates_list=dates_list)
     f = funds_of("rise")[0]
     rows, real = ads["rise"].holdings(f.key, MON)
     assert real == FRI and {c: h.qty for c, h in rows.items()} == w.expected(f, FRI)
-    w2, ads2, _ = setup(latest=MON, today=MON)
+    w2, ads2, _ = setup(latest=MON, today=MON, rise_dates_list=dates_list)
     _, real2 = ads2["rise"].holdings(f.key, SAT)  # 토요일 → 금요일(최신 월요일이 아니라)
     assert real2 == FRI
     asked = [q.get("base_dt") for _, p, q in w2.calls_of("rise") if p.endswith("/holdings")]
     assert "20261009" in asked
 
 
-def test_rise_future_request_starts_from_today() -> None:
-    _, ads, _ = setup(latest=TUE, today=date(2026, 10, 7))
+@pytest.mark.parametrize("dates_list", [False, True])
+def test_rise_future_request_starts_from_today(dates_list: bool) -> None:
+    _, ads, _ = setup(latest=TUE, today=date(2026, 10, 7), rise_dates_list=dates_list)
     _, real = ads["rise"].holdings(funds_of("rise")[0].key, date(2026, 12, 1))
     assert real == TUE
+
+
+def test_rise_past_day_is_fetched_as_is() -> None:
+    """2026-11 모양은 지난 날짜를 그대로 준다 — 빠진 날을 다시 받을 수 있다."""
+    w, ads, _ = setup(latest=MON, today=MON)
+    f = funds_of("rise")[0]
+    rows, real = ads["rise"].holdings(f.key, TUE)
+    assert real == TUE and {c: h.qty for c, h in rows.items()} == w.expected(f, TUE)
+
+
+def test_rise_walk_back_is_bounded() -> None:
+    """구성종목이 있는 날을 못 찾으면 LOOKBACK 번 안에 멈추고 빈 결과(items 가 늘 비는 서버)."""
+    w, ads, _ = setup(latest=TUE, today=date(2026, 10, 7), rise_top=0)
+    rows, real = ads["rise"].holdings(funds_of("rise")[0].key, TUE)
+    assert rows == {} and real == TUE
+    assert len([1 for _, p, _ in w.calls_of("rise") if p.endswith("/holdings")]) == 1 + LOOKBACK
 
 
 def test_rise_full_list_comes_from_xlsx_and_drops_cash_bond_futures() -> None:

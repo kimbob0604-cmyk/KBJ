@@ -17,8 +17,11 @@
   우선주 ISIN(KR7990011003 → 990015)도 하나.
 - 날짜 처리는 운용사마다 실측 기록대로: KODEX·KoAct·TIMEFOLIO·PLUS 는 요청일 이하 최신으로
   폴백, TIGER·ACE·HANARO 는 그날만(없으면 빈), HANARO 는 미래일 요청을 최신으로 클램프, SOL 은
-  날짜를 무시하고 최신. RISE(kbam.co.kr — 2026-10 이전)는 공시일 목록(`available_dates`)을 주고,
-  공시가 없는 날을 달라면 **최신 날**을 준다(실측 2026-10-20). JSON 은 비중 상위 `rise_top` 줄만,
+  날짜를 무시하고 최신. RISE(kbam.co.kr)는 기본이 2026-11 모양(실측 2026-11-26): `start_dt`·
+  `latest_dt` 를 주고 `base_dt` 는 요청한 날 그대로, 공시가 없는 날은 `items` 가 빈다.
+  `rise_dates_list=True` 면
+  2026-10 모양: 공시일 목록(`available_dates`)을 주고 공시가 없는 날을 달라면 **최신 날**을 준다
+  (실측 2026-10-20). JSON 은 비중 상위 `rise_top` 줄만,
   `download=xlsx` 는 전체를 엑셀로(종목코드는 ISIN 을 6자리로 줄인 값 — 비주식도 코드처럼 보인다).
   TIGER 목록은 2026-10 모양(`javascript:cmmCtrl.getEtfDtlPop('ISIN','이름')` — 실측 2026-10-27).
 
@@ -149,6 +152,7 @@ class FakeIssuers:
     rise_page: int = 2  # RISE 목록 한 쪽 줄 수(쪽 넘김을 시험하려고 작게 — 실사이트 20)
     rise_top: int = 8  # RISE JSON 이 주는 상위 줄 수(실사이트 30 — 합성 펀드가 작아 줄였다)
     rise_xlsx_status: int | None = None  # RISE 엑셀만 이 상태로 실패
+    rise_dates_list: bool = False  # True = RISE 2026-10 모양(available_dates·없는 날 → 최신)
     calls: list[tuple[str, str, str, dict[str, str]]] = field(
         default_factory=list[tuple[str, str, str, dict[str, str]]]
     )
@@ -471,6 +475,22 @@ class FakeIssuers:
                     if self.published(d)][:60]  # fmt: skip
             asked = p.get("base_dt")
             want = date(int(asked[:4]), int(asked[4:6]), int(asked[6:])) if asked else None
+            if not self.rise_dates_list:  # 2026-11 모양 — 요청한 날 그대로, 공시 없는 날은 빈다
+                real = want if want is not None else days[0]
+                lines = self.lines(fund, real) if self.published(real) else []
+                if p.get("download") == "xlsx":
+                    if self.rise_xlsx_status is not None:
+                        return httpx.Response(self.rise_xlsx_status, text="합성 엑셀 오류")
+                    return httpx.Response(200, content=_rise_xlsx(lines))
+                top = sorted(lines, key=lambda ln: -ln.wt)[: self.rise_top]
+                items = [{"rank": k, "item_cd": ln.isin, "item_nm": ln.name, "ratio": ln.wt,
+                          "shares": ln.qty, "unit_price": 0.0, "vamt": ln.val}
+                         for k, ln in enumerate(top, 1)]  # fmt: skip
+                return httpx.Response(200, json={
+                    "fund_cd": fund.key, "start_dt": days[-1].strftime("%Y%m%d"),
+                    "base_dt": real.strftime("%Y%m%d"), "latest_dt": days[0].strftime("%Y%m%d"),
+                    "holding_count": len(items), "total_count": len(lines), "items": items,
+                })  # fmt: skip
             real = want if want is not None and self.published(want) else days[0]
             lines = self.lines(fund, real)
             if p.get("download") == "xlsx":

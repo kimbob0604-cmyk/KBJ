@@ -23,6 +23,11 @@ D-P3-12).
    - 펀드 PDF 오류가 `DOWN_AFTER`(5)번 이어지면(응답을 하나 받으면 0) 그 운용사는 내려간 것으로 보고
      남은 펀드는 부르지 않는다(오류로 남긴다) — 접속이 안 되는 호스트에 펀드마다 재시도·시간 상한을
      다 쓰면 한 운용사가 작업 전체를 수십 분 붙잡는다(market_close `NET_DOWN_AFTER` 와 같은 생각).
+   - 빈 날 채우기(2026-11-26): 과거 기준일을 주는 운용사(`HISTORY`)는 오늘 PDF 다음에 **최근
+     `FILL_DAYS` 거래일 중 스냅이 없는 날**도 받는다(그 펀드의 첫 스냅 이후만 — 상장 전 날을 매번
+     부르지 않게). 맥이 깨어난 직후 DNS 가 안 붙어 대부분 펀드를 놓치고도 `ok` 로 끝난 날(11-12·
+     16·19·23)과 장애로 작업이 아예 안 돈 날(11-21·24)이 다음 실행에서 메워진다. 채우기 오류는
+     빈 응답 연속·일부만 받음·통째 실패에 세지 않고 detail `filled`·`fill_errors` 에만 남긴다.
 3. 저장은 이 스레드(주 스레드)에서만 한다.
 4. 변동: 펀드별 최근 두 스냅(`fund_pairs` — 간격 ≤ `etf.holdings.max_gap_days`)을
    `analyze`(qty_floor·action_pp·min_base_for_cu)로 비교해 **실행일 행을 통째로 한 번에** 바꾼다
@@ -53,6 +58,7 @@ from datetime import date, datetime
 from typing import Any, Final
 
 from kbj.config.markets import HoldingsCfg
+from kbj.core.calendar import TradingCalendar
 from kbj.core.rows import Change, EtfMeta, EtfType, Fund, HoldingRow
 from kbj.core.time import kst_date
 from kbj.data.private.etf_issuers.base import FundRef, IssuerAdapter, IssuerHttp, source_of
@@ -60,7 +66,7 @@ from kbj.data.private.etf_issuers.registry import build
 from kbj.engines.etf.flows import LAG_MAX, c3_checks, window_flows
 from kbj.engines.etf.holdings import analyze, fund_pairs
 from kbj.engines.etf.types import classify, etf_type, is_active, typed_meta
-from kbj.services.collectors._p3 import RepoSet, markets, reason, repos
+from kbj.services.collectors._p3 import RepoSet, calendar, markets, reason, repos
 from kbj.services.runtime.log import log_event
 from kbj.services.scheduler.handlers import JobContext, JobResult
 from kbj.store.repos import EtfRepo
@@ -69,6 +75,7 @@ __all__ = [
     "DOWN_AFTER",
     "EMPTY_LIMIT",
     "ENGINE_VERSION",
+    "FILL_DAYS",
     "WHOLE_EMPTY_MIN",
     "IssuerRun",
     "accept",
@@ -86,6 +93,7 @@ EMPTY_LIMIT: Final = 3
 TRACKED_TYPES: Final = frozenset({EtfType.KR_INDEX, EtfType.KR_THEME})
 DETAIL_ERRORS_MAX: Final = 8
 DOWN_AFTER: Final = 5  # 펀드 PDF 오류가 이만큼 이어지면 그 운용사의 남은 펀드는 부르지 않는다
+FILL_DAYS: Final = 5  # 빈 날 채우기 — 오늘 앞의 이만큼 거래일에서 스냅이 없는 날을 받는다
 DOWN_REASON: Final = "운용사 응답 없음 — 앞 펀드 오류가 이어져 부르지 않았다"
 EMPTY_UNIVERSE: Final = "목록이 0건 — 사이트 모양이 바뀌었을 수 있다(저장된 추적 펀드로 받는다)"
 # 추적 펀드가 이만큼 넘게 **전부** 빈 응답이면 펀드 사정이 아니라 운용사 장애·응답 모양 변경으로
@@ -117,6 +125,11 @@ class IssuerRun:
     universe_error: str | None = None
     skipped: int = 0  # 목록에서 뺀 펀드(이름 없음·추적 유형 아님)
     down_skipped: int = 0  # 운용사가 내려가 부르지 않은 펀드(`DOWN_AFTER`)
+    # 빈 날 채우기로 받은 스냅 — 오늘 것(snaps)과 따로 둔다(통째 실패·일부만 받음은 오늘 것만 본다)
+    fills: list[tuple[str, date, list[HoldingRow]]] = field(
+        default_factory=list[tuple[str, date, list[HoldingRow]]]
+    )
+    fill_errors: int = 0  # 빈 날 채우기 오류 수(통째 실패·일부만 받음에 세지 않는다)
 
     @property
     def attempted(self) -> int:
@@ -189,8 +202,10 @@ def collect_issuer(
     day: date,
     meta: Mapping[str, EtfMeta],
     old_funds: Mapping[str, Fund],
+    fill: Mapping[str, Sequence[date]] | None = None,
 ) -> IssuerRun:
-    """운용사 하나 — 목록 → 추적 펀드마다 PDF. 저장하지 않는다(주 스레드가 쓴다)."""
+    """운용사 하나 — 목록 → 추적 펀드마다 PDF → 빈 날 채우기(`fill` — 펀드 id → 받을 지난 날,
+    `HISTORY` 운용사만). 저장하지 않는다(주 스레드가 쓴다)."""
     res = IssuerRun(adapter.KEY, str(getattr(adapter, "NAME", "") or adapter.KEY))
     mine = {k: f for k, f in old_funds.items() if f.issuer == adapter.KEY}
     try:
@@ -227,7 +242,32 @@ def collect_issuer(
             res.empty.add(fid)
             continue
         res.snaps.append((fid, real, list(rows.values())))
+    if fill and getattr(adapter, "HISTORY", False) and streak < DOWN_AFTER:
+        _fill_gaps(adapter, res, fill)
     return res
+
+
+def _fill_gaps(adapter: IssuerAdapter, res: IssuerRun, fill: Mapping[str, Sequence[date]]) -> None:
+    """추적 펀드의 지난 빈 날을 받는다. 그날 그대로 온 것만 쓴다(앞 날로 바꿔 주면 버린다).
+    오류가 `DOWN_AFTER` 번 이어지면 그만둔다(오늘 수집과 같은 생각 — 내려간 호스트를 붙잡지 않는다).
+    오류는 삼키지 않고 수를 detail `fill_errors` 에 남긴다 — 다음 실행이 같은 날을 다시 채운다."""
+    streak = 0
+    for fid in sorted(fill):
+        f = res.funds.get(fid)
+        if f is None or not f.track:
+            continue
+        for d in fill[fid]:
+            if streak >= DOWN_AFTER:
+                return
+            try:
+                rows, real = adapter.holdings(f.fund_key, d)
+            except Exception:  # 격리 — 다음 실행에서 다시 채운다
+                res.fill_errors += 1
+                streak += 1
+                continue
+            streak = 0
+            if real == d and rows:
+                res.fills.append((fid, real, list(rows.values())))
 
 
 def _streaks(res: IssuerRun, limit: int) -> tuple[list[Fund], int]:
@@ -250,6 +290,32 @@ def _streaks(res: IssuerRun, limit: int) -> tuple[list[Fund], int]:
             f = replace(f, empty_streak=n, track=f.track and not off)
         out.append(f)
     return out, dropped
+
+
+def recent_days(cal: TradingCalendar, day: date, n: int) -> list[date]:
+    """day 앞의 거래일 n 개(가까운 날부터). day 는 넣지 않는다."""
+    out: list[date] = []
+    d = day
+    for _ in range(n):
+        d = cal.prev_trading_day(d)
+        out.append(d)
+    return out
+
+
+def fill_plan(
+    have: Mapping[str, Sequence[date]], funds: Mapping[str, Fund], days: Sequence[date]
+) -> dict[str, list[date]]:
+    """추적 펀드마다 스냅이 없는 지난 날 — 그 펀드의 첫 스냅 이후만(스냅이 없으면 안 채운다)."""
+    out: dict[str, list[date]] = {}
+    for fid, f in funds.items():
+        got = have.get(fid)
+        if not f.track or not got:
+            continue
+        first, seen = min(got), set(got)
+        miss = [d for d in days if d >= first and d not in seen]
+        if miss:
+            out[fid] = miss
+    return out
 
 
 def analyze_changes(
@@ -300,9 +366,10 @@ def run(ctx: JobContext) -> JobResult:
     repo = repos(ctx).etf
     meta, n_typed = _classify_meta(repo, ctx)
     old_funds = repo.funds()
+    fill = fill_plan(repo.holding_dates(), old_funds, recent_days(calendar(ctx), day, FILL_DAYS))
     adapters, http = _adapters(ctx, lambda: kst_date(now))
     try:
-        jobs = [lambda a=a: collect_issuer(a, day, meta, old_funds) for a in adapters]
+        jobs = [lambda a=a: collect_issuer(a, day, meta, old_funds, fill) for a in adapters]
         if ctx.resources.get("parallel", True) and len(jobs) > 1:
             with ThreadPoolExecutor(max_workers=len(jobs), thread_name_prefix="etf-issuer") as ex:
                 results = list(ex.map(lambda j: j(), jobs))
@@ -320,12 +387,13 @@ def run(ctx: JobContext) -> JobResult:
     for res in results:
         funds, dropped = _streaks(res, EMPTY_LIMIT)
         repo.upsert_funds(funds, loaded_by=ctx.job, now=now)
-        for fid, asof, hs in res.snaps:
+        for fid, asof, hs in [*res.snaps, *res.fills]:
             rows += repo.put_holdings(fid, asof, hs, loaded_by=ctx.job, received_at=now)
         detail["issuers"][res.key] = {
             "funds": sum(1 for f in funds if f.track), "snapshots": len(res.snaps),
             "empty": len(res.empty), "errors": len(res.errors), "dropped": dropped,
             "skipped": res.skipped, "down_skipped": res.down_skipped,
+            "filled": len(res.fills), "fill_errors": res.fill_errors,
         }  # fmt: skip
         if res.universe_error is not None:
             errors[f"{res.key}:universe"] = res.universe_error
