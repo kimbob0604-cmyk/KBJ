@@ -322,8 +322,15 @@ kbj_gex_poller_on() {
 }
 
 # gex-poller 는 GX → KBJ 전환(runbook ④) 전까지 띄우지 않는다 — 등록부의 gex.poller 를 따른다(2026-10-20 부터 켜짐)
+# 로컬 전용 고르기: $KBJ_ROOT/.env.services 가 있으면 거기 적힌 서비스만 띄운다(한 줄에 하나, # 주석).
+# 2026-11-26 — 사이트(api·ws-gateway·recorder·gex·notifier)는 안 굴리고 Beom's Dashboard 가 쓰는 수집만 남김.
+# 파일을 지우면 예전처럼 전부 띄운다. .env.* 라 git 에 안 올라간다.
 kbj_app_services() {
   local svcs
+  if [[ -f "$KBJ_ROOT/.env.services" ]]; then
+    sed -e 's/#.*//' -e 's/[[:space:]]//g' "$KBJ_ROOT/.env.services" | grep -v '^$' | grep -vx migrate
+    return 0
+  fi
   svcs="$(kbj_compose config --services 2>/dev/null)" || return 0
   if kbj_gex_poller_on; then
     printf '%s\n' "$svcs" | grep -vx migrate
