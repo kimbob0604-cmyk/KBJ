@@ -1,9 +1,10 @@
-"""운용사 어댑터 목록 — 9곳(docs/p3_design.md §1.5·D-P3-12).
+"""운용사 어댑터 목록 — 11곳(docs/p3_design.md §1.5·D-P3-12, 2026-11-28 KIWOOM·1Q 추가).
 
 ET `etf_tracker_v9/collectors.py` 의 내장 4곳(`Kodex`·`Tiger`·`TimeFolio`·`Sol`)과 `adapters/` 5곳
 (`Ace`·`Hanaro`·`KoAct`·`Plus`·`Rise`). **네이버 TOP10 폴백(`NaverTop10`)은 옮기지 않는다**(ADR 0001
 U4 — 네이버 스크래핑 금지). 전용 어댑터가 없는 운용사(키움·하나·우리 등)의 구성종목은 P3 에서 비고,
-대체 후보는 KIS `FHKST121600C0` [실측 필요].
+대체 후보는 KIS `FHKST121600C0` — 실측 2026-11-28: 비중 상위 30줄만·오늘만이라 쓰지 않는다
+(상위 30 경계를 넘나드는 종목이 편입·편출처럼 보인다). 키움·하나는 2026-11-28 전용 어댑터를 붙였다.
 
 ET 의 `adapters/` 폴더 자동 등록(`_load_plugins` — import 실패를 출력만 하고 넘어감)은 두지 않는다.
 목록은 이 파일 하나다(빠지면 시험이 잡는다).
@@ -18,8 +19,10 @@ from typing import Final
 from kbj.data.private.etf_issuers.ace import Ace
 from kbj.data.private.etf_issuers.base import IssuerAdapter, IssuerHttp, today_kst
 from kbj.data.private.etf_issuers.hanaro import Hanaro
+from kbj.data.private.etf_issuers.kiwoom import Kiwoom
 from kbj.data.private.etf_issuers.koact import KoAct
 from kbj.data.private.etf_issuers.kodex import Kodex
+from kbj.data.private.etf_issuers.oneq import OneQ
 from kbj.data.private.etf_issuers.plus import Plus
 from kbj.data.private.etf_issuers.rise import Rise
 from kbj.data.private.etf_issuers.sol import Sol
@@ -28,7 +31,7 @@ from kbj.data.private.etf_issuers.timefolio import TimeFolio
 
 __all__ = ["ADAPTERS", "KEYS", "build"]
 
-ADAPTERS: Final = (Kodex, Tiger, TimeFolio, Sol, Ace, Hanaro, KoAct, Plus, Rise)
+ADAPTERS: Final = (Kodex, Tiger, TimeFolio, Sol, Ace, Hanaro, KoAct, Plus, Rise, Kiwoom, OneQ)
 KEYS: Final[tuple[str, ...]] = tuple(a.KEY for a in ADAPTERS)
 
 

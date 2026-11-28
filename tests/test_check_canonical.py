@@ -76,8 +76,8 @@ def test_every_group_matches_its_sample_and_only_its_group() -> None:
     assert cc.GROUPS["krx_scrape"].pattern.search("import py" + "krx")
 
 
-def test_etf_issuer_hosts_all_nine_and_only_inside_the_adapter_package() -> None:
-    """P3 묶음 S — 운용사 9곳 호스트는 kbj.data.private.etf_issuers 안에서만(나머지 kbj 는 실패)."""
+def test_etf_issuer_hosts_all_and_only_inside_the_adapter_package() -> None:
+    """P3 묶음 S — 운용사 11곳 호스트는 kbj.data.private.etf_issuers 안에서만(나머지는 실패)."""
     hosts = [
         "www.samsung" + "fund.com",
         "investments.mirae" + "asset.com",
@@ -88,6 +88,8 @@ def test_etf_issuer_hosts_all_nine_and_only_inside_the_adapter_package() -> None
         "www.samsung" + "active.co.kr",
         "www.plus" + "etf.co.kr",
         "www.rise" + "etf.co.kr",
+        "www.kiwoom" + "etf.com",
+        "api.hana" + "am.com",
     ]
     g = cc.GROUPS["etf_issuers"]
     assert all(g.pattern.search(f"https://{h}/x") for h in hosts)

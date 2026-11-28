@@ -110,3 +110,12 @@ def test_limit_status_is_retried_like_429() -> None:
     n["calls"] = 0
     with pytest.raises(IssuerError):
         http.json("sol", "https://a.example/p")
+
+
+def test_ssl_context_adds_public_intermediate_ca() -> None:
+    """KIWOOM 사이트는 잎 인증서만 보낸다 — 공개 중간 CA(Sectigo OV)를 certifi 뿌리에 더한다."""
+    from kbj.data.private.etf_issuers.base import _ssl  # pyright: ignore[reportPrivateUsage]
+
+    subjects = " ".join(str(c.get("subject")) for c in _ssl().get_ca_certs())
+    assert "Sectigo RSA Organization Validation Secure Server CA" in subjects
+    assert "USERTrust RSA Certification Authority" in subjects  # 뿌리는 certifi 에서

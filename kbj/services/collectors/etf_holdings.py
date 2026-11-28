@@ -1,4 +1,4 @@
-"""`etf.collect` — 운용사 9곳 구성종목(PDF) 수집 + 구성종목 변동 분석(docs/p3_design.md §1.5·
+"""`etf.collect` — 운용사 11곳 구성종목(PDF) 수집 + 구성종목 변동 분석(docs/p3_design.md §1.5·
 D-P3-12).
 
 승격 원본: ET `etf_tracker_v9/tracker.py` — `build_universe`:109(네이버 종목명 조인·TOP10 폴백은
@@ -13,8 +13,10 @@ D-P3-12).
 2. 운용사마다 **격리**해 받는다(스레드 하나씩 — 호스트 리미터가 운용사마다 따로라 서로 기다리지
    않는다. 한 운용사 실패가 다른 운용사를 멈추지 않는다 — 절대 규칙 4):
    - 목록(`universe`) → 추적 대상 = 유형이 국내 대표지수·국내 테마인 펀드(ET: 네이버 탭 1·2 +
-     `classify` 가 None 아님. 해외·레버리지·채권·원자재는 국내 주식 시그널이 아니라 뺀다). 이름은
-     KRX 메타(티커로) → 운용사 목록 순. 이름이 없으면 건너뛴다. 목록이 실패하거나 **0건이면**
+     `classify` 가 None 아님. 해외·인버스·채권·원자재는 국내 주식 시그널이 아니라 뺀다) + 국내
+     지수를 현물로 담는 레버리지(`domestic_leveraged` — 2026-11-28. 코스닥150 은 레버리지
+     순자산이 1배의 절반이 넘어 빼면 그 종목 ETF 수급이 크게 비었다. 테마는 기초지수로 정한다).
+     이름은 KRX 메타(티커로) → 운용사 목록 순. 이름이 없으면 건너뛴다. 목록이 실패하거나 **0건이면**
      (사이트 모양이 바뀌어 파서가 하나도 못 찾은 것 — TIGER 2026-10-27) 저장된 그 운용사의 추적
      펀드로 PDF 만 받는다(0건을 정상으로 두면 그 운용사가 조용히 빠진다).
    - PDF(`holdings`) → 국내 종목이 있으면 그 **실제 기준일**로 `prv_etf.holding` 스냅을 통째로
@@ -45,7 +47,7 @@ D-P3-12).
 detail 에 운용사별 수(펀드·스냅·빈 응답·오류·제외·건너뜀)와 변동 수.
 
 자원(`JobContext.resources`): `repos`(없으면 Pg), `markets`, `etf_issuers`(어댑터 목록 — 없으면
-`IssuerHttp.for_service(redis)` 로 9곳), `etf_issuer_keys`(일부만), `parallel`(기본 True).
+`IssuerHttp.for_service(redis)` 로 11곳), `etf_issuer_keys`(일부만), `parallel`(기본 True).
 """
 
 from __future__ import annotations
@@ -65,7 +67,7 @@ from kbj.data.private.etf_issuers.base import FundRef, IssuerAdapter, IssuerHttp
 from kbj.data.private.etf_issuers.registry import build
 from kbj.engines.etf.flows import LAG_MAX, c3_checks, window_flows
 from kbj.engines.etf.holdings import analyze, fund_pairs
-from kbj.engines.etf.types import classify, etf_type, is_active, typed_meta
+from kbj.engines.etf.types import classify, domestic_leveraged, etf_type, is_active, typed_meta
 from kbj.services.collectors._p3 import RepoSet, calendar, markets, reason, repos
 from kbj.services.runtime.log import log_event
 from kbj.services.scheduler.handlers import JobContext, JobResult
@@ -159,8 +161,13 @@ class IssuerRun:
 
 
 def accept(name: str, base_index: str | None) -> tuple[str, bool] | None:
-    """추적 대상이면 (테마, 액티브 여부), 아니면 None. 유형이 국내 대표지수·국내 테마인 것만."""
-    if etf_type(name, base_index) not in TRACKED_TYPES:
+    """추적 대상이면 (테마, 액티브 여부), 아니면 None. 유형이 국내 대표지수·국내 테마인 것과
+    국내 지수 현물 레버리지(테마 = 기초지수 분류)."""
+    t = etf_type(name, base_index)
+    if t is EtfType.LEVERAGED_INVERSE and domestic_leveraged(name, base_index):
+        theme = classify(base_index or "")
+        return None if theme is None else (theme, is_active(name))
+    if t not in TRACKED_TYPES:
         return None
     theme = classify(name)
     if theme is None:
@@ -216,7 +223,7 @@ def collect_issuer(
     else:
         if refs:
             res.funds, res.skipped = _fund_rows(adapter, refs, meta, mine)
-        else:  # 0건은 정상이 아니다(9곳 모두 펀드가 있다) — 파서가 못 찾은 것으로 본다
+        else:  # 0건은 정상이 아니다(모든 운용사에 펀드가 있다) — 파서가 못 찾은 것으로 본다
             res.universe_error = EMPTY_UNIVERSE
             res.funds = dict(mine)
     streak = 0

@@ -37,7 +37,7 @@ P3 확장(docs/p3_design.md §8.3 — 묶음 S): `SimOptions(p3=True)` 면 등�
 **실제 처리기**가 돈다. 자원: 저장소는 `kbj.store.repos.memory`(재기동을 넘긴다 — DB 처럼),
 KIS 는 scheduler 의 `KisRestClient`(같은 가짜 서버·앱키 리미터·auth 토큰 읽기), KRX 는
 scheduler 의 `KrxClient`(가짜 KRX — 가짜 KIS 종목도 KRX 원장에 둔다, `kis_symbols_on_krx`),
-운용사는 가짜 운용사 9곳(`tests/fakes/etf_issuer_server.py`), 공개 내보내기는 읽기 전용 확인만
+운용사는 가짜 운용사 11곳(`tests/fakes/etf_issuer_server.py`), 공개 내보내기는 읽기 전용 확인만
 통과하는 가짜 연결과 임시 산출 디렉터리. 가짜 KRX 는 시장당 몇 행뿐이라 커버리지 절대 하한은
 끈다(`Coverage(min_rows={})`). 창 시작 전에 있어야 할 데이터(장중 창의 감시 ETF 일별 등)는
 `SimOptions.prepare` 로 심는다.

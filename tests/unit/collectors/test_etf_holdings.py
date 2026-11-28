@@ -1,4 +1,4 @@
-"""`etf.collect` — 운용사 9곳 구성종목 수집 + 변동 분석(가짜 운용사 서버·메모리 저장소).
+"""`etf.collect` — 운용사 11곳 구성종목 수집 + 변동 분석(가짜 운용사 서버·메모리 저장소).
 
 ET tracker.py `build_universe`·`snapshot`·`analyze` 의 규칙: 운용사 격리, 빈 응답 연속 → 추적 제외,
 실제 기준일로 적재, 실행일 변동을 한 번에 통째로.
@@ -269,6 +269,16 @@ def test_accept_rule() -> None:
     assert accept("KODEX 미국S&P500", None) is None
     assert accept("KODEX 레버리지", None) is None
     assert accept("KODEX 합성테마", "S&P 500") is None  # 기초지수가 해외
+    # 국내 지수 현물 레버리지는 기초지수로 테마를 정해 담는다 (2026-11-28)
+    assert accept("KODEX 레버리지", "코스피 200") == ("시장대표", False)
+    assert accept("KODEX 코스닥150레버리지", "코스닥 150") == ("코스닥", False)
+    assert accept("KODEX 반도체레버리지", "KRX 반도체") == ("반도체", False)
+    assert accept("KODEX 인버스", "코스피 200") is None  # 인버스
+    assert accept("KODEX 200선물인버스2X", "코스피 200 선물지수") is None
+    assert accept("TIGER 200선물레버리지", "코스피 200 선물지수") is None  # 선물만 담는다
+    assert accept("RISE 코스닥150선물레버리지", "F-코스닥150 지수") is None
+    assert accept("TIGER 미국나스닥100레버리지(합성)", "NASDAQ 100") is None  # 해외
+    assert accept("KIWOOM 국고채10년레버리지", "KIS 10년 국고채 지수 (총수익)") is None  # 채권
 
 
 def _eday(code: str, d: date, s: int, nav: float, extra: int = 0) -> EtfDay:

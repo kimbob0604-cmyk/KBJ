@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import re
+import ssl
 import time
 from collections.abc import Callable, Iterable, Mapping
 from typing import Any, Final, Protocol
@@ -198,9 +199,11 @@ def make_client(
     read_s: float = READ_S,
     transport: httpx.BaseTransport | None = None,
     headers: Mapping[str, str] | None = None,
+    verify: ssl.SSLContext | bool = True,
 ) -> httpx.Client:
     """접속·읽기 시간 제한이 있는 클라이언트. 넘겨주기(redirect)는 따라가지 않는다 — 키가 붙은
-    요청이 다른 호스트로 가지 않게. 시험은 `transport=httpx.MockTransport(...)`."""
+    요청이 다른 호스트로 가지 않게. 시험은 `transport=httpx.MockTransport(...)`. `verify` 는 인증서
+    검증 설정(기본 certifi — 중간 인증서를 보내지 않는 사이트는 SSL 문맥을 넘긴다, 끄지 않는다)."""
     if min(connect_s, read_s) <= 0:
         raise ValueError("시간 제한은 0 보다 커야 한다")
     return httpx.Client(
@@ -209,6 +212,7 @@ def make_client(
         transport=transport,
         headers=dict(headers or {}),
         follow_redirects=False,
+        verify=verify,
     )
 
 

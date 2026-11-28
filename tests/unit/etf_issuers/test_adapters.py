@@ -111,11 +111,30 @@ def test_holdings_keep_only_domestic_codes(key: str) -> None:
             assert ETF_IN_FUND in rows  # ETF 를 담은 행은 어댑터가 남긴다(분석에서 뺀다)
 
 
-@pytest.mark.parametrize("key", ["hanaro", "rise", "plus"])
+@pytest.mark.parametrize("key", ["hanaro", "rise", "plus", "kiwoom", "oneq"])
 def test_preferred_share_isin_is_fixed(key: str) -> None:
     _, ads, _ = setup()
     rows, _ = ads[key].holdings(funds_of(key)[0].key, TUE)
     assert PREF_CODE in rows and "990011" not in rows
+
+
+def test_kiwoom_walks_back_to_published_day_and_drops_cash() -> None:
+    """KIWOOM 은 공시가 없는 날 빈 목록 — 어댑터가 하루씩 거슬러 실제 기준일을 돌려준다."""
+    w, ads, _ = setup(latest=FRI)
+    f = funds_of("kiwoom")[0]
+    rows, real = ads["kiwoom"].holdings(f.key, SAT)
+    assert real == FRI and {c: h.qty for c, h in rows.items()} == w.expected(f, FRI)
+    assert "CASH00000001" not in rows and "KRD010010001" not in rows
+    assert [q["startDate"] for _, _, q in w.calls_of("kiwoom")] == ["20261010", "20261009"]
+
+
+def test_oneq_gives_latest_only() -> None:
+    """1Q 는 날짜 인자 없이 최신 공시일만 — 지난 날을 달라 해도 최신 기준일을 그대로 돌려준다
+    (수집기가 요청일보다 뒤인 기준일을 거른다). 그래서 빈 날 채우기 대상이 아니다(HISTORY)."""
+    _, ads, _ = setup(latest=FRI)
+    rows, real = ads["oneq"].holdings(funds_of("oneq")[0].key, date(2026, 10, 7))
+    assert rows and real == FRI
+    assert ads["oneq"].HISTORY is False and ads["kiwoom"].HISTORY is True
 
 
 def test_ace_sums_duplicate_codes_and_drops_derivatives() -> None:
@@ -309,8 +328,9 @@ def test_limiter_per_host_and_koact_cap() -> None:
 # ── 목록·견본 ──
 
 
-def test_registry_has_nine_and_no_naver() -> None:
-    assert KEYS == ("kodex", "tiger", "timefolio", "sol", "ace", "hanaro", "koact", "plus", "rise")
+def test_registry_has_eleven_and_no_naver() -> None:
+    assert KEYS == ("kodex", "tiger", "timefolio", "sol", "ace", "hanaro", "koact", "plus", "rise",
+                    "kiwoom", "oneq")  # fmt: skip
     assert all(a.DEPTH == "full" for a in ADAPTERS)
     assert "naver" not in KEYS
     with pytest.raises(ValueError, match="모르는"):
@@ -332,7 +352,8 @@ def test_parse_fixture_file(key: str) -> None:
         p = req.url.path
         listy = any(s in p for s in ("product.do", "list.ajax", "m11_list", "/api/etf/pds",
                                      "/api/funds", "search-list", "etf.do", "find/list",
-                                     "/api/products/etfs"))  # fmt: skip
+                                     "/api/products/etfs", "productListAjax",
+                                     "/api/Etf"))  # fmt: skip
         if listy and not any(s in p for s in ("pdf", "holdings")) and p != "/api/etf/pds/pdf":
             body = uni
             if ("product.do" in p or "etf.do" in p) and req.url.params.get("pageNo") != "1":

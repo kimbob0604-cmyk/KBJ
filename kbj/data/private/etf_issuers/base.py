@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import json
 import re
+import ssl
 import threading
 import time
 from collections.abc import Callable, Mapping
@@ -33,6 +34,7 @@ from datetime import date
 from typing import Any, ClassVar, Final, Literal, Protocol
 from urllib.parse import urlsplit
 
+import certifi
 import httpx
 from redis import Redis
 
@@ -41,6 +43,7 @@ from kbj.core.rows import HoldingRow
 from kbj.core.time import kst_date, utcnow
 from kbj.data.http import FetchError, make_client, scrub
 from kbj.data.limits import load_limits
+from kbj.data.private.etf_issuers.ca_extra import CA_EXTRA_PEM
 from kbj.data.private.etf_issuers.datasets import LIMITER, SOURCE
 from kbj.data.ratelimit import (
     LocalRateLimiter,
@@ -428,9 +431,16 @@ def _capped(base: RateLimitConfig, cap: float | None) -> RateLimitConfig:
     return replace(base, rate=cap, floor_rate=min(base.floor_rate, cap))
 
 
+def _ssl() -> ssl.SSLContext:
+    """certifi 뿌리 + 공개 중간 CA(`ca_extra` — 중간 인증서를 보내지 않는 운용사 사이트용)."""
+    ctx = ssl.create_default_context(cafile=certifi.where())
+    ctx.load_verify_locations(cadata=CA_EXTRA_PEM)
+    return ctx
+
+
 def _client(transport: httpx.BaseTransport | None) -> httpx.Client:
-    return make_client("", transport=transport, headers={
-        "User-Agent": UA, "Accept-Language": "ko-KR,ko;q=0.9"})  # fmt: skip
+    return make_client("", transport=transport, verify=True if transport is not None else _ssl(),
+                       headers={"User-Agent": UA, "Accept-Language": "ko-KR,ko;q=0.9"})  # fmt: skip
 
 
 def _path(url: str) -> str:

@@ -25,7 +25,8 @@ DATASETS: Final[tuple[DatasetSpec, ...]] = (
         as_of_kind="trade_date",
         store="prv_etf.holding",
         notes=(
-            "ETF 구성종목(PDF) — 운용사 9곳(KODEX·TIGER·TIMEFOLIO·SOL·ACE·HANARO·KoAct·PLUS·RISE). "
+            "ETF 구성종목(PDF) — 운용사 11곳(KODEX·TIGER·TIMEFOLIO·SOL·ACE·HANARO·KoAct·PLUS·RISE·"
+            "KIWOOM·1Q). "
             "약관이 운용사마다 달라 로그인 등급. 작업 etf.collect(P3 로 당김 — D-P3-12). "
             "운용사 실응답·약관 [실측 필요 — 체크리스트 #27]. 네이버 TOP10 폴백 없음(U4). "
             "펀드 목록은 prv_etf.fund, 변동은 prv_etf.change_log(엔진 kbj.engines.etf.holdings)"

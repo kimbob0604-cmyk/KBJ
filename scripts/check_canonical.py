@@ -211,13 +211,15 @@ GROUPS: dict[str, Group] = {
                         _dots("plusetf", "co", "kr"),
                         _dots("riseetf", "co", "kr"),
                         _dots("kbam", "co", "kr"),  # RISE — 2026-10 riseetf 에서 이전
+                        _dots("kiwoometf", "com"),  # KIWOOM — 2026-11-28 추가
+                        _dots("api", "hanaam", "com"),  # 1Q(하나) — 2026-11-28 추가
                     )
                 )
                 + ")"
             ),
             ("kbj/data/private/etf_issuers/*",),
             True,
-            "ETF 운용사 9곳 호스트(구성종목 PDF) — kbj.data.private.etf_issuers 로(P3 묶음 E3·S)",
+            "ETF 운용사 11곳 호스트(구성종목 PDF) — kbj.data.private.etf_issuers 로(P3 묶음 E3·S)",
             "P3~P5",
         ),
         Group(

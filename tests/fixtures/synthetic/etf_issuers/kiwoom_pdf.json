@@ -1,0 +1,175 @@
+{
+ "pdfList": [
+  {
+   "assessment": "53,011,270",
+   "businessDate": "2026.10.06",
+   "gcode": "KR7990030003",
+   "itemCode": "KR7990030003",
+   "itemTitle": "합성종목003",
+   "ratio": "3.74%",
+   "volume": "3,757"
+  },
+  {
+   "assessment": "227,734,500",
+   "businessDate": "2026.10.06",
+   "gcode": "KR7990340003",
+   "itemCode": "KR7990340003",
+   "itemTitle": "합성종목034",
+   "ratio": "16.06%",
+   "volume": "4,025"
+  },
+  {
+   "assessment": "45,059,310",
+   "businessDate": "2026.10.06",
+   "gcode": "KR7990010003",
+   "itemCode": "KR7990010003",
+   "itemTitle": "합성종목001",
+   "ratio": "3.18%",
+   "volume": "3,963"
+  },
+  {
+   "assessment": "175,968,820",
+   "businessDate": "2026.10.06",
+   "gcode": "KR7990180003",
+   "itemCode": "KR7990180003",
+   "itemTitle": "합성종목018",
+   "ratio": "12.41%",
+   "volume": "5,077"
+  },
+  {
+   "assessment": "337,674,650",
+   "businessDate": "2026.10.06",
+   "gcode": "KR7990350003",
+   "itemCode": "KR7990350003",
+   "itemTitle": "합성종목035",
+   "ratio": "23.81%",
+   "volume": "5,827"
+  },
+  {
+   "assessment": "141,437,520",
+   "businessDate": "2026.10.06",
+   "gcode": "KR7990160003",
+   "itemCode": "KR7990160003",
+   "itemTitle": "합성종목016",
+   "ratio": "9.97%",
+   "volume": "4,431"
+  },
+  {
+   "assessment": "39,470,600",
+   "businessDate": "2026.10.06",
+   "gcode": "KR7990150003",
+   "itemCode": "KR7990150003",
+   "itemTitle": "합성종목015",
+   "ratio": "2.78%",
+   "volume": "1,292"
+  },
+  {
+   "assessment": "8,147,200",
+   "businessDate": "2026.10.06",
+   "gcode": "KR7990240003",
+   "itemCode": "KR7990240003",
+   "itemTitle": "합성종목024",
+   "ratio": "0.57%",
+   "volume": "190"
+  },
+  {
+   "assessment": "112,639,040",
+   "businessDate": "2026.10.06",
+   "gcode": "KR7990080003",
+   "itemCode": "KR7990080003",
+   "itemTitle": "합성종목008",
+   "ratio": "7.94%",
+   "volume": "5,374"
+  },
+  {
+   "assessment": "136,035,520",
+   "businessDate": "2026.10.06",
+   "gcode": "KR7990380003",
+   "itemCode": "KR7990380003",
+   "itemTitle": "합성종목038",
+   "ratio": "9.59%",
+   "volume": "2,192"
+  },
+  {
+   "assessment": "35,417,490",
+   "businessDate": "2026.10.06",
+   "gcode": "KR7990190003",
+   "itemCode": "KR7990190003",
+   "itemTitle": "합성종목019",
+   "ratio": "2.50%",
+   "volume": "983"
+  },
+  {
+   "assessment": "55,210,000",
+   "businessDate": "2026.10.06",
+   "gcode": "KR7990330003",
+   "itemCode": "KR7990330003",
+   "itemTitle": "합성종목033",
+   "ratio": "3.89%",
+   "volume": "1,000"
+  },
+  {
+   "assessment": "33,185,000",
+   "businessDate": "2026.10.06",
+   "gcode": "KR7995010003",
+   "itemCode": "KR7995010003",
+   "itemTitle": "합성ETF",
+   "ratio": "2.34%",
+   "volume": "500"
+  },
+  {
+   "assessment": "17,223,300",
+   "businessDate": "2026.10.06",
+   "gcode": "KR7990011003",
+   "itemCode": "KR7990011003",
+   "itemTitle": "합성종목001우",
+   "ratio": "1.21%",
+   "volume": "300"
+  },
+  {
+   "assessment": "1,000,000",
+   "businessDate": "2026.10.06",
+   "gcode": "US0378331005",
+   "itemCode": "US0378331005",
+   "itemTitle": "합성애플",
+   "ratio": "0.50%",
+   "volume": "10"
+  },
+  {
+   "assessment": "1,000,000",
+   "businessDate": "2026.10.06",
+   "gcode": "KRD010010001",
+   "itemCode": "KRD010010001",
+   "itemTitle": "원화예금",
+   "ratio": "0.30%",
+   "volume": "0"
+  },
+  {
+   "assessment": "1,000,000",
+   "businessDate": "2026.10.06",
+   "gcode": "KR4A01690002",
+   "itemCode": "KR4A01690002",
+   "itemTitle": "합성지수선물",
+   "ratio": "0.20%",
+   "volume": "1"
+  },
+  {
+   "assessment": "1,000,000",
+   "businessDate": "2026.10.06",
+   "gcode": "KR103502GF30",
+   "itemCode": "KR103502GF30",
+   "itemTitle": "합성국고채",
+   "ratio": "0.10%",
+   "volume": "0"
+  },
+  {
+   "assessment": "1,000",
+   "businessDate": "2026.10.06",
+   "gcode": "CASH00000001",
+   "itemCode": "CASH00000001",
+   "itemTitle": "원화현금",
+   "ratio": "0.01%",
+   "volume": "0"
+  }
+ ]
+}

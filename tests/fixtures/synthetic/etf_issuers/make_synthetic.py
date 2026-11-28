@@ -10,8 +10,8 @@
     uv run python tests/fixtures/synthetic/etf_issuers/make_synthetic.py  # 커밋본과 비교(다르면 1)
     uv run python tests/fixtures/synthetic/etf_issuers/make_synthetic.py --write  # 다시 쓴다
 
-만드는 것(이 폴더): `<운용사>_universe.{json,html}`, `<운용사>_pdf.{json,html}` — 운용사 9곳
-(kodex·tiger·timefolio·sol·ace·hanaro·koact·plus·rise). 기준일 2026-10-06(화).
+만드는 것(이 폴더): `<운용사>_universe.{json,html}`, `<운용사>_pdf.{json,html}` — 운용사 11곳
+(kodex·tiger·timefolio·sol·ace·hanaro·koact·plus·rise·kiwoom·oneq). 기준일 2026-10-06(화).
 """
 
 from __future__ import annotations

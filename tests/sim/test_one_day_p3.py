@@ -3,7 +3,7 @@
 창: 2026-10-07(수) 05:00 ~ 10-08(목) 09:30 KST(28.5시간 — 다음 날 08:05 KRX 확정·08:40 보드
 확정까지).
 켜진 P3 작업 — `krx.daily`·`market.close_collect`·`flows.intraday`·`market.intraday`·`board.daily`·
-`board.confirm`·`etf.collect`(가짜 운용사 9곳)·`public.export` — 은 실제 처리기, 저장소는 메모리.
+`board.confirm`·`etf.collect`(가짜 운용사 11곳)·`public.export` — 은 실제 처리기, 저장소는 메모리.
 나머지 작업은 P2 시뮬레이션 처리기 그대로(같은 KIS 버킷·같은 선점 장부).
 
 단언(§8.3)

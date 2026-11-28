@@ -1,4 +1,5 @@
-"""가짜 ETF 운용사 9곳 — 목록·구성종목(PDF) 응답을 운용사별 모양으로(`httpx.MockTransport`). 합성만.
+"""가짜 ETF 운용사 11곳 — 목록·구성종목(PDF) 응답을 운용사별 모양으로(`httpx.MockTransport`).
+합성만.
 
 운용사 실응답은 로그인 등급이라 레포에 넣지 않는다(CLAUDE.md §2). 응답 모양은 ET
 `etf_tracker_v9/collectors.py`·`adapters/*.py` 머리말의 실측 기록을 따라 손으로 만든 합성이다
@@ -53,10 +54,14 @@ FundKind = Literal["kr", "idx", "us"]
 KINDS: Final[tuple[FundKind, ...]] = ("kr", "idx", "us")
 ISSUERS: Final[tuple[str, ...]] = (
     "kodex", "tiger", "timefolio", "sol", "ace", "hanaro", "koact", "plus", "rise",
+    "kiwoom", "oneq",
 )  # fmt: skip
+# 운용사 순번 → 티커 한 자리(10번째부터 영문 — 0185L0 같은 신규 코드 꼴)
+DIGIT: Final = "0123456789ABCDEF"
 BRAND: Final[dict[str, str]] = {
     "kodex": "KODEX", "tiger": "TIGER", "timefolio": "TIME", "sol": "SOL", "ace": "ACE",
-    "hanaro": "HANARO", "koact": "KoAct", "plus": "PLUS", "rise": "RISE",
+    "hanaro": "HANARO", "koact": "KoAct", "plus": "PLUS", "rise": "RISE", "kiwoom": "KIWOOM",
+    "oneq": "1Q",
 }  # fmt: skip
 HOSTS: Final[dict[str, str]] = {
     "www.samsungfund.com": "kodex",
@@ -68,12 +73,15 @@ HOSTS: Final[dict[str, str]] = {
     "www.samsungactive.co.kr": "koact",
     "www.plusetf.co.kr": "plus",
     "kbam.co.kr": "rise",  # 2026-10 riseetf.co.kr → kbam.co.kr 이전
+    "www.kiwoometf.com": "kiwoom",
+    "api.hanaam.com": "oneq",
 }
 # 거를 행 모양: short = 6자리 코드 운용사(해외 티커·원화예금), ace = + 선물·채권 분류코드(ACE 가
 # `_STOCK` 으로 거른다), isin = ISIN 으로 주는 운용사(+ 선물·채권 ISIN, 우선주 ISIN)
 NOISE: Final[dict[str, Literal["short", "ace", "isin"]]] = {
     "kodex": "short", "tiger": "short", "timefolio": "short", "sol": "short", "ace": "ace",
-    "hanaro": "isin", "koact": "short", "plus": "isin", "rise": "isin",
+    "hanaro": "isin", "koact": "short", "plus": "isin", "rise": "isin", "kiwoom": "isin",
+    "oneq": "isin",
 }  # fmt: skip
 SUFFIX: Final[dict[FundKind, str]] = {"kr": "합성반도체", "idx": "합성200", "us": "합성미국테크"}
 
@@ -88,7 +96,7 @@ class FakeFund:
 
     @property
     def isin(self) -> str:
-        return f"KR7{self.ticker}00{ISSUERS.index(self.issuer)}"
+        return f"KR7{self.ticker}00{ISSUERS.index(self.issuer) % 10}"
 
     @property
     def fund_id(self) -> str:
@@ -116,13 +124,19 @@ def _key(issuer: str, i: int, j: int) -> str:
         return f"KR797{i}{j}0000{i}"
     if issuer == "rise":
         return f"R{i}{j}0"
+    if issuer == "kiwoom":  # KIWOOM 은 티커가 키
+        return f"97{DIGIT[i]}{j}00"
+    if issuer == "oneq":  # 1Q 는 사이트 상품 번호
+        return str(1 + j)
     return f"{issuer[:2].upper()}{j:03d}"
 
 
 def funds_of(issuer: str) -> list[FakeFund]:
     i = ISSUERS.index(issuer)
     return [
-        FakeFund(issuer, k, _key(issuer, i, j), f"97{i}{j}00", f"{BRAND[issuer]} {SUFFIX[k]}")
+        FakeFund(
+            issuer, k, _key(issuer, i, j), f"97{DIGIT[i]}{j}00", f"{BRAND[issuer]} {SUFFIX[k]}"
+        )
         for j, k in enumerate(KINDS)
     ]
 
@@ -454,6 +468,54 @@ class FakeIssuers:
             return httpx.Response(200, json={"content": rows, "totalPages": 1})
         return httpx.Response(404, text="not found")
 
+    def _kiwoom(self, path: str, p: dict[str, str]) -> httpx.Response:
+        if path == "/service/main/productListAjax":
+            prods = [{"gcode": f.ticker, "goodsNm": f.name, "goodsType": "50001"}
+                     for f in funds_of("kiwoom")]  # fmt: skip
+            return httpx.Response(
+                200, json={"keywords": [{"keywordNo": "50001"}], "products": prods}
+            )
+        if path == "/service/etf/KO02010200MAjax4":
+            fund = self.fund("kiwoom", p.get("schGubun1", ""))
+            s = p.get("startDate", "")
+            d = date(int(s[:4]), int(s[4:6]), int(s[6:]))
+            if fund is None or not self.published(d):  # 그날만(없으면 빈) — 어댑터가 거슬러 간다
+                return httpx.Response(200, json={"pdfList": []})
+            rows = [{"gcode": ln.isin, "itemCode": ln.isin, "itemTitle": ln.name,
+                     "volume": f"{ln.qty:,.0f}", "assessment": f"{ln.val:,.0f}",
+                     "ratio": f"{ln.wt:.2f}%", "businessDate": d.strftime("%Y.%m.%d")}
+                    for ln in self.lines(fund, d)]  # fmt: skip
+            rows.append({"gcode": "CASH00000001", "itemCode": "CASH00000001",
+                         "itemTitle": "원화현금", "volume": "0", "assessment": "1,000",
+                         "ratio": "0.01%", "businessDate": d.strftime("%Y.%m.%d")})  # fmt: skip
+            return httpx.Response(200, json={"pdfList": rows})
+        return httpx.Response(404, text="not found")
+
+    def _oneq(self, path: str, p: dict[str, str]) -> httpx.Response:
+        if path == "/api/Etf":
+            data = [{"id": int(f.key), "code": f.ticker, "name": f.name} for f in funds_of("oneq")]
+            return httpx.Response(200, json={"data": data, "success": True, "resultCode": "200"})
+        if path.startswith("/api/Etf/") and path.endswith("/holdings"):
+            fund = self.fund("oneq", path.split("/")[3])
+            real = self.on_or_before(self.latest)  # 날짜 인자를 무시하고 최신만
+            if fund is None:
+                return httpx.Response(404, json={"success": False})
+            if real is None:
+                return httpx.Response(200, json={"data": {"baseDate": None, "holdings": []}})
+            rows = [
+                {
+                    "name": ln.name,
+                    "code": ln.isin,
+                    "quantity": f"{ln.qty:,.0f}",
+                    "price": ln.val,
+                    "ratio": f"{ln.wt:.2f}",
+                }
+                for ln in self.lines(fund, real)
+            ]
+            data = {"baseDate": real.isoformat(), "pdfUrl": None, "holdings": rows}
+            return httpx.Response(200, json={"data": data, "success": True})
+        return httpx.Response(404, text="not found")
+
     def _rise(self, path: str, p: dict[str, str]) -> httpx.Response:
         api = "/api/products/etfs"
         if path == api:
@@ -548,6 +610,9 @@ def samples() -> dict[str, str]:
     ka = "https://www.samsungactive.co.kr/api/v1/product"
     pl = "https://www.plusetf.co.kr/api/v1/product"
     rs = "https://kbam.co.kr/api/products/etfs"
+    kw = "https://www.kiwoometf.com/service"
+    oq = "https://api.hanaam.com/api/Etf"
+    kiwoom_tk = funds_of("kiwoom")[0].key
     tiger_isin = funds_of("tiger")[0].isin
     hanaro_uid = funds_of("hanaro")[0].key
     rise_key = funds_of("rise")[0].key
@@ -572,13 +637,18 @@ def samples() -> dict[str, str]:
         "plus_pdf.json": ("GET", f"{pl}/pdf/list?n=PL000&d=20261006&page=0&pageSize=1000", None),
         "rise_universe.json": ("GET", f"{rs}?page=1&page_size=20", None),
         "rise_pdf.json": ("GET", f"{rs}/{rise_key}/holdings?base_dt=20261006", None),
+        "kiwoom_universe.json": ("POST", f"{kw}/main/productListAjax", {}),
+        "kiwoom_pdf.json": ("POST", f"{kw}/etf/KO02010200MAjax4",
+                            {"schGubun1": kiwoom_tk, "startDate": "20261006"}),
+        "oneq_universe.json": ("GET", oq, None),
+        "oneq_pdf.json": ("GET", f"{oq}/1/holdings", None),
     }  # fmt: skip
     out: dict[str, str] = {}
     for name, (method, url, body) in req.items():
         if method == "POST" and name.startswith("plus"):
             r = httpx.Request(method, url, json=body)
         elif method == "POST":
-            r = httpx.Request(method, url, data=body or {"page": "50"})
+            r = httpx.Request(method, url, data=body if body is not None else {"page": "50"})
         else:
             r = httpx.Request(method, url)
         resp = w.handle(r)

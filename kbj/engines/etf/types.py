@@ -45,6 +45,7 @@ __all__ = [
     "RULES",
     "brand_of",
     "classify",
+    "domestic_leveraged",
     "etf_type",
     "is_active",
     "is_excluded",
@@ -271,6 +272,29 @@ def etf_type(name: str, base_index: str | None = None) -> EtfType:
 
 _INV_WORDS: Final = _words("인버스", "INVERSE", "숏")
 _TWO_WORDS: Final = _words("레버리지", "LEVERAGE")
+
+
+def domestic_leveraged(name: str, base_index: str | None) -> bool:
+    """국내 주식 지수를 현물로 담는 레버리지(배수 > 0) — KODEX 레버리지·코스닥150레버리지·
+    단일종목레버리지 등.
+
+    기초지수 이름이 있어야 하고(이름만으로는 무엇을 두 배 하는지 모른다), 인버스·해외·채권·
+    원자재·선물지수(`선물`·`F-` — 선물만 담는다)는 아니다. 기초지수가 국내 테마로 분류돼야 한다
+    (`classify`).
+    """
+    nm, base = _clean(name), _clean(base_index)
+    if not nm or not base or not _lev_inv(nm, base):
+        return False
+    lv = leverage_of(nm, base)
+    if lv is None or lv <= 0:
+        return False
+    if "선물" in nm or "선물" in base or base.upper().startswith("F-"):
+        return False
+    if _BOND_CASH.search(nm) or _BOND_CASH.search(base) or _commodity(nm) or _commodity(base):
+        return False
+    if _overseas(nm, base):
+        return False
+    return classify(base) is not None
 
 
 def leverage_of(name: str, base_index: str | None = None) -> float | None:

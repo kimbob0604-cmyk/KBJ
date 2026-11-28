@@ -1,0 +1,24 @@
+{
+ "keywords": [
+  {
+   "keywordNo": "50001"
+  }
+ ],
+ "products": [
+  {
+   "gcode": "979000",
+   "goodsNm": "KIWOOM 합성반도체",
+   "goodsType": "50001"
+  },
+  {
+   "gcode": "979100",
+   "goodsNm": "KIWOOM 합성200",
+   "goodsType": "50001"
+  },
+  {
+   "gcode": "979200",
+   "goodsNm": "KIWOOM 합성미국테크",
+   "goodsType": "50001"
+  }
+ ]
+}
